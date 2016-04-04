@@ -24,6 +24,7 @@
 #include <thread>
 #include <map>
 
+#include "backend/networking/rpc_client.h"
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
@@ -193,9 +194,36 @@ peloton_dml(PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
+  /*
+   * To execute a plan, we need prepare three stuff: plan, param_list and TupleDesc
+   * Plan is a class which can be SerializeTo
+   * Param_list can be transformed to value using BuildParams() and be SerializeTo
+   * TupleDesc is nested structure in Postgres, we can define a nested message in protobuf
+   */
+
+  // First Serialize plan
   peloton::CopySerializeOutput output;
   mapped_plan_ptr->SerializeTo(output);
-  peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
+
+  // Second prepare param_values from param_list, and then Serialize param_values
+  std::vector<Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
+  int param_count = param_values.size();
+  for (int it = 0; it < param_count; it++) {
+      param_values[it].SerializeTo(output);
+  }
+
+  // Third prepare protobuf nested message from TupleDesc
+
+
+  // Finally prepare the QueryPlanExecRequest
+  const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
+  auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+  peloton::networking::QueryPlanExecRequest request;
+  request.set_plan_type(static_cast<int>(type));
+  request.set_plan(output.Data(), output.Size());
+
+  // Send the request
+  pclient->QueryPlan(&request, NULL);
 
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {

@@ -505,6 +505,22 @@ message TimeSyncResponse {
     required int64 t1_s = 4;
 }
 
+message QueryPlanExecRequest {
+    // The plan type of the top level node 
+    required int32 plan_type = 1;
+    // TupleDesc
+    optional TupleDesc tuple_dec = 2; 
+    // The plan + param
+    required bytes plan = 3;
+}
+
+message QueryPlanExecResponse {
+    // The id of the PelotonSite responding to this timesync request
+    required int32 sender_site = 1;
+    // The time when the local PelotonSite sent this request
+    required bytes result = 2;
+}
+
 // -----------------------------------
 // SERVICE
 // -----------------------------------
@@ -526,5 +542,5 @@ service AbstractPelotonService {
     rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
     rpc UnevictData(UnevictDataRequest) returns (UnevictDataResponse);
     rpc TimeSync(TimeSyncRequest) returns (TimeSyncResponse);
-    rpc QueryPlan(QueryPlanRequest) returns (SeqScanPlan);
+    rpc QueryPlan(QueryPlanExecRequest) returns (QueryPlanExecResponse);
 }

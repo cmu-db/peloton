@@ -41,6 +41,8 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {}
 
+  SeqScanPlan():AbstractScan(){}
+
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   const std::string GetInfo() const { return "SeqScan"; }
@@ -48,7 +50,7 @@ class SeqScanPlan : public AbstractScan {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output);
+  bool SerializeTo(SerializeOutput &output) const;
   bool DeserializeFrom(SerializeInputBE &input);
 
   /* For init SerializeOutput */

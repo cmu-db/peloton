@@ -26,7 +26,6 @@ backend/networking/abstract_service.pb.cc:
 networking_FILES = \
 networking_FILES = \
 				backend/networking/abstract_service.pb.cc \
-				backend/networking/queryplan.pb.cc \
 				backend/networking/rpc_channel.cpp \
 				backend/networking/rpc_server.cpp \
 				backend/networking/rpc_client.cpp \

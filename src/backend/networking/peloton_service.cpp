@@ -14,6 +14,10 @@
 #include "backend/networking/peloton_endpoint.h"
 #include "backend/networking/rpc_server.h"
 #include "backend/common/logger.h"
+#include "backend/common/types.h"
+#include "backend/common/serializer.h"
+#include "backend/planner/seq_scan_plan.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -375,8 +379,8 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
     }
 }
 void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
-        const QueryPlanRequest* request,
-        SeqScanPlan* response,
+        const QueryPlanExecRequest* request,
+        QueryPlanExecResponse* response,
         ::google::protobuf::Closure* done) {
 
     // TODO: controller should be set, we probably use it in the future
@@ -390,37 +394,44 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
      * If request is not null, this is a rpc  call, server should handle the reqeust
      */
     if (request != NULL) {
-        LOG_TRACE("Received a queryplan, the type is: %s",
-                request->type().c_str());
+        LOG_TRACE("Received a queryplan");
 
-        if (request->type() == "Scan") {
-            //const AbstractScan scan = request->scan_plan();
-            if (request->has_seqscan_plan()) {
-                const SeqScanPlan seq_plan = request->seqscan_plan();
+        if (!request->has_plan_type()) {
+            LOG_ERROR("Queryplan recived desen't have type");
+            return;
+        }
 
-                int test1 = -1;
-                int test2 = -1;
-                int test3 = -1;
+        PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
 
-                if ( seq_plan.has_test_number()) {
-                    test1 = seq_plan.test_number();
-                }
-
-                if (seq_plan.base().has_test_number()) {
-                   test2 = seq_plan.base().test_number();
-                }
-
-                if (seq_plan.base().base().has_test_base()) {
-                   test3 = seq_plan.base().base().test_base();
-                }
-
-                LOG_TRACE("The test number-- test1: %d, test2: %d, test3: %d", test1, test2, test3);
-            } else {
-                LOG_TRACE("the message doen't have seq_scan");
+        switch (plan_type) {
+            case PLAN_NODE_TYPE_INVALID: {
+                LOG_ERROR("Queryplan recived desen't have type");
+                break;
             }
 
-        } else {
-            LOG_TRACE("Unknow queryplan type!");
+            case PLAN_NODE_TYPE_SEQSCAN: {
+                LOG_ERROR("SEQSCAN revieved");
+                std::string plan = request->plan();
+                ReferenceSerializeInputBE input(plan.c_str(), plan.size());
+                std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan =
+                        std::make_shared<peloton::planner::SeqScanPlan>();
+                ss_plan->DeserializeFrom(input);
+
+                ParamListInfo param_list;
+                TupleDesc tuple_desc;
+
+                //peloton_status status =
+                        peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
+                                                                    param_list,
+                                                                    tuple_desc);
+                break;
+            }
+
+            default: {
+              LOG_ERROR("Queryplan recived :: Unsupported TYPE: %u ",
+                      plan_type);
+              break;
+            }
         }
 
         // if callback exist, run it

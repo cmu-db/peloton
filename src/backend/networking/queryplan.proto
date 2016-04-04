@@ -1,39 +1,55 @@
 package peloton.networking;
 
-import "expression.proto";
-
-message AbstractPlan {
-    // A plan node can have multiple children
-    repeated AbstractPlan children = 1;
-    // Associated with children
-    optional bool include_children = 2;
-    // The parent node
-    optional AbstractPlan parent = 3;
+// NameData should be transformed 
+message FormAttribute {
+    required uint64 attrelid = 1;
+    // The original is NameData structure which contains 64 bytes char array
+    optional bytes attname = 2;
+    optional uint64 atttypid = 3;
+    optional int32 attstattarget = 4;
+    // The original is int16 which should be cast for conversion
+    optional int32 attlen = 5;
+    // The original is int16 which should be cast for conversion
+	optional int32 attnum = 6;
+	optional int32 attndims = 7;
+	optional int32 attcacheoff = 8;
+	optional int32 atttypmod = 9;
+	optional bool attbyval = 10;
+	// The original is char which should be cast for conversion
+	optional int32 attstorage = 11;
+	// The original is char which should be cast for conversion
+	optional int32 attalign = 12;
+	optional bool attnotnull = 13;
+	optional bool atthasdef = 14;
+	optional bool attisdropped = 15;
+	optional bool attislocal = 16;
+	optional int32 attinhcount = 17;
+	optional uint64 attcollation = 18;
 }
 
-message AbstractScanPlan {
-    // Columns from tile group to be added to logical tile output
-    repeated int64 column_ids = 1;
-    // Associated with column id
-    optional bool include_column_ids = 2;
-    // Selection predicate pointer
-    optional ExpressionMessage predicate = 3;
-    // Pointer to table to scan from
-    optional DataTable target_table = 4;
+// AttrDefault and ConstrCheck should be transformed
+message TupleConstr {
+	// The following 2 members are AttrDefault in Postgres(int16	adnum and char *adbin)
+    required int32 adnum = 1;
+	optional bytes adbin = 2;
+	// The following 4 members are ConstrCheck in Postgres
+	optional bytes ccname = 3;
+	optional bytes ccbin = 4;
+	optional bool ccvalid = 5;
+	optional bool ccnoinherit = 6;
+	// The original is uint16 which should be cast for conversion
+	optional int32 num_defval = 7;
+	// The original is uint16 which should be cast for conversion
+	optional int32 num_check = 8;
+	optional bool has_not_null = 9;
 }
 
-message SeqScanPlan {
-    // The base abstract scan plan
-    required AbstractScanPlan base = 1;
-}
-
-message IndexScanPlan {
-    // The base abstract scan plan
-    required AbstractScanPlan base = 1;
-}
-
-message QueryPlanRequest {
-    required string plan_type = 1;
-    optional SeqScanPlan seq_scan_plan = 2;
-    optional IndexScanPlan index_scan_plan = 3;
+message TupleDesc {
+    required int32 natts = 1;
+    optional FormAttribute attrs = 2;
+    optional TupleConstr constr = 3;
+    optional uint64 tdtypeid = 4;
+    optional int32 tdtypmod = 5;
+    optional bool tdhasoid = 6;
+    optional int32 tdrefcount = 7;
 }
