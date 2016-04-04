@@ -288,6 +288,8 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
         if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
           return false;
         }
@@ -346,6 +348,8 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
         if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
           return false;
         }
