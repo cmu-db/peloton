@@ -13,9 +13,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "backend/benchmark/logger/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/logger/logger_workload.h"
+
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 // Logging mode
 extern LoggingType peloton_logging_mode;
@@ -26,6 +27,13 @@ extern int64_t peloton_wait_timeout;
 
 namespace peloton {
 namespace benchmark {
+
+namespace ycsb {
+
+configuration state;
+
+}
+
 namespace logger {
 
 std::string wal_log_file_name = "wal.log";

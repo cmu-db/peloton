@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// rpwp_txn_manager.cpp
+// pessimistic_txn_manager.cpp
 //
-// Identification: src/backend/concurrency/rpwp_txn_manager.cpp
+// Identification: src/backend/concurrency/eager_write_txn_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpwp_txn_manager.h"
+#include "eager_write_txn_manager.h"
 
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
@@ -27,25 +27,25 @@ namespace peloton {
 namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
-    released_rdlock;
+    eager_write_released_rdlock;
 
-RpwpTxnManager &RpwpTxnManager::GetInstance() {
-  static RpwpTxnManager txn_manager;
+EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
+  static EagerWriteTxnManager txn_manager;
   return txn_manager;
 }
 
 // // Visibility check
-bool RpwpTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
+bool EagerWriteTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group_header,
                                              const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
-  if (EXTRACT_TXNID(tuple_txn_id) == EXTRACT_TXNID(INVALID_TXN_ID)) {
+  if (GET_WRITER_ID(tuple_txn_id) == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
   }
-  bool own = (current_txn->GetTransactionId() == EXTRACT_TXNID(tuple_txn_id));
+  bool own = (GET_WRITER_ID(tuple_txn_id) == current_txn->GetTransactionId());
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
@@ -61,7 +61,7 @@ bool RpwpTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group
   } else {
     bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
     bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
-    if (EXTRACT_TXNID(tuple_txn_id) != EXTRACT_TXNID(INITIAL_TXN_ID)) {
+    if (GET_WRITER_ID(tuple_txn_id) != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
         // currently, we do not handle cascading abort. so never read an
@@ -86,45 +86,45 @@ bool RpwpTxnManager::IsVisible(const storage::TileGroupHeader * const tile_group
   }
 }
 
-bool RpwpTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
+bool EagerWriteTxnManager::IsOwner(const storage::TileGroupHeader * const tile_group_header,
                                             const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-  return EXTRACT_TXNID(tuple_txn_id) == current_txn->GetTransactionId();
+  return GET_WRITER_ID(tuple_txn_id) == current_txn->GetTransactionId();
 }
 
 // No others own the tuple
-bool RpwpTxnManager::IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+bool EagerWriteTxnManager::IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                                                  const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  LOG_INFO("IsAccessable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
+  LOG_INFO("IsOwnable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
   // FIXME: actually when read count is not 0 this tuple is not accessable
-  return EXTRACT_TXNID(tuple_txn_id) == INITIAL_TXN_ID &&
+  return GET_WRITER_ID(tuple_txn_id) == INITIAL_TXN_ID &&
          tuple_end_cid == MAX_CID;
 }
 
 
-bool RpwpTxnManager::ReleaseReadLock(
+bool EagerWriteTxnManager::ReleaseReadLock(
     const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
 
-  if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
+  if (GET_WRITER_ID(old_txn_id) != INITIAL_TXN_ID) {
     assert(false);
   }
 
   // No writer
   // Decrease read count
   while (true) {
-    assert(EXTRACT_READ_COUNT(old_txn_id) != 0);
-    auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
-    auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
+    assert(GET_READER_COUNT(old_txn_id) != 0);
+    auto new_read_count = GET_READER_COUNT(old_txn_id) - 1;
+    auto new_txn_id = PACK_TXN_ID(INITIAL_TXN_ID, new_read_count);
     auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, old_txn_id,
                                            &old_txn_id);
     if (!res) {
       // Assert there's no other writer
-      assert(EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID);
+      assert(GET_WRITER_ID(old_txn_id) == INITIAL_TXN_ID);
     } else {
       break;
     }
@@ -133,11 +133,11 @@ bool RpwpTxnManager::ReleaseReadLock(
   return true;
 }
 
-bool RpwpTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+bool EagerWriteTxnManager::AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                                   const oid_t &tile_group_id, const oid_t &tuple_id) {
-  LOG_TRACE("AcquireLock");
+  LOG_TRACE("AcquireOwnership");
   // acquire write lock.
-  if (IsOwner(tile_group_header, tuple_id)) return true;
+  assert(IsOwner(tile_group_header, tuple_id) == false);
 
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
@@ -145,7 +145,7 @@ bool RpwpTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_gro
   auto res = ReleaseReadLock(tile_group_header, tuple_id);
   // Must success
   assert(res);
-  released_rdlock[tile_group_id][tuple_id] = true;
+  eager_write_released_rdlock[tile_group_id][tuple_id] = true;
 
   // Try get write lock
   auto new_txn_id = current_txn->GetTransactionId();
@@ -161,7 +161,7 @@ bool RpwpTxnManager::AcquireLock(const storage::TileGroupHeader * const tile_gro
   }
 }
 
-bool RpwpTxnManager::PerformRead(const oid_t &tile_group_id,
+bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
                                                 const oid_t &tuple_id) {
   LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
@@ -183,19 +183,19 @@ bool RpwpTxnManager::PerformRead(const oid_t &tile_group_id,
   // Try to acquire read lock.
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
   // No one is holding the write lock
-  if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
+  if (GET_WRITER_ID(old_txn_id) == INITIAL_TXN_ID) {
     LOG_TRACE("No one holding the lock");
     while (true) {
-      LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
-      auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
+      LOG_TRACE("Current read count is %lu", GET_READER_COUNT(old_txn_id));
+      auto new_read_count = GET_READER_COUNT(old_txn_id) + 1;
       // Try add read count
-      auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
+      auto new_txn_id = PACK_TXN_ID(INITIAL_TXN_ID, new_read_count);
       LOG_TRACE("New txn id %lx", new_txn_id);
       auto res = tile_group_header->CASTxnId(tuple_id, new_txn_id, old_txn_id,
                                              &old_txn_id);
       if (!res) {
         // See if there's writer
-        if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) return false;
+        if (GET_WRITER_ID(old_txn_id) != INITIAL_TXN_ID) return false;
       } else {
         break;
       }
@@ -210,7 +210,7 @@ bool RpwpTxnManager::PerformRead(const oid_t &tile_group_id,
   return true;
 }
 
-bool RpwpTxnManager::PerformUpdate(
+bool EagerWriteTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
@@ -224,7 +224,7 @@ bool RpwpTxnManager::PerformUpdate(
     ->GetHeader();
 
   // The write lock must have been acquired
-  // Notice: if the executor doesn't call PerformUpdate after AcquireLock, no
+  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership, no
   // one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
@@ -240,22 +240,22 @@ bool RpwpTxnManager::PerformUpdate(
   return true;
 }
 
-bool RpwpTxnManager::PerformInsert(const oid_t &tile_group_id,
+bool EagerWriteTxnManager::PerformInsert(const oid_t &tile_group_id,
                                                   const oid_t &tuple_id) {
   LOG_TRACE("Perform insert");
-  SetInsertVisibility(tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   current_txn->RecordInsert(tile_group_id, tuple_id);
   return true;
 }
 
-bool RpwpTxnManager::PerformDelete(
+bool EagerWriteTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id,
     const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
-  auto res = AcquireLock(tile_group_header, tile_group_id, tuple_id);
+  auto res = AcquireOwnership(tile_group_header, tile_group_id, tuple_id);
 
   if (res) {
     auto new_tile_group_header = catalog::Manager::GetInstance()
@@ -278,7 +278,7 @@ bool RpwpTxnManager::PerformDelete(
   }
 }
 
-Result RpwpTxnManager::CommitTransaction() {
+Result EagerWriteTxnManager::CommitTransaction() {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
@@ -296,14 +296,14 @@ Result RpwpTxnManager::CommitTransaction() {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
         // Release read locks
-        if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
-            released_rdlock[tile_group_id].find(tuple_slot) ==
-                released_rdlock[tile_group_id].end()) {
+        if (eager_write_released_rdlock.find(tile_group_id) == eager_write_released_rdlock.end() ||
+            eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
+                eager_write_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
           if (ret == false) {
             assert(false);
           }
-          released_rdlock[tile_group_id][tuple_slot] = true;
+          eager_write_released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
@@ -368,11 +368,11 @@ Result RpwpTxnManager::CommitTransaction() {
 
   EndTransaction();
   
-  released_rdlock.clear();
+  eager_write_released_rdlock.clear();
   return ret;
 }
 
-Result RpwpTxnManager::AbortTransaction() {
+Result EagerWriteTxnManager::AbortTransaction() {
   LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
@@ -386,14 +386,14 @@ Result RpwpTxnManager::AbortTransaction() {
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_READ) {
-        if (released_rdlock.find(tile_group_id) == released_rdlock.end() ||
-            released_rdlock[tile_group_id].find(tuple_slot) ==
-                released_rdlock[tile_group_id].end()) {
+        if (eager_write_released_rdlock.find(tile_group_id) == eager_write_released_rdlock.end() ||
+            eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
+                eager_write_released_rdlock[tile_group_id].end()) {
           bool ret = ReleaseReadLock(tile_group_header, tuple_slot);
           if (ret == false) {
             assert(false);
           }
-          released_rdlock[tile_group_id][tuple_slot] = true;
+          eager_write_released_rdlock[tile_group_id][tuple_slot] = true;
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -445,11 +445,11 @@ Result RpwpTxnManager::AbortTransaction() {
 
   EndTransaction();
 
-  released_rdlock.clear();
+  eager_write_released_rdlock.clear();
   return Result::RESULT_ABORTED;
 }
 
-void RpwpTxnManager::PerformDelete(
+void EagerWriteTxnManager::PerformDelete(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -467,7 +467,7 @@ void RpwpTxnManager::PerformDelete(
   }
 }
 
-void RpwpTxnManager::PerformUpdate(
+void EagerWriteTxnManager::PerformUpdate(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -486,7 +486,7 @@ void RpwpTxnManager::PerformUpdate(
   }
 }
 
-void RpwpTxnManager::SetInsertVisibility(
+void EagerWriteTxnManager::SetOwnership(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
