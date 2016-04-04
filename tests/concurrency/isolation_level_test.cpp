@@ -29,9 +29,6 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_SSI
 };
 
-
->>>>>>> ssi
-
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
