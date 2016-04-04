@@ -97,7 +97,7 @@ class ProjectInfo {
     }
 
     ProjectInfo *ret =
-      new ProjectInfo(std::move(target_list_), std::move(direct_map_list_));
+      new ProjectInfo(std::move(new_target_list), std::move(new_map_list));
     return ret;
   }
 
