@@ -19,6 +19,7 @@
 #include "backend/planner/abstract_scan_plan.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 
