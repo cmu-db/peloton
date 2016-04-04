@@ -20,7 +20,7 @@
 namespace peloton {
 namespace concurrency {
 class TransactionManagerFactory {
-public:
+ public:
   static TransactionManager &GetInstance() {
     switch (protocol_) {
       case CONCURRENCY_TYPE_OPTIMISTIC:

@@ -17,7 +17,7 @@
 namespace peloton {
 namespace concurrency {
 
-extern thread_local std::unordered_map<oid_t, std::unordered_map<oid_t, bool>>
+extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
     pessimistic_released_rdlock;
 
 //===--------------------------------------------------------------------===//
@@ -30,19 +30,22 @@ class PessimisticTxnManager : public TransactionManager {
 
   static PessimisticTxnManager &GetInstance();
 
-  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsVisible(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
-  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tuple_id);
+  virtual bool IsOwnable(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool AcquireOwnership(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
   virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
@@ -53,11 +56,9 @@ class PessimisticTxnManager : public TransactionManager {
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-  
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Result CommitTransaction();
 
@@ -74,7 +75,8 @@ class PessimisticTxnManager : public TransactionManager {
     return (txn_id >> 56) & READ_COUNT_MASK;
   }
 
-  bool ReleaseReadLock(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  bool ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 };
 }
 }
