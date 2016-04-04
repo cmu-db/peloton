@@ -138,7 +138,6 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-
       transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id,
                                         location);
 
