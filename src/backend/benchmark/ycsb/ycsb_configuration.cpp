@@ -28,7 +28,9 @@ void Usage(FILE *out) {
           "   -t --transactions      :  # of transactions \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
-          "   -b --backend_count     :  # of backends \n");
+          "   -b --backend_count     :  # of backends \n"
+          "   -r --relation_count    :  # of relations \n"
+          );
   exit(EXIT_FAILURE);
 }
 
@@ -38,6 +40,7 @@ static struct option opts[] = {
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
+    {"relation_count", optional_argument, NULL, 'r'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -82,6 +85,17 @@ void ValidateBackendCount(const configuration &state) {
       << " : " << state.backend_count << std::endl;
 }
 
+void ValidateRelationCount(const configuration &state) {
+  if (state.relation_count <= 0) {
+    std::cout << "Invalid relation_count :: " << state.relation_count
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "relation_count "
+      << " : " << state.relation_count << std::endl;
+}
+
 void ValidateTransactionCount(const configuration &state) {
   if (state.transaction_count <= 0) {
     std::cout << "Invalid transaction_count :: " << state.transaction_count
@@ -103,11 +117,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
+  state.relation_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:t:c:u:b:r:", opts, &idx);
 
     if (c == -1) break;
 
@@ -127,13 +142,18 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+      case 'r':
+        state.relation_count = atoi(optarg);
+        break;
       case 'h':
         Usage(stderr);
+        exit(EXIT_FAILURE);
         break;
 
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
+        exit(EXIT_FAILURE);
     }
   }
 
@@ -143,6 +163,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
   ValidateTransactionCount(state);
+  ValidateRelationCount(state);
 
 }
 

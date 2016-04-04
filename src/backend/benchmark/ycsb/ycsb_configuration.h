@@ -49,6 +49,10 @@ class configuration {
 
   // number of backends
   int backend_count;
+
+  // number of relations
+  int relation_count;
+
 };
 
 extern configuration state;
@@ -64,6 +68,8 @@ void ValidateUpdateRatio(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateTransactionCount(const configuration &state);
+
+void ValidateRelationCount(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
