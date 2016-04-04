@@ -158,8 +158,15 @@ StorageManager::~StorageManager() {
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
 
-  // unmap the data file
+  // sync and unmap the data file
   if(data_file_address != nullptr) {
+    // sync the mmap'ed file to SSD or HDD
+    int status = msync(data_file_address, data_file_len, MS_SYNC);
+    if(status != 0) {
+      perror("msync");
+      exit(EXIT_FAILURE);
+    }
+
     if (munmap(data_file_address, data_file_len) == MAP_FAILED) {
       perror("munmap");
       exit(EXIT_FAILURE);
