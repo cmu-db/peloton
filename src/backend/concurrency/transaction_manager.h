@@ -25,8 +25,6 @@
 namespace peloton {
 namespace concurrency {
 
-// class Transaction;
-
 extern thread_local Transaction *current_txn;
 
 class TransactionManager {
@@ -48,11 +46,17 @@ class TransactionManager {
   virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-  virtual bool IsAccessable(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tuple_id) = 0;
 
-  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
+  virtual bool AcquireOwnership(const storage::TileGroupHeader * const tile_group_header,
                             const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  virtual void SetOwnership(const oid_t &tile_group_id,
+                                   const oid_t &tuple_id) = 0;
+
+  virtual bool PerformInsert(const oid_t &tile_group_id,
+                             const oid_t &tuple_id) = 0;
 
   virtual bool PerformRead(const oid_t &tile_group_id,
                            const oid_t &tuple_id) = 0;
@@ -60,19 +64,13 @@ class TransactionManager {
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location) = 0;
 
-  virtual bool PerformInsert(const oid_t &tile_group_id,
-                             const oid_t &tuple_id) = 0;
-
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location) = 0;
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
+  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id) = 0;
-
-  virtual void PerformUpdate(const oid_t &tile_group_id,
                                    const oid_t &tuple_id) = 0;
 
   void SetTransactionResult(const Result result) {

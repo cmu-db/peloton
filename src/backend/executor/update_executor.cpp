@@ -105,12 +105,12 @@ bool UpdateExecutor::DExecute() {
       delete new_tuple;
       new_tuple = nullptr;
 
-    } else if (transaction_manager.IsAccessable(tile_group_header,
+    } else if (transaction_manager.IsOwnable(tile_group_header,
                                                 physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
-      // transdaction.
+      // transaction.
 
-      if (transaction_manager.AcquireLock(tile_group_header, tile_group_id, physical_tuple_id) ==
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) ==
           false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
