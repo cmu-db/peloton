@@ -44,7 +44,7 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     AbstractPlan *new_plan = new SeqScanPlan(
       this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return new_plan;

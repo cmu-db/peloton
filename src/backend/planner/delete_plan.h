@@ -42,7 +42,7 @@ class DeletePlan : public AbstractPlan {
 
   bool GetTruncate() const { return truncate; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     return new DeletePlan(target_table_, truncate);
   }
 

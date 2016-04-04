@@ -97,7 +97,7 @@ class AggregatePlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     std::vector<AggTerm> copied_agg_terms;
     for (const AggTerm &term : unique_agg_terms_) {
       copied_agg_terms.push_back(term.Copy());

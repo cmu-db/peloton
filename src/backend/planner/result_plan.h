@@ -47,7 +47,7 @@ class ResultPlan : public AbstractPlan {
 
   inline std::string GetInfo() const { return "Result"; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     return new ResultPlan(new storage::Tuple(*tuple_), backend_);
   }
 
