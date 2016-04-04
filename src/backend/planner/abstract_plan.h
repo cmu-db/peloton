@@ -17,8 +17,10 @@
 #include <map>
 #include <vector>
 
+#include "backend/common/assert.h"
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
+#include "backend/common/serializer.h"
 
 #include "nodes/nodes.h"
 
@@ -70,6 +72,30 @@ class AbstractPlan : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  // A plan will be sent to anther node
+  // So serialization is should be implemented by the derived classes
+
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  // Each sub-class will have to implement these functions
+  // After the implementation for each sub-class, we should set these to pure virtual
+  //===--------------------------------------------------------------------===//
+  virtual bool SerializeTo(SerializeOutput &output) {
+      ASSERT(&output != nullptr);
+      return false;
+  }
+  virtual bool DeserializeFrom(SerializeInputBE &input) {
+      ASSERT(&input != nullptr);
+      return false;
+  }
+  virtual int SerializeSize() {
+      return 0;
+  }
+
+ protected:
+  // only used by its derived classes (when deserialization)
+  AbstractPlan *Parent() {return parent_;}
 
  private:
   // A plan node can have multiple children
