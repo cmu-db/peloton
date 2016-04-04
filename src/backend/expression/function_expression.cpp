@@ -111,6 +111,10 @@ class ConstantFunctionExpression : public expression::AbstractExpression {
     buffer << spacer << "ConstantFunctionExpression " << F << std::endl;
     return (buffer.str());
   }
+
+    expression::AbstractExpression *Copy() const {
+      return new ConstantFunctionExpression<F>();
+    }
 };
 
 /*
@@ -140,6 +144,11 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
     buffer << spacer << "UnaryFunctionExpression " << F << std::endl;
     return (buffer.str());
   }
+
+    expression::AbstractExpression *Copy() const {
+      assert(m_child != nullptr);
+      return new UnaryFunctionExpression<F>(m_child->Copy());
+    }
 };
 
 /*
@@ -189,6 +198,15 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
     buffer << spacer << "GeneralFunctionExpression " << F << std::endl;
     return (buffer.str());
   }
+
+    expression::AbstractExpression *Copy() const {
+      std::vector<expression::AbstractExpression *> args;
+      for (auto arg : m_args) {
+        args.push_back(arg->Copy());
+      }
+
+      return new GeneralFunctionExpression<F>(args);
+    }
 
  private:
   const std::vector<AbstractExpression *> &m_args;
