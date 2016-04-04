@@ -55,7 +55,7 @@ class HashJoinPlan : public AbstractJoinPlan {
     return outer_column_ids_;
   }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     HashJoinPlan *new_plan = new HashJoinPlan(
       GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
       catalog::Schema::CopySchema(GetSchema()), outer_column_ids_);

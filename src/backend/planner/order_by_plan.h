@@ -53,7 +53,7 @@ class OrderByPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "OrderBy"; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     return new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_);
   }
 

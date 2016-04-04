@@ -62,7 +62,7 @@ class AbstractJoinPlan : public AbstractPlan {
 
   const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
 
-  const AbstractPlan *Copy() const = 0;
+  AbstractPlan *Copy() const = 0;
 
  private:
   /** @brief The type of join that we're going to perform */

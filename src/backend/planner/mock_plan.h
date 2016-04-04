@@ -39,7 +39,7 @@ class MockPlan : public planner::AbstractPlan {
 
   inline const std::string GetInfo() const { return "Mock"; }
 
-  const planner::AbstractPlan *Copy() const { return new MockPlan(); }
+  planner::AbstractPlan *Copy() const { return new MockPlan(); }
 
 };
 

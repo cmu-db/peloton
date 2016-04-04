@@ -105,7 +105,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  const AbstractPlan *Copy() const {
+  AbstractPlan *Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
     for (auto *key : runtime_keys_) {
       new_runtime_keys.push_back(key->Copy());
