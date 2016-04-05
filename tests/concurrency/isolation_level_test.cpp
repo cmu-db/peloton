@@ -24,9 +24,10 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  // CONCURRENCY_TYPE_OPTIMISTIC,
-  // CONCURRENCY_TYPE_PESSIMISTIC
-  CONCURRENCY_TYPE_SSI
+  CONCURRENCY_TYPE_OPTIMISTIC,
+  CONCURRENCY_TYPE_PESSIMISTIC,
+  // CONCURRENCY_TYPE_SSI
+  // CONCURRENCY_TYPE_SPECULATIVE_READ
 };
 
 void DirtyWriteTest() {
@@ -418,8 +419,9 @@ TEST_F(IsolationLevelTest, SerializableTest) {
   }
 }
 
+// FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
 TEST_F(IsolationLevelTest, StressTest) {
-  const int num_txn = 1024;
+  const int num_txn = 64;
   const int scale = 5;
   const int num_key = 10;
   srand(15721);
@@ -455,6 +457,7 @@ TEST_F(IsolationLevelTest, StressTest) {
     for (int i = 0; i < num_key; i++) {
       scheduler2.Txn(0).Read(i);
     }
+    scheduler2.Txn(0).Commit();
     scheduler2.Run();
     // The sum should be zero
     int sum = 0;
