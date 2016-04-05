@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// projection_node.h
+// projection_plan.h
 //
-// Identification: src/backend/planner/projection_node.h
+// Identification: src/backend/planner/projection_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,6 +54,13 @@ class ProjectionPlan : public AbstractPlan {
   }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
+
+  AbstractPlan *Copy() const {
+    ProjectionPlan *new_plan = new ProjectionPlan(
+      project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
+    new_plan->SetColumnIds(column_ids_);
+    return new_plan;
+  }
 
  private:
   /** @brief Projection Info.            */

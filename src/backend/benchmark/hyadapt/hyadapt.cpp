@@ -1,21 +1,21 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // hyadapt.cpp
 //
-// Identification: benchmark/hyadapt/hyadapt.cpp
+// Identification: src/backend/benchmark/hyadapt/hyadapt.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
 #include <fstream>
 
-#include "backend/benchmark/hyadapt/hyadapt.h"
 #include "backend/benchmark/hyadapt/hyadapt_configuration.h"
-#include "hyadapt_workload.h"
+#include "backend/common/logger.h"
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
 
 namespace peloton {
 namespace benchmark {
@@ -54,7 +54,7 @@ void RunBenchmark() {
         break;
 
       default:
-        std::cout << "Unsupported test type : " << state.operator_type << "\n";
+        LOG_ERROR("Unsupported test type : %d", state.operator_type);
         break;
     }
 
@@ -119,8 +119,7 @@ void RunBenchmark() {
         break;
 
       default:
-        std::cout << "Unsupported experiment type : " << state.experiment_type
-                  << "\n";
+        LOG_ERROR("Unsupported experiment_type : %d", state.experiment_type);
         break;
     }
   }

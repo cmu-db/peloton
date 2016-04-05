@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// string_functions.h
+// date_expression.h
 //
-// Identification: src/backend/expression/string_functions.h
+// Identification: src/backend/expression/date_expression.h
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -117,6 +117,10 @@ class ExtractExpression : public AbstractExpression {
     return (spacer + "ExtractExpression");
   }
 
+  AbstractExpression *Copy() const {
+    return new ExtractExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
+
  private:
   TimestampSubfield subfield;
   static std::string const YEAR_STR;
@@ -197,6 +201,10 @@ class DateToTimestampExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "DateToTimestampExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new DateToTimestampExpression(CopyUtil(GetLeft()));
   }
 };
 

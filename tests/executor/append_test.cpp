@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // append_test.cpp
 //
 // Identification: tests/executor/append_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -84,8 +84,7 @@ TEST_F(AppendTests, AppendTwoTest) {
   auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 5, false,
                                    false, false);
   txn_manager.CommitTransaction();
 

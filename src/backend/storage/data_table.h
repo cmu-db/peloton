@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // data_table.h
 //
 // Identification: src/backend/storage/data_table.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -84,8 +84,9 @@ class DataTable : public AbstractTable {
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema, const std::string &table_name, const oid_t &database_oid,
-            const oid_t &table_oid, const size_t &tuples_per_tilegroup, const bool own_schema,
+  DataTable(catalog::Schema *schema, const std::string &table_name,
+            const oid_t &database_oid, const oid_t &table_oid,
+            const size_t &tuples_per_tilegroup, const bool own_schema,
             const bool adapt_table);
 
   ~DataTable();
@@ -156,7 +157,8 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(const oid_t &tile_group_offset, const double &theta);
+  storage::TileGroup *TransformTileGroup(const oid_t &tile_group_offset,
+                                         const double &theta);
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -212,7 +214,8 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetTupleSlot(const storage::Tuple *tuple, bool check_constraint = true);
+  ItemPointer GetTupleSlot(const storage::Tuple *tuple,
+                           bool check_constraint = true);
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
@@ -227,8 +230,7 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  /** @return True if it's a same-key update and it's successful */
-  bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, ItemPointer location);
 
  private:
   //===--------------------------------------------------------------------===//

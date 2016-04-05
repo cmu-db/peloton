@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// abstract_join_node.h
+// abstract_join_plan.h
 //
-// Identification: src/backend/planner/abstract_join_node.h
+// Identification: src/backend/planner/abstract_join_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -61,6 +61,8 @@ class AbstractJoinPlan : public AbstractPlan {
   const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
 
   const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
+
+  AbstractPlan *Copy() const = 0;
 
  private:
   /** @brief The type of join that we're going to perform */

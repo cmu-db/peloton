@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // cast_expression.h
 //
 // Identification: src/backend/expression/cast_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -74,6 +74,10 @@ class CastExpression : public AbstractExpression {
     buffer << spacer << "Cast as [" << this->type_ << "]\n";
     if (child_) buffer << this->child_->Debug(" " + spacer);
     return (buffer.str());
+  }
+
+  AbstractExpression *Copy() const {
+    return new CastExpression(type_, CopyUtil(child_));
   }
 
  private:
