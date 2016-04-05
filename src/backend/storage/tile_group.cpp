@@ -204,16 +204,15 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
-                             const Tuple *tuple) {
+                                         const Tuple *tuple) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
-    // No more slots
+  // No more slots
   if (status == false) return INVALID_OID;
   cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
-  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id){
-      return tuple_slot_id;
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
   }
-
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
@@ -252,11 +251,14 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
-oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id){
+oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
-
-      // No more slots
-    if (status == false) return INVALID_OID;
+  cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
+  }
+  // No more slots
+  if (status == false) return INVALID_OID;
   // Set MVCC info
   tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
   tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
@@ -267,9 +269,14 @@ oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id){
   return tuple_slot_id;
 }
 
-oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, ItemPointer new_location){
+oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
+                                         ItemPointer new_location) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
+  cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
+  }
   // No more slots
   if (status == false) return INVALID_OID;
   // Set MVCC info
@@ -288,7 +295,8 @@ oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, I
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
-                             const Tuple *tuple, cid_t commit_id) {
+                                           const Tuple *tuple,
+                                           cid_t commit_id) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
