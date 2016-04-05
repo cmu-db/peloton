@@ -55,6 +55,13 @@ class ProjectionPlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
+  AbstractPlan *Copy() const {
+    ProjectionPlan *new_plan = new ProjectionPlan(
+      project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
+    new_plan->SetColumnIds(column_ids_);
+    return new_plan;
+  }
+
  private:
   /** @brief Projection Info.            */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
