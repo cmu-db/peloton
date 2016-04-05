@@ -58,7 +58,14 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     return nl_;
   }  // added to support IN+subquery
 
- private:
+  AbstractPlan *Copy() const {
+    NestedLoopJoinPlan *new_plan = new NestedLoopJoinPlan(
+      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+      catalog::Schema::CopySchema(GetSchema()), nl_);
+    return new_plan;
+  }
+
+private:
   NestLoop *nl_;  // added to support IN+subquery
 };
 
