@@ -127,10 +127,13 @@ class SsiTxnManager : public TransactionManager {
         tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 
     while (true) {
-      while (*lock_addr != INITIAL_TXN_ID)
-        ;
-      if (atomic_cas(lock_addr, INITIAL_TXN_ID, txn_id)) {
-        return true;
+      while (*lock_addr != INITIAL_TXN_ID) {
+        auto owner = *lock_addr;
+        assert(owner == INITIAL_TXN_ID || owner == MAX_TXN_ID);
+        (void) owner;
+      }
+      if (atomic_cas(lock_addr, INITIAL_TXN_ID, MAX_TXN_ID)) {
+        return;
       }
     }
   }
@@ -140,7 +143,9 @@ class SsiTxnManager : public TransactionManager {
     txn_id_t *lock_addr = (txn_id_t *)(
         tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 
-    atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
+    bool res = atomic_cas(lock_addr, MAX_TXN_ID, INITIAL_TXN_ID);
+    assert(res);
+    (void) res;
     //auto res = atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
     //assert(res);
   }
