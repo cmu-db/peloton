@@ -347,6 +347,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+        break;
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
