@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // pool.h
 //
 // Identification: src/backend/common/pool.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,14 +18,11 @@
 #include <errno.h>
 #include <climits>
 #include <string.h>
-
 #include <mutex>
 
 #include "backend/storage/storage_manager.h"
 
 namespace peloton {
-
-static const size_t TEMP_POOL_CHUNK_SIZE = 512;  // 512 B
 
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap
@@ -68,22 +65,12 @@ class VarlenPool {
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-  VarlenPool(BackendType backend_type)
-      : backend_type(backend_type),
-        allocation_size(TEMP_POOL_CHUNK_SIZE),
-        max_chunk_count(1),
-        current_chunk_index(0) {
-    Init();
-  }
 
-  VarlenPool(BackendType backend_type, uint64_t allocation_size,
-             uint64_t max_chunk_count)
-      : backend_type(backend_type),
-        allocation_size(allocation_size),
-        max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
-        current_chunk_index(0) {
-    Init();
-  }
+  VarlenPool(BackendType backend_type);
+
+  VarlenPool(BackendType backend_type,
+             uint64_t allocation_size,
+             uint64_t max_chunk_count);
 
   ~VarlenPool();
 

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// nested_loop_join_node.h
+// nested_loop_join_plan.h
 //
-// Identification: src/backend/planner/nested_loop_join_node.h
+// Identification: src/backend/planner/nested_loop_join_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -58,7 +58,14 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     return nl_;
   }  // added to support IN+subquery
 
- private:
+  AbstractPlan *Copy() const {
+    NestedLoopJoinPlan *new_plan = new NestedLoopJoinPlan(
+      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+      catalog::Schema::CopySchema(GetSchema()), nl_);
+    return new_plan;
+  }
+
+private:
   NestLoop *nl_;  // added to support IN+subquery
 };
 

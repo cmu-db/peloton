@@ -18,8 +18,6 @@ Our approach differs from previous methods in that we use a single execution eng
 
 For more details, please visit the [Peloton Wiki](https://github.com/cmu-db/peloton/wiki "Peloton Wiki") page.
 
-If you have any questions on Peloton usage, please send a mail to peloton-dev@cs.cmu.edu.
-
 ## Installation
 
 Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki/Installation).
@@ -38,5 +36,5 @@ Before reporting a problem, check out this how to [file an issue](https://github
 
 ## License
 
-Licensed under the [Apache License](LICENSE).  
-Copyright (c) 2015-16 [Carnegie Mellon Database Group](http://db.cs.cmu.edu/)  
+Copyright (c) 2015-16 [CMU Database Group](http://db.cs.cmu.edu/)  
+Licensed under the [Apache License](LICENSE).

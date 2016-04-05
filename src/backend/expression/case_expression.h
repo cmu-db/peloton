@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// vector_expression.h
+// case_expression.h
 //
 // Identification: src/backend/expression/case_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,10 +17,8 @@ namespace peloton {
 namespace expression {
 
 class CaseExpression : public AbstractExpression {
-
  public:
-  CaseExpression(ValueType vt,
-                 const std::vector<AbstractExpression *>& clauses,
+  CaseExpression(ValueType vt, const std::vector<AbstractExpression *> &clauses,
                  AbstractExpression *default_result)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
         clauses(clauses),
@@ -53,6 +51,19 @@ class CaseExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "CaseExpression";
+  }
+
+  AbstractExpression *Copy() const {
+    std::vector<AbstractExpression *> copied_clauses;
+    for (AbstractExpression *clause : clauses) {
+      if (clause == nullptr) {
+        continue;
+      }
+      copied_clauses.push_back(clause->Copy());
+    }
+
+    return new CaseExpression(case_type, copied_clauses,
+                              default_result->Copy());
   }
 
  private:

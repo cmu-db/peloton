@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// abstract_scan_node.h
+// abstract_scan_plan.h
 //
-// Identification: src/backend/planner/abstract_scan_node.h
+// Identification: src/backend/planner/abstract_scan_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -53,6 +53,8 @@ class AbstractScan : public AbstractPlan {
   const std::string GetInfo() const { return "AbstractScan"; }
 
   storage::DataTable *GetTable() const { return target_table_; }
+
+  AbstractPlan *Copy() const = 0;
 
  private:
   /** @brief Pointer to table to scan from. */

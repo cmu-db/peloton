@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_func_map.cpp
+//
+// Identification: src/backend/bridge/dml/expr/pg_func_map.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/expr/pg_func_map.h"
 
@@ -215,33 +226,33 @@ std::unordered_map<Oid, const PltFuncMetaInfo> kPgFuncMap{
  * but means a SUM(float) in an aggregation.
  */
 std::unordered_map<Oid, const PltFuncMetaInfo> kPgTransitFuncMap{
-     //====--------------------------------
-     // "Transit function" of Aggregates
-     //====--------------------------------
-     {768, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
-     {770, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
-     {223, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
+    //====--------------------------------
+    // "Transit function" of Aggregates
+    //====--------------------------------
+    {768, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
+    {770, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
+    {223, {EXPRESSION_TYPE_AGGREGATE_MAX, 1}},
 
-     {769, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
-     {771, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
-     {224, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
+    {769, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
+    {771, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
+    {224, {EXPRESSION_TYPE_AGGREGATE_MIN, 1}},
 
-     {1840, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
-     {1841, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
-     {1842, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
-     {218, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
+    {1840, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
+    {1841, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
+    {1842, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
+    {218, {EXPRESSION_TYPE_AGGREGATE_SUM, 1}},
 
-     {222, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1834, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1835, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1836, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1833, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1962, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {1963, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
-     {2858, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {222, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1834, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1835, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1836, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1833, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1962, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {1963, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
+    {2858, {EXPRESSION_TYPE_AGGREGATE_AVG, 1}},
 
-     {1219, {EXPRESSION_TYPE_AGGREGATE_COUNT, 1}},
-     {2804, {EXPRESSION_TYPE_AGGREGATE_COUNT, 1}},
+    {1219, {EXPRESSION_TYPE_AGGREGATE_COUNT, 1}},
+    {2804, {EXPRESSION_TYPE_AGGREGATE_COUNT, 1}},
 
 };
 

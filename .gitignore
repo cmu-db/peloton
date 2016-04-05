@@ -137,7 +137,6 @@ doc/
 #==============================================================================#
 # Scripts
 #==============================================================================#
-*.py
 *.jar
 scripts/PelotonTest/out
 scripts/PelotonTest/lib
@@ -212,3 +211,5 @@ local.properties
 
 # Code Recommenders
 .recommenders/
+
+CMakeLists.txt

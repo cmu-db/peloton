@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // scalar_value_expression.h
 //
 // Identification: src/backend/expression/scalar_value_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,6 +28,10 @@ class ScalarValueExpression : public AbstractExpression {
                  executor::ExecutorContext *context) const;
 
   std::string DebugInfo(const std::string &spacer) const;
+
+  AbstractExpression *Copy() const {
+    return new ScalarValueExpression(CopyUtil(GetLeft()));
+  }
 };
 
 }  // End expression namespace

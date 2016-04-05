@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // btree_index.h
 //
 // Identification: src/backend/index/btree_index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,6 @@
 #include <string>
 
 #include "backend/catalog/manager.h"
-#include "backend/common/allocator.h"
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
@@ -31,7 +30,8 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType, typename ValueType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, typename ValueType, class KeyComparator,
+          class KeyEqualityChecker>
 class BTreeIndex : public Index {
   friend class IndexFactory;
 
@@ -47,10 +47,14 @@ class BTreeIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
+  bool ConditionalInsertEntry(const storage::Tuple *key,
+      const ItemPointer &location,
+      std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate);
+
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types,
-                                const ScanDirectionType& scan_direction);
+                                const ScanDirectionType &scan_direction);
 
   std::vector<ItemPointer> ScanAllKeys();
 
@@ -58,13 +62,9 @@ class BTreeIndex : public Index {
 
   std::string GetTypeName() const;
 
-  bool Cleanup() {
-    return true;
-  }
+  bool Cleanup() { return true; }
 
-  size_t GetMemoryFootprint() {
-    return container.GetMemoryFootprint();
-  }
+  size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
 
  protected:
   MapType container;

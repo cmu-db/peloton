@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // platform.h
 //
 // Identification: src/backend/common/platform.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -126,7 +126,7 @@ class Spinlock {
   }
 
  private:
-  //typedef enum { Locked, Unlocked } LockState;
+  // typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/

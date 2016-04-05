@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // data_table.cpp
 //
 // Identification: src/backend/storage/data_table.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -89,7 +89,8 @@ DataTable::~DataTable() {
  * Check if the locations contains at least one visible entry to the transaction
  */
 // bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-//                           const concurrency::Transaction *transaction __attribute__((unused))) {
+//                           const concurrency::Transaction *transaction
+//                           __attribute__((unused))) {
 //   auto &manager = catalog::Manager::GetInstance();
 
 //   for (auto loc : locations) {
@@ -102,9 +103,11 @@ DataTable::~DataTable() {
 //     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
 //     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
 //     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
-//     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    
-//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid, tuple_end_cid);
+//     auto &txn_manager =
+//     concurrency::TransactionManagerFactory::GetInstance();
+
+//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
+//     tuple_end_cid);
 
 //     if (visible) return true;
 //   }
@@ -124,7 +127,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
           "%lu th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
+              "attribute.",
           column_itr);
       return false;
     }
@@ -137,13 +140,14 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " +
-                              std::string(tuple->GetInfo()));
+        std::string(tuple->GetInfo()));
     return false;
   }
   return true;
 }
 
-ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_constraint) {
+ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
+                                    bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
@@ -175,8 +179,8 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple, bool check_cons
     }
   }
 
-  LOG_INFO("tile group offset: %lu, tile group id: %lu, address: %p",
-           tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group offset: %lu, tile group id: %lu, address: %p",
+            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -195,7 +199,13 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  // Index checks and updates
+  if (InsertInSecondaryIndexes(tuple, location) == false) {
+    LOG_WARN("Index constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -209,7 +219,13 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  // Index checks and updates
+  if (InsertInSecondaryIndexes(tuple, location) == false) {
+    LOG_WARN("Index constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -223,7 +239,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_INFO("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
@@ -248,9 +264,16 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
- // TODO: this function MUST be rewritten!!! --Yingjun
-bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
+// TODO: this function MUST be rewritten!!! --Yingjun
+bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
+                                ItemPointer location) {
   int index_count = GetIndexCount();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
+      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
+                  std::placeholders::_1, std::placeholders::_2);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -264,8 +287,15 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        //auto locations = index->ScanKey(key.get());
-        //auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+          return false;
+        }
+
+        // auto locations = index->ScanKey(key.get());
+        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
         // if (exist_visible) {
         //   LOG_WARN("A visible index entry exists.");
         //   return false;
@@ -274,12 +304,40 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
+        index->InsertEntry(key.get(), location);
         break;
     }
-    LOG_INFO("Index constraint check on %s passed.", index->GetName().c_str());
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   // (B) Insert into index
+//  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+//    auto index = GetIndex(index_itr);
+//    auto index_schema = index->GetKeySchema();
+//    auto indexed_columns = index_schema->GetIndexedColumns();
+//    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+//    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+//
+//    auto status = index->InsertEntry(key.get(), location);
+//    (void)status;
+//    assert(status);
+//  }
+
+  return true;
+}
+
+bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
+                                         ItemPointer location) {
+  int index_count = GetIndexCount();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
+      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
+                  std::placeholders::_1, std::placeholders::_2);
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
     auto index_schema = index->GetKeySchema();
@@ -287,11 +345,57 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
-    auto status = index->InsertEntry(key.get(), location);
-    (void)status;
-    assert(status);
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+          return false;
+        }
+        // auto locations = index->ScanKey(key.get());
+        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
+        // if (exist_visible) {
+        //   LOG_WARN("A visible index entry exists.");
+        //   return false;
+        // }
+      } break;
+
+      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      default:
+        index->InsertEntry(key.get(), location);
+        break;
+    }
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
+  // (B) Insert into index
+//  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+//    auto index = GetIndex(index_itr);
+//    auto index_schema = index->GetKeySchema();
+//    auto indexed_columns = index_schema->GetIndexedColumns();
+//    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+//    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+//
+//    switch (index->GetIndexType()) {
+//      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+//      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+//        // auto locations = index->ScanKey(key.get());
+//        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
+//        // if (exist_visible) {
+//        //   LOG_WARN("A visible index entry exists.");
+//        //   return false;
+//        // }
+//      } break;
+//
+//      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+//      default:
+//        auto status = index->InsertEntry(key.get(), location);
+//        (void)status;
+//        assert(status);
+//        break;
+//    }
+//  }
   return true;
 }
 
@@ -316,12 +420,13 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
 
 //   auto tile_group = GetTileGroupById(tile_group_id);
 //   txn_id_t transaction_id = transaction->GetTransactionId();
-//   cid_t last_cid = transaction->GetStartCommitId();
+//   cid_t last_cid = transaction->GetBeginCommitId();
 
 //   // Delete slot in underlying tile group
 //   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
 //   if (status == false) {
-//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu ",
+//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu
+//     ",
 //              tile_group_id, transaction_id);
 //     return false;
 //   }
@@ -428,13 +533,13 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
-  // pure column layout map
+    // pure column layout map
   else if (layout_type == LAYOUT_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
-  // hybrid layout map
+    // hybrid layout map
   else if (layout_type == LAYOUT_HYBRID) {
     // TODO: Fallback option for regular tables
     if (col_count < 10) {
@@ -446,7 +551,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
     }
   } else {
     throw Exception("Unknown tilegroup layout option : " +
-                    std::to_string(layout_type));
+        std::to_string(layout_type));
   }
 
   return column_map;
@@ -582,7 +687,7 @@ const std::string DataTable::GetInfo() const {
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     os << "Tile Group Id  : " << tile_group_itr
-       << " Tuple Count : " << tile_tuple_count << "\n";
+        << " Tuple Count : " << tile_tuple_count << "\n";
     os << (*tile_group);
 
     tuple_count += tile_tuple_count;
@@ -756,12 +861,11 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   *new_header = *header;
 }
 
-storage::TileGroup *DataTable::TransformTileGroup(const oid_t &tile_group_offset,
-                                                  const double &theta) {
+storage::TileGroup *DataTable::TransformTileGroup(
+    const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu ",
-              tile_group_offset);
+    LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
     return nullptr;
   }
 
@@ -890,7 +994,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
         column_map[hyadapt_column_id] = std::make_pair(1, column_id);
       }
     }
-    // MULTIPLE GROUPS
+      // MULTIPLE GROUPS
     else {
       column_map[0] = std::make_pair(0, 0);
       oid_t tile_column_count = column_count / peloton_num_groups;
@@ -911,7 +1015,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
     }
 
   }
-  // YCSB
+    // YCSB
   else if (table_name == "USERTABLE") {
     column_map[0] = std::make_pair(0, 0);
 
@@ -919,7 +1023,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
       column_map[column_id] = std::make_pair(1, column_id - 1);
     }
   }
-  // FALLBACK
+    // FALLBACK
   else {
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
       column_map[column_id] = std::make_pair(0, column_id);
