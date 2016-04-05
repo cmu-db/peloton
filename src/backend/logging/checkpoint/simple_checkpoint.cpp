@@ -101,7 +101,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &log_manager = LogManager::GetInstance();
   // wait if recovery is in process
-  log_manager.WaitForMode(LOGGING_STATUS_TYPE_LOGGING, true);
+  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
   logger_ = log_manager.GetBackendLogger();
 
   while (true) {
@@ -333,8 +333,8 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         assert(logger_);
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
-            target_table->GetOid(), location, INVALID_ITEMPOINTER, tuple.get(),
-            database_oid));
+            target_table->GetOid(), database_oid, location, INVALID_ITEMPOINTER,
+            tuple.get()));
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
@@ -430,6 +430,7 @@ void SimpleCheckpoint::InitVersionNumber() {
     LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
     return;
   }
+
   while ((file = readdir(dirp)) != NULL) {
     if (strncmp(file->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) == 0) {
       // found a checkpoint file!

@@ -29,9 +29,12 @@ SsiTxnManager &SsiTxnManager::GetInstance() {
 }
 
 // Visibility check
-bool SsiTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
-                                             const cid_t &tuple_begin_cid,
-                                             const cid_t &tuple_end_cid) {
+bool SsiTxnManager::IsVisible(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     return false;
@@ -55,7 +58,7 @@ bool SsiTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
-        // currently, we do not handle cascading abort. so never read an
+        // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
         return false;
       } else {
@@ -77,133 +80,260 @@ bool SsiTxnManager::IsVisible(const txn_id_t &tuple_txn_id,
   }
 }
 
-bool SsiTxnManager::IsOwner(storage::TileGroup *tile_group,
-                                           const oid_t &tuple_id) {
-  auto tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_id);
+bool SsiTxnManager::IsOwner(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
+  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
 // if the tuple is not owned by any transaction and is visible to current
-// transdaction.
+// transaction.
 // will only be performed by deletes and updates.
-bool SsiTxnManager::IsAccessable(storage::TileGroup *tile_group,
-                                                const oid_t &tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+bool SsiTxnManager::IsOwnable(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
-bool SsiTxnManager::AcquireTuple(
-    storage::TileGroup *tile_group, const oid_t &physical_tuple_id) {
-  auto tile_group_header = tile_group->GetHeader();
+bool SsiTxnManager::AcquireOwnership(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+  LOG_INFO("Acquire tuple");
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->LockTupleSlot(physical_tuple_id, txn_id) == false) {
+  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
-    SetTransactionResult(Result::RESULT_FAILURE);
+    // SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+
+    auto txn_id = current_txn->GetTransactionId();
+    GetReadLock(tile_group_header, tuple_id, txn_id);
+    ReadList *header = GetReaderList(tile_group_header, tuple_id);
+
+    bool should_abort = false;
+    while (header != nullptr) {
+      // For all siread lock on this version
+      auto owner = header->txn_id;
+      if (owner == txn_id) {
+        header = header->next;
+        continue;
+      }
+      auto &ctx = txn_table_.at(owner);
+      auto end_cid = ctx.transaction_->GetEndCommitId();
+
+      // Owner is running
+      if (end_cid == INVALID_TXN_ID) {
+        SetInConflict(txn_id);
+        SetOutConflict(owner);
+        LOG_INFO("set %ld in, set %ld out", current_txn->GetTransactionId(),
+                 owner);
+      } else {
+        // Owner has commited and ownner commit after I start
+        if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner)) {
+          should_abort = true;
+          LOG_INFO("abort in acquire");
+          break;
+        }
+      }
+
+      header = header->next;
+    }
+    ReleaseReadLock(tile_group_header, tuple_id, txn_id);
+
+    if (should_abort) return false;
+  }
+
   return true;
 }
 
 bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
-                                               const oid_t &tuple_id) {
+                                const oid_t &tuple_id) {
+
+  LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+  auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+  auto tile_group_header = tile_group->GetHeader();
+
+  auto txn_id = current_txn->GetTransactionId();
+
+  auto &rw_set = current_txn->GetRWSet();
+  if (rw_set.count(tile_group_id) == 0 ||
+      rw_set.at(tile_group_id).count(tuple_id) == 0) {
+    LOG_INFO("Not read before");
+    // previously, this tuple hasn't been read
+
+    AddSIReader(tile_group.get(), tuple_id);
+
+    auto writer = tile_group_header->GetTransactionId(tuple_id);
+    if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
+        writer != txn_id) {
+      SetInConflict(writer);
+      SetOutConflict(txn_id);
+    }
+  }
+
+  // existing SI code
   current_txn->RecordRead(tile_group_id, tuple_id);
+
+  // for each new version
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+
+    LOG_INFO("SI read phase 2");
+
+    ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
+    while (!next_item.IsNull()) {
+      auto tile_group =
+          catalog::Manager::GetInstance().GetTileGroup(next_item.block);
+      auto creator = GetCreatorTxnId(tile_group.get(), next_item.block);
+
+      LOG_INFO("%ld %ld creator is %ld", next_item.block, next_item.offset,
+               creator);
+
+      if (txn_table_.count(creator) == 0 || creator == txn_id) {
+        if (creator == txn_id) LOG_INFO("check in read, escape myself");
+        next_item =
+            tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
+        continue;
+      }
+
+      auto &ctx = txn_table_.at(creator);
+      // if creator committed and has out_confict
+      if (ctx.transaction_->GetEndCommitId() != INVALID_TXN_ID &&
+          ctx.out_conflict_) {
+        LOG_INFO("abort in read");
+        return false;
+      }
+
+      // LOG_INFO("set %ld in, set %ld out", creator,
+      // current_txn->GetTransactionId());
+
+      SetInConflict(creator);
+      SetOutConflict(current_txn->GetTransactionId());
+
+      next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.block);
+    }
+  }
+
   return true;
 }
 
 bool SsiTxnManager::PerformInsert(const oid_t &tile_group_id,
-                                                 const oid_t &tuple_id) {
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+                                  const oid_t &tuple_id) {
+  LOG_INFO("Perform insert %lu %lu", tile_group_id, tuple_id);
+  SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
   current_txn->RecordInsert(tile_group_id, tuple_id);
+
+  InitTupleReserved(current_txn->GetTransactionId(), tile_group_id, tuple_id);
   return true;
 }
 
-bool SsiTxnManager::PerformUpdate(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+bool SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                  const oid_t &tuple_id,
+                                  const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
-  
+
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  // Set double linked list
+  tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
   new_tile_group_header->SetEndCommitId(new_location.offset, MAX_CID);
 
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
   current_txn->RecordUpdate(tile_group_id, tuple_id);
+
+  InitTupleReserved(transaction_id, new_location.block, new_location.offset);
   return true;
 }
 
-bool SsiTxnManager::PerformDelete(
-    const oid_t &tile_group_id, const oid_t &tuple_id,
-    const ItemPointer &new_location) {
+void SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
+                                  const oid_t &tuple_id) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
-  auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
-
-  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
-  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
-  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
-
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  current_txn->RecordDelete(tile_group_id, tuple_id);
-  return true;
-}
-
-void SsiTxnManager::SetDeleteVisibility(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
-}
-
-void SsiTxnManager::SetUpdateVisibility(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
+  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
 
   // Set MVCC info
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
 
+  // Add the old tuple into the update set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // Update an inserted version
+    current_txn->RecordUpdate(old_location.block, old_location.offset);
+  }
   // tile_group_header->SetInsertCommit(tuple_id, false); // unused
   // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
-void SsiTxnManager::SetInsertVisibility(
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+bool SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                  const oid_t &tuple_id,
+                                  const ItemPointer &new_location) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  auto new_tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(new_location.block)->GetHeader();
+
+  // Set up double linked list
+  tile_group_header->SetNextItemPointer(tuple_id, new_location);
+  new_tile_group_header->SetPrevItemPointer(
+      new_location.offset, ItemPointer(tile_group_id, tuple_id));
+
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
+  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
+
+  // Add the old tuple into the delete set
+  current_txn->RecordDelete(tile_group_id, tuple_id);
+  InitTupleReserved(transaction_id, new_location.block, new_location.offset);
+  return true;
+}
+
+void SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
+                                  const oid_t &tuple_id) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto transaction_id = current_txn->GetTransactionId();
+
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
+
+  // Add the old tuple into the delete set
+  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  if (old_location.IsNull() == false) {
+    // delete an inserted version
+    current_txn->RecordDelete(old_location.block, old_location.offset);
+  }
+  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
+  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
+}
+
+void SsiTxnManager::SetOwnership(const oid_t &tile_group_id,
+                                 const oid_t &tuple_id) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set MVCC info
@@ -223,39 +353,23 @@ Result SsiTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
-
+  auto txn_id = current_txn->GetTransactionId();
   auto &rw_set = current_txn->GetRWSet();
+
+  bool should_abort = false;
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+
+    if (GetInConflict(txn_id) && GetOutConflict(txn_id)) should_abort = true;
+  }
+
+  if (should_abort) {
+    LOG_INFO("Abort because RW conflict");
+    return AbortTransaction();
+  }
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
-  // validate read set.
-  for (auto &tile_group_entry : rw_set) {
-    oid_t tile_group_id = tile_group_entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto &tuple_entry : tile_group_entry.second) {
-      auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second != RW_TYPE_INSERT &&
-          tuple_entry.second != RW_TYPE_INS_DEL) {
-        if (tile_group_header->GetTransactionId(tuple_slot) ==
-            current_txn->GetTransactionId()) {
-          // the version is owned by the transaction.
-          continue;
-        } else {
-          if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID &&
-              tile_group_header->GetBeginCommitId(tuple_slot) <=
-                  end_commit_id &&
-              tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-            // the version is not locked and still visible.
-            continue;
-          }
-        }
-        // otherwise, validation fails. abort transaction.
-        return AbortTransaction();
-      }
-    }
-  }
   //////////////////////////////////////////////////////////
 
   auto &log_manager = logging::LogManager::GetInstance();
@@ -275,7 +389,8 @@ Result SsiTxnManager::CommitTransaction() {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer old_version(tile_group_id, tuple_slot);
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version, new_version);
+        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
+                              new_version);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -337,14 +452,26 @@ Result SsiTxnManager::CommitTransaction() {
   log_manager.LogCommitTransaction(end_commit_id);
 
   Result ret = current_txn->GetResult();
+  if (ret == Result::RESULT_SUCCESS) {
+    current_txn->SetEndCommitId(end_commit_id);
+  }
+  // EndTransaction();
 
-  EndTransaction();
-
+  CleanUp();
   return ret;
 }
 
 Result SsiTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    auto txn_id = current_txn->GetTransactionId();
+    // Remove all read tuples by the current txns
+    RemoveReader(txn_id);
+    txn_table_.erase(txn_id);
+  }
+
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -404,8 +531,88 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
-  EndTransaction();
+  delete current_txn;
+  current_txn = nullptr;
+
+  CleanUp();
+  // EndTransaction();
   return Result::RESULT_ABORTED;
+}
+
+// removeReader should be protected in txn_table_mutex_
+void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
+  LOG_INFO("release SILock");
+  assert(txn_table_.count(txn_id) > 0);
+
+  // remove read lock
+  auto &my_ctx = txn_table_.at(txn_id);
+  auto &rw_set = my_ctx.transaction_->GetRWSet();
+
+  for (auto &tile_group_entry : rw_set) {
+    oid_t tile_group_id = tile_group_entry.first;
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+
+    for (auto &tuple_entry : tile_group_entry.second) {
+
+      auto tuple_slot = tuple_entry.first;
+
+      // we don't have reader lock on insert type
+      if (tuple_entry.second == RW_TYPE_INSERT) {
+        continue;
+      }
+
+      RemoveSIReader(tile_group.get(), tuple_slot, txn_id);
+    }
+  }
+  LOG_INFO("release SILock finish");
+}
+
+void SsiTxnManager::CleanUp() {
+  std::lock_guard<std::mutex> lock(txn_table_mutex_);
+
+  if (txn_table_.empty()) {
+    return;
+  }
+
+  // find smallest begin cid of the running transaction
+
+  // init it as max() for the case that all transactions are committed
+  cid_t min_begin = std::numeric_limits<cid_t>::max();
+  for (auto &item : txn_table_) {
+    auto &ctx = item.second;
+    if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
+      if (ctx.transaction_->GetBeginCommitId() < min_begin) {
+        min_begin = ctx.transaction_->GetBeginCommitId();
+      }
+    }
+  }
+
+  auto itr = txn_table_.begin();
+  while (itr != txn_table_.end()) {
+    auto &ctx = itr->second;
+    auto end_cid = ctx.transaction_->GetEndCommitId();
+    if (end_cid == INVALID_TXN_ID) {
+      // running transaction
+      break;
+    }
+
+    if (end_cid < min_begin) {
+      // we can safely remove it from table
+
+      // remove its reader mark
+      LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
+      RemoveReader(ctx.transaction_->GetTransactionId());
+
+      // delete transaction
+      delete ctx.transaction_;
+
+      // remove from table
+      itr = txn_table_.erase(itr);
+    } else {
+      itr++;
+    }
+  }
 }
 
 }  // End storage namespace
