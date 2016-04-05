@@ -822,7 +822,10 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       fp = fopen(this->GetFileNameFromVersion(version_number).c_str(), "rb");
       max_commit_id = UINT64_MAX;
 
-      fread((void *)&max_commit_id, sizeof(max_commit_id), 1, fp);
+      size_t res_size = fread((void *)&max_commit_id, sizeof(max_commit_id), 1, fp);
+      if (res_size != max_commit_id) {
+        assert(false);
+      }
       LOG_INFO("Got max_commit_id as %d", (int)max_commit_id);
 
       // TODO set max commit ID here!
@@ -993,7 +996,10 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   LOG_INFO("FD of opened file is %d", (int)this->log_file_fd);
 
   // Skip first 8 bytes of max commit id
-  fread((void *)&max_commit_id, 1, sizeof(max_commit_id), this->log_file);
+  size_t res_size = fread((void *)&max_commit_id, 1, sizeof(max_commit_id), this->log_file);
+  if (res_size != max_commit_id) {
+    assert(false);
+  }
   LOG_INFO("On startup: MaxCommitId of this file is %d", (int)max_commit_id);
 
   struct stat stat_buf;
