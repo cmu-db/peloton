@@ -113,10 +113,10 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   int log_file_cursor_;
 
-  //for recovery from in memory buffer instead of file.
-  char * input_log_buffer;
+  // for recovery from in memory buffer instead of file.
+  char *input_log_buffer;
 
-  std::string peloton_log_directory = "peloton_log";
+  std::string peloton_log_directory = "pl_log";
 
   std::string LOG_FILE_PREFIX = "peloton_log_";
 

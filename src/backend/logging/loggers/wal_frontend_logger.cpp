@@ -1014,8 +1014,9 @@ void WriteAheadFrontendLogger::TruncateLog(txn_id_t max_commit_id) {
     if (max_commit_id >= this->log_files_[i]->GetMaxCommitId()) {
       return_val = remove(this->log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
-        LOG_ERROR("Couldn't delete log file: %s",
-                  this->log_files_[i]->GetLogFileName().c_str());
+        LOG_ERROR("Couldn't delete log file: %s error: %s",
+                  this->log_files_[i]->GetLogFileName().c_str(),
+                  strerror(errno));
       }
       // remove entry from list anyway
       delete this->log_files_[i];
