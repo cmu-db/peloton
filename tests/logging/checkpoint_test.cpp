@@ -4,7 +4,7 @@
 //
 // checkpoint_test.cpp
 //
-// Identification: tests/planner/checkpoint_test.cpp
+// Identification: tests/logging/checkpoint_test.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
+#include "backend/index/index.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -40,58 +41,18 @@ namespace test {
 
 class CheckpointTests : public PelotonTest {};
 
-// TODO refactor with join_test
-void ExpectNormalTileResults(
-    size_t table_tile_group_count, MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>> &
-        table_logical_tile_ptrs) {
-  // Return true for the first table_tile_group_count times
-  // Then return false after that
-  {
-    testing::Sequence execute_sequence;
-    for (size_t table_tile_group_itr = 0;
-         table_tile_group_itr < table_tile_group_count + 1;
-         table_tile_group_itr++) {
-      // Return true for the first table_tile_group_count times
-      if (table_tile_group_itr < table_tile_group_count) {
-        EXPECT_CALL(*table_scan_executor, DExecute())
-            .InSequence(execute_sequence)
-            .WillOnce(Return(true));
-      } else  // Return false after that
-      {
-        EXPECT_CALL(*table_scan_executor, DExecute())
-            .InSequence(execute_sequence)
-            .WillOnce(Return(false));
-      }
-    }
-  }
-  // Return the appropriate logical tiles for the first table_tile_group_count
-  // times
-  {
-    testing::Sequence get_output_sequence;
-    for (size_t table_tile_group_itr = 0;
-         table_tile_group_itr < table_tile_group_count;
-         table_tile_group_itr++) {
-      EXPECT_CALL(*table_scan_executor, GetOutput())
-          .InSequence(get_output_sequence)
-          .WillOnce(
-              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
-    }
-  }
-}
-
 std::vector<logging::TupleRecord> BuildTupleRecords(
-    std::vector<storage::Tuple *> &tuples, size_t tile_group_size,
-    size_t table_tile_group_count) {
+    std::vector<std::shared_ptr<storage::Tuple>> &tuples,
+    size_t tile_group_size, size_t table_tile_group_count) {
   std::vector<logging::TupleRecord> records;
   for (size_t block = 1; block <= table_tile_group_count; ++block) {
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
       ItemPointer location(block, offset);
-      auto tuple = tuples[(block - 1) * tile_group_size + offset];
+      auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT,
                                   INITIAL_TXN_ID, INVALID_OID, location,
                                   INVALID_ITEMPOINTER, nullptr, DEFAULT_DB_ID);
-      record.SetTuple(tuple);
+      record.SetTuple(tuple.get());
       records.push_back(record);
     }
   }
@@ -99,10 +60,9 @@ std::vector<logging::TupleRecord> BuildTupleRecords(
   return records;
 }
 
-std::vector<storage::Tuple *> BuildTuples(storage::DataTable *table,
-                                          int num_rows, bool mutate,
-                                          bool random) {
-  std::vector<storage::Tuple *> tuples;
+std::vector<std::shared_ptr<storage::Tuple>> BuildTuples(
+    storage::DataTable *table, int num_rows, bool mutate, bool random) {
+  std::vector<std::shared_ptr<storage::Tuple>> tuples;
   LOG_INFO("build a vector of %d tuples", num_rows);
 
   // Random values
@@ -119,7 +79,7 @@ std::vector<storage::Tuple *> BuildTuples(storage::DataTable *table,
     int populate_value = rowid;
     if (mutate) populate_value *= 3;
 
-    storage::Tuple *tuple = new storage::Tuple(schema, allocate);
+    std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, allocate));
 
     // First column is unique in this case
     tuple->SetValue(0,
@@ -143,7 +103,7 @@ std::vector<storage::Tuple *> BuildTuples(storage::DataTable *table,
         std::to_string(ExecutorTestsUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
-    tuples.push_back(tuple);
+    tuples.push_back(std::move(tuple));
   }
   return tuples;
 }
@@ -182,14 +142,13 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
                                    false, false, false);
   txn_manager.CommitTransaction();
 
+  auto checkpoint_txn = txn_manager.BeginTransaction();
   // create scan executor
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(
-          txn, bridge::PlanTransformer::BuildParams(nullptr)));
-
+          checkpoint_txn, bridge::PlanTransformer::BuildParams(nullptr)));
   auto schema = target_table->GetSchema();
   assert(schema);
-  expression::AbstractExpression *predicate = nullptr;
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
@@ -197,7 +156,7 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   /* Construct the Peloton plan node */
   LOG_TRACE("Initializing the executor tree");
   std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
-      new planner::SeqScanPlan(target_table.get(), predicate, column_ids));
+      new planner::SeqScanPlan(target_table.get(), nullptr, column_ids));
   std::unique_ptr<executor::SeqScanExecutor> scan_executor(
       new executor::SeqScanExecutor(scan_plan_node.get(),
                                     executor_context.get()));
@@ -207,8 +166,6 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   logging::WriteAheadBackendLogger *logger =
       logging::WriteAheadBackendLogger::GetInstance();
   simple_checkpoint.SetLogger(logger);
-  auto checkpoint_txn = txn_manager.BeginTransaction();
-
   simple_checkpoint.Execute(scan_executor.get(), checkpoint_txn,
                             target_table.get(), DEFAULT_DB_ID);
   txn_manager.CommitTransaction();
@@ -219,11 +176,6 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
             TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
   for (unsigned int i = 0; i < records.size(); i++) {
     EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
-  }
-
-  // Clean up
-  for (auto record : records) {
-    delete record;
   }
 }
 
@@ -238,7 +190,7 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   auto mutate = true;
   auto random = false;
   int num_rows = tile_group_size * table_tile_group_count;
-  std::vector<storage::Tuple *> tuples =
+  std::vector<std::shared_ptr<storage::Tuple>> tuples =
       BuildTuples(recovery_table.get(), num_rows, mutate, random);
   std::vector<logging::TupleRecord> records =
       BuildTupleRecords(tuples, tile_group_size, table_tile_group_count);
@@ -251,6 +203,8 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
     // recovery checkpoint from these records
     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(), target_location,
                                    DEFAULT_RECOVERY_CID);
+    simple_checkpoint.RecoverIndex(tuple, recovery_table.get(),
+                                   target_location);
   }
 
   // recovered tuples are not visible until DEFAULT_RECOVERY_CID - 1
@@ -263,9 +217,14 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
       GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID);
   EXPECT_EQ(total_tuple_count, tile_group_size * table_tile_group_count);
 
+  EXPECT_EQ(recovery_table->GetIndex(0)->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
+  EXPECT_EQ(recovery_table->GetIndex(1)->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
+
   // Clean up
-  for (auto tuple : tuples) {
-    delete tuple;
+  for (auto &tuple : tuples) {
+    tuple.reset();
   }
 }
 
