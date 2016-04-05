@@ -110,7 +110,7 @@ class SsiTxnManager : public TransactionManager {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
     *(txn_id_t *)(reserved_area + CREATOR_OFFSET) = txn_id;
-    *(txn_id_t *)(reserved_area + LOCK_OFFSET) = INITIAL_TXN_ID;
+    new ((Spinlock *)(reserved_area + LOCK_OFFSET)) Spinlock();
     *(ReadList **)(reserved_area + LIST_OFFSET) = nullptr;
   }
 
@@ -122,32 +122,15 @@ class SsiTxnManager : public TransactionManager {
   }
 
   void GetReadLock(const storage::TileGroupHeader *tile_group_header,
-                   const oid_t tuple_id, txn_id_t txn_id) {
-    txn_id_t *lock_addr = (txn_id_t *)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
-
-    while (true) {
-      while (*lock_addr != INITIAL_TXN_ID) {
-        auto owner = *lock_addr;
-        assert(owner == INITIAL_TXN_ID || owner == MAX_TXN_ID);
-        (void) owner;
-      }
-      if (atomic_cas(lock_addr, INITIAL_TXN_ID, MAX_TXN_ID)) {
-        return;
-      }
-    }
+                   const oid_t tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+    lock->Lock();
   }
 
   void ReleaseReadLock(const storage::TileGroupHeader *tile_group_header,
-                       const oid_t tuple_id, txn_id_t txn_id) {
-    txn_id_t *lock_addr = (txn_id_t *)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
-
-    bool res = atomic_cas(lock_addr, MAX_TXN_ID, INITIAL_TXN_ID);
-    assert(res);
-    (void) res;
-    //auto res = atomic_cas(lock_addr, txn_id, INITIAL_TXN_ID);
-    //assert(res);
+                       const oid_t tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+    lock->Unlock();
   }
 
   // Add the current txn into the reader list of a tuple
@@ -158,12 +141,12 @@ class SsiTxnManager : public TransactionManager {
     reader->txn_id = txn_id;
     ReadList **headp = (ReadList **)(
         tile_group->GetHeader()->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
-    GetReadLock(tile_group->GetHeader(), tuple_id, txn_id);
+    GetReadLock(tile_group->GetHeader(), tuple_id);
 
     reader->next = *headp;
     *headp = reader;
 
-    ReleaseReadLock(tile_group->GetHeader(), tuple_id, txn_id);
+    ReleaseReadLock(tile_group->GetHeader(), tuple_id);
   }
 
   // Remove reader from the reader list of a tuple
@@ -172,7 +155,7 @@ class SsiTxnManager : public TransactionManager {
     ReadList **headp = (ReadList **)(
         tile_group->GetHeader()->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
 
-    GetReadLock(tile_group->GetHeader(), tuple_id, txn_id);
+    GetReadLock(tile_group->GetHeader(), tuple_id);
 
     ReadList fake_header;
     fake_header.next = *headp;
@@ -195,7 +178,7 @@ class SsiTxnManager : public TransactionManager {
 
     *headp = fake_header.next;
 
-    ReleaseReadLock(tile_group->GetHeader(), tuple_id, txn_id);
+    ReleaseReadLock(tile_group->GetHeader(), tuple_id);
     if (find == false) {
       assert(false);
     }
