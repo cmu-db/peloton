@@ -180,25 +180,25 @@ void SimpleCheckpoint::DoCheckpoint() {
   }
 }
 
-bool SimpleCheckpoint::DoRecovery() {
+cid_t SimpleCheckpoint::DoRecovery() {
   // open log file and file descriptor
   // we open it in read + binary mode
   if (checkpoint_version < 0) {
-    return false;
+    return 0;
   }
   std::string file_name = ConcatFileName(checkpoint_dir, checkpoint_version);
   checkpoint_file_ = fopen(file_name.c_str(), "rb");
 
   if (checkpoint_file_ == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
-    return false;
+    return 0;
   }
 
   // also, get the descriptor
   checkpoint_file_fd_ = fileno(checkpoint_file_);
   if (checkpoint_file_fd_ == INVALID_FILE_DESCRIPTOR) {
     LOG_ERROR("checkpoint_file_fd_ is -1");
-    return false;
+    return 0;
   }
 
   checkpoint_file_size_ = GetLogFileSize(checkpoint_file_fd_);
@@ -245,7 +245,7 @@ bool SimpleCheckpoint::DoRecovery() {
   }
 
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
-  return true;
+  return commit_id;
 }
 
 void SimpleCheckpoint::InsertTuple(cid_t commit_id) {

@@ -41,7 +41,7 @@ class SimpleCheckpoint : public Checkpoint {
 
   void DoCheckpoint();
 
-  bool DoRecovery();
+  cid_t DoRecovery();
 
   // Internal functions
   void InsertTuple(cid_t commit_id);

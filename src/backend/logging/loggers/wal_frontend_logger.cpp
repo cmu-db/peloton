@@ -196,8 +196,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
+  cid_t start_commit_id = 0;
   if (peloton_checkpoint_mode == CHECKPOINT_TYPE_NORMAL) {
-    this->checkpoint.DoRecovery();
+    start_commit_id = this->checkpoint.DoRecovery();
   }
 
   log_file_cursor_ = 0;
@@ -229,6 +230,9 @@ void WriteAheadFrontendLogger::DoRecovery() {
             return;
           }
           commit_id = txn_rec.GetTransactionId();
+          if (commit_id <= start_commit_id) {
+            continue;
+          }
           break;
         }
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -252,7 +256,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto table = GetTable(*tuple_record);
-          if (!table) {
+          if (!table || cid <= start_commit_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
             continue;
@@ -273,6 +277,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
+          if (cid <= start_commit_id) {
+            delete tuple_record;
+            continue;
+          }
           if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
             LOG_TRACE("Delete txd id %d not found in recovery txn table",
                       (int)cid);
