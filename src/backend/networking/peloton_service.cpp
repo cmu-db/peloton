@@ -417,13 +417,13 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                         std::make_shared<peloton::planner::SeqScanPlan>();
                 ss_plan->DeserializeFrom(input);
 
-                ParamListInfo param_list;
-                TupleDesc tuple_desc;
+                //ParamListInfo param_list;
+                //TupleDesc tuple_desc;
 
                 //peloton_status status =
-                        peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
-                                                                    param_list,
-                                                                    tuple_desc);
+                //        peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
+                //                                                    param_list,
+                //                                                    tuple_desc);
                 break;
             }
 

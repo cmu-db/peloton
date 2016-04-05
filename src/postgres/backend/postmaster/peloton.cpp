@@ -25,6 +25,7 @@
 #include <map>
 
 #include "backend/networking/rpc_client.h"
+#include "backend/networking/rpc_utils.h"
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
@@ -201,25 +202,29 @@ peloton_dml(PlanState *planstate,
    * TupleDesc is nested structure in Postgres, we can define a nested message in protobuf
    */
 
-  // First Serialize plan
+  // Prepare QueryPlanExecRequest
+  const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
+  auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+  peloton::networking::QueryPlanExecRequest request;
+  request.set_plan_type(static_cast<int>(type));
+
+  // First prepare TupleDesc and set it into QueryPlanExecRequest
+  peloton::networking::TupleDescMsg tuple_desc_msg;
+  peloton::networking::CreateTupleDesc(tuple_desc, tuple_desc_msg);
+  request.set_allocated_tuple_dec(&tuple_desc_msg);
+
+  // Second Serialize plan with plan
   peloton::CopySerializeOutput output;
   mapped_plan_ptr->SerializeTo(output);
 
-  // Second prepare param_values from param_list, and then Serialize param_values
-  std::vector<Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
+  // Third Serialize plan with param_values from param_list
+  std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
   int param_count = param_values.size();
   for (int it = 0; it < param_count; it++) {
       param_values[it].SerializeTo(output);
   }
 
-  // Third prepare protobuf nested message from TupleDesc
-
-
-  // Finally prepare the QueryPlanExecRequest
-  const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
-  auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
-  peloton::networking::QueryPlanExecRequest request;
-  request.set_plan_type(static_cast<int>(type));
+  // Set plan (bytes)
   request.set_plan(output.Data(), output.Size());
 
   // Send the request
