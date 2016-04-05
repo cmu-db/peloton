@@ -32,7 +32,7 @@ class ExpressionUtil {
   static AbstractExpression *ExpressionFactory(
       PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
       AbstractExpression *lc, AbstractExpression *rc,
-      const std::vector<AbstractExpression *>& arguments);
+      const std::vector<AbstractExpression *> &arguments);
 
   static AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                                ExpressionType et, ValueType vt,
@@ -91,7 +91,7 @@ class ExpressionUtil {
   // Implemented in functionexpression.cpp because function expression
   // handling.Is a system unto itself.
   static AbstractExpression *FunctionFactory(
-      int functionId, const std::vector<AbstractExpression *>& arguments);
+      int functionId, const std::vector<AbstractExpression *> &arguments);
 
   static AbstractExpression *CastFactory(ValueType vt, AbstractExpression *lc);
 
@@ -100,7 +100,7 @@ class ExpressionUtil {
       AbstractExpression *child = nullptr);
 
   static AbstractExpression *VectorFactory(
-      ValueType vt, const std::vector<AbstractExpression *>& args);
+      ValueType vt, const std::vector<AbstractExpression *> &args);
   static AbstractExpression *ParameterValueFactory(int idx);
   static AbstractExpression *ParameterValueFactory(PlannerDomValue obj,
                                                    ExpressionType et,
@@ -127,7 +127,7 @@ class ExpressionUtil {
 
   static AbstractExpression *SubqueryFactory(
       ExpressionType subqueryType, PlannerDomValue obj,
-      const std::vector<AbstractExpression *>& rgs);
+      const std::vector<AbstractExpression *> &rgs);
 
   static AbstractExpression *CaseExprFactory(
       ValueType vt, const std::vector<AbstractExpression *> &clauses,

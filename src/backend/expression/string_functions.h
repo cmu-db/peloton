@@ -625,7 +625,8 @@ struct money_numpunct : std::numpunct<char> {
 template <>
 inline Value Value::Call<FUNC_VOLT_FORMAT_CURRENCY>(
     const std::vector<Value> &arguments) {
-  // TODO: Use the getloc of standart c out stream instead of std::locale() below
+  // TODO: Use the getloc of standart c out stream instead of std::locale()
+  // below
   static std::locale newloc(std::locale(), new money_numpunct);
   static std::locale nullloc(std::locale(), new std::numpunct<char>);
   static TTInt one("1");
