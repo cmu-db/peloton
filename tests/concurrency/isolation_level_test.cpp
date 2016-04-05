@@ -25,8 +25,8 @@ class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI
+  CONCURRENCY_TYPE_PESSIMISTIC
+  // CONCURRENCY_TYPE_SSI
 };
 
 void DirtyWriteTest() {
@@ -416,6 +416,62 @@ TEST_F(IsolationLevelTest, SerializableTest) {
     ReadSkewTest();
     PhantomTest();
     SIAnomalyTest1();
+  }
+}
+
+TEST_F(IsolationLevelTest, StressTest) {
+  const int num_txn = 1024;
+  const int scale = 5;
+  const int num_key = 10;
+  srand(15721);
+
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, ISOLATION_LEVEL_TYPE_FULL);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable(num_key));
+
+    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);  
+    scheduler.SetConcurrent(true);
+    for (int i = 0; i < num_txn; i++) {
+      for (int j = 0; j < scale; j++) {
+        // randomly select two uniq keys
+        int key1 = rand() % num_key;
+        int key2 = rand() % num_key;
+        int delta = rand() % 1000;
+        // Store substracted value
+        scheduler.Txn(i).ReadStore(key1, -delta);
+        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+        // Store increased value
+        scheduler.Txn(i).ReadStore(key2, delta);
+        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+      }
+      scheduler.Txn(i).Commit();
+    }
+    scheduler.Run();
+
+    // Read all values
+    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    for (int i = 0; i < num_key; i++) {
+      scheduler2.Txn(0).Read(i);
+    }
+    scheduler2.Run();
+    // The sum should be zero
+    int sum = 0;
+    for (auto result : scheduler2.schedules[0].results) {
+      sum += result;
+    }
+
+    EXPECT_EQ(0, sum);
+
+    // stats
+    int nabort = 0;
+    for (auto &schedule : scheduler.schedules) {
+      if (schedule.txn_result == RESULT_ABORTED)
+        nabort += 1;
+    }
+    LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }
 }
 
