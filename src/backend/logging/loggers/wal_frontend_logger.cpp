@@ -817,7 +817,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       // TODO set max commit ID here!
       if (max_commit_id == 0 || max_commit_id == UINT64_MAX) {
         // TODO uncomment
-        // max_commit_id = this->ExtractMaxCommitIdFromLogFileRecords(fp);
+        max_commit_id = this->ExtractMaxCommitIdFromLogFileRecords(fp);
         LOG_INFO("ExtractMaxCommitId returned %d", (int)max_commit_id);
       }
 
@@ -1043,7 +1043,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
   bool reached_end_of_file = false;
   int fd;
   struct stat log_stats;
-  txn_id_t max_commit_id;
+  txn_id_t max_commit_id = 0;
   int log_file_size;
 
   fd = fileno(log_file);
@@ -1055,7 +1055,6 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
     // Read the first byte to identify log record type
     // If that is not possible, then wrap up recovery
     auto record_type = GetNextLogRecordType(log_file, log_file_size);
-    LOG_INFO("Record type is %d", record_type);
 
     cid_t commit_id = INVALID_CID;
 
@@ -1083,6 +1082,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
         if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
             false) {
           LOG_ERROR("Could not read tuple record header.");
+          delete tuple_record;
           return UINT64_MAX;
         }
 
@@ -1097,6 +1097,18 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
 
         if (cid > max_commit_id) max_commit_id = cid;
 
+        auto table = GetTable(*tuple_record);
+        if (!table) {
+          SkipTupleRecordBody(log_file, log_file_size);
+          delete tuple_record;
+          continue;
+        }
+
+        // Read off the tuple record body from the log
+        ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file,
+                            log_file_size);
+        delete tuple_record;
+
         break;
       }
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
@@ -1105,6 +1117,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
         // TODO if this fails, is there a memory leak? @mperron
         if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
             false) {
+          delete tuple_record;
           return UINT64_MAX;  // TODO same as below
         }
 
@@ -1117,6 +1130,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
         } */
 
         if (cid > max_commit_id) max_commit_id = cid;
+        delete tuple_record;
         break;
       }
       default:
