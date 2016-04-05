@@ -44,6 +44,10 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
+  bool IsVisbleOrDirty(const storage::Tuple *, const ItemPointer &) {
+    return false;
+  }
+
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
