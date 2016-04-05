@@ -21,6 +21,8 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/database.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tuple.h"
+
 
 namespace peloton {
 namespace logging {
@@ -42,6 +44,9 @@ class Checkpoint {
 
   // Do recovery from most recent version of checkpoint
   virtual bool DoRecovery() = 0;
+
+  void RecoverIndex(storage::Tuple *tuple, storage::DataTable *table,
+		  ItemPointer target_location);
 
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);

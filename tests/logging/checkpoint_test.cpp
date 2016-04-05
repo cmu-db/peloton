@@ -21,6 +21,7 @@
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
+#include "backend/index/index.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -202,6 +203,8 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
     // recovery checkpoint from these records
     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(), target_location,
                                    DEFAULT_RECOVERY_CID);
+    simple_checkpoint.RecoverIndex(tuple, recovery_table.get(),
+                                   target_location);
   }
 
   // recovered tuples are not visible until DEFAULT_RECOVERY_CID - 1
@@ -213,6 +216,11 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   total_tuple_count =
       GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID);
   EXPECT_EQ(total_tuple_count, tile_group_size * table_tile_group_count);
+
+  EXPECT_EQ(recovery_table->GetIndex(0)->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
+  EXPECT_EQ(recovery_table->GetIndex(1)->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
 
   // Clean up
   for (auto &tuple : tuples) {
