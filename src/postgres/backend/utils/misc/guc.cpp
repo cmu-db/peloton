@@ -417,8 +417,8 @@ typedef enum LoggingType
 {
   LOGGING_TYPE_INVALID, /* No logging */
 
-  LOGGING_TYPE_DRAM_NVM,   /* Aries */
-  LOGGING_TYPE_NVM_NVM  /* Peloton */
+  LOGGING_TYPE_DRAM_NVM = 10,   /* Aries */
+  LOGGING_TYPE_NVM_NVM /* Peloton */
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
