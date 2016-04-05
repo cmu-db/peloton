@@ -378,7 +378,8 @@ void WriteAheadFrontendLogger::CommitTransactionRecovery(cid_t commit_id) {
 
 void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &insert_loc,
-                       storage::Tuple *tuple) {
+                       storage::Tuple *tuple,
+                       bool should_increase_tuple_count = true) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(insert_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
@@ -399,7 +400,9 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
-  table->IncreaseNumberOfTuplesBy(1);
+  if (should_increase_tuple_count) {
+    table->IncreaseNumberOfTuplesBy(1);
+  }
   delete tuple;
 }
 
@@ -447,7 +450,8 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = remove_loc.block;
     }
   }
-  InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple);
+  InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple,
+                    false);
 
   tile_group->UpdateTupleFromRecovery(commit_id, remove_loc.offset, insert_loc);
 }
