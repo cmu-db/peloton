@@ -114,7 +114,7 @@ bool SsiTxnManager::AcquireOwnership(
     std::lock_guard<std::mutex> lock(txn_table_mutex_);
 
     auto txn_id = current_txn->GetTransactionId();
-    GetReadLock(tile_group_header, tuple_id, txn_id);
+    GetReadLock(tile_group_header, tuple_id);
     ReadList *header = GetReaderList(tile_group_header, tuple_id);
 
     bool should_abort = false;
@@ -146,7 +146,7 @@ bool SsiTxnManager::AcquireOwnership(
 
       header = header->next;
     }
-    ReleaseReadLock(tile_group_header, tuple_id, txn_id);
+    ReleaseReadLock(tile_group_header, tuple_id);
 
     if (should_abort) return false;
   }

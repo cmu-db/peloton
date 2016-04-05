@@ -402,7 +402,6 @@ void SIAnomalyTest1() {
 //     scheduler.Txn(0).Read(Y);
 //     scheduler.Txn(0).Write(X, 1);
 //   }
-//   int X = 3, Y = 4, Z = 5;
 // }
 
 TEST_F(IsolationLevelTest, SerializableTest) {
