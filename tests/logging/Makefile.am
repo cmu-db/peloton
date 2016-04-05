@@ -7,7 +7,7 @@
 check_PROGRAMS += checkpoint_test \
 				logging_test
 
-executor_tests_common= 	executor/executor_tests_util.cpp \
+logging_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
 
 checkpoint_test_SOURCES = \

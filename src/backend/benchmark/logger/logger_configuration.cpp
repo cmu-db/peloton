@@ -19,66 +19,40 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
 namespace benchmark {
 namespace logger {
 
-void Usage() {
-  LOG_ERROR(
-      "Command line options :  logger <options> \n"
-      "   -h --help              :  Print help message \n"
-      "   -l --logging-type      :  Logging type \n"
-      "   -t --tuple-count       :  Tuple count \n"
-      "   -b --backend-count     :  Backend count \n"
-      "   -z --column-count      :  # of columns per tuple \n"
-      "   -c --check-tuple-count :  Check tuple count \n"
-      "   -f --data-file-size    :  Data file size (MB) \n"
-      "   -e --experiment_type   :  Experiment Type \n"
-      "   -w --wait-timeout      :  Wait timeout (us) \n");
-  exit(EXIT_FAILURE);
+void Usage(FILE* out) {
+  fprintf(out,
+          "Command line options :  logger <options> \n"
+          "   -h --help              :  Print help message \n"
+          "   -l --logging-type      :  Logging type \n"
+          "   -f --data-file-size    :  Data file size (MB) \n"
+          "   -e --experiment_type   :  Experiment Type \n"
+          "   -w --wait-timeout      :  Wait timeout (us) \n"
+          "   -h --help              :  Print help message \n"
+          "   -k --scale-factor      :  # of tuples \n"
+          "   -t --transaction-count :  # of transactions \n"
+          "   -u --write_ratio       :  Fraction of updates \n"
+  );
 }
 
 static struct option opts[] = {
     {"logging-type", optional_argument, NULL, 'l'},
-    {"tuple-count", optional_argument, NULL, 't'},
-    {"backend-count", optional_argument, NULL, 'b'},
-    {"column-count", optional_argument, NULL, 'z'},
-    {"check-tuple-count", optional_argument, NULL, 'c'},
     {"data-file-size", optional_argument, NULL, 'f'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"wait-timeout", optional_argument, NULL, 'w'},
+    {"scale-factor", optional_argument, NULL, 'k'},
+    {"transaction_count", optional_argument, NULL, 't'},
+    {"update_ratio", optional_argument, NULL, 'u'},
     {NULL, 0, NULL, 0}};
+
 
 static void ValidateLoggingType(const configuration& state) {
   LOG_INFO("Invalid logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
-}
-
-static void ValidateColumnCount(const configuration& state) {
-  if (state.column_count <= 0) {
-    LOG_ERROR("Invalid column_count :: %ld", state.column_count);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("column_count :: %ld", state.column_count);
-}
-
-static void ValidateTupleCount(const configuration& state) {
-  if (state.tuple_count <= 0) {
-    LOG_ERROR("Invalid tuple_count :: %d", state.tuple_count);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("tuple_count :: %d", state.tuple_count);
-}
-
-static void ValidateBackendCount(const configuration& state) {
-  if (state.backend_count <= 0) {
-    LOG_ERROR("Invalid backend_count :: %d", state.backend_count);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("backend_count :: %d", state.backend_count);
 }
 
 static void ValidateDataFileSize(const configuration& state) {
@@ -116,7 +90,6 @@ static void ValidateLogFileDir(configuration& state) {
     // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_SSD_NVM:
     case LOGGING_TYPE_HDD_NVM: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
@@ -127,22 +100,10 @@ static void ValidateLogFileDir(configuration& state) {
     // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_SSD_HDD:
     case LOGGING_TYPE_HDD_HDD: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
-      }
-    } break;
-
-    // Log file on SSD
-    case LOGGING_TYPE_DRAM_SSD:
-    case LOGGING_TYPE_NVM_SSD:
-    case LOGGING_TYPE_SSD_SSD:
-    case LOGGING_TYPE_HDD_SSD: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = SSD_DIR;
       }
     } break;
 
@@ -163,14 +124,7 @@ static void ValidateLogFileDir(configuration& state) {
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
-  state.tuple_count = 10;
-
   state.logging_type = LOGGING_TYPE_DRAM_NVM;
-  state.backend_count = 1;
-
-  state.column_count = 10;
-
-  state.check_tuple_count = false;
 
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
@@ -178,28 +132,23 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 100;
 
+  // Default Values
+  ycsb::state.scale_factor = 1;
+  ycsb::state.transaction_count = 10000;
+  ycsb::state.column_count = 10;
+  ycsb::state.update_ratio = 0.5;
+  ycsb::state.backend_count = 1;
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:f:e:w:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
-        break;
-      case 't':
-        state.tuple_count = atoi(optarg);
-        break;
-      case 'b':
-        state.backend_count = atoi(optarg);
-        break;
-      case 'z':
-        state.column_count = atoi(optarg);
-        break;
-      case 'c':
-        state.check_tuple_count = atoi(optarg);
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
@@ -211,25 +160,47 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.wait_timeout = atoi(optarg);
         break;
 
+        // YCSB
+      case 'k':
+        ycsb::state.scale_factor = atoi(optarg);
+        break;
+      case 't':
+        ycsb::state.transaction_count = atoi(optarg);
+        break;
+      case 'c':
+        ycsb::state.column_count = atoi(optarg);
+        break;
+      case 'u':
+        ycsb::state.update_ratio = atof(optarg);
+        break;
+      case 'b':
+        ycsb::state.backend_count = atoi(optarg);
+        break;
+
       case 'h':
-        Usage();
+        Usage(stderr);
         break;
 
       default:
         LOG_ERROR("Unknown option: -%c-", c);
-        Usage();
+        Usage(stderr);
     }
   }
 
   // Print configuration
   ValidateLoggingType(state);
-  ValidateColumnCount(state);
-  ValidateTupleCount(state);
-  ValidateBackendCount(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
+
+  // Print configuration
+  ycsb::ValidateScaleFactor(ycsb::state);
+  ycsb::ValidateColumnCount(ycsb::state);
+  ycsb::ValidateUpdateRatio(ycsb::state);
+  ycsb::ValidateBackendCount(ycsb::state);
+  ycsb::ValidateTransactionCount(ycsb::state);
+
 }
 
 }  // namespace logger

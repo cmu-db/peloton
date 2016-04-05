@@ -74,10 +74,11 @@ bool DeleteExecutor::DExecute() {
 
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
+  auto &pos_lists = source_tile.get()->GetPositionLists();
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
-  auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -95,17 +96,17 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group, physical_tuple_id) == true) {
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
-      transaction_manager.SetDeleteVisibility(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
 
-    } else if (transaction_manager.IsAccessable(tile_group,
-                                                physical_tuple_id) == true) {
+    } else if (transaction_manager.IsOwnable(tile_group_header,
+                                             physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireTuple(tile_group, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }

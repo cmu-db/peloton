@@ -163,9 +163,9 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
 
   // create checkpoint
   logging::SimpleCheckpoint simple_checkpoint;
-  logging::WriteAheadBackendLogger *logger =
-      logging::WriteAheadBackendLogger::GetInstance();
-  simple_checkpoint.SetLogger(logger);
+  std::unique_ptr<logging::WriteAheadBackendLogger> logger(
+      new logging::WriteAheadBackendLogger());
+  simple_checkpoint.SetLogger(logger.get());
   simple_checkpoint.Execute(scan_executor.get(), checkpoint_txn,
                             target_table.get(), DEFAULT_DB_ID);
   txn_manager.CommitTransaction();

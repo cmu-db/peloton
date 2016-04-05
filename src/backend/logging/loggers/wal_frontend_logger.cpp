@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <algorithm>
+#include <dirent.h>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
@@ -118,10 +119,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
  * @brief close logfile
  */
 WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
-  for (auto log_record : global_queue) {
-    delete log_record;
-  }
-
   // close the log file
   if (log_file != nullptr) {
     int ret = fclose(log_file);
@@ -136,6 +133,7 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
 void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
   // First, flush
   if (log_file_fd == -1) return;
+
   int ret = fflush(log_file);
   if (ret != 0) {
     LOG_ERROR("Error occured in fflush(%d)", ret);
@@ -156,11 +154,16 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   if (global_queue.size() != 0 && this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
   }
-  for (auto record : global_queue) {
+
+  size_t global_queue_size = global_queue.size();
+  for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
+       global_queue_itr++) {
     if (this->FileSwitchCondIsTrue()) {
       fflush_and_sync(log_file, log_file_fd, fsync_count);
       this->CreateNewLogFile(true);
     }
+    auto &record = global_queue[global_queue_itr];
+
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
            log_file);
     LOG_INFO("TransactionID of this Log is %d",
@@ -174,16 +177,12 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
-  for (auto record : global_queue) {
-    delete record;
-  }
   global_queue.clear();
 
   // Commit each backend logger
   {
-    std::lock_guard<std::mutex> lock(backend_logger_mutex);
     for (auto backend_logger : backend_loggers) {
-      backend_logger->Commit();
+      backend_logger->FinishedFlushing();
     }
   }
 }
@@ -210,6 +209,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // Go over the log size if needed
   if (log_file_size > 0) {
     bool reached_end_of_file = false;
+    __attribute__((unused)) oid_t recovery_log_record_count = 0;
 
     // Go over each log record in the log file
     while (reached_end_of_file == false) {
@@ -550,7 +550,6 @@ size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
   // Read next 4 bytes as an integer
   CopySerializeInputBE frameCheck(buffer, sizeof(buffer));
   frame_size = (frameCheck.ReadInt()) + sizeof(buffer);
-  ;
 
   // Move back by 4 bytes
   // So that tuple deserializer works later as expected

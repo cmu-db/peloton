@@ -92,6 +92,39 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
+    class KeyEqualityChecker>
+bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
+::ConditionalInsertEntry(const storage::Tuple *key,
+    const ItemPointer &location,
+    std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate) {
+
+  std::vector<ItemPointer> result;
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  {
+    index_lock.WriteLock();
+
+    // find the <key, location> pair
+    auto entries = container.equal_range(index_key);
+    for (auto entry = entries.first; entry != entries.second; ++entry) {
+      if (predicate(key, entry->second)) {
+        LOG_INFO("this key is already visible or dirty in the index");
+        return false;
+      }
+    }
+
+    LOG_INFO("k,v pair successfully inserted");
+    // Insert the key, val pair
+    container.insert(std::pair<KeyType, ValueType>(index_key, location));
+
+    index_lock.Unlock();
+  }
+
+  return true;
+}
+
+template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 std::vector<ItemPointer>
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
@@ -135,6 +168,8 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       all_constraints_are_equal = ConstructLowerBoundTuple(
           start_key.get(), values, key_column_ids, expr_types);
       LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
+      index_key.SetFromKey(start_key.get());
+
       index_key.SetFromKey(start_key.get());
 
       // Set scan begin iterator

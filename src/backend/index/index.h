@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <string>
+#include <functional>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -121,6 +122,14 @@ class Index : public Printable {
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer &location) = 0;
+
+  // First retrieve all Key-Value pairs of the given key
+  // Return false if any of those k-v pairs satisfy the predicate
+  // If not any of those k-v pair satisfy the predicate, insert the k-v pair into the index and return true.
+  // This function should be called for all primary/unique index insert
+  virtual bool ConditionalInsertEntry(const storage::Tuple *key,
+                                      const ItemPointer &location,
+                                      std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
