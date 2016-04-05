@@ -56,8 +56,9 @@ void Checkpoint::RecoverIndex(storage::Tuple *tuple, storage::DataTable *table,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     auto status = index->InsertEntry(key.get(), target_location);
-
-    assert(status);
+    if (status == false) {
+      assert(false);
+    }
     // Increase the indexes' number of tuples by 1 as well
     index->IncreaseNumberOfTuplesBy(1);
   }
