@@ -19,8 +19,6 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/executor_context.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/tuple_record.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tuple_iterator.h"
