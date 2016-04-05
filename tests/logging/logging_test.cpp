@@ -169,7 +169,7 @@ TEST_F(LoggingTests, BasicUpdateTest) {
   EXPECT_TRUE(
       val3.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 3)) == 0);
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 1);
+  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
