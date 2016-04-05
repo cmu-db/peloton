@@ -203,19 +203,26 @@ class SsiTxnManager : public TransactionManager {
   }
 
   bool GetInConflict(txn_id_t txn_id) {
+    assert(txn_table_.count(txn_id) != 0);
     return txn_table_.at(txn_id).in_conflict_;
   }
 
   bool GetOutConflict(txn_id_t txn_id) {
+    assert(txn_table_.count(txn_id) != 0);
+
     return txn_table_.at(txn_id).out_conflict_;
   }
 
   void SetInConflict(txn_id_t txn_id) {
+    assert(txn_table_.count(txn_id) != 0);
+
     LOG_INFO("Set in conflict %lu", txn_id);
     txn_table_.at(txn_id).in_conflict_ = true;
   }
 
   void SetOutConflict(txn_id_t txn_id) {
+    assert(txn_table_.count(txn_id) != 0);
+    
     LOG_INFO("Set out conflict %lu", txn_id);
     txn_table_.at(txn_id).out_conflict_ = true;
   }
