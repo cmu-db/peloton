@@ -238,10 +238,11 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
 
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
@@ -349,6 +350,7 @@ Result OptimisticTxnManager::CommitTransaction() {
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer old_version(tile_group_id, tuple_slot);
 
+        // logging.
         log_manager.LogUpdate(current_txn, end_commit_id, old_version,
                               new_version);
 
@@ -373,10 +375,11 @@ Result OptimisticTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-        // logging.
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer delete_location(tile_group_id, tuple_slot);
+        
+        // logging.
         log_manager.LogDelete(end_commit_id, delete_location);
 
         // we do not change begin cid for old tuple.
@@ -427,12 +430,9 @@ Result OptimisticTxnManager::CommitTransaction() {
   }
   log_manager.LogCommitTransaction(end_commit_id);
 
-  // is it always true???
-  Result ret = current_txn->GetResult();
-
   EndTransaction();
 
-  return ret;
+  return Result::RESULT_SUCCESS;
 }
 
 Result OptimisticTxnManager::AbortTransaction() {

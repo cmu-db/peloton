@@ -75,7 +75,7 @@ class PessimisticTxnManager : public TransactionManager {
     return (txn_id >> 56) & READ_COUNT_MASK;
   }
 
-  bool ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 };
 }

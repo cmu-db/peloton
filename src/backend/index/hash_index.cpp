@@ -84,6 +84,7 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   return true;
 }
 
+
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 std::vector<ItemPointer>
