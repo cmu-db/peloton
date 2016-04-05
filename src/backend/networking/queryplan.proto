@@ -1,7 +1,7 @@
 package peloton.networking;
 
 // NameData should be transformed 
-message FormAttribute {
+message FormAttributeMsg {
     required uint64 attrelid = 1;
     // The original is NameData structure which contains 64 bytes char array
     optional bytes attname = 2;
@@ -28,7 +28,7 @@ message FormAttribute {
 }
 
 // AttrDefault and ConstrCheck should be transformed
-message TupleConstr {
+message TupleConstrMsg {
 	// The following 2 members are AttrDefault in Postgres(int16	adnum and char *adbin)
     required int32 adnum = 1;
 	optional bytes adbin = 2;
@@ -38,16 +38,16 @@ message TupleConstr {
 	optional bool ccvalid = 5;
 	optional bool ccnoinherit = 6;
 	// The original is uint16 which should be cast for conversion
-	optional int32 num_defval = 7;
+	optional uint32 num_defval = 7;
 	// The original is uint16 which should be cast for conversion
-	optional int32 num_check = 8;
+	optional uint32 num_check = 8;
 	optional bool has_not_null = 9;
 }
 
-message TupleDesc {
+message TupleDescMsg {
     required int32 natts = 1;
-    optional FormAttribute attrs = 2;
-    optional TupleConstr constr = 3;
+    optional FormAttributeMsg attrs = 2;
+    optional TupleConstrMsg constr = 3;
     optional uint64 tdtypeid = 4;
     optional int32 tdtypmod = 5;
     optional bool tdhasoid = 6;

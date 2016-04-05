@@ -509,7 +509,7 @@ message QueryPlanExecRequest {
     // The plan type of the top level node 
     required int32 plan_type = 1;
     // TupleDesc
-    optional TupleDesc tuple_dec = 2; 
+    optional TupleDescMsg tuple_dec = 2; 
     // The plan + param
     required bytes plan = 3;
 }
