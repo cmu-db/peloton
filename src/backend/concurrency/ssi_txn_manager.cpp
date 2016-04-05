@@ -119,8 +119,9 @@ bool SsiTxnManager::AcquireOwnership(
 
     bool should_abort = false;
     while (header != nullptr) {
-      // For all siread lock on this version
+      // For all owner of siread lock on this version
       auto owner = header->txn_id;
+      // Myself, skip
       if (owner == txn_id) {
         header = header->next;
         continue;
@@ -129,14 +130,13 @@ bool SsiTxnManager::AcquireOwnership(
       auto &ctx = txn_table_.at(owner);
       auto end_cid = ctx.transaction_->GetEndCommitId();
 
-      // Owner is running
+      // Owner is running, then siread lock owner has an out edge to me
       if (end_cid == INVALID_TXN_ID) {
         SetInConflict(txn_id);
         SetOutConflict(owner);
-        LOG_INFO("set %ld in, set %ld out", current_txn->GetTransactionId(),
-                 owner);
+        LOG_INFO("set %ld in, set %ld out", txn_id, owner);
       } else {
-        // Owner has commited and ownner commit after I start
+        // Owner has commited and ownner commit after I start, then I must abort
         if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner)) {
           should_abort = true;
           LOG_INFO("abort in acquire");
