@@ -101,8 +101,8 @@ bool SsiTxnManager::IsOwnable(
 bool SsiTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
-  LOG_INFO("Acquire tuple");
   auto txn_id = current_txn->GetTransactionId();
+  LOG_INFO("Acquire tuple %lu", txn_id);
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
@@ -125,6 +125,7 @@ bool SsiTxnManager::AcquireOwnership(
         header = header->next;
         continue;
       }
+      assert(txn_table_.count(owner) > 0);
       auto &ctx = txn_table_.at(owner);
       auto end_cid = ctx.transaction_->GetEndCommitId();
 
@@ -171,8 +172,16 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     AddSIReader(tile_group.get(), tuple_id);
 
     auto writer = tile_group_header->GetTransactionId(tuple_id);
+    // Another transaction is writting
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
+      std::lock_guard<std::mutex> lock(txn_table_mutex_);
+      
+      if (txn_table_.count(writer) == 0) {
+        LOG_INFO("Writer %lu has no entry in txn table", writer);
+      }
+      assert(txn_table_.count(writer) > 0);
+      assert(txn_table_.count(txn_id) > 0);
       SetInConflict(writer);
       SetOutConflict(txn_id);
     }
@@ -203,6 +212,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         continue;
       }
 
+      assert(txn_table_.count(creator) > 0);
       auto &ctx = txn_table_.at(creator);
       // if creator committed and has out_confict
       if (ctx.transaction_->GetEndCommitId() != INVALID_TXN_ID &&
@@ -213,11 +223,12 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
       // LOG_INFO("set %ld in, set %ld out", creator,
       // current_txn->GetTransactionId());
-
+      assert(txn_table_.count(creator) > 0);
+      assert(txn_table_.count(txn_id) > 0);
       SetInConflict(creator);
-      SetOutConflict(current_txn->GetTransactionId());
+      SetOutConflict(txn_id);
 
-      next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.block);
+      next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
     }
   }
 
@@ -464,14 +475,6 @@ Result SsiTxnManager::CommitTransaction() {
 Result SsiTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
 
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
-    auto txn_id = current_txn->GetTransactionId();
-    // Remove all read tuples by the current txns
-    RemoveReader(txn_id);
-    txn_table_.erase(txn_id);
-  }
-
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -531,6 +534,14 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
+  {
+    //std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    //auto txn_id = current_txn->GetTransactionId();
+    // Remove all read tuples by the current txns
+    // RemoveReader(txn_id);
+    // txn_table_.erase(txn_id);
+  }
+
   delete current_txn;
   current_txn = nullptr;
 
@@ -568,7 +579,9 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   LOG_INFO("release SILock finish");
 }
 
+// Clean obsolete txn record
 void SsiTxnManager::CleanUp() {
+  return;
   std::lock_guard<std::mutex> lock(txn_table_mutex_);
 
   if (txn_table_.empty()) {
@@ -576,7 +589,6 @@ void SsiTxnManager::CleanUp() {
   }
 
   // find smallest begin cid of the running transaction
-
   // init it as max() for the case that all transactions are committed
   cid_t min_begin = std::numeric_limits<cid_t>::max();
   for (auto &item : txn_table_) {

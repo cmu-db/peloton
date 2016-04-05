@@ -24,9 +24,9 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC
-  // CONCURRENCY_TYPE_SSI
+  // CONCURRENCY_TYPE_OPTIMISTIC,
+  // CONCURRENCY_TYPE_PESSIMISTIC
+  CONCURRENCY_TYPE_SSI
 };
 
 void DirtyWriteTest() {
