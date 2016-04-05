@@ -49,6 +49,18 @@ class NullIfExpression : public AbstractExpression {
     return spacer + "NullIfExpression";
   }
 
+  AbstractExpression *Copy() const {
+    std::vector<AbstractExpression *> copied_expression;
+    for (AbstractExpression *expression : expressions) {
+      if (expression == nullptr) {
+        continue;
+      }
+      copied_expression.push_back(expression->Copy());
+    }
+
+    return new NullIfExpression(value_type, copied_expression);
+  }
+
  private:
   // Specified expressions
   std::vector<AbstractExpression *> expressions;
