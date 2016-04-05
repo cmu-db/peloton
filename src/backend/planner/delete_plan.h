@@ -42,6 +42,10 @@ class DeletePlan : public AbstractPlan {
 
   bool GetTruncate() const { return truncate; }
 
+  AbstractPlan *Copy() const {
+    return new DeletePlan(target_table_, truncate);
+  }
+
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;

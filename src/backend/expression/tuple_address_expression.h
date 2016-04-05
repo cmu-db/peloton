@@ -39,6 +39,8 @@ class TupleAddressExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "TupleAddressExpression\n";
   }
+
+  AbstractExpression *Copy() const { return new TupleAddressExpression(); }
 };
 
 }  // End expression namespace
