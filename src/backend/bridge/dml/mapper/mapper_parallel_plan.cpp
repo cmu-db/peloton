@@ -14,7 +14,7 @@ namespace bridge {
 typedef const expression::AbstractExpression HashKeyType;
 typedef std::unique_ptr<HashKeyType> HashKeyPtrType;
 
-static planner::AbstractPlan *BuildParallelHashPlan( const planner::AbstractPlan *old_plan) {
+static planner::AbstractPlan *BuildParallelHashPlan(const planner::AbstractPlan *old_plan) {
   LOG_TRACE("Mapping hash plan to parallel seq scan plan (add exchange has "
               "operator)");
 
@@ -26,7 +26,7 @@ static planner::AbstractPlan *BuildParallelHashPlan( const planner::AbstractPlan
       copied_hash_keys.push_back(std::unique_ptr<HashKeyType>(temp_key));
     }
 
-  return new ExchangeHashPlan(copied_hash_keys);
+  return new planner::ExchangeHashPlan(copied_hash_keys);
 }
 
 static planner::AbstractPlan *BuildParallelSeqScanPlan(

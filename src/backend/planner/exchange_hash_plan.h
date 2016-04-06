@@ -30,12 +30,12 @@ public:
 
   const std::string GetInfo() const { return "ExchangeHash"; }
 
-  inline const std::vector<HashKeyType *> &GetHashKeys() const {
-    return this->hash_keys_;
+  inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
+    return hash_keys_;
   }
 
 private:
-  std::vector<HashKeyType *> hash_keys_;
+  std::vector<HashKeyPtrType> hash_keys_;
 };
 
 }  // namespace planner
