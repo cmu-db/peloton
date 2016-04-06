@@ -136,7 +136,7 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   return table;
 }
 
-storage::DataTable *TransactionTestsUtil::CreateTable() {
+storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
   auto value_column = catalog::Column(
@@ -169,7 +169,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable() {
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < num_key; i++) {
     ExecuteInsert(txn, table, i, 0);
   }
   txn_manager.CommitTransaction();

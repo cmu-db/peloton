@@ -2,11 +2,11 @@
 //
 //                         PelotonDB
 //
-// transaction_test.cpp
+// isolation_level_test.cpp
 //
 // Identification: tests/concurrency/isolation_level_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,9 +27,8 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
   CONCURRENCY_TYPE_SSI
+  // CONCURRENCY_TYPE_SPECULATIVE_READ
 };
-
-
 
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -404,7 +403,6 @@ void SIAnomalyTest1() {
 //     scheduler.Txn(0).Read(Y);
 //     scheduler.Txn(0).Write(X, 1);
 //   }
-//   int X = 3, Y = 4, Z = 5;
 // }
 
 TEST_F(IsolationLevelTest, SerializableTest) {
@@ -418,6 +416,64 @@ TEST_F(IsolationLevelTest, SerializableTest) {
     ReadSkewTest();
     PhantomTest();
     SIAnomalyTest1();
+  }
+}
+
+// FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
+TEST_F(IsolationLevelTest, StressTest) {
+  const int num_txn = 64;
+  const int scale = 5;
+  const int num_key = 10;
+  srand(15721);
+
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, ISOLATION_LEVEL_TYPE_FULL);
+    std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable(num_key));
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);  
+    scheduler.SetConcurrent(true);
+    for (int i = 0; i < num_txn; i++) {
+      for (int j = 0; j < scale; j++) {
+        // randomly select two uniq keys
+        int key1 = rand() % num_key;
+        int key2 = rand() % num_key;
+        int delta = rand() % 1000;
+        // Store substracted value
+        scheduler.Txn(i).ReadStore(key1, -delta);
+        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+        // Store increased value
+        scheduler.Txn(i).ReadStore(key2, delta);
+        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+      }
+      scheduler.Txn(i).Commit();
+    }
+    scheduler.Run();
+
+    // Read all values
+    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    for (int i = 0; i < num_key; i++) {
+      scheduler2.Txn(0).Read(i);
+    }
+    scheduler2.Txn(0).Commit();
+    scheduler2.Run();
+    // The sum should be zero
+    int sum = 0;
+    for (auto result : scheduler2.schedules[0].results) {
+      sum += result;
+    }
+
+    EXPECT_EQ(0, sum);
+
+    // stats
+    int nabort = 0;
+    for (auto &schedule : scheduler.schedules) {
+      if (schedule.txn_result == RESULT_ABORTED)
+        nabort += 1;
+    }
+    LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }
 }
 
