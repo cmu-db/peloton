@@ -214,7 +214,7 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetTupleSlot(const storage::Tuple *tuple,
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
                            bool check_constraint = true);
 
   // add a default unpartitioned tile group to table

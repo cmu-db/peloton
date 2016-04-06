@@ -48,7 +48,7 @@ void GCManager::Poll() {
   {
     std::lock_guard<std::mutex> lock(gc_mutex);
     auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
-    auto oldest_trans = trans_mgr.GetOldestLiveTransaction();
+    auto oldest_trans = trans_mgr.GetMaxCommittedCid();
     for(auto it=possibly_free_list.begin(); it != possibly_free_list.end(); ) {
       auto tm = *it;
       if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {

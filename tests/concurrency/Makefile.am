@@ -9,7 +9,8 @@ check_PROGRAMS += \
         isolation_level_test \
         pessimistic_txn_manager_test \
         optimistic_txn_manager_test \
-        speculative_read_txn_manager_test
+        speculative_read_txn_manager_test \
+        eager_write_txn_manager_test
 #        ssi_txn_manager_test
 
 transaction_test_common = \
@@ -36,6 +37,10 @@ speculative_read_txn_manager_test_SOURCES = \
                            concurrency/speculative_read_txn_manager_test.cpp \
                            $(transaction_test_common)
 
+eager_write_txn_manager_test_SOURCES = \
+                           concurrency/eager_write_txn_manager_test.cpp \
+                           $(transaction_test_common)
+
 #ssi_txn_manager_test_SOURCES = \
 #                           concurrency/ssi_txn_manager_test.cpp \
 #                           $(transaction_test_common)
@@ -45,4 +50,5 @@ isolation_level_test_LDADD =  $(peloton_tests_common_ld)
 pessimistic_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 optimistic_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 speculative_read_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
+eager_write_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 #ssi_txn_manager_test_LDADD =  $(peloton_tests_common_ld)

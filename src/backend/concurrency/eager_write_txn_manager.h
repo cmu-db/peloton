@@ -21,9 +21,8 @@ extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
     eager_write_released_rdlock;
 
 //===--------------------------------------------------------------------===//
-// pessimistic concurrency control with eager writes
+// pessimistic concurrency control
 //===--------------------------------------------------------------------===//
-
 class EagerWriteTxnManager : public TransactionManager {
  public:
   EagerWriteTxnManager() {}
@@ -65,32 +64,58 @@ class EagerWriteTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
+  virtual Transaction *BeginTransaction() {
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
+    
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+
+    return txn;
+  }
+
+  virtual void EndTransaction() {
+    txn_id_t txn_id = current_txn->GetTransactionId();
+
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+    
+    delete current_txn;
+    current_txn = nullptr;
+  }
+
+  virtual cid_t GetMaxCommittedCid() {
+    cid_t min_running_cid = 0;
+    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
+      {
+        auto iter = running_txn_buckets_[i].lock_table();
+        for (auto &it : iter) {
+          if (min_running_cid == 0 || it.second < min_running_cid) {
+            min_running_cid = it.second;
+          }
+        }
+      }
+    }
+    assert(min_running_cid > 0);
+    return min_running_cid - 1;
+  }
+
  private:
-#define MAX_READER_COUNT 0xFFFFFFFFFFFFFFFF
-#define READER_COUNT_MASK 0xFF
-#define WRITER_ID_MASK 0x00FFFFFFFFFFFFFF
-
-  inline txn_id_t GET_WRITER_ID(txn_id_t tuple_txn_id) {
-    return txn_id_t(tuple_txn_id & WRITER_ID_MASK);
+#define READ_COUNT_MASK 0xFF
+#define TXNID_MASK 0x00FFFFFFFFFFFFFF
+  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
+    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
+  }
+  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
+  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
+    return (txn_id >> 56) & READ_COUNT_MASK;
   }
 
-  inline int GET_READER_COUNT(txn_id_t tuple_txn_id) {
-    return int((tuple_txn_id >> 56) & READER_COUNT_MASK);
-  }
-
-  inline txn_id_t PACK_TXN_ID(txn_id_t writer_id, int read_count) {
-    return txn_id_t(((long)(read_count & READER_COUNT_MASK) << 56) |
-                    (writer_id & WRITER_ID_MASK));
-  }
-
-  // inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id &
-  // TXNID_MASK; }
-  // inline int EXTRACT_READ_COUNT(txn_id_t txn_id) {
-  //   return int((txn_id >> 56) & READ_COUNT_MASK);
-  // }
-
-  bool ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
+
+  
+  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };
 }
 }
