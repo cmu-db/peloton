@@ -605,7 +605,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
   LOG_INFO("File is at position %d", (int)ftell(log_file));
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
-    LOG_ERROR("Log file is truncated");
+    LOG_INFO("Log file is truncated, should open next log file");
     // return LOGRECORD_TYPE_INVALID;
     is_truncated = true;
   }
