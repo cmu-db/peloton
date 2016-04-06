@@ -276,13 +276,14 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
     LOG_ERROR("Torn checkpoint write.");
     return;
   }
-
   auto target_location = tuple_record.GetInsertLocation();
   auto tile_group_id = target_location.block;
   RecoverTuple(tuple.get(), table, target_location, commit_id);
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
+  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)", target_location.block, target_location.offset);
+
 }
 
 bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,

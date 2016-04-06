@@ -118,6 +118,7 @@ bool SeqScanExecutor::DExecute() {
       concurrency::OptimisticTxnManager::GetInstance() :
 	  concurrency::TransactionManagerFactory::GetInstance();
 
+    //LOG_INFO("Number of tuples: %f", target_table_->GetIndex(0)->GetNumberOfTuples());
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
