@@ -68,6 +68,8 @@ class PlanTransformer {
 
   static std::vector<Value> BuildParams(const ParamListInfo param_list);
 
+  const static planner::AbstractPlan *PlanTransformer::BuildParallelPlan(const planner::AbstractPlan *old_plan);
+
  private:
   Cache<std::string, const planner::AbstractPlan> plan_cache_;
 
