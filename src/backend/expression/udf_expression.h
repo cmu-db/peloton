@@ -39,7 +39,7 @@ public:
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
 
-    Datum result = nullptr;
+    Datum result;
 
     // Evaluate the argument expression into Value, and convert it into Datum
     // for invoking OidFunctionCall
@@ -48,10 +48,7 @@ public:
       Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
-
-    // Check if the number of arguments are less then maximum allowed.
-    assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
-
+    
     // Invoking the udf function call
     switch (m_args.size()) {
       case 0:
