@@ -405,19 +405,19 @@ void SIAnomalyTest1() {
 //   }
 // }
 
-// TEST_F(IsolationLevelTest, SerializableTest) {
-//   for (auto test_type : TEST_TYPES) {
-//     concurrency::TransactionManagerFactory::Configure(
-//         test_type, ISOLATION_LEVEL_TYPE_FULL);
-//     DirtyWriteTest();
-//     DirtyReadTest();
-//     FuzzyReadTest();
-//     // WriteSkewTest();
-//     ReadSkewTest();
-//     PhantomTest();
-//     SIAnomalyTest1();
-//   }
-// }
+TEST_F(IsolationLevelTest, SerializableTest) {
+  for (auto test_type : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(
+        test_type, ISOLATION_LEVEL_TYPE_FULL);
+    DirtyWriteTest();
+    DirtyReadTest();
+    FuzzyReadTest();
+    // WriteSkewTest();
+    ReadSkewTest();
+    PhantomTest();
+    SIAnomalyTest1();
+  }
+}
 
 // FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
 TEST_F(IsolationLevelTest, StressTest) {
