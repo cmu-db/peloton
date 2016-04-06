@@ -1,12 +1,15 @@
 //
 // Created by siddharth on 17/3/16.
 //
-#include "postgres/backend/postmaster/memcached_query_parser.h"
+#include "postmaster/memcached_query_parser.h"
 
 namespace peloton {
 namespace memcached {
-
-  void QueryParser::parseQuery(){
+  //get-0, set-1, add-2, replace-3
+  int QueryParser::getOpType() {
+    return op_type;
+  }
+  std::string QueryParser::parseQuery(){
     //set <key> <flags> <exptime> <bytes> [noreply]\r\n<value>
     //add <key> <flags> <exptime> <bytes> [noreply]\r\n<value>
     //replace <key> <flags> <exptime> <bytes> [noreply]\r\n<value>
@@ -17,7 +20,7 @@ namespace memcached {
     int flags; //unsigned int?
     int exptime;
     int bytes;
-
+    std::string return_string;
     auto space_del (" ");
     auto found = memcached_query.find(space_del);
     if (found!=std::string::npos)
@@ -25,13 +28,18 @@ namespace memcached {
       auto command = memcached_query.substr(0, found);
       if(command == "get"){
         key = memcached_query.substr(found+1);
+//        return_string =  "EXECUTE GET ('"+key+"')";
+        return_string = "SELECT key, flag, size, value FROM TEST WHERE key = '"+key+"'";
+        op_type=0;
+        return return_string;
       }
       else if(command == "delete"){
         //TODO: handle non-empty time field later
         auto last_found = memcached_query.find_last_of(space_del);
         if(last_found == found){
           key = memcached_query.substr(last_found+1);
-
+          return_string =  "EXECUTE DELETE ('"+key+"')";
+          return return_string;
         }
 //        else{
 //          auto temp_string = memcached_query.substr(last_found+1);
@@ -43,24 +51,60 @@ namespace memcached {
       else if(command == "set" || command == "add" || command == "replace" ){
         //key cannot have spaces or /r/n
         //TODO: Try boost
+        printf("%c\n",command[0]);
+        switch(command[0]){
+          case 's':{
+            op_type=1;
+            command = "SET";
+            break;
+          }
+          case 'a':{
+            op_type=2;
+            command = "ADD";
+            break;
+          }
+          case 'r':{
+            op_type=3;
+            command = "REPLACE";
+            break;
+          }
+          default:
+            break;
+        }
 
         char *token = std::strtok(&memcached_query[0], " ");
+        token = std::strtok(NULL, " ");
+        key = token;
         token = std::strtok(NULL, " ");
         flags = atoi(token);
         token = std::strtok(NULL, " ");
         exptime = atoi(token);
         token = std::strtok(NULL, " ");
         bytes = atoi(token);
+        printf("key:%s,flags:%d,exptime:%d,bytes:%d\n",key.c_str(),flags,exptime,bytes);
+        value="";
+//        if(!mcsocket->read_line(value)){
+//          op_type=-1;
+//          return "Failure String";
+//        }
+
         //TODO: Handle noreply
 
-        auto new_line_del ("\r\n");
-        found = memcached_query.find(new_line_del);
-        value = memcached_query.substr(found+2);
+//        auto new_line_del ("\r\n");
+//        found = memcached_query.find(new_line_del);
+//        value = memcached_query.substr(found+2);
+//        printf("%s\n",value.c_str());
 
+        return_string = "EXECUTE "+command+" ('"+key+"','"+value+"',"+std::to_string(flags)+","+std::to_string(bytes);
+
+        return return_string;
       }
     }else {
+
       //INVALID CASE
     }
+    op_type=-1;
+    return "Failure String";
   }
 
 

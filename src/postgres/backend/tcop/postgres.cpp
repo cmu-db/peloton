@@ -55,6 +55,7 @@
 #include "pg_getopt.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/memcached_query_parser.h"
 #include "replication/slot.h"
 #include "replication/walsender.h"
 #include "rewrite/rewriteHandler.h"
@@ -182,6 +183,7 @@ thread_local static bool RecoveryConflictPending = false;
 thread_local static bool RecoveryConflictRetryable = true;
 thread_local static ProcSignalReason RecoveryConflictReason;
 
+enum MC_OP { GET, SET, ADD, REPLACE };
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
@@ -205,10 +207,10 @@ static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
-
+static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op, int len);
 // memcached helpers
-static void parse_select_result_cols(StringInfoData *buf, std::string& result);
-enum MC_OP { GET, SET, ADD, REPLACE };
+
+
 /* ----------------------------------------------------------------
  *		routines to obtain user input
  * ----------------------------------------------------------------
@@ -4343,10 +4345,42 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
 
       // TODO parse the Memcached request into calls to the prepared statements
+      peloton::memcached::QueryParser qp = peloton::memcached::QueryParser(query_line);//, &mc_sock);
+
+      query_line = qp.parseQuery();
+      int op_type = qp.getOpType();
+
+      printf("op_type:%d\n",op_type);
+      printf("query_line:%s\n",query_line.c_str());
       // get a flag of the operation
+      MC_OP op;
+      switch (op_type){
+        case 0:{
+          op = GET;
+          break;
+        }
+        case 1:{
+          op = SET;
+          break;
+        }
+        case 2:{
+          op = ADD;
+          break;
+        }
+        case 3: {
+          op = REPLACE;
+          break;
+        }
+        default:{
+          printf("\nRead line failed, terminating thread\n");
+          terminate=true;
+          continue;
+        }
+      }
 
       auto mc_state = new MemcachedState();
       exec_simple_query(&query_line[0], mc_state);
+
       // proceed to frontend write only if response is not empty
       // echo response
       // TODO parse the sql result into Memcached format back to user
@@ -4357,12 +4391,13 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         terminate = true;
       }
       // clear the result data
-      pfree(mc_state->result.data);
+      if(mc_state->result.len > 0)
+        pfree(mc_state->result.data);
       delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
       // terminate the thread
-       terminate = true;
+      terminate = true;
     }
 
   } /* end of input-reading loop */
@@ -4386,7 +4421,7 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result, M
     // base 2 int, 16 bits
     buf->len = 2;
     int nattrs = pq_getmsgint(buf, 2);
-    if (nattrs != 4) { 
+    if (nattrs != 4) {
       printf("nattrs:%d != 4\n", nattrs);
       result += "ERROR";
       return;
@@ -4414,8 +4449,8 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result, M
     result += pq_getmsgbytes(buf, col_length);
     result += "\r\n";
     return;
+  }
 }
-
 /*
  * Throw an error if we're a WAL sender process.
  *

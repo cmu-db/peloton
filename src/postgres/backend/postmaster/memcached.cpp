@@ -18,8 +18,7 @@ DROP TABLE test;
 CREATE TABLE test ( key VARCHAR(200) PRIMARY KEY, value VARCHAR(2048), flag smallint, size smallint );
 
 DEALLOCATE GET;
-PREPARE GET (text) AS
-  SELECT key, flag, size, value FROM TEST WHERE key = $1;
+PREPARE GET (text) AS SELECT key, flag, size, value FROM TEST WHERE key = $1;
 
 DEALLOCATE SET;
 PREPARE SET (text, text, smallint, smallint) AS
