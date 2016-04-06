@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// append_node.h
+// append_plan.h
 //
-// Identification: src/backend/planner/append_node.h
+// Identification: src/backend/planner/append_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,7 +34,9 @@ class AppendPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Append"; }
 
- private:
+  AbstractPlan *Copy() const { return new AppendPlan(); }
+
+private:
   // nothing
 };
 }

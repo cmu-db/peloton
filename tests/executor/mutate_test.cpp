@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mutate_test.cpp
 //
 // Identification: tests/executor/mutate_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -83,7 +83,7 @@ std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -104,7 +104,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
 }
 
 void UpdateTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -118,7 +118,7 @@ void UpdateTuple(storage::DataTable *table) {
   planner::ProjectInfo::DirectMapList direct_map_list;
   target_list.emplace_back(
       2, expression::ExpressionUtil::ConstantValueFactory(update_val));
-  std::cout << target_list.at(0).first << std::endl;
+  LOG_INFO("%lu", target_list.at(0).first);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
@@ -157,7 +157,7 @@ void UpdateTuple(storage::DataTable *table) {
 }
 
 void DeleteTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -196,7 +196,7 @@ void DeleteTuple(storage::DataTable *table) {
 }
 
 TEST_F(MutateTests, StressTests) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -218,9 +218,8 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor.Execute();
-  }
-  catch (ConstraintException &ce) {
-    std::cout << ce.what();
+  } catch (ConstraintException &ce) {
+    LOG_ERROR("%s", ce.what());
   }
 
   delete tuple;
@@ -233,29 +232,26 @@ TEST_F(MutateTests, StressTests) {
 
   try {
     executor2.Execute();
-  }
-  catch (ConstraintException &ce) {
-    std::cout << ce.what();
+  } catch (ConstraintException &ce) {
+    LOG_ERROR("%s", ce.what());
   }
 
   delete tuple;
 
   txn_manager.CommitTransaction();
 
-  std::cout << "Start tests \n";
-
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
-  // std::cout << (*table);
+  LOG_TRACE(table->GetInfo().c_str());
 
   LOG_INFO("---------------------------------------------");
 
   // LaunchParallelTest(1, UpdateTuple, table);
-  // std::cout << (*table);
+  // LOG_TRACE(table->GetInfo().c_str());
 
   LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
-  // std::cout << (*table);
+  LOG_TRACE(table->GetInfo().c_str());
 
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
@@ -296,7 +292,7 @@ TEST_F(MutateTests, StressTests) {
 
 // Insert a logical tile into a table
 TEST_F(MutateTests, InsertTest) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
@@ -321,8 +317,9 @@ TEST_F(MutateTests, InsertTest) {
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
-  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
-      Return(false));
+  EXPECT_CALL(child_executor, DExecute())
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // Construct input logical tile
   auto physical_tile_group = source_data_table->GetTileGroup(0);
@@ -358,7 +355,7 @@ TEST_F(MutateTests, DeleteTest) {
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
   LaunchParallelTest(1, DeleteTuple, table);
 
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -383,7 +380,7 @@ TEST_F(MutateTests, DeleteTest) {
 int SeqScanCount(storage::DataTable *table,
                  const std::vector<oid_t> &column_ids,
                  expression::AbstractExpression *predicate) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

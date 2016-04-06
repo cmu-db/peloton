@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * wbl_frontend_logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wbl_frontend_logger.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wbl_frontend_logger.h
+//
+// Identification: src/backend/logging/loggers/wbl_frontend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -40,7 +40,7 @@ class WriteBehindFrontendLogger : public FrontendLogger {
   void FlushLogRecords(void);
 
   // Collect the tuple log records for flushing
-  std::pair<bool, ItemPointer> CollectTupleRecord(TupleRecord *record);
+  std::pair<bool, ItemPointer> CollectTupleRecord(std::unique_ptr<TupleRecord> record);
 
   //===--------------------------------------------------------------------===//
   // Recovery
@@ -94,6 +94,7 @@ class WriteBehindFrontendLogger : public FrontendLogger {
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
   oid_t max_oid = INVALID_OID;
+
   // Keep tracking latest cid for setting next commit in txn manager
   cid_t latest_commit_id = INVALID_CID;
 };

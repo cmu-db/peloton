@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_test.cpp
 //
 // Identification: tests/storage/tile_group_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -82,9 +82,13 @@ TEST_F(TileGroupTests, BasicTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map, 4));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, 4));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   // TUPLES
 
@@ -107,7 +111,7 @@ TEST_F(TileGroupTests, BasicTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetStartCommitId();
+  // const cid_t commit_id = txn->GetBeginCommitId();
 
   EXPECT_EQ(0, tile_group->GetActiveTupleCount(txn_id));
 
@@ -135,14 +139,15 @@ TEST_F(TileGroupTests, BasicTest) {
   delete schema2;
 }
 
-void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group, catalog::Schema *schema) {
+void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
+                     catalog::Schema *schema) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
   // txn_id_t txn_id = txn->GetTransactionId();
-  // cid_t commit_id = txn->GetStartCommitId();
+  // cid_t commit_id = txn->GetBeginCommitId();
   auto pool = tile_group->GetTilePool(1);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
@@ -211,10 +216,13 @@ TEST_F(TileGroupTests, StressTest) {
   column_map[2] = std::make_pair(1, 0);
   column_map[3] = std::make_pair(1, 1);
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map,
-      10000));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, 10000));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -227,7 +235,7 @@ TEST_F(TileGroupTests, StressTest) {
   delete schema;
 }
 
-//TEST_F(TileGroupTests, MVCCInsert) {
+// TEST_F(TileGroupTests, MVCCInsert) {
 //  std::vector<catalog::Column> columns;
 //  std::vector<std::string> tile_column_names;
 //  std::vector<std::vector<std::string>> column_names;
@@ -274,9 +282,13 @@ TEST_F(TileGroupTests, StressTest) {
 //  column_map[2] = std::make_pair(1, 0);
 //  column_map[3] = std::make_pair(1, 1);
 //
-//  std::shared_ptr<storage::TileGroup> tile_group = storage::TileGroupFactory::GetTileGroup(
-//      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map, 3);
-//  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+//  std::shared_ptr<storage::TileGroup> tile_group =
+//  storage::TileGroupFactory::GetTileGroup(
+//      INVALID_OID, INVALID_OID,
+//      TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+//      column_map, 3);
+//  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+//  tile_group);
 //
 //  storage::Tuple *tuple = new storage::Tuple(schema, true);
 //  auto pool = tile_group->GetTilePool(1);
@@ -291,7 +303,7 @@ TEST_F(TileGroupTests, StressTest) {
 //  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 //  auto txn = txn_manager.BeginTransaction();
 //  txn_id_t txn_id1 = txn->GetTransactionId();
-//  cid_t cid1 = txn->GetStartCommitId();
+//  cid_t cid1 = txn->GetBeginCommitId();
 //
 //  tuple->SetValue(2, ValueFactory::GetIntegerValue(0), pool);
 //  tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
@@ -323,7 +335,7 @@ TEST_F(TileGroupTests, StressTest) {
 //  // DELETE
 //  auto txn2 = txn_manager.BeginTransaction();
 //  txn_id_t tid2 = txn2->GetTransactionId();
-//  cid_t lcid2 = txn2->GetStartCommitId();
+//  cid_t lcid2 = txn2->GetBeginCommitId();
 //
 //  tile_group->DeleteTuple(tid2, 2, lcid2);
 //
@@ -377,10 +389,13 @@ TEST_F(TileGroupTests, TileCopyTest) {
     column_map[col_itr] = std::make_pair(0, col_itr);
   }
 
-  std::shared_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas, column_map,
-      tuple_count));
-  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(), tile_group);
+  std::shared_ptr<storage::TileGroup> tile_group(
+      storage::TileGroupFactory::GetTileGroup(
+          INVALID_OID, INVALID_OID,
+          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
+          column_map, tuple_count));
+  catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
+                                               tile_group);
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
@@ -433,17 +448,15 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   txn_manager.CommitTransaction();
 
-  std::cout << "\t Original Tile Details ..." << std::endl
-            << std::endl;
-  std::cout << (*tile);
+  LOG_INFO("\t Original Tile Details ...");
+  LOG_INFO("%s", tile->GetInfo().c_str());
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
   storage::Tile *new_tile = tile->CopyTile(BACKEND_TYPE_MM);
 
-  std::cout << "\t Copied Tile Details ..." << std::endl
-            << std::endl;
-  std::cout << (*new_tile);
+  LOG_INFO("\t Copied Tile Details ...");
+  LOG_INFO("%s", new_tile->GetInfo().c_str());
 
   /*
    * Test for equality of old and new tile data

@@ -1,15 +1,14 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // cache_test.cpp
 //
 // Identification: tests/common/cache_test.cpp
 //
-// Copyright (c) 201CACHE_SIZE, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "harness.h"
 

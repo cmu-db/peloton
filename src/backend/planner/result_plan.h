@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// result_node.h
+// result_plan.h
 //
-// Identification: src/backend/planner/result_node.h
+// Identification: src/backend/planner/result_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,6 +46,10 @@ class ResultPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_RESULT; }
 
   inline std::string GetInfo() const { return "Result"; }
+
+  AbstractPlan *Copy() const {
+    return new ResultPlan(new storage::Tuple(*tuple_), backend_);
+  }
 
  private:
   /**

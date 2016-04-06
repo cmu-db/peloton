@@ -1,17 +1,18 @@
-/*-------------------------------------------------------------------------
- *
- * wal_backend_logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/logging/wal_backend_logger.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_backend_logger.h
+//
+// Identification: src/backend/logging/loggers/wal_backend_logger.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include "backend/common/types.h"
 #include "backend/logging/backend_logger.h"
 
 namespace peloton {
@@ -28,19 +29,18 @@ class WriteAheadBackendLogger : public BackendLogger {
   WriteAheadBackendLogger(WriteAheadBackendLogger &&) = delete;
   WriteAheadBackendLogger &operator=(WriteAheadBackendLogger &&) = delete;
 
-  static WriteAheadBackendLogger *GetInstance(void);
+  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   void Log(LogRecord *record);
 
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
-                            oid_t table_oid, ItemPointer insert_location,
-                            ItemPointer delete_location, void *data = nullptr,
-                            oid_t db_oid = INVALID_OID);
+                            oid_t table_oid, oid_t db_oid,
+                            ItemPointer insert_location,
+                            ItemPointer delete_location, void *data = nullptr);
 
  private:
-  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
 
   CopySerializeOutput output_buffer;
 };

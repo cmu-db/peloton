@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// abstract_plan_node.h
+// abstract_plan.h
 //
-// Identification: src/backend/planner/abstract_plan_node.h
+// Identification: src/backend/planner/abstract_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -71,7 +71,10 @@ class AbstractPlan : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
- private:
+
+  virtual AbstractPlan *Copy() const = 0;
+
+private:
   // A plan node can have multiple children
   std::vector<const AbstractPlan *> children_;
 

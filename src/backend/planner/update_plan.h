@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// update_node.h
+// update_plan.h
 //
-// Identification: src/backend/planner/update_node.h
+// Identification: src/backend/planner/update_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,6 +49,10 @@ class UpdatePlan : public AbstractPlan {
   storage::DataTable *GetTable() const { return target_table_; }
 
   const std::string GetInfo() const { return "UpdatePlan"; }
+
+  AbstractPlan *Copy() const {
+    return new UpdatePlan(target_table_, project_info_->Copy());
+  }
 
  private:
   /** @brief Target table. */

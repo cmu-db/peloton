@@ -1,25 +1,29 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// hyadapt.cpp
+// ycsb_loader.h
 //
-// Identification: benchmark/hyadapt/hyadapt.h
+// Identification: benchmark/ycsb/ycsb_loader.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "hyadapt_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace ycsb {
 
 extern configuration state;
 
-}  // namespace hyadapt
+void CreateYCSBDatabase();
+
+void LoadYCSBDatabase();
+
+}  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton

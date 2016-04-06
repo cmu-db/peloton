@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregate_executor.cpp
 //
 // Identification: src/backend/executor/aggregate_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -156,7 +156,8 @@ bool AggregateExecutor::DExecute() {
       tuple->SetAllNulls();
       auto location = output_table->InsertTuple(tuple.get());
       assert(location.block != INVALID_OID);
-      concurrency::TransactionManagerFactory::GetInstance().SetInsertVisibility(location.block, location.offset);
+      concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
+          location.block, location.offset);
     } else {
       done = true;
       return false;
@@ -173,7 +174,8 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
+    auto logical_tile =
+        LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
 
     result.push_back(logical_tile);
   }

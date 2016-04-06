@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// order_by_node.h
+// order_by_plan.h
 //
-// Identification: src/backend/planner/order_by_node.h
+// Identification: src/backend/planner/order_by_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,6 +52,10 @@ class OrderByPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ORDERBY; }
 
   const std::string GetInfo() const { return "OrderBy"; }
+
+  AbstractPlan *Copy() const {
+    return new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_);
+  }
 
  private:
   /** @brief Column Ids to sort keys w.r.t input tiles.

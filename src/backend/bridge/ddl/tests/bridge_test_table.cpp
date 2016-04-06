@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // bridge_test_table.cpp
 //
 // Identification: src/backend/bridge/ddl/tests/bridge_test_table.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -84,7 +84,6 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
 
   // Get the table's schema to get a column
   catalog::Schema *schema = table->GetSchema();
-  std::cout << (*schema);
 
   // Check the first column' name, length and value type
   catalog::Column column = schema->GetColumn(0);
