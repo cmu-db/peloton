@@ -85,7 +85,10 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    Transaction *txn = TransactionManager::BeginTransaction();
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
       assert(running_txns_.find(txn->GetTransactionId()) ==
@@ -103,7 +106,13 @@ class SpeculativeReadTxnManager : public TransactionManager {
       running_txns_.erase(current_txn->GetTransactionId());
     }
     spec_txn_context.Clear();
-    TransactionManager::EndTransaction();
+
+    delete current_txn;
+    current_txn = nullptr;
+  }
+
+  virtual cid_t GetMaxCommittedCid() {
+    return 1;
   }
 
   // is it because this dependency has been registered before?

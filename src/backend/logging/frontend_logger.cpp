@@ -26,7 +26,8 @@ extern int64_t peloton_wait_timeout;
 namespace peloton {
 namespace logging {
 
-FrontendLogger::FrontendLogger() : checkpoint(CheckpointFactory::GetInstance()) {
+FrontendLogger::FrontendLogger()
+    : checkpoint(CheckpointFactory::GetInstance()) {
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout
@@ -34,11 +35,9 @@ FrontendLogger::FrontendLogger() : checkpoint(CheckpointFactory::GetInstance()) 
 }
 
 FrontendLogger::~FrontendLogger() {
-
-  for(auto backend_logger : backend_loggers){
+  for (auto backend_logger : backend_loggers) {
     delete backend_logger;
   }
-
 }
 
 /** * @brief Return the frontend logger based on logging type
@@ -83,7 +82,9 @@ void FrontendLogger::MainLoop(void) {
       /////////////////////////////////////////////////////////////////////
 
       // First, do recovery if needed
+      LOG_INFO("Log manager: Invoking DoRecovery");
       DoRecovery();
+      LOG_INFO("Log manager: DoRecovery done");
 
       // Now, enter LOGGING mode
       log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
@@ -106,9 +107,11 @@ void FrontendLogger::MainLoop(void) {
   // Periodically, wake up and do logging
   while (log_manager.GetLoggingStatus() == LOGGING_STATUS_TYPE_LOGGING) {
     // Collect LogRecords from all backend loggers
+    // LOG_INFO("Log manager: Invoking CollectLogRecordsFromBackendLoggers");
     CollectLogRecordsFromBackendLoggers();
 
     // Flush the data to the file
+    // LOG_INFO("Log manager: Invoking FlushLogRecords");
     FlushLogRecords();
   }
 
@@ -139,7 +142,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
   {
     // Look at the local queues of the backend loggers
-    for(auto backend_logger : backend_loggers){
+    for (auto backend_logger : backend_loggers) {
       {
         std::lock_guard<std::mutex> lock(backend_logger->local_queue_mutex);
 
@@ -149,17 +152,17 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         if (local_queue_size == 0) continue;
 
         // Move the log record from backend_logger to here
-        for (oid_t log_record_itr = 0;
-            log_record_itr < local_queue_size;
-            log_record_itr++) {
-          global_queue.push_back(std::move(backend_logger->local_queue[log_record_itr]));
+        for (oid_t log_record_itr = 0; log_record_itr < local_queue_size;
+             log_record_itr++) {
+          LOG_INFO("Found a log record to push in global queue");
+          global_queue.push_back(
+              std::move(backend_logger->local_queue[log_record_itr]));
         }
 
         // cleanup the local queue
         backend_logger->local_queue.clear();
       }
     }
-
   }
 }
 
@@ -167,12 +170,10 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
  * @brief Store backend logger
  * @param backend logger
  */
-void FrontendLogger::AddBackendLogger(BackendLogger* backend_logger) {
-
+void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   // Add backend logger to the list of backend loggers
   backend_loggers.push_back(backend_logger);
 }
-
 
 }  // namespace logging
 }
