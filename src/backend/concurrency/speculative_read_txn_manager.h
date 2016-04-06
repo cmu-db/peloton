@@ -181,7 +181,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
   std::mutex running_txns_mutex_;
   // records all running transactions.
   std::unordered_map<txn_id_t, SpecTxnContext *> running_txns_;
-
 };
 }
 }

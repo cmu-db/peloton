@@ -111,7 +111,7 @@ bool SsiTxnManager::AcquireOwnership(
   }
 
   {
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     auto txn_id = current_txn->GetTransactionId();
     GetReadLock(tile_group_id, tuple_id);
@@ -156,7 +156,6 @@ bool SsiTxnManager::AcquireOwnership(
 
 bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
                                 const oid_t &tuple_id) {
-
   LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -175,10 +174,12 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     // Another transaction is writting
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
-      std::lock_guard<std::mutex> lock(txn_table_mutex_);
-      
-      if (txn_table_.count(writer) != 0) { // might have been committed or aborted
-        LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
+      std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+
+      if (txn_table_.count(writer) !=
+          0) {  // might have been committed or aborted
+        LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
+                 tuple_id);
         SetInConflict(writer);
         SetOutConflict(txn_id);
       }
@@ -190,7 +191,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
   // for each new version
   {
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     LOG_INFO("SI read phase 2");
 
@@ -252,7 +253,8 @@ bool SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
@@ -290,8 +292,6 @@ void SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
     // Update an inserted version
     current_txn->RecordUpdate(old_location.block, old_location.offset);
   }
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 bool SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
@@ -302,7 +302,8 @@ bool SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
@@ -367,7 +368,7 @@ Result SsiTxnManager::CommitTransaction() {
 
   bool should_abort = false;
   {
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     if (GetInConflict(txn_id) && GetOutConflict(txn_id)) should_abort = true;
   }
@@ -498,7 +499,8 @@ Result SsiTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        LOG_INFO("Txn %lu free %lu", current_txn->GetTransactionId(), tuple_slot);
+        LOG_INFO("Txn %lu free %lu", current_txn->GetTransactionId(),
+                 tuple_slot);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -533,8 +535,9 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
+  // Clean the aborted txn's context
   {
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     auto txn_id = current_txn->GetTransactionId();
     // Remove all read tuples by the current txns
     RemoveReader(txn_id);
@@ -544,11 +547,10 @@ Result SsiTxnManager::AbortTransaction() {
   delete current_txn;
   current_txn = nullptr;
 
-  // EndTransaction();
   return Result::RESULT_ABORTED;
 }
 
-// removeReader should be protected in txn_table_mutex_
+// RemoveReader should be protected in txn_manager_mutex_
 void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   LOG_INFO("release SILock");
   assert(txn_table_.count(txn_id) > 0);
@@ -560,7 +562,6 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
     for (auto &tuple_entry : tile_group_entry.second) {
-
       auto tuple_slot = tuple_entry.first;
 
       // we don't have reader lock on insert type
@@ -581,7 +582,7 @@ void SsiTxnManager::CleanUp() {
     std::chrono::milliseconds sleep_time(20);
     std::this_thread::sleep_for(sleep_time);
 
-    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     // find smallest begin cid of the running transaction
     // init it as max() for the case that all transactions are committed
@@ -606,7 +607,6 @@ void SsiTxnManager::CleanUp() {
 
       if (end_cid < min_begin) {
         // we can safely remove it from table
-
         // remove its reader mark
         LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
         RemoveReader(ctx.transaction_->GetTransactionId());
@@ -621,7 +621,7 @@ void SsiTxnManager::CleanUp() {
       }
     }
 
-  } // End of outer while 
+  }  // End of outer while
 }
 
 }  // End storage namespace
