@@ -25,6 +25,10 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);
 static void plpgsql_extra_warnings_assign_hook(const char *newvalue, void *extra);
@@ -500,4 +504,10 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tuple);
 
 	PG_RETURN_VOID();
+
+
 }
+
+#ifdef __cplusplus
+}
+#endif
