@@ -15,6 +15,8 @@
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/log_file.h"
+#include "backend/executor/executors.h"
+
 #include <dirent.h>
 #include <vector>
 #include <set>
@@ -48,6 +50,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   //===--------------------------------------------------------------------===//
 
   void DoRecovery(void);
+
+  void RecoverIndex();
 
   void StartTransactionRecovery(cid_t commit_id);
 
@@ -83,6 +87,12 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
  private:
   std::string GetLogFileName(void);
+
+  bool RecoverIndexHelper(executor::AbstractExecutor *scan_executor,
+                          storage::DataTable *target_table);
+
+  void InsertIndexEntry(storage::Tuple *tuple, storage::DataTable *table,
+                        ItemPointer target_location);
 
   //===--------------------------------------------------------------------===//
   // Member Variables

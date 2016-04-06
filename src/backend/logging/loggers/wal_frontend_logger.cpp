@@ -22,6 +22,7 @@
 #include "backend/common/pool.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/concurrency/transaction_manager.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
@@ -32,6 +33,11 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
+#include "backend/executor/executor_context.h"
+#include "backend/planner/seq_scan_plan.h"
+#include "backend/bridge/dml/mapper/mapper.h"
+
 
 extern CheckpointType peloton_checkpoint_mode;
 
@@ -265,19 +271,18 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
-            LOG_ERROR("Insert txd id %d not found in recovery txn table",
-                      (int)cid);
-
-            this->log_file_fd = -1;
-            return;
-          }
-
           auto table = GetTable(*tuple_record);
           if (!table || cid <= start_commit_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
             continue;
+          }
+
+          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+            LOG_ERROR("Insert txd id %d not found in recovery txn table",
+                      (int)cid);
+            this->log_file_fd = -1;
+            return;
           }
 
           // Read off the tuple record body from the log
@@ -363,9 +368,145 @@ void WriteAheadFrontendLogger::DoRecovery() {
       manager.SetNextOid(max_oid);
     }
 
-    concurrency::TransactionManagerFactory::GetInstance().SetNextCid(max_cid);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    if (txn_manager.GetNextCommitId() < max_cid){
+    	txn_manager.SetNextCid(max_cid + 1);
+    }
+
+    RecoverIndex();
   }
   this->log_file_fd = -1;
+}
+
+void WriteAheadFrontendLogger::RecoverIndex() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  LOG_INFO("Recovering the indexes");
+
+  // get txn
+  std::unique_ptr<concurrency::Transaction> txn(txn_manager.BeginTransaction());
+  assert(txn);
+  LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
+            start_commit_id);
+
+  // build executor context
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(
+          txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
+
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto database_count = catalog_manager.GetDatabaseCount();
+  bool failure = false;
+  // loop all databases
+  for (oid_t database_idx = 0; database_idx < database_count && !failure;
+       database_idx++) {
+    auto database = catalog_manager.GetDatabase(database_idx);
+    auto table_count = database->GetTableCount();
+
+    // loop all tables
+    for (oid_t table_idx = 0; table_idx < table_count && !failure;
+         table_idx++) {
+      // Get the target table
+      storage::DataTable *target_table = database->GetTable(table_idx);
+      assert(target_table);
+      LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
+               table_idx, target_table->GetName().c_str());
+
+      auto schema = target_table->GetSchema();
+      assert(schema);
+      std::vector<oid_t> column_ids;
+      column_ids.resize(schema->GetColumnCount());
+      std::iota(column_ids.begin(), column_ids.end(), 0);
+
+      // Construct the plan node
+      LOG_TRACE("Initializing the executor tree");
+      std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
+          new planner::SeqScanPlan(target_table, nullptr, column_ids));
+      std::unique_ptr<executor::SeqScanExecutor> scan_executor(
+          new executor::SeqScanExecutor(scan_plan_node.get(),
+                                        executor_context.get()));
+      scan_executor->SetForbidDirtyRead(true);
+      if (!RecoverIndexHelper(scan_executor.get(), target_table)) {
+        break;
+      }
+    }
+  }
+}
+
+bool WriteAheadFrontendLogger::RecoverIndexHelper(
+    executor::AbstractExecutor *scan_executor,
+    storage::DataTable *target_table) {
+  // Prepare columns
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids;
+  column_ids.resize(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+
+  // Initialize the seq scan executor
+  auto status = scan_executor->Init();
+  // Abort and cleanup
+  if (status == false) {
+    LOG_ERROR("Failed to init scan executor during recovery");
+    return false;
+  }
+
+  // Execute seq scan until we get result tiles
+  for (;;) {
+    status = scan_executor->Execute();
+    // Stop
+    if (status == false) {
+      break;
+    }
+
+    // Retrieve a logical tile
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        scan_executor->GetOutput());
+    auto tile_group_id = logical_tile->GetColumnInfo(0)
+                             .base_tile->GetTileGroup()
+                             ->GetTileGroupId();
+    LOG_TRACE("Retrieved tile group %lu", tile_group_id);
+
+    // Go over the logical tile
+    for (oid_t tuple_id : *logical_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(
+          logical_tile.get(), tuple_id);
+
+      // Index update
+      {
+        // construct a physical tuple from the logical tuple
+        std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+        for (auto column_id : column_ids) {
+          tuple->SetValue(column_id, cur_tuple.GetValue(column_id),
+                          recovery_pool);
+        }
+
+        ItemPointer location(tile_group_id, tuple_id);
+        InsertIndexEntry(tuple.get(), target_table, location);
+      }
+    }
+  }
+  return true;
+}
+
+void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
+                                                storage::DataTable *table,
+                                                ItemPointer target_location) {
+  assert(tuple);
+  assert(table);
+  auto index_count = table->GetIndexCount();
+  LOG_TRACE("Insert tuple (%lu, %lu) into %lu indexes", target_location.block,
+            target_location.offset, index_count);
+
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = table->GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+
+    index->InsertEntry(key.get(), target_location);
+    // Increase the indexes' number of tuples by 1 as well
+    index->IncreaseNumberOfTuplesBy(1);
+  }
 }
 
 /**
@@ -638,7 +779,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
   LOG_INFO("File is at position %d", (int)ftell(log_file));
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
-    LOG_ERROR("Log file is truncated");
+    LOG_INFO("Log file is truncated, should open next log file");
     // return LOGRECORD_TYPE_INVALID;
     is_truncated = true;
   }

@@ -28,6 +28,8 @@ class SeqScanExecutor : public AbstractScanExecutor {
   explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
+  void SetForbidDirtyRead(bool forbid_dirty_read);
+
  protected:
   bool DInit();
 
@@ -50,6 +52,9 @@ class SeqScanExecutor : public AbstractScanExecutor {
 
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
+
+  /** @brief Forbid dirty reads during scan */
+  bool forbid_dirty_read_ = false;
 };
 
 }  // namespace executor
