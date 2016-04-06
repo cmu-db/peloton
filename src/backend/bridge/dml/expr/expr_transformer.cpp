@@ -34,6 +34,7 @@
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
+#include "backend/expression/udf_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -303,11 +304,30 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
   // FIXME It will generate incorrect results.
   if (!retval) {
-    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
+//    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
     assert(list_length(fn_es->args) > 0);
 
-    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
-    return TransformExpr(first_child);
+    LOG_INFO("Trying to convert to UDF Function, Op Function ID: %u", pg_func_id);
+
+    auto function_id = fn_expr->funcid;
+    auto collation = fn_es->fcinfo_data.fncollation;
+    auto args = fn_es->args;
+
+    std::vector<expression::AbstractExpression*> m_args;
+
+    int i = 0;
+    ListCell *arg;
+    foreach (arg, args) {
+      ExprState *argstate = (ExprState *)lfirst(arg);
+      m_args.push_back(TransformExpr(argstate));
+      i++;
+    }
+
+    auto udf_expr = new expression::UDFExpression(function_id, collation, rettype, m_args);
+    return udf_expr;
+//
+//    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
+//    return TransformExpr(first_child);
   }
 
   if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
@@ -522,7 +542,7 @@ expression::AbstractExpression *ExprTransformer::TransformList(
  * to proper expression type in Peloton
  *
  * @param pg_func_id  PG Function Id used to lookup function in \b
- *fmrg_builtin[]
+ * fmgr_builtin[]
  * (see Postgres source file 'fmgrtab.cpp')
  * @param args  The argument list in PG ExprState
  * @return            Corresponding expression tree in peloton.
@@ -539,6 +559,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
               pg_func_id);
     return nullptr;
   }
+
   PltFuncMetaInfo func_meta = itr->second;
 
   if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
@@ -565,6 +586,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     children[i] = TransformExpr(argstate);
 
     i++;
+
+
   }
 
   // Construct the corresponding Peloton expression
