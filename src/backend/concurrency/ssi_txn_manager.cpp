@@ -114,8 +114,8 @@ bool SsiTxnManager::AcquireOwnership(
     std::lock_guard<std::mutex> lock(txn_table_mutex_);
 
     auto txn_id = current_txn->GetTransactionId();
-    GetReadLock(tile_group_header, tuple_id);
-    ReadList *header = GetReaderList(tile_group_header, tuple_id);
+    GetReadLock(tile_group_id, tuple_id);
+    ReadList *header = GetReaderList(tile_group_id, tuple_id);
 
     bool should_abort = false;
     while (header != nullptr) {
@@ -146,7 +146,7 @@ bool SsiTxnManager::AcquireOwnership(
 
       header = header->next;
     }
-    ReleaseReadLock(tile_group_header, tuple_id);
+    ReleaseReadLock(tile_group_id, tuple_id);
 
     if (should_abort) return false;
   }
@@ -177,13 +177,11 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         writer != txn_id) {
       std::lock_guard<std::mutex> lock(txn_table_mutex_);
       
-      if (txn_table_.count(writer) == 0) {
-        LOG_INFO("Writer %lu has no entry in txn table", writer);
+      if (txn_table_.count(writer) != 0) { // might have been committed or aborted
+        LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
+        SetInConflict(writer);
+        SetOutConflict(txn_id);
       }
-      assert(txn_table_.count(writer) > 0);
-      assert(txn_table_.count(txn_id) > 0);
-      SetInConflict(writer);
-      SetOutConflict(txn_id);
     }
   }
 
@@ -468,7 +466,7 @@ Result SsiTxnManager::CommitTransaction() {
   }
   // EndTransaction();
 
-  CleanUp();
+  // CleanUp();
   return ret;
 }
 
@@ -500,6 +498,7 @@ Result SsiTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+        LOG_INFO("Txn %lu free %lu", current_txn->GetTransactionId(), tuple_slot);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -535,17 +534,16 @@ Result SsiTxnManager::AbortTransaction() {
   }
 
   {
-    //std::lock_guard<std::mutex> lock(txn_table_mutex_);
-    //auto txn_id = current_txn->GetTransactionId();
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
+    auto txn_id = current_txn->GetTransactionId();
     // Remove all read tuples by the current txns
-    // RemoveReader(txn_id);
-    // txn_table_.erase(txn_id);
+    RemoveReader(txn_id);
+    txn_table_.erase(txn_id);
   }
 
   delete current_txn;
   current_txn = nullptr;
 
-  CleanUp();
   // EndTransaction();
   return Result::RESULT_ABORTED;
 }
@@ -573,7 +571,7 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
         continue;
       }
 
-      RemoveSIReader(tile_group.get(), tuple_slot, txn_id);
+      RemoveSIReader(tile_group_id, tuple_slot, txn_id);
     }
   }
   LOG_INFO("release SILock finish");
@@ -581,50 +579,56 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 
 // Clean obsolete txn record
 void SsiTxnManager::CleanUp() {
-  return;
-  std::lock_guard<std::mutex> lock(txn_table_mutex_);
+  while (!this->stopped || txn_table_.size() != 0) {
+    // GC periodically
+    std::chrono::milliseconds sleep_time(20);
+    std::this_thread::sleep_for(sleep_time);
 
-  if (txn_table_.empty()) {
-    return;
-  }
+    std::lock_guard<std::mutex> lock(txn_table_mutex_);
 
-  // find smallest begin cid of the running transaction
-  // init it as max() for the case that all transactions are committed
-  cid_t min_begin = std::numeric_limits<cid_t>::max();
-  for (auto &item : txn_table_) {
-    auto &ctx = item.second;
-    if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
-      if (ctx.transaction_->GetBeginCommitId() < min_begin) {
-        min_begin = ctx.transaction_->GetBeginCommitId();
+    if (txn_table_.empty()) {
+      return;
+    }
+
+    // find smallest begin cid of the running transaction
+    // init it as max() for the case that all transactions are committed
+    cid_t min_begin = std::numeric_limits<cid_t>::max();
+    for (auto &item : txn_table_) {
+      auto &ctx = item.second;
+      if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
+        if (ctx.transaction_->GetBeginCommitId() < min_begin) {
+          min_begin = ctx.transaction_->GetBeginCommitId();
+        }
       }
     }
-  }
 
-  auto itr = txn_table_.begin();
-  while (itr != txn_table_.end()) {
-    auto &ctx = itr->second;
-    auto end_cid = ctx.transaction_->GetEndCommitId();
-    if (end_cid == INVALID_TXN_ID) {
-      // running transaction
-      break;
+    auto itr = txn_table_.begin();
+    while (itr != txn_table_.end()) {
+      auto &ctx = itr->second;
+      auto end_cid = ctx.transaction_->GetEndCommitId();
+      if (end_cid == INVALID_TXN_ID) {
+        // running transaction
+        break;
+      }
+
+      if (end_cid < min_begin) {
+        // we can safely remove it from table
+
+        // remove its reader mark
+        LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
+        RemoveReader(ctx.transaction_->GetTransactionId());
+
+        // delete transaction
+        delete ctx.transaction_;
+
+        // remove from table
+        itr = txn_table_.erase(itr);
+      } else {
+        itr++;
+      }
     }
 
-    if (end_cid < min_begin) {
-      // we can safely remove it from table
-
-      // remove its reader mark
-      LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
-      RemoveReader(ctx.transaction_->GetTransactionId());
-
-      // delete transaction
-      delete ctx.transaction_;
-
-      // remove from table
-      itr = txn_table_.erase(itr);
-    } else {
-      itr++;
-    }
-  }
+  } // End of while 
 }
 
 }  // End storage namespace
