@@ -84,9 +84,8 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  //for use by recovery
-  void SetNextCid(cid_t cid) { next_cid_ = cid; }
-  ;
+  // for use by recovery
+  void SetNextCid(cid_t cid) { next_cid_ = cid; };
 
   virtual Transaction *BeginTransaction() {
     Transaction *txn =

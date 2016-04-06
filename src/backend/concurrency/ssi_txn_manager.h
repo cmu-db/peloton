@@ -46,7 +46,7 @@ struct SIReadLock {
 
 class SsiTxnManager : public TransactionManager {
  public:
-  SsiTxnManager(): stopped(false) {
+  SsiTxnManager() : stopped(false) {
     vaccum = std::thread(&SsiTxnManager::CleanUp, this);
   }
 
@@ -91,7 +91,7 @@ class SsiTxnManager : public TransactionManager {
   virtual Transaction *BeginTransaction() {
     Transaction *txn = TransactionManager::BeginTransaction();
     {
-      std::lock_guard<std::mutex> lock(txn_table_mutex_);
+      std::lock_guard<std::mutex> lock(txn_manager_mutex_);
       assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
       txn_table_.insert(
           std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
@@ -106,12 +106,16 @@ class SsiTxnManager : public TransactionManager {
   virtual Result AbortTransaction();
 
  private:
-  std::mutex txn_table_mutex_;
+  // Mutex to protect txn_table_ and sireadlocks
+  std::mutex txn_manager_mutex_;
+  // Transaction contexts
   std::map<txn_id_t, SsiTxnContext> txn_table_;
+  // SIReadLocks
   typedef std::unordered_map<oid_t, SIReadLock> TupleReadlocks;
   std::unordered_map<oid_t, TupleReadlocks> sireadlocks;
   // Used to make the vaccum thread stop
   bool stopped;
+  // Vaccum thread, GC overu 20 ms
   std::thread vaccum;
 
   // init reserved area of a tuple
@@ -123,7 +127,8 @@ class SsiTxnManager : public TransactionManager {
              tuple_id);
 
     auto tile_group_header = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetHeader();
+                                 .GetTileGroup(tile_group_id)
+                                 ->GetHeader();
 
     assert(tile_group_header->GetTransactionId(tuple_id) == txn_id);
     assert(current_txn->GetTransactionId() == txn_id);
@@ -136,26 +141,26 @@ class SsiTxnManager : public TransactionManager {
   // Get creator of a tuple
   inline txn_id_t GetCreatorTxnId(storage::TileGroup *tile_group,
                                   const oid_t &tuple_id) {
-    return *(txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(
-        tuple_id) + CREATOR_OFFSET);
+    return *(
+        txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(tuple_id) +
+                    CREATOR_OFFSET);
   }
 
-  void GetReadLock(const oid_t &tile_group_id,
-                   const oid_t &tuple_id) {
+  void GetReadLock(const oid_t &tile_group_id, const oid_t &tuple_id) {
     if (sireadlocks.count(tile_group_id) == 0) {
       sireadlocks[tile_group_id] = TupleReadlocks();
     }
     if (sireadlocks[tile_group_id].count(tuple_id) == 0) {
       sireadlocks[tile_group_id].emplace(tuple_id, SIReadLock());
-      // Hack, initilize the spinlock
-      new ((Spinlock *)&sireadlocks[tile_group_id][tuple_id].spinlock) Spinlock();
+      // Hack, initilize the spinlock because it is uncopyable
+      new ((Spinlock *)&sireadlocks[tile_group_id][tuple_id].spinlock)
+          Spinlock();
     }
 
     sireadlocks[tile_group_id][tuple_id].Lock();
   }
 
-  void ReleaseReadLock(const oid_t &tile_group_id,
-                       const oid_t tuple_id) {
+  void ReleaseReadLock(const oid_t &tile_group_id, const oid_t tuple_id) {
     sireadlocks[tile_group_id][tuple_id].Unlock();
   }
 
@@ -176,7 +181,9 @@ class SsiTxnManager : public TransactionManager {
   }
 
   // Remove reader from the reader list of a tuple
-  void RemoveSIReader(const oid_t &tile_group_id, const oid_t &tuple_id, txn_id_t txn_id) {
+  void RemoveSIReader(const oid_t &tile_group_id, const oid_t &tuple_id,
+                      txn_id_t txn_id) {
+    LOG_INFO("Remove SSI reader for txn %lu", txn_id);
     GetReadLock(tile_group_id, tuple_id);
 
     auto itr = sireadlocks[tile_group_id].find(tuple_id);
@@ -191,8 +198,8 @@ class SsiTxnManager : public TransactionManager {
       if (next->txn_id == txn_id) {
         find = true;
         prev->next = next->next;
-        LOG_INFO("find in %ld group %ld tuple %ld", next->txn_id,
-                 tile_group_id, tuple_id);
+        LOG_INFO("find in %ld group %ld tuple %ld", next->txn_id, tile_group_id,
+                 tuple_id);
         delete next;
         break;
       }
@@ -208,12 +215,9 @@ class SsiTxnManager : public TransactionManager {
     }
   }
 
-  ReadList *GetReaderList(const oid_t &tile_group_id,
-                          const oid_t &tuple_id) {
-
+  ReadList *GetReaderList(const oid_t &tile_group_id, const oid_t &tuple_id) {
     return sireadlocks[tile_group_id][tuple_id].list;
   }
-
 
   bool GetInConflict(txn_id_t txn_id) {
     assert(txn_table_.count(txn_id) != 0);
@@ -235,7 +239,7 @@ class SsiTxnManager : public TransactionManager {
 
   void SetOutConflict(txn_id_t txn_id) {
     assert(txn_table_.count(txn_id) != 0);
-    
+
     LOG_INFO("Set out conflict %lu", txn_id);
     txn_table_.at(txn_id).out_conflict_ = true;
   }
@@ -246,8 +250,6 @@ class SsiTxnManager : public TransactionManager {
   void CleanUp();
 
   static const int CREATOR_OFFSET = 0;
-  static const int LOCK_OFFSET = (CREATOR_OFFSET + sizeof(txn_id_t));
-  // static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
 };
 }
 }

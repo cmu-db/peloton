@@ -84,8 +84,6 @@ class TsOrderTxnManager : public TransactionManager {
       memcpy(reserved_field, &last_read_ts, sizeof(cid_t));
     }
   }
-
 };
-
 }
 }

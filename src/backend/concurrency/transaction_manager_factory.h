@@ -49,7 +49,7 @@ class TransactionManagerFactory {
 
   static IsolationLevelType GetIsolationLevel() { return isolation_level_; }
 
-private:
+ private:
   static ConcurrencyType protocol_;
   static IsolationLevelType isolation_level_;
 };
