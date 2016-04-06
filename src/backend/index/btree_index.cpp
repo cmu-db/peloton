@@ -109,12 +109,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
       if (predicate(key, entry->second)) {
-        LOG_INFO("this key is already visible or dirty in the index");
+        // this key is already visible or dirty in the index
         return false;
       }
     }
 
-    LOG_INFO("k,v pair successfully inserted");
     // Insert the key, val pair
     container.insert(std::pair<KeyType, ValueType>(index_key, location));
 
