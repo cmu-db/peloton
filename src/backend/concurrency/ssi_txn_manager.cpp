@@ -167,7 +167,11 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     LOG_INFO("Not read before");
     // Previously, this tuple hasn't been read, add the txn to the reader list
     // of the tuple
-    AddSIReader(tile_group.get(), tuple_id);
+    {
+      std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+      AddSIReader(tile_group.get(), tuple_id);
+    }
+    
 
     auto writer = tile_group_header->GetTransactionId(tuple_id);
     // Another transaction is writting this tuple, add an edge
@@ -574,14 +578,10 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 void SsiTxnManager::CleanUp() {
   while (!this->stopped || txn_table_.size() != 0) {
     // GC periodically
-    std::chrono::milliseconds sleep_time(20);
+    std::chrono::milliseconds sleep_time(50);
     std::this_thread::sleep_for(sleep_time);
 
-    LOG_INFO("Acquire lock");
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    LOG_INFO("Acquired lock");
-    LOG_INFO("Cleanup: %d, %lu", this->stopped, txn_table_.size());
-
     // find smallest begin cid of the running transaction
     // init it as max() for the case that all transactions are committed
     cid_t min_begin = std::numeric_limits<cid_t>::max();
@@ -600,7 +600,8 @@ void SsiTxnManager::CleanUp() {
       auto end_cid = ctx.transaction_->GetEndCommitId();
       if (end_cid == INVALID_TXN_ID) {
         // running transaction
-        break;
+        itr++;
+        continue;
       }
 
       if (end_cid < min_begin) {
@@ -618,7 +619,6 @@ void SsiTxnManager::CleanUp() {
         itr++;
       }
     }
-
   }  // End of outer while
 }
 
