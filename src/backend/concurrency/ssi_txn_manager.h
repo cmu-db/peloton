@@ -46,17 +46,15 @@ struct SIReadLock {
 };
 
 class SsiTxnManager : public TransactionManager {
- public:
+  public:
   SsiTxnManager() : stopped(false), cleaned(false) {
     vaccum = std::thread(&SsiTxnManager::CleanUp, this);
-    vaccum.detach();
   }
 
   virtual ~SsiTxnManager() {
     LOG_INFO("Deconstruct SSI manager");
     stopped = true;
-    std::chrono::milliseconds sleep_time(100);
-    std::this_thread::sleep_for(sleep_time);
+    vaccum.join();
   }
 
   static SsiTxnManager &GetInstance();

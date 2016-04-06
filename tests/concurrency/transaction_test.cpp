@@ -110,7 +110,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     }
 
     // delete not exist, delete exist, read deleted, update deleted,
-    // read deleted, insert back, update inserted, read newly updated
+    // read deleted, insert back, update inserted, read newly updated,
+    // delete inserted, read deleted
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
       scheduler.Txn(0).Delete(100);
@@ -121,6 +122,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       scheduler.Txn(0).Insert(0, 2);
       scheduler.Txn(0).Update(0, 3);
       scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Delete(0);
+      scheduler.Txn(0).Read(0);
       scheduler.Txn(0).Commit();
 
       scheduler.Run();
@@ -129,6 +132,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(-1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(-1, scheduler.schedules[0].results[1]);
       EXPECT_EQ(3, scheduler.schedules[0].results[2]);
+      EXPECT_EQ(-1, scheduler.schedules[0].results[3]);
     }
 
     // insert, delete inserted, read deleted, insert again, delete again
