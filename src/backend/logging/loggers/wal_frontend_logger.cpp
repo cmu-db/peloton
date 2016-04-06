@@ -253,19 +253,18 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
-            LOG_ERROR("Insert txd id %d not found in recovery txn table",
-                      (int)cid);
-
-            this->log_file_fd = -1;
-            return;
-          }
-
           auto table = GetTable(*tuple_record);
           if (!table || cid <= start_commit_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
             continue;
+          }
+
+          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+            LOG_ERROR("Insert txd id %d not found in recovery txn table",
+                      (int)cid);
+            this->log_file_fd = -1;
+            return;
           }
 
           // Read off the tuple record body from the log
@@ -336,7 +335,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
       manager.SetNextOid(max_oid);
     }
 
-    concurrency::TransactionManagerFactory::GetInstance().SetNextCid(max_cid);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    if (txn_manager.GetNextCommitId() < max_cid){
+    	txn_manager.SetNextCid(max_cid + 1);
+    }
 
     RecoverIndex();
   }
@@ -428,6 +430,7 @@ bool WriteAheadFrontendLogger::RecoverIndexHelper(
     auto tile_group_id = logical_tile->GetColumnInfo(0)
                              .base_tile->GetTileGroup()
                              ->GetTileGroupId();
+    LOG_TRACE("Retrieved tile group %lu", tile_group_id);
 
     // Go over the logical tile
     for (oid_t tuple_id : *logical_tile) {
