@@ -19,7 +19,7 @@ CREATE TABLE test ( key VARCHAR(200) PRIMARY KEY, value VARCHAR(2048), flag smal
 
 DEALLOCATE GET;
 PREPARE GET (text) AS
-  SELECT key, value, flag, size FROM TEST WHERE key = $1;
+  SELECT key, flag, size, value FROM TEST WHERE key = $1;
 
 DEALLOCATE SET;
 PREPARE SET (text, text, smallint, smallint) AS

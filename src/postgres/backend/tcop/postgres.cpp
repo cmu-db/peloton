@@ -4348,26 +4348,21 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       auto mc_state = new MemcachedState();
       exec_simple_query(&query_line[0], mc_state);
       // proceed to frontend write only if response is not empty
-      if (mc_state->result.len > 0) {
-        // echo response
-
-        // TODO parse the sql result into Memcached format back to user
-
-        parse_select_result_cols(&mc_state->result, query_result);
-        printf("\nMC_RESULT:%s\n",query_result.c_str());
-        if (!mc_sock.write_response(query_result + "\r\n")) {
-          printf("\nWrite line failed, terminating thread\n");
-          terminate = true;
-        }
-
-        // clear the result data
-        pfree(mc_state->result.data);
+      // echo response
+      // TODO parse the sql result into Memcached format back to user
+      parse_select_result_cols(&mc_state->result, query_result, op, mc_state->result.len);
+      printf("\nMC_RESULT:%s\n",query_result.c_str());
+      if (!mc_sock.write_response(query_result + "\r\n")) {
+        printf("\nWrite line failed, terminating thread\n");
+        terminate = true;
       }
+      // clear the result data
+      pfree(mc_state->result.data);
       delete mc_state;
     } else {
       printf("\nRead line failed, terminating thread\n");
       // terminate the thread
-      terminate = true;
+       terminate = true;
     }
 
   } /* end of input-reading loop */
@@ -4376,28 +4371,49 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
 /* Print all the attribute values for query result
  * in StringInfoData format
  */
-static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op) {
-  //  printf("Reached\n");
-  //  for (int i=0; i< buf->len; i++){
-  //    printf("%d\t", buf->data[i]);
-  //  }
-  //  printf("\n");
-  buf->cursor = 0;
-  // base 2 int, 16 bits
-  buf->len = 2;
-  int nattrs = pq_getmsgint(buf, 2);
-  // printf("\nnattrs:%d\n", nattrs);
-  int col_length;
-  for (int i=0; i < nattrs; i++) {
+static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op, int len) {
+  if (op != GET) {
+    result += "STORED\r\n";
+  } else {
+    // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
+    // <data block>\r\n
+    if (len == 0) {
+      result += "NOT_FOUND\r\n";
+      return;
+    }
+    result += "VALUE ";
+    buf->cursor = 0;
+    // base 2 int, 16 bits
+    buf->len = 2;
+    int nattrs = pq_getmsgint(buf, 2);
+    if (nattrs != 4) { 
+      printf("nattrs:%d != 4\n", nattrs);
+      result += "ERROR";
+      return;
+    }
+    int col_length;
     buf->len += 4;
+    // key
     col_length = pq_getmsgint(buf, 4);
-    // printf("\nresult:%d\n", col_length);
-
     buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
-    result += "\t";
-    // printf("\nresult:%s\n", result.c_str());
-  }
+    result += " ";
+    // flag
+    col_length = pq_getmsgint(buf, 4);
+    buf->len += col_length;
+    result += pq_getmsgbytes(buf, col_length);
+    result += " ";
+    // size
+    col_length = pq_getmsgint(buf, 4);
+    buf->len += col_length;
+    result += pq_getmsgbytes(buf, col_length);
+    result += "\r\n";
+    // value
+    col_length = pq_getmsgint(buf, 4);
+    buf->len += col_length;
+    result += pq_getmsgbytes(buf, col_length);
+    result += "\r\n";
+    return;
 }
 
 /*
