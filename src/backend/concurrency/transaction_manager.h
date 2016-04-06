@@ -87,7 +87,7 @@ class TransactionManager {
   void SetTransactionResult(const Result result) {
     current_txn->SetResult(result);
   }
-
+  
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
