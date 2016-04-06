@@ -51,26 +51,8 @@ namespace memcached {
       else if(command == "set" || command == "add" || command == "replace" ){
         //key cannot have spaces or /r/n
         //TODO: Try boost
-        printf("%c\n",command[0]);
-        switch(command[0]){
-          case 's':{
-            op_type=1;
-            command = "SET";
-            break;
-          }
-          case 'a':{
-            op_type=2;
-            command = "ADD";
-            break;
-          }
-          case 'r':{
-            op_type=3;
-            command = "REPLACE";
-            break;
-          }
-          default:
-            break;
-        }
+//        printf("%c\n",command[0]);
+        //TODO: Handle noreply
 
         char *token = std::strtok(&memcached_query[0], " ");
         token = std::strtok(NULL, " ");
@@ -81,21 +63,42 @@ namespace memcached {
         exptime = atoi(token);
         token = std::strtok(NULL, " ");
         bytes = atoi(token);
-        printf("key:%s,flags:%d,exptime:%d,bytes:%d\n",key.c_str(),flags,exptime,bytes);
-        value="";
+//        printf("key:%s,flags:%d,exptime:%d,bytes:%d\n",key.c_str(),flags,exptime,bytes);
+        value="$$$$"; //TODO: Can do better here
 //        if(!mcsocket->read_line(value)){
-//          op_type=-1;
 //          return "Failure String";
 //        }
 
-        //TODO: Handle noreply
+        switch(command[0]){
+          case 's':{
+            op_type=1;
+            command = "SET";
+            return_string = "INSERT INTO test (key, value, flag, size) VALUES ('"+key+"', '"+value+"', "+std::to_string(flags)+", "+std::to_string(bytes)+") ON CONFLICT (key) DO UPDATE SET value = excluded.value, flag = excluded.flag, size = excluded.size";
+            break;
+          }
+          case 'a':{
+            op_type=2;
+            command = "ADD";
+            return_string = "INSERT INTO test (key, value, flag, size) VALUES ('"+key+"', '"+value+"', "+std::to_string(flags)+", "+std::to_string(bytes)+") ON CONFLICT (key) DO UPDATE SET value = excluded.value, flag = excluded.flag, size = excluded.size";
+            break;
+          }
+          case 'r':{
+            op_type=3;
+            command = "REPLACE";
+            return_string = "UPDATE test SET value = '"+value+"', flag = "+std::to_string(flags)+", size = "+std::to_string(bytes)+" WHERE key='"+key+"'";
+            break;
+          }
+          default:
+            return_string="Failed String";
+            break;
+        }
 
 //        auto new_line_del ("\r\n");
 //        found = memcached_query.find(new_line_del);
 //        value = memcached_query.substr(found+2);
 //        printf("%s\n",value.c_str());
 
-        return_string = "EXECUTE "+command+" ('"+key+"','"+value+"',"+std::to_string(flags)+","+std::to_string(bytes);
+//        return_string = "EXECUTE "+command+" ('"+key+"','"+value+"',"+std::to_string(flags)+","+std::to_string(bytes)+")";
 
         return return_string;
       }

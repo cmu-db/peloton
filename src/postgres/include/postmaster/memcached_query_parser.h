@@ -1,13 +1,11 @@
 
-#ifndef MEMCACHED_QUERY_PARSER_H
-#define MEMCACHED_QUERY_PARSER_H
+#pragma once
 
 #include <string>
 #include <cstring>
 #include <vector>
 #include <algorithm>
 
-#include "postmaster/memcached.h"
 
 namespace peloton {
 namespace memcached {
@@ -32,4 +30,3 @@ public:
 } // end memcached namespace
 } // end peloton namespace
 
-#endif
