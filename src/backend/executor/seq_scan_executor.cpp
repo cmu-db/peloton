@@ -27,6 +27,7 @@
 #include "backend/storage/tile.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace executor {
@@ -112,8 +113,12 @@ bool SeqScanExecutor::DExecute() {
     assert(target_table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
+    // Force to use occ txn manager if dirty read is forbidden
+    concurrency::TransactionManager &transaction_manager = forbid_dirty_read_ ?
+      concurrency::OptimisticTxnManager::GetInstance() :
+	  concurrency::TransactionManagerFactory::GetInstance();
+
+
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
@@ -177,6 +182,11 @@ bool SeqScanExecutor::DExecute() {
 
   return false;
 }
+
+void SeqScanExecutor::SetForbidDirtyRead(bool forbid_dirty_read){
+	forbid_dirty_read_ = forbid_dirty_read;
+}
+
 
 }  // namespace executor
 }  // namespace peloton
