@@ -95,6 +95,7 @@ class SsiTxnManager : public TransactionManager {
       assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
       txn_table_.insert(
           std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
+      LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     }
     return txn;
   }
@@ -166,7 +167,7 @@ class SsiTxnManager : public TransactionManager {
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    LOG_INFO("Add SSI reader");
+    LOG_INFO("Add SSI reader for txn %lu, %lu %lu", current_txn->GetTransactionId(), tile_group->GetTileGroupId(), tuple_id);
     auto txn_id = current_txn->GetTransactionId();
     ReadList *reader = new ReadList(txn_id);
     reader->txn_id = txn_id;
@@ -183,7 +184,7 @@ class SsiTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveSIReader(const oid_t &tile_group_id, const oid_t &tuple_id,
                       txn_id_t txn_id) {
-    LOG_INFO("Remove SSI reader for txn %lu", txn_id);
+    LOG_INFO("Remove SSI reader for txn %lu, %lu %lu", txn_id, tile_group_id, tuple_id);
     GetReadLock(tile_group_id, tuple_id);
 
     auto itr = sireadlocks[tile_group_id].find(tuple_id);

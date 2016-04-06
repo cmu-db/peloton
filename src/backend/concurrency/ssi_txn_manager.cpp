@@ -577,7 +577,10 @@ void SsiTxnManager::CleanUp() {
     std::chrono::milliseconds sleep_time(20);
     std::this_thread::sleep_for(sleep_time);
 
+    LOG_INFO("Acquire lock");
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    LOG_INFO("Acquired lock");
+    LOG_INFO("Cleanup: %d, %lu", this->stopped, txn_table_.size());
 
     // find smallest begin cid of the running transaction
     // init it as max() for the case that all transactions are committed

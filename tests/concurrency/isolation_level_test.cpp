@@ -2,11 +2,11 @@
 //
 //                         PelotonDB
 //
-// transaction_test.cpp
+// isolation_level_test.cpp
 //
 // Identification: tests/concurrency/isolation_level_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,8 +24,8 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  // CONCURRENCY_TYPE_OPTIMISTIC,
-  // CONCURRENCY_TYPE_PESSIMISTIC,
+  CONCURRENCY_TYPE_OPTIMISTIC,
+  CONCURRENCY_TYPE_PESSIMISTIC,
   CONCURRENCY_TYPE_SSI
   // CONCURRENCY_TYPE_SPECULATIVE_READ
 };
