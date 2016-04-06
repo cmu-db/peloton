@@ -49,6 +49,10 @@ class ConstantValueExpression : public AbstractExpression {
            "\n";
   }
 
+  AbstractExpression *Copy() const {
+    return new ConstantValueExpression(value);
+  }
+
  protected:
   Value value;
 };
