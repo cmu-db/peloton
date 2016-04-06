@@ -68,6 +68,20 @@ class MergeJoinPlan : public AbstractJoinPlan {
 
   const std::string GetInfo() const { return "MergeJoin"; }
 
+  AbstractPlan *Copy() const {
+    std::vector<JoinClause> new_join_clauses;
+    for (size_t i = 0; i < join_clauses_.size(); i++) {
+      new_join_clauses.push_back(JoinClause(join_clauses_[i].left_->Copy(),
+                                            join_clauses_[i].right_->Copy(),
+                                            join_clauses_[i].reversed_));
+    }
+
+    MergeJoinPlan *new_plan = new MergeJoinPlan(
+      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+      catalog::Schema::CopySchema(GetSchema()), new_join_clauses);
+    return new_plan;
+  }
+
  private:
   std::vector<JoinClause> join_clauses_;
 };

@@ -26,10 +26,14 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/tuple.h"
 
+#include "libcuckoo/cuckoohash_map.hh"
+
 namespace peloton {
 namespace concurrency {
 
 extern thread_local Transaction *current_txn;
+
+#define RUNNING_TXN_BUCKET_NUM 10
 
 class TransactionManager {
  public:
@@ -47,6 +51,10 @@ class TransactionManager {
   virtual bool IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
+
+  bool IsVisbleOrDirty(const storage::Tuple *, const ItemPointer &) {
+    return false;
+  }
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
@@ -102,37 +110,23 @@ class TransactionManager {
 
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
-  ;
 
   virtual Transaction *BeginTransaction() {
-    Transaction *txn =
-        new Transaction(GetNextTransactionId(), GetNextCommitId());
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
-    {
-      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
-      assert(std::find(running_txns_list_.begin(), running_txns_list_.end(), txn->GetTransactionId()) == running_txns_list_.end());
-      running_txns_list_.push_back(txn->GetTransactionId());
-    }
+    
+    RegisterTransaction(txn_id, begin_cid);
     return txn;
   }
 
   virtual void EndTransaction() {
-    {
-      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
-      assert(std::find(running_txns_list_.begin(), running_txns_list_.end(), current_txn->GetTransactionId()) != running_txns_list_.end());
-      running_txns_list_.remove(current_txn->GetTransactionId());
-    }
+    txn_id_t txn_id = current_txn->GetTransactionId();
+    DeregisterTransaction(txn_id);
+    
     delete current_txn;
     current_txn = nullptr;
-  }
-
-  virtual txn_id_t GetOldestLiveTransaction(){
-    {
-      std::lock_guard<std::mutex> lock(running_txns_list_mutex_);
-      if(running_txns_list_.size() == 0)
-        return INVALID_TXN_ID;
-      return running_txns_list_.front();
-    }
   }
 
   virtual Result CommitTransaction() = 0;
@@ -144,12 +138,39 @@ class TransactionManager {
     next_cid_ = START_CID;
   }
 
+
+  void RegisterTransaction(const txn_id_t &txn_id, const cid_t &begin_cid) {
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+  }
+
+  void DeregisterTransaction(const txn_id_t &txn_id) {
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+  }
+
+  // this function generates the maximum commit id of committed transactions.
+  // please note that this function only returns a "safe" value instead of a precise value.
+  cid_t GetMaxCommittedCid() {
+    cid_t min_running_cid = 0;
+    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
+      {
+        auto iter = running_txn_buckets_[i].lock_table();
+        for (auto &it : iter) {
+          if (min_running_cid == 0 || it.second < min_running_cid) {
+            min_running_cid = it.second;
+          }
+        }
+      }
+    }
+    assert(min_running_cid > 0);
+    return min_running_cid - 1;
+  }
+
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
-  // records all running transactions.
-  std::mutex running_txns_list_mutex_;
-  std::list<txn_id_t> running_txns_list_;
+
+  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
+  
 };
 }  // End storage namespace
 }  // End peloton namespace
