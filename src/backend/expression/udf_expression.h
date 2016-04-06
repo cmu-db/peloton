@@ -39,13 +39,20 @@ public:
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
 
+    Datum result = nullptr;
+
+    // Evaluate the argument expression into Value, and convert it into Datum
+    // for invoking OidFunctionCall
     std::vector<Datum> args_eval(m_args.size());
     for(size_t i = 0; i < m_args.size(); i++) {
       Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
 
-    Datum result = nullptr;
+    // Check if the number of arguments are less then maximum allowed.
+    assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
+
+    // Invoking the udf function call
     switch (m_args.size()) {
       case 0:
         result = OidFunctionCall0Coll(func_id, collation);
@@ -57,12 +64,16 @@ public:
         result = OidFunctionCall2Coll(func_id, collation, args_eval[0], args_eval[1]);
         break;
       case 3:
+        result = OidFunctionCall3Coll(func_id, collation, args_eval[0], args_eval[1], args_eval[2]);
+      case 4:
+        result = OidFunctionCall4Coll(func_id, collation, args_eval[0], args_eval[1], args_eval[2], args_eval[3]);
       default:
+        // This part should not be reached.
         break;
     }
 
-    auto result_value = bridge::TupleTransformer::GetValue(result, return_type);
-    return result_value;
+    // Convert returned Datum into peloton's Value
+    return bridge::TupleTransformer::GetValue(result, return_type);
   }
 
   std::string DebugInfo(const std::string &spacer) const {

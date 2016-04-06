@@ -157,6 +157,11 @@ class ExpressionUtil {
                                                   ExpressionType et,
                                                   AbstractExpression *lc,
                                                   AbstractExpression *rc);
+
+  static AbstractExpression *UDFExpressionFactory(Oid function_id,
+                                                  Oid collation,
+                                                  Oid return_type,
+                                                  std::vector<expression::AbstractExpression*> args);
 };
 
 }  // End expression namespace

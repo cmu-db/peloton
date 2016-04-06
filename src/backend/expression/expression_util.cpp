@@ -38,6 +38,7 @@
 #include "backend/expression/vector_comparison_expression.h"
 #include "backend/expression/coalesce_expression.h"
 #include "backend/expression/nullif_expression.h"
+#include "backend/expression/udf_expression.h"
 #include <json_spirit.h>
 
 namespace peloton {
@@ -911,7 +912,16 @@ AbstractExpression *ExpressionUtil::NullIfFactory(
   return new expression::NullIfExpression(vt, expressions);
 }
 
-// Given an expression type and a valuetype, find the best
+AbstractExpression *UDFExpressionFactory(Oid function_id,
+                                         Oid collation,
+                                         Oid return_type,
+                                         std::vector<expression::AbstractExpression*> args) {
+
+  return new expression::UDFExpression(function_id, collation, return_type, args);
+}
+
+
+  // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
 // class-specific serialization from serialize_io. */
