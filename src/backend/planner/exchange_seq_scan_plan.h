@@ -31,6 +31,9 @@ public:
 
   const std::string GetInfo() const { return "ExchangeSeqScan"; }
 
+  AbstractPlan *Copy() const {
+     return new ExchangeSeqScanPlan(GetTable(), GetPredicate()->Copy(), GetColumnIds());
+  }
 };
 
 }  // namespace planner
