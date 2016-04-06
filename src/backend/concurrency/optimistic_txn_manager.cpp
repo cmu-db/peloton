@@ -161,17 +161,19 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) == MAX_CID);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+         MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  
-  
+
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
   new_tile_group_header->SetPrevItemPointer(
@@ -212,13 +214,16 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) == MAX_CID);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+         MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   // Set up double linked list
@@ -242,7 +247,7 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  
+
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
@@ -318,16 +323,20 @@ Result OptimisticTxnManager::CommitTransaction() {
           continue;
         } else {
           if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID && tile_group_header->GetBeginCommitId(
-                                        tuple_slot) <= end_commit_id &&
+                  INITIAL_TXN_ID &&
+              tile_group_header->GetBeginCommitId(tuple_slot) <=
+                  end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
             // the version is not owned by other txns and is still visible.
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu", tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu", tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu", tile_group_header->GetEndCommitId(tuple_slot));
+        LOG_INFO("transaction id=%lu",
+                 tile_group_header->GetTransactionId(tuple_slot));
+        LOG_INFO("begin commit id=%lu",
+                 tile_group_header->GetBeginCommitId(tuple_slot));
+        LOG_INFO("end commit id=%lu",
+                 tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
       }
@@ -378,7 +387,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer delete_location(tile_group_id, tuple_slot);
-        
+
         // logging.
         log_manager.LogDelete(end_commit_id, delete_location);
 

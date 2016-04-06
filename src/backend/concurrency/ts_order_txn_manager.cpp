@@ -181,7 +181,8 @@ bool TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
@@ -210,7 +211,8 @@ bool TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -244,7 +246,6 @@ void TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
     // update an inserted version
     current_txn->RecordUpdate(old_location.block, old_location.offset);
   }
-
 }
 
 void TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
@@ -415,6 +416,5 @@ Result TsOrderTxnManager::AbortTransaction() {
   EndTransaction();
   return Result::RESULT_ABORTED;
 }
-
 }
 }
