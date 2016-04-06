@@ -22,6 +22,53 @@ add_one(PG_FUNCTION_ARGS) {
     PG_RETURN_INT32(arg + 1);
 }
 
+/* by value */
+PG_FUNCTION_INFO_V1(add);
+
+Datum
+add(PG_FUNCTION_ARGS) {
+    int32 arg0 = PG_GETARG_INT32(0);
+    int32 arg1 = PG_GETARG_INT32(1);
+
+    PG_RETURN_INT32(arg0 + arg1);
+}
+
+
+/* by value */
+PG_FUNCTION_INFO_V1(minus);
+
+Datum
+minus(PG_FUNCTION_ARGS) {
+    int32 arg0 = PG_GETARG_INT32(0);
+    int32 arg1 = PG_GETARG_INT32(1);
+
+    PG_RETURN_INT32(arg0 - arg1);
+}
+
+
+/* by value */
+PG_FUNCTION_INFO_V1(multiply);
+
+Datum
+multiply(PG_FUNCTION_ARGS) {
+    int32 arg0 = PG_GETARG_INT32(0);
+    int32 arg1 = PG_GETARG_INT32(1);
+
+    PG_RETURN_INT32(arg0 * arg1);
+}
+
+
+/* by value */
+PG_FUNCTION_INFO_V1(divide);
+
+Datum
+divide(PG_FUNCTION_ARGS) {
+    int32 arg0 = PG_GETARG_INT32(0);
+    int32 arg1 = PG_GETARG_INT32(1);
+
+    PG_RETURN_INT32(arg0 / arg1);
+}
+
 /* by reference, fixed length */
 
 PG_FUNCTION_INFO_V1(add_one_float8);
