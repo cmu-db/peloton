@@ -109,6 +109,13 @@ class VectorComparisonExpression : public AbstractExpression {
     return (spacer + "VectorComparisonExpression\n");
   }
 
+  AbstractExpression *Copy() const {
+    return new VectorComparisonExpression<OP, ValueExtractorLeft,
+                                          ValueExtractorRight>(
+        GetExpressionType(), CopyUtil(GetLeft()), CopyUtil(GetRight()),
+        m_quantifier);
+  }
+
  private:
   QuantifierType m_quantifier = QUANTIFIER_TYPE_NONE;
 };

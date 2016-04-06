@@ -36,6 +36,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
  public:
   WriteAheadFrontendLogger(void);
 
+  WriteAheadFrontendLogger(bool for_testing);
+
   ~WriteAheadFrontendLogger(void);
 
   void FlushLogRecords(void);
@@ -68,13 +70,15 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
 
-  void TruncateLog(int);
+  void TruncateLog(txn_id_t);
 
   void SetLogDirectory(char *);
 
   void InitLogDirectory();
 
   std::string GetFileNameFromVersion(int);
+
+  txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
 
  private:
   std::string GetLogFileName(void);
@@ -109,11 +113,16 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   int log_file_cursor_;
 
-  std::string peloton_log_directory = "peloton_log";
+  // for recovery from in memory buffer instead of file.
+  char *input_log_buffer;
+
+  std::string peloton_log_directory = "pl_log";
 
   std::string LOG_FILE_PREFIX = "peloton_log_";
 
   std::string LOG_FILE_SUFFIX = ".log";
+
+  txn_id_t max_commit_id;
 };
 
 }  // namespace logging

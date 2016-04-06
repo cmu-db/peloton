@@ -47,6 +47,10 @@ class ResultPlan : public AbstractPlan {
 
   inline std::string GetInfo() const { return "Result"; }
 
+  AbstractPlan *Copy() const {
+    return new ResultPlan(new storage::Tuple(*tuple_), backend_);
+  }
+
  private:
   /**
    * @brief A backend is needed to create physical tuple
