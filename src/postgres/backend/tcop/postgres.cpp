@@ -83,7 +83,9 @@
 #include "backend/logging/log_manager.h"
 
 // TODO: Memcached Changes
+
 #include "postmaster/memcached.h"
+
 
 /* ----------------
  *		global variables
@@ -4354,6 +4356,18 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       printf("query_line:%s\n",query_line.c_str());
       // get a flag of the operation
       MC_OP op;
+      std::string value;
+
+      if(op_type>0){
+        if(!mc_sock.read_line(value)){
+          op_type=-1;
+        }
+        else{
+          auto temp_loc = query_line.find("$$$$");
+          query_line.replace(temp_loc, 4, value);
+        }
+      }
+
       switch (op_type){
         case 0:{
           op = GET;

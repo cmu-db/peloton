@@ -269,7 +269,7 @@ static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
 char *memcached_dbname = strdup("postgres");
-char *memcached_username = strdup("siddharth");
+char *memcached_username = strdup("nitin");
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
