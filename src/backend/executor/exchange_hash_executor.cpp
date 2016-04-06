@@ -62,12 +62,12 @@ void ExchangeHashExecutor::BuildHashTableThreadMain( HashMapType *table, Logical
         inner.insert(std::make_pair(child_tile_itr, tuple_id));
       }, MapValueType());
 
-      bool ok = table->update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
+      table->update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
         inner.insert(std::make_pair(child_tile_itr, tuple_id));
       });
 
       // There is no way second update fail.
-      assert(ok == true);
+      // assert(ok == true);
     }
   }
 
