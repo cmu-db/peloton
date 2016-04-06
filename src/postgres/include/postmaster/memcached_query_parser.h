@@ -12,12 +12,11 @@ namespace memcached {
 class QueryParser {
 private:
   std::string memcached_query;
-  void parseQuery();
 
 public:
+  void parseQuery();
   QueryParser(std::string query) {
     memcached_query = query;
-    parseQuery();
   };
 
   ~QueryParser() {};
