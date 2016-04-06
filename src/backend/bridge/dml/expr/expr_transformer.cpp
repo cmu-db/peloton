@@ -323,6 +323,9 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
       i++;
     }
 
+    // Check if the number of arguments are less then maximum allowed.
+    assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
+
     return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
 //
 //    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
