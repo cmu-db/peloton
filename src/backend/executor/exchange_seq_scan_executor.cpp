@@ -121,7 +121,7 @@ bool ExchangeSeqScanExecutor::DExecute() {
   return false;
 }
 
-void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (oid_t current_tile_group_offset) {
+void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (oid_t assigned_tile_group_offset) {
   LOG_INFO("Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, executor: %s", GetRawNode()->GetInfo().c_str());
 
   bool seq_failure = false;
@@ -129,7 +129,7 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (o
     concurrency::TransactionManagerFactory::GetInstance();
 
   auto tile_group =
-    target_table_->GetTileGroup(current_tile_group_offset_++);
+    target_table_->GetTileGroup(assigned_tile_group_offset);
   auto tile_group_header = tile_group->GetHeader();
 
   oid_t active_tuple_count = tile_group->GetNextTupleSlot();
