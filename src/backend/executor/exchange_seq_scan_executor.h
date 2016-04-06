@@ -27,11 +27,8 @@ public:
   explicit ExchangeSeqScanExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context);
 
-  void SeqScanThreadMain(ExchangeSeqScanExecutor *executor,
-                         oid_t current_tile_group_offset_,
-                         BlockingQueue<AbstractParallelTaskResponse *> *queue);
 
-  void ThreadExecute(oid_t current_tile_group_offset);
+  void ThreadExecute(oid_t assigned_tile_group_offset);
 
 protected:
   bool DInit();
@@ -56,7 +53,7 @@ private:
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
 
-private:
+  /** @brief flag if paralleling done. */
   bool parallelize_done_;
 
 };
