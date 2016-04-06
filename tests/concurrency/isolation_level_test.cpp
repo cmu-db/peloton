@@ -24,9 +24,9 @@ namespace test {
 class IsolationLevelTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC,
-  // CONCURRENCY_TYPE_SSI
+  // CONCURRENCY_TYPE_OPTIMISTIC,
+  // CONCURRENCY_TYPE_PESSIMISTIC,
+  CONCURRENCY_TYPE_SSI
   // CONCURRENCY_TYPE_SPECULATIVE_READ
 };
 
@@ -405,19 +405,19 @@ void SIAnomalyTest1() {
 //   }
 // }
 
-TEST_F(IsolationLevelTest, SerializableTest) {
-  for (auto test_type : TEST_TYPES) {
-    concurrency::TransactionManagerFactory::Configure(
-        test_type, ISOLATION_LEVEL_TYPE_FULL);
-    DirtyWriteTest();
-    DirtyReadTest();
-    FuzzyReadTest();
-    // WriteSkewTest();
-    ReadSkewTest();
-    PhantomTest();
-    SIAnomalyTest1();
-  }
-}
+// TEST_F(IsolationLevelTest, SerializableTest) {
+//   for (auto test_type : TEST_TYPES) {
+//     concurrency::TransactionManagerFactory::Configure(
+//         test_type, ISOLATION_LEVEL_TYPE_FULL);
+//     DirtyWriteTest();
+//     DirtyReadTest();
+//     FuzzyReadTest();
+//     // WriteSkewTest();
+//     ReadSkewTest();
+//     PhantomTest();
+//     SIAnomalyTest1();
+//   }
+// }
 
 // FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
 TEST_F(IsolationLevelTest, StressTest) {
@@ -429,9 +429,9 @@ TEST_F(IsolationLevelTest, StressTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, ISOLATION_LEVEL_TYPE_FULL);
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable(num_key));
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);  
     scheduler.SetConcurrent(true);
