@@ -912,7 +912,7 @@ AbstractExpression *ExpressionUtil::NullIfFactory(
   return new expression::NullIfExpression(vt, expressions);
 }
 
-AbstractExpression *UDFExpressionFactory(Oid function_id,
+AbstractExpression *ExpressionUtil::UDFExpressionFactory(Oid function_id,
                                          Oid collation,
                                          Oid return_type,
                                          std::vector<expression::AbstractExpression*> args) {

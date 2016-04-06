@@ -48,7 +48,7 @@ public:
       Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
-    
+
     // Invoking the udf function call
     switch (m_args.size()) {
       case 0:
