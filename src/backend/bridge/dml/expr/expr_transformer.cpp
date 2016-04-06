@@ -34,7 +34,6 @@
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
-#include "backend/expression/udf_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -315,6 +314,7 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
     std::vector<expression::AbstractExpression*> m_args;
 
+    // Convert arguments to Peloton's expression
     int i = 0;
     ListCell *arg;
     foreach (arg, args) {
@@ -323,8 +323,7 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
       i++;
     }
 
-    auto udf_expr = new expression::UDFExpression(function_id, collation, rettype, m_args);
-    return udf_expr;
+    return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
 //
 //    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
 //    return TransformExpr(first_child);
