@@ -559,9 +559,6 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
-    auto tile_group =
-        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-
     for (auto &tuple_entry : tile_group_entry.second) {
 
       auto tuple_slot = tuple_entry.first;
@@ -585,10 +582,6 @@ void SsiTxnManager::CleanUp() {
     std::this_thread::sleep_for(sleep_time);
 
     std::lock_guard<std::mutex> lock(txn_table_mutex_);
-
-    if (txn_table_.empty()) {
-      return;
-    }
 
     // find smallest begin cid of the running transaction
     // init it as max() for the case that all transactions are committed
@@ -628,7 +621,7 @@ void SsiTxnManager::CleanUp() {
       }
     }
 
-  } // End of while 
+  } // End of outer while 
 }
 
 }  // End storage namespace
