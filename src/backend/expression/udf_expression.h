@@ -26,10 +26,10 @@ private:
   Oid func_id;
   Oid collation;
   Oid return_type;
-  const std::vector<expression::AbstractExpression*> &m_args;
+  std::vector<expression::AbstractExpression*> m_args;
 
 public:
-  UDFExpression(Oid id, Oid col, Oid rettype, const std::vector<expression::AbstractExpression*> &args)
+  UDFExpression(Oid id, Oid col, Oid rettype, std::vector<expression::AbstractExpression*> args)
     : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {
     func_id = id;
     collation = col;
@@ -42,7 +42,8 @@ public:
 
     std::vector<Datum> args_eval(m_args.size());
     for(size_t i = 0; i < m_args.size(); i++) {
-      args_eval[i] = bridge::TupleTransformer::GetDatum(m_args[i]->Evaluate(tuple1, tuple2, context));
+      Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
+      args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
 
     Datum result;
