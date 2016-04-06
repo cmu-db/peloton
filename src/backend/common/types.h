@@ -442,7 +442,10 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_RESULT = 70,
 
   // Test
-  PLAN_NODE_TYPE_MOCK = 80
+  PLAN_NODE_TYPE_MOCK = 80,
+
+  PLAN_NODE_TYPE_EXCHANGE_SEQSCAN = 200
+
 };
 
 //===--------------------------------------------------------------------===//
