@@ -12,6 +12,7 @@
 
 #include "plan_executor.h"
 #include <cassert>
+#include <vector>
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
@@ -31,6 +32,12 @@ namespace bridge {
 executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn);
 
+/*
+ * Added for network invoking efficiently
+ */
+executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
+                                                concurrency::Transaction *txn);
+
 executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context);
@@ -42,7 +49,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         ParamListInfo param_list,
+                                         const std::vector<Value> &params,
                                          TupleDesc tuple_desc) {
   peloton_status p_status;
 
@@ -67,7 +74,9 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
-  auto executor_context = BuildExecutorContext(param_list, txn);
+  // Use const std::vector<Value> &params to make it more elegant for network
+  auto executor_context = BuildExecutorContext(params, txn);
+  //auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
 
@@ -181,6 +190,15 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn) {
   return new executor::ExecutorContext(
       txn, PlanTransformer::BuildParams(param_list));
+}
+
+/**
+ * @brief Build Executor Context
+ */
+executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
+                                                concurrency::Transaction *txn) {
+  return new executor::ExecutorContext(
+      txn, params);
 }
 
 /**

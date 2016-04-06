@@ -196,38 +196,48 @@ peloton_dml(PlanState *planstate,
   }
 
   /*
-   * To execute a plan, we need prepare three stuff: plan, param_list and TupleDesc
+   * To execute a plan, we need prepare three stuff: TupleDesc, plan and param_list
    * Plan is a class which can be SerializeTo
    * Param_list can be transformed to value using BuildParams() and be SerializeTo
    * TupleDesc is nested structure in Postgres, we can define a nested message in protobuf
+   *
+   * The query plan message of protobuf is:
+   * 1. type      : int       casted from PlanNodeType
+   * 2. TupleDesc : message   converted from TupleDesc
+   * 3. num value : int       the size of value_list
+   * 4. value_list: bytes     value Serialize
+   * 5. plan      : bytes     plan Serialize
    */
 
-  // Prepare QueryPlanExecRequest
+  // First set type
   const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
   auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
   peloton::networking::QueryPlanExecRequest request;
   request.set_plan_type(static_cast<int>(type));
 
-  // First prepare TupleDesc and set it into QueryPlanExecRequest
+  // Second prepare TupleDesc and set it into QueryPlanExecRequest
   peloton::networking::TupleDescMsg tuple_desc_msg;
   peloton::networking::CreateTupleDesc(tuple_desc, tuple_desc_msg);
   request.set_allocated_tuple_dec(&tuple_desc_msg);
 
-  // Second Serialize plan with plan
-  peloton::CopySerializeOutput output;
-  mapped_plan_ptr->SerializeTo(output);
-
-  // Third Serialize plan with param_values from param_list
+  // Third set size of parameter list
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
   int param_count = param_values.size();
+  request.set_param_num(param_count);
+
+  // Fourth Serialize param_values from param_list
+  peloton::CopySerializeOutput output_params;
   for (int it = 0; it < param_count; it++) {
-      param_values[it].SerializeTo(output);
+      param_values[it].SerializeTo(output_params);
   }
+  request.set_param_list(output_params.Data(), output_params.Size());
 
-  // Set plan (bytes)
-  request.set_plan(output.Data(), output.Size());
+  // Fifth Serialize plan with plan
+  peloton::CopySerializeOutput output_plan;
+  mapped_plan_ptr->SerializeTo(output_plan);
+  request.set_plan(output_plan.Data(), output_plan.Size());
 
-  // Send the request
+  // Finally send the request
   pclient->QueryPlan(&request, NULL);
 
   // Ignore empty plans
@@ -246,9 +256,8 @@ peloton_dml(PlanState *planstate,
   // Execute the plantree
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
-                                                        param_list,
+                                                        param_values,
                                                         tuple_desc);
-
     // Clean up the plantree
     // Not clean up now ! This is cached !
     //peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);

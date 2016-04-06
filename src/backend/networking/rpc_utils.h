@@ -24,7 +24,17 @@ namespace networking {
 //===----------------------------------------------------------------------===//
 //   Message Creation Functions
 //===----------------------------------------------------------------------===//
-void CreateTupleDesc(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
+
+/*
+ * CreateTupleDescMsg is used when a node sends query plan
+ */
+void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
+
+/*
+ * When executing the query plan, a node must parse the received msg and convert it
+ * to Postgres's TupleDesc
+ */
+TupleDesc ParseTupleDescMsg(TupleDescMsg& tuple_desc_msg);
 
 } // namespace message
 } // namespace peloton
