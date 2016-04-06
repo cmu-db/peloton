@@ -40,9 +40,12 @@ class WriteAheadBackendLogger : public BackendLogger {
                             ItemPointer insert_location,
                             ItemPointer delete_location, void *data = nullptr);
 
- private:
+  cid_t GetHighestLoggedCommitId();
 
+ private:
   CopySerializeOutput output_buffer;
+
+  cid_t highest_logged_commit_id = 0;
 };
 
 }  // namespace logging

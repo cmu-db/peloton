@@ -43,7 +43,7 @@ enum LoggingType {
 
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL  = 1,
+  CHECKPOINT_TYPE_NORMAL = 1,
 };
 //===--------------------------------------------------------------------===//
 // Filesystem directories
@@ -352,12 +352,12 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OPTIMISTIC = 0, // optimistic
-  CONCURRENCY_TYPE_PESSIMISTIC = 1, // pessimistic
-  CONCURRENCY_TYPE_SPECULATIVE_READ = 2, // optimistic + speculative read
-  CONCURRENCY_TYPE_EAGER_WRITE = 3, // pessimistic + eager write
-  CONCURRENCY_TYPE_TO = 4,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5   // serializable snapshot isolation
+  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
@@ -678,7 +678,11 @@ enum LogRecordType {
   // DML records for Write behind logging
   LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
   LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
-  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
+  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
+
+  // Record for delimiting transactions
+  // includes max persistent commit_id
+  LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;

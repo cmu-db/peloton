@@ -63,7 +63,7 @@ storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
 void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
 
 // Wrappers
-storage::DataTable *GetTable(TupleRecord tupleRecord);
+storage::DataTable *GetTable(TupleRecord &tupleRecord);
 
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint

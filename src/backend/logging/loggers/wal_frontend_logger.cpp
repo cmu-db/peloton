@@ -64,7 +64,7 @@ void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
 // Wrappers
-storage::DataTable *GetTable(TupleRecord tupleRecord);
+storage::DataTable *GetTable(TupleRecord &tupleRecord);
 
 int ExtractNumberFromFileName(const char *name);
 
@@ -156,6 +156,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   size_t global_queue_size = global_queue.size();
+  bool write_del = false;
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
     if (this->FileSwitchCondIsTrue()) {
@@ -172,8 +173,24 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
       this->max_commit_id = record->GetTransactionId();
     }
+    write_del = true;
   }
 
+  if (write_del) {
+    TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
+                                    this->max_collected_commit_id);
+    delimiter_rec.Serialize(output_buffer);
+    if (this->FileSwitchCondIsTrue()) {
+      fflush_and_sync(log_file, log_file_fd, fsync_count);
+      this->CreateNewLogFile(true);
+    }
+    if (log_file_fd != -1) {
+      fwrite(delimiter_rec.GetMessage(), sizeof(char),
+             delimiter_rec.GetMessageLength(), log_file);
+      LOG_INFO("Wrote delimiter log file with commit_id %ld",
+               this->max_collected_commit_id);
+    }
+  }
   fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
@@ -221,7 +238,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
       TupleRecord *tuple_record;
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+        case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+        case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Check for torn log write
           TransactionRecord txn_rec(record_type);
           if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
@@ -302,7 +320,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
             assert(commit_id != INVALID_CID);
-            CommitTransactionRecovery(commit_id);
+            pending_commits.insert(commit_id);
             break;
 
           case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -311,6 +329,20 @@ void WriteAheadFrontendLogger::DoRecovery() {
             recovery_txn_table[tuple_record->GetTransactionId()].push_back(
                 tuple_record);
             break;
+          case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+            auto it = pending_commits.begin();
+            for (; it != pending_commits.end(); it++) {
+              cid_t curr = *it;
+              if (curr > commit_id) {
+                break;
+              }
+              CommitTransactionRecovery(curr);
+            }
+            if (it != pending_commits.begin()) {
+              pending_commits.erase(pending_commits.begin(), it);
+            }
+            break;
+          }
 
           default:
             LOG_INFO("Got Type as TXN_INVALID");
@@ -322,6 +354,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
+    pending_commits.clear();
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
@@ -753,7 +786,7 @@ void SkipTupleRecordBody(FILE *log_file, size_t log_file_size) {
  * @param tuple record
  * @return data table
  */
-storage::DataTable *GetTable(TupleRecord tuple_record) {
+storage::DataTable *GetTable(TupleRecord &tuple_record) {
   // Get db, table, schema to insert tuple
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db =

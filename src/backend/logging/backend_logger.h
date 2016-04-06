@@ -27,7 +27,7 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 
 class BackendLogger : public Logger {
- friend class FrontendLogger;
+  friend class FrontendLogger;
 
  public:
   BackendLogger();
@@ -49,15 +49,14 @@ class BackendLogger : public Logger {
 
   // Construct a log record with tuple information
   virtual LogRecord *GetTupleRecord(LogRecordType log_record_type,
-                                    txn_id_t txn_id,
-                                    oid_t table_oid,
-                                    oid_t db_oid,
-                                    ItemPointer insert_location,
+                                    txn_id_t txn_id, oid_t table_oid,
+                                    oid_t db_oid, ItemPointer insert_location,
                                     ItemPointer delete_location,
                                     void *data = nullptr) = 0;
 
- protected:
+  virtual cid_t GetHighestLoggedCommitId() { return 0; };
 
+ protected:
   std::vector<std::unique_ptr<LogRecord>> local_queue;
   std::mutex local_queue_mutex;
 
