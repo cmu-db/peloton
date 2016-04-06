@@ -118,6 +118,14 @@ class TransactionTestsUtil {
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
   static storage::DataTable *CreateTable();
+
+  // Create the same table as CreateTable with primary key constrainst on id and
+  // unique key constraints on value
+  static storage::DataTable *CreatePrimaryKeyUniqueKeyTable();
+
+  // Create the same table with combined primary key constrainst on (id, value)
+  static storage::DataTable *CreateCombinedPrimaryKeyTable();
+
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteRead(concurrency::Transaction *txn,
@@ -127,7 +135,7 @@ class TransactionTestsUtil {
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
-                            storage::DataTable *table, int old_value, int new_value);
+                                   storage::DataTable *table, int old_value, int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
@@ -249,7 +257,7 @@ class TransactionThread {
         int old_value = id;
         int new_value = value;
         execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
-          txn, table, old_value, new_value);
+            txn, table, old_value, new_value);
         break;
       }
       case TXN_OP_ABORT: {
