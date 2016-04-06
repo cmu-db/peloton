@@ -14,8 +14,9 @@
 namespace peloton {
 namespace executor {
 
-class ExchangeSeqScanExecutor : public AbstractExchangeExecutor, public AbstractScanExecutor {
-public:
+class ExchangeSeqScanExecutor : public AbstractExchangeExecutor,
+                                public AbstractScanExecutor {
+ public:
   ExchangeSeqScanExecutor(const ExchangeSeqScanExecutor &) = delete;
 
   ExchangeSeqScanExecutor &operator=(const ExchangeSeqScanExecutor &) = delete;
@@ -27,15 +28,14 @@ public:
   explicit ExchangeSeqScanExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context);
 
-
   void ThreadExecute(oid_t assigned_tile_group_offset);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -55,7 +55,6 @@ private:
 
   /** @brief flag if paralleling done. */
   bool parallelize_done_;
-
 };
 
 }  // executor

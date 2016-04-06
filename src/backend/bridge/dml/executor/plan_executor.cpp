@@ -260,7 +260,7 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PLAN_NODE_TYPE_EXCHANGE_SEQSCAN:
-      child_executor new executor::ExchangeSeqScanExecutor(plan, executor_context);
+      child_executor = new executor::ExchangeSeqScanExecutor(plan, executor_context);
 
     default:
       LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);

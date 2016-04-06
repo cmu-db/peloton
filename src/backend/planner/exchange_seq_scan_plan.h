@@ -27,12 +27,18 @@ public:
                    seq_scan_plan->GetColumnIds())
       {}
 
+  ExchangeSeqScanPlan(const ExchangeSeqScanPlan *seq_scan_plan)
+    : AbstractScan(seq_scan_plan->GetTable(),
+                   seq_scan_plan->GetPredicate()->Copy(),
+                   seq_scan_plan->GetColumnIds())
+      {}
+
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_EXCHANGE_SEQSCAN; }
 
   const std::string GetInfo() const { return "ExchangeSeqScan"; }
 
   AbstractPlan *Copy() const {
-     return new ExchangeSeqScanPlan(GetTable(), GetPredicate()->Copy(), GetColumnIds());
+     return new ExchangeSeqScanPlan(this);
   }
 };
 

@@ -9,25 +9,20 @@
 namespace peloton {
 namespace executor {
 
-enum ParallelTaskStatus {
-  Unknown,
-  HasRetValue,
-  NoRetValue,
-  Abort
-};
+enum ParallelTaskStatus { Unknown, HasRetValue, NoRetValue, Abort };
 
 class AbstractParallelTaskResponse {
-public:
+ public:
   AbstractParallelTaskResponse();
   AbstractParallelTaskResponse(ParallelTaskStatus status);
 
   ParallelTaskStatus GetStatus();
 
   virtual LogicalTile *GetOutput() = 0;
-private:
-  ParallelTaskStatus  status_;
-};
 
+ private:
+  ParallelTaskStatus status_;
+};
 
 }  // namespace executor
 }  // namespace peloton

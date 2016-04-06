@@ -12,15 +12,16 @@ namespace peloton {
 namespace executor {
 
 class AbstractExchangeExecutor {
-public:
+ public:
   AbstractExchangeExecutor(const AbstractExchangeExecutor &) = delete;
-  AbstractExchangeExecutor &operator=(const AbstractExchangeExecutor&) = delete;
+  AbstractExchangeExecutor &operator=(const AbstractExchangeExecutor &) =
+      delete;
   AbstractExchangeExecutor(AbstractExchangeExecutor &&) = delete;
   AbstractExchangeExecutor &operator=(AbstractExchangeExecutor &&) = delete;
 
   explicit AbstractExchangeExecutor();
 
-protected:
+ protected:
   BlockingQueue<AbstractParallelTaskResponse *> queue_;
 };
 

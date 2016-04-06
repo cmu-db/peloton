@@ -15,9 +15,9 @@
 namespace peloton {
 namespace executor {
 
-ExchangeSeqScanExecutor::ExchangeSeqScanExecutor(const planner::AbstractPlan *node,
-                                                 ExecutorContext *executor_context)
-  : AbstractScanExecutor(node, executor_context) {}
+ExchangeSeqScanExecutor::ExchangeSeqScanExecutor(
+    const planner::AbstractPlan *node, ExecutorContext *executor_context)
+    : AbstractScanExecutor(node, executor_context) {}
 
 bool ExchangeSeqScanExecutor::DInit() {
   parallelize_done_ = false;
@@ -46,20 +46,25 @@ bool ExchangeSeqScanExecutor::DInit() {
 }
 
 bool ExchangeSeqScanExecutor::DExecute() {
-  LOG_INFO("Exchange Seq Scan executor:: start execute, children_size %lu", children_.size());
+  LOG_INFO("Exchange Seq Scan executor:: start execute, children_size %lu",
+           children_.size());
 
   if (!parallelize_done_) {
-    // When exchange_seq_scan_executor reads from a table, just paralleling each part of this table.
+    // When exchange_seq_scan_executor reads from a table, just paralleling each
+    // part of this table.
     if (children_.size() == 0) {
       assert(target_table_ != nullptr);
       assert(column_ids_.size() != 0);
       assert(current_tile_group_offset_ == START_OID);
 
       while (current_tile_group_offset_ < table_tile_group_count_) {
-        LOG_TRACE("ExchangeSeqScanExecutor :: submit task to thread pool, dealing with %lu tile.",
-                  current_tile_group_offset_);
-        std::function<void()> f_seq_scan = std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
-                                                     current_tile_group_offset_);
+        LOG_TRACE(
+            "ExchangeSeqScanExecutor :: submit task to thread pool, dealing "
+            "with %lu tile.",
+            current_tile_group_offset_);
+        std::function<void()> f_seq_scan =
+            std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
+                      current_tile_group_offset_);
         ThreadManager::GetInstance().AddTask(f_seq_scan);
 
         current_tile_group_offset_++;
@@ -67,8 +72,10 @@ bool ExchangeSeqScanExecutor::DExecute() {
 
       parallelize_done_ = true;
     } else {
-      // When exchange_seq_scan_executor, should use a single thread to create parallel tasks.
-      // TODO: Use one single thead here to keep fetching logical tiles from child_, ignore it now.
+      // When exchange_seq_scan_executor, should use a single thread to create
+      // parallel tasks.
+      // TODO: Use one single thead here to keep fetching logical tiles from
+      // child_, ignore it now.
       assert(children_.size() == 1);
       LOG_TRACE("Exchange Seq Scan executor :: 1 child ");
       assert(target_table_ == nullptr);
@@ -82,7 +89,7 @@ bool ExchangeSeqScanExecutor::DExecute() {
           for (oid_t tuple_id : *tile) {
             expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
             if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
-              .IsFalse()) {
+                    .IsFalse()) {
               tile->RemoveVisibility(tuple_id);
             }
           }
@@ -121,15 +128,17 @@ bool ExchangeSeqScanExecutor::DExecute() {
   return false;
 }
 
-void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (oid_t assigned_tile_group_offset) {
-  LOG_INFO("Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, executor: %s", GetRawNode()->GetInfo().c_str());
+void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset) {
+  LOG_INFO(
+      "Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, "
+      "executor: %s",
+      GetRawNode()->GetInfo().c_str());
 
   bool seq_failure = false;
   auto &transaction_manager =
-    concurrency::TransactionManagerFactory::GetInstance();
+      concurrency::TransactionManagerFactory::GetInstance();
 
-  auto tile_group =
-    target_table_->GetTileGroup(assigned_tile_group_offset);
+  auto tile_group = target_table_->GetTileGroup(assigned_tile_group_offset);
   auto tile_group_header = tile_group->GetHeader();
 
   oid_t active_tuple_count = tile_group->GetNextTupleSlot();
@@ -144,21 +153,23 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (o
       // if the tuple is visible, then perform predicate evaluation.
       if (predicate_ == nullptr) {
         position_list.push_back(tuple_id);
-        auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
-        if(!res){
+        auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(),
+                                                   tuple_id);
+        if (!res) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
           seq_failure = true;
           break;
         }
       } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(
-          tile_group.get(), tuple_id);
-        auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
-          .IsTrue();
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                             tuple_id);
+        auto eval =
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
-          if(!res){
+          auto res = transaction_manager.PerformRead(
+              tile_group->GetTileGroupId(), tuple_id);
+          if (!res) {
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
             seq_failure = true;
             break;
@@ -171,7 +182,7 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (o
   AbstractParallelTaskResponse *response = nullptr;
 
   if (seq_failure) {
-     response = new ParallelSeqScanTaskResponse(Abort);
+    response = new ParallelSeqScanTaskResponse(Abort);
   } else {
     if (position_list.size() == 0) {
       response = new ParallelSeqScanTaskResponse(NoRetValue);
@@ -181,7 +192,8 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t current_tile_group_offset_) (o
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
 
-      response = new ParallelSeqScanTaskResponse(HasRetValue, logical_tile.release());
+      response =
+          new ParallelSeqScanTaskResponse(HasRetValue, logical_tile.release());
     }
   }
 
