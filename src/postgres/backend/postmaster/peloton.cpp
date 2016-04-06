@@ -195,11 +195,15 @@ peloton_dml(PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
+  //===----------------------------------------------------------------------===//
+  //   Send a query plan through network
+  //   We can use a more clean wrapper to send the plan in the future
+  //===----------------------------------------------------------------------===//
   /*
    * To execute a plan, we need prepare three stuff: TupleDesc, plan and param_list
-   * Plan is a class which can be SerializeTo
-   * Param_list can be transformed to value using BuildParams() and be SerializeTo
-   * TupleDesc is nested structure in Postgres, we can define a nested message in protobuf
+   * Plan is a class which can be Serialized
+   * Param_list can be transformed to value using BuildParams() and be Serialized
+   * TupleDesc is a nested structure in Postgres, we can define a nested message in protobuf
    *
    * The query plan message of protobuf is:
    * 1. type      : int       casted from PlanNodeType
@@ -217,7 +221,7 @@ peloton_dml(PlanState *planstate,
 
   // Second prepare TupleDesc and set it into QueryPlanExecRequest
   peloton::networking::TupleDescMsg tuple_desc_msg;
-  peloton::networking::CreateTupleDesc(tuple_desc, tuple_desc_msg);
+  peloton::networking::CreateTupleDescMsg(tuple_desc, tuple_desc_msg);
   request.set_allocated_tuple_dec(&tuple_desc_msg);
 
   // Third set size of parameter list
@@ -239,6 +243,10 @@ peloton_dml(PlanState *planstate,
 
   // Finally send the request
   pclient->QueryPlan(&request, NULL);
+  //===----------------------------------------------------------------------===//
+  //   End for sending
+  //===----------------------------------------------------------------------===//
+
 
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {

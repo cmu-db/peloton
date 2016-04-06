@@ -13,6 +13,7 @@
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/peloton_endpoint.h"
 #include "backend/networking/rpc_server.h"
+#include "backend/networking/rpc_utils.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/common/serializer.h"
@@ -408,16 +409,14 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         std::vector<Value> params;
         for (int it = 0; it < param_num; it++) {
             // TODO: Make sure why varlen_pool is used as parameter
-            VarlenPool varlen_pool;
+            std::shared_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
             Value value_item;
-            value_item.DeserializeFromAllocateForStorage(param_input, &varlen_pool);
-            params.push_backs(value_item);
+            value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
+            params.push_back(value_item);
         }
 
         // construct TupleDesc
-        TupleDesc tuple_desc;
-        TupleDescMsg tuple_desc_msg = request->tuple_dec();
-        ParseTupleDesc(tuple_desc, tuple_desc_msg);
+        TupleDesc tuple_desc = ParseTupleDescMsg(request->tuple_dec());
 
         PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
         switch (plan_type) {
