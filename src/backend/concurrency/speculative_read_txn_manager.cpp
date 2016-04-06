@@ -180,10 +180,12 @@ bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
@@ -218,10 +220,11 @@ void SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                               const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  
+
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == current_txn->GetBeginCommitId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) ==
+         current_txn->GetBeginCommitId());
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
@@ -242,10 +245,12 @@ bool SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) == INVALID_TXN_ID);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
@@ -280,7 +285,8 @@ void SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
 
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == current_txn->GetBeginCommitId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) ==
+         current_txn->GetBeginCommitId());
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
@@ -294,7 +300,6 @@ void SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
     // if this version is newly inserted.
     current_txn->RecordDelete(tile_group_id, tuple_id);
   }
-
 }
 
 Result SpeculativeReadTxnManager::CommitTransaction() {
