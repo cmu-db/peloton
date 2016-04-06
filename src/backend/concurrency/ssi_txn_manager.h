@@ -47,14 +47,16 @@ struct SIReadLock {
 
 class SsiTxnManager : public TransactionManager {
  public:
-  SsiTxnManager() : stopped(false) {
+  SsiTxnManager() : stopped(false), cleaned(false) {
     vaccum = std::thread(&SsiTxnManager::CleanUp, this);
+    vaccum.detach();
   }
 
   virtual ~SsiTxnManager() {
     LOG_INFO("Deconstruct SSI manager");
     stopped = true;
-    vaccum.join();
+    std::chrono::milliseconds sleep_time(100);
+    std::this_thread::sleep_for(sleep_time);
   }
 
   static SsiTxnManager &GetInstance();
@@ -117,6 +119,7 @@ class SsiTxnManager : public TransactionManager {
   std::unordered_map<oid_t, TupleReadlocks> sireadlocks;
   // Used to make the vaccum thread stop
   bool stopped;
+  bool cleaned;
   // Vaccum thread, GC overu 20 ms
   std::thread vaccum;
 
@@ -193,8 +196,6 @@ class SsiTxnManager : public TransactionManager {
       if (next->txn_id == txn_id) {
         find = true;
         prev->next = next->next;
-        LOG_INFO("find in %ld group %ld tuple %ld", next->txn_id, tile_group_id,
-                 tuple_id);
         delete next;
         break;
       }

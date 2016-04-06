@@ -620,6 +620,7 @@ void SsiTxnManager::CleanUp() {
       }
     }
   }  // End of outer while
+  cleaned = true;
 }
 
 }  // End storage namespace
