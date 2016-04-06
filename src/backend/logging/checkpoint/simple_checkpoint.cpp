@@ -105,23 +105,19 @@ void SimpleCheckpoint::DoCheckpoint() {
   logger_ = log_manager.GetBackendLogger();
 
   while (true) {
-    // build executor context
+    // get txn
     std::unique_ptr<concurrency::Transaction> txn(
         txn_manager.BeginTransaction());
     start_commit_id = txn->GetBeginCommitId();
     assert(txn);
-    assert(txn.get());
     LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
               start_commit_id);
 
+    // build executor context
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext(
             txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
     LOG_TRACE("Building the executor tree");
-
-    auto &catalog_manager = catalog::Manager::GetInstance();
-    auto database_count = catalog_manager.GetDatabaseCount();
-    bool failure = false;
 
     // Add txn begin record
     std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
@@ -130,14 +126,20 @@ void SimpleCheckpoint::DoCheckpoint() {
     begin_record->Serialize(begin_output_buffer);
     records_.push_back(begin_record);
 
+    auto &catalog_manager = catalog::Manager::GetInstance();
+    auto database_count = catalog_manager.GetDatabaseCount();
+    bool failure = false;
+    // loop all databases
     for (oid_t database_idx = 0; database_idx < database_count && !failure;
          database_idx++) {
       auto database = catalog_manager.GetDatabase(database_idx);
       auto table_count = database->GetTableCount();
       auto database_oid = database->GetOid();
+
+      // loop all tables
       for (oid_t table_idx = 0; table_idx < table_count && !failure;
            table_idx++) {
-        /* Get the target table */
+        // Get the target table
         storage::DataTable *target_table = database->GetTable(table_idx);
         assert(target_table);
         LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
@@ -149,13 +151,14 @@ void SimpleCheckpoint::DoCheckpoint() {
         column_ids.resize(schema->GetColumnCount());
         std::iota(column_ids.begin(), column_ids.end(), 0);
 
-        /* Construct the Peloton plan node */
+        // Construct the plan node
         LOG_TRACE("Initializing the executor tree");
         std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
             new planner::SeqScanPlan(target_table, nullptr, column_ids));
         std::unique_ptr<executor::SeqScanExecutor> scan_executor(
             new executor::SeqScanExecutor(scan_plan_node.get(),
                                           executor_context.get()));
+        scan_executor->SetForbidDirtyRead(true);
         if (!Execute(scan_executor.get(), txn.get(), target_table,
                      database_oid)) {
           break;
@@ -210,7 +213,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
     switch (record_type) {
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
-        LOG_INFO("Read checkpoint insert entry");
+        LOG_TRACE("Read checkpoint insert entry");
         InsertTuple(commit_id);
         break;
       }
@@ -219,7 +222,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         break;
       }
       case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
-        LOG_INFO("Read checkpoint begin entry");
+    	LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
         if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
                                         checkpoint_file_size_) == false) {
@@ -277,7 +280,6 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   auto target_location = tuple_record.GetInsertLocation();
   auto tile_group_id = target_location.block;
   RecoverTuple(tuple.get(), table, target_location, commit_id);
-  RecoverIndex(tuple.get(), table, target_location);
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
@@ -297,6 +299,7 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
   auto status = scan_executor->Init();
   // Abort and cleanup
   if (status == false) {
+    LOG_ERROR("Failed to init scan executor during checkpoint");
     return false;
   }
   LOG_TRACE("Running the seq scan executor");

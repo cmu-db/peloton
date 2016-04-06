@@ -44,9 +44,6 @@ class Checkpoint {
   // Do recovery from most recent version of checkpoint
   virtual cid_t DoRecovery() = 0;
 
-  void RecoverIndex(storage::Tuple *tuple, storage::DataTable *table,
-                    ItemPointer target_location);
-
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);
 
