@@ -11,6 +11,8 @@
 #include "backend/executor/abstract_parallel_task_response.h"
 #include "backend/common/blocking_queue.h"
 
+#include "libcuckoo/cuckoohash_map.hh"
+
 namespace peloton {
 namespace executor {
 
