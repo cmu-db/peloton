@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// mapper_agg.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_agg.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/planner/aggregate_plan.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -110,8 +122,8 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
 
   /* Map agg stragegy */
   LOG_INFO("aggstrategy : %s", (AGG_HASHED == aggstrategy)
-                                     ? "HASH"
-                                     : (AGG_SORTED ? "SORT" : "PLAIN"));
+                                   ? "HASH"
+                                   : (AGG_SORTED ? "SORT" : "PLAIN"));
 
   PelotonAggType agg_type = AGGREGATE_TYPE_INVALID;
 

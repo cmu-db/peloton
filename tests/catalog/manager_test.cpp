@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // manager_test.cpp
 //
 // Identification: tests/catalog/manager_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -61,8 +61,8 @@ void AddTileGroup() {
 TEST_F(ManagerTests, TransactionTest) {
   LaunchParallelTest(8, AddTileGroup);
 
-  std::cout << "Catalog allocations :: "
-            << catalog::Manager::GetInstance().GetCurrentOid() << "\n";
+  LOG_INFO("Catalog allocations :: %lu",
+           catalog::Manager::GetInstance().GetCurrentOid());
 
   EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
 }

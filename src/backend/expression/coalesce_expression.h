@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// vector_expression.h
+// coalesce_expression.h
 //
-// Identification: src/backend/expression/case_expression.h
+// Identification: src/backend/expression/coalesce_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,16 +19,15 @@ namespace expression {
 // Evaluates the arguments in order and returns the current value of the first
 // expression that initially does not evaluate to NULL.
 class CoalesceExpression : public AbstractExpression {
-
  public:
-  CoalesceExpression(ValueType vt, const std::vector<AbstractExpression *>& expressions)
+  CoalesceExpression(ValueType vt,
+                     const std::vector<AbstractExpression *> &expressions)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
         expressions(expressions),
         value_type(vt) {}
 
   virtual ~CoalesceExpression() {
-    for (auto value : expressions)
-      delete value;
+    for (auto value : expressions) delete value;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -46,12 +45,23 @@ class CoalesceExpression : public AbstractExpression {
     return spacer + "CoalesceExpression";
   }
 
+  AbstractExpression *Copy() const {
+    std::vector<AbstractExpression *> copied_expression;
+    for (AbstractExpression *expression : expressions) {
+      if (expression == nullptr) {
+        continue;
+      }
+      copied_expression.push_back(expression->Copy());
+    }
+
+    return new CoalesceExpression(value_type, copied_expression);
+  }
+
  private:
   // Expression arguments
   std::vector<AbstractExpression *> expressions;
 
   ValueType value_type;
-
 };
 
 }  // End expression namespace

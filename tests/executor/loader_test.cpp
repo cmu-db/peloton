@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// mutate_test.cpp
+// loader_test.cpp
 //
-// Identification: tests/executor/mutate_test.cpp
+// Identification: tests/executor/loader_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +21,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/value_factory.h"
 #include "backend/common/pool.h"
-#include "backend/concurrency/optimistic_transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/insert_executor.h"
@@ -77,17 +77,17 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  oid_t tilegroup_count_per_loader) {
-  auto &txn_manager = concurrency::OptimisticTransactionManager::GetInstance();
+  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
 
   oid_t tuple_count = tilegroup_count_per_loader * DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Start a txn for each insert
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::Tuple> tuple(
-          ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool));
+      ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool));
 
   std::unique_ptr<executor::ExecutorContext> context(
-          new executor::ExecutorContext(txn));
+      new executor::ExecutorContext(txn));
 
   auto project_info = MakeProjectInfoFromTuple(tuple.get());
 
@@ -95,44 +95,42 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
   // Insert the desired # of tuples
   for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
-      executor::InsertExecutor executor(&node, context.get());
-      executor.Execute();
+    executor::InsertExecutor executor(&node, context.get());
+    executor.Execute();
   }
 
   txn_manager.CommitTransaction();
-
 }
 
 TEST_F(LoaderTests, LoadingTest) {
-    // We are going to simply load tile groups concurrently in this test
-    oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
-    bool build_indexes = false;
+  // We are going to simply load tile groups concurrently in this test
+  oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+  bool build_indexes = false;
 
-    // Control the scale
-    oid_t loader_threads_count = 2;
-    oid_t tilegroup_count_per_loader = 10;
+  // Control the scale
+  oid_t loader_threads_count = 2;
+  oid_t tilegroup_count_per_loader = 10;
 
-    // Each tuple size ~40 B.
-    oid_t tuple_size = 41;
+  // Each tuple size ~40 B.
+  oid_t tuple_size = 41;
 
-    std::unique_ptr<storage::DataTable> data_table(
-            ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, build_indexes));
 
-    auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-    LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(), testing_pool,
-            tilegroup_count_per_loader);
+  LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(),
+                     testing_pool, tilegroup_count_per_loader);
 
-    auto expected_tile_group_count = loader_threads_count *
-        tilegroup_count_per_loader;
-    auto bytes_to_megabytes_converter = (1024 * 1024);
+  auto expected_tile_group_count =
+      loader_threads_count * tilegroup_count_per_loader;
+  auto bytes_to_megabytes_converter = (1024 * 1024);
 
-    EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
+  EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-    printf("Dataset size : %lu MB \n",
-            (expected_tile_group_count * tuples_per_tilegroup * tuple_size)/
-            bytes_to_megabytes_converter);
-
+  LOG_INFO("Dataset size : %lu MB \n",
+           (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
+           bytes_to_megabytes_converter);
 }
 
 }  // namespace test

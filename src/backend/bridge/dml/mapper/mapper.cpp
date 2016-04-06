@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -145,7 +145,7 @@ const planner::AbstractPlan *PlanTransformer::TransformPlan(
 
     case T_UniqueState:
       peloton_plan = PlanTransformer::TransformUnique(
-          reinterpret_cast<const UniquePlanState*>(planstate));
+          reinterpret_cast<const UniquePlanState *>(planstate));
       break;
 
     default: {
@@ -186,8 +186,9 @@ void PlanTransformer::CleanPlan(const planner::AbstractPlan *root) {
 
   // Clean all children subtrees
   auto children = root->GetChildren();
-  for (auto child : children) {
+  for (auto &child : children) {
     CleanPlan(child);
+    child = nullptr;
   }
 
   // Clean the root

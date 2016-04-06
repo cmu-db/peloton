@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // function_expression.cpp
 //
 // Identification: src/backend/expression/function_expression.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -111,6 +111,10 @@ class ConstantFunctionExpression : public expression::AbstractExpression {
     buffer << spacer << "ConstantFunctionExpression " << F << std::endl;
     return (buffer.str());
   }
+
+    expression::AbstractExpression *Copy() const {
+      return new ConstantFunctionExpression<F>();
+    }
 };
 
 /*
@@ -140,6 +144,11 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
     buffer << spacer << "UnaryFunctionExpression " << F << std::endl;
     return (buffer.str());
   }
+
+    expression::AbstractExpression *Copy() const {
+      assert(m_child != nullptr);
+      return new UnaryFunctionExpression<F>(m_child->Copy());
+    }
 };
 
 /*
@@ -190,15 +199,23 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
     return (buffer.str());
   }
 
+    expression::AbstractExpression *Copy() const {
+      std::vector<expression::AbstractExpression *> args;
+      for (auto arg : m_args) {
+        args.push_back(arg->Copy());
+      }
+
+      return new GeneralFunctionExpression<F>(args);
+    }
+
  private:
   const std::vector<AbstractExpression *> &m_args;
 };
 
 expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
-    int functionId, const std::vector<AbstractExpression *> *arguments) {
+    int functionId, const std::vector<AbstractExpression *>& arguments) {
   AbstractExpression *ret = 0;
-  assert(arguments);
-  size_t nArgs = arguments->size();
+  size_t nArgs = arguments.size();
   if (nArgs == 0) {
     switch (functionId) {
       case FUNC_CURRENT_TIMESTAMP:
@@ -207,252 +224,250 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
       default:
         return NULL;
     }
-    delete arguments;
   } else if (nArgs == 1) {
     switch (functionId) {
       case FUNC_ABS:
-        ret = new UnaryFunctionExpression<FUNC_ABS>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_ABS>((arguments)[0]);
         break;
       case FUNC_CEILING:
-        ret = new UnaryFunctionExpression<FUNC_CEILING>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_CEILING>((arguments)[0]);
         break;
       case FUNC_CHAR:
-        ret = new UnaryFunctionExpression<FUNC_CHAR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_CHAR>((arguments)[0]);
         break;
       case FUNC_CHAR_LENGTH:
-        ret = new UnaryFunctionExpression<FUNC_CHAR_LENGTH>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_CHAR_LENGTH>((arguments)[0]);
         break;
       case FUNC_EXP:
-        ret = new UnaryFunctionExpression<FUNC_EXP>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXP>((arguments)[0]);
         break;
       case FUNC_EXTRACT_DAY:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_DAY>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_DAY>((arguments)[0]);
         break;
       case FUNC_EXTRACT_DAY_OF_WEEK:
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_DAY_OF_WEEK>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_EXTRACT_WEEKDAY:
         ret =
-            new UnaryFunctionExpression<FUNC_EXTRACT_WEEKDAY>((*arguments)[0]);
+            new UnaryFunctionExpression<FUNC_EXTRACT_WEEKDAY>((arguments)[0]);
         break;
       case FUNC_EXTRACT_DAY_OF_YEAR:
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_DAY_OF_YEAR>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_EXTRACT_HOUR:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_HOUR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_HOUR>((arguments)[0]);
         break;
       case FUNC_EXTRACT_MINUTE:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_MINUTE>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_MINUTE>((arguments)[0]);
         break;
       case FUNC_EXTRACT_MONTH:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_MONTH>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_MONTH>((arguments)[0]);
         break;
       case FUNC_EXTRACT_QUARTER:
         ret =
-            new UnaryFunctionExpression<FUNC_EXTRACT_QUARTER>((*arguments)[0]);
+            new UnaryFunctionExpression<FUNC_EXTRACT_QUARTER>((arguments)[0]);
         break;
       case FUNC_EXTRACT_SECOND:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_SECOND>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_SECOND>((arguments)[0]);
         break;
       case FUNC_EXTRACT_WEEK_OF_YEAR:
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_WEEK_OF_YEAR>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_EXTRACT_YEAR:
-        ret = new UnaryFunctionExpression<FUNC_EXTRACT_YEAR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_YEAR>((arguments)[0]);
         break;
       case FUNC_SINCE_EPOCH_SECOND:
         ret = new UnaryFunctionExpression<FUNC_SINCE_EPOCH_SECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_SINCE_EPOCH_MILLISECOND:
         ret = new UnaryFunctionExpression<FUNC_SINCE_EPOCH_MILLISECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_SINCE_EPOCH_MICROSECOND:
         ret = new UnaryFunctionExpression<FUNC_SINCE_EPOCH_MICROSECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_TO_TIMESTAMP_DAY:
-        ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_DAY>(
-            (*arguments)[0]);
+        ret =
+            new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_DAY>((arguments)[0]);
         break;
       case FUNC_TO_TIMESTAMP_SECOND:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_SECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_TO_TIMESTAMP_MILLISECOND:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_MILLISECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_TO_TIMESTAMP_MICROSECOND:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_MICROSECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_TRUNCATE_YEAR:
-        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_YEAR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_YEAR>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_QUARTER:
         ret =
-            new UnaryFunctionExpression<FUNC_TRUNCATE_QUARTER>((*arguments)[0]);
+            new UnaryFunctionExpression<FUNC_TRUNCATE_QUARTER>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_MONTH:
-        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MONTH>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MONTH>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_DAY:
-        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_DAY>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_DAY>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_HOUR:
-        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_HOUR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_HOUR>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_MINUTE:
         ret =
-            new UnaryFunctionExpression<FUNC_TRUNCATE_MINUTE>((*arguments)[0]);
+            new UnaryFunctionExpression<FUNC_TRUNCATE_MINUTE>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_SECOND:
         ret =
-            new UnaryFunctionExpression<FUNC_TRUNCATE_SECOND>((*arguments)[0]);
+            new UnaryFunctionExpression<FUNC_TRUNCATE_SECOND>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_MILLISECOND:
         ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MILLISECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_TRUNCATE_MICROSECOND:
         ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MICROSECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       // Alias for function FUNC_TO_TIMESTAMP_SECOND
       case FUNC_VOLT_FROM_UNIXTIME:
         ret = new UnaryFunctionExpression<FUNC_TO_TIMESTAMP_SECOND>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_FLOOR:
-        ret = new UnaryFunctionExpression<FUNC_FLOOR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_FLOOR>((arguments)[0]);
         break;
       case FUNC_OCTET_LENGTH:
-        ret = new UnaryFunctionExpression<FUNC_OCTET_LENGTH>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_OCTET_LENGTH>((arguments)[0]);
         break;
       case FUNC_SPACE:
-        ret = new UnaryFunctionExpression<FUNC_SPACE>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_SPACE>((arguments)[0]);
         break;
       case FUNC_FOLD_LOWER:
-        ret = new UnaryFunctionExpression<FUNC_FOLD_LOWER>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_FOLD_LOWER>((arguments)[0]);
         break;
       case FUNC_FOLD_UPPER:
-        ret = new UnaryFunctionExpression<FUNC_FOLD_UPPER>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_FOLD_UPPER>((arguments)[0]);
         break;
       case FUNC_SQRT:
-        ret = new UnaryFunctionExpression<FUNC_SQRT>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_SQRT>((arguments)[0]);
         break;
       case FUNC_VOLT_ARRAY_LENGTH:
         ret = new UnaryFunctionExpression<FUNC_VOLT_ARRAY_LENGTH>(
-            (*arguments)[0]);
+            (arguments)[0]);
         break;
       case FUNC_VOLT_BITNOT:
-        ret = new UnaryFunctionExpression<FUNC_VOLT_BITNOT>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_VOLT_BITNOT>((arguments)[0]);
         break;
       case FUNC_VOLT_HEX:
-        ret = new UnaryFunctionExpression<FUNC_VOLT_HEX>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_VOLT_HEX>((arguments)[0]);
         break;
       case FUNC_VOLT_BIN:
-        ret = new UnaryFunctionExpression<FUNC_VOLT_BIN>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_VOLT_BIN>((arguments)[0]);
         break;
       case FUNC_VOLT_SQL_ERROR:
-        ret = new UnaryFunctionExpression<FUNC_VOLT_SQL_ERROR>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_VOLT_SQL_ERROR>((arguments)[0]);
         break;
       case FUNC_LN:
-        ret = new UnaryFunctionExpression<FUNC_LN>((*arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_LN>((arguments)[0]);
         break;
       default:
         return NULL;
     }
-    delete arguments;
   } else {
     // GeneralFunctions defer deleting the arguments container until through
     // with it.
     switch (functionId) {
       case FUNC_BITAND:
-        ret = new GeneralFunctionExpression<FUNC_BITAND>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITAND>(arguments);
         break;
       case FUNC_BITOR:
-        ret = new GeneralFunctionExpression<FUNC_BITOR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITOR>(arguments);
         break;
       case FUNC_BITXOR:
-        ret = new GeneralFunctionExpression<FUNC_BITXOR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITXOR>(arguments);
         break;
       case FUNC_CONCAT:
-        ret = new GeneralFunctionExpression<FUNC_CONCAT>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_CONCAT>(arguments);
         break;
       case FUNC_DECODE:
-        ret = new GeneralFunctionExpression<FUNC_DECODE>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_DECODE>(arguments);
         break;
       case FUNC_LEFT:
-        ret = new GeneralFunctionExpression<FUNC_LEFT>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_LEFT>(arguments);
         break;
       case FUNC_MOD:
-        ret = new GeneralFunctionExpression<FUNC_MOD>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_MOD>(arguments);
         break;
       case FUNC_OVERLAY_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_OVERLAY_CHAR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_OVERLAY_CHAR>(arguments);
         break;
       case FUNC_POSITION_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_POSITION_CHAR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_POSITION_CHAR>(arguments);
         break;
       case FUNC_POWER:
-        ret = new GeneralFunctionExpression<FUNC_POWER>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_POWER>(arguments);
         break;
       case FUNC_REPEAT:
-        ret = new GeneralFunctionExpression<FUNC_REPEAT>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_REPEAT>(arguments);
         break;
       case FUNC_REPLACE:
-        ret = new GeneralFunctionExpression<FUNC_REPLACE>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_REPLACE>(arguments);
         break;
       case FUNC_RIGHT:
-        ret = new GeneralFunctionExpression<FUNC_RIGHT>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_RIGHT>(arguments);
         break;
       case FUNC_SUBSTRING_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_SUBSTRING_CHAR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_SUBSTRING_CHAR>(arguments);
         break;
       case FUNC_TRIM_BOTH_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_TRIM_BOTH_CHAR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_TRIM_BOTH_CHAR>(arguments);
         break;
       case FUNC_TRIM_LEADING_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_TRIM_LEADING_CHAR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_TRIM_LEADING_CHAR>(arguments);
         break;
       case FUNC_TRIM_TRAILING_CHAR:
         ret =
-            new GeneralFunctionExpression<FUNC_TRIM_TRAILING_CHAR>(*arguments);
+            new GeneralFunctionExpression<FUNC_TRIM_TRAILING_CHAR>(arguments);
         break;
       case FUNC_VOLT_ARRAY_ELEMENT:
         ret =
-            new GeneralFunctionExpression<FUNC_VOLT_ARRAY_ELEMENT>(*arguments);
+            new GeneralFunctionExpression<FUNC_VOLT_ARRAY_ELEMENT>(arguments);
         break;
       case FUNC_VOLT_BIT_SHIFT_LEFT:
         ret =
-            new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_LEFT>(*arguments);
+            new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_LEFT>(arguments);
         break;
       case FUNC_VOLT_BIT_SHIFT_RIGHT:
         ret = new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_RIGHT>(
-            *arguments);
+            arguments);
         break;
       case FUNC_VOLT_FIELD:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(arguments);
         break;
       case FUNC_VOLT_FORMAT_CURRENCY:
         ret = new GeneralFunctionExpression<FUNC_VOLT_FORMAT_CURRENCY>(
-            *arguments);
+            arguments);
         break;
       case FUNC_VOLT_SET_FIELD:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_SET_FIELD>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_SET_FIELD>(arguments);
         break;
       case FUNC_VOLT_SQL_ERROR:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_SQL_ERROR>(*arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_SQL_ERROR>(arguments);
         break;
       case FUNC_VOLT_SUBSTRING_CHAR_FROM:
         ret = new GeneralFunctionExpression<FUNC_VOLT_SUBSTRING_CHAR_FROM>(
-            *arguments);
+            arguments);
         break;
       default:
         return NULL;

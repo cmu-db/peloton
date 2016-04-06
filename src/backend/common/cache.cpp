@@ -1,12 +1,12 @@
-///===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // cache.cpp
 //
 // Identification: src/backend/common/cache.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon Universitry Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +22,8 @@ namespace peloton {
 template <class Key, class Value>
 Cache<Key, Value>::Cache(size_type capacity, ValueDeleter deleter,
                          size_t insert_threshold)
-    : capacity_(capacity), value_deleter_(deleter),
+    : capacity_(capacity),
+      value_deleter_(deleter),
       insert_threshold_(insert_threshold) {}
 
 /* @brief find a value cached with key
