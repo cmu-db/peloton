@@ -137,8 +137,9 @@ bool SpeculativeReadTxnManager::PerformRead(const oid_t &tile_group_id,
   // if the tuple is owned by other transaction, then register dependency.
   if (tuple_txn_id != INITIAL_TXN_ID && tuple_txn_id != INVALID_TXN_ID &&
       tuple_txn_id != current_txn_id) {
-    RegisterRetType ret_type = RegisterDependency(tuple_txn_id);
-    if (ret_type == REGISTER_RET_TYPE_NOT_FOUND) {
+    bool ret_type = RegisterDependency(tuple_txn_id);
+    if (ret_type == false) {
+      // we did not find the dependent txn.
       // actually, we can now validate whether this speculative read succeeds.
     }
   }
