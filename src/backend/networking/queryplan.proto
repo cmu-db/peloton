@@ -46,7 +46,7 @@ message TupleConstrMsg {
 
 message TupleDescMsg {
     required int32 natts = 1;
-    optional FormAttributeMsg attrs = 2;
+    repeated FormAttributeMsg attrs = 2;
     optional TupleConstrMsg constr = 3;
     optional uint64 tdtypeid = 4;
     optional int32 tdtypmod = 5;

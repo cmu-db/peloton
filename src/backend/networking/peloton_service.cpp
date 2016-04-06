@@ -401,8 +401,25 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
             return;
         }
 
-        PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
+        // construct parameter list
+        int param_num = request->param_num();
+        std::string param_list = request->param_list();
+        ReferenceSerializeInputBE param_input(param_list.c_str(), param_list.size());
+        std::vector<Value> params;
+        for (int it = 0; it < param_num; it++) {
+            // TODO: Make sure why varlen_pool is used as parameter
+            VarlenPool varlen_pool;
+            Value value_item;
+            value_item.DeserializeFromAllocateForStorage(param_input, &varlen_pool);
+            params.push_backs(value_item);
+        }
 
+        // construct TupleDesc
+        TupleDesc tuple_desc;
+        TupleDescMsg tuple_desc_msg = request->tuple_dec();
+        ParseTupleDesc(tuple_desc, tuple_desc_msg);
+
+        PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
         switch (plan_type) {
             case PLAN_NODE_TYPE_INVALID: {
                 LOG_ERROR("Queryplan recived desen't have type");
@@ -417,13 +434,10 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                         std::make_shared<peloton::planner::SeqScanPlan>();
                 ss_plan->DeserializeFrom(input);
 
-                //ParamListInfo param_list;
-                //TupleDesc tuple_desc;
-
                 //peloton_status status =
-                //        peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
-                //                                                    param_list,
-                //                                                    tuple_desc);
+                        peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
+                                                                    params,
+                                                                    tuple_desc);
                 break;
             }
 
