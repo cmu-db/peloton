@@ -121,7 +121,7 @@ void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
  * @param  TupleDescMsg&
  * @return TupleDesc
  */
-TupleDesc ParseTupleDescMsg(TupleDescMsg& tuple_desc_msg) {
+TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
 
     // TODO: Using Postgres func to create, but when should we FreeTupleDesc?
     TupleDesc tuple_desc;
@@ -139,7 +139,6 @@ TupleDesc ParseTupleDescMsg(TupleDescMsg& tuple_desc_msg) {
         assert(tuple_desc_msg.attrs_size() == attrs_count);
 
         for (int it = 0; it < attrs_count; it++) {
-            tuple_desc_msg.attrs(it).attalign;
             // Here attalign is char in postgres, so we convert it
             attrs[it]->attalign = assert_range_cast_same<int8, int32>(
                     tuple_desc_msg.attrs(it).attalign());
@@ -189,17 +188,17 @@ TupleDesc ParseTupleDescMsg(TupleDescMsg& tuple_desc_msg) {
     // Note the three char* () is ended with \0 in postgres, such as appendStringInfoChar.
     // So they are safe to be set in protobuf (as bytes) with on "size" parameter
     // But when convert them back to char* we should set \0 at the end of char*
-    AttrDefault* attrdef = (AttrDefault*)malloc(siezeof(AttrDefault));
-    ConstrCheck* constrch = (ConstrCheck*)malloc(siezeof(ConstrCheck));
-    TupleConstr* tuple_constr = (TupleConstr*)malloc(siezeof(TupleConstr));
+    AttrDefault* attrdef = (AttrDefault*)malloc(sizeof(AttrDefault));
+    ConstrCheck* constrch = (ConstrCheck*)malloc(sizeof(ConstrCheck));
+    TupleConstr* tuple_constr = (TupleConstr*)malloc(sizeof(TupleConstr));
 
     std::string adbinss = tuple_desc_msg.constr().adbin();
     std::string ccbinss = tuple_desc_msg.constr().ccbin();
     std::string ccnamess = tuple_desc_msg.constr().ccname();
 
-    char* adbin = malloc( adbinss.size() + 1 );
-    char* ccbin = malloc( ccbinss.size() + 1 );
-    char* ccname = malloc( ccnamess.size() + 1 );
+    char* adbin = (char*)malloc( adbinss.size() + 1 );
+    char* ccbin = (char*)malloc( ccbinss.size() + 1 );
+    char* ccname = (char*)malloc( ccnamess.size() + 1 );
 
     adbinss.copy(adbin, adbinss.size());
     adbin[adbinss.size()] = '\0';

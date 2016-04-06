@@ -34,7 +34,7 @@ void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
  * When executing the query plan, a node must parse the received msg and convert it
  * to Postgres's TupleDesc
  */
-TupleDesc ParseTupleDescMsg(TupleDescMsg& tuple_desc_msg);
+TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg);
 
 } // namespace message
 } // namespace peloton
