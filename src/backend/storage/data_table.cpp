@@ -43,9 +43,6 @@ bool peloton_fsm;
 namespace peloton {
 namespace storage {
 
-// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-//                           const concurrency::Transaction *transaction);
-
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
@@ -85,36 +82,6 @@ DataTable::~DataTable() {
   // AbstractTable cleans up the schema
 }
 
-/**
- * Check if the locations contains at least one visible entry to the transaction
- */
-// bool ContainsVisibleEntry(std::vector<ItemPointer> &locations,
-//                           const concurrency::Transaction *transaction
-//                           __attribute__((unused))) {
-//   auto &manager = catalog::Manager::GetInstance();
-
-//   for (auto loc : locations) {
-//     oid_t tile_group_id = loc.block;
-//     oid_t tuple_offset = loc.offset;
-
-//     auto tile_group = manager.GetTileGroup(tile_group_id);
-//     auto header = tile_group->GetHeader();
-
-//     txn_id_t tuple_txn_id = header->GetTransactionId(tuple_offset);
-//     cid_t tuple_begin_cid = header->GetBeginCommitId(tuple_offset);
-//     cid_t tuple_end_cid = header->GetEndCommitId(tuple_offset);
-//     auto &txn_manager =
-//     concurrency::TransactionManagerFactory::GetInstance();
-
-//     bool visible = txn_manager.IsVisible(tuple_txn_id, tuple_begin_cid,
-//     tuple_end_cid);
-
-//     if (visible) return true;
-//   }
-
-//   return false;
-// }
-
 //===--------------------------------------------------------------------===//
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
@@ -146,7 +113,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   return true;
 }
 
-ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                     bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
@@ -193,7 +160,7 @@ ItemPointer DataTable::GetTupleSlot(const storage::Tuple *tuple,
 //===--------------------------------------------------------------------===//
 ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(tuple, false);
+  ItemPointer location = GetEmptyTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -213,7 +180,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(tuple, true);
+  ItemPointer location = GetEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -233,7 +200,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(tuple);
+  ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -310,19 +277,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
-  // (B) Insert into index
-//  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-//    auto index = GetIndex(index_itr);
-//    auto index_schema = index->GetKeySchema();
-//    auto indexed_columns = index_schema->GetIndexedColumns();
-//    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-//    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-//
-//    auto status = index->InsertEntry(key.get(), location);
-//    (void)status;
-//    assert(status);
-//  }
-
   return true;
 }
 
@@ -369,76 +323,8 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
     }
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
-
-  // (B) Insert into index
-//  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-//    auto index = GetIndex(index_itr);
-//    auto index_schema = index->GetKeySchema();
-//    auto indexed_columns = index_schema->GetIndexedColumns();
-//    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-//    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-//
-//    switch (index->GetIndexType()) {
-//      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-//      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-//        // auto locations = index->ScanKey(key.get());
-//        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
-//        // if (exist_visible) {
-//        //   LOG_WARN("A visible index entry exists.");
-//        //   return false;
-//        // }
-//      } break;
-//
-//      case INDEX_CONSTRAINT_TYPE_DEFAULT:
-//      default:
-//        auto status = index->InsertEntry(key.get(), location);
-//        (void)status;
-//        assert(status);
-//        break;
-//    }
-//  }
   return true;
 }
-
-//===--------------------------------------------------------------------===//
-// DELETE
-//===--------------------------------------------------------------------===//
-
-/**
- * @brief Try to delete a tuple from the table.
- * It may fail because the tuple has been latched or conflict with a future
- *delete.
- *
- * @param transaction_id  The current transaction Id.
- * @param location        ItemPointer of the tuple to delete.
- * NB: location.block should be the tile_group's \b ID, not \b offset.
- * @return True on success, false on failure.
- */
-// bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
-//                             ItemPointer location) {
-//   oid_t tile_group_id = location.block;
-//   oid_t tuple_id = location.offset;
-
-//   auto tile_group = GetTileGroupById(tile_group_id);
-//   txn_id_t transaction_id = transaction->GetTransactionId();
-//   cid_t last_cid = transaction->GetBeginCommitId();
-
-//   // Delete slot in underlying tile group
-//   auto status = tile_group->DeleteTuple(transaction_id, tuple_id, last_cid);
-//   if (status == false) {
-//     LOG_WARN("Failed to delete tuple from the tile group : %lu , Txn_id : %lu
-//     ",
-//              tile_group_id, transaction_id);
-//     return false;
-//   }
-
-//   LOG_TRACE("Deleted location :: block = %lu offset = %lu ", location.block,
-//             location.offset);
-//   // Decrease the table's number of tuples by 1
-//   DecreaseNumberOfTuplesBy(1);
-
-//   return true;
-// }
 
 //===--------------------------------------------------------------------===//
 // STATS
