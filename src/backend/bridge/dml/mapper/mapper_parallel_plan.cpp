@@ -2,8 +2,8 @@
 // Created by Rui Wang on 16-4-4.
 //
 
-#include <backend/planner/hash_plan.h>
-//#include <backend/planner/exchange_hash_plan.h>
+#include "backend/planner/hash_plan.h"
+#include "backend/planner/exchange_hash_plan.h"
 #include "backend/planner/exchange_seq_scan_plan.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -11,16 +11,22 @@
 namespace peloton {
 namespace bridge {
 
-static planner::AbstractPlan *BuildParallelHashPlan(
-    __attribute__((unused)) const planner::AbstractPlan *old_plan) {
-  //  LOG_TRACE("Mapping hash plan to parallel seq scan plan (add exchange hash
-  //  operator)");
-  //  const planner::HashPlan *plan = dynamic_cast<const planner::HashPlan
-  //  *>(old_plan);
-  //  planner::AbstractPlan *exchange_hash_plan = new
-  //  planner::ExchangeHashPlan(plan);
-  //  return exchange_hash_plan;
-  return nullptr;
+typedef const expression::AbstractExpression HashKeyType;
+typedef std::unique_ptr<HashKeyType> HashKeyPtrType;
+
+static planner::AbstractPlan *BuildParallelHashPlan( const planner::AbstractPlan *old_plan) {
+  LOG_TRACE("Mapping hash plan to parallel seq scan plan (add exchange has "
+              "operator)");
+
+  const planner::HashPlan *plan = dynamic_cast<const planner::HashPlan *>(old_plan);
+  const auto&  hash_keys = plan->GetHashKeys();
+  std::vector<HashKeyPtrType> copied_hash_keys;
+    for (const auto &key : hash_keys) {
+      const expression::AbstractExpression *temp_key = key->Copy();
+      copied_hash_keys.push_back(std::unique_ptr<HashKeyType>(temp_key));
+    }
+
+  return new ExchangeHashPlan(copied_hash_keys);
 }
 
 static planner::AbstractPlan *BuildParallelSeqScanPlan(
