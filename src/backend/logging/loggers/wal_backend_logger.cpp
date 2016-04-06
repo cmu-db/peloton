@@ -31,15 +31,17 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   {
     std::lock_guard<std::mutex> lock(local_queue_mutex);
     local_queue.push_back(std::unique_ptr<LogRecord>(record));
+    if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+      assert(record->GetTransactionId() > highest_logged_commit_id);
+      highest_logged_commit_id = record->GetTransactionId();
+    }
   }
 }
 
-LogRecord *WriteAheadBackendLogger::GetTupleRecord(LogRecordType log_record_type,
-                                                   txn_id_t txn_id,
-                                                   oid_t table_oid, oid_t db_oid,
-                                                   ItemPointer insert_location,
-                                                   ItemPointer delete_location,
-                                                   void *data) {
+LogRecord *WriteAheadBackendLogger::GetTupleRecord(
+    LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
+    oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
+    void *data) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
@@ -68,6 +70,10 @@ LogRecord *WriteAheadBackendLogger::GetTupleRecord(LogRecordType log_record_type
                       delete_location, data, db_oid);
 
   return record;
+}
+
+cid_t WriteAheadBackendLogger::GetHighestLoggedCommitId() {
+  return highest_logged_commit_id;
 }
 
 }  // namespace logging

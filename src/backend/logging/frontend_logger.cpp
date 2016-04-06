@@ -141,6 +141,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   std::this_thread::sleep_for(sleep_period);
 
   {
+    cid_t max_possible_commit_id = MAX_CID;
     // Look at the local queues of the backend loggers
     for (auto backend_logger : backend_loggers) {
       {
@@ -158,10 +159,16 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
           global_queue.push_back(
               std::move(backend_logger->local_queue[log_record_itr]));
         }
+        max_possible_commit_id = std::min(
+            backend_logger->GetHighestLoggedCommitId(), max_possible_commit_id);
 
         // cleanup the local queue
         backend_logger->local_queue.clear();
       }
+    }
+    if (max_possible_commit_id != MAX_CID) {
+      assert(max_possible_commit_id >= max_collected_commit_id);
+      max_collected_commit_id = max_possible_commit_id;
     }
   }
 }

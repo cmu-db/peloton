@@ -17,6 +17,7 @@
 #include "backend/logging/log_file.h"
 #include <dirent.h>
 #include <vector>
+#include <set>
 
 namespace peloton {
 
@@ -123,6 +124,10 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   std::string LOG_FILE_SUFFIX = ".log";
 
   txn_id_t max_commit_id;
+
+  CopySerializeOutput output_buffer;
+
+  std::set<cid_t> pending_commits;
 };
 
 }  // namespace logging

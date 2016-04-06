@@ -64,7 +64,7 @@ class FrontendLogger : public Logger {
 
  protected:
   // Associated backend loggers
-  std::vector<BackendLogger*> backend_loggers;
+  std::vector<BackendLogger *> backend_loggers;
 
   // Global queue
   std::vector<std::unique_ptr<LogRecord>> global_queue;
@@ -78,6 +78,8 @@ class FrontendLogger : public Logger {
 
   // checkpoint
   Checkpoint &checkpoint;
+
+  cid_t max_collected_commit_id = 0;
 };
 
 }  // namespace logging

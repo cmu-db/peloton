@@ -166,9 +166,7 @@ std::string BackendTypeToString(BackendType type) {
       return "FILE";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: {
-      return "UNKNOWN " + std::to_string(type);
-    }
+    default: { return "UNKNOWN " + std::to_string(type); }
   }
   return (ret);
 }
@@ -1026,6 +1024,9 @@ std::string LogRecordTypeToString(LogRecordType type) {
     }
     case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
       return "LOGRECORD_TYPE_WBL_TUPLE_UPDATE";
+    }
+    case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+      return "LOGRECORD_TYPE_ITERATION_DELIMITER";
     }
   }
   return "INVALID";
