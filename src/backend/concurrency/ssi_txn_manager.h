@@ -92,7 +92,11 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    Transaction *txn = TransactionManager::BeginTransaction();
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
+
     {
       std::lock_guard<std::mutex> lock(txn_manager_mutex_);
       assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
@@ -104,6 +108,11 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() { assert(false); };
+
+  
+  virtual cid_t GetMaxCommittedCid() {
+    return 1;
+  }
 
   virtual Result CommitTransaction();
 
