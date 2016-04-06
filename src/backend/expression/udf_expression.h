@@ -38,7 +38,6 @@ public:
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-//    assert(m_left);
 
     std::vector<Datum> args_eval(m_args.size());
     for(size_t i = 0; i < m_args.size(); i++) {
@@ -46,7 +45,7 @@ public:
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
 
-    Datum result;
+    Datum result = nullptr;
     switch (m_args.size()) {
       case 0:
         result = OidFunctionCall0Coll(func_id, collation);
@@ -58,7 +57,6 @@ public:
         result = OidFunctionCall2Coll(func_id, collation, args_eval[0], args_eval[1]);
         break;
       case 3:
-        break;
       default:
         break;
     }
