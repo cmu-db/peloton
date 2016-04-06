@@ -208,7 +208,7 @@ static void log_disconnections(int code, Datum arg);
 
 // memcached helpers
 static void parse_select_result_cols(StringInfoData *buf, std::string& result);
-
+enum MC_OP { GET, SET, ADD, REPLACE };
 /* ----------------------------------------------------------------
  *		routines to obtain user input
  * ----------------------------------------------------------------
@@ -4341,11 +4341,18 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
 
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
+
+      // TODO parse the Memcached request into calls to the prepared statements
+      // get a flag of the operation
+
       auto mc_state = new MemcachedState();
       exec_simple_query(&query_line[0], mc_state);
       // proceed to frontend write only if response is not empty
       if (mc_state->result.len > 0) {
         // echo response
+
+        // TODO parse the sql result into Memcached format back to user
+
         parse_select_result_cols(&mc_state->result, query_result);
         printf("\nMC_RESULT:%s\n",query_result.c_str());
         if (!mc_sock.write_response(query_result + "\r\n")) {
@@ -4369,7 +4376,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
 /* Print all the attribute values for query result
  * in StringInfoData format
  */
-static void parse_select_result_cols(StringInfoData *buf, std::string& result) {
+static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op) {
   //  printf("Reached\n");
   //  for (int i=0; i< buf->len; i++){
   //    printf("%d\t", buf->data[i]);
