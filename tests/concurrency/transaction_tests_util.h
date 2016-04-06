@@ -156,7 +156,6 @@ struct TransactionSchedule {
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
   int stored_value;
-  Result txn_result;
   TransactionSchedule() : txn_result(RESULT_FAILURE), stored_value(0) {}
 };
 
