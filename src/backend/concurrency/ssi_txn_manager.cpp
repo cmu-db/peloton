@@ -100,7 +100,7 @@ bool SsiTxnManager::IsOwnable(
 
 bool SsiTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
   LOG_INFO("AcquireOwnership %lu", txn_id);
 
@@ -113,8 +113,8 @@ bool SsiTxnManager::AcquireOwnership(
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     auto txn_id = current_txn->GetTransactionId();
-    GetReadLock(tile_group_id, tuple_id);
-    ReadList *header = GetReaderList(tile_group_id, tuple_id);
+    GetReadLock(tile_group_header, tuple_id);
+    ReadList *header = GetReaderList(tile_group_header, tuple_id);
 
     bool should_abort = false;
     while (header != nullptr) {
@@ -145,7 +145,7 @@ bool SsiTxnManager::AcquireOwnership(
 
       header = header->next;
     }
-    ReleaseReadLock(tile_group_id, tuple_id);
+    ReleaseReadLock(tile_group_header, tuple_id);
 
     if (should_abort) return false;
   }
@@ -560,6 +560,12 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    if (tile_group == nullptr)
+      continue;
+
+    auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
 
@@ -567,8 +573,7 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
       if (tuple_entry.second == RW_TYPE_INSERT) {
         continue;
       }
-
-      RemoveSIReader(tile_group_id, tuple_slot, txn_id);
+      RemoveSIReader(tile_group_header, tuple_slot, txn_id);
     }
   }
   LOG_INFO("release SILock finish");
@@ -576,49 +581,55 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 
 // Clean obsolete txn record
 void SsiTxnManager::CleanUp() {
+  // GC periodically
+  // find smallest begin cid of the running transaction
+  // init it as max() for the case that all transactions are committed
+  std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+
+  cid_t min_begin = std::numeric_limits<cid_t>::max();
+  for (auto &item : txn_table_) {
+    auto &ctx = item.second;
+    if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
+      if (ctx.transaction_->GetBeginCommitId() < min_begin) {
+        min_begin = ctx.transaction_->GetBeginCommitId();
+      }
+    }
+  }
+
+  auto itr = txn_table_.begin();
+  while (itr != txn_table_.end()) {
+    auto &ctx = itr->second;
+    auto end_cid = ctx.transaction_->GetEndCommitId();
+    if (end_cid == INVALID_TXN_ID) {
+      // running transaction
+      itr++;
+      continue;
+    }
+
+    if (end_cid < min_begin) {
+      // we can safely remove it from table
+      // remove its reader mark
+      LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
+      RemoveReader(ctx.transaction_->GetTransactionId());
+
+      // delete transaction
+      delete ctx.transaction_;
+
+      // remove from table
+      itr = txn_table_.erase(itr);
+    } else {
+      itr++;
+    }
+  }
+}
+
+void SsiTxnManager::CleanUpBg() {
   while (!this->stopped || txn_table_.size() != 0) {
     // GC periodically
     std::chrono::milliseconds sleep_time(50);
     std::this_thread::sleep_for(sleep_time);
 
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    // find smallest begin cid of the running transaction
-    // init it as max() for the case that all transactions are committed
-    cid_t min_begin = std::numeric_limits<cid_t>::max();
-    for (auto &item : txn_table_) {
-      auto &ctx = item.second;
-      if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
-        if (ctx.transaction_->GetBeginCommitId() < min_begin) {
-          min_begin = ctx.transaction_->GetBeginCommitId();
-        }
-      }
-    }
-
-    auto itr = txn_table_.begin();
-    while (itr != txn_table_.end()) {
-      auto &ctx = itr->second;
-      auto end_cid = ctx.transaction_->GetEndCommitId();
-      if (end_cid == INVALID_TXN_ID) {
-        // running transaction
-        itr++;
-        continue;
-      }
-
-      if (end_cid < min_begin) {
-        // we can safely remove it from table
-        // remove its reader mark
-        LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
-        RemoveReader(ctx.transaction_->GetTransactionId());
-
-        // delete transaction
-        delete ctx.transaction_;
-
-        // remove from table
-        itr = txn_table_.erase(itr);
-      } else {
-        itr++;
-      }
-    }
+    CleanUp();
   }  // End of outer while
   cleaned = true;
 }

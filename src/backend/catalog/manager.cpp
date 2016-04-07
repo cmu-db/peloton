@@ -17,8 +17,14 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
+
+namespace concurrency {
+  class TransactionManagerFactory;
+}
+
 namespace catalog {
 
 Manager &Manager::GetInstance() {
@@ -46,6 +52,7 @@ void Manager::AddTileGroup(
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
+  concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group

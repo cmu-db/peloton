@@ -288,8 +288,7 @@ class TileGroupHeader : public Printable {
   static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
   static const size_t prev_pointer_offset = next_pointer_offset + sizeof(ItemPointer);
   static const size_t reserved_field_offset = prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset =
-      reserved_field_offset + 24;
+  static const size_t insert_commit_offset = reserved_field_offset + 24;
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 
