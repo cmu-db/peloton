@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "ssi_txn_manager.h"
 
 #include "backend/common/platform.h"
@@ -20,6 +21,9 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 
+
+
+#include <set>
 namespace peloton {
 namespace concurrency {
 
@@ -544,14 +548,15 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
+  auto txn_id = current_txn->GetTransactionId();
   // Clean the aborted txn's context
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    auto txn_id = current_txn->GetTransactionId();
-    // Remove all read tuples by the current txns
-    RemoveReader(txn_id);
     txn_table_.erase(txn_id);
   }
+
+  // Remove all read tuples by the current txns
+  RemoveReader(current_txn);
 
   delete current_txn;
   current_txn = nullptr;
@@ -559,14 +564,11 @@ Result SsiTxnManager::AbortTransaction() {
   return Result::RESULT_ABORTED;
 }
 
-// RemoveReader should be protected in txn_manager_mutex_
-void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
+void SsiTxnManager::RemoveReader(Transaction *txn) {
   LOG_INFO("release SILock");
-  assert(txn_table_.count(txn_id) > 0);
 
   // Remove from the read list of accessed tuples
-  auto &my_ctx = txn_table_.at(txn_id);
-  auto &rw_set = my_ctx.transaction_->GetRWSet();
+  auto &rw_set = txn->GetRWSet();
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -583,7 +585,7 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
       if (tuple_entry.second == RW_TYPE_INSERT) {
         continue;
       }
-      RemoveSIReader(tile_group_header, tuple_slot, txn_id);
+      RemoveSIReader(tile_group_header, tuple_slot, txn->GetTransactionId());
     }
   }
   LOG_INFO("release SILock finish");
@@ -593,45 +595,52 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 // Current implementation might be very expensive, consider using dependency
 // count
 void SsiTxnManager::CleanUp() {
-  // GC periodically
-  // find smallest begin cid of the running transaction
-  // init it as max() for the case that all transactions are committed
-  std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
-  cid_t min_begin = std::numeric_limits<cid_t>::max();
-  for (auto &item : txn_table_) {
-    auto &ctx = item.second;
-    if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
-      if (ctx.transaction_->GetBeginCommitId() < min_begin) {
+  std::set<Transaction *> garbage;
+  {
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+
+    // init it as max() for the case that all transactions are committed
+    cid_t min_begin = std::numeric_limits<cid_t>::max();
+
+    for (auto &item : txn_table_) {
+      // find smallest begin cid of the running transaction
+      auto &ctx = item.second;
+      if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
+        // txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
+        // so the first running transaction's begin_cid must be the smallest
+        // see BeginTransaction()
         min_begin = ctx.transaction_->GetBeginCommitId();
+        break;
+      }
+    }
+
+    // remove committed transactions, whose end_cid < min_begin
+    auto itr = txn_table_.begin();
+    while (itr != txn_table_.end()) {
+      auto &ctx = itr->second;
+      auto end_cid = ctx.transaction_->GetEndCommitId();
+      if (end_cid == INVALID_TXN_ID) {
+        // running transaction
+        itr++;
+        continue;
+      }
+
+      if (end_cid < min_begin) {
+        // we can safely remove it from table
+        LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
+        garbage.insert(ctx.transaction_);
+        itr = txn_table_.erase(itr);
+      } else {
+        itr++;
       }
     }
   }
 
-  auto itr = txn_table_.begin();
-  while (itr != txn_table_.end()) {
-    auto &ctx = itr->second;
-    auto end_cid = ctx.transaction_->GetEndCommitId();
-    if (end_cid == INVALID_TXN_ID) {
-      // running transaction
-      itr++;
-      continue;
-    }
-
-    if (end_cid < min_begin) {
-      // we can safely remove it from table
-      // remove its reader mark
-      LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
-      RemoveReader(ctx.transaction_->GetTransactionId());
-
-      // delete transaction
-      delete ctx.transaction_;
-
-      // remove from table
-      itr = txn_table_.erase(itr);
-    } else {
-      itr++;
-    }
+  for(auto txn : garbage) {
+    // remove txn in reader list
+    RemoveReader(txn);
+    delete txn;
   }
 }
 

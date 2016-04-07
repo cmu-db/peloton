@@ -90,14 +90,18 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+
+    // protect beginTransaction with a global lock
+    // to ensure that:
+    //    txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
     Transaction *txn = TransactionManager::BeginTransaction();
-    {
-      std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-      assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
-      txn_table_.insert(
-          std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
-      LOG_INFO("Begin txn %lu", txn->GetTransactionId());
-    }
+    assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
+
+    txn_table_.insert(
+        std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
+
+    LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
 
@@ -143,7 +147,7 @@ class SsiTxnManager : public TransactionManager {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
     *(txn_id_t *)(reserved_area + CREATOR_OFFSET) = txn_id;
-    new ((Spinlock *)(reserved_area + LOCK_OFFSET)) Spinlock();
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
     *(ReadList **)(reserved_area + LIST_OFFSET) = nullptr;
   }
 
@@ -243,7 +247,7 @@ class SsiTxnManager : public TransactionManager {
     txn_table_.at(txn_id).out_conflict_ = true;
   }
 
-  void RemoveReader(txn_id_t txn_id);
+  void RemoveReader(Transaction *txn);
 
   // Free contexts for SSI manager
   void CleanUpBg();
