@@ -128,6 +128,9 @@ bool UpdateExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(new_tuple);
 
+      // FIXME: PerformUpdate() will not be executed if the insertion failed,
+      // There is a write lock, acquired, but since it is not in the write set, 
+      // the acquired lock can't be released when the txn is aborted.
       if (location.IsNull() == true) {
         delete new_tuple;
         new_tuple = nullptr;

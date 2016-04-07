@@ -117,7 +117,7 @@ class TransactionTestsUtil {
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable();
+  static storage::DataTable *CreateTable(int num_key = 10);
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteRead(concurrency::Transaction *txn,
@@ -187,9 +187,20 @@ class TransactionThread {
     }
   }
 
-  void Run() {
-    std::thread thread(&TransactionThread::RunLoop, this);
-    thread.detach();
+  void RunNoWait() {
+    while (true) {
+      ExecuteNext();
+      if (cur_seq == (int)schedule->operations.size()) {
+        break;
+      }
+    }
+  }
+
+  std::thread Run(bool no_wait = false) {
+    if (!no_wait)
+      return std::thread(&TransactionThread::RunLoop, this);
+    else
+      return std::thread(&TransactionThread::RunNoWait, this);
   }
 
   void ExecuteNext() {
@@ -270,6 +281,7 @@ class TransactionThread {
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
         schedule->results.push_back(result);
+        LOG_INFO("READ_STORE, key: %d, read: %d, modify and stored as: %d", id, result, result+value);
         schedule->stored_value = result + value;
         break;
       }
@@ -300,23 +312,38 @@ class TransactionScheduler {
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
-        schedules(num_txn) {}
+        schedules(num_txn),
+        concurrent(false) {}
 
   void Run() {
+    // Run the txns according to the schedule
     for (int i = 0; i < (int)schedules.size(); i++) {
       tthreads.emplace_back(&schedules[i], table, txn_manager);
     }
-    for (int i = 0; i < (int)schedules.size(); i++) {
-      tthreads[i].Run();
-    }
-    for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-      LOG_INFO("Execute %d", (int)itr->second);
-      tthreads[itr->second].go = true;
-      while (tthreads[itr->second].go) {
-        std::chrono::milliseconds sleep_time(1);
-        std::this_thread::sleep_for(sleep_time);
+    if (!concurrent) { 
+      for (int i = 0; i < (int)schedules.size(); i++) {
+        std::thread t = tthreads[i].Run();
+        t.detach();
       }
-      LOG_INFO("Done %d", (int)itr->second);
+      for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
+        LOG_INFO("Execute %d", (int)itr->second);
+        tthreads[itr->second].go = true;
+        while (tthreads[itr->second].go) {
+          std::chrono::milliseconds sleep_time(1);
+          std::this_thread::sleep_for(sleep_time);
+        }
+        LOG_INFO("Done %d", (int)itr->second);
+      }  
+    } else {
+      // Run the txns concurrently
+      std::vector<std::thread> threads(schedules.size());
+      for (int i = 0; i < (int)schedules.size(); i++) {
+        threads[i] = tthreads[i].Run(true);
+      }
+      for (auto &thread : threads) {
+        thread.join();
+      }
+      LOG_INFO("Done conccurent transaction schedule");
     }
   }
 
@@ -366,6 +393,10 @@ class TransactionScheduler {
     sequence[time++] = cur_txn_id;
   }
 
+  void SetConcurrent(bool flag) {
+    concurrent = flag;
+  }
+
   concurrency::TransactionManager *txn_manager;
   storage::DataTable *table;
   int time;
@@ -373,6 +404,7 @@ class TransactionScheduler {
   std::vector<TransactionThread> tthreads;
   std::map<int, int> sequence;
   int cur_txn_id;
+  bool concurrent;
 };
 }
 }
