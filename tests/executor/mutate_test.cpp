@@ -85,7 +85,7 @@ std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -106,7 +106,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
 }
 
 void UpdateTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -160,7 +160,7 @@ void UpdateTuple(storage::DataTable *table) {
 }
 
 void DeleteTuple(storage::DataTable *table) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -200,7 +200,7 @@ void DeleteTuple(storage::DataTable *table) {
 }
 
 TEST_F(MutateTests, StressTests) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -296,7 +296,7 @@ TEST_F(MutateTests, StressTests) {
 
 // Insert a logical tile into a table
 TEST_F(MutateTests, InsertTest) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(
       ExecutorTestsUtil::CreateAndPopulateTable());
@@ -359,7 +359,7 @@ TEST_F(MutateTests, DeleteTest) {
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
   LaunchParallelTest(1, DeleteTuple, table);
 
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -384,7 +384,7 @@ TEST_F(MutateTests, DeleteTest) {
 int SeqScanCount(storage::DataTable *table,
                  const std::vector<oid_t> &column_ids,
                  expression::AbstractExpression *predicate) {
-  auto &txn_manager = concurrency::RowoTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
