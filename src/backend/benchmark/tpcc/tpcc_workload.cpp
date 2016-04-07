@@ -76,9 +76,15 @@ namespace tpcc {
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-void RunRead();
+void RunStockLevel();
 
-void RunUpdate();
+void RunDelivery();
+
+void RunOrderStatus();
+
+void RunPayment();
+
+void RunNewOrder();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -89,7 +95,7 @@ std::vector<double> durations;
 void RunBackend(oid_t thread_id) {
   auto txn_count = state.transaction_count;
 
-  //UniformGenerator generator;
+  UniformGenerator generator;
   Timer<> timer;
 
   // Start timer
@@ -98,9 +104,19 @@ void RunBackend(oid_t thread_id) {
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
-    //auto rng_val = generator.GetSample();
+    auto rng_val = generator.GetSample();
 
-    RunUpdate();
+    if (rng_val <= 0.04) {
+      RunStockLevel();
+    } else if (rng_val <= 0.08) {
+      RunDelivery();
+    } else if (rng_val <= 0.12) {
+      RunOrderStatus();
+    } else if (rng_val <= 0.55) {
+      RunPayment();
+    } else {
+      RunNewOrder();
+    }
 
   }
 
@@ -170,177 +186,25 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
-void RunRead() {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  oid_t column_count = 1;
-
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(col_itr);
-  }
-
-  // Create and set up index scan executor
-
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
-
-  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-  auto lookup_key = rand() % tuple_count;
-
-  key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-  auto tpcc_pkey_index = user_table->GetIndexWithOid(
-      user_table_pkey_index_oid);
-
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      tpcc_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-  // Create plan node.
-  auto predicate = nullptr;
-
-  planner::IndexScanPlan index_scan_node(user_table,
-                                         predicate, column_ids,
-                                         index_scan_desc);
-
-  // Run the executor
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-                                                  context.get());
-
-  /////////////////////////////////////////////////////////
-  // MATERIALIZE
-  /////////////////////////////////////////////////////////
-
-  // Create and set up materialization executor
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    old_to_new_cols[col_itr] = col_itr;
-  }
-
-  auto output_schema = catalog::Schema::CopySchema(user_table->GetSchema());
-  bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema,
-                                        physify_flag);
-
-  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&index_scan_executor);
-
-  /////////////////////////////////////////////////////////
-  // EXECUTE
-  /////////////////////////////////////////////////////////
-
+void RunStockLevel() {
   std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&mat_executor);
-
   ExecuteTest(executors);
-
-  txn_manager.CommitTransaction(txn);
 }
 
-void RunUpdate() {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+void RunDelivery(){
 
-  auto txn = txn_manager.BeginTransaction();
+}
 
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
+void RunOrderStatus(){
 
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
+}
 
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  oid_t column_count = 1 + 1;
+void RunPayment(){
 
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(col_itr);
-  }
+}
 
-  // Create and set up index scan executor
+void RunNewOrder(){
 
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
-
-  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-  auto lookup_key = rand() % tuple_count;
-
-  key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-  auto tpcc_pkey_index = user_table->GetIndexWithOid(
-      user_table_pkey_index_oid);
-
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      tpcc_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-  // Create plan node.
-  auto predicate = nullptr;
-
-  planner::IndexScanPlan index_scan_node(user_table,
-                                         predicate, column_ids,
-                                         index_scan_desc);
-
-  // Run the executor
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-                                                  context.get());
-
-  /////////////////////////////////////////////////////////
-  // UPDATE
-  /////////////////////////////////////////////////////////
-
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  // Update the second attribute
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    if(col_itr != 1) {
-      direct_map_list.emplace_back(col_itr,
-                                   std::pair<oid_t, oid_t>(0, col_itr));
-    }
-  }
-
-  std::string update_raw_value(100, 'u');
-  Value update_val = ValueFactory::GetStringValue(update_raw_value);
-  target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
-  planner::UpdatePlan update_node(
-      user_table, new planner::ProjectInfo(std::move(target_list),
-                                           std::move(direct_map_list)));
-
-  executor::UpdateExecutor update_executor(&update_node, context.get());
-  update_executor.AddChild(&index_scan_executor);
-
-  /////////////////////////////////////////////////////////
-  // EXECUTE
-  /////////////////////////////////////////////////////////
-
-  std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&update_executor);
-
-  ExecuteTest(executors);
-
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace tpcc

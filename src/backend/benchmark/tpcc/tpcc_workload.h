@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_loader.h"
 
 namespace peloton {
 
@@ -24,8 +25,6 @@ namespace benchmark {
 namespace tpcc {
 
 extern configuration state;
-
-extern storage::DataTable* user_table;
 
 double RunWorkload();
 
