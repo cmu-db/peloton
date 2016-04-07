@@ -89,7 +89,7 @@ std::vector<double> durations;
 void RunBackend(oid_t thread_id) {
   auto txn_count = state.transaction_count;
 
-  UniformGenerator generator;
+  //UniformGenerator generator;
   Timer<> timer;
 
   // Start timer
@@ -98,7 +98,7 @@ void RunBackend(oid_t thread_id) {
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
-    auto rng_val = generator.GetSample();
+    //auto rng_val = generator.GetSample();
 
     RunUpdate();
 

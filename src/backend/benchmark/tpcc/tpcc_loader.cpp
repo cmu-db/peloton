@@ -44,7 +44,7 @@ storage::Database* tpcc_database;
 
 storage::DataTable* user_table;
 
-void CreatetpccDatabase() {
+void CreateTPCCDatabase() {
   return;
 
   const oid_t col_count = 10 + 1;
