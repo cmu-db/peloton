@@ -9,11 +9,11 @@ sample_udf_test_FILES = \
 
 sample_udf_test_INCLUDES = \
       -I$(srcdir)/postgres/include \
-      -I$(srcdir)/postgres/backenkd
+      -I$(srcdir)/postgres/backend
 
 spi_udf_test_FILES = \
       udf/spi_udf.cpp
 
 spi_udf_test_INCLUDES = \
       -I$(srcdir)/postgres/include \
-      -I$(srcdir)/postgres/backenkd
+      -I$(srcdir)/postgres/backend
