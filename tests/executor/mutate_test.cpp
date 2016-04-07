@@ -300,7 +300,9 @@ TEST_F(MutateTests, InsertTest) {
       ExecutorTestsUtil::CreateTable());
   const std::vector<storage::Tuple *> tuples;
 
-  EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
+  // NOTE: WE HAVE CHANGED TILE-GROUP ALLOCATION MECHANISM.
+  EXPECT_EQ(source_data_table->GetTileGroupCount(), 4);
+  //EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 
   auto txn = txn_manager.BeginTransaction();
@@ -343,7 +345,9 @@ TEST_F(MutateTests, InsertTest) {
   txn_manager.CommitTransaction();
 
   // We have inserted all the tuples in this logical tile
-  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
+  // NOTE: WE HAVE CHANGED TILE-GROUP ALLOCATION MECHANISM.
+  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 2);
+  //EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
 TEST_F(MutateTests, DeleteTest) {

@@ -122,8 +122,9 @@ TEST_F(LoaderTests, LoadingTest) {
   LaunchParallelTest(loader_threads_count, InsertTuple, data_table.get(),
                      testing_pool, tilegroup_count_per_loader);
 
+  // NOTE: WE HAVE CHANGED TILE-GROUP ALLOCATION MECHANISM.
   auto expected_tile_group_count =
-      loader_threads_count * tilegroup_count_per_loader;
+      loader_threads_count * tilegroup_count_per_loader + 1;
   auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
