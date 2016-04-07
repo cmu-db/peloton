@@ -116,7 +116,8 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   std::unique_ptr<expression::ContainerTuple<std::vector<Value>>> aggref_tuple(
       new expression::ContainerTuple<std::vector<Value>>(&aggregate_values));
 
-  auto predicate = node->GetPredicate();
+  // TODO: should we do a copy here?
+  auto predicate = node->GetPredicate().get();
   if (nullptr != predicate &&
       predicate->Evaluate(delegate_tuple, aggref_tuple.get(), econtext)
           .IsFalse()) {

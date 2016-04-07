@@ -81,7 +81,7 @@ class ProjectInfo {
 
   ~ProjectInfo();
 
-  ProjectInfo *Copy() const {
+  std::unique_ptr<const ProjectInfo> Copy() const {
     std::vector<Target> new_target_list;
     for (const Target &target : target_list_) {
       new_target_list.push_back(
@@ -96,9 +96,8 @@ class ProjectInfo {
           std::pair<oid_t, oid_t>(aMap.second.first, aMap.second.second)));
     }
 
-    ProjectInfo *ret =
-        new ProjectInfo(std::move(new_target_list), std::move(new_map_list));
-    return ret;
+    return std::unique_ptr<ProjectInfo>(
+        new ProjectInfo(std::move(new_target_list), std::move(new_map_list)));
   }
 
  private:

@@ -127,10 +127,11 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformUpdate(
   // Child must be a scan node
   auto sub_planstate = (AbstractScanPlanState *)mt_plan_state->mt_plans[0];
 
-  auto project_info = BuildProjectInfo(sub_planstate->proj);
+  std::unique_ptr<const planner::ProjectInfo> project_info{
+      BuildProjectInfo(sub_planstate->proj)};
 
   std::unique_ptr<planner::AbstractPlan> plan_node(
-      new planner::UpdatePlan(target_table, project_info));
+      new planner::UpdatePlan(target_table, std::move(project_info)));
 
   TransformOptions new_options = options;
   new_options.use_projInfo = false;

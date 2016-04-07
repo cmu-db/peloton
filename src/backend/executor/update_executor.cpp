@@ -46,7 +46,7 @@ bool UpdateExecutor::DInit() {
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
-  project_info_ = node.GetProjectInfo();
+  project_info_ = node.GetProjectInfo().get();
 
   assert(target_table_);
   assert(project_info_);
@@ -129,7 +129,7 @@ bool UpdateExecutor::DExecute() {
       ItemPointer location = target_table_->InsertVersion(new_tuple);
 
       // FIXME: PerformUpdate() will not be executed if the insertion failed,
-      // There is a write lock, acquired, but since it is not in the write set, 
+      // There is a write lock, acquired, but since it is not in the write set,
       // the acquired lock can't be released when the txn is aborted.
       if (location.IsNull() == true) {
         delete new_tuple;

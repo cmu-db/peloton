@@ -42,8 +42,8 @@ class InsertPlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  const planner::ProjectInfo *GetProjectInfo() const {
-    return project_info_.get();
+  const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
+    return project_info_;
   }
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
@@ -52,7 +52,7 @@ class InsertPlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new InsertPlan(
-        target_table_, project_info_->Copy(), bulk_insert_count));
+        target_table_, std::move(project_info_->Copy()), bulk_insert_count));
   }
 
  private:

@@ -283,11 +283,11 @@ void RunDirectTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -413,12 +413,12 @@ void RunAggregateTest() {
   for (auto column_id : column_ids) {
     columns.push_back(data_table_schema->GetColumn(column_id));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(new catalog::Schema(columns));
+  std::shared_ptr<const catalog::Schema> output_table_schema(new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan aggregation_node(
       std::move(proj_info), std::move(aggregate_predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema), AGGREGATE_TYPE_PLAIN);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN);
 
   executor::AggregateExecutor aggregation_executor(&aggregation_node,
                                                    context.get());
@@ -442,11 +442,11 @@ void RunAggregateTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&aggregation_executor);
@@ -588,11 +588,11 @@ void RunArithmeticTest() {
   output_columns.push_back(column);
   old_to_new_cols[col_itr] = col_itr;
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&projection_executor);
@@ -684,12 +684,12 @@ void RunJoinTest() {
   auto join_type = JOIN_TYPE_INNER;
 
   // Create join predicate
-  expression::AbstractExpression *join_predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> join_predicate(nullptr);
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
   std::shared_ptr<const catalog::Schema> schema(nullptr);
 
   planner::NestedLoopJoinPlan nested_loop_join_node(
-      join_type, join_predicate, std::move(project_info), schema);
+      join_type, std::move(join_predicate), std::move(project_info), schema);
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -716,11 +716,11 @@ void RunJoinTest() {
     old_to_new_cols[col_itr] = col_itr;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&nested_loop_join_executor);
@@ -818,11 +818,11 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -946,9 +946,10 @@ void RunUpdateTest() {
     direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
-  planner::UpdatePlan update_node(hyadapt_table.get(), project_info);
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(hyadapt_table.get(), std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -2040,11 +2041,11 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);

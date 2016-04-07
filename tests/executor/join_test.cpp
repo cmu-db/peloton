@@ -364,15 +364,15 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   auto schema = CreateJoinSchema();
 
   // Construct predicate
-  expression::AbstractExpression *predicate =
-      JoinTestsUtil::CreateJoinPredicate();
+  std::unique_ptr<const expression::AbstractExpression> predicate(
+      JoinTestsUtil::CreateJoinPredicate());
 
   // Differ based on join algorithm
   switch (join_algorithm) {
     case PLAN_NODE_TYPE_NESTLOOP: {
       // Create nested loop join plan node.
       planner::NestedLoopJoinPlan nested_loop_join_node(
-          join_type, predicate, std::move(projection), schema);
+          join_type, std::move(predicate), std::move(projection), schema);
 
       // Run the nested loop join executor
       executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -406,7 +406,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
       // Create merge join plan node
       planner::MergeJoinPlan merge_join_node(
-          join_type, predicate, std::move(projection), schema, join_clauses);
+          join_type, std::move(predicate), std::move(projection), schema,
+          join_clauses);
 
       // Construct the merge join executor
       executor::MergeJoinExecutor merge_join_executor(&merge_join_node,
@@ -450,7 +451,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 
       // Create hash join plan node.
       planner::HashJoinPlan hash_join_plan_node(
-          join_type, predicate, std::move(projection), schema);
+          join_type, std::move(predicate), std::move(projection), schema);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node,

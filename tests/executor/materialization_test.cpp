@@ -116,7 +116,7 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumn(1));
   output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(1));
   output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(0));
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
 
   // Construct mapping using the ordering mentioned above.
@@ -125,7 +125,7 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan node(old_to_new_cols, output_schema.release(),
+  planner::MaterializationPlan node(old_to_new_cols, output_schema,
                                     physify_flag);
 
   // Pass through materialization executor.

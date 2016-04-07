@@ -37,11 +37,11 @@ class UpdatePlan : public AbstractPlan {
   UpdatePlan &operator=(UpdatePlan &&) = delete;
 
   explicit UpdatePlan(storage::DataTable *table,
-                      const planner::ProjectInfo *project_info)
-      : target_table_(table), project_info_(project_info) {}
+                      std::unique_ptr<const planner::ProjectInfo> project_info)
+      : target_table_(table), project_info_(std::move(project_info)) {}
 
-  const planner::ProjectInfo *GetProjectInfo() const {
-    return project_info_.get();
+  const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
+    return project_info_;
   }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_UPDATE; }
@@ -52,7 +52,7 @@ class UpdatePlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
-        new UpdatePlan(target_table_, project_info_->Copy()));
+        new UpdatePlan(target_table_, std::move(project_info_->Copy())));
   }
 
  private:
