@@ -128,19 +128,12 @@ class ExpressionUtil {
   static AbstractExpression *SubqueryFactory(
       ExpressionType subqueryType, PlannerDomValue obj,
       const std::vector<AbstractExpression *> &rgs);
-
-  static AbstractExpression *CaseExprFactory(
-      ValueType vt, const std::vector<AbstractExpression *> &clauses,
-      AbstractExpression *default_result);
+  //
   static AbstractExpression *CoalesceFactory(
       ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *NullIfFactory(
       ValueType vt, const std::vector<AbstractExpression *> &values);
-
-  static AbstractExpression *CaseWhenFactory(ValueType vt,
-                                             AbstractExpression *lc,
-                                             AbstractExpression *rc);
 
   static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
                                                   ValueType vt,
