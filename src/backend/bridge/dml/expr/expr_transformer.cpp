@@ -35,7 +35,8 @@
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
 #include "backend/expression/case_expression.h"
-
+#include "backend/expression/nullif_expression.h"
+#include "backend/expression/coalesce_expression.h"
 namespace peloton {
 namespace bridge {
 
@@ -388,14 +389,14 @@ expression::AbstractExpression *ExprTransformer::TransformNullIf(
   const List *list = nullif_es->args;
   ListCell *arg;
 
-  std::vector<expression::AbstractExpression *> values;
+  std::vector<expression::NullIfExpression::AbstractExprPtr> expressions;
   foreach (arg, list) {
     auto *expr = reinterpret_cast<const ExprState *> lfirst(arg);
     auto t = TransformExpr(expr);
-    values.push_back(t);
+    expressions.push_back(expression::NullIfExpression::AbstractExprPtr(t));
   }
 
-  return expression::ExpressionUtil::NullIfFactory(vt, values);
+  return new expression::NullIfExpression(vt, expressions);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformCoalesce(

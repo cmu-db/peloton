@@ -132,9 +132,6 @@ class ExpressionUtil {
   static AbstractExpression *CoalesceFactory(
       ValueType vt, const std::vector<AbstractExpression *> &values);
 
-  static AbstractExpression *NullIfFactory(
-      ValueType vt, const std::vector<AbstractExpression *> &values);
-
   static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
                                                   ValueType vt,
                                                   ExpressionType et,

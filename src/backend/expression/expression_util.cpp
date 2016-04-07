@@ -894,11 +894,6 @@ AbstractExpression *ExpressionUtil::CoalesceFactory(
   return new expression::CoalesceExpression(vt, expressions);
 }
 
-AbstractExpression *ExpressionUtil::NullIfFactory(
-    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
-  return new expression::NullIfExpression(vt, expressions);
-}
-
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
