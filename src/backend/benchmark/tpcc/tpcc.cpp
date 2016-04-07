@@ -43,6 +43,8 @@ void RunBenchmark() {
   CreateTPCCDatabase();
 
   //LoadtpccDatabase();
+
+  WriteOutput(0);
 }
 
 }  // namespace tpcc
