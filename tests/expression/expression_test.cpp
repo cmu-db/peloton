@@ -603,8 +603,9 @@ TEST_F(ExpressionTest, SimpleCase) {
   expression::CaseExpression *case_expression = new expression::CaseExpression(
       VALUE_TYPE_INTEGER, clauses,
       expression::CaseExpression::WhenClausePtr(
-          new expression::CaseExpression::WhenClause(nullptr,
-                                                     const_val_exp_3)));
+          new expression::CaseExpression::WhenClause(
+              expression::CaseExpression::AbstractExprPtr(nullptr),
+              expression::CaseExpression::AbstractExprPtr(const_val_exp_3))));
   // TUPLE
 
   std::vector<catalog::Column> columns;
@@ -670,8 +671,10 @@ TEST_F(ExpressionTest, SimpleCaseCopyTest) {
       new expression::CaseExpression(
           VALUE_TYPE_INTEGER, clauses,
           expression::CaseExpression::WhenClausePtr(
-              new expression::CaseExpression::WhenClause(nullptr,
-                                                         const_val_exp_3)));
+              new expression::CaseExpression::WhenClause(
+                  expression::CaseExpression::AbstractExprPtr(nullptr),
+                  expression::CaseExpression::AbstractExprPtr(
+                      const_val_exp_3))));
 
   expression::CaseExpression *case_expression =
       dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy());
