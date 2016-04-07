@@ -25,7 +25,7 @@ namespace networking {
  * @param TupleDesc and TupleDescMsg&
  * @return TupleDescMsg is set on
  */
-void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
+void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
     // Convert the basic value type
     tuple_desc_msg.set_natts(tuple_desc->natts);
     tuple_desc_msg.set_tdhasoid(tuple_desc->tdhasoid);
@@ -91,7 +91,6 @@ void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
     int atts_count = tuple_desc->natts;
     int repeate_count = tuple_desc_msg.attrs_size();
     assert(atts_count == repeate_count);
-
     // end debug
 
     // Convert TupleConstr. It is a message type

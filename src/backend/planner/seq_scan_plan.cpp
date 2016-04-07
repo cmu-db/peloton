@@ -48,7 +48,7 @@ namespace planner {
 bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
 
     // A placeholder for the total size written at the end
-    size_t start = output.Position();
+    int start = output.Position();
     output.WriteInt(-1);
 
     // Write the SeqScanPlan type
@@ -99,7 +99,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
     }
 
     // Write the total length
-    int32_t sz = static_cast<int32_t>(output.Position() - start - sizeof(int32_t));
+    int32_t sz = static_cast<int32_t>(output.Position() - start - sizeof(int));
     assert(sz > 0);
     output.WriteIntAt(start, sz);
 

@@ -28,7 +28,7 @@ namespace networking {
 /*
  * CreateTupleDescMsg is used when a node sends query plan
  */
-void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
+void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
 
 /*
  * When executing the query plan, a node must parse the received msg and convert it
