@@ -87,33 +87,42 @@ void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
                 (*tuple_desc->attrs)->atttypmod);
     }
 
+    // debug
+    int atts_count = tuple_desc->natts;
+    int repeate_count = tuple_desc_msg.attrs_size();
+    assert(atts_count == repeate_count);
+
+    // end debug
+
     // Convert TupleConstr. It is a message type
     // Note the threee char* () is ended with \0 in postgres, such as appendStringInfoChar.
     // So they are safe to be set in protobuf (as bytes) with on "size" parameter
-    tuple_desc_msg.mutable_constr()->set_adbin(
-            tuple_desc->constr->defval->adbin);
-    // AttrNumber(adnum) is int16 in Postgres, so we convert it to int32
-    tuple_desc_msg.mutable_constr()->set_adnum(
-            assert_range_cast_same<int32, int16>(
-                    tuple_desc->constr->defval->adnum));
-    tuple_desc_msg.mutable_constr()->set_ccbin(
-            tuple_desc->constr->check->ccbin);
-    tuple_desc_msg.mutable_constr()->set_ccname(
-            tuple_desc->constr->check->ccname);
-    tuple_desc_msg.mutable_constr()->set_ccnoinherit(
-            tuple_desc->constr->check->ccnoinherit);
-    tuple_desc_msg.mutable_constr()->set_ccvalid(
-            tuple_desc->constr->check->ccvalid);
-    tuple_desc_msg.mutable_constr()->set_has_not_null(
-            tuple_desc->constr->has_not_null);
-    // num_check is uint16 in Postgres, so we convert it to uint32
-    tuple_desc_msg.mutable_constr()->set_num_check(
-            assert_range_cast_same<uint32, uint16>(
-                    tuple_desc->constr->num_check));
-    // num_defval is uint16 in Postgres, so we convert it to uint32
-    tuple_desc_msg.mutable_constr()->set_num_defval(
-            assert_range_cast_same<uint32, uint16>(
-                    tuple_desc->constr->num_defval));
+    if ( tuple_desc->constr != NULL ) {
+        tuple_desc_msg.mutable_constr()->set_adbin(
+                tuple_desc->constr->defval->adbin);
+        // AttrNumber(adnum) is int16 in Postgres, so we convert it to int32
+        tuple_desc_msg.mutable_constr()->set_adnum(
+                assert_range_cast_same<int32, int16>(
+                        tuple_desc->constr->defval->adnum));
+        tuple_desc_msg.mutable_constr()->set_ccbin(
+                tuple_desc->constr->check->ccbin);
+        tuple_desc_msg.mutable_constr()->set_ccname(
+                tuple_desc->constr->check->ccname);
+        tuple_desc_msg.mutable_constr()->set_ccnoinherit(
+                tuple_desc->constr->check->ccnoinherit);
+        tuple_desc_msg.mutable_constr()->set_ccvalid(
+                tuple_desc->constr->check->ccvalid);
+        tuple_desc_msg.mutable_constr()->set_has_not_null(
+                tuple_desc->constr->has_not_null);
+        // num_check is uint16 in Postgres, so we convert it to uint32
+        tuple_desc_msg.mutable_constr()->set_num_check(
+                assert_range_cast_same<uint32, uint16>(
+                        tuple_desc->constr->num_check));
+        // num_defval is uint16 in Postgres, so we convert it to uint32
+        tuple_desc_msg.mutable_constr()->set_num_defval(
+                assert_range_cast_same<uint32, uint16>(
+                        tuple_desc->constr->num_defval));
+    }
 }
 
 /*
@@ -124,7 +133,8 @@ void CreateTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
 TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
 
     // TODO: Using Postgres func to create, but when should we FreeTupleDesc?
-    TupleDesc tuple_desc;
+    // We didn't use CreateTupleDesc, which is a Postgres function. CreateTupleDesc brings error
+    TupleDesc tuple_desc = (TupleDesc) malloc(sizeof(struct tupleDesc));
 
     //===----------------------------------------------------------------------===//
     //   Parse and create attrs structure
@@ -139,6 +149,7 @@ TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
         assert(tuple_desc_msg.attrs_size() == attrs_count);
 
         for (int it = 0; it < attrs_count; it++) {
+            attrs[it] = (Form_pg_attribute)malloc(sizeof(FormData_pg_attribute));
             // Here attalign is char in postgres, so we convert it
             attrs[it]->attalign = assert_range_cast_same<int8, int32>(
                     tuple_desc_msg.attrs(it).attalign());
@@ -169,14 +180,15 @@ TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
 
         }
 
-        tuple_desc = CreateTupleDesc(attrs_count, false, ppattrs);
+        tuple_desc->attrs = ppattrs;
     } else {
-        tuple_desc = CreateTemplateTupleDesc(attrs_count, false);
+        tuple_desc->attrs = NULL;
     }
 
     //===----------------------------------------------------------------------===//
     //    Set the basic value type
     //===----------------------------------------------------------------------===//
+    tuple_desc->natts = attrs_count;
     tuple_desc->tdhasoid = tuple_desc_msg.tdhasoid();
     tuple_desc->tdrefcount = tuple_desc_msg.tdrefcount();
     tuple_desc->tdtypeid = tuple_desc_msg.tdtypeid();
@@ -188,54 +200,57 @@ TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
     // Note the three char* () is ended with \0 in postgres, such as appendStringInfoChar.
     // So they are safe to be set in protobuf (as bytes) with on "size" parameter
     // But when convert them back to char* we should set \0 at the end of char*
-    AttrDefault* attrdef = (AttrDefault*)malloc(sizeof(AttrDefault));
-    ConstrCheck* constrch = (ConstrCheck*)malloc(sizeof(ConstrCheck));
-    TupleConstr* tuple_constr = (TupleConstr*)malloc(sizeof(TupleConstr));
+    if (tuple_desc_msg.has_constr()) {
+        AttrDefault* attrdef = (AttrDefault*)malloc(sizeof(AttrDefault));
+        ConstrCheck* constrch = (ConstrCheck*)malloc(sizeof(ConstrCheck));
+        TupleConstr* tuple_constr = (TupleConstr*)malloc(sizeof(TupleConstr));
 
-    std::string adbinss = tuple_desc_msg.constr().adbin();
-    std::string ccbinss = tuple_desc_msg.constr().ccbin();
-    std::string ccnamess = tuple_desc_msg.constr().ccname();
+        std::string adbinss = tuple_desc_msg.constr().adbin();
+        std::string ccbinss = tuple_desc_msg.constr().ccbin();
+        std::string ccnamess = tuple_desc_msg.constr().ccname();
 
-    char* adbin = (char*)malloc( adbinss.size() + 1 );
-    char* ccbin = (char*)malloc( ccbinss.size() + 1 );
-    char* ccname = (char*)malloc( ccnamess.size() + 1 );
+        char* adbin = (char*)malloc( adbinss.size() + 1 );
+        char* ccbin = (char*)malloc( ccbinss.size() + 1 );
+        char* ccname = (char*)malloc( ccnamess.size() + 1 );
 
-    adbinss.copy(adbin, adbinss.size());
-    adbin[adbinss.size()] = '\0';
+        adbinss.copy(adbin, adbinss.size());
+        adbin[adbinss.size()] = '\0';
 
-    ccbinss.copy(adbin, ccbinss.size());
-    adbin[ccbinss.size()] = '\0';
+        ccbinss.copy(adbin, ccbinss.size());
+        adbin[ccbinss.size()] = '\0';
 
-    ccnamess.copy(adbin, ccnamess.size());
-    adbin[ccnamess.size()] = '\0';
+        ccnamess.copy(adbin, ccnamess.size());
+        adbin[ccnamess.size()] = '\0';
 
-    // Set AttrDefault
-    attrdef->adbin = adbin;
-    // int16
-    attrdef->adnum = tuple_desc_msg.constr().adnum();
+        // Set AttrDefault
+        attrdef->adbin = adbin;
+        // int16
+        attrdef->adnum = tuple_desc_msg.constr().adnum();
 
-    // Set ConstrCheck
-    constrch->ccbin = ccbin;
-    constrch->ccname = ccname;
-    constrch->ccnoinherit = tuple_desc_msg.constr().ccnoinherit();
-    constrch->ccvalid = tuple_desc_msg.constr().ccvalid();
+        // Set ConstrCheck
+        constrch->ccbin = ccbin;
+        constrch->ccname = ccname;
+        constrch->ccnoinherit = tuple_desc_msg.constr().ccnoinherit();
+        constrch->ccvalid = tuple_desc_msg.constr().ccvalid();
 
-    // Set TupleConstr
-    tuple_constr->check = constrch;
-    tuple_constr->defval = attrdef;
-    tuple_constr->has_not_null = tuple_desc_msg.constr().has_not_null();
-    // uint16
-    tuple_constr->num_check = assert_range_cast_same<uint16, uint32>(
-            tuple_desc_msg.constr().num_check());
-    // uint16
-    tuple_constr->num_defval = assert_range_cast_same<uint16, uint32>(
-            tuple_desc_msg.constr().num_defval());
+        // Set TupleConstr
+        tuple_constr->check = constrch;
+        tuple_constr->defval = attrdef;
+        tuple_constr->has_not_null = tuple_desc_msg.constr().has_not_null();
+        // uint16
+        tuple_constr->num_check = assert_range_cast_same<uint16, uint32>(
+                tuple_desc_msg.constr().num_check());
+        // uint16
+        tuple_constr->num_defval = assert_range_cast_same<uint16, uint32>(
+                tuple_desc_msg.constr().num_defval());
 
-    // Set Constr
-    tuple_desc->constr = tuple_constr;
+        // Set Constr
+        tuple_desc->constr = tuple_constr;
+    } else {
+        tuple_desc->constr = NULL;
+    }
 
     return tuple_desc;
 }
-
 } // namespace message
 } // namespace peloton

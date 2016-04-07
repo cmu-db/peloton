@@ -220,9 +220,9 @@ peloton_dml(PlanState *planstate,
   request.set_plan_type(static_cast<int>(type));
 
   // Second prepare TupleDesc and set it into QueryPlanExecRequest
-  peloton::networking::TupleDescMsg tuple_desc_msg;
-  peloton::networking::CreateTupleDescMsg(tuple_desc, tuple_desc_msg);
-  request.set_allocated_tuple_dec(&tuple_desc_msg);
+  peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
+  peloton::networking::CreateTupleDescMsg(tuple_desc, *tuple_desc_msg);
+  //request.set_allocated_tuple_dec(&tuple_desc_msg);
 
   // Third set size of parameter list
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);

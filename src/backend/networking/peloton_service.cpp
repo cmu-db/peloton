@@ -426,7 +426,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
             }
 
             case PLAN_NODE_TYPE_SEQSCAN: {
-                LOG_ERROR("SEQSCAN revieved");
+                LOG_TRACE("SEQSCAN revieved");
                 std::string plan = request->plan();
                 ReferenceSerializeInputBE input(plan.c_str(), plan.size());
                 std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan =
