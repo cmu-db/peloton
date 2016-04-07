@@ -33,7 +33,8 @@ class MaterializationPlan : public AbstractPlan {
   MaterializationPlan &operator=(MaterializationPlan &&) = delete;
 
   MaterializationPlan(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-                      std::shared_ptr<const catalog::Schema> &schema, bool physify_flag)
+                      std::shared_ptr<const catalog::Schema> &schema,
+                      bool physify_flag)
       : old_to_new_cols_(old_to_new_cols),
         schema_(schema),
         physify_flag_(physify_flag) {}
@@ -60,8 +61,8 @@ class MaterializationPlan : public AbstractPlan {
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(schema_));
-    return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
-        old_to_new_cols_, schema_copy, physify_flag_));
+    return std::unique_ptr<AbstractPlan>(
+        new MaterializationPlan(old_to_new_cols_, schema_copy, physify_flag_));
   }
 
  private:

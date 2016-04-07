@@ -33,7 +33,8 @@ void AbstractPlan::AddChild(std::unique_ptr<AbstractPlan> &&child) {
   children_.emplace_back(std::move(child));
 }
 
-const std::vector<std::unique_ptr<AbstractPlan>> &AbstractPlan::GetChildren() const {
+const std::vector<std::unique_ptr<AbstractPlan>> &AbstractPlan::GetChildren()
+    const {
   return children_;
 }
 

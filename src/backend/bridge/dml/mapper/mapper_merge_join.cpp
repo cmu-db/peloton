@@ -28,8 +28,8 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
  * @brief Convert a Postgres MergeJoin into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-std::unique_ptr<planner::AbstractPlan>
-PlanTransformer::TransformMergeJoin(const MergeJoinPlanState *mj_plan_state) {
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
+    const MergeJoinPlanState *mj_plan_state) {
   std::unique_ptr<planner::AbstractPlan> result;
   PelotonJoinType join_type =
       PlanTransformer::TransformJoinType(mj_plan_state->jointype);
@@ -74,22 +74,22 @@ PlanTransformer::TransformMergeJoin(const MergeJoinPlanState *mj_plan_state) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
 
-    result = std::unique_ptr<planner::AbstractPlan>(new planner::ProjectionPlan(
-        std::move(project_info), project_schema));
+    result = std::unique_ptr<planner::AbstractPlan>(
+        new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
     LOG_INFO("We have direct mapping projection");
   }
 
-  std::unique_ptr<planner::MergeJoinPlan> plan_node(
-      new planner::MergeJoinPlan(
-          join_type, std::move(predicate), std::move(project_info), project_schema, join_clauses));
+  std::unique_ptr<planner::MergeJoinPlan> plan_node(new planner::MergeJoinPlan(
+      join_type, std::move(predicate), std::move(project_info), project_schema,
+      join_clauses));
 
-  std::unique_ptr<planner::AbstractPlan> outer{
-      std::move(PlanTransformer::TransformPlan(outerAbstractPlanState(mj_plan_state)))};
-  std::unique_ptr<planner::AbstractPlan> inner{
-      std::move(PlanTransformer::TransformPlan(innerAbstractPlanState(mj_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> outer{std::move(
+      PlanTransformer::TransformPlan(outerAbstractPlanState(mj_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> inner{std::move(
+      PlanTransformer::TransformPlan(innerAbstractPlanState(mj_plan_state)))};
 
   /* Add the children nodes */
   plan_node->AddChild(std::move(outer));

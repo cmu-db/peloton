@@ -78,23 +78,22 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
   if (non_trivial) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    result = std::unique_ptr<planner::AbstractPlan>(new planner::ProjectionPlan(
-        std::move(project_info), project_schema));
+    result = std::unique_ptr<planner::AbstractPlan>(
+        new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
     LOG_INFO("We have direct mapping projection");
   }
 
-  std::unique_ptr<planner::HashJoinPlan> plan_node(
-      new planner::HashJoinPlan(
-          join_type, std::move(predicate), std::move(project_info), project_schema,
-          outer_hashkeys));
+  std::unique_ptr<planner::HashJoinPlan> plan_node(new planner::HashJoinPlan(
+      join_type, std::move(predicate), std::move(project_info), project_schema,
+      outer_hashkeys));
 
-  std::unique_ptr<planner::AbstractPlan> outer{
-      std::move(PlanTransformer::TransformPlan(outerAbstractPlanState(hj_plan_state)))};
-  std::unique_ptr<planner::AbstractPlan> inner{
-      std::move(PlanTransformer::TransformPlan(innerAbstractPlanState(hj_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> outer{std::move(
+      PlanTransformer::TransformPlan(outerAbstractPlanState(hj_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> inner{std::move(
+      PlanTransformer::TransformPlan(innerAbstractPlanState(hj_plan_state)))};
 
   /* Add the children nodes */
   plan_node->AddChild(std::move(outer));

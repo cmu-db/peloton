@@ -32,20 +32,23 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan(NestedLoopJoinPlan &&) = delete;
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
-  NestedLoopJoinPlan(PelotonJoinType join_type,
-                     std::unique_ptr<const expression::AbstractExpression> &&predicate,
-                     std::unique_ptr<const ProjectInfo> &&proj_info,
-                     std::shared_ptr<const catalog::Schema> &proj_schema)
-      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info), proj_schema) {
+  NestedLoopJoinPlan(
+      PelotonJoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema)
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema) {
     nl_ = nullptr;
   }
 
-  NestedLoopJoinPlan(PelotonJoinType join_type,
-                     std::unique_ptr<const expression::AbstractExpression> &&predicate,
-                     std::unique_ptr<const ProjectInfo> &&proj_info,
-                     std::shared_ptr<const catalog::Schema> &proj_schema,
-                     NestLoop *nl)
-      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info), proj_schema) {
+  NestedLoopJoinPlan(
+      PelotonJoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema, NestLoop *nl)
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema) {
     nl_ = nl;
   }  // added to set member nl_
 

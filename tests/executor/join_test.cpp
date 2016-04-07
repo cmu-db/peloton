@@ -60,11 +60,10 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(
-      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(1),
-                           ExecutorTestsUtil::GetColumnInfo(0),
-                           ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(0),
+       ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 std::vector<PlanNodeType> join_algorithms = {
@@ -104,7 +103,8 @@ enum JOIN_TEST_TYPE {
 TEST_F(JoinTests, BasicTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BASIC_TEST);
   }
 }
@@ -112,7 +112,8 @@ TEST_F(JoinTests, BasicTest) {
 TEST_F(JoinTests, EmptyTablesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     ExecuteJoinTest(join_algorithm, JOIN_TYPE_INNER, BOTH_TABLES_EMPTY);
   }
 }
@@ -120,7 +121,8 @@ TEST_F(JoinTests, EmptyTablesTest) {
 TEST_F(JoinTests, JoinTypesTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_INFO("JOIN TYPE :: %d", join_type);
@@ -133,7 +135,8 @@ TEST_F(JoinTests, JoinTypesTest) {
 TEST_F(JoinTests, ComplicatedTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_INFO("JOIN TYPE :: %d", join_type);
@@ -146,7 +149,8 @@ TEST_F(JoinTests, ComplicatedTest) {
 TEST_F(JoinTests, LeftTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_INFO("JOIN TYPE :: %d", join_type);
@@ -159,7 +163,8 @@ TEST_F(JoinTests, LeftTableEmptyTest) {
 TEST_F(JoinTests, RightTableEmptyTest) {
   // Go over all join algorithms
   for (auto join_algorithm : join_algorithms) {
-    LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+    LOG_INFO("JOIN ALGORITHM :: %s",
+             PlanNodeTypeToString(join_algorithm).c_str());
     // Go over all join types
     for (auto join_type : join_types) {
       LOG_INFO("JOIN TYPE :: %d", join_type);
@@ -179,7 +184,8 @@ TEST_F(JoinTests, JoinPredicateTest) {
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {
-      LOG_INFO("JOIN ALGORITHM :: %s", PlanNodeTypeToString(join_algorithm).c_str());
+      LOG_INFO("JOIN ALGORITHM :: %s",
+               PlanNodeTypeToString(join_algorithm).c_str());
       // Go over all join types
       for (auto join_type : join_types) {
         LOG_INFO("JOIN TYPE :: %d", join_type);
@@ -405,9 +411,9 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
       join_clauses = CreateJoinClauses();
 
       // Create merge join plan node
-      planner::MergeJoinPlan merge_join_node(
-          join_type, std::move(predicate), std::move(projection), schema,
-          join_clauses);
+      planner::MergeJoinPlan merge_join_node(join_type, std::move(predicate),
+                                             std::move(projection), schema,
+                                             join_clauses);
 
       // Construct the merge join executor
       executor::MergeJoinExecutor merge_join_executor(&merge_join_node,
@@ -450,8 +456,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
       executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
       // Create hash join plan node.
-      planner::HashJoinPlan hash_join_plan_node(
-          join_type, std::move(predicate), std::move(projection), schema);
+      planner::HashJoinPlan hash_join_plan_node(join_type, std::move(predicate),
+                                                std::move(projection), schema);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node,

@@ -36,10 +36,11 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan(AbstractJoinPlan &&) = delete;
   AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
 
-  AbstractJoinPlan(PelotonJoinType joinType,
-                   std::unique_ptr<const expression::AbstractExpression> &&predicate,
-                   std::unique_ptr<const ProjectInfo> &&proj_info,
-                   std::shared_ptr<const catalog::Schema> &proj_schema)
+  AbstractJoinPlan(
+      PelotonJoinType joinType,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema)
       : AbstractPlan(),
         join_type_(joinType),
         predicate_(std::move(predicate)),
@@ -54,13 +55,18 @@ class AbstractJoinPlan : public AbstractPlan {
 
   PelotonJoinType GetJoinType() const { return join_type_; }
 
-  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate() const {
+  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate()
+      const {
     return predicate_;
   }
 
-  const std::unique_ptr<const ProjectInfo> &GetProjInfo() const { return proj_info_; }
+  const std::unique_ptr<const ProjectInfo> &GetProjInfo() const {
+    return proj_info_;
+  }
 
-  const std::shared_ptr<const catalog::Schema> &GetSchema() const { return proj_schema_; }
+  const std::shared_ptr<const catalog::Schema> &GetSchema() const {
+    return proj_schema_;
+  }
 
   std::unique_ptr<AbstractPlan> Copy() const = 0;
 
