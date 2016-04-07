@@ -12,7 +12,7 @@
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
-
+#include <memory>
 namespace peloton {
 namespace expression {
 
@@ -20,14 +20,13 @@ namespace expression {
 // Otherwise, returns the first expression result.
 class NullIfExpression : public AbstractExpression {
  public:
-  NullIfExpression(ValueType vt,
-                   const std::vector<AbstractExpression *> &expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
-        expressions(expressions),
-        value_type(vt) {}
+  typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
 
-  virtual ~NullIfExpression() {
-    for (auto value : expressions) delete value;
+  NullIfExpression(ValueType vt, std::vector<AbstractExprPtr> &t_expressions)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF), value_type(vt) {
+    for (auto &expression : t_expressions) {
+      expressions.push_back(std::move(expression));
+    }
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -49,12 +48,12 @@ class NullIfExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const {
-    std::vector<AbstractExpression *> copied_expression;
-    for (AbstractExpression *expression : expressions) {
+    std::vector<AbstractExprPtr> copied_expression;
+    for (auto &expression : expressions) {
       if (expression == nullptr) {
         continue;
       }
-      copied_expression.push_back(expression->Copy());
+      copied_expression.push_back(AbstractExprPtr(expression->Copy()));
     }
 
     return new NullIfExpression(value_type, copied_expression);
@@ -62,7 +61,7 @@ class NullIfExpression : public AbstractExpression {
 
  private:
   // Specified expressions
-  std::vector<AbstractExpression *> expressions;
+  std::vector<AbstractExprPtr> expressions;
 
   ValueType value_type;
 };
