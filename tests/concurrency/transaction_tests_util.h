@@ -117,7 +117,9 @@ class TransactionTestsUtil {
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable(int num_key = 10);
+  static storage::DataTable *CreateTable(int num_key = 10,
+                                         std::string table_name = "TEST_TABLE",
+                                         oid_t index_oid = 1234);
 
   // Create the same table as CreateTable with primary key constrainst on id and
   // unique key constraints on value
