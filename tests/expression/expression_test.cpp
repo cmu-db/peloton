@@ -593,8 +593,10 @@ TEST_F(ExpressionTest, SimpleCase) {
           EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp_1);
 
   expression::CaseExpression::WhenClause *when_clause =
-      new expression::CaseExpression::WhenClause(VALUE_TYPE_INTEGER, when_cond,
-                                                 const_val_exp_2);
+      new expression::CaseExpression::WhenClause(
+          VALUE_TYPE_INTEGER,
+          expression::CaseExpression::AbstractExprPtr(when_cond),
+          expression::CaseExpression::AbstractExprPtr(const_val_exp_2));
 
   std::vector<expression::CaseExpression::WhenClausePtr> clauses;
   clauses.push_back(expression::CaseExpression::WhenClausePtr(when_clause));
@@ -658,8 +660,10 @@ TEST_F(ExpressionTest, SimpleCaseCopyTest) {
           EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp_1);
 
   expression::CaseExpression::WhenClause *when_clause =
-      new expression::CaseExpression::WhenClause(VALUE_TYPE_INTEGER, when_cond,
-                                                 const_val_exp_2);
+      new expression::CaseExpression::WhenClause(
+          VALUE_TYPE_INTEGER,
+          expression::CaseExpression::AbstractExprPtr(when_cond),
+          expression::CaseExpression::AbstractExprPtr(const_val_exp_2));
 
   std::vector<expression::CaseExpression::WhenClausePtr> clauses;
   clauses.push_back(expression::CaseExpression::WhenClausePtr(when_clause));
