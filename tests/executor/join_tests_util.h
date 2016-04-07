@@ -40,7 +40,7 @@ class JoinTestsUtil {
   static expression::AbstractExpression *CreateJoinPredicate();
 
   // Create projection
-  static planner::ProjectInfo *CreateProjection();
+  static std::unique_ptr<const planner::ProjectInfo> CreateProjection();
 
   // Create complicated join predicate
   static expression::AbstractExpression *CreateComplicatedJoinPredicate();

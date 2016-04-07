@@ -89,17 +89,18 @@ TEST_F(ProjectionTests, BasicTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
 
-  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -150,7 +151,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   columns.push_back(orig_schema->GetColumn(1));
   columns.push_back(orig_schema->GetColumn(3));
 
-  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap map0 =
@@ -163,10 +164,11 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -215,7 +217,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   columns.push_back(orig_schema->GetColumn(0));
-  std::shared_ptr<catalog::Schema> schema(new catalog::Schema(columns));
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
@@ -233,10 +235,11 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);

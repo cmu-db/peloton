@@ -24,17 +24,17 @@ namespace bridge {
  * @brief Convert a Postgres Material into a Peloton Materialization node
  * @return Pointer to the constructed AbstractPlan.
  */
-const std::shared_ptr<planner::AbstractPlan>
+std::unique_ptr<planner::AbstractPlan>
 PlanTransformer::TransformMaterialization(const MaterialPlanState *plan_state) {
   // Currently, we just pass the underlying plan node for this case
   AbstractPlanState *outer_plan_state = plan_state->left_tree;
   auto child = TransformPlan(outer_plan_state);
 
   bool physify_flag = false;
-  std::shared_ptr<planner::AbstractPlan> plan_node(
+  std::unique_ptr<planner::AbstractPlan> plan_node(
       new planner::MaterializationPlan(physify_flag));
 
-  plan_node.get()->AddChild(child);
+  plan_node.get()->AddChild(std::move(child));
 
   return plan_node;
 }

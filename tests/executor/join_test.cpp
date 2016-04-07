@@ -59,8 +59,8 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   return join_clauses;
 }
 
-std::shared_ptr<peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<peloton::catalog::Schema>(
+std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
+  return std::shared_ptr<const peloton::catalog::Schema>(
       new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
                            ExecutorTestsUtil::GetColumnInfo(1),
                            ExecutorTestsUtil::GetColumnInfo(0),
@@ -371,8 +371,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
   switch (join_algorithm) {
     case PLAN_NODE_TYPE_NESTLOOP: {
       // Create nested loop join plan node.
-      planner::NestedLoopJoinPlan nested_loop_join_node(join_type, predicate,
-                                                        projection, schema);
+      planner::NestedLoopJoinPlan nested_loop_join_node(
+          join_type, predicate, std::move(projection), schema);
 
       // Run the nested loop join executor
       executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -405,8 +405,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
       join_clauses = CreateJoinClauses();
 
       // Create merge join plan node
-      planner::MergeJoinPlan merge_join_node(join_type, predicate, projection,
-                                             schema, join_clauses);
+      planner::MergeJoinPlan merge_join_node(
+          join_type, predicate, std::move(projection), schema, join_clauses);
 
       // Construct the merge join executor
       executor::MergeJoinExecutor merge_join_executor(&merge_join_node,
@@ -449,8 +449,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
       executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
       // Create hash join plan node.
-      planner::HashJoinPlan hash_join_plan_node(join_type, predicate,
-                                                projection, schema);
+      planner::HashJoinPlan hash_join_plan_node(
+          join_type, predicate, std::move(projection), schema);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node,

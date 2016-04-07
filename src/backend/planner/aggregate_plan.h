@@ -42,17 +42,17 @@ class AggregatePlan : public AbstractPlan {
         : aggtype(et), expression(expr), distinct(distinct) {}
   };
 
-  AggregatePlan(const planner::ProjectInfo *project_info,
-                const expression::AbstractExpression *predicate,
+  AggregatePlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
+                std::unique_ptr<const expression::AbstractExpression> &&predicate,
                 const std::vector<AggTerm> &&unique_agg_terms,
                 const std::vector<oid_t> &&groupby_col_ids,
-                const catalog::Schema *output_schema,
+                std::unique_ptr<const catalog::Schema> &&output_schema,
                 PelotonAggType aggregate_strategy)
-      : project_info_(project_info),
-        predicate_(predicate),
+      : project_info_(std::move(project_info)),
+        predicate_(std::move(predicate)),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
-        output_schema_(output_schema),
+        output_schema_(std::move(output_schema)),
         agg_strategy_(aggregate_strategy) {}
 
   const std::vector<oid_t> &GetGroupbyColIds() const {

@@ -38,12 +38,12 @@ class AbstractJoinPlan : public AbstractPlan {
 
   AbstractJoinPlan(PelotonJoinType joinType,
                    const expression::AbstractExpression *predicate,
-                   const ProjectInfo *proj_info,
-                   const std::shared_ptr<catalog::Schema> &proj_schema)
+                   std::unique_ptr<const ProjectInfo> &&proj_info,
+                   std::shared_ptr<const catalog::Schema> &proj_schema)
       : AbstractPlan(),
         join_type_(joinType),
         predicate_(predicate),
-        proj_info_(proj_info),
+        proj_info_(std::move(proj_info)),
         proj_schema_(proj_schema) {
     // Fuck off!
   }
