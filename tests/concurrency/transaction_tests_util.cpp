@@ -136,7 +136,9 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   return table;
 }
 
-storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
+storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
+                                                      std::string table_name,
+                                                      oid_t index_oid) {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
   auto value_column = catalog::Column(
@@ -145,7 +147,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
   // Create the table
   catalog::Schema *table_schema =
       new catalog::Schema({id_column, value_column});
-  auto table_name = "TEST_TABLE";
+
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup,
@@ -159,7 +161,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, INDEX_TYPE_BTREE,
+      "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
