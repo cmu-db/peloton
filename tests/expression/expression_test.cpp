@@ -594,7 +594,6 @@ TEST_F(ExpressionTest, SimpleCase) {
 
   expression::CaseExpression::WhenClause *when_clause =
       new expression::CaseExpression::WhenClause(
-          VALUE_TYPE_INTEGER,
           expression::CaseExpression::AbstractExprPtr(when_cond),
           expression::CaseExpression::AbstractExprPtr(const_val_exp_2));
 
@@ -661,7 +660,6 @@ TEST_F(ExpressionTest, SimpleCaseCopyTest) {
 
   expression::CaseExpression::WhenClause *when_clause =
       new expression::CaseExpression::WhenClause(
-          VALUE_TYPE_INTEGER,
           expression::CaseExpression::AbstractExprPtr(when_cond),
           expression::CaseExpression::AbstractExprPtr(const_val_exp_2));
 
