@@ -592,15 +592,18 @@ TEST_F(ExpressionTest, SimpleCase) {
       new expression::ComparisonExpression<expression::CmpEq>(
           EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp_1);
 
-  expression::WhenClause *when_clause = new expression::WhenClause(
-      VALUE_TYPE_INTEGER, when_cond, const_val_exp_2);
+  expression::CaseExpression::WhenClause *when_clause =
+      new expression::CaseExpression::WhenClause(VALUE_TYPE_INTEGER, when_cond,
+                                                 const_val_exp_2);
 
-  std::vector<expression::WhenClause *> clauses;
-  clauses.push_back(when_clause);
+  std::vector<expression::CaseExpression::WhenClausePtr> clauses;
+  clauses.push_back(expression::CaseExpression::WhenClausePtr(when_clause));
 
   expression::CaseExpression *case_expression = new expression::CaseExpression(
       VALUE_TYPE_INTEGER, clauses,
-      expression::WhenClause(nullptr, const_val_exp_3));
+      expression::CaseExpression::WhenClausePtr(
+          new expression::CaseExpression::WhenClause(nullptr,
+                                                     const_val_exp_3)));
   // TUPLE
 
   std::vector<catalog::Column> columns;
@@ -654,16 +657,19 @@ TEST_F(ExpressionTest, SimpleCaseCopyTest) {
       new expression::ComparisonExpression<expression::CmpEq>(
           EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp_1);
 
-  expression::WhenClause *when_clause = new expression::WhenClause(
-      VALUE_TYPE_INTEGER, when_cond, const_val_exp_2);
+  expression::CaseExpression::WhenClause *when_clause =
+      new expression::CaseExpression::WhenClause(VALUE_TYPE_INTEGER, when_cond,
+                                                 const_val_exp_2);
 
-  std::vector<expression::WhenClause *> clauses;
-  clauses.push_back(when_clause);
+  std::vector<expression::CaseExpression::WhenClausePtr> clauses;
+  clauses.push_back(expression::CaseExpression::WhenClausePtr(when_clause));
 
   expression::CaseExpression *o_case_expression =
       new expression::CaseExpression(
           VALUE_TYPE_INTEGER, clauses,
-          expression::WhenClause(nullptr, const_val_exp_3));
+          expression::CaseExpression::WhenClausePtr(
+              new expression::CaseExpression::WhenClause(nullptr,
+                                                         const_val_exp_3)));
 
   expression::CaseExpression *case_expression =
       dynamic_cast<expression::CaseExpression *>(o_case_expression->Copy());
