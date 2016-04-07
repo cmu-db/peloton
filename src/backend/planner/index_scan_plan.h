@@ -105,7 +105,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  AbstractPlan *Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
     for (auto *key : runtime_keys_) {
       new_runtime_keys.push_back(key->Copy());
@@ -114,8 +114,8 @@ class IndexScanPlan : public AbstractScan {
     IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
-      GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc);
-    return new_plan;
+        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc);
+    return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
  private:
