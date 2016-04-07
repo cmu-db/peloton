@@ -471,6 +471,7 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+        RecycleTupleSlot(manager.GetTileGroup(new_version.block)->GetTileGroupId(), new_version.offset);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -491,6 +492,7 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+        RecycleTupleSlot(manager.GetTileGroup(new_version.block)->GetTileGroupId(), new_version.offset);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
@@ -500,6 +502,7 @@ Result OptimisticTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        RecycleTupleSlot(tile_group_id, tuple_slot);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -507,6 +510,7 @@ Result OptimisticTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        RecycleTupleSlot(tile_group_id, tuple_slot);
       }
     }
   }
