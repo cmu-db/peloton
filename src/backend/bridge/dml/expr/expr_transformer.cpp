@@ -349,7 +349,7 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
 
   expression::AbstractExpression *condition = NULL, *result = NULL;
 
-  std::vector<expression::CaseExpression::WhenClausePtr> clauses;
+  std::vector<expression::CaseExpression::WhenClause> clauses;
   foreach (arg, list) {
     auto *clause = reinterpret_cast<const CaseWhenState *>(lfirst(arg));
     if (testExpr == NULL)
@@ -365,19 +365,15 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
           ExprTransformer::TransformExpr(testExpr), TransformExpr(expr));
     }
     result = ExprTransformer::TransformExpr((clause->result));
-    clauses.push_back(expression::CaseExpression::WhenClausePtr(
-        new expression::CaseExpression::WhenClause(
-            expression::CaseExpression::AbstractExprPtr(condition),
-            expression::CaseExpression::AbstractExprPtr(result))));
+    clauses.push_back(expression::CaseExpression::WhenClause(
+        expression::CaseExpression::AbstractExprPtr(condition),
+        expression::CaseExpression::AbstractExprPtr(result)));
   }
   expression::AbstractExpression *defresult = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(case_es->defresult));
-  expression::CaseExpression::WhenClause *default_clause =
-      new expression::CaseExpression::WhenClause(
-          nullptr, expression::CaseExpression::AbstractExprPtr(defresult));
 
   return new expression::CaseExpression(
-      vt, clauses, expression::CaseExpression::WhenClausePtr(default_clause));
+      vt, clauses, expression::CaseExpression::AbstractExprPtr(defresult));
 }
 
 expression::AbstractExpression *ExprTransformer::TransformNullIf(

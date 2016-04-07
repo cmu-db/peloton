@@ -9,7 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#pragma once
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include <memory>
@@ -23,21 +23,19 @@ class NullIfExpression : public AbstractExpression {
   typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
 
   NullIfExpression(ValueType vt, std::vector<AbstractExprPtr> &t_expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF), value_type(vt) {
-    for (auto &expression : t_expressions) {
-      expressions.push_back(std::move(expression));
-    }
-  }
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
+        expressions_(std::move(t_expressions)),
+        value_type_(vt) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    assert(expressions.size() == 2);
+    assert(expressions_.size() == 2);
 
-    auto left_result = expressions[0]->Evaluate(tuple1, tuple2, context);
-    auto right_result = expressions[1]->Evaluate(tuple1, tuple2, context);
+    auto left_result = expressions_[0]->Evaluate(tuple1, tuple2, context);
+    auto right_result = expressions_[1]->Evaluate(tuple1, tuple2, context);
 
     if (left_result == right_result) {
-      return Value::GetNullValue(value_type);
+      return Value::GetNullValue(value_type_);
     } else {
       return left_result;
     }
@@ -49,21 +47,21 @@ class NullIfExpression : public AbstractExpression {
 
   AbstractExpression *Copy() const {
     std::vector<AbstractExprPtr> copied_expression;
-    for (auto &expression : expressions) {
+    for (auto &expression : expressions_) {
       if (expression == nullptr) {
         continue;
       }
       copied_expression.push_back(AbstractExprPtr(expression->Copy()));
     }
 
-    return new NullIfExpression(value_type, copied_expression);
+    return new NullIfExpression(value_type_, copied_expression);
   }
 
  private:
   // Specified expressions
-  std::vector<AbstractExprPtr> expressions;
+  std::vector<AbstractExprPtr> expressions_;
 
-  ValueType value_type;
+  ValueType value_type_;
 };
 
 }  // End expression namespace
