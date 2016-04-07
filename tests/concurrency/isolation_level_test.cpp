@@ -423,7 +423,7 @@ TEST_F(IsolationLevelTest, SerializableTest) {
 TEST_F(IsolationLevelTest, StressTest) {
   const int num_txn = 64;
   const int scale = 5;
-  const int num_key = 10;
+  const int num_key = 256;
   srand(15721);
 
   for (auto test_type : TEST_TYPES) {
