@@ -22,10 +22,14 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 
+#include "libcuckoo/cuckoohash_map.hh"
+
 namespace peloton {
 namespace concurrency {
 
 extern thread_local Transaction *current_txn;
+
+#define RUNNING_TXN_BUCKET_NUM 10
 
 class TransactionManager {
  public:
@@ -86,19 +90,17 @@ class TransactionManager {
 
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
-  ;
 
   virtual Transaction *BeginTransaction() {
-    Transaction *txn =
-        new Transaction(GetNextTransactionId(), GetNextCommitId());
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
+
     return txn;
   }
 
-  virtual void EndTransaction() {
-    delete current_txn;
-    current_txn = nullptr;
-  }
+  virtual void EndTransaction() = 0;
 
   virtual Result CommitTransaction() = 0;
 
@@ -109,9 +111,16 @@ class TransactionManager {
     next_cid_ = START_CID;
   }
 
+  // this function generates the maximum commit id of committed transactions.
+  // please note that this function only returns a "safe" value instead of a precise value.
+  virtual cid_t GetMaxCommittedCid() {
+    return 1;
+  }
+
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
+  
 };
 }  // End storage namespace
 }  // End peloton namespace
