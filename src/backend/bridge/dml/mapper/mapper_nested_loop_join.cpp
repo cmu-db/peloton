@@ -72,8 +72,8 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
 
-    result = std::unique_ptr<planner::AbstractPlan>(new planner::ProjectionPlan(
-        std::move(project_info), project_schema));
+    result = std::unique_ptr<planner::AbstractPlan>(
+        new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
@@ -81,13 +81,14 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
   }
 
   std::unique_ptr<planner::NestedLoopJoinPlan> plan_node(
-      new planner::NestedLoopJoinPlan(
-          peloton_join_type, std::move(predicate), std::move(project_info), project_schema, nl));
+      new planner::NestedLoopJoinPlan(peloton_join_type, std::move(predicate),
+                                      std::move(project_info), project_schema,
+                                      nl));
 
-  std::unique_ptr<planner::AbstractPlan> outer{
-      std::move(PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state)))};
-  std::unique_ptr<planner::AbstractPlan> inner{
-      std::move(PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> outer{std::move(
+      PlanTransformer::TransformPlan(outerAbstractPlanState(nl_plan_state)))};
+  std::unique_ptr<planner::AbstractPlan> inner{std::move(
+      PlanTransformer::TransformPlan(innerAbstractPlanState(nl_plan_state)))};
 
   /* Add the children nodes */
   plan_node->AddChild(std::move(outer));

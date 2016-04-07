@@ -37,7 +37,8 @@ class ProjectionPlan : public AbstractPlan {
                  std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
+  inline const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo()
+      const {
     return project_info_;
   }
 
@@ -59,9 +60,9 @@ class ProjectionPlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(
-         catalog::Schema::CopySchema(schema_.get()));
-    ProjectionPlan *new_plan = new ProjectionPlan(
-        project_info_->Copy(), schema_copy);
+        catalog::Schema::CopySchema(schema_.get()));
+    ProjectionPlan *new_plan =
+        new ProjectionPlan(project_info_->Copy(), schema_copy);
     new_plan->SetColumnIds(column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }

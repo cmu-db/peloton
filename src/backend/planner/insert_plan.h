@@ -31,9 +31,10 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(InsertPlan &&) = delete;
   InsertPlan &operator=(InsertPlan &&) = delete;
 
-  explicit InsertPlan(storage::DataTable *table,
-                      std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                      oid_t bulk_insert_count = 1)
+  explicit InsertPlan(
+      storage::DataTable *table,
+      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+      oid_t bulk_insert_count = 1)
       : target_table_(table),
         project_info_(std::move(project_info)),
         bulk_insert_count(bulk_insert_count) {}

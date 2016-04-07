@@ -48,12 +48,14 @@ class MergeJoinPlan : public AbstractJoinPlan {
   MergeJoinPlan(MergeJoinPlan &&) = delete;
   MergeJoinPlan &operator=(MergeJoinPlan &&) = delete;
 
-  MergeJoinPlan(PelotonJoinType join_type,
-                std::unique_ptr<const expression::AbstractExpression> &&predicate,
-                std::unique_ptr<const ProjectInfo> &&proj_info,
-                std::shared_ptr<const catalog::Schema> &proj_schema,
-                std::vector<JoinClause> &join_clauses)
-      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info), proj_schema),
+  MergeJoinPlan(
+      PelotonJoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema,
+      std::vector<JoinClause> &join_clauses)
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema),
         join_clauses_(std::move(join_clauses)) {
     // Nothing to see here...
   }
@@ -79,7 +81,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate().get()->Copy());
     std::shared_ptr<const catalog::Schema> schema_copy(
-         catalog::Schema::CopySchema(GetSchema()));
+        catalog::Schema::CopySchema(GetSchema()));
     MergeJoinPlan *new_plan = new MergeJoinPlan(
         GetJoinType(), std::move(predicate_copy),
         std::move(GetProjInfo()->Copy()), schema_copy, new_join_clauses);

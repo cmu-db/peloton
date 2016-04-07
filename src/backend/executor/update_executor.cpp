@@ -86,7 +86,8 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
+        true) {
       // if the thread is the owner of the tuple, then directly update in place.
       storage::Tuple *new_tuple =
           new storage::Tuple(target_table_->GetSchema(), true);
@@ -103,12 +104,12 @@ bool UpdateExecutor::DExecute() {
       new_tuple = nullptr;
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
-                                                physical_tuple_id) == true) {
+                                             physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) ==
-          false) {
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id,
+                                               physical_tuple_id) == false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;

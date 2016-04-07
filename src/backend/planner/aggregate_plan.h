@@ -46,12 +46,13 @@ class AggregatePlan : public AbstractPlan {
     }
   };
 
-  AggregatePlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                std::unique_ptr<const expression::AbstractExpression> &&predicate,
-                const std::vector<AggTerm> &&unique_agg_terms,
-                const std::vector<oid_t> &&groupby_col_ids,
-                std::shared_ptr<const catalog::Schema> &output_schema,
-                PelotonAggType aggregate_strategy)
+  AggregatePlan(
+      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      const std::vector<AggTerm> &&unique_agg_terms,
+      const std::vector<oid_t> &&groupby_col_ids,
+      std::shared_ptr<const catalog::Schema> &output_schema,
+      PelotonAggType aggregate_strategy)
       : project_info_(std::move(project_info)),
         predicate_(std::move(predicate)),
         unique_agg_terms_(unique_agg_terms),
@@ -63,7 +64,8 @@ class AggregatePlan : public AbstractPlan {
     return groupby_col_ids_;
   }
 
-  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate() const {
+  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate()
+      const {
     return predicate_;
   }
 
@@ -107,7 +109,7 @@ class AggregatePlan : public AbstractPlan {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         predicate_->Copy());
     std::shared_ptr<const catalog::Schema> output_schema_copy(
-         catalog::Schema::CopySchema(GetOutputSchema()));
+        catalog::Schema::CopySchema(GetOutputSchema()));
     AggregatePlan *new_plan = new AggregatePlan(
         std::move(project_info_->Copy()), std::move(predicate_copy),
         std::move(copied_agg_terms), std::move(copied_groupby_col_ids),

@@ -30,15 +30,15 @@ namespace bridge {
  *
  * Basically, it multiplexes into helper methods based on operation type.
  */
-std::unique_ptr<planner::AbstractPlan>
-PlanTransformer::TransformModifyTable(const ModifyTablePlanState *mt_plan_state,
-                                      const TransformOptions options) {
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformModifyTable(
+    const ModifyTablePlanState *mt_plan_state, const TransformOptions options) {
   auto operation = mt_plan_state->operation;
 
   switch (operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
-      return std::move(PlanTransformer::TransformInsert(mt_plan_state, options));
+      return std::move(
+          PlanTransformer::TransformInsert(mt_plan_state, options));
       break;
 
     case CMD_UPDATE:

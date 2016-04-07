@@ -59,8 +59,8 @@ namespace test {
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-std::unique_ptr<const planner::ProjectInfo>
-MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
+std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
+    const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -70,9 +70,8 @@ MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return std::unique_ptr<const planner::ProjectInfo>(
-      new planner::ProjectInfo(std::move(target_list),
-                               std::move(direct_map_list)));
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
 }
 
 //===--------------------------------------------------------------------===//
@@ -147,7 +146,8 @@ void UpdateTuple(storage::DataTable *table) {
   std::vector<oid_t> column_ids = {0};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(table, predicate, column_ids));
-  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
+                                              context.get());
 
   // Parent-Child relationship
   update_node.AddChild(std::move(seq_scan_node));
@@ -187,7 +187,8 @@ void DeleteTuple(storage::DataTable *table) {
   std::vector<oid_t> column_ids = {0};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(table, predicate, column_ids));
-  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
+                                              context.get());
 
   // Parent-Child relationship
   delete_node.AddChild(std::move(seq_scan_node));
