@@ -48,10 +48,11 @@ bool AbstractJoinExecutor::DInit() {
       GetPlanNode<planner::AbstractJoinPlan>();
 
   // NOTE: predicate can be null for cartesian product
-  predicate_ = node.GetPredicate();
-  proj_info_ = node.GetProjInfo();
+  // TODO: should we do a copy here?
+  predicate_ = node.GetPredicate().get();
+  proj_info_ = node.GetProjInfo().get();
   join_type_ = node.GetJoinType();
-  proj_schema_ = node.GetSchema();
+  proj_schema_ = node.GetSchema().get();
 
   return true;
 }

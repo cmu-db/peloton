@@ -82,6 +82,36 @@ Schema::Schema(const std::vector<Column> &columns)
 }
 
 // Copy schema
+std::shared_ptr<const Schema> Schema::CopySchema(
+    const std::shared_ptr<const Schema> &schema) {
+  oid_t column_count = schema->GetColumnCount();
+  std::vector<oid_t> set;
+
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
+    set.push_back(column_itr);
+
+  return CopySchema(schema, set);
+}
+
+// Copy subset of columns in the given schema
+std::shared_ptr<const Schema> Schema::CopySchema(
+    const std::shared_ptr<const Schema> &schema,
+    const std::vector<oid_t> &set) {
+  oid_t column_count = schema->GetColumnCount();
+  std::vector<Column> columns;
+
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    // If column exists in set
+    if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
+      columns.push_back(schema->columns[column_itr]);
+    }
+  }
+
+  return std::shared_ptr<Schema>(new Schema(columns));
+}
+
+// Backward compatible for raw pointers
+// Copy schema
 Schema *Schema::CopySchema(const Schema *schema) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<oid_t> set;

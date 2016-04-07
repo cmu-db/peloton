@@ -117,7 +117,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   }
 
   /* Get output schema */
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   /* Map agg stragegy */
@@ -149,7 +149,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
 
   auto retval = new planner::AggregatePlan(
       std::move(proj_info), std::move(predicate), std::move(unique_agg_terms),
-      std::move(groupby_col_ids), std::move(output_schema), agg_type);
+      std::move(groupby_col_ids), output_schema, agg_type);
 
   ((planner::AggregatePlan *)retval)->SetColumnIds(column_ids);
 

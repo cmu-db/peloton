@@ -50,14 +50,14 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(hj_plan_state->qual));
 
-  expression::AbstractExpression *predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
   if (join_filter && plan_filter) {
-    predicate = expression::ExpressionUtil::ConjunctionFactory(
-        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter);
+    predicate.reset(expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter));
   } else if (join_filter) {
-    predicate = join_filter;
+    predicate.reset(join_filter);
   } else {
-    predicate = plan_filter;
+    predicate.reset(plan_filter);
   }
 
   /* Transform project info */
@@ -88,7 +88,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
 
   std::unique_ptr<planner::HashJoinPlan> plan_node(
       new planner::HashJoinPlan(
-          join_type, predicate, std::move(project_info), project_schema,
+          join_type, std::move(predicate), std::move(project_info), project_schema,
           outer_hashkeys));
 
   std::unique_ptr<planner::AbstractPlan> outer{

@@ -125,9 +125,10 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
-  planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(std::move(target_list),
-                                      std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 

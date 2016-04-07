@@ -33,19 +33,19 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   NestedLoopJoinPlan &operator=(NestedLoopJoinPlan &&) = delete;
 
   NestedLoopJoinPlan(PelotonJoinType join_type,
-                     const expression::AbstractExpression *predicate,
+                     std::unique_ptr<const expression::AbstractExpression> &&predicate,
                      std::unique_ptr<const ProjectInfo> &&proj_info,
                      std::shared_ptr<const catalog::Schema> &proj_schema)
-      : AbstractJoinPlan(join_type, predicate, std::move(proj_info), proj_schema) {
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info), proj_schema) {
     nl_ = nullptr;
   }
 
   NestedLoopJoinPlan(PelotonJoinType join_type,
-                     const expression::AbstractExpression *predicate,
+                     std::unique_ptr<const expression::AbstractExpression> &&predicate,
                      std::unique_ptr<const ProjectInfo> &&proj_info,
                      std::shared_ptr<const catalog::Schema> &proj_schema,
                      NestLoop *nl)
-      : AbstractJoinPlan(join_type, predicate, std::move(proj_info), proj_schema) {
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info), proj_schema) {
     nl_ = nl;
   }  // added to set member nl_
 
@@ -60,9 +60,13 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   }  // added to support IN+subquery
 
   std::unique_ptr<AbstractPlan> Copy() const {
+    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
+        GetPredicate().get()->Copy());
+    std::shared_ptr<const catalog::Schema> schema_copy(
+        catalog::Schema::CopySchema(GetSchema()));
     NestedLoopJoinPlan *new_plan = new NestedLoopJoinPlan(
-        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
-        catalog::Schema::CopySchema(GetSchema()), nl_);
+        GetJoinType(), std::move(predicate_copy),
+        std::move(GetProjInfo()->Copy()), schema_copy, nl_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 

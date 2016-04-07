@@ -92,14 +92,13 @@ TEST_F(AggregateTests, SortedDistinctTest) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_SORTED);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -199,13 +198,13 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
+      std::move(group_by_columns), output_table_schema,
       AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
@@ -310,14 +309,13 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_SORTED);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -415,14 +413,13 @@ TEST_F(AggregateTests, HashDistinctTest) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_HASH);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -513,14 +510,13 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_HASH);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -615,14 +611,13 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_HASH);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -733,14 +728,13 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  std::unique_ptr<const catalog::Schema> output_table_schema(
+  std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan node(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
-      std::move(group_by_columns), std::move(output_table_schema),
-      AGGREGATE_TYPE_PLAIN);
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();

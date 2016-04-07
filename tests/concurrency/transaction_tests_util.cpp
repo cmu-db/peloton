@@ -195,9 +195,10 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan
-  planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(std::move(target_list),
-                                      std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -232,9 +233,10 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
 
   // Update plan
-  planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(std::move(target_list),
-                                      std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -247,10 +249,11 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
-  update_node.AddChild(&seq_scan_node);
+  update_node.AddChild(std::move(seq_scan_node));
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());

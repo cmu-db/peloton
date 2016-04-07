@@ -37,11 +37,13 @@ class ProjectionPlan : public AbstractPlan {
                  std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const planner::ProjectInfo *GetProjectInfo() const {
-    return project_info_.get();
+  inline const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
+    return project_info_;
   }
 
-  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
+  inline const std::shared_ptr<const catalog::Schema> &GetSchema() const {
+    return schema_;
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_PROJECTION;
@@ -56,8 +58,10 @@ class ProjectionPlan : public AbstractPlan {
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
+    std::shared_ptr<const catalog::Schema> schema_copy(
+         catalog::Schema::CopySchema(schema_.get()));
     ProjectionPlan *new_plan = new ProjectionPlan(
-        project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
+        project_info_->Copy(), schema_copy);
     new_plan->SetColumnIds(column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }

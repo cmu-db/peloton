@@ -50,14 +50,14 @@ PlanTransformer::TransformMergeJoin(const MergeJoinPlanState *mj_plan_state) {
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(mj_plan_state->qual));
 
-  expression::AbstractExpression *predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
   if (join_filter && plan_filter) {
-    predicate = expression::ExpressionUtil::ConjunctionFactory(
-        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter);
+    predicate.reset(expression::ExpressionUtil::ConjunctionFactory(
+        EXPRESSION_TYPE_CONJUNCTION_AND, join_filter, plan_filter));
   } else if (join_filter) {
-    predicate = join_filter;
+    predicate.reset(join_filter);
   } else {
-    predicate = plan_filter;
+    predicate.reset(plan_filter);
   }
 
   /* Transform project info */
@@ -84,7 +84,7 @@ PlanTransformer::TransformMergeJoin(const MergeJoinPlanState *mj_plan_state) {
 
   std::unique_ptr<planner::MergeJoinPlan> plan_node(
       new planner::MergeJoinPlan(
-          join_type, predicate, std::move(project_info), project_schema, join_clauses));
+          join_type, std::move(predicate), std::move(project_info), project_schema, join_clauses));
 
   std::unique_ptr<planner::AbstractPlan> outer{
       std::move(PlanTransformer::TransformPlan(outerAbstractPlanState(mj_plan_state)))};

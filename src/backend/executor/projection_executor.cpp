@@ -41,8 +41,8 @@ bool ProjectionExecutor::DInit() {
 
   // Grab settings from plan node
   const planner::ProjectionPlan &node = GetPlanNode<planner::ProjectionPlan>();
-  this->project_info_ = node.GetProjectInfo();
-  this->schema_ = node.GetSchema();
+  this->project_info_ = node.GetProjectInfo().get();
+  this->schema_ = node.GetSchema().get();
 
   return true;
 }

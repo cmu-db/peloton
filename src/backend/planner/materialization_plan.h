@@ -33,7 +33,7 @@ class MaterializationPlan : public AbstractPlan {
   MaterializationPlan &operator=(MaterializationPlan &&) = delete;
 
   MaterializationPlan(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-                      catalog::Schema *schema, bool physify_flag)
+                      std::shared_ptr<const catalog::Schema> &schema, bool physify_flag)
       : old_to_new_cols_(old_to_new_cols),
         schema_(schema),
         physify_flag_(physify_flag) {}
@@ -41,16 +41,13 @@ class MaterializationPlan : public AbstractPlan {
   MaterializationPlan(bool physify_flag)
       : schema_(nullptr), physify_flag_(physify_flag) {}
 
-  ~MaterializationPlan() {
-    // Clean up schema
-    if (schema_) delete schema_;
-  }
-
   inline const std::unordered_map<oid_t, oid_t> &old_to_new_cols() const {
     return old_to_new_cols_;
   }
 
-  inline const catalog::Schema *GetSchema() const { return schema_; }
+  inline const std::shared_ptr<const catalog::Schema> &GetSchema() const {
+    return schema_;
+  }
 
   inline bool GetPhysifyFlag() const { return physify_flag_; }
 
@@ -61,8 +58,10 @@ class MaterializationPlan : public AbstractPlan {
   const std::string GetInfo() const { return "Materialize"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
+    std::shared_ptr<const catalog::Schema> schema_copy(
+        catalog::Schema::CopySchema(schema_));
     return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
-        old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
+        old_to_new_cols_, schema_copy, physify_flag_));
   }
 
  private:
@@ -72,7 +71,7 @@ class MaterializationPlan : public AbstractPlan {
   std::unordered_map<oid_t, oid_t> old_to_new_cols_;
 
   /** @brief Schema of newly materialized tile. */
-  catalog::Schema *schema_;
+  std::shared_ptr<const catalog::Schema> schema_;
 
   /**
    * @brief whether to create a physical tile or just pass thru underlying
