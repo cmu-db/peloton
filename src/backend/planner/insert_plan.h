@@ -50,9 +50,9 @@ class InsertPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
-  AbstractPlan *Copy() const {
-    return new InsertPlan(target_table_, project_info_->Copy(),
-                          bulk_insert_count);
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new InsertPlan(
+        target_table_, project_info_->Copy(), bulk_insert_count));
   }
 
  private:
