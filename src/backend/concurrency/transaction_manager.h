@@ -87,18 +87,11 @@ class TransactionManager {
   void SetTransactionResult(const Result result) {
     current_txn->SetResult(result);
   }
-
+  
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction() {
-    txn_id_t txn_id = GetNextTransactionId();
-    cid_t begin_cid = GetNextCommitId();
-    Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
-
-    return txn;
-  }
+  virtual Transaction *BeginTransaction() = 0;
 
   virtual void EndTransaction() = 0;
 
@@ -113,9 +106,7 @@ class TransactionManager {
 
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a precise value.
-  virtual cid_t GetMaxCommittedCid() {
-    return 1;
-  }
+  virtual cid_t GetMaxCommittedCid() = 0;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
