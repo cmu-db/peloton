@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#pragma once
 #include <utility>
 #include <memory>
 #include <vector>
@@ -22,27 +23,22 @@ class CaseExpression : public AbstractExpression {
  public:
   // the first part is condition, and the second part is expression
   typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
-  typedef std::pair<AbstractExprPtr, std::unique_ptr<AbstractExpression>>
-      WhenClause;
-  typedef std::unique_ptr<WhenClause> WhenClausePtr;
-  CaseExpression(ValueType vt, std::vector<WhenClausePtr> &t_clauses,
-                 WhenClausePtr default_clause)
+  typedef std::pair<AbstractExprPtr, AbstractExprPtr> WhenClause;
+  CaseExpression(ValueType vt, std::vector<WhenClause> &t_clauses,
+                 AbstractExprPtr default_clause)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
-        default_clause(std::move(default_clause)),
-        case_type(vt) {
-    for (auto &clause : t_clauses) {
-      clauses.push_back(std::move(clause));
-    }
-  }
+        clauses_(std::move(t_clauses)),
+        default_clause_(std::move(default_clause)),
+        case_type_(vt) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    for (auto &clause : clauses) {
-      auto condition = clause->first->Evaluate(tuple1, tuple2, context);
+    for (auto &clause : clauses_) {
+      auto condition = clause.first->Evaluate(tuple1, tuple2, context);
       if (condition.IsTrue())
-        return clause->second->Evaluate(tuple1, tuple2, context);
+        return clause.second->Evaluate(tuple1, tuple2, context);
     }
-    return default_clause->second->Evaluate(tuple1, tuple2, context);
+    return default_clause_->Evaluate(tuple1, tuple2, context);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -50,27 +46,25 @@ class CaseExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const {
-    std::vector<WhenClausePtr> copied_clauses;
-    for (auto &clause : clauses) {
-      copied_clauses.push_back(WhenClausePtr(
-          new WhenClause(AbstractExprPtr(clause->first->Copy()),
-                         AbstractExprPtr(clause->second->Copy()))));
+    std::vector<WhenClause> copied_clauses;
+    for (auto &clause : clauses_) {
+      copied_clauses.push_back(
+          WhenClause(AbstractExprPtr(clause.first->Copy()),
+                     AbstractExprPtr(clause.second->Copy())));
     }
     // default result has no condition.
-    return new CaseExpression(
-        case_type, copied_clauses,
-        WhenClausePtr(new WhenClause(
-            nullptr, AbstractExprPtr(default_clause->second->Copy()))));
+    return new CaseExpression(case_type_, copied_clauses,
+                              AbstractExprPtr(default_clause_->Copy()));
   }
 
  private:
   // Case expression clauses
-  std::vector<WhenClausePtr> clauses;
+  std::vector<WhenClause> clauses_;
 
   // Fallback case result expression
-  WhenClausePtr default_clause;
+  AbstractExprPtr default_clause_;
 
-  ValueType case_type;
+  ValueType case_type_;
 };
 
 }  // End expression namespace
