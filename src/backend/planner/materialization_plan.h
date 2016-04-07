@@ -60,9 +60,9 @@ class MaterializationPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Materialize"; }
 
-  AbstractPlan *Copy() const {
-    return new MaterializationPlan(
-      old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_);
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
+        old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
   }
 
  private:
