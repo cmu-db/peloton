@@ -89,7 +89,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   memcpy(buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
   /*  call protobuf to serialize the request message into sending buf */
-  request->SerializeToArray(buf + + HEADERLEN + TYPELEN + OPCODELEN, request->ByteSize());
+  request->SerializeToArray(buf + HEADERLEN + TYPELEN + OPCODELEN, request->ByteSize());
 
   /*
    * GET a connection to process the rpc send and recv. If there is a associated connection
