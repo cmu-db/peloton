@@ -134,41 +134,6 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   }
 };
 
-class OperatorCaseWhenExpression : public AbstractExpression {
- public:
-  OperatorCaseWhenExpression(ValueType vt, AbstractExpression *left,
-                             AbstractExpression *right)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_WHEN, left, right),
-        m_returnType(vt){};
-
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
-    assert(m_left);
-    assert(m_right);
-    Value thenClause = m_left->Evaluate(tuple1, tuple2, context);
-
-    if (thenClause.IsTrue()) {
-      return m_right->Evaluate(tuple1, tuple2, context).CastAs(m_returnType);
-    } else {
-      // the condition value is not true
-      // this statement shouldn't be executed
-      throw 0;
-    }
-  }
-
-  std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "Operator CASE WHEN Expression");
-  }
-
-  AbstractExpression *Copy() const {
-    return new OperatorCaseWhenExpression(m_returnType, CopyUtil(GetLeft()),
-                                          CopyUtil(GetRight()));
-  }
-
- private:
-  ValueType m_returnType;
-};
-
 /*
  * Binary operators.
  */
