@@ -889,12 +889,6 @@ void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
   throw Exception(fn_message);
 }
 
-// AbstractExpression *ExpressionUtil::CaseExprFactory(
-//    ValueType vt, const std::vector<AbstractExpression *> &clauses,
-//    AbstractExpression *default_result) {
-//  return new expression::CaseExpression(vt, clauses, default_result);
-//}
-
 AbstractExpression *ExpressionUtil::CoalesceFactory(
     ValueType vt, const std::vector<AbstractExpression *> &expressions) {
   return new expression::CoalesceExpression(vt, expressions);
