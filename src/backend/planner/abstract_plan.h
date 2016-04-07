@@ -72,7 +72,7 @@ class AbstractPlan : public Printable {
   const std::string GetInfo() const;
 
 
-  virtual AbstractPlan *Copy() const = 0;
+  virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
 private:
   // A plan node can have multiple children
