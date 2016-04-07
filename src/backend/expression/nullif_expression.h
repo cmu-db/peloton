@@ -9,7 +9,9 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #pragma once
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include <memory>

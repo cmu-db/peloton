@@ -9,7 +9,9 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #pragma once
+
 #include <utility>
 #include <memory>
 #include <vector>
