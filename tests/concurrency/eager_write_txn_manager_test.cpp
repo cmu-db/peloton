@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// optimistic_transaction_manager_test.cpp
+// pessimistic_txn_manager_test.cpp
 //
-// Identification: tests/concurrency/rowo_txn_manager_test.cpp
+// Identification: tests/concurrency/eager_write_txn_manager_test.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -21,10 +21,10 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class RowoTxnManagerTests : public PelotonTest {};
+class EagerWriteTxnManagerTests : public PelotonTest {};
 
-TEST_F(RowoTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_ROWO);
+TEST_F(EagerWriteTxnManagerTests, Test) {
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_EAGER_WRITE);
   EXPECT_TRUE(true);
 }
 

@@ -106,7 +106,8 @@ enum txn_op_t {
   TXN_OP_SCAN,
   TXN_OP_ABORT,
   TXN_OP_COMMIT,
-  TXN_OP_READ_STORE
+  TXN_OP_READ_STORE,
+  TXN_OP_UPDATE_BY_VALUE
 };
 
 #define TXN_STORED_VALUE      -10000
@@ -116,7 +117,7 @@ class TransactionTestsUtil {
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable();
+  static storage::DataTable *CreateTable(int num_key = 10);
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteRead(concurrency::Transaction *txn,
@@ -125,6 +126,8 @@ class TransactionTestsUtil {
                             storage::DataTable *table, int id);
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
+  static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
+                            storage::DataTable *table, int old_value, int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
@@ -166,7 +169,7 @@ class TransactionThread {
         table(table_),
         cur_seq(0),
         go(false) {
-    LOG_TRACE("Thread has %d ops", (int)sched->operations.size());
+    LOG_INFO("Thread has %d ops", (int)sched->operations.size());
   }
 
   void RunLoop() {
@@ -184,9 +187,20 @@ class TransactionThread {
     }
   }
 
-  void Run() {
-    std::thread thread(&TransactionThread::RunLoop, this);
-    thread.detach();
+  void RunNoWait() {
+    while (true) {
+      ExecuteNext();
+      if (cur_seq == (int)schedule->operations.size()) {
+        break;
+      }
+    }
+  }
+
+  std::thread Run(bool no_wait = false) {
+    if (!no_wait)
+      return std::thread(&TransactionThread::RunLoop, this);
+    else
+      return std::thread(&TransactionThread::RunNoWait, this);
   }
 
   void ExecuteNext() {
@@ -212,13 +226,13 @@ class TransactionThread {
     // Execute the operation
     switch (op) {
       case TXN_OP_INSERT: {
-        LOG_TRACE("Execute Insert");
+        LOG_INFO("Execute Insert");
         execute_result =
             TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
         break;
       }
       case TXN_OP_READ: {
-        LOG_TRACE("Execute Read");
+        LOG_INFO("Execute Read");
         int result;
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
@@ -226,24 +240,31 @@ class TransactionThread {
         break;
       }
       case TXN_OP_DELETE: {
-        LOG_TRACE("Execute Delete");
+        LOG_INFO("Execute Delete");
         execute_result = TransactionTestsUtil::ExecuteDelete(txn, table, id);
         break;
       }
       case TXN_OP_UPDATE: {
-        LOG_TRACE("Execute Update");
+        LOG_INFO("Execute Update");
         execute_result =
             TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
         break;
       }
       case TXN_OP_SCAN: {
-        LOG_TRACE("Execute Scan");
+        LOG_INFO("Execute Scan");
         execute_result = TransactionTestsUtil::ExecuteScan(
             txn, schedule->results, table, id);
         break;
       }
+      case TXN_OP_UPDATE_BY_VALUE: {
+        int old_value = id;
+        int new_value = value;
+        execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
+          txn, table, old_value, new_value);
+        break;
+      }
       case TXN_OP_ABORT: {
-        LOG_TRACE("Abort");
+        LOG_INFO("Abort");
         // Assert last operation
         assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction();
@@ -260,6 +281,7 @@ class TransactionThread {
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
         schedule->results.push_back(result);
+        LOG_INFO("READ_STORE, key: %d, read: %d, modify and stored as: %d", id, result, result+value);
         schedule->stored_value = result + value;
         break;
       }
@@ -268,8 +290,8 @@ class TransactionThread {
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
-      LOG_TRACE("ABORT NOW");
-      if (execute_result == false) LOG_TRACE("Executor returns false");
+      LOG_INFO("ABORT NOW");
+      if (execute_result == false) LOG_INFO("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }
@@ -290,23 +312,38 @@ class TransactionScheduler {
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
-        schedules(num_txn) {}
+        schedules(num_txn),
+        concurrent(false) {}
 
   void Run() {
+    // Run the txns according to the schedule
     for (int i = 0; i < (int)schedules.size(); i++) {
       tthreads.emplace_back(&schedules[i], table, txn_manager);
     }
-    for (int i = 0; i < (int)schedules.size(); i++) {
-      tthreads[i].Run();
-    }
-    for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-      LOG_TRACE("Execute %d", (int)itr->second);
-      tthreads[itr->second].go = true;
-      while (tthreads[itr->second].go) {
-        std::chrono::milliseconds sleep_time(1);
-        std::this_thread::sleep_for(sleep_time);
+    if (!concurrent) {
+      for (int i = 0; i < (int)schedules.size(); i++) {
+        std::thread t = tthreads[i].Run();
+        t.detach();
       }
-      LOG_TRACE("Done %d", (int)itr->second);
+      for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
+        LOG_INFO("Execute %d", (int)itr->second);
+        tthreads[itr->second].go = true;
+        while (tthreads[itr->second].go) {
+          std::chrono::milliseconds sleep_time(1);
+          std::this_thread::sleep_for(sleep_time);
+        }
+        LOG_INFO("Done %d", (int)itr->second);
+      }
+    } else {
+      // Run the txns concurrently
+      std::vector<std::thread> threads(schedules.size());
+      for (int i = 0; i < (int)schedules.size(); i++) {
+        threads[i] = tthreads[i].Run(true);
+      }
+      for (auto &thread : threads) {
+        thread.join();
+      }
+      LOG_INFO("Done conccurent transaction schedule");
     }
   }
 
@@ -344,12 +381,20 @@ class TransactionScheduler {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_COMMIT, 0, 0);
     sequence[time++] = cur_txn_id;
   }
+  void UpdateByValue(int old_value, int new_value) {
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
+    sequence[time++] = cur_txn_id;
+  }
   // ReadStore will store the (result of read + modify) to the schedule, the
   // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
   // to a schedule. See usage in isolation_level_test SIAnomalyTest.
   void ReadStore(int id, int modify) {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id, modify);
     sequence[time++] = cur_txn_id;
+  }
+
+  void SetConcurrent(bool flag) {
+    concurrent = flag;
   }
 
   concurrency::TransactionManager *txn_manager;
@@ -359,6 +404,7 @@ class TransactionScheduler {
   std::vector<TransactionThread> tthreads;
   std::map<int, int> sequence;
   int cur_txn_id;
+  bool concurrent;
 };
 }
 }

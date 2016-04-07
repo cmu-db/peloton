@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/spec_rowo_txn_manager.h
+// Identification: src/backend/concurrency/speculative_read_txn_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -30,8 +30,8 @@ struct SpecTxnContext {
 
   std::unordered_set<txn_id_t> inner_dep_set_;
   std::unordered_set<txn_id_t> outer_dep_set_;
-  std::atomic<size_t> outer_dep_count_; // default: 0
-  std::atomic<bool> is_cascading_abort_; // default: false
+  std::atomic<size_t> outer_dep_count_;   // default: 0
+  std::atomic<bool> is_cascading_abort_;  // default: false
 };
 
 extern thread_local SpecTxnContext spec_txn_context;
@@ -42,48 +42,57 @@ enum RegisterRetType {
   REGISTER_RET_TYPE_NOT_FOUND = 2
 };
 
-class SpecRowoTxnManager : public TransactionManager {
+//===--------------------------------------------------------------------===//
+// optimistic concurrency control with speculative reads
+//===--------------------------------------------------------------------===//
+
+class SpeculativeReadTxnManager : public TransactionManager {
  public:
-  SpecRowoTxnManager() {}
+  SpeculativeReadTxnManager() {}
 
-  virtual ~SpecRowoTxnManager() {}
+  virtual ~SpeculativeReadTxnManager() {}
 
-  static SpecRowoTxnManager &GetInstance();
+  static SpeculativeReadTxnManager &GetInstance();
 
-  virtual bool IsVisible(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsVisible(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool IsOwner(const storage::TileGroupHeader * const tile_group_header, const oid_t &tuple_id);
+  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 
-  virtual bool IsOwnable(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tuple_id);
+  virtual bool IsOwnable(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
-  virtual bool AcquireLock(const storage::TileGroupHeader * const tile_group_header,
-                            const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool AcquireOwnership(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
-                            const ItemPointer &new_location);
-
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+                             const ItemPointer &new_location);
 
   virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
                              const ItemPointer &new_location);
 
-  virtual void SetInsertVisibility(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
-
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                                   const oid_t &tuple_id);
+  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    Transaction *txn = TransactionManager::BeginTransaction();
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(txn->GetTransactionId()) == running_txns_.end());
+      assert(running_txns_.find(txn->GetTransactionId()) ==
+             running_txns_.end());
       running_txns_[txn->GetTransactionId()] = &spec_txn_context;
     }
     return txn;
@@ -92,11 +101,18 @@ class SpecRowoTxnManager : public TransactionManager {
   virtual void EndTransaction() {
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      assert(running_txns_.find(current_txn->GetTransactionId()) != running_txns_.end());
+      assert(running_txns_.find(current_txn->GetTransactionId()) !=
+             running_txns_.end());
       running_txns_.erase(current_txn->GetTransactionId());
     }
     spec_txn_context.Clear();
-    TransactionManager::EndTransaction();
+
+    delete current_txn;
+    current_txn = nullptr;
+  }
+
+  virtual cid_t GetMaxCommittedCid() {
+    return 1;
   }
 
   // is it because this dependency has been registered before?
@@ -104,11 +120,11 @@ class SpecRowoTxnManager : public TransactionManager {
   RegisterRetType RegisterDependency(const txn_id_t &dst_txn_id) {
     txn_id_t src_txn_id = current_txn->GetTransactionId();
     // if this dependency has been registered before, then return.
-    if (spec_txn_context.outer_dep_set_.find(dst_txn_id) != 
-          spec_txn_context.outer_dep_set_.end()) {
+    if (spec_txn_context.outer_dep_set_.find(dst_txn_id) !=
+        spec_txn_context.outer_dep_set_.end()) {
       return REGISTER_RET_TYPE_DUPLICATE;
     }
-    
+
     // critical section.
     {
       std::lock_guard<std::mutex> lock(running_txns_mutex_);
@@ -124,7 +140,7 @@ class SpecRowoTxnManager : public TransactionManager {
     spec_txn_context.outer_dep_count_++;
     return REGISTER_RET_TYPE_SUCCESS;
   }
- 
+
   bool IsCommittable() {
     while (true) {
       if (spec_txn_context.outer_dep_count_ == 0) {
@@ -169,12 +185,11 @@ class SpecRowoTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
-  private:
-    // should be changed to libcuckoo.
-    std::mutex running_txns_mutex_;
-    // records all running transactions.
-    std::unordered_map<txn_id_t, SpecTxnContext*> running_txns_;
-
+ private:
+  // should be changed to libcuckoo.
+  std::mutex running_txns_mutex_;
+  // records all running transactions.
+  std::unordered_map<txn_id_t, SpecTxnContext *> running_txns_;
 };
 }
 }

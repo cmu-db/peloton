@@ -40,6 +40,10 @@ class SetOpPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "SetOp"; }
 
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new SetOpPlan(set_op_));
+  }
+
  private:
   /** @brief Set Operation of this node */
   SetOpType set_op_;

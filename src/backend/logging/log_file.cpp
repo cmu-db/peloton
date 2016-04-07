@@ -21,11 +21,11 @@ namespace logging {
 // Logger
 //===--------------------------------------------------------------------===//
 
-void LogFile::SetMaxCommitId(int max_commit_id) {
+void LogFile::SetMaxCommitId(txn_id_t max_commit_id) {
   max_commit_id_ = max_commit_id;
 }
 
-int LogFile::GetMaxCommitId() { return max_commit_id_; }
+txn_id_t LogFile::GetMaxCommitId() { return max_commit_id_; }
 
 int LogFile::GetLogNumber() { return log_number_; }
 
@@ -38,6 +38,8 @@ void LogFile::SetLogFileSize(int log_file_size) {
 FILE *LogFile::GetFilePtr() { return log_file_; }
 
 void LogFile::SetLogFileFD(int fd) { log_file_fd_ = fd; }
+
+void LogFile::SetFilePtr(FILE *fp) { log_file_ = fp; }
 
 }  // namespace logging
 }  // namespace peloton

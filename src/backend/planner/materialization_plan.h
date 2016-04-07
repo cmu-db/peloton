@@ -60,6 +60,11 @@ class MaterializationPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Materialize"; }
 
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
+        old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
+  }
+
  private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.

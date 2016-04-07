@@ -11,9 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/executor/update_executor.h"
-
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/tuple_record.h"
 #include "backend/planner/update_plan.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
@@ -110,7 +107,7 @@ bool UpdateExecutor::DExecute() {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireLock(tile_group_header, tile_group_id, physical_tuple_id) ==
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) ==
           false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
@@ -131,6 +128,9 @@ bool UpdateExecutor::DExecute() {
       // finally insert updated tuple into the table
       ItemPointer location = target_table_->InsertVersion(new_tuple);
 
+      // FIXME: PerformUpdate() will not be executed if the insertion failed,
+      // There is a write lock, acquired, but since it is not in the write set, 
+      // the acquired lock can't be released when the txn is aborted.
       if (location.IsNull() == true) {
         delete new_tuple;
         new_tuple = nullptr;
@@ -138,7 +138,6 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-
       transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id,
                                         location);
 

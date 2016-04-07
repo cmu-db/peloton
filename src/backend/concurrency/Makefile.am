@@ -5,10 +5,12 @@
 ######################################################################
 
 concurrency_FILES = \
-    backend/concurrency/rowo_txn_manager.cpp \
-    backend/concurrency/rpwo_txn_manager.cpp \
-    backend/concurrency/rpwp_txn_manager.cpp \
-    backend/concurrency/spec_rowo_txn_manager.cpp \
+    backend/concurrency/optimistic_txn_manager.cpp \
+    backend/concurrency/pessimistic_txn_manager.cpp \
+    backend/concurrency/ssi_txn_manager.cpp \
+    backend/concurrency/eager_write_txn_manager.cpp \
+    backend/concurrency/speculative_read_txn_manager.cpp \
+    backend/concurrency/ts_order_txn_manager.cpp \
     backend/concurrency/transaction_manager.cpp \
     backend/concurrency/transaction.cpp \
     backend/concurrency/transaction_manager_factory.cpp

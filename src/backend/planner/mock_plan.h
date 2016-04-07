@@ -38,6 +38,10 @@ class MockPlan : public planner::AbstractPlan {
   //===--------------------------------------------------------------------===//
 
   inline const std::string GetInfo() const { return "Mock"; }
+
+  std::unique_ptr<planner::AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new MockPlan());
+  }
 };
 
 }  // namespace test

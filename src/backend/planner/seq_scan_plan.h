@@ -43,6 +43,12 @@ class SeqScanPlan : public AbstractScan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   const std::string GetInfo() const { return "SeqScan"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    AbstractPlan *new_plan = new SeqScanPlan(
+        this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
+    return std::unique_ptr<AbstractPlan>(new_plan);
+  }
 };
 
 }  // namespace planner

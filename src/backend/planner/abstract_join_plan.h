@@ -62,6 +62,8 @@ class AbstractJoinPlan : public AbstractPlan {
 
   const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
 
+  std::unique_ptr<AbstractPlan> Copy() const = 0;
+
  private:
   /** @brief The type of join that we're going to perform */
   PelotonJoinType join_type_;

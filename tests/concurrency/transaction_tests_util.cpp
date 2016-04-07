@@ -32,7 +32,7 @@ class InsertPlan;
 class ProjectInfo;
 }
 namespace test {
-storage::DataTable *TransactionTestsUtil::CreateTable() {
+storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
   auto value_column = catalog::Column(
@@ -65,7 +65,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable() {
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < num_key; i++) {
     ExecuteInsert(txn, table, i, 0);
   }
   txn_manager.CommitTransaction();
@@ -211,6 +211,46 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
   update_node.AddChild(std::move(seq_scan_node));
+  update_executor.AddChild(&seq_scan_executor);
+
+  EXPECT_TRUE(update_executor.Init());
+  return update_executor.Execute();
+}
+
+bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
+                                storage::DataTable *table, int old_value, int new_value) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  Value update_val = ValueFactory::GetIntegerValue(new_value);
+
+  // ProjectInfo
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+  target_list.emplace_back(
+      1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
+
+  // Update plan
+  planner::UpdatePlan update_node(
+      table, new planner::ProjectInfo(std::move(target_list),
+                                      std::move(direct_map_list)));
+
+  executor::UpdateExecutor update_executor(&update_node, context.get());
+
+  // Predicate
+  auto tup_val_exp = new expression::TupleValueExpression(0, 1);
+  auto const_val_exp = new expression::ConstantValueExpression(
+      ValueFactory::GetIntegerValue(old_value));
+  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+
+  // Seq scan
+  std::vector<oid_t> column_ids = {0, 1};
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  update_node.AddChild(&seq_scan_node);
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());
