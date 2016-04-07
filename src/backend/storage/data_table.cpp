@@ -172,6 +172,12 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
+  // ForeignKey checks
+  if (CheckForeignKeyConstraints(tuple) == false) {
+    LOG_WARN("ForeignKey constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
   LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
@@ -189,6 +195,12 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
     LOG_WARN("Index constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  // ForeignKey checks
+  if (CheckForeignKeyConstraints(tuple) == false) {
+    LOG_WARN("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -211,6 +223,12 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
     LOG_WARN("Index constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  // ForeignKey checks
+  if (CheckForeignKeyConstraints(tuple) == false) {
+    LOG_WARN("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -323,6 +341,53 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
     }
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
+  return true;
+}
+
+/**
+ * @brief Check if all the foreign key constraints on this table
+ * is satisfied by checking whether the key exist in the referred table
+ *
+ * FIXME: this still does not guarantee correctness under concurrent transaction
+ *
+ * @returns True on success, false if any foreign key constraints fail
+ */
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
+
+  for (auto foreign_key : foreign_keys) {
+    oid_t sink_table_id = foreign_key->GetSinkTableOid();
+    storage::DataTable *ref_table =
+        (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
+            database_oid, sink_table_id);
+
+    int ref_table_index_count = ref_table->GetIndexCount();
+
+    for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
+      auto index = ref_table->GetIndex(index_itr);
+
+      // The foreign key constraints only refer to the primary key
+      if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+        LOG_INFO("BEGIN checking referred table");
+        auto key_attrs = foreign_key->GetFKColumnOffsets();
+
+        std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
+        std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
+        //FIXME: what is the 3rd arg should be?
+        key->SetFromTuple(tuple, key_attrs, index->GetPool());
+
+        LOG_INFO("check key: %s", key->GetInfo().c_str());
+        auto locations = index->ScanKey(key.get());
+
+        // if this key doesn't exist in the refered column
+        if (locations.size() == 0) {
+          return false;
+        }
+
+        break;
+      }
+    }
+  }
+
   return true;
 }
 
