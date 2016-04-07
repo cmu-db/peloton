@@ -57,7 +57,7 @@ class ProjectionPlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     ProjectionPlan *new_plan = new ProjectionPlan(
-      project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
+        project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
     new_plan->SetColumnIds(column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }

@@ -51,7 +51,8 @@ class UpdatePlan : public AbstractPlan {
   const std::string GetInfo() const { return "UpdatePlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new UpdatePlan(target_table_, project_info_->Copy()));
+    return std::unique_ptr<AbstractPlan>(
+        new UpdatePlan(target_table_, project_info_->Copy()));
   }
 
  private:

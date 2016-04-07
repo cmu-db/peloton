@@ -34,9 +34,11 @@ class AppendPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Append"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const { return std::unique_ptr<AbstractPlan>(new AppendPlan()); }
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new AppendPlan());
+  }
 
-private:
+ private:
   // nothing
 };
 }

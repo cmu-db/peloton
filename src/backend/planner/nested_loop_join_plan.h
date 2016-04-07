@@ -60,12 +60,12 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     NestedLoopJoinPlan *new_plan = new NestedLoopJoinPlan(
-      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
-      catalog::Schema::CopySchema(GetSchema()), nl_);
+        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+        catalog::Schema::CopySchema(GetSchema()), nl_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
-private:
+ private:
   NestLoop *nl_;  // added to support IN+subquery
 };
 

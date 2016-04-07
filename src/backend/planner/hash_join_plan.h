@@ -57,8 +57,8 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     HashJoinPlan *new_plan = new HashJoinPlan(
-      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
-      catalog::Schema::CopySchema(GetSchema()), outer_column_ids_);
+        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+        catalog::Schema::CopySchema(GetSchema()), outer_column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 

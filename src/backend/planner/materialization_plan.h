@@ -62,7 +62,7 @@ class MaterializationPlan : public AbstractPlan {
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
-      old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
+        old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
   }
 
  private:

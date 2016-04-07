@@ -43,7 +43,8 @@ class DeletePlan : public AbstractPlan {
   bool GetTruncate() const { return truncate; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new DeletePlan(target_table_, truncate));
+    return std::unique_ptr<AbstractPlan>(
+        new DeletePlan(target_table_, truncate));
   }
 
  private:

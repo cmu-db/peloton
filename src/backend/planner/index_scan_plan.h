@@ -114,7 +114,7 @@ class IndexScanPlan : public AbstractScan {
     IndexScanDesc desc(index_, key_column_ids_, expr_types_, values_,
                        new_runtime_keys);
     IndexScanPlan *new_plan = new IndexScanPlan(
-      GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc);
+        GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
