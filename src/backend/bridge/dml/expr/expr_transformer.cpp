@@ -34,6 +34,7 @@
 #include "postgres/include/executor/executor.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/string_expression.h"
+#include "backend/expression/case_expression.h"
 
 namespace peloton {
 namespace bridge {
@@ -92,6 +93,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
 
     case T_FuncExpr:
       peloton_expr = TransformFunc(expr_state);
+      break;
+
+    case T_CaseExpr:
+      peloton_expr = TransformCaseExpr(expr_state);
       break;
 
     case T_Aggref:
@@ -321,6 +326,44 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   }
 
   return retval;
+}
+
+expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
+    const ExprState *es) {
+  auto case_es = reinterpret_cast<const CaseExprState *>(es);
+  auto case_expr = reinterpret_cast<const CaseExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(case_expr->casetype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = case_es->args;
+  ListCell *arg;
+  Expr *testExpr = case_expr->arg;
+
+  expression::AbstractExpression *condition = NULL, *result = NULL;
+
+  std::vector<expression::WhenClause *> clauses;
+  foreach (arg, list) {
+    auto *clause = reinterpret_cast<const CaseWhenState *>(lfirst(arg));
+    if (testExpr == NULL)
+      condition = ExprTransformer::TransformExpr((clause->expr));
+    else {
+      FuncExprState *t_expr = reinterpret_cast<FuncExprState *>(clause->expr);
+
+      // Get the second parameter,
+      // because the first paramter is a place holder for testExpr.
+      ExprState *expr = (ExprState *)lsecond(t_expr->args);
+      condition = expression::ExpressionUtil::ComparisonFactory(
+          EXPRESSION_TYPE_COMPARE_EQUAL,
+          ExprTransformer::TransformExpr(testExpr), TransformExpr(expr));
+    }
+    result = ExprTransformer::TransformExpr((clause->result));
+    clauses.push_back(new expression::WhenClause(condition, result));
+  }
+  expression::AbstractExpression *defresult = ExprTransformer::TransformExpr(
+      reinterpret_cast<ExprState *>(case_es->defresult));
+  expression::WhenClause *default_clause =
+      new expression::WhenClause(nullptr, defresult);
+
+  return new expression::CaseExpression(vt, clauses, default_clause);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(
