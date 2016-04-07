@@ -4393,8 +4393,9 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       }
 
       auto mc_state = new MemcachedState();
+      printf("Before query run\n");
       exec_simple_query(&query_line[0], mc_state);
-
+      printf("After query run\n");
       // proceed to frontend write only if response is not empty
       // echo response
       // TODO parse the sql result into Memcached format back to user
@@ -4423,6 +4424,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
 static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op, int len) {
   if (op != GET) {
     result += "STORED\r\n";
+    printf("RESULT SAYS NOT GET:%s\n",result.c_str());
   } else {
     // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
     // <data block>\r\n
@@ -4438,6 +4440,7 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result, M
     if (nattrs != 4) {
       printf("nattrs:%d != 4\n", nattrs);
       result += "ERROR";
+      printf("RESULT ERROR:%s\n",result.c_str());
       return;
     }
     int col_length;
@@ -4462,6 +4465,7 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result, M
     buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
     result += "\r\n";
+    printf("RESULT no ERROR:%s\n",result.c_str());
     return;
   }
 }
