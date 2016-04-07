@@ -26,14 +26,14 @@ namespace bridge {
  *        does not support cases where there is only OFFSET
  * @return Pointer to the constructed AbstractPlan
  */
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
     const LimitPlanState *limit_state) {
   // TODO: does not do pass down bound to child node
   // TODO: handle no limit and no offset cases
   LOG_INFO("Flags :: Limit: %d, Offset: %d", limit_state->noLimit,
            limit_state->noOffset);
   LOG_INFO("Limit: %ld, Offset: %ld", limit_state->limit, limit_state->offset);
-  std::shared_ptr<planner::AbstractPlan> plan_node(
+  std::unique_ptr<planner::AbstractPlan> plan_node(
       new planner::LimitPlan(limit_state->limit, limit_state->offset));
 
   // Resolve child plan

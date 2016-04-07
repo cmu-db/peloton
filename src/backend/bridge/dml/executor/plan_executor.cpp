@@ -164,9 +164,9 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 
   LOG_TRACE("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
 
-  auto children = plan->GetChildren();
+  auto &children = plan->GetChildren();
 
-  for (auto child : children) {
+  for (auto &child : children) {
     PrintPlan(child.get(), prefix);
   }
 }
@@ -273,8 +273,8 @@ executor::AbstractExecutor *BuildExecutorTree(
   }
 
   // Recurse
-  auto children = plan->GetChildren();
-  for (auto child : children) {
+  auto &children = plan->GetChildren();
+  for (auto &child : children) {
     child_executor = BuildExecutorTree(child_executor, child.get(), executor_context);
   }
 

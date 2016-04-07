@@ -29,11 +29,11 @@ AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
-void AbstractPlan::AddChild(const std::shared_ptr<AbstractPlan> &child) {
-  children_.push_back(child);
+void AbstractPlan::AddChild(std::unique_ptr<AbstractPlan> &&child) {
+  children_.emplace_back(std::move(child));
 }
 
-const std::vector<std::shared_ptr<AbstractPlan>> &AbstractPlan::GetChildren() const {
+const std::vector<std::unique_ptr<AbstractPlan>> &AbstractPlan::GetChildren() const {
   return children_;
 }
 

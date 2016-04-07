@@ -34,18 +34,18 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
   NestedLoopJoinPlan(PelotonJoinType join_type,
                      const expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info,
-                     const std::shared_ptr<catalog::Schema> &proj_schema)
-      : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {
+                     std::unique_ptr<const ProjectInfo> &&proj_info,
+                     std::shared_ptr<const catalog::Schema> &proj_schema)
+      : AbstractJoinPlan(join_type, predicate, std::move(proj_info), proj_schema) {
     nl_ = nullptr;
   }
 
   NestedLoopJoinPlan(PelotonJoinType join_type,
                      const expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info,
-                     const std::shared_ptr<catalog::Schema> &proj_schema,
+                     std::unique_ptr<const ProjectInfo> &&proj_info,
+                     std::shared_ptr<const catalog::Schema> &proj_schema,
                      NestLoop *nl)
-      : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {
+      : AbstractJoinPlan(join_type, predicate, std::move(proj_info), proj_schema) {
     nl_ = nl;
   }  // added to set member nl_
 

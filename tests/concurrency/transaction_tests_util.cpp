@@ -73,7 +73,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable() {
   return table;
 }
 
-planner::ProjectInfo *TransactionTestsUtil::MakeProjectInfoFromTuple(
+std::unique_ptr<const planner::ProjectInfo>
+TransactionTestsUtil::MakeProjectInfoFromTuple(
     const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
@@ -84,8 +85,9 @@ planner::ProjectInfo *TransactionTestsUtil::MakeProjectInfoFromTuple(
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
+  return std::unique_ptr<const planner::ProjectInfo>(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 }
 
 bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
@@ -100,10 +102,11 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
   tuple->SetValue(0, ValueFactory::GetIntegerValue(id), testing_pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(value), testing_pool);
-  auto project_info = MakeProjectInfoFromTuple(tuple.get());
+  std::unique_ptr<const planner::ProjectInfo> project_info{
+    MakeProjectInfoFromTuple(tuple.get())};
 
   // Insert
-  planner::InsertPlan node(table, project_info);
+  planner::InsertPlan node(table, std::move(project_info));
   executor::InsertExecutor executor(&node, context.get());
   return executor.Execute();
 }
@@ -165,11 +168,11 @@ bool TransactionTestsUtil::ExecuteDelete(concurrency::Transaction *transaction,
 
   // Scan
   std::vector<oid_t> column_ids = {0};
-  std::shared_ptr<planner::SeqScanPlan> seq_scan_node(
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(table, predicate, column_ids));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
-  delete_node.AddChild(seq_scan_node);
+  delete_node.AddChild(std::move(seq_scan_node));
   delete_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(delete_executor.Init());
@@ -203,11 +206,11 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  std::shared_ptr<planner::SeqScanPlan> seq_scan_node(
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(table, predicate, column_ids));
   executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(), context.get());
 
-  update_node.AddChild(seq_scan_node);
+  update_node.AddChild(std::move(seq_scan_node));
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());

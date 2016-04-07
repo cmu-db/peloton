@@ -17,7 +17,7 @@
 namespace peloton {
 namespace bridge {
 
-const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformSort(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformSort(
     const SortPlanState *plan_state) {
   auto sort = plan_state->sort;
 
@@ -37,11 +37,11 @@ const std::shared_ptr<planner::AbstractPlan> PlanTransformer::TransformSort(
     descend_flags.push_back(reverse_flags[i]);
   }
 
-  std::shared_ptr<planner::AbstractPlan> retval(
+  std::unique_ptr<planner::AbstractPlan> retval(
       new planner::OrderByPlan(sort_keys, descend_flags, output_col_ids));
 
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
-  retval->AddChild(lchild);
+  retval->AddChild(std::move(lchild));
 
   return retval;
 }
