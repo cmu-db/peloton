@@ -128,9 +128,6 @@ class ExpressionUtil {
   static AbstractExpression *SubqueryFactory(
       ExpressionType subqueryType, PlannerDomValue obj,
       const std::vector<AbstractExpression *> &rgs);
-  //
-  static AbstractExpression *CoalesceFactory(
-      ValueType vt, const std::vector<AbstractExpression *> &values);
 
   static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
                                                   ValueType vt,

@@ -408,14 +408,14 @@ expression::AbstractExpression *ExprTransformer::TransformCoalesce(
   const List *list = coalesce_es->args;
   ListCell *arg;
 
-  std::vector<expression::AbstractExpression *> values;
+  std::vector<expression::CoalesceExpression::AbstractExprPtr> expressions;
   foreach (arg, list) {
-    auto *expr = reinterpret_cast<ExprState *> lfirst(arg);
+    auto *expr = reinterpret_cast<const ExprState *> lfirst(arg);
     auto t = TransformExpr(expr);
-    values.push_back(t);
+    expressions.push_back(expression::CoalesceExpression::AbstractExprPtr(t));
   }
 
-  return expression::ExpressionUtil::CoalesceFactory(vt, values);
+  return new expression::CoalesceExpression(vt, expressions);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(

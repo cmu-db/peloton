@@ -36,7 +36,6 @@
 #include "backend/expression/string_expression.h"
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
-#include "backend/expression/coalesce_expression.h"
 #include "backend/expression/nullif_expression.h"
 #include <json_spirit.h>
 
@@ -887,11 +886,6 @@ void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
            nameString.c_str(), functionId, (int)args.size());
   // DEBUG_ASSERT_OR_THROW_OR_CRASH(false, fn_message);
   throw Exception(fn_message);
-}
-
-AbstractExpression *ExpressionUtil::CoalesceFactory(
-    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
-  return new expression::CoalesceExpression(vt, expressions);
 }
 
 // Given an expression type and a valuetype, find the best
