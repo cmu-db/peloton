@@ -25,17 +25,14 @@ namespace peloton {
 namespace expression {
 
 SubqueryExpression::SubqueryExpression(
-    ExpressionType subqueryType, int subqueryId,
+    ExpressionType subqueryType, ValueType result_type, int subqueryId,
     const std::vector<int> &paramIdxs, const std::vector<int> &otherParamIdxs,
     __attribute__((unused)) const std::vector<AbstractExpression *>& tveParams)
-    : AbstractExpression(subqueryType),
+    : AbstractExpression(subqueryType, result_type),
       m_subqueryId(subqueryId),
       m_paramIdxs(paramIdxs),
       m_otherParamIdxs(otherParamIdxs){
   LOG_TRACE("SubqueryExpression %d", subqueryId);
-}
-
-SubqueryExpression::~SubqueryExpression() {
 }
 
 Value SubqueryExpression::Evaluate(

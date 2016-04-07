@@ -48,7 +48,8 @@ class ExtractExpression : public AbstractExpression {
    * date: date or timestamp to extract from
    */
   ExtractExpression(AbstractExpression *subfield, AbstractExpression *date)
-      : AbstractExpression(EXPRESSION_TYPE_EXTRACT, subfield, date) {
+      : AbstractExpression(EXPRESSION_TYPE_EXTRACT, VALUE_TYPE_BIGINT,
+                           subfield, date) {
     if (subfield->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT) {
       this->subfield = ExtractExpression::GetFieldFromValue(
           subfield->Evaluate(nullptr, nullptr, nullptr));
@@ -57,10 +58,8 @@ class ExtractExpression : public AbstractExpression {
     }
   }
 
-  ~ExtractExpression() {}
-
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     assert(m_right);
     TimestampSubfield local_subfield;
@@ -113,11 +112,11 @@ class ExtractExpression : public AbstractExpression {
     return ret;
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "ExtractExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new ExtractExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 
@@ -180,14 +179,14 @@ const std::string ExtractExpression::HOUR_STR = "hour";
 const std::string ExtractExpression::MINUTE_STR = "minute";
 const std::string ExtractExpression::SECOND_STR = "second";
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // An expression that converts a DATE type to a TIMESTAMP type
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 class DateToTimestampExpression : public AbstractExpression {
  public:
   DateToTimestampExpression(AbstractExpression *date_expr)
-      : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, date_expr,
-                           nullptr) {
+      : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, VALUE_TYPE_BIGINT,
+                           date_expr, nullptr) {
     assert(GetLeft() != nullptr);
     assert(GetRight() == nullptr);
   }
