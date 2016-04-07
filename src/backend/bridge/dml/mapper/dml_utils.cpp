@@ -819,6 +819,25 @@ ExprState *CopyExprState(ExprState *expr_state) {
       }
     } break;
 
+    case T_CoalesceExprState: {
+      expr_state_copy = (ExprState *)makeNode(CoalesceExprState);
+      CoalesceExprState *coalesce_expr_state_copy =
+          (CoalesceExprState *)expr_state_copy;
+      CoalesceExprState *coalesce_expr_state = (CoalesceExprState *)expr_state;
+      *coalesce_expr_state_copy = *coalesce_expr_state;
+
+      List *items = coalesce_expr_state->args;
+      ListCell *item;
+
+      coalesce_expr_state_copy->args = NIL;
+      foreach (item, items) {
+        ExprState *expr_state = (ExprState *)lfirst(item);
+        auto child_expr_state = CopyExprState(expr_state);
+        coalesce_expr_state_copy->args =
+            lappend(coalesce_expr_state_copy->args, child_expr_state);
+      }
+    } break;
+
     case T_CaseExprState: {
       expr_state_copy = (ExprState *)makeNode(CaseExprState);
       CaseExprState *case_expr_state_copy = (CaseExprState *)expr_state_copy;
