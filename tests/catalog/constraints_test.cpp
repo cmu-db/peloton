@@ -22,14 +22,18 @@
 #include "backend/storage/tuple.h"
 #include "backend/storage/table_factory.h"
 #include "backend/index/index_factory.h"
+#include "backend/bridge/ddl/bridge.h"
 
 #include "catalog/constraints_tests_util.h"
 #include "concurrency/transaction_tests_util.h"
 
-
+//#define NOTNULL_TEST
+//#define PRIMARY_UNIQUEKEY_TEST
+#define FOREIGHN_KEY_TEST
 
 namespace peloton {
 namespace test {
+
 
 //===--------------------------------------------------------------------===//
 // Constraints Tests
@@ -37,6 +41,7 @@ namespace test {
 
 class ConstraintsTests : public PelotonTest {};
 
+#ifdef NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {
   // First, generate the table with index
   // this table has 15 rows:
@@ -90,7 +95,9 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   txn_manager.CommitTransaction();
 
 }
+#endif
 
+#ifdef PRIMARY_UNIQUEKEY_TEST
 TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
   // First, generate the table with index
   // this table has 10 rows:
@@ -196,6 +203,62 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
     EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[1].txn_result);
   }
 }
+#endif
+
+#ifdef FOREIGHN_KEY_TEST
+TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
+  // First, initial 2 tables like following
+  //     TABLE A -- src table          TABLE B -- sink table
+  // int(primary, ref B)  int            int(primary)  int
+  //    0                 0               0             0
+  //    1                 0               1             0
+  //    2                 0               2             0
+  //                                      .....
+  //                                      9             0
+
+  // create new db
+  auto &manager = catalog::Manager::GetInstance();
+  oid_t current_db_oid = bridge::Bridge::GetCurrentDatabaseOid();
+  auto newdb = new storage::Database(current_db_oid);
+  manager.AddDatabase(newdb);
+
+  auto table_B = TransactionTestsUtil::CreateTable(10, "tableB",0, 1001, 1001, true);
+  auto table_A = TransactionTestsUtil::CreateTable(3, "tableA", 0, 1000, 1000, true);
+
+  (void)table_A;
+  (void)table_B;
+
+  // add the foreign key constraints for table_A
+  std::unique_ptr<catalog::ForeignKey> foreign_key(
+      new catalog::ForeignKey(1001, {"id"}, {0}, {"id"}, {0},
+                              'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT"));
+  table_A->AddForeignKey(foreign_key.get());
+
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // Test1: insert 2 tuple, one of which doesn't follow foreign key constraint
+  // txn0 insert (10,10) --> fail
+  // txn1 insert (9,10) --> success
+  // txn0 commit
+  // txn1 commit
+  {
+    TransactionScheduler scheduler(2, table_A, &txn_manager);
+    scheduler.Txn(0).Insert(10, 10);
+    scheduler.Txn(1).Insert(9, 10);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Commit();
+
+    scheduler.Run();
+
+    EXPECT_TRUE(RESULT_ABORTED == scheduler.schedules[0].txn_result);
+    EXPECT_TRUE(RESULT_SUCCESS == scheduler.schedules[1].txn_result);
+  }
+
+  // this will also indirectly delete all tables in this database
+  delete newdb;
+}
+#endif
 
 }  // End test namespace
 }  // End peloton namespace
