@@ -77,8 +77,8 @@ class MergeJoinPlan : public AbstractJoinPlan {
     }
 
     MergeJoinPlan *new_plan = new MergeJoinPlan(
-      GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
-      catalog::Schema::CopySchema(GetSchema()), new_join_clauses);
+        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+        catalog::Schema::CopySchema(GetSchema()), new_join_clauses);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
