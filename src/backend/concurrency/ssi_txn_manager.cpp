@@ -167,11 +167,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     LOG_INFO("Not read before");
     // Previously, this tuple hasn't been read, add the txn to the reader list
     // of the tuple
-    {
-      std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-      AddSIReader(tile_group.get(), tuple_id);
-    }
-    
+    AddSIReader(tile_group.get(), tuple_id);
 
     auto writer = tile_group_header->GetTransactionId(tuple_id);
     // Another transaction is writting this tuple, add an edge
@@ -180,7 +176,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
       std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
       if (txn_table_.count(writer) != 0) {  
-        // might have been committed or aborted
+        // The writer have not been removed from the txn table
         LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
                  tuple_id);
         SetInConflict(writer);
@@ -194,6 +190,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
   // For each new version of the tuple
   {
+    // This is a potential big overhead for read operations
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     LOG_INFO("SI read phase 2");
@@ -207,14 +204,27 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
       LOG_INFO("%ld %ld creator is %ld", next_item.block, next_item.offset,
                creator);
 
-      // Check creator status, skip if creator has commited or self is creator
-      if (txn_table_.count(creator) == 0 || creator == txn_id) {
-        if (creator == txn_id) LOG_INFO("check in read, escape myself");
-        next_item =
-            tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
-        continue;
+      // Check creator status, skip if creator has commited before I start
+      // or self is creator
+      auto should_skip = false;
+      if (txn_table_.count(creator) == 0)
+        should_skip = true;
+      else {
+        if (creator == txn_id)
+          should_skip = true;
+        else {
+          auto &ctx = txn_table_.at(creator);
+          if (ctx.transaction_->GetEndCommitId() != INVALID_TXN_ID 
+            && ctx.transaction_->GetEndCommitId() < current_txn->GetBeginCommitId()) {
+            should_skip = true;
+          }
+        }
       }
 
+      if (should_skip) {
+        next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
+        continue;
+      }
       
       auto &ctx = txn_table_.at(creator);
       // If creator committed and has out_confict, since creator has commited,
@@ -580,6 +590,8 @@ void SsiTxnManager::RemoveReader(txn_id_t txn_id) {
 }
 
 // Clean obsolete txn record
+// Current implementation might be very expensive, consider using dependency
+// count
 void SsiTxnManager::CleanUp() {
   // GC periodically
   // find smallest begin cid of the running transaction
