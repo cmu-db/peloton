@@ -30,7 +30,7 @@ class CaseExpression : public AbstractExpression {
                  AbstractExprPtr default_clause)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
         clauses_(std::move(t_clauses)),
-        default_clause_(std::move(default_clause)),
+        default_expression_(std::move(default_clause)),
         case_type_(vt) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -40,7 +40,7 @@ class CaseExpression : public AbstractExpression {
       if (condition.IsTrue())
         return clause.second->Evaluate(tuple1, tuple2, context);
     }
-    return default_clause_->Evaluate(tuple1, tuple2, context);
+    return default_expression_->Evaluate(tuple1, tuple2, context);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -56,7 +56,7 @@ class CaseExpression : public AbstractExpression {
     }
     // default result has no condition.
     return new CaseExpression(case_type_, copied_clauses,
-                              AbstractExprPtr(default_clause_->Copy()));
+                              AbstractExprPtr(default_expression_->Copy()));
   }
 
  private:
@@ -64,7 +64,7 @@ class CaseExpression : public AbstractExpression {
   std::vector<WhenClause> clauses_;
 
   // Fallback case result expression
-  AbstractExprPtr default_clause_;
+  AbstractExprPtr default_expression_;
 
   ValueType case_type_;
 };
