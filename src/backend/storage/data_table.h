@@ -232,6 +232,8 @@ class DataTable : public AbstractTable {
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple, ItemPointer location);
 
+  // check the foreign key constraints
+  bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS

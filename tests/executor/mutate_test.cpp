@@ -241,7 +241,7 @@ TEST_F(MutateTests, StressTests) {
   txn_manager.CommitTransaction();
 
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
-  LOG_TRACE(table->GetInfo().c_str());
+  LOG_TRACE("%s", table->GetInfo().c_str());
 
   LOG_INFO("---------------------------------------------");
 
@@ -251,7 +251,7 @@ TEST_F(MutateTests, StressTests) {
   LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
-  LOG_TRACE(table->GetInfo().c_str());
+  LOG_TRACE("%s",table->GetInfo().c_str());
 
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
