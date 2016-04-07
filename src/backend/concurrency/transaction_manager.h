@@ -84,6 +84,12 @@ class TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id,
                              const oid_t &tuple_id) = 0;
 
+  // Txn manager may store related information in TileGroupHeader, so when
+  // TileGroup is dropped, txn manager might need to be notified
+  virtual void DroppingTileGroup(const oid_t &tile_group_id __attribute__((unused))) {
+    return;
+  }
+
   void SetTransactionResult(const Result result) {
     current_txn->SetResult(result);
   }
