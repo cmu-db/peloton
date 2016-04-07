@@ -22,12 +22,15 @@ class CoalesceExpression : public AbstractExpression {
  public:
   CoalesceExpression(ValueType vt,
                      const std::vector<AbstractExpression *> &expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_COALESCE),
         expressions(expressions),
         value_type(vt) {}
 
   virtual ~CoalesceExpression() {
-    for (auto value : expressions) delete value;
+    for (auto value : expressions) {
+      delete value;
+      value = nullptr;
+    }
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,

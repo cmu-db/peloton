@@ -99,6 +99,14 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformCaseExpr(expr_state);
       break;
 
+    case T_CoalesceExpr:
+      peloton_expr = TransformCoalesce(expr_state);
+      break;
+
+    case T_NullIfExpr:
+      peloton_expr = TransformNullIf(expr_state);
+      break;
+
     case T_Aggref:
       peloton_expr = TransformAggRef(expr_state);
       break;
@@ -364,6 +372,44 @@ expression::AbstractExpression *ExprTransformer::TransformCaseExpr(
       new expression::WhenClause(nullptr, defresult);
 
   return new expression::CaseExpression(vt, clauses, default_clause);
+}
+
+expression::AbstractExpression *ExprTransformer::TransformNullIf(
+    const ExprState *es) {
+  auto nullif_es = reinterpret_cast<const FuncExprState *>(es);
+  auto expr = reinterpret_cast<const NullIfExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(expr->opresulttype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = nullif_es->args;
+  ListCell *arg;
+
+  std::vector<expression::AbstractExpression *> values;
+  foreach (arg, list) {
+    auto *expr = reinterpret_cast<const ExprState *> lfirst(arg);
+    auto t = TransformExpr(expr);
+    values.push_back(t);
+  }
+
+  return expression::ExpressionUtil::NullIfFactory(vt, values);
+}
+
+expression::AbstractExpression *ExprTransformer::TransformCoalesce(
+    const ExprState *es) {
+  auto coalesce_es = reinterpret_cast<const CoalesceExprState *>(es);
+  auto expr = reinterpret_cast<const CoalesceExpr *>(es->expr);
+  PostgresValueType pt = static_cast<PostgresValueType>(expr->coalescetype);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+  const List *list = coalesce_es->args;
+  ListCell *arg;
+
+  std::vector<expression::AbstractExpression *> values;
+  foreach (arg, list) {
+    auto *expr = reinterpret_cast<ExprState *> lfirst(arg);
+    auto t = TransformExpr(expr);
+    values.push_back(t);
+  }
+
+  return expression::ExpressionUtil::CoalesceFactory(vt, values);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(
@@ -648,6 +694,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_POSITION:
     case EXPRESSION_TYPE_EXTRACT:
     case EXPRESSION_TYPE_DATE_TO_TIMESTAMP:
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
+
       return expression::ExpressionUtil::OperatorFactory(
           plt_exprtype, children[0], children[1], children[2], children[3]);
 

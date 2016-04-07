@@ -40,8 +40,7 @@ class NullIfExpression : public AbstractExpression {
     if (left_result == right_result) {
       return Value::GetNullValue(value_type);
     } else {
-      // FIXME: Order of expressions got reversed somewhere
-      return right_result;
+      return left_result;
     }
   }
 
