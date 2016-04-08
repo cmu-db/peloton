@@ -223,19 +223,6 @@ peloton_dml(PlanState *planstate,
   // Second prepare TupleDesc and set it into QueryPlanExecRequest
   peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
   peloton::networking::SetTupleDescMsg(tuple_desc, *tuple_desc_msg);
-  //request.set_allocated_tuple_dec(&tuple_desc_msg);
-  // debug
-  int atts_count = tuple_desc->natts;
-  int repeate_count = tuple_desc_msg->attrs_size();
-  assert(atts_count == repeate_count);
-
-  peloton::networking::TupleDescMsg tdmsg = request.tuple_dec();
-  int size1 = tdmsg.natts();
-  int size2 = tdmsg.attrs_size();
-  assert(size1 == size2);
-
-  TupleDesc tuple_desc2 = peloton::networking::ParseTupleDescMsg(tdmsg);
-  // end debug
 
   // Third set size of parameter list
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
@@ -254,14 +241,8 @@ peloton_dml(PlanState *planstate,
   mapped_plan_ptr->SerializeTo(output_plan);
   request.set_plan(output_plan.Data(), output_plan.Size());
 
-  // Test for DeserializeFrom
-  peloton::ReferenceSerializeInputBE input(output_plan.Data(), output_plan.Size());
-  peloton::planner::SeqScanPlan ss_plan;
-  ss_plan.DeserializeFrom(input);
-  // End test
-
   // Finally send the request
-  pclient->QueryPlan(&request, NULL);
+  //pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
