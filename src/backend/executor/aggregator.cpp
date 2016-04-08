@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregator.cpp
 //
 // Identification: src/backend/executor/aggregator.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 #include "backend/executor/executor_context.h"
 #include "backend/common/logger.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -131,11 +132,13 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
   LOG_TRACE("Tuple to Output :");
   LOG_TRACE("GROUP TUPLE :: %s", tuple->GetInfo().c_str());
 
-  auto location =
-      output_table->InsertTuple(econtext->GetTransaction(), tuple.get());
+  auto location = output_table->InsertTuple(tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple ");
     return false;
+  } else {
+    concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
+        location.block, location.offset);
   }
 
   return true;

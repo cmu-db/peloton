@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// limit_node.h
+// limit_plan.h
 //
-// Identification: src/backend/planner/limit_node.h
+// Identification: src/backend/planner/limit_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,6 +44,10 @@ class LimitPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_LIMIT; }
 
   const std::string GetInfo() const { return "Limit"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new LimitPlan(limit_, offset_));
+  }
 
  private:
   const size_t limit_;   // as LIMIT in SQL standard

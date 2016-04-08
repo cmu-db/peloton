@@ -1,14 +1,15 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // storage_manager.h
 //
 // Identification: src/backend/storage/storage_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <mutex>
@@ -37,13 +38,9 @@ class StorageManager {
 
   void Sync(BackendType type, void *address, size_t length);
 
-  size_t GetMsyncCount() const {
-    return msync_count;
-  }
+  size_t GetMsyncCount() const { return msync_count; }
 
-  size_t GetClflushCount() const {
-    return clflush_count;
-  }
+  size_t GetClflushCount() const { return clflush_count; }
 
  private:
   // pmem file address

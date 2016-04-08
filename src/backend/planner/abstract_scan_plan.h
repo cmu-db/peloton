@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// abstract_scan_node.h
+// abstract_scan_plan.h
 //
-// Identification: src/backend/planner/abstract_scan_node.h
+// Identification: src/backend/planner/abstract_scan_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,6 +40,7 @@ class AbstractScan : public AbstractPlan {
                const std::vector<oid_t> &column_ids)
       : target_table_(table), predicate_(predicate), column_ids_(column_ids) {}
 
+  // We should add an empty constructor to support an empty object
   AbstractScan():target_table_(nullptr), predicate_(nullptr) {}
 
   const expression::AbstractExpression *GetPredicate() const {

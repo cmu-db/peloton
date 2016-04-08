@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// insert_node.h
+// insert_plan.h
 //
-// Identification: src/backend/planner/insert_node.h
+// Identification: src/backend/planner/insert_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,6 +49,11 @@ class InsertPlan : public AbstractPlan {
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
   const std::string GetInfo() const { return "InsertPlan"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new InsertPlan(
+        target_table_, project_info_->Copy(), bulk_insert_count));
+  }
 
  private:
   /** @brief Target table. */

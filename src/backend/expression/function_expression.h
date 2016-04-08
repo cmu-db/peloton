@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // function_expression.h
 //
 // Identification: src/backend/expression/function_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -232,9 +232,10 @@ static const int FUNC_SINCE_EPOCH_SECOND = 20006;
 static const int FUNC_SINCE_EPOCH_MILLISECOND = 20007;
 static const int FUNC_SINCE_EPOCH_MICROSECOND = 20008;
 static const int FUNC_TO_TIMESTAMP = 20009;
-static const int FUNC_TO_TIMESTAMP_SECOND = 20010;
-static const int FUNC_TO_TIMESTAMP_MILLISECOND = 20011;
-static const int FUNC_TO_TIMESTAMP_MICROSECOND = 20012;
+static const int FUNC_TO_TIMESTAMP_DAY = 20010;
+static const int FUNC_TO_TIMESTAMP_SECOND = 20011;
+static const int FUNC_TO_TIMESTAMP_MILLISECOND = 20012;
+static const int FUNC_TO_TIMESTAMP_MICROSECOND = 20013;
 
 // VoltDB truncate timestamp function
 static const int FUNC_TRUNCATE_TIMESTAMP =

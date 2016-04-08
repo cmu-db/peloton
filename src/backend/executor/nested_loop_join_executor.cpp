@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // nested_loop_join_executor.cpp
 //
 // Identification: src/backend/executor/nested_loop_join_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -77,6 +77,7 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
+  // Prepare nest_loop
   const planner::NestedLoopJoinPlan &nl_plan_node =
       GetPlanNode<planner::NestedLoopJoinPlan>();
   const NestLoop *nest_loop = nl_plan_node.GetNestLoop();

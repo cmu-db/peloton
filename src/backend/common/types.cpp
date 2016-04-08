@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // types.cpp
 //
 // Identification: src/backend/common/types.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,20 +29,20 @@ ItemPointer INVALID_ITEMPOINTER;
 /** Testing utility */
 bool IsNumeric(ValueType type) {
   switch (type) {
-    case (VALUE_TYPE_TINYINT):
-    case (VALUE_TYPE_SMALLINT):
-    case (VALUE_TYPE_INTEGER):
-    case (VALUE_TYPE_BIGINT):
-    case (VALUE_TYPE_DECIMAL):
-    case (VALUE_TYPE_DOUBLE):
+    case VALUE_TYPE_TINYINT:
+    case VALUE_TYPE_SMALLINT:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DECIMAL:
+    case VALUE_TYPE_DOUBLE:
       return true;
-      break;
-    case (VALUE_TYPE_VARCHAR):
-    case (VALUE_TYPE_VARBINARY):
-    case (VALUE_TYPE_TIMESTAMP):
-    case (VALUE_TYPE_NULL):
-    case (VALUE_TYPE_INVALID):
-    case (VALUE_TYPE_ARRAY):
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_DATE:
+    case VALUE_TYPE_TIMESTAMP:
+    case VALUE_TYPE_NULL:
+    case VALUE_TYPE_INVALID:
+    case VALUE_TYPE_ARRAY:
       return false;
     default:
       throw Exception("IsNumeric");
@@ -53,20 +53,20 @@ bool IsNumeric(ValueType type) {
 /** Used in index optimization **/
 bool IsIntegralType(ValueType type) {
   switch (type) {
-    case (VALUE_TYPE_TINYINT):
-    case (VALUE_TYPE_SMALLINT):
-    case (VALUE_TYPE_INTEGER):
-    case (VALUE_TYPE_BIGINT):
+    case VALUE_TYPE_TINYINT:
+    case VALUE_TYPE_SMALLINT:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_BIGINT:
       return true;
-      break;
-    case (VALUE_TYPE_REAL):
-    case (VALUE_TYPE_DOUBLE):
-    case (VALUE_TYPE_VARCHAR):
-    case (VALUE_TYPE_VARBINARY):
-    case (VALUE_TYPE_TIMESTAMP):
-    case (VALUE_TYPE_NULL):
-    case (VALUE_TYPE_DECIMAL):
-    case (VALUE_TYPE_ARRAY):
+    case VALUE_TYPE_REAL:
+    case VALUE_TYPE_DOUBLE:
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_DATE:
+    case VALUE_TYPE_TIMESTAMP:
+    case VALUE_TYPE_NULL:
+    case VALUE_TYPE_DECIMAL:
+    case VALUE_TYPE_ARRAY:
       return false;
     default:
       throw Exception("IsIntegralType");
@@ -83,6 +83,7 @@ Value GetRandomValue(ValueType type) {
     case VALUE_TYPE_SMALLINT:
       return ValueFactory::GetSmallIntValue(
           static_cast<int16_t>(rand() % 32768));
+    case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
       return ValueFactory::GetIntegerValue(rand() % (1 << 31));
     case VALUE_TYPE_BIGINT:
@@ -122,28 +123,30 @@ Value GetRandomValue(ValueType type) {
 // Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
   switch (type) {
-    case (VALUE_TYPE_TINYINT):
+    case VALUE_TYPE_TINYINT:
       return 1;
-    case (VALUE_TYPE_SMALLINT):
+    case VALUE_TYPE_SMALLINT:
       return 2;
-    case (VALUE_TYPE_INTEGER):
+    case VALUE_TYPE_INTEGER:
       return 4;
-    case (VALUE_TYPE_BIGINT):
+    case VALUE_TYPE_BIGINT:
       return 8;
-    case (VALUE_TYPE_REAL):
-    case (VALUE_TYPE_DOUBLE):
+    case VALUE_TYPE_REAL:
+    case VALUE_TYPE_DOUBLE:
       return 8;
-    case (VALUE_TYPE_VARCHAR):
+    case VALUE_TYPE_VARCHAR:
       return 0;
-    case (VALUE_TYPE_VARBINARY):
+    case VALUE_TYPE_VARBINARY:
       return 0;
-    case (VALUE_TYPE_TIMESTAMP):
+    case VALUE_TYPE_DATE:
+      return 4;
+    case VALUE_TYPE_TIMESTAMP:
       return 8;
-    case (VALUE_TYPE_DECIMAL):
+    case VALUE_TYPE_DECIMAL:
       return 0;
-    case (VALUE_TYPE_INVALID):
+    case VALUE_TYPE_INVALID:
       return 0;
-    case (VALUE_TYPE_NULL):
+    case VALUE_TYPE_NULL:
       return 0;
     default: { return 0; }
   }
@@ -163,11 +166,7 @@ std::string BackendTypeToString(BackendType type) {
       return "FILE";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: {
-      char buffer[32];
-      ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
-      ret = buffer;
-    }
+    default: { return "UNKNOWN " + std::to_string(type); }
   }
   return (ret);
 }
@@ -209,6 +208,8 @@ std::string ValueTypeToString(ValueType type) {
       return "VARCHAR";
     case VALUE_TYPE_VARBINARY:
       return "VARBINARY";
+    case VALUE_TYPE_DATE:
+      return "DATE";
     case VALUE_TYPE_TIMESTAMP:
       return "TIMESTAMP";
     case VALUE_TYPE_DECIMAL:
@@ -237,6 +238,8 @@ ValueType StringToValueType(std::string str) {
     return VALUE_TYPE_VARCHAR;
   } else if (str == "VARBINARY") {
     return VALUE_TYPE_VARBINARY;
+  } else if (str == "DATE") {
+    return VALUE_TYPE_DATE;
   } else if (str == "TIMESTAMP") {
     return VALUE_TYPE_TIMESTAMP;
   } else if (str == "DECIMAL") {
@@ -286,7 +289,6 @@ bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   switch (logging_type) {
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_DRAM_HDD:
-    case LOGGING_TYPE_DRAM_SSD:
       status = true;
       break;
 
@@ -303,15 +305,9 @@ bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
 
   switch (logging_type) {
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_SSD:
     case LOGGING_TYPE_NVM_HDD:
 
-    case LOGGING_TYPE_SSD_NVM:
-    case LOGGING_TYPE_SSD_SSD:
-    case LOGGING_TYPE_SSD_HDD:
-
     case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_SSD:
     case LOGGING_TYPE_HDD_HDD:
       status = true;
       break;
@@ -463,12 +459,6 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_OPERATOR_COALESCE: {
       return "COALESCE";
     }
-    case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
-      return "OPERATOR_CASE_WHEN";
-    }
-    case EXPRESSION_TYPE_OPERATOR_ALTERNATIVE: {
-      return "OPERATOR_ALTERNATIVE";
-    }
     case EXPRESSION_TYPE_ROW_SUBQUERY: {
       return "ROW_SUBQUERY";
     }
@@ -542,6 +532,9 @@ std::string ExpressionTypeToString(ExpressionType type) {
     }
     case EXPRESSION_TYPE_EXTRACT: {
       return "EXTRACT";
+    }
+    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP: {
+      return "DATE_TO_TIMESTAMP";
     }
   }
   return "INVALID";
@@ -628,10 +621,6 @@ ExpressionType StringToExpressionType(std::string str) {
     return EXPRESSION_TYPE_VALUE_VECTOR;
   } else if (str == "HASH_RANGE") {
     return EXPRESSION_TYPE_HASH_RANGE;
-  } else if (str == "OPERATOR_CASE_WHEN") {
-    return EXPRESSION_TYPE_OPERATOR_CASE_WHEN;
-  } else if (str == "OPERATOR_ALTERNATIVE") {
-    return EXPRESSION_TYPE_OPERATOR_ALTERNATIVE;
   } else if (str == "ROW_SUBQUERY") {
     return EXPRESSION_TYPE_ROW_SUBQUERY;
   } else if (str == "SELECT_SUBQUERY") {
@@ -920,34 +909,21 @@ std::string LoggingTypeToString(LoggingType type) {
       return "DRAM_NVM";
     case LOGGING_TYPE_DRAM_HDD:
       return "DRAM_HDD";
-    case LOGGING_TYPE_DRAM_SSD:
-      return "DRAM_SSD";
 
     // WBL Based
 
     case LOGGING_TYPE_NVM_NVM:
       return "NVM_NVM";
-    case LOGGING_TYPE_NVM_SSD:
-      return "NVM_SSD";
     case LOGGING_TYPE_NVM_HDD:
       return "NVM_HDD";
 
     case LOGGING_TYPE_HDD_NVM:
       return "HDD_NVM";
-    case LOGGING_TYPE_HDD_SSD:
-      return "HDD_SSD";
     case LOGGING_TYPE_HDD_HDD:
       return "HDD_HDD";
 
-    case LOGGING_TYPE_SSD_NVM:
-      return "SSD_NVM";
-    case LOGGING_TYPE_SSD_SSD:
-      return "SSD_SSD";
-    case LOGGING_TYPE_SSD_HDD:
-      return "SSD_HDD";
-
     default:
-      throw Exception("Invalid logging_type :: " + std::to_string(type));
+      LOG_ERROR("Invalid logging_type :: %d", type);
       exit(EXIT_FAILURE);
   }
   return "INVALID";
@@ -1045,30 +1021,30 @@ std::string LogRecordTypeToString(LogRecordType type) {
 
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType) {
-  ValueType valueType = VALUE_TYPE_INVALID;
+  ValueType value_type = VALUE_TYPE_INVALID;
 
   switch (PostgresValType) {
     case POSTGRES_VALUE_TYPE_BOOLEAN:
-      valueType = VALUE_TYPE_BOOLEAN;
+      value_type = VALUE_TYPE_BOOLEAN;
       break;
 
     /* INTEGER */
     case POSTGRES_VALUE_TYPE_SMALLINT:
-      valueType = VALUE_TYPE_SMALLINT;
+      value_type = VALUE_TYPE_SMALLINT;
       break;
     case POSTGRES_VALUE_TYPE_INTEGER:
-      valueType = VALUE_TYPE_INTEGER;
+      value_type = VALUE_TYPE_INTEGER;
       break;
     case POSTGRES_VALUE_TYPE_BIGINT:
-      valueType = VALUE_TYPE_BIGINT;
+      value_type = VALUE_TYPE_BIGINT;
       break;
 
     /* DOUBLE */
     case POSTGRES_VALUE_TYPE_REAL:
-      valueType = VALUE_TYPE_REAL;
+      value_type = VALUE_TYPE_REAL;
       break;
     case POSTGRES_VALUE_TYPE_DOUBLE:
-      valueType = VALUE_TYPE_DOUBLE;
+      value_type = VALUE_TYPE_DOUBLE;
       break;
 
     /* CHAR */
@@ -1077,27 +1053,32 @@ ValueType PostgresValueTypeToPelotonValueType(
     case POSTGRES_VALUE_TYPE_VARCHAR:
     case POSTGRES_VALUE_TYPE_VARCHAR2:
     case POSTGRES_VALUE_TYPE_TEXT:
-      valueType = VALUE_TYPE_VARCHAR;
+      value_type = VALUE_TYPE_VARCHAR;
+      break;
+
+    /* DATE */
+    case POSTGRES_VALUE_TYPE_DATE:
+      value_type = VALUE_TYPE_DATE;
       break;
 
     /* TIMESTAMPS */
     case POSTGRES_VALUE_TYPE_TIMESTAMPS:
     case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
-      valueType = VALUE_TYPE_TIMESTAMP;
+      value_type = VALUE_TYPE_TIMESTAMP;
       break;
 
     /* DECIMAL */
     case POSTGRES_VALUE_TYPE_DECIMAL:
-      valueType = VALUE_TYPE_DECIMAL;
+      value_type = VALUE_TYPE_DECIMAL;
       break;
 
     /* INVALID VALUE TYPE */
     default:
       LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
-      valueType = VALUE_TYPE_INVALID;
+      value_type = VALUE_TYPE_INVALID;
       break;
   }
-  return valueType;
+  return value_type;
 }
 
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
@@ -1138,7 +1119,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
+      LOG_ERROR("INVALID CONSTRAINT TYPE : %d ", PostgresConstrType);
       break;
   }
   return constraintType;

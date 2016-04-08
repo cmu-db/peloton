@@ -1,17 +1,19 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// abstract_plan_node.h
+// abstract_plan.h
 //
-// Identification: src/backend/planner/abstract_plan_node.h
+// Identification: src/backend/planner/abstract_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <iostream>
+#include <memory>
 #include <cstdint>
 #include <vector>
 #include <map>
@@ -72,6 +74,8 @@ class AbstractPlan : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
   // A plan will be sent to anther node
   // So serialization is should be implemented by the derived classes

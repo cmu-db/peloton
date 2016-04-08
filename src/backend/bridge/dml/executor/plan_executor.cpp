@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // plan_executor.cpp
 //
 // Identification: src/backend/bridge/dml/executor/plan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,7 +49,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         const std::vector<Value> &params,
+                                         ParamListInfo param_list,
                                          TupleDesc tuple_desc) {
   peloton_status p_status;
 
@@ -75,13 +75,13 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Building the executor tree");
 
   // Use const std::vector<Value> &params to make it more elegant for network
-  auto executor_context = BuildExecutorContext(params, txn);
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+  BuildExecutorContext(params, txn));
   //auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
-
-  executor::AbstractExecutor *executor_tree =
-      BuildExecutorTree(nullptr, plan, executor_context);
+  std::unique_ptr<executor::AbstractExecutor> executor_tree(
+      BuildExecutorTree(nullptr, plan, executor_context.get()));
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -143,23 +143,20 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        txn_manager.CommitTransaction();
+        p_status.m_result = txn_manager.CommitTransaction();
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-        txn_manager.AbortTransaction();
+        p_status.m_result = txn_manager.AbortTransaction();
     }
   }
+
   // clean up executor tree
-  CleanExecutorTree(executor_tree);
+  CleanExecutorTree(executor_tree.get());
 
-  // Clean executor context
-  delete executor_context;
-
-  p_status.m_result = txn->GetResult();
   return p_status;
 }
 
@@ -315,9 +312,6 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
   for (auto child : children) {
     CleanExecutorTree(child);
   }
-
-  // Cleanup self
-  delete root;
 }
 
 }  // namespace bridge

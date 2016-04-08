@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// hash_join_node.h
+// hash_join_plan.h
 //
-// Identification: src/backend/planner/hash_join_node.h
+// Identification: src/backend/planner/hash_join_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -53,6 +53,13 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   const std::vector<oid_t> &GetOuterHashIds() const {
     return outer_column_ids_;
+  }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    HashJoinPlan *new_plan = new HashJoinPlan(
+        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
+        catalog::Schema::CopySchema(GetSchema()), outer_column_ids_);
+    return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
  private:

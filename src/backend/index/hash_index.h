@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // hash_index.h
 //
 // Identification: src/backend/index/hash_index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,6 @@
 #include <string>
 
 #include "backend/catalog/manager.h"
-#include "backend/common/allocator.h"
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
@@ -48,6 +47,12 @@ class HashIndex : public Index {
   bool InsertEntry(const storage::Tuple *key, ItemPointer &location);
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
+
+  // TODO: implement this
+  bool ConditionalInsertEntry(const storage::Tuple *key __attribute__((unused)),
+                              const ItemPointer &location __attribute__((unused)),
+                              std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate __attribute__((unused)))
+                              {return true;}
 
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
