@@ -24,7 +24,10 @@
 #include <thread>
 #include <map>
 
+#include "backend/networking/rpc_client.h"
+#include "backend/networking/rpc_utils.h"
 #include "backend/common/logger.h"
+#include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -32,6 +35,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/planner/seq_scan_plan.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -192,6 +196,77 @@ peloton_dml(PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
+  //===----------------------------------------------------------------------===//
+  //   Send a query plan through network
+  //   We can use a more clean wrapper to send the plan in the future
+  //===----------------------------------------------------------------------===//
+  /*
+   * To execute a plan, we need prepare three stuff: TupleDesc, plan and param_list
+   * Plan is a class which can be Serialized
+   * Param_list can be transformed to value using BuildParams() and be Serialized
+   * TupleDesc is a nested structure in Postgres, we can define a nested message in protobuf
+   *
+   * The query plan message of protobuf is:
+   * 1. type      : int       casted from PlanNodeType
+   * 2. TupleDesc : message   converted from TupleDesc
+   * 3. num value : int       the size of value_list
+   * 4. value_list: bytes     value Serialize
+   * 5. plan      : bytes     plan Serialize
+   */
+
+  // First set type
+  const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
+  auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+  peloton::networking::QueryPlanExecRequest request;
+  request.set_plan_type(static_cast<int>(type));
+
+  // Second prepare TupleDesc and set it into QueryPlanExecRequest
+  peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
+  peloton::networking::SetTupleDescMsg(tuple_desc, *tuple_desc_msg);
+  //request.set_allocated_tuple_dec(&tuple_desc_msg);
+  // debug
+  int atts_count = tuple_desc->natts;
+  int repeate_count = tuple_desc_msg->attrs_size();
+  assert(atts_count == repeate_count);
+
+  peloton::networking::TupleDescMsg tdmsg = request.tuple_dec();
+  int size1 = tdmsg.natts();
+  int size2 = tdmsg.attrs_size();
+  assert(size1 == size2);
+
+  TupleDesc tuple_desc2 = peloton::networking::ParseTupleDescMsg(tdmsg);
+  // end debug
+
+  // Third set size of parameter list
+  std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
+  int param_count = param_values.size();
+  request.set_param_num(param_count);
+
+  // Fourth Serialize param_values from param_list
+  peloton::CopySerializeOutput output_params;
+  for (int it = 0; it < param_count; it++) {
+      param_values[it].SerializeTo(output_params);
+  }
+  request.set_param_list(output_params.Data(), output_params.Size());
+
+  // Fifth Serialize plan with plan
+  peloton::CopySerializeOutput output_plan;
+  mapped_plan_ptr->SerializeTo(output_plan);
+  request.set_plan(output_plan.Data(), output_plan.Size());
+
+  // Test for DeserializeFrom
+  peloton::ReferenceSerializeInputBE input(output_plan.Data(), output_plan.Size());
+  peloton::planner::SeqScanPlan ss_plan;
+  ss_plan.DeserializeFrom(input);
+  // End test
+
+  // Finally send the request
+  pclient->QueryPlan(&request, NULL);
+  //===----------------------------------------------------------------------===//
+  //   End for sending query
+  //===----------------------------------------------------------------------===//
+
+
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {
     elog(WARNING, "Empty or unrecognized plan sent to Peloton");
@@ -205,12 +280,11 @@ peloton_dml(PlanState *planstate,
   //if(rand() % 100 < 5)
   //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
 
-  // Execute the plantree
+  // Execute the plantree mapped_plan_ptr.get()
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
-                                                        param_list,
+                                                        param_values,
                                                         tuple_desc);
-
     // Clean up the plantree
     // Not clean up now ! This is cached !
     //peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);
@@ -357,3 +431,80 @@ bool IsPelotonQuery(List *relationOids) {
   return peloton_query;
 }
 
+//===--------------------------------------------------------------------===//
+// Serialization/Deserialization
+//===--------------------------------------------------------------------===//
+
+  /**
+   * The peloton_status has the following members:
+   * m_processed   : uint32
+   * m_result      : enum Result
+   * m_result_slots: list pointer (type, length, data)
+   *
+   * Therefore a peloton_status is serialized as:
+   * [(int) total size]
+   * [(int) m_processed]
+   * [(int8_t) m_result]
+   * [(int8_t) note type]
+   * [(int) list length]
+   * [(bytes) data]
+   * [(bytes) data]
+   * [(bytes) data]
+   * .....
+   *
+   * TODO: parent_ seems never be set or used
+   */
+
+bool peloton_status::SerializeTo(peloton::SerializeOutput &output) {
+
+    // A placeholder for the total size written at the end
+    int start = output.Position();
+    output.WriteInt(-1);
+
+    // Write m_processed.
+    output.WriteInt(static_cast<int>(m_processed));
+
+    // Write m_result, which is enum Result
+    output.WriteByte(static_cast<int8_t>(m_result));
+
+    if (m_result_slots != NULL) {
+        // Write the list type
+        NodeTag list_type = m_result_slots->type;
+        output.WriteByte(static_cast<int8_t>(list_type));
+
+        // Write the list length
+        int list_length = m_result_slots->length;
+        output.WriteInt(list_length);
+
+        // Write the list data one by one
+        ListCell *lc;
+        foreach(lc, m_result_slots) {
+            lfirst(lc);
+            // TODO: Write the tuple into the buffer
+        }
+    } else {
+        // Write the list type
+        output.WriteByte(static_cast<int8_t>(T_Invalid));
+
+        // Write the list length
+        output.WriteInt(-1);
+    }
+
+    // Write the total length
+    int32_t sz = static_cast<int32_t>(output.Position() - start - sizeof(int));
+    assert(sz > 0);
+    output.WriteIntAt(start, sz);
+
+    return true;
+}
+
+/**
+ * TODO: Deserialize
+ */
+bool peloton_status::DeserializeFrom(peloton::SerializeInputBE &input) {
+
+//    List *slots = NULL;
+//    slots = lappend(slots, slot);
+
+    return true;
+}

@@ -171,7 +171,7 @@ void *Connection::ProcessMessage(void *connection) {
         google::protobuf::Message *response = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len - TYPELEN - OPCODELEN);
 
         // Invoke rpc call.
         rpc_method->service_->CallMethod(method, &controller, message, response,
