@@ -79,7 +79,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
     }
 
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
-        GetPredicate().get()->Copy());
+        GetPredicate()->Copy());
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(GetSchema()));
     MergeJoinPlan *new_plan = new MergeJoinPlan(

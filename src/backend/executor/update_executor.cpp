@@ -46,7 +46,7 @@ bool UpdateExecutor::DInit() {
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
-  project_info_ = node.GetProjectInfo().get();
+  project_info_ = node.GetProjectInfo();
 
   assert(target_table_);
   assert(project_info_);

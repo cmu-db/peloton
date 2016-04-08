@@ -46,8 +46,8 @@ class MaterializationPlan : public AbstractPlan {
     return old_to_new_cols_;
   }
 
-  inline const std::shared_ptr<const catalog::Schema> &GetSchema() const {
-    return schema_;
+  inline const catalog::Schema *GetSchema() const {
+    return schema_.get();
   }
 
   inline bool GetPhysifyFlag() const { return physify_flag_; }

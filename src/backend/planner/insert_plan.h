@@ -43,8 +43,8 @@ class InsertPlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
-    return project_info_;
+  const planner::ProjectInfo *GetProjectInfo() const {
+    return project_info_.get();
   }
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }

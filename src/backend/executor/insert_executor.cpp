@@ -117,7 +117,7 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-    auto project_info = node.GetProjectInfo().get();
+    auto project_info = node.GetProjectInfo();
 
     // There should be no direct maps
     assert(project_info);

@@ -64,21 +64,20 @@ class AggregatePlan : public AbstractPlan {
     return groupby_col_ids_;
   }
 
-  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate()
-      const {
-    return predicate_;
+  const expression::AbstractExpression *GetPredicate() const {
+    return predicate_.get();
   }
 
-  const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
-    return project_info_;
+  const planner::ProjectInfo *GetProjectInfo() const {
+    return project_info_.get();
   }
 
   const std::vector<AggTerm> &GetUniqueAggTerms() const {
     return unique_agg_terms_;
   }
 
-  const std::shared_ptr<const catalog::Schema> &GetOutputSchema() const {
-    return output_schema_;
+  const catalog::Schema *GetOutputSchema() const {
+    return output_schema_.get();
   }
 
   PelotonAggType GetAggregateStrategy() const { return agg_strategy_; }
