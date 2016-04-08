@@ -297,6 +297,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
       LOG_ERROR("No response: status is null");
     }
   }
+  }
 }
 
 void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
@@ -408,7 +409,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     else {
         // proecess the response
         LOG_TRACE("proecess the Query response");
-        ASSERT(esponse);
+        ASSERT(response);
     }
 }
 

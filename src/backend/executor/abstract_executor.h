@@ -62,23 +62,14 @@ class AbstractExecutor {
   virtual LogicalTile *GetOutput();
 
   const planner::AbstractPlan *GetRawNode() const { return node_; }
-<<<<<<< HEAD
+
   // set the context 
   void SetContext(Value value, ParamsExecFlag flag) {
  	  executor_context_->SetParams(value);
  	  executor_context_->SetParamsExecFlag(flag);
    }
+
   // clear the context
-=======
-
-  // Set the context
-  void SetContext(Value value, uint32_t flag) {
-    executor_context_->SetParams(value);
-    executor_context_->SetParamsExec(flag);
-  }
-
-  // Clear the context
->>>>>>> refs/remotes/upstream/master
   void ClearContext() { executor_context_->ClearParams(); }
 
  protected:

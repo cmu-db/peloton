@@ -14,6 +14,7 @@
 #include "backend/storage/data_table.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/common/assert.h"
 #include "backend/common/logger.h"
 
 #include <cassert>
@@ -130,7 +131,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInputBE &input) {
 
     // Read the type
     PlanNodeType plan_type = (PlanNodeType)input.ReadEnumInSingleByte();
-    assert(plan_type == GetPlanNodeType());
+    ASSERT(plan_type == GetPlanNodeType());
 
     // Read database id
     oid_t database_oid = input.ReadInt();

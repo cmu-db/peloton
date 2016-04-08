@@ -47,7 +47,6 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-<<<<<<< HEAD
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
@@ -56,13 +55,13 @@ class SeqScanPlan : public AbstractScan {
 
   /* For init SerializeOutput */
   int SerializeSize();
-=======
+
   std::unique_ptr<AbstractPlan> Copy() const {
     AbstractPlan *new_plan = new SeqScanPlan(
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
->>>>>>> refs/remotes/upstream/master
+
 };
 
 }  // namespace planner
