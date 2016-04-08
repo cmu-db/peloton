@@ -55,17 +55,16 @@ class AbstractJoinPlan : public AbstractPlan {
 
   PelotonJoinType GetJoinType() const { return join_type_; }
 
-  const std::unique_ptr<const expression::AbstractExpression> &GetPredicate()
-      const {
-    return predicate_;
+  const expression::AbstractExpression *GetPredicate() const {
+    return predicate_.get();
   }
 
-  const std::unique_ptr<const ProjectInfo> &GetProjInfo() const {
-    return proj_info_;
+  const ProjectInfo* GetProjInfo() const {
+    return proj_info_.get();
   }
 
-  const std::shared_ptr<const catalog::Schema> &GetSchema() const {
-    return proj_schema_;
+  const catalog::Schema *GetSchema() const {
+    return proj_schema_.get();
   }
 
   std::unique_ptr<AbstractPlan> Copy() const = 0;

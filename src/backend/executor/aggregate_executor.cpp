@@ -53,7 +53,7 @@ bool AggregateExecutor::DInit() {
 
   // Construct the output table
   auto output_table_schema =
-      const_cast<catalog::Schema *>(node.GetOutputSchema().get());
+      const_cast<catalog::Schema *>(node.GetOutputSchema());
 
   assert(output_table_schema->GetColumnCount() >= 1);
 

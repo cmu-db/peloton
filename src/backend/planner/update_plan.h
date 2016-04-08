@@ -40,8 +40,8 @@ class UpdatePlan : public AbstractPlan {
                       std::unique_ptr<const planner::ProjectInfo> project_info)
       : target_table_(table), project_info_(std::move(project_info)) {}
 
-  const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo() const {
-    return project_info_;
+  const planner::ProjectInfo *GetProjectInfo() const {
+    return project_info_.get();
   }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_UPDATE; }

@@ -37,13 +37,13 @@ class ProjectionPlan : public AbstractPlan {
                  std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const std::unique_ptr<const planner::ProjectInfo> &GetProjectInfo()
+  inline const planner::ProjectInfo *GetProjectInfo()
       const {
-    return project_info_;
+    return project_info_.get();
   }
 
-  inline const std::shared_ptr<const catalog::Schema> &GetSchema() const {
-    return schema_;
+  inline const catalog::Schema *GetSchema() const {
+    return schema_.get();
   }
 
   inline PlanNodeType GetPlanNodeType() const {
