@@ -622,7 +622,7 @@ void SsiTxnManager::CleanUp() {
       if (end_cid == INVALID_TXN_ID) {
         // running transaction
         itr++;
-        continue;
+        break;
       }
 
       if (end_cid < min_begin) {
