@@ -176,8 +176,8 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     LOG_INFO("TransactionID of this Log is %d",
              (int)record->GetTransactionId());
     if (record->GetTransactionId() > this->max_commit_id) {
-      LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
       this->max_commit_id = record->GetTransactionId();
+      LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
     }
     write_del = true;
   }

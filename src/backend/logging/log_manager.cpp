@@ -72,7 +72,8 @@ void LogManager::StartStandbyMode() {
 
   // Launch the frontend logger's main loop
   for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
-    frontend_loggers[i].get()->MainLoop();
+    std::thread(&FrontendLogger::MainLoop, frontend_loggers[i].get()).detach();
+    // frontend_loggers[i].get()->MainLoop();
   }
 }
 
