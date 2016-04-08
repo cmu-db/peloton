@@ -46,10 +46,13 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 
 /**
  * @brief Build a executor tree and execute it.
+ * Use std::vector<Value> as params to make it more elegant for networking
+ * Before ExecutePlan, a node first receives value list, so we should pass
+ * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         ParamListInfo param_list,
+                                         const std::vector<Value> &params,
                                          TupleDesc tuple_desc) {
   peloton_status p_status;
 
