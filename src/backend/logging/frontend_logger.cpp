@@ -184,3 +184,4 @@ void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
 
 }  // namespace logging
 }
+
