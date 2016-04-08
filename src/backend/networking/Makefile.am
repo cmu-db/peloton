@@ -5,11 +5,12 @@
 ######################################################################
 
 BUILT_SOURCES += \
-				 backend/networking/abstract_service.pb.cc
+                 backend/networking/queryplan.pb.cc \
+				 backend/networking/abstract_service.pb.cc 
 
 dist_noinst_DATA = \
+				    backend/networking/queryplan.proto \
 				    backend/networking/abstract_service.proto
-				    backend/networking/queryplan.proto
 
 MOSTLYCLEANFILES = \
 				    backend/networking/abstract_service.pb.cc \
