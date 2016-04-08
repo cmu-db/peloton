@@ -149,17 +149,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
       return true;
     }
 
-    // critical section.
-    // {
-    //   std::lock_guard<std::mutex> lock(running_txns_mutex_);
-    //   // the dst txn has been committed.
-    //   if (running_txns_.find(dst_txn_id) == running_txns_.end()) {
-    //     return false;
-    //   }
-    //   auto &dst_txn_context = *(running_txns_.at(dst_txn_id));
-    //   dst_txn_context.inner_dep_set_.insert(src_txn_id);
-    // }
-
     bool changeable = true;
     bool ret = running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext *context){
       context->inner_dep_set_lock_.Lock();
@@ -181,53 +170,24 @@ class SpeculativeReadTxnManager : public TransactionManager {
   }
 
   bool IsCommittable() {
-	//size_t count = 0;
-    while (true) {
+	  while (true) {
       if (spec_txn_context.outer_dep_count_ == 0) {
         return true;
       }
       if (spec_txn_context.is_cascading_abort_ == true) {
         return false;
       }
-	//++count;
-	/*if (count % 1000 == 0) {
-		printf("transaction id=%d, outer dep count=%d, waiting for=%d\n", int(current_txn->GetTransactionId()), int(spec_txn_context.outer_dep_count_), int(*(spec_txn_context.outer_dep_set_.begin())));
-	}*/
       _mm_pause();
     }
   }
 
   void NotifyCommit() {
-    //{
-      // std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      // // some other transactions may also modify my inner dep set.
-      // for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      //   if (running_txns_.find(child_txn_id) == running_txns_.end()) {
-      //     continue;
-      //   }
-      //   auto &child_txn_context = *(running_txns_.at(child_txn_id));
-      //   assert(child_txn_context.outer_dep_count_ > 0);
-      //   child_txn_context.outer_dep_count_--;
-      // }
-    //}
-
-
-      // {
-      //   auto iter = running_txn_buckets_[i].lock_table();
-      //   for (auto &it : iter) {
-      //     if (it.second->begin_cid_ < min_running_cid) {
-      //       min_running_cid = it.second->begin_cid_;
-      //     }
-      //   }
-      // }
 
     // some other transactions may also modify my inner dep set.
     // so lock first.
     {
-      //auto iter = spec_txn_context.inner_dep_set_.lock_table();
       spec_txn_context.inner_dep_set_lock_.Lock();
       for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-	  //for (auto &it : iter) {
         running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
           assert(context->outer_dep_count_ > 0);
           context->outer_dep_count_--;
@@ -239,25 +199,12 @@ class SpeculativeReadTxnManager : public TransactionManager {
   }
 
   void NotifyAbort() {
-    //{
-      // std::lock_guard<std::mutex> lock(running_txns_mutex_);
-      // // some other transactions may also modify my inner dep set.
-      // for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      //   if (running_txns_.find(child_txn_id) == running_txns_.end()) {
-      //     continue;
-      //   }
-      //   auto &child_txn_context = *(running_txns_.at(child_txn_id));
-      //   child_txn_context.is_cascading_abort_ = true;
-      // }
-    //}
-
     // some other transactions may also modify my inner dep set.
     // so lock first.
     {
       //auto iter = spec_txn_context.inner_dep_set_.lock_table();
       spec_txn_context.inner_dep_set_lock_.Lock();
       for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-	  //for (auto &it : iter) {
         running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
           assert(context->outer_dep_count_ > 0);
           context->is_cascading_abort_ = true;
