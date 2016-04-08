@@ -48,12 +48,12 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
                      const bool adapt_table)
     : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-      tuples_per_tilegroup(tuples_per_tilegroup),
-      adapt_table(adapt_table) {
+      tuples_per_tilegroup_(tuples_per_tilegroup), 
+      adapt_table_(adapt_table) {
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-    default_partition[col_itr] = std::make_pair(0, col_itr);
+    default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
   // Create a tile group.
@@ -65,17 +65,17 @@ DataTable::~DataTable() {
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
-    auto tile_group_id = tile_groups[tile_group_itr];
+    auto tile_group_id = tile_groups_[tile_group_itr];
     catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }
 
   // clean up indices
-  for (auto index : indexes) {
+  for (auto index : indexes_) {
     delete index;
   }
 
   // clean up foreign keys
-  for (auto foreign_key : foreign_keys) {
+  for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
   }
 
@@ -113,6 +113,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   return true;
 }
 
+// this function is called when update/delete/insert is performed.
+// this function first checks whether there's available slot.
+// if yes, then directly return the available slot.
+// in particular, if this is the last slot, a new tile group is created.
+// if there's no available slot, then some other threads must be allocating a new tile group.
+// we just wait until a new tuple slot in the newly allocated tile group is available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                     bool check_constraint) {
   assert(tuple);
@@ -122,32 +128,29 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
-  oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
 
-  while (tuple_slot == INVALID_OID) {
-    // First, figure out last tile group
-    {
-      std::lock_guard<std::mutex> lock(table_mutex);
-      assert(GetTileGroupCount() > 0);
-      tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %lu ", tile_group_offset);
-    }
-
-    // Then, try to grab a slot in the tile group header
-    tile_group = GetTileGroup(tile_group_offset);
+  // get valid tuple.
+  while (true) {
+    // get the last tile group.
+    tile_group = GetTileGroup(tile_group_count_ - 1);
 
     tuple_slot = tile_group->InsertTuple(tuple);
-    tile_group_id = tile_group->GetTileGroupId();
 
-    if (tuple_slot == INVALID_OID) {
-      // XXX Should we put this in a critical section?
-      AddDefaultTileGroup();
+    // now we have already obtained a new tuple slot.
+    if (tuple_slot != INVALID_OID) {
+      tile_group_id = tile_group->GetTileGroupId();
+      break;
     }
   }
+  // if this is the last tuple slot we can get
+  // then create a new tile group
+  if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
+    AddDefaultTileGroup();
+  }
 
-  LOG_TRACE("tile group offset: %lu, tile group id: %lu, address: %p",
-            tile_group_offset, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group count: %lu, tile group id: %lu, address: %p",
+            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -235,7 +238,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // Increase the table's number of tuples by 1
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+  for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
 
   return location;
 }
@@ -400,8 +403,8 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
  * @param amount amount to increase
  */
 void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
-  number_of_tuples += amount;
-  dirty = true;
+  number_of_tuples_ += amount;
+  dirty_ = true;
 }
 
 /**
@@ -409,8 +412,8 @@ void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
  * @param amount amount to decrease
  */
 void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
-  number_of_tuples -= amount;
-  dirty = true;
+  number_of_tuples_ -= amount;
+  dirty_ = true;
 }
 
 /**
@@ -418,26 +421,26 @@ void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
  * @param num_tuples number of tuples
  */
 void DataTable::SetNumberOfTuples(const float &num_tuples) {
-  number_of_tuples = num_tuples;
-  dirty = true;
+  number_of_tuples_ = num_tuples;
+  dirty_ = true;
 }
 
 /**
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples; }
+float DataTable::GetNumberOfTuples() const { return number_of_tuples_; }
 
 /**
  * @brief return dirty flag
  * @return dirty flag
  */
-bool DataTable::IsDirty() const { return dirty; }
+bool DataTable::IsDirty() const { return dirty_; }
 
 /**
  * @brief Reset dirty flag
  */
-void DataTable::ResetDirty() { dirty = false; }
+void DataTable::ResetDirty() { dirty_ = false; }
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP
@@ -468,7 +471,7 @@ TileGroup *DataTable::GetTileGroupWithLayout(
 
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
       database_oid, table_oid, tile_group_id, this, schemas, partitioning,
-      tuples_per_tilegroup);
+      tuples_per_tilegroup_);
 
   return tile_group;
 }
@@ -477,7 +480,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   column_map_type column_map;
 
   auto col_count = schema->GetColumnCount();
-  if (adapt_table == false) layout_type = LAYOUT_ROW;
+  if (adapt_table_ == false) layout_type = LAYOUT_ROW;
 
   // pure row layout map
   if (layout_type == LAYOUT_ROW) {
@@ -523,37 +526,17 @@ oid_t DataTable::AddDefaultTileGroup() {
 
   LOG_TRACE("Trying to add a tile group ");
   {
-    std::lock_guard<std::mutex> lock(table_mutex);
-
-    // Check if we actually need to allocate a tile group
-
-    // (A) no tile groups in table
-    if (tile_groups.empty()) {
-      LOG_TRACE("Added first tile group ");
-      tile_groups.push_back(tile_group->GetTileGroupId());
-      // add tile group metadata in locator
-      catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-      LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-      return tile_group_id;
-    }
-
-    // (B) no slots in last tile group in table
-    auto last_tile_group_offset = GetTileGroupCount() - 1;
-    auto last_tile_group = GetTileGroup(last_tile_group_offset);
-
-    oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
-    oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
-    if (active_tuple_count < allocated_tuple_count) {
-      LOG_TRACE("Slot exists in last tile group :: %lu %lu ",
-                active_tuple_count, allocated_tuple_count);
-      return INVALID_OID;
-    }
-
     LOG_TRACE("Added a tile group ");
-    tile_groups.push_back(tile_group->GetTileGroupId());
+    tile_groups_.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+    
+    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+    COMPILER_MEMORY_FENCE;
+
+    tile_group_count_++;
+
     LOG_TRACE("Recording tile group : %lu ", tile_group_id);
   }
 
@@ -575,45 +558,50 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
 
   std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
-      tuples_per_tilegroup));
+      tuples_per_tilegroup_));
 
-  LOG_TRACE("Trying to add a tile group ");
-  {
-    std::lock_guard<std::mutex> lock(table_mutex);
-
-    LOG_TRACE("Added a tile group ");
-    tile_groups.push_back(tile_group->GetTileGroupId());
+  
+  LOG_TRACE("Added a tile group ");
+  tile_groups_.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-  }
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_count_++;
+
+  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
 
   return tile_group_id;
 }
 
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
-  {
-    std::lock_guard<std::mutex> lock(table_mutex);
-
-    tile_groups.push_back(tile_group->GetTileGroupId());
-    oid_t tile_group_id = tile_group->GetTileGroupId();
+  tile_groups_.push_back(tile_group->GetTileGroupId());
+  oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group in catalog
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-  }
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+  COMPILER_MEMORY_FENCE;
+
+  tile_group_count_++;
+
+
+  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
 }
 
 size_t DataTable::GetTileGroupCount() const {
-  size_t size = tile_groups.size();
+  size_t size = tile_groups_.size();
   return size;
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const oid_t &tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
-  auto tile_group_id = tile_groups[tile_group_offset];
+  auto tile_group_id = tile_groups_[tile_group_offset];
   return GetTileGroupById(tile_group_id);
 }
 
@@ -658,21 +646,21 @@ const std::string DataTable::GetInfo() const {
 
 void DataTable::AddIndex(index::Index *index) {
   {
-    std::lock_guard<std::mutex> lock(table_mutex);
-    indexes.push_back(index);
+    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    indexes_.push_back(index);
   }
 
   // Update index stats
   auto index_type = index->GetIndexType();
   if (index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
-    has_primary_key = true;
+    has_primary_key_ = true;
   } else if (index_type == INDEX_CONSTRAINT_TYPE_UNIQUE) {
-    unique_constraint_count++;
+    unique_constraint_count_++;
   }
 }
 
 index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
-  for (auto index : indexes)
+  for (auto index : indexes_)
     if (index->GetOid() == index_oid) return index;
 
   return nullptr;
@@ -680,27 +668,27 @@ index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
 
 void DataTable::DropIndexWithOid(const oid_t &index_id) {
   {
-    std::lock_guard<std::mutex> lock(table_mutex);
+    std::lock_guard<std::mutex> lock(tile_group_mutex_);
 
     oid_t index_offset = 0;
-    for (auto index : indexes) {
+    for (auto index : indexes_) {
       if (index->GetOid() == index_id) break;
       index_offset++;
     }
-    assert(index_offset < indexes.size());
+    assert(index_offset < indexes_.size());
 
     // Drop the index
-    indexes.erase(indexes.begin() + index_offset);
+    indexes_.erase(indexes_.begin() + index_offset);
   }
 }
 
 index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
-  assert(index_offset < indexes.size());
-  auto index = indexes.at(index_offset);
+  assert(index_offset < indexes_.size());
+  auto index = indexes_.at(index_offset);
   return index;
 }
 
-oid_t DataTable::GetIndexCount() const { return indexes.size(); }
+oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
 
 //===--------------------------------------------------------------------===//
 // FOREIGN KEYS
@@ -708,7 +696,7 @@ oid_t DataTable::GetIndexCount() const { return indexes.size(); }
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
-    std::lock_guard<std::mutex> lock(table_mutex);
+    std::lock_guard<std::mutex> lock(tile_group_mutex_);
     catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(CONSTRAINT_TYPE_FOREIGN,
                                    key->GetConstraintName());
@@ -718,25 +706,25 @@ void DataTable::AddForeignKey(catalog::ForeignKey *key) {
     }
     // TODO :: We need this one..
     catalog::ForeignKey *fk = new catalog::ForeignKey(*key);
-    foreign_keys.push_back(fk);
+    foreign_keys_.push_back(fk);
   }
 }
 
 catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
   catalog::ForeignKey *key = nullptr;
-  key = foreign_keys.at(key_offset);
+  key = foreign_keys_.at(key_offset);
   return key;
 }
 
 void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
-    std::lock_guard<std::mutex> lock(table_mutex);
-    assert(key_offset < foreign_keys.size());
-    foreign_keys.erase(foreign_keys.begin() + key_offset);
+    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    assert(key_offset < foreign_keys_.size());
+    foreign_keys_.erase(foreign_keys_.begin() + key_offset);
   }
 }
 
-oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
+oid_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
 // Get the schema for the new transformed tile group
 std::vector<catalog::Schema> TransformTileGroupSchema(
@@ -816,17 +804,17 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 storage::TileGroup *DataTable::TransformTileGroup(
     const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
-  if (tile_group_offset >= tile_groups.size()) {
+  if (tile_group_offset >= tile_groups_.size()) {
     LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
     return nullptr;
   }
 
-  auto tile_group_id = tile_groups[tile_group_offset];
+  auto tile_group_id = tile_groups_[tile_group_offset];
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetSchemaDifference(default_partition);
+  auto diff = tile_group->GetSchemaDifference(default_partition_);
 
   // Check threshold for transformation
   if (diff < theta) {
@@ -835,14 +823,14 @@ storage::TileGroup *DataTable::TransformTileGroup(
 
   // Get the schema for the new transformed tile group
   auto new_schema =
-      TransformTileGroupSchema(tile_group.get(), default_partition);
+      TransformTileGroupSchema(tile_group.get(), default_partition_);
 
   // Allocate space for the transformed tile group
   std::shared_ptr<storage::TileGroup> new_tile_group(
       TileGroupFactory::GetTileGroup(
           tile_group->GetDatabaseId(), tile_group->GetTableId(),
           tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-          new_schema, default_partition, tile_group->GetAllocatedTupleCount()));
+          new_schema, default_partition_, tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
   SetTransformedTileGroup(tile_group.get(), new_tile_group.get());
@@ -857,20 +845,20 @@ storage::TileGroup *DataTable::TransformTileGroup(
 void DataTable::RecordSample(const brain::Sample &sample) {
   // Add sample
   {
-    std::lock_guard<std::mutex> lock(clustering_mutex);
-    samples.push_back(sample);
+    std::lock_guard<std::mutex> lock(clustering_mutex_);
+    samples_.push_back(sample);
   }
 }
 
 const column_map_type &DataTable::GetDefaultPartition() {
-  return default_partition;
+  return default_partition_;
 }
 
 std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
   std::map<oid_t, oid_t> column_map_stats;
 
   // Cluster per-tile column count
-  for (auto entry : default_partition) {
+  for (auto entry : default_partition_) {
     auto tile_id = entry.second.first;
     auto column_map_itr = column_map_stats.find(tile_id);
     if (column_map_itr == column_map_stats.end())
@@ -893,20 +881,20 @@ void DataTable::UpdateDefaultPartition() {
 
   // Process all samples
   {
-    std::lock_guard<std::mutex> lock(clustering_mutex);
+    std::lock_guard<std::mutex> lock(clustering_mutex_);
 
     // Check if we have any samples
-    if (samples.empty()) return;
+    if (samples_.empty()) return;
 
-    for (auto sample : samples) {
+    for (auto sample : samples_) {
       clusterer.ProcessSample(sample);
     }
 
-    samples.clear();
+    samples_.clear();
   }
 
   // TODO: Max number of tiles
-  default_partition = clusterer.GetPartitioning(2);
+  default_partition_ = clusterer.GetPartitioning(2);
 }
 
 //===--------------------------------------------------------------------===//
