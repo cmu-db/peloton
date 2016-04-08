@@ -27,15 +27,14 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
+#define NUM_FRONTEND_LOGGERS 4
 
 // Each thread gets a backend logger
-thread_local static BackendLogger* backend_logger = nullptr;
+thread_local static BackendLogger *backend_logger = nullptr;
 
-LogManager::LogManager() {
-}
+LogManager::LogManager() {}
 
-LogManager::~LogManager() {
-}
+LogManager::~LogManager() {}
 
 /**
  * @brief Return the singleton log manager instance
@@ -52,12 +51,18 @@ LogManager &LogManager::GetInstance() {
  */
 void LogManager::StartStandbyMode() {
   // If frontend logger doesn't exist
-  if (frontend_logger == nullptr) {
-    frontend_logger.reset(FrontendLogger::GetFrontendLogger(peloton_logging_mode));
+  if (frontend_loggers.size() == 0) {
+    for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
+      std::unique_ptr<FrontendLogger> frontend_logger(
+          FrontendLogger::GetFrontendLogger(peloton_logging_mode));
+
+      if (frontend_logger.get() != nullptr)
+        frontend_loggers.push_back(std::move(frontend_logger));
+    }
   }
 
   // If frontend logger still doesn't exist, then we have disabled logging
-  if (frontend_logger == nullptr) {
+  if (frontend_loggers.size() == 0) {
     LOG_INFO("We have disabled logging");
     return;
   }
@@ -66,7 +71,9 @@ void LogManager::StartStandbyMode() {
   SetLoggingStatus(LOGGING_STATUS_TYPE_STANDBY);
 
   // Launch the frontend logger's main loop
-  frontend_logger->MainLoop();
+  for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
+    frontend_loggers[i].get()->MainLoop();
+  }
 }
 
 void LogManager::StartRecoveryMode() {
@@ -82,13 +89,14 @@ void LogManager::TerminateLoggingMode() {
   WaitForModeTransition(LOGGING_STATUS_TYPE_SLEEP, true);
 }
 
-void LogManager::WaitForModeTransition(LoggingStatus logging_status_, bool is_equal) {
+void LogManager::WaitForModeTransition(LoggingStatus logging_status_,
+                                       bool is_equal) {
   // Wait for mode transition
   {
     std::unique_lock<std::mutex> wait_lock(logging_status_mutex);
 
     while ((!is_equal && logging_status == logging_status_) ||
-        (is_equal && logging_status != logging_status_)) {
+           (is_equal && logging_status != logging_status_)) {
       logging_status_cv.wait(wait_lock);
     }
   }
@@ -120,16 +128,17 @@ bool LogManager::EndLogging() {
 // Utility Functions
 //===--------------------------------------------------------------------===//
 
-void LogManager::LogBeginTransaction(cid_t commit_id){
+void LogManager::LogBeginTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    auto record = new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
+    auto record =
+        new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
     logger->Log(record);
   }
 }
 
-void LogManager::LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &old_version, ItemPointer &new_version){
+void LogManager::LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
+                           ItemPointer &old_version, ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
     auto executor_context = new executor::ExecutorContext(curr_txn);
     auto executor_pool = executor_context->GetExecutorContextPool();
@@ -138,29 +147,28 @@ void LogManager::LogUpdate(concurrency::Transaction* curr_txn, cid_t commit_id, 
     auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
 
     auto logger = this->GetBackendLogger();
-    auto schema =
-        manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
-                                new_tuple_tile_group->GetTableId())->GetSchema();
+    auto schema = manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
+                                          new_tuple_tile_group->GetTableId())
+                      ->GetSchema();
 
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-      tuple->SetValue(col, new_tuple_tile_group->GetValue(new_version.offset, col),
+      tuple->SetValue(col,
+                      new_tuple_tile_group->GetValue(new_version.offset, col),
                       executor_pool);
     }
-    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE,
-                                         commit_id,
+    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
                                          new_tuple_tile_group->GetTableId(),
                                          new_tuple_tile_group->GetDatabaseId(),
-                                         new_version,
-                                         old_version,
-                                         tuple.get());
+                                         new_version, old_version, tuple.get());
 
     logger->Log(record);
     delete executor_context;
   }
 }
 
-void LogManager::LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, ItemPointer &new_location){
+void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
+                           ItemPointer &new_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -175,46 +183,40 @@ void LogManager::LogInsert(concurrency::Transaction* curr_txn, cid_t commit_id, 
                                 tile_group->GetTableId())->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-      tuple->SetValue(col, new_tuple_tile_group->GetValue(new_location.offset, col),
+      tuple->SetValue(col,
+                      new_tuple_tile_group->GetValue(new_location.offset, col),
                       executor_pool);
     }
 
-    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
-                                         commit_id,
-                                         tile_group->GetTableId(),
-                                         new_tuple_tile_group->GetDatabaseId(),
-                                         new_location,
-                                         INVALID_ITEMPOINTER,
-                                         tuple.get());
+    auto record = logger->GetTupleRecord(
+        LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
+        new_tuple_tile_group->GetDatabaseId(), new_location,
+        INVALID_ITEMPOINTER, tuple.get());
 
     delete executor_context;
     logger->Log(record);
   }
 }
 
-void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location){
+void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(delete_location.block);
 
-    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE,
-                                         commit_id,
-                                         tile_group->GetTableId(),
-                                         tile_group->GetDatabaseId(),
-                                         INVALID_ITEMPOINTER,
-                                         delete_location);
+    auto record = logger->GetTupleRecord(
+        LOGRECORD_TYPE_TUPLE_DELETE, commit_id, tile_group->GetTableId(),
+        tile_group->GetDatabaseId(), INVALID_ITEMPOINTER, delete_location);
 
     logger->Log(record);
   }
-
 }
 
-void LogManager::LogCommitTransaction(cid_t commit_id){
+void LogManager::LogCommitTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    auto record = new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
+    auto record =
+        new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
     logger->Log(record);
     logger->WaitForFlushing();
   }
@@ -226,13 +228,15 @@ void LogManager::LogCommitTransaction(cid_t commit_id){
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger *LogManager::GetBackendLogger() {
-  assert(frontend_logger != nullptr);
+  assert(frontend_loggers.size() != 0);
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
+  int i = 0;
   if (backend_logger == nullptr) {
     backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
-    frontend_logger->AddBackendLogger(backend_logger);
+    // TODO for now, add all backend loggers to FrontendLogger(0), change this
+    frontend_loggers[i].get()->AddBackendLogger(backend_logger);
   }
 
   return backend_logger;
@@ -244,11 +248,13 @@ BackendLogger *LogManager::GetBackendLogger() {
  * @return the frontend logger otherwise nullptr
  */
 FrontendLogger *LogManager::GetFrontendLogger() {
-  return frontend_logger.get();
+  // TODO return appropriate frontend logger, currently return the 0th one
+  int i = 0;
+  return frontend_loggers[i].get();
 }
 
 bool LogManager::ContainsFrontendLogger(void) {
-  return (frontend_logger != nullptr);
+  return (frontend_loggers.size() != 0);
 }
 
 /**
@@ -282,7 +288,10 @@ std::string LogManager::GetLogFileName(void) {
 }
 
 void LogManager::ResetFrontendLogger() {
-  frontend_logger.reset(FrontendLogger::GetFrontendLogger(peloton_logging_mode));
+  // TODO don't know what to do here, so just reset the first one among them
+  int i = 0;
+  frontend_loggers[i].reset(
+      FrontendLogger::GetFrontendLogger(peloton_logging_mode));
 }
 
 }  // namespace logging

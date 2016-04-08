@@ -128,7 +128,7 @@ class LogManager {
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
-  std::unique_ptr<FrontendLogger> frontend_logger;
+  std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
   LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
