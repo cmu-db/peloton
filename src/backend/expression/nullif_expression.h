@@ -10,9 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
-
+#include <memory>
 namespace peloton {
 namespace expression {
 
@@ -20,28 +22,24 @@ namespace expression {
 // Otherwise, returns the first expression result.
 class NullIfExpression : public AbstractExpression {
  public:
-  NullIfExpression(ValueType vt,
-                   const std::vector<AbstractExpression *> &expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
-        expressions(expressions),
-        value_type(vt) {}
+  typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
 
-  virtual ~NullIfExpression() {
-    for (auto value : expressions) delete value;
-  }
+  NullIfExpression(ValueType vt, std::vector<AbstractExprPtr> &t_expressions)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
+        expressions_(std::move(t_expressions)),
+        value_type_(vt) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    assert(expressions.size() == 2);
+    assert(expressions_.size() == 2);
 
-    auto left_result = expressions[0]->Evaluate(tuple1, tuple2, context);
-    auto right_result = expressions[1]->Evaluate(tuple1, tuple2, context);
+    auto left_result = expressions_[0]->Evaluate(tuple1, tuple2, context);
+    auto right_result = expressions_[1]->Evaluate(tuple1, tuple2, context);
 
     if (left_result == right_result) {
-      return Value::GetNullValue(value_type);
+      return Value::GetNullValue(value_type_);
     } else {
-      // FIXME: Order of expressions got reversed somewhere
-      return right_result;
+      return left_result;
     }
   }
 
@@ -50,22 +48,22 @@ class NullIfExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const {
-    std::vector<AbstractExpression *> copied_expression;
-    for (AbstractExpression *expression : expressions) {
+    std::vector<AbstractExprPtr> copied_expression;
+    for (auto &expression : expressions_) {
       if (expression == nullptr) {
         continue;
       }
-      copied_expression.push_back(expression->Copy());
+      copied_expression.push_back(AbstractExprPtr(expression->Copy()));
     }
 
-    return new NullIfExpression(value_type, copied_expression);
+    return new NullIfExpression(value_type_, copied_expression);
   }
 
  private:
   // Specified expressions
-  std::vector<AbstractExpression *> expressions;
+  std::vector<AbstractExprPtr> expressions_;
 
-  ValueType value_type;
+  ValueType value_type_;
 };
 
 }  // End expression namespace

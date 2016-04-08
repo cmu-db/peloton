@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <iostream>
+#include <memory>
 #include <cstdint>
 #include <vector>
 #include <map>
@@ -71,10 +73,9 @@ class AbstractPlan : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
-  virtual AbstractPlan *Copy() const = 0;
-
-private:
+ private:
   // A plan node can have multiple children
   std::vector<const AbstractPlan *> children_;
 
