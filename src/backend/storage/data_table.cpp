@@ -113,6 +113,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   return true;
 }
 
+// this function is called when update/delete/insert is performed.
+// this function first checks whether there's available slot.
+// if yes, then directly return the available slot.
+// in particular, if this is the last slot, a new tile group is created.
+// if there's no available slot, then some other threads must be allocating a new tile group.
+// we just wait until a new tuple slot in the newly allocated tile group is available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                     bool check_constraint) {
   assert(tuple);
@@ -122,36 +128,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
-  //oid_t tile_group_offset = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;
-
-  // while (tuple_slot == INVALID_OID) {
-  //   // First, figure out last tile group
-  //   //{
-  //     //std::lock_guard<std::mutex> lock(tile_group_mutex_);
-  //     tile_group_lock_.Lock();
-  //     assert(GetTileGroupCount() > 0);
-  //     tile_group_offset = GetTileGroupCount() - 1;
-  //     tile_group_lock_.Unlock();
-  //     LOG_TRACE("Tile group offset :: %lu ", tile_group_offset);
-  //   //}
-
-  //   // Then, try to grab a slot in the tile group header
-  //   tile_group = GetTileGroup(tile_group_offset);
-
-  //   tuple_slot = tile_group->InsertTuple(tuple);
-  //   tile_group_id = tile_group->GetTileGroupId();
-
-  //   if (tuple_slot == INVALID_OID) {
-  //     // attempt to grab a lock.
-  //     // if successful, then add new tile group.
-  //     // else, someone else has already created a new tile.
-
-
-  //     // XXX Should we put this in a critical section?
-  //     AddDefaultTileGroup();
-  //   }
-  // }
 
   // get valid tuple.
   while (true) {
@@ -165,14 +142,12 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
       tile_group_id = tile_group->GetTileGroupId();
       break;
     }
-
   }
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
     AddDefaultTileGroup();
   }
-
 
   LOG_TRACE("tile group count: %lu, tile group id: %lu, address: %p",
             tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
@@ -486,39 +461,6 @@ oid_t DataTable::AddDefaultTileGroup() {
 
   LOG_TRACE("Trying to add a tile group ");
   {
-    //std::lock_guard<std::mutex> lock(tile_group_mutex_);
-
-    // Check if we actually need to allocate a tile group
-
-    // (A) no tile groups in table
-    // if (tile_groups_.empty()) {
-    //   LOG_TRACE("Added first tile group ");
-    //   tile_groups_.push_back(tile_group->GetTileGroupId());
-    //   // add tile group metadata in locator
-    //   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-      
-    //   // do we need this fence?
-    //   // we must guarantee that the compiler always add tile group before adding tile_group_count_.
-    //   COMPILER_MEMORY_FENCE;
-      
-    //   tile_group_count_++;
-      
-    //   LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-    //   return tile_group_id;
-    // }
-
-    // (B) no slots in last tile group in table
-    //auto last_tile_group_offset = GetTileGroupCount() - 1;
-    //auto last_tile_group = GetTileGroup(last_tile_group_offset);
-
-    //oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
-    //oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
-    // if (active_tuple_count < allocated_tuple_count) {
-    //   LOG_TRACE("Slot exists in last tile group :: %lu %lu ",
-    //             active_tuple_count, allocated_tuple_count);
-    //   return INVALID_OID;
-    // }
-
     LOG_TRACE("Added a tile group ");
     tile_groups_.push_back(tile_group->GetTileGroupId());
 
@@ -536,7 +478,6 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-// TODO: who calls this function? do we need mutex??
 oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
   assert(tile_group_id);
 
@@ -554,46 +495,37 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup_));
 
-  LOG_TRACE("Trying to add a tile group ");
-  {
-    //std::lock_guard<std::mutex> lock(tile_group_mutex_);
-
-    LOG_TRACE("Added a tile group ");
-    tile_groups_.push_back(tile_group->GetTileGroupId());
+  
+  LOG_TRACE("Added a tile group ");
+  tile_groups_.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
     // we must guarantee that the compiler always add tile group before adding tile_group_count_.
-    COMPILER_MEMORY_FENCE;
+  COMPILER_MEMORY_FENCE;
 
-    tile_group_count_++;
+  tile_group_count_++;
 
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-  }
+  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
 
   return tile_group_id;
 }
 
-// TODO: who calls this function? do we need mutex??
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
-  {
-    //std::lock_guard<std::mutex> lock(tile_group_mutex_);
-
-    tile_groups_.push_back(tile_group->GetTileGroupId());
-    oid_t tile_group_id = tile_group->GetTileGroupId();
+  tile_groups_.push_back(tile_group->GetTileGroupId());
+  oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group in catalog
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
     // we must guarantee that the compiler always add tile group before adding tile_group_count_.
-    COMPILER_MEMORY_FENCE;
+  COMPILER_MEMORY_FENCE;
 
-    tile_group_count_++;
+  tile_group_count_++;
 
 
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
-  }
+  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
 }
 
 size_t DataTable::GetTileGroupCount() const {
