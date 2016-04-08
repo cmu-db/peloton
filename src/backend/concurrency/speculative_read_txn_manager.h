@@ -19,7 +19,11 @@ namespace peloton {
 namespace concurrency {
 
 struct SpecTxnContext {
-  SpecTxnContext() : begin_cid_(MAX_CID), inner_dep_set_changeable_(true), outer_dep_count_(0), is_cascading_abort_(false) {}
+  SpecTxnContext()
+      : begin_cid_(MAX_CID),
+        inner_dep_set_changeable_(true),
+        outer_dep_count_(0),
+        is_cascading_abort_(false) {}
 
   void SetBeginCid(const cid_t &begin_cid) {
     assert(begin_cid_ == MAX_CID);
@@ -39,10 +43,10 @@ struct SpecTxnContext {
   }
 
   cid_t begin_cid_;
-  
+
   // outer_dep_set is thread_local, and is safe to modify it.
   std::unordered_set<txn_id_t> outer_dep_set_;
-  
+
   // inner_dep_set is modified by other transactions. so lock is required.
   Spinlock inner_dep_set_lock_;
   std::unordered_set<txn_id_t> inner_dep_set_;
@@ -102,7 +106,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
     spec_txn_context.SetBeginCid(begin_cid);
-    
+
     cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
     assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
     running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
@@ -150,27 +154,30 @@ class SpeculativeReadTxnManager : public TransactionManager {
     }
 
     bool changeable = true;
-    bool ret = running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext *context){
+    bool ret =
+        running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
+            dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext * context) {
       context->inner_dep_set_lock_.Lock();
       if (context->inner_dep_set_changeable_ == true) {
-        assert(context->inner_dep_set_.find(src_txn_id) == context->inner_dep_set_.end());
+        assert(context->inner_dep_set_.find(src_txn_id) ==
+               context->inner_dep_set_.end());
         context->inner_dep_set_.insert(src_txn_id);
       } else {
         changeable = false;
       }
       context->inner_dep_set_lock_.Unlock();
     });
-	
-	  if (changeable == false || ret == false) {
-		  return false;
-	  }
+
+    if (changeable == false || ret == false) {
+      return false;
+    }
     spec_txn_context.outer_dep_set_.insert(dst_txn_id);
     spec_txn_context.outer_dep_count_++;
     return true;
   }
 
   bool IsCommittable() {
-	  while (true) {
+    while (true) {
       if (spec_txn_context.outer_dep_count_ == 0) {
         return true;
       }
@@ -188,7 +195,8 @@ class SpeculativeReadTxnManager : public TransactionManager {
     {
       spec_txn_context.inner_dep_set_lock_.Lock();
       for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
+        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+            .update_fn(child_txn_id, [](SpecTxnContext * context) {
           assert(context->outer_dep_count_ > 0);
           context->outer_dep_count_--;
         });
@@ -202,10 +210,10 @@ class SpeculativeReadTxnManager : public TransactionManager {
     // some other transactions may also modify my inner dep set.
     // so lock first.
     {
-      //auto iter = spec_txn_context.inner_dep_set_.lock_table();
       spec_txn_context.inner_dep_set_lock_.Lock();
       for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
+        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+            .update_fn(child_txn_id, [](SpecTxnContext * context) {
           assert(context->outer_dep_count_ > 0);
           context->is_cascading_abort_ = true;
         });
@@ -221,7 +229,8 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
  private:
   // records all running transactions.
-  cuckoohash_map<txn_id_t, SpecTxnContext *> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
+  cuckoohash_map<txn_id_t, SpecTxnContext *>
+      running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };
 }
 }
