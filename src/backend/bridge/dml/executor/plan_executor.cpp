@@ -12,6 +12,7 @@
 
 #include "plan_executor.h"
 #include <cassert>
+#include <vector>
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
@@ -31,6 +32,12 @@ namespace bridge {
 executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn);
 
+/*
+ * Added for network invoking efficiently
+ */
+executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
+                                                concurrency::Transaction *txn);
+
 executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context);
@@ -39,10 +46,13 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 
 /**
  * @brief Build a executor tree and execute it.
+ * Use std::vector<Value> as params to make it more elegant for networking
+ * Before ExecutePlan, a node first receives value list, so we should pass
+ * value list directly rather than passing Postgres's ParamListInfo
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         ParamListInfo param_list,
+                                         const std::vector<Value> &params,
                                          TupleDesc tuple_desc) {
   peloton_status p_status;
 
@@ -67,8 +77,10 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
+  // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-      BuildExecutorContext(param_list, txn));
+  BuildExecutorContext(params, txn));
+  //auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -178,6 +190,15 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
                                                 concurrency::Transaction *txn) {
   return new executor::ExecutorContext(
       txn, PlanTransformer::BuildParams(param_list));
+}
+
+/**
+ * @brief Build Executor Context
+ */
+executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
+                                                concurrency::Transaction *txn) {
+  return new executor::ExecutorContext(
+      txn, params);
 }
 
 /**
