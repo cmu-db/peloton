@@ -56,6 +56,10 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
     output.WriteByte(static_cast<int8_t>(plan_type));
 
     // Write database id and table id
+    if (!GetTable()) {
+        // The plan is not completed
+        return false;
+    }
     oid_t database_id = GetTable()->GetDatabaseOid();
     oid_t table_id = GetTable()->GetOid();
 

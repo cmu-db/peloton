@@ -263,7 +263,7 @@ peloton_dml(PlanState *planstate,
   // Finally send the request
   pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
-  //   End for sending
+  //   End for sending query
   //===----------------------------------------------------------------------===//
 
 

@@ -87,12 +87,6 @@ void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
                 (*tuple_desc->attrs)->atttypmod);
     }
 
-    // debug
-    int atts_count = tuple_desc->natts;
-    int repeate_count = tuple_desc_msg.attrs_size();
-    assert(atts_count == repeate_count);
-    // end debug
-
     // Convert TupleConstr. It is a message type
     // Note the threee char* () is ended with \0 in postgres, such as appendStringInfoChar.
     // So they are safe to be set in protobuf (as bytes) with on "size" parameter
