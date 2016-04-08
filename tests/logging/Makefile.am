@@ -4,4 +4,16 @@
 # LOGGING
 ######################################################################
 
-check_PROGRAMS +=
+check_PROGRAMS += checkpoint_test \
+				logging_test
+
+logging_tests_common= 	executor/executor_tests_util.cpp \
+						harness.cpp
+
+checkpoint_test_SOURCES = \
+							$(executor_tests_common) \ 
+							logging/checkpoint_test.cpp 
+							
+logging_test_SOURCES = \
+							$(executor_tests_common) \ 
+							logging/logging_test.cpp 

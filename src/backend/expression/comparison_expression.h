@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// compa.Ison_expression.h
+// comparison_expression.h
 //
-// Identification: src/backend/expression/compa.Ison_expression.h
+// Identification: src/backend/expression/comparison_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -248,6 +248,16 @@ class ComparisonExpression : public AbstractExpression {
     return (spacer + "ComparisonExpression\n");
   }
 
+  AbstractExpression *Copy() const {
+    AbstractExpression *copied_left =
+        ((m_left == nullptr) ? nullptr : m_left->Copy());
+    AbstractExpression *copied_right =
+        ((m_right == nullptr) ? nullptr : m_right->Copy());
+
+    return new ComparisonExpression<OP>(AbstractExpression::m_type, copied_left,
+                                        copied_right);
+  }
+
  private:
   AbstractExpression *m_left;
   AbstractExpression *m_right;
@@ -259,6 +269,19 @@ class InlinedComparisonExpression : public ComparisonExpression<C> {
   InlinedComparisonExpression(ExpressionType type, AbstractExpression *left,
                               AbstractExpression *right)
       : ComparisonExpression<C>(type, left, right) {}
+
+  AbstractExpression *Copy() const {
+    AbstractExpression *copied_left =
+        ((AbstractExpression::m_left == nullptr)
+             ? nullptr
+             : AbstractExpression::m_left->Copy());
+    AbstractExpression *copied_right =
+        ((AbstractExpression::m_right == nullptr)
+             ? nullptr
+             : AbstractExpression::m_right->Copy());
+    return new InlinedComparisonExpression<C, L, R>(AbstractExpression::m_type,
+                                                    copied_left, copied_right);
+  }
 };
 
 }  // End expression namespace

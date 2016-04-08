@@ -1,17 +1,18 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregate_executor.cpp
 //
 // Identification: src/backend/executor/aggregate_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <utility>
 #include <vector>
+#include <backend/concurrency/transaction_manager_factory.h>
 
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
@@ -153,7 +154,10 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(transaction, tuple.get());
+      auto location = output_table->InsertTuple(tuple.get());
+      assert(location.block != INVALID_OID);
+      concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
+          location.block, location.offset);
     } else {
       done = true;
       return false;
@@ -170,7 +174,8 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
+    auto logical_tile =
+        LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
 
     result.push_back(logical_tile);
   }

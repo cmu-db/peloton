@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // types.h
 //
 // Identification: src/backend/common/types.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,30 +31,26 @@ enum LoggingType {
 
   // Based on write ahead logging
   LOGGING_TYPE_DRAM_NVM = 10,
-  LOGGING_TYPE_DRAM_SSD = 11,
-  LOGGING_TYPE_DRAM_HDD = 12,
+  LOGGING_TYPE_DRAM_HDD = 11,
 
   // Based on write behind logging
   LOGGING_TYPE_NVM_NVM = 20,
-  LOGGING_TYPE_NVM_SSD = 21,
-  LOGGING_TYPE_NVM_HDD = 22,
+  LOGGING_TYPE_NVM_HDD = 21,
 
-  LOGGING_TYPE_SSD_NVM = 30,
-  LOGGING_TYPE_SSD_SSD = 31,
-  LOGGING_TYPE_SSD_HDD = 32,
-
-  LOGGING_TYPE_HDD_NVM = 40,
-  LOGGING_TYPE_HDD_SSD = 41,
-  LOGGING_TYPE_HDD_HDD = 42,
+  LOGGING_TYPE_HDD_NVM = 30,
+  LOGGING_TYPE_HDD_HDD = 31,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL = 1,
+};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
 
 #define NVM_DIR "/mnt/pmfs/"
 #define HDD_DIR "/data/"
-#define SSD_DIR "/data1/"
 
 #define TMP_DIR "/tmp/"
 
@@ -107,9 +103,6 @@ class Value;
 
 #define DEFAULT_TUPLES_PER_TILEGROUP 1000
 
-// Ref count starting point
-#define BASE_REF_COUNT 1
-
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
 // 1048576.
@@ -158,6 +151,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_VARCHAR = 1015,
   POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
 
+  POSTGRES_VALUE_TYPE_DATE = 1082,
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
@@ -185,6 +179,7 @@ enum ValueType {
   VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
+  VALUE_TYPE_DATE = 10,       // 4 bytes int
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
   VALUE_TYPE_DECIMAL = 22,    // decimal(p,s)
   VALUE_TYPE_BOOLEAN =
@@ -291,8 +286,6 @@ enum ExpressionType {
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
-  EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
   EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
@@ -335,6 +328,7 @@ enum ExpressionType {
   // Date operators
   // -----------------------------
   EXPRESSION_TYPE_EXTRACT = 600,
+  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
@@ -356,16 +350,18 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-    CONCURRENCY_TYPE_OCC = 0, // optimistic
-    CONCURRENCY_TYPE_2PL = 1, // pessimistic
-    CONCURRENCY_TYPE_TO = 2, // timestamp ordering
-    CONCURRENCY_TYPE_SSI = 3 // serializable snapshot isolation
+  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
-    ISOLATION_LEVEL_TYPE_FULL = 0, // full serializability
-    ISOLATION_LEVEL_TYPE_SNAPSHOT = 1, // snapshot isolation
-    ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2 // repeatable read
+  ISOLATION_LEVEL_TYPE_FULL = 0,            // full serializability
+  ISOLATION_LEVEL_TYPE_SNAPSHOT = 1,        // snapshot isolation
+  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2  // repeatable read
 };
 
 enum BackendType {
@@ -683,6 +679,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
 
+static const int INVALID_FILE_DESCRIPTOR = -1;
+
 // ------------------------------------------------------------------
 // Tuple serialization formats
 // ------------------------------------------------------------------
@@ -749,6 +747,8 @@ struct ItemPointer {
   ItemPointer() : block(INVALID_OID), offset(INVALID_OID) {}
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
+
+  bool IsNull() { return (block == INVALID_OID && offset == INVALID_OID); }
 };
 
 extern ItemPointer INVALID_ITEMPOINTER;

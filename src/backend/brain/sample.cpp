@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // sample.cpp
 //
 // Identification: src/backend/brain/sample.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -88,7 +88,6 @@ const std::string Sample::GetInfo() const {
 
   for (auto column : columns_accessed_) os << std::round(column) << " ";
   os << "  ::  " << std::round(weight_);
-  os << "\n";
 
   return os.str();
 }

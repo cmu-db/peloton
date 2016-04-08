@@ -417,14 +417,26 @@ typedef enum LoggingType
 {
   LOGGING_TYPE_INVALID, /* No logging */
 
-  LOGGING_TYPE_DRAM_NVM,   /* Aries */
-  LOGGING_TYPE_NVM_NVM  /* Peloton */
+  LOGGING_TYPE_DRAM_NVM = 10,   /* Aries */
+  LOGGING_TYPE_NVM_NVM /* Peloton */
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
   {"invalid", LOGGING_TYPE_INVALID, false},
   {"aries", LOGGING_TYPE_DRAM_NVM, false},
   {"peloton", LOGGING_TYPE_NVM_NVM, false},
+  {NULL, 0, false}
+};
+
+/* Possible values for peloton_checkpoint_mode GUC */
+typedef enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID,
+  CHECKPOINT_TYPE_NORMAL,
+} CheckpointType;
+
+static const struct config_enum_entry peloton_checkpoint_mode_options[] = {
+  {"invalid", CHECKPOINT_TYPE_INVALID, false},
+  {"normal", CHECKPOINT_TYPE_NORMAL, false},
   {NULL, 0, false}
 };
 
@@ -498,6 +510,9 @@ int     peloton_layout_mode;
 
 // Logging mode
 LoggingType     peloton_logging_mode;
+
+// Checkpoint mode
+CheckpointType     peloton_checkpoint_mode;
 
 // Directory for peloton logs
 char    *peloton_log_directory;
@@ -3791,6 +3806,15 @@ struct config_enum ConfigureNamesEnum[] =
     LOGGING_TYPE_INVALID, peloton_logging_mode_options,
     NULL, NULL, NULL
   },
+  {
+      {"peloton_checkpoint_mode", PGC_USERSET, PELOTON_CHECKPOINT_OPTIONS,
+        gettext_noop("Change peloton checkpoint mode"),
+        gettext_noop("This determines the checkpoint mode.")
+      },
+      reinterpret_cast<int *>(&peloton_checkpoint_mode),
+      CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
+      NULL, NULL, NULL
+    },
 
 	/* End-of-list marker */
 	{

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// seq_scan_node.h
+// seq_scan_plan.h
 //
-// Identification: src/backend/planner/seq_scan_node.h
+// Identification: src/backend/planner/seq_scan_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,6 +47,7 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
+<<<<<<< HEAD
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
@@ -55,6 +56,13 @@ class SeqScanPlan : public AbstractScan {
 
   /* For init SerializeOutput */
   int SerializeSize();
+=======
+  std::unique_ptr<AbstractPlan> Copy() const {
+    AbstractPlan *new_plan = new SeqScanPlan(
+        this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
+    return std::unique_ptr<AbstractPlan>(new_plan);
+  }
+>>>>>>> refs/remotes/upstream/master
 };
 
 }  // namespace planner

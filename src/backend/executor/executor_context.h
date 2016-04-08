@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_context.h
 //
 // Identification: src/backend/executor/executor_context.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,14 +23,14 @@ namespace executor {
 // Executor Context
 //===--------------------------------------------------------------------===//
 
+// TODO: We might move this flag into the types.h in the future
 enum ParamsExecFlag {
-  IN_NESTLOOP = 1, // nestloop (in+indexscan)
-  INVALID
-  //IN_** other types
+  INVALID,
+  IN_NESTLOOP = 1 // nestloop (in+indexscan)
+  //IN_**         // other types
 };
 
 class ExecutorContext {
-
  public:
   ExecutorContext(const ExecutorContext &) = delete;
   ExecutorContext &operator=(const ExecutorContext &) = delete;

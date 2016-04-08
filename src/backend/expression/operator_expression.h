@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // operator_expression.h
 //
 // Identification: src/backend/expression/operator_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,6 +52,10 @@ class OperatorNotExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorNotExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorNotExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorIsNullExpression : public AbstractExpression {
@@ -75,6 +79,10 @@ class OperatorIsNullExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorIsNullExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorIsNullExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorCastExpression : public AbstractExpression {
@@ -92,6 +100,10 @@ class OperatorCastExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "CastExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorCastExpression(m_targetType, CopyUtil(m_left));
   }
 
  private:
@@ -116,39 +128,11 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorNotExpression");
   }
-};
 
-
-class OperatorCaseWhenExpression : public AbstractExpression {
- public:
-  OperatorCaseWhenExpression(ValueType vt, AbstractExpression *left,
-                             AbstractExpression *right)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_WHEN, left, right),
-        m_returnType(vt){};
-
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
-    assert(m_left);
-    assert(m_right);
-    Value thenClause = m_left->Evaluate(tuple1, tuple2, context);
-
-    if (thenClause.IsTrue()) {
-      return m_right->Evaluate(tuple1, tuple2, context).CastAs(m_returnType);
-    } else {
-      // the condition value is not true
-      // this statement shouldn't be executed
-      throw 0;
-    }
+  AbstractExpression *Copy() const {
+    return new OperatorUnaryMinusExpression(CopyUtil(m_left));
   }
-
-  std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "Operator CASE WHEN Expression");
-  }
-
- private:
-  ValueType m_returnType;
 };
-
 
 /*
  * Binary operators.
@@ -208,6 +192,12 @@ class OperatorExpression : public AbstractExpression {
     return (spacer + "OptimizedOperatorExpression");
   }
 
+  AbstractExpression *Copy() const {
+    // TODO: How about OPER oper?
+    return new OperatorExpression<OPER>(
+        GetExpressionType(), CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
+
  private:
   OPER oper;
 };
@@ -222,6 +212,10 @@ class OperatorExistsExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorE.IstsExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorExistsExpression(CopyUtil(GetLeft()));
   }
 };
 

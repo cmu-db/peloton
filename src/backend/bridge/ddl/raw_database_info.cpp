@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// raw_database_info.cpp
+//
+// Identification: src/backend/bridge/ddl/raw_database_info.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/bridge/ddl/raw_database_info.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/format_transformer.h"

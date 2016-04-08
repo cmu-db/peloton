@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_utils.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_utils.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -390,7 +390,7 @@ PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
       return JOIN_TYPE_LEFT;
     case JOIN_RIGHT:
       return JOIN_TYPE_RIGHT;
-    case JOIN_SEMI: // IN+Subquery is JOIN_SEMI
+    case JOIN_SEMI:  // IN+Subquery is JOIN_SEMI
       return JOIN_TYPE_SEMI;
     default:
       return JOIN_TYPE_INVALID;
@@ -427,13 +427,12 @@ void PlanTransformer::BuildColumnListFromExpr(
  * @brief Transform a ExpState List to a one-dimensional column list.
  */
 const std::vector<oid_t> PlanTransformer::BuildColumnListFromExpStateList(
-    List* expr_state_list) {
+    List *expr_state_list) {
   std::vector<oid_t> column_ids;
 
-  ListCell* expr;
-  foreach (expr, expr_state_list)
-  {
-    ExprState *expr_state = (ExprState *) lfirst(expr);
+  ListCell *expr;
+  foreach (expr, expr_state_list) {
+    ExprState *expr_state = (ExprState *)lfirst(expr);
 
     auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
 

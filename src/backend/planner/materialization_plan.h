@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// materialization_node.h
+// materialization_plan.h
 //
-// Identification: src/backend/planner/materialization_node.h
+// Identification: src/backend/planner/materialization_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,6 +59,11 @@ class MaterializationPlan : public AbstractPlan {
   }
 
   const std::string GetInfo() const { return "Materialize"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new MaterializationPlan(
+        old_to_new_cols_, catalog::Schema::CopySchema(schema_), physify_flag_));
+  }
 
  private:
   /**

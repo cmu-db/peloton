@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// btree_index.h
+// bwtree_index.h
 //
-// Identification: src/backend/index/btree_index.h
+// Identification: src/backend/index/bwtree_index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +31,8 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType, typename ValueType, typename KeyComparator, typename KeyEqualityChecker>
+template <typename KeyType, typename ValueType, typename KeyComparator,
+          typename KeyEqualityChecker>
 class BWTreeIndex : public Index {
   friend class IndexFactory;
 
@@ -46,10 +47,17 @@ class BWTreeIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
+  // TODO: implement this
+  bool ConditionalInsertEntry(const storage::Tuple *key __attribute__((unused)),
+                              const ItemPointer &location __attribute__((unused)),
+                              std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate __attribute__((unused)))
+                              {return true;}
+
+
   std::vector<ItemPointer> Scan(const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types,
-                                const ScanDirectionType& scan_direction);
+                                const ScanDirectionType &scan_direction);
 
   std::vector<ItemPointer> ScanAllKeys();
 
@@ -58,14 +66,10 @@ class BWTreeIndex : public Index {
   std::string GetTypeName() const;
 
   // TODO: Implement this
-  bool Cleanup() {
-    return true;
-  }
+  bool Cleanup() { return true; }
 
   // TODO: Implement this
-  size_t GetMemoryFootprint() {
-    return 0;
-  }
+  size_t GetMemoryFootprint() { return 0; }
 
  protected:
   // container

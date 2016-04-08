@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group.h
 //
 // Identification: src/backend/storage/tile_group.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -74,37 +74,26 @@ class TileGroup : public Printable {
   //===--------------------------------------------------------------------===//
 
   // copy tuple in place.
-  void CopyTuple(txn_id_t transaction_id, const Tuple *tuple, oid_t tuple_slot_id);
+  void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);
 
   // insert tuple at next available slot in tile if a slot exists
-  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  oid_t InsertTuple(const Tuple *tuple);
 
   // insert tuple at specific tuple slot
   // used by recovery mode
-  oid_t InsertTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
+  oid_t InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                     const Tuple *tuple);
 
-  // delete tuple at given slot if it is not already locked
-  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id,
-                   cid_t last_cid);
+  // insert tuple at specific tuple slot
+  // used by recovery mode
+  oid_t DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id);
 
-  //===--------------------------------------------------------------------===//
-  // Transaction Processing
-  //===--------------------------------------------------------------------===//
+  // insert tuple at specific tuple slot
+  // used by recovery mode
+  oid_t UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, ItemPointer new_location);
 
-  // commit the inserted tuple
-  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id,
-                           txn_id_t transaction_id);
-
-  // commit the deleted tuple
-  void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id,
-                          cid_t commit_id);
-
-  // abort the inserted tuple
-  void AbortInsertedTuple(oid_t tuple_slot_id);
-
-  // abort the deleted tuple
-  void AbortDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id);
+  oid_t InsertTupleFromCheckpoint(oid_t tuple_slot_id,
+                    const Tuple *tuple, cid_t commit_id);
 
   //===--------------------------------------------------------------------===//
   // Utilities

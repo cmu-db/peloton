@@ -1,22 +1,21 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.cpp
+// hyadapt_workload.cpp
 //
-// Identification: benchmark/hyadapt/workload.cpp
+// Identification: src/backend/benchmark/hyadapt/hyadapt_workload.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+#undef NDEBUG
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
 #include <iostream>
 #include <ctime>
 #include <cassert>
@@ -25,14 +24,20 @@
 
 #include "backend/expression/expression_util.h"
 #include "backend/brain/clusterer.h"
+
+#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
+#include "backend/common/timer.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+
 
 #include "backend/executor/executor_context.h"
 #include "backend/executor/abstract_executor.h"
@@ -68,7 +73,6 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
-#include "hyadapt_loader.h"
 
 namespace peloton {
 namespace benchmark {
@@ -95,9 +99,10 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
       expression::ExpressionUtil::ConstantValueFactory(constant_value);
 
   // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate = expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
-      constant_value_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ComparisonFactory(
+          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
+          constant_value_expr);
 
   return predicate;
 }
@@ -110,16 +115,16 @@ static void WriteOutput(double duration) {
   // Convert to ms
   duration *= 1000;
 
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.layout_mode << " " << state.operator_type << " "
-      << state.projectivity << " " << state.selectivity << " "
-      << state.write_ratio << " " << state.scale_factor << " "
-      << state.column_count << " " << state.subset_experiment_type << " "
-      << state.access_num_groups << " " << state.subset_ratio << " "
-      << state.theta << " " << state.split_point << " "
-      << state.sample_weight << " " << state.tuples_per_tilegroup
-      << " :: ";
-  std::cout << duration << " ms\n";
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %d %lf %lf %lf %d %d %d %d %lf %lf %d %lf %d :: %lf ms",
+           state.layout_mode, state.operator_type,
+           state.projectivity, state.selectivity,
+           state.write_ratio, state.scale_factor,
+           state.column_count, state.subset_experiment_type,
+           state.access_num_groups, state.subset_ratio,
+           state.theta, state.split_point,
+           state.sample_weight, state.tuples_per_tilegroup,
+           duration);
 
   out << state.layout_mode << " ";
   out << state.operator_type << " ";
@@ -149,12 +154,12 @@ static int GetLowerBound() {
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
                         std::vector<double> columns_accessed, double cost) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
+  Timer<> timer;
 
   auto txn_count = state.transactions;
   bool status = false;
 
-  start = std::chrono::system_clock::now();
+  timer.Start();
 
   // Construct sample
   brain::Sample sample(columns_accessed, cost);
@@ -172,43 +177,40 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Run all the executors
     for (auto executor : executors) {
-        status = executor->Init();
-        if (status == false) throw Exception("Init failed");
+      status = executor->Init();
+      if (status == false) throw Exception("Init failed");
 
-        std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+      std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
-        while (executor->Execute() == true) {
-          std::unique_ptr<executor::LogicalTile> result_tile(
-              executor->GetOutput());
-          result_tiles.emplace_back(result_tile.release());
-        }
+      while (executor->Execute() == true) {
+        std::unique_ptr<executor::LogicalTile> result_tile(
+            executor->GetOutput());
+        result_tiles.emplace_back(result_tile.release());
+      }
 
-        // Execute stuff
-        executor->Execute();
+      // Execute stuff
+      executor->Execute();
     }
 
     // Capture fine-grained stats in adapt experiment
     if (state.adapt == true) {
-      end = std::chrono::system_clock::now();
-      std::chrono::duration<double> elapsed_seconds = end - start;
-      double time_per_transaction = ((double)elapsed_seconds.count());
+      timer.Stop();
+      double time_per_transaction = timer.GetDuration();
 
-      if (state.distribution == false)
-        WriteOutput(time_per_transaction);
+      if (state.distribution == false) WriteOutput(time_per_transaction);
 
       // Record sample
       if (state.fsm == true && cost != 0) {
         hyadapt_table->RecordSample(sample);
       }
 
-      start = std::chrono::system_clock::now();
+      timer.Start();
     }
   }
 
   if (state.adapt == false) {
-    end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
+    timer.Stop();
+    double time_per_transaction = timer.GetDuration() / txn_count;
 
     WriteOutput(time_per_transaction);
   }
@@ -259,7 +261,7 @@ void RunDirectTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -301,7 +303,8 @@ void RunDirectTest() {
   planner::ProjectInfo::DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -311,7 +314,7 @@ void RunDirectTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -361,7 +364,7 @@ void RunAggregateTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -457,7 +460,8 @@ void RunAggregateTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -466,7 +470,7 @@ void RunAggregateTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -516,7 +520,7 @@ void RunArithmeticTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -543,12 +547,13 @@ void RunArithmeticTest() {
 
   for (oid_t col_itr = 0; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
-    auto column_expr = expression::ExpressionUtil::TupleValueFactory(0, hyadapt_colum_id);
+    auto column_expr =
+        expression::ExpressionUtil::TupleValueFactory(0, hyadapt_colum_id);
     if (sum_expr == nullptr)
       sum_expr = column_expr;
     else {
-      sum_expr = expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
-                                             sum_expr, column_expr);
+      sum_expr = expression::ExpressionUtil::OperatorFactory(
+          EXPRESSION_TYPE_OPERATOR_PLUS, sum_expr, column_expr);
     }
   }
 
@@ -598,7 +603,8 @@ void RunArithmeticTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -607,7 +613,7 @@ void RunArithmeticTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -656,17 +662,15 @@ void RunJoinTest() {
   // Create and set up seq scan executor
   auto left_table_predicate = CreatePredicate(lower_bound);
   auto right_table_predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan left_table_seq_scan_node(hyadapt_table,
-                                                left_table_predicate,
-                                                column_ids);
-  planner::SeqScanPlan right_table_seq_scan_node(hyadapt_table,
-                                                 right_table_predicate,
-                                                 column_ids);
+  planner::SeqScanPlan left_table_seq_scan_node(
+      hyadapt_table.get(), left_table_predicate, column_ids);
+  planner::SeqScanPlan right_table_seq_scan_node(
+      hyadapt_table.get(), right_table_predicate, column_ids);
 
   executor::SeqScanExecutor left_table_scan_executor(&left_table_seq_scan_node,
                                                      context.get());
-  executor::SeqScanExecutor right_table_scan_executor(&right_table_seq_scan_node,
-                                                      context.get());
+  executor::SeqScanExecutor right_table_scan_executor(
+      &right_table_seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
   // JOIN EXECUTOR
@@ -677,8 +681,7 @@ void RunJoinTest() {
   // Create join predicate
   expression::AbstractExpression *join_predicate = nullptr;
 
-  planner::NestedLoopJoinPlan nested_loop_join_node(join_type,
-                                                    join_predicate,
+  planner::NestedLoopJoinPlan nested_loop_join_node(join_type, join_predicate,
                                                     nullptr, nullptr);
 
   // Run the nested loop join executor
@@ -697,7 +700,7 @@ void RunJoinTest() {
   std::vector<catalog::Column> output_columns;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t join_column_count = column_count * 2;
-  for (oid_t col_itr = 0; col_itr < join_column_count ; col_itr++) {
+  for (oid_t col_itr = 0; col_itr < join_column_count; col_itr++) {
     auto column =
         catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                         "" + std::to_string(col_itr), is_inlined);
@@ -768,7 +771,7 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
       oid_t tile_column_proj = column_proj / peloton_num_group;
 
       for (int tile_group_itr = 0; tile_group_itr < peloton_num_group;
-          tile_group_itr++) {
+           tile_group_itr++) {
         oid_t column_offset = tile_group_itr * tile_column_count;
 
         for (oid_t col_itr = 0; col_itr < tile_column_proj; col_itr++) {
@@ -780,14 +783,13 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
 
     case SUBSET_TYPE_INVALID:
     default:
-      std::cout << "Unsupported subset experiment type : " << subset_test_type
-      << "\n";
+      LOG_ERROR("Unsupported subset experiment type : %d", subset_test_type);
       break;
   }
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -859,7 +861,8 @@ void RunInsertTest() {
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
     column_ids.push_back(col_id);
   }
@@ -870,7 +873,7 @@ void RunInsertTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -917,7 +920,7 @@ void RunUpdateTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -937,7 +940,7 @@ void RunUpdateTest() {
 
   auto project_info = new planner::ProjectInfo(std::move(target_list),
                                                std::move(direct_map_list));
-  planner::UpdatePlan update_node(hyadapt_table, project_info);
+  planner::UpdatePlan update_node(hyadapt_table.get(), project_info);
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -1015,8 +1018,8 @@ void RunProjectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
           RunAggregateTest();
 
-          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          //RunArithmeticTest();
+          // state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          // RunArithmeticTest();
         }
       }
     }
@@ -1060,8 +1063,8 @@ void RunSelectivityExperiment() {
           state.operator_type = OPERATOR_TYPE_AGGREGATE;
           RunAggregateTest();
 
-          //state.operator_type = OPERATOR_TYPE_ARITHMETIC;
-          //RunArithmeticTest();
+          // state.operator_type = OPERATOR_TYPE_ARITHMETIC;
+          // RunArithmeticTest();
         }
       }
     }
@@ -1075,7 +1078,7 @@ int op_column_count = 100;
 std::vector<double> op_projectivity = {0.01, 0.1, 1.0};
 
 std::vector<double> op_selectivity = {0.1, 0.2, 0.3, 0.4, 0.5,
-    0.6, 0.7, 0.8, 0.9, 1.0};
+                                      0.6, 0.7, 0.8, 0.9, 1.0};
 
 void RunOperatorExperiment() {
   state.column_count = op_column_count;
@@ -1117,7 +1120,7 @@ void RunOperatorExperiment() {
 }
 
 std::vector<oid_t> vertical_tuples_per_tilegroup = {10, 100, 1000, 10000,
-    100000};
+                                                    100000};
 
 void RunVerticalExperiment() {
   // Cache the original value
@@ -1269,10 +1272,10 @@ static void CollectColumnMapStats() {
 
   // Go over all tg's
   auto tile_group_count = hyadapt_table->GetTileGroupCount();
-  std::cout << "TG Count :: " << tile_group_count << "\n";
+  LOG_TRACE("TG Count :: %lu", tile_group_count);
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     auto tile_group = hyadapt_table->GetTileGroup(tile_group_itr);
     auto col_map = tile_group->GetColumnMap();
 
@@ -1313,14 +1316,6 @@ static void CollectColumnMapStats() {
   oid_t type_itr = 0;
   oid_t type_cnt = 5;
   for (auto col_map_stats_summary_entry : col_map_stats_summary) {
-    // First, print col map stats
-    std::cout << "Type " << type_itr << " -- ";
-
-    for (auto col_stats_itr : col_map_stats_summary_entry.first)
-      std::cout << col_stats_itr.first << " " << col_stats_itr.second << " :: ";
-
-    // Next, print the normalized count
-    std::cout << col_map_stats_summary_entry.second << "\n";
     out << query_itr << " " << type_itr << " "
         << col_map_stats_summary_entry.second << "\n";
     type_itr++;
@@ -1416,15 +1411,14 @@ static void RunAdaptTest() {
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
-
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
+                                         LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
-
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
@@ -1436,29 +1430,29 @@ void RunAdaptExperiment() {
   double theta = 0.0;
 
   // Go over all column counts
-  for(auto column_count : adapt_column_counts) {
+  for (auto column_count : adapt_column_counts) {
     state.column_count = column_count;
 
     // Generate sequence
     GenerateSequence(state.column_count);
 
     // Go over all layouts
-    for(auto layout : adapt_layouts) {
+    for (auto layout : adapt_layouts) {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
-      CreateAndLoadTable((LayoutType) peloton_layout_mode);
+      CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
       // Launch transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
         transformer = std::thread(Transform, theta);
@@ -1467,14 +1461,12 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if(state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
         transformer.join();
       }
-
     }
-
   }
 
   // Reset
@@ -1589,7 +1581,7 @@ static void Reorg() {
   hyadapt_table->UpdateDefaultPartition();
 
   for (size_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
+       tile_group_itr++) {
     hyadapt_table->TransformTileGroup(tile_group_itr, theta);
   }
 }
@@ -1630,7 +1622,7 @@ void RunReorgExperiment() {
         state.reorg = true;
       }
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1697,7 +1689,7 @@ void RunDistributionExperiment() {
       state.layout_mode = layout_mode;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1767,7 +1759,6 @@ void RunJoinExperiment() {
         state.operator_type = OPERATOR_TYPE_JOIN;
         RunJoinTest();
       }
-
     }
   }
 
@@ -1779,7 +1770,6 @@ void RunJoinExperiment() {
 }
 
 void RunInsertExperiment() {
-
   // Set write ratio
   state.write_ratio = 1.0;
 
@@ -1801,7 +1791,6 @@ void RunInsertExperiment() {
 
       state.operator_type = OPERATOR_TYPE_INSERT;
       RunInsertTest();
-
     }
   }
 
@@ -1811,10 +1800,8 @@ void RunInsertExperiment() {
 std::vector<oid_t> version_chain_lengths = {10, 100, 1000, 10000, 10000};
 
 void RunVersionExperiment() {
-
   oid_t tuple_count = version_chain_lengths.back();
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-  std::chrono::duration<double> elapsed_seconds;
+  Timer<> timer;
   double version_chain_travesal_time = 0;
 
   std::unique_ptr<storage::TileGroupHeader> header(
@@ -1823,27 +1810,29 @@ void RunVersionExperiment() {
   // Create a version chain
   oid_t block_id = 0;
   header->SetNextItemPointer(0, INVALID_ITEMPOINTER);
-  for(oid_t tuple_itr = 1; tuple_itr < tuple_count; tuple_itr++) {
+  header->SetPrevItemPointer(0, INVALID_ITEMPOINTER);
+
+  for (oid_t tuple_itr = 1; tuple_itr < tuple_count; tuple_itr++) {
     header->SetNextItemPointer(tuple_itr, ItemPointer(block_id, tuple_itr - 1));
+    header->SetPrevItemPointer(tuple_itr - 1, ItemPointer(block_id, tuple_itr));
   }
 
-  start = std::chrono::system_clock::now();
+  timer.Start();
 
   // Traverse the version chain
-  for(auto version_chain_length : version_chain_lengths){
+  for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    std::cout << "Offset : " << starting_tuple_offset << "\n";
+    LOG_INFO("Offset : %lu", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
-    while(prev_item_pointer.block != INVALID_OID) {
+    while (prev_item_pointer.block != INVALID_OID) {
       prev_tuple_offset = prev_item_pointer.offset;
       prev_item_pointer = header->GetNextItemPointer(prev_tuple_offset);
     }
 
-    end = std::chrono::system_clock::now();
-    elapsed_seconds = end - start;
-    version_chain_travesal_time = ((double)elapsed_seconds.count());
+    timer.Stop();
+    version_chain_travesal_time = timer.GetDuration();
 
     WriteOutput(version_chain_travesal_time);
   }
@@ -1858,14 +1847,12 @@ std::vector<oid_t> hyrise_column_counts = {50};
 std::vector<double> hyrise_projectivities = {0.9, 0.04, 0.9, 0.04};
 
 static void RunHyriseTest() {
-
-  for(auto hyrise_projectivity : hyrise_projectivities) {
+  for (auto hyrise_projectivity : hyrise_projectivities) {
     state.projectivity = hyrise_projectivity;
     peloton_projectivity = state.projectivity;
     state.operator_type = OPERATOR_TYPE_DIRECT;
     RunDirectTest();
   }
-
 }
 
 void RunHyriseExperiment() {
@@ -1895,19 +1882,18 @@ void RunHyriseExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "----------------------------------------- \n\n";
+      LOG_INFO("----------------------------------------- \n");
 
       state.projectivity = hyrise_projectivities[0];
       peloton_projectivity = state.projectivity;
       // HYPER
-      if(layout == LAYOUT_COLUMN) {
-        CreateAndLoadTable((LayoutType) LAYOUT_COLUMN);
+      if (layout == LAYOUT_COLUMN) {
+        CreateAndLoadTable((LayoutType)LAYOUT_COLUMN);
       }
       // HYRISE and HYBRID
       else {
-        CreateAndLoadTable((LayoutType) LAYOUT_HYBRID);
+        CreateAndLoadTable((LayoutType)LAYOUT_HYBRID);
       }
-
 
       // Reset query counter
       query_itr = 0;
@@ -1947,15 +1933,15 @@ oid_t insert_ctr = 0;
 static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &executors,
                                   oid_t thread_id, oid_t num_threads,
                                   double scan_ratio) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_real_distribution<> dis(0, 1);
+  Timer<> timer;
 
   auto txn_count = state.transactions;
   bool status = false;
 
-  start = std::chrono::system_clock::now();
+  timer.Start();
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
@@ -1966,7 +1952,7 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
     executor::AbstractExecutor *executor = nullptr;
 
     // SCAN
-    if(dis_sample < scan_ratio) {
+    if (dis_sample < scan_ratio) {
       executor = executors[0];
       scan_ctr++;
     }
@@ -1983,25 +1969,21 @@ static void ExecuteConcurrentTest(std::vector<executor::AbstractExecutor *> &exe
     std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
     while (executor->Execute() == true) {
-      std::unique_ptr<executor::LogicalTile> result_tile(
-          executor->GetOutput());
+      std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
       result_tiles.emplace_back(result_tile.release());
     }
 
     // Execute stuff
     executor->Execute();
-
   }
 
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end - start;
-  double time_per_transaction = ((double)elapsed_seconds.count()) / txn_count;
+  timer.Stop();
+  double time_per_transaction = timer.GetDuration() / txn_count;
 
-  if(thread_id == 0) {
-    double throughput = (double)num_threads/time_per_transaction;
-    WriteOutput(throughput/1000.0);
+  if (thread_id == 0) {
+    double throughput = (double)num_threads / time_per_transaction;
+    WriteOutput(throughput / 1000.0);
   }
-
 }
 
 void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
@@ -2028,7 +2010,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound);
-  planner::SeqScanPlan seq_scan_node(hyadapt_table, predicate, column_ids);
+  planner::SeqScanPlan seq_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
@@ -2070,7 +2052,8 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   planner::ProjectInfo::DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
     target_list.emplace_back(col_id, expression);
   }
 
@@ -2079,7 +2062,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
 
   auto bulk_insert_count = 1;
 
-  planner::InsertPlan insert_node(hyadapt_table, project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -2096,13 +2079,11 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   txn_manager.CommitTransaction();
 }
 
-
 std::vector<oid_t> num_threads_list = {1, 2, 4, 8, 16, 32};
 
 std::vector<double> scan_ratios = {0, 0.5, 0.9, 1.0};
 
 void RunConcurrencyExperiment() {
-
   state.selectivity = 0.001;
   state.operator_type = OPERATOR_TYPE_INSERT;
 
@@ -2111,9 +2092,8 @@ void RunConcurrencyExperiment() {
   peloton_projectivity = state.projectivity;
 
   // Go over all scan ratios
-  for(auto scan_ratio : scan_ratios) {
-
-    std::cout << "SCAN RATIO :" << scan_ratio << "\n\n\n";
+  for (auto scan_ratio : scan_ratios) {
+    LOG_INFO("SCAN RATIO : %lf \n\n", scan_ratio);
 
     // Go over all layouts
     for (auto layout : layouts) {
@@ -2121,11 +2101,10 @@ void RunConcurrencyExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      std::cout << "LAYOUT :" << layout << "\n";
+      LOG_INFO("LAYOUT : %d", layout);
 
       // Go over all scale factors
-      for(auto num_threads : num_threads_list) {
-
+      for (auto num_threads : num_threads_list) {
         // Reuse variables
         state.theta = scan_ratio;
         state.sample_weight = num_threads;
@@ -2144,7 +2123,8 @@ void RunConcurrencyExperiment() {
 
         // Launch a group of threads
         for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-          thread_group.push_back(std::thread(RunConcurrentTest, thread_itr, num_threads, scan_ratio));
+          thread_group.push_back(std::thread(RunConcurrentTest, thread_itr,
+                                             num_threads, scan_ratio));
         }
 
         // Join the threads with the main thread
@@ -2155,18 +2135,14 @@ void RunConcurrencyExperiment() {
         auto final_tg_count = hyadapt_table->GetTileGroupCount();
         auto diff_tg_count = final_tg_count - initial_tg_count;
 
-        std::cout << "Inserted Tile Group Count " << diff_tg_count << "\n";
+        LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        std::cout << "Scan count   : " << scan_ctr << "\n";
-        std::cout << "Insert count : " << insert_ctr << "\n";
+        LOG_INFO("Scan count  : %lu", scan_ctr);
+        LOG_INFO("Insert count  : %lu", insert_ctr);
       }
-
     }
-
   }
-
 }
-
 
 }  // namespace hyadapt
 }  // namespace benchmark

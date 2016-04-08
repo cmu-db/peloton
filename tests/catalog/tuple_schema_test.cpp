@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tuple_schema_test.cpp
 //
 // Identification: tests/catalog/tuple_schema_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -58,14 +58,14 @@ TEST_F(TupleSchemaTests, TupleSchemaTest) {
   columns.push_back(column4);
 
   catalog::Schema schema1(columns);
-  std::cout << schema1;
+  LOG_INFO("%s", schema1.GetInfo().c_str());
 
   catalog::Schema schema2(columns);
   EXPECT_EQ(schema1, schema2);
 
   std::vector<oid_t> subset{0, 2};
   catalog::Schema *schema3 = catalog::Schema::CopySchema(&schema2, subset);
-  std::cout << (*schema3);
+  LOG_INFO("%s", schema3->GetInfo().c_str());
 
   EXPECT_NE(schema1, (*schema3));
 

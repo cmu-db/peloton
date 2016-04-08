@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// bithise_functions.h
+// bitwise_functions.h
 //
-// Identification: src/backend/expression/bithise_functions.h
+// Identification: src/backend/expression/bitwise_functions.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

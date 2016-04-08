@@ -116,7 +116,7 @@ peloton_bootstrap() {
           // Wait for standby mode
           std::thread(&peloton::logging::LogManager::StartStandbyMode,
                       &log_manager).detach();
-          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
+          log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
           elog(DEBUG2, "Standby mode");
 
           // Do any recovery
@@ -124,7 +124,7 @@ peloton_bootstrap() {
           elog(DEBUG2, "Wait for logging mode");
 
           // Wait for logging mode
-          log_manager.WaitForMode(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
+          log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
           elog(DEBUG2, "Logging mode");
         }
 
