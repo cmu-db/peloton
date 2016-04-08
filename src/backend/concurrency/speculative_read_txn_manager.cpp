@@ -77,6 +77,8 @@ bool SpeculativeReadTxnManager::IsVisible(
   }
 }
 
+// check whether the current transaction owns the tuple.
+// this function is called by update/delete executors.
 bool SpeculativeReadTxnManager::IsOwner(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
