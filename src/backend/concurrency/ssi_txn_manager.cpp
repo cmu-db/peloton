@@ -125,11 +125,10 @@ bool SsiTxnManager::AcquireOwnership(
       // For all owner of siread lock on this version
       auto owner = header->txn_id;
       // Myself, skip
-      if (owner == txn_id) {
+      if (owner == txn_id || txn_table_.count(owner) == 0) {
         header = header->next;
         continue;
       }
-      assert(txn_table_.count(owner) > 0);
       auto &ctx = txn_table_.at(owner);
       auto end_cid = ctx.transaction_->GetEndCommitId();
 
@@ -203,7 +202,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     while (!next_item.IsNull()) {
       auto tile_group =
           catalog::Manager::GetInstance().GetTileGroup(next_item.block);
-      auto creator = GetCreatorTxnId(tile_group.get(), next_item.block);
+      auto creator = GetCreatorTxnId(tile_group.get(), next_item.offset);
 
       LOG_INFO("%ld %ld creator is %ld", next_item.block, next_item.offset,
                creator);
