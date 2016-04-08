@@ -51,6 +51,32 @@ storage::DataTable* orders_table;
 storage::DataTable* new_order_table;
 storage::DataTable* order_line_table;
 
+const bool own_schema = true;
+const bool adapt_table = false;
+const bool is_inlined = true;
+const bool unique_index = false;
+
+index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
+                                         const catalog::Schema *tuple_schema,
+                                         std::string index_name,
+                                         oid_t index_oid){
+
+  catalog::Schema *key_schema;
+  index::IndexMetadata *index_metadata;
+
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  index_metadata = new index::IndexMetadata(
+      index_name,
+      index_oid,
+      INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_INVALID,
+      tuple_schema, key_schema, unique_index);
+
+  return index_metadata;
+}
+
 void CreateWarehouseTable() {
   /*
    CREATE TABLE WAREHOUSE (
@@ -68,10 +94,6 @@ void CreateWarehouseTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> warehouse_columns;
 
   auto w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "W_ID", is_inlined);
@@ -108,24 +130,12 @@ void CreateWarehouseTable() {
 
   // Primary index on W_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = warehouse_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "warehouse_pkey",
-      warehouse_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            warehouse_table->GetSchema(),
+                                                            "warehouse_pkey",
+                                                            warehouse_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   warehouse_table->AddIndex(pkey_index);
@@ -151,10 +161,6 @@ void CreateDistrictTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> district_columns;
 
   auto d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "D_ID", is_inlined);
@@ -177,7 +183,7 @@ void CreateDistrictTable() {
   district_columns.push_back(d_tax_column);
   auto d_ytd_column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "D_YTD", is_inlined);
   district_columns.push_back(d_ytd_column);
-  auto d_next_o_id_column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "D_NEXT_O_ID", is_inlined);
+  auto d_next_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_NEXT_O_ID", is_inlined);
   district_columns.push_back(d_next_o_id_column);
 
   catalog::Schema *table_schema = new catalog::Schema(district_columns);
@@ -195,24 +201,12 @@ void CreateDistrictTable() {
 
   // Primary index on D_ID, D_W_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = district_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 1};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "district_pkey",
-      district_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            district_table->GetSchema(),
+                                                            "district_pkey",
+                                                            district_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   district_table->AddIndex(pkey_index);
@@ -232,10 +226,6 @@ void CreateItemTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> item_columns;
 
   auto i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "I_ID", is_inlined);
@@ -264,24 +254,12 @@ void CreateItemTable() {
 
   // Primary index on I_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = item_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "item_pkey",
-      item_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            item_table->GetSchema(),
+                                                            "item_pkey",
+                                                            item_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   item_table->AddIndex(pkey_index);
@@ -320,10 +298,6 @@ void CreateCustomerTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> customer_columns;
 
   auto c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_ID", is_inlined);
@@ -384,43 +358,23 @@ void CreateCustomerTable() {
 
   // Primary index on C_W_ID, C_D_ID, C_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = customer_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 1, 2};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "customer_pkey",
-      customer_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            customer_table->GetSchema(),
+                                                            "customer_pkey",
+                                                            customer_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(pkey_index);
 
   // Secondary index on C_W_ID, C_D_ID, C_LAST
-  key_attrs.clear();
-
   key_attrs = {1, 2, 5};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "customer_skey",
-      customer_table_skey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index_metadata = BuildIndexMetadata(key_attrs,
+                                      customer_table->GetSchema(),
+                                      "customer_skey",
+                                      customer_table_skey_index_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(skey_index);
@@ -444,10 +398,6 @@ void CreateHistoryTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> history_columns;
 
   auto h_c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_ID", is_inlined);
@@ -507,10 +457,6 @@ void CreateStockTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> stock_columns;
 
   auto s_i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_I_ID", is_inlined);
@@ -563,24 +509,12 @@ void CreateStockTable() {
 
   // Primary index on S_I_ID, S_W_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = stock_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 1};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "stock_pkey",
-      stock_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            stock_table->GetSchema(),
+                                                            "stock_pkey",
+                                                            stock_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   stock_table->AddIndex(pkey_index);
@@ -606,10 +540,6 @@ void CreateOrdersTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> orders_columns;
 
   auto o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_ID", is_inlined);
@@ -644,46 +574,27 @@ void CreateOrdersTable() {
 
   // Primary index on O_ID, O_D_ID, O_W_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = orders_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 2, 3};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "orders_pkey",
-      orders_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            orders_table->GetSchema(),
+                                                            "orders_pkey",
+                                                            orders_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
-  key_attrs.clear();
-
   key_attrs = {1, 2, 3};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "orders_skey",
-      orders_table_skey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index_metadata =  BuildIndexMetadata(key_attrs,
+                                       orders_table->GetSchema(),
+                                       "orders_skey",
+                                       orders_table_skey_index_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(skey_index);
+
 }
 
 void CreateNewOrderTable() {
@@ -698,10 +609,6 @@ void CreateNewOrderTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> new_order_columns;
 
   auto no_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_O_ID", is_inlined);
@@ -726,24 +633,12 @@ void CreateNewOrderTable() {
 
   // Primary index on NO_O_ID, NO_D_ID, NO_W_ID
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = new_order_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 1, 2};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "new_order_pkey",
-      new_order_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            new_order_table->GetSchema(),
+                                                            "new_order_pkey",
+                                                            new_order_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   new_order_table->AddIndex(pkey_index);
@@ -771,10 +666,6 @@ void CreateOrderLineTable() {
    */
 
   // Create schema first
-  const bool own_schema = true;
-  const bool adapt_table = false;
-  const bool is_inlined = true;
-
   std::vector<catalog::Column> order_line_columns;
 
   auto ol_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_O_ID", is_inlined);
@@ -813,47 +704,26 @@ void CreateOrderLineTable() {
 
   // Primary index on OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
   std::vector<oid_t> key_attrs;
-
-  auto tuple_schema = order_line_table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
-
   key_attrs = {0, 1, 2, 3};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "order_line_pkey",
-      order_line_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
+                                                            order_line_table->GetSchema(),
+                                                            "order_line_pkey",
+                                                            order_line_table_pkey_index_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
-  key_attrs.clear();
-
   key_attrs = {0, 1, 2};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
 
-  unique = true;
-
-  index_metadata = new index::IndexMetadata(
-      "order_line_skey",
-      order_line_table_skey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique);
+  index_metadata =  BuildIndexMetadata(key_attrs,
+                                       order_line_table->GetSchema(),
+                                       "order_line_skey",
+                                       order_line_table_skey_index_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(skey_index);
-
 
 }
 
@@ -871,12 +741,23 @@ void CreateTPCCDatabase() {
   customer_table = nullptr;
   history_table = nullptr;
   stock_table = nullptr;
+  orders_table = nullptr;
   new_order_table = nullptr;
   order_line_table = nullptr;
 
   auto& manager = catalog::Manager::GetInstance();
   tpcc_database = new storage::Database(tpcc_database_oid);
   manager.AddDatabase(tpcc_database);
+
+  CreateWarehouseTable();
+  CreateDistrictTable();
+  CreateItemTable();
+  CreateCustomerTable();
+  CreateHistoryTable();
+  CreateStockTable();
+  CreateOrdersTable();
+  CreateNewOrderTable();
+  CreateOrderLineTable();
 
 }
 
