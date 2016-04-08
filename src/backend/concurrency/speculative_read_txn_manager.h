@@ -40,7 +40,8 @@ struct SpecTxnContext {
   // outer_dep_set is thread_local, and is safe to modify it.
   std::unordered_set<txn_id_t> outer_dep_set_;
   // inner_dep_set is modified by other transactions. so lock is required.
-  cuckoohash_map<txn_id_t, bool> inner_dep_set_;
+  Spinlock inner_dep_set_lock_;
+  std::unordered_set<txn_id_t> inner_dep_set_;
   volatile std::atomic<size_t> outer_dep_count_;   // default: 0
   volatile std::atomic<bool> is_cascading_abort_;  // default: false
 };
@@ -153,19 +154,23 @@ class SpeculativeReadTxnManager : public TransactionManager {
     //   dst_txn_context.inner_dep_set_.insert(src_txn_id);
     // }
 
-    running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&src_txn_id](SpecTxnContext *context){
-      //context->inner_dep_set_lock_.Lock();
-      assert(context->inner_dep_set_.contains(src_txn_id) == false);
-      context->inner_dep_set_[src_txn_id] = true;
-      //context->inner_dep_set_lock_.Unlock();
+    bool ret = running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&src_txn_id](SpecTxnContext *context){
+      context->inner_dep_set_lock_.Lock();
+      assert(context->inner_dep_set_.find(src_txn_id) == context->inner_dep_set_.end());
+      context->inner_dep_set_.insert(src_txn_id);
+      context->inner_dep_set_lock_.Unlock();
     });
-
+	
+	if (ret == false) {
+		return false;
+	}
     spec_txn_context.outer_dep_set_.insert(dst_txn_id);
     spec_txn_context.outer_dep_count_++;
     return true;
   }
 
   bool IsCommittable() {
+	//size_t count = 0;
     while (true) {
       if (spec_txn_context.outer_dep_count_ == 0) {
         return true;
@@ -173,6 +178,10 @@ class SpeculativeReadTxnManager : public TransactionManager {
       if (spec_txn_context.is_cascading_abort_ == true) {
         return false;
       }
+	//++count;
+	/*if (count % 1000 == 0) {
+		printf("transaction id=%d, outer dep count=%d, waiting for=%d\n", int(current_txn->GetTransactionId()), int(spec_txn_context.outer_dep_count_), int(*(spec_txn_context.outer_dep_set_.begin())));
+	}*/
       _mm_pause();
     }
   }
@@ -204,15 +213,16 @@ class SpeculativeReadTxnManager : public TransactionManager {
     // some other transactions may also modify my inner dep set.
     // so lock first.
     {
-      auto iter = spec_txn_context.inner_dep_set_.lock_table();
-      //spec_txn_context.inner_dep_set_lock_.Lock();
-      for (auto &it : iter) {
-        running_txn_buckets_[it.first % RUNNING_TXN_BUCKET_NUM].update_fn(it.first, [](SpecTxnContext *context){
+      //auto iter = spec_txn_context.inner_dep_set_.lock_table();
+      spec_txn_context.inner_dep_set_lock_.Lock();
+      for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+	  //for (auto &it : iter) {
+        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
           assert(context->outer_dep_count_ > 0);
           context->outer_dep_count_--;
         });
       }
-      //spec_txn_context.inner_dep_set_lock_.Unlock();
+      spec_txn_context.inner_dep_set_lock_.Unlock();
     }
   }
 
@@ -232,15 +242,16 @@ class SpeculativeReadTxnManager : public TransactionManager {
     // some other transactions may also modify my inner dep set.
     // so lock first.
     {
-      auto iter = spec_txn_context.inner_dep_set_.lock_table();
-      //spec_txn_context.inner_dep_set_lock_.Lock();
-      for (auto &it : iter) {
-        running_txn_buckets_[it.first % RUNNING_TXN_BUCKET_NUM].update_fn(it.first, [](SpecTxnContext *context){
+      //auto iter = spec_txn_context.inner_dep_set_.lock_table();
+      spec_txn_context.inner_dep_set_lock_.Lock();
+      for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+	  //for (auto &it : iter) {
+        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(child_txn_id, [](SpecTxnContext *context){
           assert(context->outer_dep_count_ > 0);
           context->is_cascading_abort_ = true;
         });
       }
-      //spec_txn_context.inner_dep_set_lock_.Unlock();
+      spec_txn_context.inner_dep_set_lock_.Unlock();
     }
   }
 
