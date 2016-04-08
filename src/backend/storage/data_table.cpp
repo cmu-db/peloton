@@ -357,7 +357,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
 
-  for (auto foreign_key : foreign_keys) {
+  for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
         (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
