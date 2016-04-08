@@ -31,8 +31,9 @@ UPDATE CASE_TBL
                
 SELECT i, -i, f, -f FROM CASE_TBL;
 
+select nullif(i,2) from case_tbl;
+
 SELECT  *    
   FROM CASE_TBL a, CASE2_TBL b
   WHERE COALESCE(f,b.i) = 2;
 
-select nullif(i,2) from case_tbl;
