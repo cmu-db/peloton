@@ -52,7 +52,7 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
     }
   }  // WHILE
 
-  EXPECT_EQ(expected_tilegroup_count, actual_tile_group_count);
+  EXPECT_EQ(expected_tilegroup_count + 1, actual_tile_group_count);
 }
 
 }  // End test namespace
