@@ -19,7 +19,7 @@ namespace peloton {
 namespace concurrency {
 
 struct SpecTxnContext {
-  SpecTxnContext() : begin_cid_(MAX_CID), outer_dep_count_(0), is_cascading_abort_(false) {}
+  SpecTxnContext() : begin_cid_(MAX_CID), inner_dep_set_changeable_(true), outer_dep_count_(0), is_cascading_abort_(false) {}
 
   void SetBeginCid(const cid_t &begin_cid) {
     assert(begin_cid_ == MAX_CID);
@@ -32,16 +32,22 @@ struct SpecTxnContext {
     outer_dep_set_.clear();
 
     inner_dep_set_.clear();
+    inner_dep_set_changeable_ = true;
+
     outer_dep_count_ = 0;
     is_cascading_abort_ = false;
   }
 
   cid_t begin_cid_;
+  
   // outer_dep_set is thread_local, and is safe to modify it.
   std::unordered_set<txn_id_t> outer_dep_set_;
+  
   // inner_dep_set is modified by other transactions. so lock is required.
   Spinlock inner_dep_set_lock_;
   std::unordered_set<txn_id_t> inner_dep_set_;
+  bool inner_dep_set_changeable_;
+
   volatile std::atomic<size_t> outer_dep_count_;   // default: 0
   volatile std::atomic<bool> is_cascading_abort_;  // default: false
 };
@@ -154,16 +160,21 @@ class SpeculativeReadTxnManager : public TransactionManager {
     //   dst_txn_context.inner_dep_set_.insert(src_txn_id);
     // }
 
-    bool ret = running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&src_txn_id](SpecTxnContext *context){
+    bool changeable = true;
+    bool ret = running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext *context){
       context->inner_dep_set_lock_.Lock();
-      assert(context->inner_dep_set_.find(src_txn_id) == context->inner_dep_set_.end());
-      context->inner_dep_set_.insert(src_txn_id);
+      if (context->inner_dep_set_changeable_ == true) {
+        assert(context->inner_dep_set_.find(src_txn_id) == context->inner_dep_set_.end());
+        context->inner_dep_set_.insert(src_txn_id);
+      } else {
+        changeable = false;
+      }
       context->inner_dep_set_lock_.Unlock();
     });
 	
-	if (ret == false) {
-		return false;
-	}
+	  if (changeable == false || ret == false) {
+		  return false;
+	  }
     spec_txn_context.outer_dep_set_.insert(dst_txn_id);
     spec_txn_context.outer_dep_count_++;
     return true;
@@ -222,6 +233,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
           context->outer_dep_count_--;
         });
       }
+      spec_txn_context.inner_dep_set_changeable_ = false;
       spec_txn_context.inner_dep_set_lock_.Unlock();
     }
   }
@@ -251,6 +263,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
           context->is_cascading_abort_ = true;
         });
       }
+      spec_txn_context.inner_dep_set_changeable_ = false;
       spec_txn_context.inner_dep_set_lock_.Unlock();
     }
   }
