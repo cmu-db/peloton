@@ -94,7 +94,7 @@ bool ExchangeHashExecutor::DExecute() {
       assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
       auto tuple_value =
         reinterpret_cast<const expression::TupleValueExpression *>(
-          hashkey);
+          hashkey.get());
       column_ids_.push_back(tuple_value->GetColumnId());
     }
 
