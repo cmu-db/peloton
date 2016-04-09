@@ -50,28 +50,6 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-//===------------------------------===//
-// Utility
-//===------------------------------===//
-
-/**
- * Cook a ProjectInfo object from a tuple.
- * Simply use a ConstantValueExpression for each attribute.
- */
-planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    auto value = tuple->GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
-}
-
 //===--------------------------------------------------------------------===//
 // Mutator Tests
 //===--------------------------------------------------------------------===//
@@ -90,13 +68,9 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
 
-    auto project_info = MakeProjectInfoFromTuple(tuple);
-
-    planner::InsertPlan node(table, project_info);
+    planner::InsertPlan node(table, nullptr, tuple);
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
-
-    delete tuple;
   }
 
   txn_manager.CommitTransaction();
@@ -208,9 +182,7 @@ TEST_F(MutateTests, StressTests) {
   storage::Tuple *tuple;
   tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
-  auto project_info = MakeProjectInfoFromTuple(tuple);
-
-  planner::InsertPlan node(table, project_info);
+  planner::InsertPlan node(table, nullptr, tuple);
   executor::InsertExecutor executor(&node, context.get());
 
   try {
@@ -219,11 +191,8 @@ TEST_F(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  delete tuple;
-
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
-  project_info = MakeProjectInfoFromTuple(tuple);
-  planner::InsertPlan node2(table, project_info);
+  planner::InsertPlan node2(table, nullptr, tuple);
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
@@ -232,8 +201,6 @@ TEST_F(MutateTests, StressTests) {
   } catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
-
-  delete tuple;
 
   txn_manager.CommitTransaction();
 

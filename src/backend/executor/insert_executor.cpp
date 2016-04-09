@@ -111,24 +111,35 @@ bool InsertExecutor::DExecute() {
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
     auto schema = target_table_->GetSchema();
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
+    auto tuple = node.GetTuple();
+    std::unique_ptr<storage::Tuple> project_tuple;
 
-    // There should be no direct maps
-    assert(project_info);
-    assert(project_info->GetDirectMapList().size() == 0);
+    // Check if this is not a raw tuple
+    if(tuple == nullptr) {
+      // Otherwise, there must exist a project info
+      assert(project_info);
+      // There should be no direct maps
+      assert(project_info->GetDirectMapList().size() == 0);
 
-    for (auto target : project_info->GetTargetList()) {
-      peloton::Value value =
-          target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(target.first, value, executor_pool);
+      project_tuple.reset(new storage::Tuple(schema, true));
+
+      for (auto target : project_info->GetTargetList()) {
+        peloton::Value value =
+            target.second->Evaluate(nullptr, nullptr, executor_context_);
+        project_tuple->SetValue(target.first, value, executor_pool);
+      }
+
+      // Set tuple to point to temporary project tuple
+      tuple = project_tuple.get();
     }
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
+
       // Carry out insertion
       ItemPointer location =
-          target_table_->InsertTuple(transaction_, tuple.get());
+          target_table_->InsertTuple(transaction_, tuple);
       LOG_INFO("Inserted into location: %lu, %lu", location.block,
                location.offset);
 
@@ -149,14 +160,16 @@ bool InsertExecutor::DExecute() {
               LOGRECORD_TYPE_TUPLE_INSERT, transaction_->GetTransactionId(),
               target_table_->GetOid(), target_table_->GetDatabaseOid(),
               location, INVALID_ITEMPOINTER,
-              tuple.get());
+              tuple);
 
           logger->Log(record);
         }
       }
+
+      executor_context_->num_processed += 1;  // insert one
+
     }
 
-    executor_context_->num_processed += 1;  // insert one
     done_ = true;
     return true;
   }
