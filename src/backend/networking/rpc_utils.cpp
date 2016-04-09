@@ -13,6 +13,8 @@
 #include "rpc_utils.h"
 #include "backend/common/cast.h"
 
+#include <memory>
+
 namespace peloton {
 namespace networking {
 
