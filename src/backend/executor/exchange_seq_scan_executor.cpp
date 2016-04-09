@@ -37,6 +37,7 @@ bool ExchangeSeqScanExecutor::DInit() {
     table_tile_group_count_ = target_table_->GetTileGroupCount();
 
     if (column_ids_.empty()) {
+      LOG_INFO("Column count: %lu", target_table_->GetSchema()->GetColumnCount());
       column_ids_.resize(target_table_->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
@@ -136,8 +137,8 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
                                               concurrency::TransactionManager* transaction_manager) {
   LOG_INFO(
       "Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, "
-      "executor: %s",
-      GetRawNode()->GetInfo().c_str());
+      "executor: %s with assigned tile group offset %lu" ,
+      GetRawNode()->GetInfo().c_str(), assigned_tile_group_offset);
 
   bool seq_failure = false;
 
