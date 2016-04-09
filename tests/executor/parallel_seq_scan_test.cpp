@@ -19,8 +19,8 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/exchange_seq_scan_executor.h
-#include "backend/executor/seq_scan_executor.h
+#include "backend/executor/exchange_seq_scan_executor.h"
+#include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/planner/seq_scan_plan.h"
@@ -154,8 +154,7 @@ executor::LogicalTile *GetNextTile(executor::AbstractExecutor &executor) {
 }
 
 
-void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
-             int expected_num_cols) {
+void RunTest(executor::ExchangeSeqScanExecutor &executor, int expected_num_tiles, int expected_num_cols) {
   EXPECT_TRUE(executor.Init());
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
   for (int i = 0; i < expected_num_tiles; i++) {

@@ -81,6 +81,6 @@ loader_test_SOURCES = \
 					$(executor_tests_common) \
 					executor/loader_test.cpp
 
- parallel_seq_scan_test_SOURCES = \
-                                  $(executor_tests_common) \
-                                 executor/parallel_seq_scan_test.cpp
+parallel_seq_scan_test_SOURCES = \
+                    $(executor_tests_common) \
+                    executor/parallel_seq_scan_test.cpp

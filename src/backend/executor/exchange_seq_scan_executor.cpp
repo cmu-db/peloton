@@ -6,7 +6,7 @@
 #include "exchange_seq_scan_executor.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/planner/seq_scan_plan.h"
+#include "backend/planner/exchange_seq_scan_plan.h"
 #include "backend/common/thread_manager.h"
 #include "backend/executor/exchange_seq_scan_executor.h"
 #include "backend/executor/parallel_seq_scan_task_response.h"
@@ -27,7 +27,7 @@ bool ExchangeSeqScanExecutor::DInit() {
   if (!status) return false;
 
   // Grab data from plan node.
-  const planner::SeqScanPlan &node = GetPlanNode<planner::SeqScanPlan>();
+  const planner::ExchangeSeqScanPlan &node = GetPlanNode<planner::ExchangeSeqScanPlan>();
 
   target_table_ = node.GetTable();
 
