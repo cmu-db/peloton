@@ -38,8 +38,9 @@
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
-
 extern CheckpointType peloton_checkpoint_mode;
+
+int logger_id_counter = 0;
 
 #define LOG_FILE_SWITCH_LIMIT (1024)
 
@@ -113,7 +114,9 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     this->checkpoint.Init();
 
     // abj1 adding code here!
-    LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
+    LOG_INFO("Log dir before getting ID is %s",
+             this->peloton_log_directory.c_str());
+    this->SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
     this->InitLogDirectory();
     this->InitLogFilesList();
     this->log_file_fd = -1;   // this is a restart or a new start
@@ -369,8 +372,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
     }
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid){
-    	txn_manager.SetNextCid(max_cid + 1);
+    if (txn_manager.GetNextCommitId() < max_cid) {
+      txn_manager.SetNextCid(max_cid + 1);
     }
 
     RecoverIndex();
@@ -1341,6 +1344,11 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
     }
   }
   return max_commit_id;
+}
+
+void WriteAheadFrontendLogger::SetLoggerID(int id) {
+  this->logger_id = id;
+  this->peloton_log_directory += std::to_string(id);
 }
 
 }  // namespace logging

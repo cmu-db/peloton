@@ -139,6 +139,8 @@ class LogManager {
   bool syncronization_commit = false;
 
   std::string log_file_name;
+
+  int frontend_logger_assign_counter;
 };
 
 }  // namespace logging

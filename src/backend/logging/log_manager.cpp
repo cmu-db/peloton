@@ -32,7 +32,7 @@ namespace logging {
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
 
-LogManager::LogManager() {}
+LogManager::LogManager() { this->frontend_logger_assign_counter = 0; }
 
 LogManager::~LogManager() {}
 
@@ -56,8 +56,10 @@ void LogManager::StartStandbyMode() {
       std::unique_ptr<FrontendLogger> frontend_logger(
           FrontendLogger::GetFrontendLogger(peloton_logging_mode));
 
-      if (frontend_logger.get() != nullptr)
+      if (frontend_logger.get() != nullptr) {
+        // frontend_logger.get()->SetLoggerID(i);
         frontend_loggers.push_back(std::move(frontend_logger));
+      }
     }
   }
 
@@ -233,11 +235,13 @@ BackendLogger *LogManager::GetBackendLogger() {
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
-  int i = 0;
   if (backend_logger == nullptr) {
     backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
     // TODO for now, add all backend loggers to FrontendLogger(0), change this
-    frontend_loggers[i].get()->AddBackendLogger(backend_logger);
+    int i;
+    i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
+    frontend_loggers[i % NUM_FRONTEND_LOGGERS].get()->AddBackendLogger(
+        backend_logger);
   }
 
   return backend_logger;
