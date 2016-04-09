@@ -15,7 +15,7 @@ manager_test_SOURCES = catalog/manager_test.cpp
 
 tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
 
-constraints_test_SOURCES = catalog/constraints_tests_util.cpp \
-                           						harness.cpp \
-                                catalog/constraints_test.cpp \
-                                concurrency/transaction_tests_util.cpp
+constraints_test_SOURCES =  catalog/constraints_tests_util.cpp \
+                            harness.cpp \
+                            catalog/constraints_test.cpp \
+                            concurrency/transaction_tests_util.cpp
