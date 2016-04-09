@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <backend/executor/executors.h>
+#include <backend/planner/exchange_seq_scan_plan.h>
 
 #include "harness.h"
 
@@ -20,7 +21,8 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/seq_scan_executor.h"
+#include "backend/executor/exchange_seq_scan_executor.h
+#include "backend/executor/seq_scan_executor.h
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/planner/seq_scan_plan.h"
@@ -242,8 +244,10 @@ TEST_F(ParallelSeqScanTests, TwoTileGroupsWithPredicateTest) {
   std::vector<oid_t> column_ids({0, 1, 3});
 
   // Create plan node.
-  planner::SeqScanPlan node(table.get(), CreatePredicate(g_tuple_ids),
+  planner::SeqScanPlan seq_node(table.get(), CreatePredicate(g_tuple_ids),
                             column_ids);
+
+  planner::ExchangeSeqScanPlan node(&seq_node);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -265,7 +269,8 @@ TEST_F(ParallelSeqScanTests, NonLeafNodePredicateTest) {
   std::vector<oid_t> column_ids;
 
   // Create plan node.
-  planner::SeqScanPlan node(table, CreatePredicate(g_tuple_ids), column_ids);
+  planner::SeqScanPlan seq_node(table, CreatePredicate(g_tuple_ids), column_ids);
+  planner::ExchangeSeqScanPlan node(&seq_node);
   // This table is generated so we can reuse the test data of the test case
   // where seq scan is a leaf node. We only need the data in the tiles.
   std::unique_ptr<storage::DataTable> data_table(CreateTable());
