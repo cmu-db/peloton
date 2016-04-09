@@ -30,7 +30,7 @@ class ExchangeSeqScanExecutor : public AbstractExchangeExecutor,
   explicit ExchangeSeqScanExecutor(const planner::AbstractPlan *node,
                                    ExecutorContext *executor_context);
 
-  void ThreadExecute(oid_t assigned_tile_group_offset, concurrency::TransactionManager& transaction_manager);
+  void ThreadExecute(oid_t assigned_tile_group_offset, concurrency::TransactionManager* transaction_manager);
 
  protected:
   bool DInit();

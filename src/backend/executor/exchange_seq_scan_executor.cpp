@@ -68,7 +68,7 @@ bool ExchangeSeqScanExecutor::DExecute() {
         std::function<void()> f_seq_scan =
             std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
                       current_tile_group_offset_,
-                      transaction_manager);
+                      &transaction_manager);
         ThreadManager::GetInstance().AddTask(f_seq_scan);
 
         current_tile_group_offset_++;
@@ -133,7 +133,7 @@ bool ExchangeSeqScanExecutor::DExecute() {
 }
 
 void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
-                                              concurrency::TransactionManager& transaction_manager) {
+                                              concurrency::TransactionManager* transaction_manager) {
   LOG_INFO(
       "Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, "
       "executor: %s",
@@ -152,14 +152,14 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
   std::vector<oid_t> position_list;
   for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
     // check transaction visibility
-    if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+    if (transaction_manager->IsVisible(tile_group_header, tuple_id)) {
       // if the tuple is visible, then perform predicate evaluation.
       if (predicate_ == nullptr) {
         position_list.push_back(tuple_id);
-        auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(),
+        auto res = transaction_manager->PerformRead(tile_group->GetTileGroupId(),
                                                    tuple_id);
         if (!res) {
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          transaction_manager->SetTransactionResult(RESULT_FAILURE);
           seq_failure = true;
           break;
         }
@@ -170,10 +170,10 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           position_list.push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(
+          auto res = transaction_manager->PerformRead(
               tile_group->GetTileGroupId(), tuple_id);
           if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            transaction_manager->SetTransactionResult(RESULT_FAILURE);
             seq_failure = true;
             break;
           }
