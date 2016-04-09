@@ -117,8 +117,6 @@ bool SsiTxnManager::AcquireOwnership(
 
   {
     // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-
-    auto txn_id = current_txn->GetTransactionId();
     GetReadLock(tile_group_header, tuple_id);
     ReadList *header = GetReaderList(tile_group_header, tuple_id);
 
@@ -636,7 +634,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
 // count
 void SsiTxnManager::CleanUp() {
 
-  std::unordered_set<Transaction *> garbage_txn;
+  std::unordered_set<SsiTxnContext *> garbage_ctx;
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
@@ -670,28 +668,27 @@ void SsiTxnManager::CleanUp() {
       if (end_cid < min_begin) {
         // we can safely remove it from table
         LOG_INFO("remove %ld in table", ctx->transaction_->GetTransactionId());
-        garbage_txn.insert(ctx->transaction_);
+        garbage_ctx.insert(ctx);
       }
     }
-  }
-
-  std::unordered_set<txn_id_t> garbage_id(garbage_txn.size());
-  // remove txn's reader list firstly
-  for(auto txn : garbage_txn) {
-    RemoveReader(txn);
-    garbage_id.insert(txn->GetTransactionId());
-    delete txn;
   }
 
   // remove garbage from table
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    for(auto txn_id : garbage_id) {
-      auto txn_ctx = txn_table_[txn_id];
-      txn_table_.erase(txn_id);
-      delete txn_ctx;
+    for(auto ctx : garbage_ctx) {
+      txn_table_.erase(ctx->transaction_->GetTransactionId());
     }
   }
+
+  // remove txn's reader list firstly
+  for(auto ctx : garbage_ctx) {
+    RemoveReader(ctx->transaction_);
+    delete ctx->transaction_;
+    delete ctx;
+  }
+
+
 }
 
 void SsiTxnManager::CleanUpBg() {
