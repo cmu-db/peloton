@@ -74,14 +74,15 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   // 2) Set up project info
   planner::ProjectInfo::DirectMapList direct_map_list = {
       {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates (empty)
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -91,12 +92,13 @@ TEST_F(AggregateTests, SortedDistinctTest) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORTED);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -175,8 +177,9 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 0}},
                                                          {1, {1, 0}}};
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -186,7 +189,7 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   agg_terms.push_back(sumb);
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -195,12 +198,14 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORTED);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema,
+      AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -279,8 +284,9 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   planner::ProjectInfo::DirectMapList direct_map_list = {
       {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -294,7 +300,7 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   agg_terms.push_back(maxc);
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -303,12 +309,13 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_SORTED);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_SORTED);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -388,14 +395,15 @@ TEST_F(AggregateTests, HashDistinctTest) {
   // 2) Set up project info
   planner::ProjectInfo::DirectMapList direct_map_list = {
       {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates (empty)
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -405,12 +413,13 @@ TEST_F(AggregateTests, HashDistinctTest) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_HASH);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -480,8 +489,9 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 1}},
                                                          {1, {1, 0}}};
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -491,7 +501,7 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   agg_terms.push_back(sumC);
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -500,12 +510,13 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_HASH);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -573,8 +584,9 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   planner::ProjectInfo::DirectMapList direct_map_list = {
       {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -590,7 +602,7 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   agg_terms.push_back(countDistinctB);
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -599,12 +611,13 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_HASH);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_HASH);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
@@ -684,8 +697,9 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   planner::ProjectInfo::DirectMapList direct_map_list = {
       {0, {1, 0}}, {1, {1, 1}}, {2, {1, 2}}};
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -705,7 +719,7 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   agg_terms.push_back(countDistinctB);
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression* predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
@@ -714,12 +728,13 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   for (auto column_index : set) {
     columns.push_back(data_table_schema->GetColumn(column_index));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(columns));
 
   // OK) Create the plan node
-  planner::AggregatePlan node(proj_info, predicate, std::move(agg_terms),
-                              std::move(group_by_columns), output_table_schema,
-                              AGGREGATE_TYPE_PLAIN);
+  planner::AggregatePlan node(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN);
 
   // Create and set up executor
   auto txn2 = txn_manager.BeginTransaction();
