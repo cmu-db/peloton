@@ -18,6 +18,8 @@
 #include "postgres/include/access/transam.h"
 #include "postgres/include/access/tupdesc.h"
 
+#include <memory>
+
 namespace peloton {
 namespace networking {
 
