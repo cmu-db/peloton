@@ -42,6 +42,7 @@ struct SpecTxnContext {
     is_cascading_abort_ = false;
   }
 
+  // the begin commit id of current transaction.
   cid_t begin_cid_;
 
   // outer_dep_set is thread_local, and is safe to modify it.
@@ -50,9 +51,10 @@ struct SpecTxnContext {
   // inner_dep_set is modified by other transactions. so lock is required.
   Spinlock inner_dep_set_lock_;
   std::unordered_set<txn_id_t> inner_dep_set_;
-  bool inner_dep_set_changeable_;
+  // whether the inner dependent set is still changeable.
+  volatile bool inner_dep_set_changeable_;
 
-  volatile std::atomic<size_t> outer_dep_count_;   // default: 0
+  std::atomic<size_t> outer_dep_count_;   // default: 0
   volatile std::atomic<bool> is_cascading_abort_;  // default: false
 };
 
@@ -189,38 +191,33 @@ class SpeculativeReadTxnManager : public TransactionManager {
   }
 
   void NotifyCommit() {
-
     // some other transactions may also modify my inner dep set.
     // so lock first.
-    {
-      spec_txn_context.inner_dep_set_lock_.Lock();
-      for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-            .update_fn(child_txn_id, [](SpecTxnContext * context) {
-          assert(context->outer_dep_count_ > 0);
-          context->outer_dep_count_--;
-        });
-      }
-      spec_txn_context.inner_dep_set_changeable_ = false;
-      spec_txn_context.inner_dep_set_lock_.Unlock();
+    spec_txn_context.inner_dep_set_lock_.Lock();
+    for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+        assert(context->outer_dep_count_ > 0);
+        context->outer_dep_count_--;
+      });
     }
+    spec_txn_context.inner_dep_set_changeable_ = false;
+    spec_txn_context.inner_dep_set_lock_.Unlock();
   }
 
   void NotifyAbort() {
     // some other transactions may also modify my inner dep set.
     // so lock first.
-    {
-      spec_txn_context.inner_dep_set_lock_.Lock();
-      for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-        running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-            .update_fn(child_txn_id, [](SpecTxnContext * context) {
-          assert(context->outer_dep_count_ > 0);
-          context->is_cascading_abort_ = true;
-        });
-      }
-      spec_txn_context.inner_dep_set_changeable_ = false;
-      spec_txn_context.inner_dep_set_lock_.Unlock();
+    spec_txn_context.inner_dep_set_lock_.Lock();
+    for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+        assert(context->outer_dep_count_ > 0);
+        context->is_cascading_abort_ = true;
+      });
     }
+    spec_txn_context.inner_dep_set_changeable_ = false;
+    spec_txn_context.inner_dep_set_lock_.Unlock();
   }
 
   virtual Result CommitTransaction();

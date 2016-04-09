@@ -37,7 +37,6 @@ SpeculativeReadTxnManager &SpeculativeReadTxnManager::GetInstance() {
 // however, if the first version that is visible is the newer one,
 // then it is possible that we obtain two versions.
 // in this case, we rely on validation to abort this transaction.
-// CONSIDER: any optimization??
 bool SpeculativeReadTxnManager::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -314,7 +313,6 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   // we do not start validation until the all the dependencies have been
   // cleared.
-  // TODO: optimize it??
   if (IsCommittable() == false) {
     AbortTransaction();
   }

@@ -73,20 +73,6 @@ class TransactionManager {
         return false;
       }
     } else {
-//      // if the tuple is owned by other transactions or not owned by anyone
-//      bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
-//      bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
-//      if ((!invalidated) && (activated || tuple_begin_cid == MAX_CID)) {
-//        // return true when:
-//        //  1) valid and activated version owned by no one
-//        //  2) valid and activated version owned by others
-//        //  3) dirty insert and update owned by others, for an update of others we see two versions
-//        return true;
-//      }
-//      // return false when:
-//      //    1) Dirty delete
-//      //    2) Old versions
-//      return false;
       bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
       bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
       if (tuple_txn_id != INITIAL_TXN_ID) {
