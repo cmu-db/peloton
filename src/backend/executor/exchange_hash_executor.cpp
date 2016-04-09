@@ -83,7 +83,7 @@ bool ExchangeHashExecutor::DExecute() {
   LOG_INFO("Exchange Hash Executor");
 
   if (done_ == false) {
-    const planner::ExchangeHashPlan& node = GetPlanNode<planner::ExchangeHashPlan>();
+    //const planner::ExchangeHashPlan& node = GetPlanNode<planner::ExchangeHashPlan>();
 
     /* *
     * HashKeys is a vector of TupleValue expr
@@ -91,15 +91,15 @@ bool ExchangeHashExecutor::DExecute() {
     * attributes of the underlying table.
     * The hash table is built on top of these hash key attributes
     * */
-    auto &hashkeys = node.GetHashKeys();
+    //auto &hashkeys = node.GetHashKeys();
 
-    for (auto &hashkey : hashkeys) {
-      assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
-      auto tuple_value =
-        reinterpret_cast<const expression::TupleValueExpression *>(
-          hashkey);
-      column_ids_.push_back(tuple_value->GetColumnId());
-    }
+    //for (auto &hashkey : hashkeys) {
+    //  assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+      // auto tuple_value =
+      //  reinterpret_cast<const expression::TupleValueExpression *>(
+      //    hashkey);
+      // column_ids_.push_back(tuple_value->GetColumnId());
+    //}
 
     // First, get all the input logical tiles
     size_t child_tile_iter = 0;

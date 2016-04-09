@@ -37,8 +37,8 @@ public:
 
   const std::string GetInfo() const { return "ExchangeSeqScan"; }
 
-  AbstractPlan *Copy() const {
-     return new ExchangeSeqScanPlan(this);
+  std::unique_ptr<peloton::planner::AbstractPlan> Copy() const {
+     return std::unique_ptr<peloton::planner::AbstractPlan> (new ExchangeSeqScanPlan(this));
   }
 };
 
