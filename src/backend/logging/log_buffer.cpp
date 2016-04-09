@@ -18,8 +18,11 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // Log Buffer
 //===--------------------------------------------------------------------===//
-size_t LogBuffer::GetSize(){
-	return size_;
+size_t LogBuffer::GetSize() { return size_; }
+
+void LogBuffer::SetSize(size_t size) {
+  assert(size < capacity_);
+  size_ = size;
 }
 
 }  // namespace logging

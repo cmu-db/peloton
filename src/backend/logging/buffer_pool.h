@@ -23,15 +23,10 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 class BufferPool {
  public:
-  BufferPool(const BufferPool &) = delete;
-  BufferPool &operator=(const BufferPool &) = delete;
-  BufferPool(BufferPool &&) = delete;
-  BufferPool &operator=(BufferPool &&) = delete;
+  virtual ~BufferPool() {}
 
-  virtual ~BufferPool(void);
-
-  virtual bool Put(std::shared_ptr<LogBuffer>);
-  virtual std::shared_ptr<LogBuffer> Get();
+  virtual bool Put(std::shared_ptr<LogBuffer>) = 0;
+  virtual std::shared_ptr<LogBuffer> Get() = 0;
 };
 
 }  // namespace logging
