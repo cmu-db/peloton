@@ -27,6 +27,8 @@
 namespace peloton {
 namespace concurrency {
 
+thread_local SsiTxnContext *current_txn_ctx;
+
 SsiTxnManager &SsiTxnManager::GetInstance() {
   static SsiTxnManager txn_manager;
   return txn_manager;
@@ -123,31 +125,44 @@ bool SsiTxnManager::AcquireOwnership(
     bool should_abort = false;
     while (header != nullptr) {
       // For all owner of siread lock on this version
-      auto owner = header->txn->GetTransactionId();
+      auto owner_ctx = header->txn_ctx;
+
+      // Lock the transaction context
+      owner_ctx->lock_.Lock();
+
       // Myself, skip
-      if (owner == txn_id) {
+      if (owner_ctx == current_txn_ctx || owner_ctx->is_abort_ == true) {
         header = header->next;
+
+        // Unlock the transaction context
+        owner_ctx->lock_.Unlock();
         continue;
       }
-      assert(txn_table_.count(owner) > 0);
-      auto &ctx = txn_table_.at(owner);
-      auto end_cid = ctx.transaction_->GetEndCommitId();
+
+      // auto &ctx = txn_table_.at(owner_ctx);
+      auto end_cid = owner_ctx->transaction_->GetEndCommitId();
 
       // Owner is running, then siread lock owner has an out edge to me
       if (end_cid == INVALID_TXN_ID) {
-        SetInConflict(txn_id);
-        SetOutConflict(owner);
-        LOG_INFO("set %ld in, set %ld out", txn_id, owner);
+        SetInConflict(current_txn_ctx);
+        SetOutConflict(owner_ctx);
+        LOG_INFO("set %ld in, set %ld out", txn_id, owner_ctx->transaction_->GetTransactionId());
       } else {
         // Owner has commited and ownner commit after I start, then I must abort
-        if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner)) {
+        if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner_ctx)) {
           should_abort = true;
           LOG_INFO("abort in acquire");
+
+          // Unlock the transaction context
+          owner_ctx->lock_.Unlock();
           break;
         }
       }
 
       header = header->next;
+
+      // Unlock the transaction context
+      owner_ctx->lock_.Unlock();
     }
     ReleaseReadLock(tile_group_header, tuple_id);
 
@@ -183,8 +198,8 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         // The writer have not been removed from the txn table
         LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
                  tuple_id);
-        SetInConflict(writer);
-        SetOutConflict(txn_id);
+        SetInConflict(txn_table_.at(writer));
+        SetOutConflict(current_txn_ctx);
       }
     }
   }
@@ -217,9 +232,9 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         if (creator == txn_id)
           should_skip = true;
         else {
-          auto &ctx = txn_table_.at(creator);
-          if (ctx.transaction_->GetEndCommitId() != INVALID_TXN_ID 
-            && ctx.transaction_->GetEndCommitId() < current_txn->GetBeginCommitId()) {
+          auto ctx = txn_table_.at(creator);
+          if (ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID
+            && ctx->transaction_->GetEndCommitId() < current_txn->GetBeginCommitId()) {
             should_skip = true;
           }
         }
@@ -230,17 +245,27 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         continue;
       }
       
-      auto &ctx = txn_table_.at(creator);
-      // If creator committed and has out_confict, since creator has commited,
-      // I must abort
-      if (ctx.transaction_->GetEndCommitId() != INVALID_TXN_ID &&
-          ctx.out_conflict_) {
-        LOG_INFO("abort in read");
-        return false;
+      auto creator_ctx = txn_table_.at(creator);
+      // Lock the transaction context
+      creator_ctx->lock_.Lock();
+
+      if (creator_ctx->is_abort_ == false) {
+        // If creator committed and has out_confict, since creator has commited,
+        // I must abort
+        if (creator_ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
+            creator_ctx->out_conflict_) {
+          LOG_INFO("abort in read");
+          // Unlock the transaction context
+          creator_ctx->lock_.Unlock();
+          return false;
+        }
+        // Creator not commited, add an edge
+        SetInConflict(creator_ctx);
+        SetOutConflict(current_txn_ctx);
       }
-      // Creator not commited, add an edge
-      SetInConflict(creator);
-      SetOutConflict(txn_id);
+
+      // Unlock the transaction context
+      creator_ctx->lock_.Unlock();
 
       next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
     }
@@ -378,14 +403,27 @@ Result SsiTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
-  auto txn_id = current_txn->GetTransactionId();
+//  auto txn_id = current_txn->GetTransactionId();
   auto &rw_set = current_txn->GetRWSet();
+  cid_t end_commit_id = GetNextCommitId();
+  Result ret;
 
   bool should_abort = false;
   {
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     // Dangerous!
-    if (GetInConflict(txn_id) && GetOutConflict(txn_id)) should_abort = true;
+    current_txn_ctx->lock_.Lock();
+    if (GetInConflict(current_txn_ctx) && GetOutConflict(current_txn_ctx)) {
+      should_abort = true;
+      current_txn_ctx->is_abort_ = true;
+    }
+
+    // generate transaction id.
+    ret = current_txn->GetResult();
+    if (should_abort == false && ret == Result::RESULT_SUCCESS) {
+      current_txn->SetEndCommitId(end_commit_id);
+    }
+    current_txn_ctx->lock_.Unlock();
   }
 
   if (should_abort) {
@@ -393,8 +431,6 @@ Result SsiTxnManager::CommitTransaction() {
     return AbortTransaction();
   }
 
-  // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
   //////////////////////////////////////////////////////////
 
   auto &log_manager = logging::LogManager::GetInstance();
@@ -475,17 +511,19 @@ Result SsiTxnManager::CommitTransaction() {
     }
   }
   log_manager.LogCommitTransaction(end_commit_id);
-
-  Result ret = current_txn->GetResult();
-  if (ret == Result::RESULT_SUCCESS) {
-    current_txn->SetEndCommitId(end_commit_id);
-  }
-
+  current_txn = nullptr;
   return ret;
 }
 
 Result SsiTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+
+  if (current_txn_ctx->is_abort_ == false) {
+    // Set abort flag
+    current_txn_ctx->lock_.Lock();
+    current_txn_ctx->is_abort_ = true;
+    current_txn_ctx->lock_.Unlock();
+  }
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -559,8 +597,7 @@ Result SsiTxnManager::AbortTransaction() {
     txn_table_.erase(txn_id);
   }
 
-
-
+  delete current_txn_ctx;
   delete current_txn;
   current_txn = nullptr;
 
@@ -609,11 +646,11 @@ void SsiTxnManager::CleanUp() {
     for (auto &item : txn_table_) {
       // find smallest begin cid of the running transaction
       auto &ctx = item.second;
-      if (ctx.transaction_->GetEndCommitId() == INVALID_TXN_ID) {
+      if (ctx->transaction_->GetEndCommitId() == INVALID_TXN_ID) {
         // txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
         // so the first running transaction's begin_cid must be the smallest
         // see BeginTransaction()
-        min_begin = ctx.transaction_->GetBeginCommitId();
+        min_begin = ctx->transaction_->GetBeginCommitId();
         break;
       }
     }
@@ -621,7 +658,7 @@ void SsiTxnManager::CleanUp() {
     // remove committed transactions, whose end_cid < min_begin
     for (auto itr = txn_table_.begin(); itr != txn_table_.end(); itr++) {
       auto &ctx = itr->second;
-      auto end_cid = ctx.transaction_->GetEndCommitId();
+      auto end_cid = ctx->transaction_->GetEndCommitId();
       if (end_cid == INVALID_TXN_ID) {
         // running transaction
         // then we know that the subsequent txn's end_cid > min_begin
@@ -632,8 +669,8 @@ void SsiTxnManager::CleanUp() {
       // record garbage
       if (end_cid < min_begin) {
         // we can safely remove it from table
-        LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
-        garbage_txn.insert(ctx.transaction_);
+        LOG_INFO("remove %ld in table", ctx->transaction_->GetTransactionId());
+        garbage_txn.insert(ctx->transaction_);
       }
     }
   }
@@ -650,7 +687,9 @@ void SsiTxnManager::CleanUp() {
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     for(auto txn_id : garbage_id) {
+      auto txn_ctx = txn_table_[txn_id];
       txn_table_.erase(txn_id);
+      delete txn_ctx;
     }
   }
 }
