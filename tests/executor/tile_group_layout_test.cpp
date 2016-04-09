@@ -177,11 +177,11 @@ void ExecuteTileGroupTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
