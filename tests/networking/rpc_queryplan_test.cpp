@@ -23,7 +23,7 @@ class RpcQueryPlanTests : public PelotonTest {};
 
 TEST_F(RpcQueryPlanTests, BasicTest) {
 
-    TupleDesc tuple_desc = (TupleDesc) malloc(sizeof(struct tupleDesc));
+    TupleDesc tuple_desc = new tupleDesc;
     tuple_desc->attrs = NULL;
     tuple_desc->constr = NULL;
     tuple_desc->natts = 0;
@@ -55,7 +55,7 @@ TEST_F(RpcQueryPlanTests, BasicTest) {
     // Becuase the plan is not completed, so it is false
     EXPECT_EQ(serialize, false);
 
-    free(tuple_desc);
+    delete tuple_desc;
 }
 
 }
