@@ -53,8 +53,7 @@ public:
     return this->column_ids_;
   }
 
-  void BuildHashTableThreadMain(HashMapType *table, LogicalTile * tile, size_t child_tile_itr,
-                              BlockingQueue<AbstractParallelTaskResponse *> *queue);
+  void BuildHashTableThreadMain(LogicalTile * tile, size_t child_tile_itr);
 
 protected:
   bool DInit();

@@ -40,29 +40,26 @@ bool ExchangeHashExecutor::DInit() {
   return true;
 }
 
-void ExchangeHashExecutor::BuildHashTableThreadMain( HashMapType *table, LogicalTile *tile,
-                                                     size_t child_tile_itr,
-                                                     BlockingQueue<AbstractParallelTaskResponse *> *queue) {
-
+void ExchangeHashExecutor::BuildHashTableThreadMain(LogicalTile *tile, size_t child_tile_itr) {
   // Construct the hash table by going over given logical tile and
   // hashing
   // Go over all tuples in the logical tile
   for (oid_t tuple_id : *tile) {
     // Key : container tuple with a subset of tuple attributes
     // Value : < child_tile offset, tuple offset >
-    bool ok = table->update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
+    bool ok = hash_table_.update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
       inner.insert(std::make_pair(child_tile_itr, tuple_id));
     });
 
     if (!ok) {
-      table->upsert(HashMapType::key_type(tile, tuple_id, &column_ids_), [&](MapValueType& inner) {
+      hash_table_.upsert(HashMapType::key_type(tile, tuple_id, &column_ids_), [&](MapValueType& inner) {
         // It is possbile this insert would succeed.
         // I won't check since I am using unordered_set, even insert succeed,
         // another won't hurt.
         inner.insert(std::make_pair(child_tile_itr, tuple_id));
       }, MapValueType());
 
-      table->update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
+      hash_table_.update_fn(HashMapType::key_type(tile, tuple_id, &column_ids_), [&] (MapValueType& inner) {
         inner.insert(std::make_pair(child_tile_itr, tuple_id));
       });
 
@@ -72,7 +69,7 @@ void ExchangeHashExecutor::BuildHashTableThreadMain( HashMapType *table, Logical
   }
 
   auto response = new ParallelSeqScanTaskResponse(NoRetValue, nullptr);
-  queue->Put(response);
+  queue_.Put(response);
 }
 
 /*
@@ -83,7 +80,7 @@ bool ExchangeHashExecutor::DExecute() {
   LOG_INFO("Exchange Hash Executor");
 
   if (done_ == false) {
-    //const planner::ExchangeHashPlan& node = GetPlanNode<planner::ExchangeHashPlan>();
+    const planner::ExchangeHashPlan& node = GetPlanNode<planner::ExchangeHashPlan>();
 
     /* *
     * HashKeys is a vector of TupleValue expr
@@ -91,15 +88,15 @@ bool ExchangeHashExecutor::DExecute() {
     * attributes of the underlying table.
     * The hash table is built on top of these hash key attributes
     * */
-    //auto &hashkeys = node.GetHashKeys();
+    auto &hashkeys = node.GetHashKeys();
 
-    //for (auto &hashkey : hashkeys) {
-    //  assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
-      // auto tuple_value =
-      //  reinterpret_cast<const expression::TupleValueExpression *>(
-      //    hashkey);
-      // column_ids_.push_back(tuple_value->GetColumnId());
-    //}
+    for (auto &hashkey : hashkeys) {
+      assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+      auto tuple_value =
+        reinterpret_cast<const expression::TupleValueExpression *>(
+          hashkey);
+      column_ids_.push_back(tuple_value->GetColumnId());
+    }
 
     // First, get all the input logical tiles
     size_t child_tile_iter = 0;
@@ -107,7 +104,7 @@ bool ExchangeHashExecutor::DExecute() {
       auto tile = children_[0]->GetOutput();
       child_tiles_.emplace_back(tile);
       std::function<void()> f_build_hash_table = std::bind(&ExchangeHashExecutor::BuildHashTableThreadMain, this,
-                                                           &hash_table_, tile, child_tile_iter, &queue_);
+                                                           tile, child_tile_iter);
       child_tile_iter++;
       ThreadManager::GetInstance().AddTask(f_build_hash_table);
     }
