@@ -24,17 +24,21 @@ namespace concurrency {
 
 struct SsiTxnContext {
   SsiTxnContext(Transaction *t)
-      : transaction_(t), in_conflict_(false), out_conflict_(false) {}
+      : transaction_(t), in_conflict_(false), out_conflict_(false), is_abort_(false) {}
   Transaction *transaction_;
   bool in_conflict_;
   bool out_conflict_;
+  bool is_abort_;
+  Spinlock lock_;
 };
 
+extern thread_local SsiTxnContext *current_txn_ctx;
+
 struct ReadList {
-  Transaction *txn;
+  SsiTxnContext *txn_ctx;
   ReadList *next;
-  ReadList() : txn(nullptr), next(nullptr) {}
-  ReadList(Transaction *t) : txn(t), next(nullptr) {}
+  ReadList() : txn_ctx(nullptr), next(nullptr) {}
+  ReadList(SsiTxnContext *t) : txn_ctx(t), next(nullptr) {}
 };
 
 struct SIReadLock {
@@ -97,9 +101,8 @@ class SsiTxnManager : public TransactionManager {
     //    txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
     Transaction *txn = TransactionManager::BeginTransaction();
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
-
-    txn_table_.insert(
-        std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
+    current_txn_ctx = new SsiTxnContext(txn);
+    txn_table_[txn->GetTransactionId()] = current_txn_ctx;
 
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
@@ -119,7 +122,7 @@ class SsiTxnManager : public TransactionManager {
   // Mutex to protect txn_table_ and sireadlocks
   std::mutex txn_manager_mutex_;
   // Transaction contexts
-  std::map<txn_id_t, SsiTxnContext> txn_table_;
+  std::map<txn_id_t, SsiTxnContext *> txn_table_;
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
   std::map<std::pair<oid_t, oid_t>, std::unique_ptr<SIReadLock>> sireadlocks;
@@ -171,7 +174,7 @@ class SsiTxnManager : public TransactionManager {
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    ReadList *reader = new ReadList(current_txn);
+    ReadList *reader = new ReadList(current_txn_ctx);
 
     GetReadLock(tile_group->GetHeader(), tuple_id);
     ReadList **headp = (ReadList **)(
@@ -198,7 +201,7 @@ class SsiTxnManager : public TransactionManager {
     bool find = false;
 
     while (next != nullptr) {
-      if (next->txn->GetTransactionId() == txn_id) {
+      if (next->txn_ctx->transaction_->GetTransactionId() == txn_id) {
         find = true;
         prev->next = next->next;
         delete next;
@@ -221,29 +224,28 @@ class SsiTxnManager : public TransactionManager {
         tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
   }
 
-  bool GetInConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
-    return txn_table_.at(txn_id).in_conflict_;
+  inline bool GetInConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
+    return txn_ctx->in_conflict_;
   }
 
-  bool GetOutConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
-
-    return txn_table_.at(txn_id).out_conflict_;
+  inline bool GetOutConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
+    return txn_ctx->out_conflict_;
   }
 
-  void SetInConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
+  inline void SetInConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
 
-    LOG_INFO("Set in conflict %lu", txn_id);
-    txn_table_.at(txn_id).in_conflict_ = true;
+    LOG_INFO("Set in conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    txn_ctx->in_conflict_ = true;
   }
 
-  void SetOutConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
+  inline void SetOutConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
 
-    LOG_INFO("Set out conflict %lu", txn_id);
-    txn_table_.at(txn_id).out_conflict_ = true;
+    LOG_INFO("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    txn_ctx->out_conflict_ = true;
   }
 
   void RemoveReader(Transaction *txn);
