@@ -40,6 +40,10 @@ namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
+/////////////////////////////////////////////////////////
+// Create the tables
+/////////////////////////////////////////////////////////
+
 storage::Database* tpcc_database;
 storage::DataTable* warehouse_table;
 storage::DataTable* district_table;
@@ -728,9 +732,6 @@ void CreateOrderLineTable() {
 }
 
 void CreateTPCCDatabase() {
-  /////////////////////////////////////////////////////////
-  // Create tables
-  /////////////////////////////////////////////////////////
 
   // Clean up
   delete tpcc_database;
@@ -761,10 +762,57 @@ void CreateTPCCDatabase() {
 
 }
 
+/////////////////////////////////////////////////////////
+// Load in the tables
+/////////////////////////////////////////////////////////
+
+void LoadWarehouseTable() {
+
+}
+
+void LoadDistrictTable() {
+
+}
+
+void LoadItemTable() {
+
+}
+
+void LoadCustomerTable() {
+
+}
+
+void LoadHistoryTable() {
+
+}
+
+void LoadStockTable() {
+
+}
+
+void LoadOrdersTable() {
+
+}
+
+void LoadNewOrderTable() {
+
+}
+
+void LoadOrderLineTable() {
+
+}
+
 void LoadTPCCDatabase() {
-  /////////////////////////////////////////////////////////
-  // Load in the data
-  /////////////////////////////////////////////////////////
+
+  LoadWarehouseTable();
+  LoadDistrictTable();
+  LoadItemTable();
+  LoadCustomerTable();
+  LoadHistoryTable();
+  LoadStockTable();
+  LoadOrdersTable();
+  LoadNewOrderTable();
+  LoadOrderLineTable();
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
