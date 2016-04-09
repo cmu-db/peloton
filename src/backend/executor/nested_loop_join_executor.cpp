@@ -77,11 +77,6 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
-  // Prepare nest_loop
-  const planner::NestedLoopJoinPlan &nl_plan_node =
-      GetPlanNode<planner::NestedLoopJoinPlan>();
-  const NestLoop *nest_loop = nl_plan_node.GetNestLoop();
-
   // Loop until we have non-empty result tile or exit
   for (;;) {
     // Build outer join output when done
@@ -136,49 +131,6 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
 
       assert(left_result_itr_ == 0);
-
-      /*
-       * Before executing right child, we should set the context for it.
-       *
-       * nest_loop is supposed to be set but here is for the original version
-       */
-      if (nest_loop != nullptr && !left_result_tiles_.empty()) {
-
-        // Get the current left tile
-        left_tile = left_result_tiles_[left_result_itr_].get();
-
-        /*
-         * Go over every pair of tuples in left tile (outer plan),
-         * and pass the joinkey to the executor of the inner plan (right tile)
-         *
-         * Details: get the value according the param,
-         *          put the value into context (value list)
-         */
-        for (auto left_tile_row_itr : *left_tile) {
-          expression::ContainerTuple<executor::LogicalTile> left_tuple(
-              left_tile, left_tile_row_itr);
-          ListCell *lc = nullptr;
-          foreach (lc, nest_loop->nestParams) {
-            NestLoopParam *nlp = (NestLoopParam *)lfirst(lc);
-
-            /*
-             * these parameters are used in postgres, we might use them in the future
-             int            paramno = nlp->paramno;
-             Var           *paramval = nlp->paramval;
-             */
-
-            /*
-             * pass the joinkeys to executor params and set the flag = IN_NESTLOOP
-             */
-            Value value = left_tuple.GetValue(nlp->paramval->varattno - 1);
-            children_[1]->ClearContext();
-            children_[1]->SetContext(value, IN_NESTLOOP);
-
-            /* Flag parameter value as changed */
-            // innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
-          }  // end foreach
-        }    // end for
-      }      // end if
 
       // Right child is finished, no more tiles
       if (children_[1]->Execute() == false) {
