@@ -142,6 +142,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
   {
     cid_t max_possible_commit_id = MAX_CID;
+    // TODO: handle edge cases here (backend logger has not yet sent a log
+    // message)
     // Look at the local queues of the backend loggers
     for (auto backend_logger : backend_loggers) {
       {
@@ -173,12 +175,15 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   }
 }
 
+cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
+
 /**
  * @brief Store backend logger
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   // Add backend logger to the list of backend loggers
+  backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
 }
 

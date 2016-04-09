@@ -1,5 +1,4 @@
 drop table if exists VACATION;
-drop table if exists VACATION;
 
 create table VACATION (
 	k integer primary key,
