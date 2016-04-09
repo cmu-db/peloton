@@ -62,6 +62,8 @@ class FrontendLogger : public Logger {
 
   void ReplayLog(const char *, size_t len);
 
+  cid_t GetMaxFlushedCommitId();
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -78,6 +80,8 @@ class FrontendLogger : public Logger {
 
   // checkpoint
   Checkpoint &checkpoint;
+
+  cid_t max_flushed_commit_id = 0;
 
   cid_t max_collected_commit_id = 0;
 };
