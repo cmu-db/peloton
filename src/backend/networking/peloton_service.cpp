@@ -330,6 +330,9 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
   }
 }
 
+/*
+ * This a QueryPlan Processing function. It is a framework right now. Different query type can be added.
+ */
 void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         const QueryPlanExecRequest* request,
         QueryPlanExecResponse* response,
@@ -367,9 +370,11 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         }
 
         // construct TupleDesc
-        TupleDesc tuple_desc = ParseTupleDescMsg(request->tuple_dec());
+        std::unique_ptr<tupleDesc> tuple_desc = ParseTupleDescMsg(request->tuple_dec());
 
         PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
+
+        // TODO: We can add more plan type in this switch to process
         switch (plan_type) {
             case PLAN_NODE_TYPE_INVALID: {
                 LOG_ERROR("Queryplan recived desen't have type");
@@ -387,7 +392,8 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
                 //peloton_status status =
                         peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
                                                                     params,
-                                                                    tuple_desc);
+                                                                    tuple_desc.get());
+                // TODO: We should return the result here
                 break;
             }
 

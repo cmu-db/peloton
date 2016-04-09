@@ -123,11 +123,14 @@ void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
  * @param  TupleDescMsg&
  * @return TupleDesc
  */
-TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
-
-    // TODO: Using Postgres func to create, but when should we FreeTupleDesc?
-    // We didn't use CreateTupleDesc, which is a Postgres function. CreateTupleDesc brings error
-    TupleDesc tuple_desc = (TupleDesc) malloc(sizeof(struct tupleDesc));
+std::unique_ptr<tupleDesc> ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
+    /*
+     * We didn't use CreateTupleDesc, which is a Postgres function. CreateTupleDesc brings error
+     * And if we use postgres create, it is a malloc inside. When should we FreeTupleDesc?
+     * So we use std::unique_ptr, and move the ownership to the caller, then we don't need to
+     * care the free problem
+     */
+    std::unique_ptr<tupleDesc> tuple_desc(new tupleDesc);
 
     //===----------------------------------------------------------------------===//
     //   Parse and create attrs structure
@@ -243,7 +246,7 @@ TupleDesc ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
         tuple_desc->constr = NULL;
     }
 
-    return tuple_desc;
+    return std::move(tuple_desc);
 }
 } // namespace message
 } // namespace peloton
