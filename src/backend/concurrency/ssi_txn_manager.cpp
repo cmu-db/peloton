@@ -478,6 +478,7 @@ Result SsiTxnManager::CommitTransaction() {
   Result ret = current_txn->GetResult();
   if (ret == Result::RESULT_SUCCESS) {
     current_txn->SetEndCommitId(end_commit_id);
+    current_txn = nullptr;
   }
 
   return ret;
