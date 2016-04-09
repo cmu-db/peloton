@@ -37,12 +37,12 @@ public:
 //    expression::ContainerTupleHasher<LogicalTile>,
 //    expression::ContainerTupleComparator<LogicalTile>> HashMapType;
 
-  typedef std::unordered_set<std::pair<size_t, oid_t>, boost::hash<std::pair<size_t, oid_t>>> MapValueType;
+  typedef std::unordered_set<std::pair<size_t, oid_t>,
+    boost::hash<std::pair<size_t, oid_t>>> MapValueType;
 
   typedef cuckoohash_map<
     expression::ContainerTuple<LogicalTile>,
-    std::unordered_set<std::pair<size_t, oid_t>,
-    boost::hash<std::pair<size_t, oid_t>>>,
+    MapValueType,
     expression::ContainerTupleHasher<LogicalTile>,
     expression::ContainerTupleComparator<LogicalTile>
     > HashMapType;

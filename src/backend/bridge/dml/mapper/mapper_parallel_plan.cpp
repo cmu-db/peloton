@@ -52,7 +52,7 @@ static planner::AbstractPlan *BuildParallelPlanUtil(
     case PLAN_NODE_TYPE_HASHJOIN:
     // TODO: HashJoin
     default:
-      return old_plan->Copy();
+      return old_plan->Copy().release();
   }
 }
 
