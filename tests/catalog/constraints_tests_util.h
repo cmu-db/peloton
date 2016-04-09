@@ -62,9 +62,6 @@ class ConstraintsTestsUtil {
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true);
 
-  static planner::ProjectInfo *MakeProjectInfoFromTuple(
-      const storage::Tuple *tuple);
-
   /** @brief Insert a tupl with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
                             storage::DataTable *table, const Value &col1,

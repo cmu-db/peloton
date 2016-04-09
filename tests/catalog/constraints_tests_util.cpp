@@ -147,7 +147,7 @@ void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
   }
 }
 
-planner::ProjectInfo *ConstraintsTestsUtil::MakeProjectInfoFromTuple(
+std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
     const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
@@ -158,8 +158,8 @@ planner::ProjectInfo *ConstraintsTestsUtil::MakeProjectInfoFromTuple(
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
 }
 
 bool ConstraintsTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
@@ -179,11 +179,10 @@ bool ConstraintsTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   tuple->SetValue(2, col3, testing_pool);
   tuple->SetValue(3, col4, testing_pool);
 
-  auto project_info =
-      ConstraintsTestsUtil::MakeProjectInfoFromTuple(tuple.get());
+  auto project_info = MakeProjectInfoFromTuple(tuple.get());
 
   // Insert
-  planner::InsertPlan node(table, project_info);
+  planner::InsertPlan node(table, std::move(project_info));
   executor::InsertExecutor executor(&node, context.get());
   return executor.Execute();
 }
