@@ -31,10 +31,10 @@ struct SsiTxnContext {
 };
 
 struct ReadList {
-  txn_id_t txn_id;
+  Transaction *txn;
   ReadList *next;
-  ReadList() : txn_id(INVALID_TXN_ID), next(nullptr) {}
-  ReadList(txn_id_t t) : txn_id(t), next(nullptr) {}
+  ReadList() : txn(nullptr), next(nullptr) {}
+  ReadList(Transaction *t) : txn(t), next(nullptr) {}
 };
 
 struct SIReadLock {
@@ -171,8 +171,7 @@ class SsiTxnManager : public TransactionManager {
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    auto txn_id = current_txn->GetTransactionId();
-    ReadList *reader = new ReadList(txn_id);
+    ReadList *reader = new ReadList(current_txn);
 
     GetReadLock(tile_group->GetHeader(), tuple_id);
     ReadList **headp = (ReadList **)(
@@ -199,7 +198,7 @@ class SsiTxnManager : public TransactionManager {
     bool find = false;
 
     while (next != nullptr) {
-      if (next->txn_id == txn_id) {
+      if (next->txn->GetTransactionId() == txn_id) {
         find = true;
         prev->next = next->next;
         delete next;
