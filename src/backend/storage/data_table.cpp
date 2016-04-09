@@ -349,6 +349,11 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * is satisfied by checking whether the key exist in the referred table
  *
  * FIXME: this still does not guarantee correctness under concurrent transaction
+ *   because it only check if the key exists the referred table's index
+ *   -- however this key might be a uncommitted key that is not visible to others
+ *   and it might be deleted if that txn abort.
+ *   We should modify this function and add logic to check
+ *   if the result of the ScanKey is visible.
  *
  * @returns True on success, false if any foreign key constraints fail
  */
