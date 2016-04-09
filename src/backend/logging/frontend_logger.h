@@ -58,6 +58,8 @@ class FrontendLogger : public Logger {
   // Restore database
   virtual void DoRecovery(void) = 0;
 
+  virtual void SetLoggerID(int) = 0;
+
   size_t GetFsyncCount() const { return fsync_count; }
 
   void ReplayLog(const char *, size_t len);

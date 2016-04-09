@@ -55,7 +55,6 @@ WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
   if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
-
 }
 
 /**
@@ -86,11 +85,9 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   //===--------------------------------------------------------------------===//
 
   size_t global_queue_size = global_queue.size();
-  for(oid_t global_queue_itr = 0;
-      global_queue_itr < global_queue_size;
-      global_queue_itr++) {
-
-    if(global_queue[global_queue_itr] == nullptr) {
+  for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
+       global_queue_itr++) {
+    if (global_queue[global_queue_itr] == nullptr) {
       continue;
     }
 
@@ -122,9 +119,8 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
       case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
       case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-
-        LogRecord* log_record = global_queue[global_queue_itr].release();
-        TupleRecord* tuple_record = reinterpret_cast<TupleRecord*>(log_record);
+        LogRecord *log_record = global_queue[global_queue_itr].release();
+        TupleRecord *tuple_record = reinterpret_cast<TupleRecord *>(log_record);
 
         // Check the commit information
         auto status =
@@ -145,7 +141,6 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
         throw Exception("Invalid or unrecogized log record found");
         break;
     }
-
   }
 
   // Clean up the frontend logger's queue
@@ -205,11 +200,10 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 
   // Notify the backend loggers
   {
-    for(auto backend_logger : backend_loggers){
+    for (auto backend_logger : backend_loggers) {
       backend_logger->FinishedFlushing();
     }
   }
-
 }
 
 size_t WriteBehindFrontendLogger::WriteLogRecords(
@@ -225,15 +219,14 @@ size_t WriteBehindFrontendLogger::WriteLogRecords(
       continue;
     }
 
-    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    auto &txn_log_record_list =
+        global_peloton_log_record_pool.txn_log_table[txn_id];
     size_t txn_log_record_list_size = txn_log_record_list.size();
     total_txn_log_records += txn_log_record_list_size;
 
     // Write out all the records in the list
     for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_record_list_size;
-        txn_log_list_itr++) {
-
+         txn_log_list_itr < txn_log_record_list_size; txn_log_list_itr++) {
       TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
 
       // Write out the log record
@@ -280,13 +273,12 @@ WriteBehindFrontendLogger::ToggleCommitMarks(
       continue;
     }
 
-    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    auto &txn_log_record_list =
+        global_peloton_log_record_pool.txn_log_table[txn_id];
     size_t txn_log_record_list_size = txn_log_record_list.size();
 
     for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_record_list_size;
-        txn_log_list_itr++) {
-
+         txn_log_list_itr < txn_log_record_list_size; txn_log_list_itr++) {
       // Get the log record
       TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
       cid_t current_commit_id = INVALID_CID;
@@ -372,7 +364,8 @@ std::pair<bool, ItemPointer> WriteBehindFrontendLogger::CollectTupleRecord(
       record_type == LOGRECORD_TYPE_WBL_TUPLE_UPDATE) {
     // Collect this log record
     auto insert_location = record->GetInsertLocation();
-    auto status = global_peloton_log_record_pool.AddLogRecord(std::move(record));
+    auto status =
+        global_peloton_log_record_pool.AddLogRecord(std::move(record));
 
     if (status != 0) {
       return std::make_pair(false, INVALID_ITEMPOINTER);
@@ -565,6 +558,10 @@ bool WriteBehindFrontendLogger::NeedRecovery(void) {
 std::string WriteBehindFrontendLogger::GetLogFileName(void) {
   auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
+}
+
+void WriteBehindFrontendLogger::SetLoggerID(__attribute__((unused)) int id) {
+  // do nothing
 }
 
 }  // namespace logging

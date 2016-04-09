@@ -85,6 +85,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
 
+  void SetLoggerID(int);
+
  private:
   std::string GetLogFileName(void);
 
@@ -138,6 +140,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   CopySerializeOutput output_buffer;
 
   std::set<cid_t> pending_commits;
+
+  int logger_id;
 };
 
 }  // namespace logging
