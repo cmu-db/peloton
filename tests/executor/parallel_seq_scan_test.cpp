@@ -61,11 +61,12 @@ storage::DataTable *CreateTable() {
                         ExecutorTestsUtil::GetColumnInfo(3)})});
 
   // Schema for second tile group. Vertical partition is 1, 3.
-  std::vector<catalog::Schema> schemas2(
+  /* std::vector<catalog::Schema> schemas2(
       {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0)}),
        catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
                         ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+                        ExecutorTestsUtil::GetColumnInfo(3)})}); 
+*/
 
   TestingHarness::GetInstance().GetNextTileGroupId();
 
@@ -75,11 +76,11 @@ storage::DataTable *CreateTable() {
   column_map1[2] = std::make_pair(1, 0);
   column_map1[3] = std::make_pair(1, 1);
 
-  std::map<oid_t, std::pair<oid_t, oid_t>> column_map2;
+  /*std::map<oid_t, std::pair<oid_t, oid_t>> column_map2;
   column_map2[0] = std::make_pair(0, 0);
   column_map2[1] = std::make_pair(1, 0);
   column_map2[2] = std::make_pair(1, 1);
-  column_map2[3] = std::make_pair(1, 2);
+  column_map2[3] = std::make_pair(1, 2); */
 
   // Create tile groups.
   table->AddTileGroup(std::shared_ptr<storage::TileGroup>(
@@ -88,15 +89,15 @@ storage::DataTable *CreateTable() {
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
           schemas1, column_map1, tuple_count)));
 
-  table->AddTileGroup(std::shared_ptr<storage::TileGroup>(
+  /*table->AddTileGroup(std::shared_ptr<storage::TileGroup>(
       storage::TileGroupFactory::GetTileGroup(
           INVALID_OID, INVALID_OID,
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
-          schemas2, column_map2, tuple_count)));
+          schemas2, column_map2, tuple_count)));*/
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
+  // ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
+  // ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
 
   return table.release();
 }
