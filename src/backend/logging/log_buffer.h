@@ -12,6 +12,7 @@
 
 #pragma once
 #include <cstddef>
+#include <cassert>
 
 namespace peloton {
 namespace logging {
@@ -27,6 +28,7 @@ class LogBuffer {
   ~LogBuffer(void){};
 
   size_t GetSize();
+  void SetSize(size_t size);
 
  private:
   size_t size_ = 0;
