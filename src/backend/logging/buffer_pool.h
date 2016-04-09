@@ -25,8 +25,8 @@ class BufferPool {
  public:
   virtual ~BufferPool() {}
 
-  virtual bool Put(std::shared_ptr<LogBuffer>) = 0;
-  virtual std::shared_ptr<LogBuffer> Get() = 0;
+  virtual bool Put(std::unique_ptr<LogBuffer>) = 0;
+  virtual std::unique_ptr<LogBuffer> Get() = 0;
 };
 
 }  // namespace logging

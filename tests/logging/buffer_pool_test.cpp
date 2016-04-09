@@ -24,22 +24,22 @@ class BufferPoolTests : public PelotonTest {};
 
 void EnqueueTest(logging::CircularBufferPool *buffer_pool) {
   for (unsigned int i = 0; i < BUFFER_POOL_SIZE; i++) {
-    std::shared_ptr<logging::LogBuffer> buf(new logging::LogBuffer());
+    std::unique_ptr<logging::LogBuffer> buf(new logging::LogBuffer());
     buf->SetSize(i);
-    buffer_pool->Put(buf);
+    buffer_pool->Put(std::move(buf));
   }
 }
 
 void DequeueTest(logging::CircularBufferPool *buffer_pool) {
   for (unsigned int i = 0; i < BUFFER_POOL_SIZE; i++) {
-    auto buf = buffer_pool->Get();
+    auto buf = std::move(buffer_pool->Get());
     assert(buf);
     EXPECT_EQ(buf->GetSize(), i);
   }
 }
 
 TEST_F(BufferPoolTests, BufferPoolBasicTest) {
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 10; i++) {
     logging::CircularBufferPool buffer_pool;
     std::thread enqueue_thread(EnqueueTest, &buffer_pool);
     std::thread dequeue_thread(DequeueTest, &buffer_pool);

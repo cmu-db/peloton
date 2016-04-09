@@ -18,7 +18,7 @@
 #include <cstring>
 
 #define BUFFER_POOL_SIZE 32
-
+#define BUFFER_POOL_MASK (BUFFER_POOL_SIZE - 1)
 namespace peloton {
 namespace logging {
 
@@ -31,12 +31,12 @@ class CircularBufferPool : public BufferPool {
   CircularBufferPool();
   ~CircularBufferPool();
 
-  bool Put(std::shared_ptr<LogBuffer>);
-  std::shared_ptr<LogBuffer> Get();
+  bool Put(std::unique_ptr<LogBuffer>);
+  std::unique_ptr<LogBuffer> Get();
 
  private:
   // TODO make BUFFER_POOL_SIZE as class template
-  std::shared_ptr<LogBuffer> buffers_[BUFFER_POOL_SIZE];
+  std::unique_ptr<LogBuffer> buffers_[BUFFER_POOL_SIZE];
   std::atomic<unsigned int> head_;
   std::atomic<unsigned int> tail_;
 };
