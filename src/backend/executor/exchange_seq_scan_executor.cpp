@@ -58,9 +58,6 @@ bool ExchangeSeqScanExecutor::DExecute() {
       assert(column_ids_.size() != 0);
       assert(current_tile_group_offset_ == START_OID);
 
-      auto &transaction_manager =
-        concurrency::TransactionManagerFactory::GetInstance();
-
       while (current_tile_group_offset_ < table_tile_group_count_) {
         LOG_TRACE(
             "ExchangeSeqScanExecutor :: submit task to thread pool, dealing "
@@ -68,8 +65,7 @@ bool ExchangeSeqScanExecutor::DExecute() {
             current_tile_group_offset_);
         std::function<void()> f_seq_scan =
             std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
-                      current_tile_group_offset_,
-                      &transaction_manager);
+                      current_tile_group_offset_);
         std::thread thread(f_seq_scan);
         thread.join();
         // ThreadManager::GetInstance().AddTask(f_seq_scan);
@@ -135,14 +131,16 @@ bool ExchangeSeqScanExecutor::DExecute() {
   return false;
 }
 
-void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
-                                              concurrency::TransactionManager* transaction_manager) {
+void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset) {
   LOG_INFO(
       "Parallel worker :: ExchangeSeqScanExecutor :: SeqScanThreadMain, "
       "executor: %s with assigned tile group offset %lu" ,
       GetRawNode()->GetInfo().c_str(), assigned_tile_group_offset);
 
   bool seq_failure = false;
+
+  auto &transaction_manager =
+    concurrency::TransactionManagerFactory::GetInstance();
 
   auto tile_group = target_table_->GetTileGroup(assigned_tile_group_offset);
   auto tile_group_header = tile_group->GetHeader();
@@ -155,33 +153,33 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
   std::vector<oid_t> position_list;
   for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
     // check transaction visibility
-    if (transaction_manager->IsVisible(tile_group_header, tuple_id)) {
+    // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
       // if the tuple is visible, then perform predicate evaluation.
       if (predicate_ == nullptr) {
         position_list.push_back(tuple_id);
-        auto res = transaction_manager->PerformRead(tile_group->GetTileGroupId(),
+        auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(),
                                                    tuple_id);
         if (!res) {
-          transaction_manager->SetTransactionResult(RESULT_FAILURE);
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
           seq_failure = true;
           break;
         }
-      } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                             tuple_id);
-        auto eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-        if (eval == true) {
-          position_list.push_back(tuple_id);
-          auto res = transaction_manager->PerformRead(
-              tile_group->GetTileGroupId(), tuple_id);
-          if (!res) {
-            transaction_manager->SetTransactionResult(RESULT_FAILURE);
-            seq_failure = true;
-            break;
-          }
-        }
-      }
+//      } else {
+//        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+//                                                             tuple_id);
+//        auto eval =
+//            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+//        if (eval == true) {
+//          position_list.push_back(tuple_id);
+//          auto res = transaction_manager.PerformRead(
+//              tile_group->GetTileGroupId(), tuple_id);
+//          if (!res) {
+//            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+//            seq_failure = true;
+//            break;
+//          }
+//        }
+//      }
     }
   }
 
