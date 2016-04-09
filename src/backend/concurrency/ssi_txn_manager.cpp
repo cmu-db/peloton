@@ -114,7 +114,7 @@ bool SsiTxnManager::AcquireOwnership(
   }
 
   {
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
     auto txn_id = current_txn->GetTransactionId();
     GetReadLock(tile_group_header, tuple_id);
@@ -123,12 +123,13 @@ bool SsiTxnManager::AcquireOwnership(
     bool should_abort = false;
     while (header != nullptr) {
       // For all owner of siread lock on this version
-      auto owner = header->txn_id;
+      auto owner = header->txn->GetTransactionId();
       // Myself, skip
-      if (owner == txn_id || txn_table_.count(owner) == 0) {
+      if (owner == txn_id) {
         header = header->next;
         continue;
       }
+      assert(txn_table_.count(owner) > 0);
       auto &ctx = txn_table_.at(owner);
       auto end_cid = ctx.transaction_->GetEndCommitId();
 
@@ -548,14 +549,17 @@ Result SsiTxnManager::AbortTransaction() {
   }
 
   auto txn_id = current_txn->GetTransactionId();
-  // Clean the aborted txn's context
+
+  // firstly, let's remove reader
+  RemoveReader(current_txn);
+
+  // then, we can erase context safely
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     txn_table_.erase(txn_id);
   }
 
-  // Remove all read tuples by the current txns
-  RemoveReader(current_txn);
+
 
   delete current_txn;
   current_txn = nullptr;
@@ -595,7 +599,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
 // count
 void SsiTxnManager::CleanUp() {
 
-  std::set<Transaction *> garbage;
+  std::unordered_set<Transaction *> garbage_txn;
   {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
 
@@ -615,31 +619,39 @@ void SsiTxnManager::CleanUp() {
     }
 
     // remove committed transactions, whose end_cid < min_begin
-    auto itr = txn_table_.begin();
-    while (itr != txn_table_.end()) {
+    for (auto itr = txn_table_.begin(); itr != txn_table_.end(); itr++) {
       auto &ctx = itr->second;
       auto end_cid = ctx.transaction_->GetEndCommitId();
       if (end_cid == INVALID_TXN_ID) {
         // running transaction
-        itr++;
+        // then we know that the subsequent txn's end_cid > min_begin
+        // so just break
         break;
       }
 
+      // record garbage
       if (end_cid < min_begin) {
         // we can safely remove it from table
         LOG_INFO("remove %ld in table", ctx.transaction_->GetTransactionId());
-        garbage.insert(ctx.transaction_);
-        itr = txn_table_.erase(itr);
-      } else {
-        itr++;
+        garbage_txn.insert(ctx.transaction_);
       }
     }
   }
 
-  for(auto txn : garbage) {
-    // remove txn in reader list
+  std::unordered_set<txn_id_t> garbage_id(garbage_txn.size());
+  // remove txn's reader list firstly
+  for(auto txn : garbage_txn) {
     RemoveReader(txn);
+    garbage_id.insert(txn->GetTransactionId());
     delete txn;
+  }
+
+  // remove garbage from table
+  {
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    for(auto txn_id : garbage_id) {
+      txn_table_.erase(txn_id);
+    }
   }
 }
 
