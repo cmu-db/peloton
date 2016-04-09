@@ -6,8 +6,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <backend/executor/executors.h>
-#include <backend/planner/exchange_seq_scan_plan.h>
 
 #include "harness.h"
 
@@ -26,6 +24,8 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/expression_util.h"
 #include "backend/planner/seq_scan_plan.h"
+#include "backend/executor/executors.h"
+#include "backend/planner/exchange_seq_scan_plan.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_factory.h"
 
@@ -48,11 +48,7 @@ namespace {
  */
 const std::set<oid_t> g_tuple_ids({0, 3});
 
-/**
- * @brief Convenience method to create table for test.
- *
- * @return Table generated for test.
- */
+
 storage::DataTable *CreateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
@@ -105,20 +101,7 @@ storage::DataTable *CreateTable() {
   return table.release();
 }
 
-/**
- * @brief Convenience method to create predicate for test.
- * @param tuple_ids Set of tuple ids that we want the predicate to match with.
- *
- * The predicate matches any tuple with ids in the specified set.
- * This assumes that the table was populated with PopulatedValue() in
- * ExecutorTestsUtil.
- *
- * Each OR node has an equality node to its right and another OR node to
- * its left. The leftmost leaf is a FALSE constant value expression.
- *
- * In each equality node, we either use (arbitrarily taking reference from the
- * parity of the loop iteration) the first field or last field of the tuple.
- */
+
 expression::AbstractExpression *CreatePredicate(
     const std::set<oid_t> &tuple_ids) {
   assert(tuple_ids.size() >= 1);
@@ -162,12 +145,7 @@ expression::AbstractExpression *CreatePredicate(
   return predicate;
 }
 
-/**
- * @brief Convenience method to extract next tile from executor.
- * @param executor Executor to be tested.
- *
- * @return Logical tile extracted from executor.
- */
+
 executor::LogicalTile *GetNextTile(executor::AbstractExecutor &executor) {
   EXPECT_TRUE(executor.Execute());
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
@@ -175,17 +153,7 @@ executor::LogicalTile *GetNextTile(executor::AbstractExecutor &executor) {
   return result_tile.release();
 }
 
-/**
- * @brief Runs actual test used by some or all of the test cases below.
- * @param executor Sequential scan executor to be tested.
- * @param expected_num_tiles Expected number of output tiles.
- * @param expected_num_cols Expected number of columns in the output
- *        logical tile(s).
- *
- * There are a lot of contracts between this function and the test cases
- * that use it (especially the part that verifies values). Please be mindful
- * if you're making changes.
- */
+
 void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
              int expected_num_cols) {
   EXPECT_TRUE(executor.Init());
