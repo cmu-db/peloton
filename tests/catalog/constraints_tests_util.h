@@ -50,7 +50,6 @@ namespace planner {
 class ProjectInfo;
 }
 
-
 #define TESTS_TUPLES_PER_TILEGROUP 5
 #define DEFAULT_TILEGROUP_COUNT 3
 
@@ -58,43 +57,27 @@ namespace test {
 
 class ConstraintsTestsUtil {
  public:
-  /**
-   * @brief Creates a basic tile group with allocated but not populated
-   *        tuples.
-   */
-  static std::shared_ptr<storage::TileGroup> CreateTileGroup(
-      int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
-
   /** @brief Creates a basic table with allocated but not populated tuples */
   static storage::DataTable *CreateTable(
       int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
       bool indexes = true);
 
-  static planner::ProjectInfo* MakeProjectInfoFromTuple (const storage::Tuple *tuple);
+  static planner::ProjectInfo *MakeProjectInfoFromTuple(
+      const storage::Tuple *tuple);
 
   /** @brief Insert a tupl with 4 columns' value specified */
   static bool ExecuteInsert(concurrency::Transaction *transaction,
-                                           storage::DataTable *table,
-                                           const Value & col1,
-                                           const Value & col2,
-                                           const Value & col3,
-                                           const Value & col4);
+                            storage::DataTable *table, const Value &col1,
+                            const Value &col2, const Value &col3,
+                            const Value &col4);
 
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
 
   static void PopulateTable(concurrency::Transaction *transaction,
-                            storage::DataTable *table, int num_rows,
-                            bool mutate, bool random, bool group_by);
-
-  static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
-                            int num_rows);
+                            storage::DataTable *table, int num_rows);
 
   static catalog::Column GetColumnInfo(int index);
-
-  static executor::LogicalTile *ExecuteTile(
-      executor::AbstractExecutor *executor,
-      executor::LogicalTile *source_logical_tile);
 
   /**
    * @brief Returns the value populated at the specified field.
@@ -109,15 +92,6 @@ class ConstraintsTestsUtil {
                                    const oid_t column_id) {
     return 10 * tuple_id + column_id;
   }
-
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
-                                  VarlenPool *pool);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table,
-                                      VarlenPool *pool);
-
-  /** Print the tuples from a vector of logical tiles */
-  static void PrintTileVector(
-      std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
 };
 
 }  // namespace test

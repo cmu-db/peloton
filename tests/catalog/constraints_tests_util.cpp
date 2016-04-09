@@ -97,67 +97,18 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
-      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_UNIQUE,
-                                               unique_constraint_name));
+      column.AddConstraint(
+          catalog::Constraint(CONSTRAINT_TYPE_UNIQUE, unique_constraint_name));
       return column;
     } break;
 
     default: {
       throw ExecutorException("Invalid column index : " +
-          std::to_string(index));
+                              std::to_string(index));
     }
   }
 
   return dummy_column;
-}
-
-/**
- * @brief Creates simple tile group for testing purposes.
- * @param backend Backend for tile group to use.
- * @param tuple_count Tuple capacity of this tile group.
- *
- * Tile group has two tiles, and each of them has two columns.
- * The first two columns have INTEGER types, the last two have TINYINT
- * and VARCHAR.
- *
- * IMPORTANT: If you modify this function, it is your responsibility to
- *            fix any affected test cases. Test cases may be depending
- *            on things like the specific number of tiles in this group.
- *
- * @return Pointer to tile group.
- */
-std::shared_ptr<storage::TileGroup> ConstraintsTestsUtil::CreateTileGroup(
-    int tuple_count) {
-  std::vector<catalog::Column> columns;
-  std::vector<catalog::Schema> schemas;
-
-  columns.push_back(GetColumnInfo(0));
-  columns.push_back(GetColumnInfo(1));
-  catalog::Schema schema1(columns);
-  schemas.push_back(schema1);
-
-  columns.clear();
-  columns.push_back(GetColumnInfo(2));
-  columns.push_back(GetColumnInfo(3));
-
-  catalog::Schema schema2(columns);
-  schemas.push_back(schema2);
-
-  std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
-  column_map[0] = std::make_pair(0, 0);
-  column_map[1] = std::make_pair(0, 1);
-  column_map[2] = std::make_pair(1, 0);
-  column_map[3] = std::make_pair(1, 1);
-
-  std::shared_ptr<storage::TileGroup> tile_group_ptr(
-      storage::TileGroupFactory::GetTileGroup(
-          INVALID_OID, INVALID_OID,
-          TestingHarness::GetInstance().GetNextTileGroupId(), nullptr, schemas,
-          column_map, tuple_count));
-
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_ptr->GetTileGroupId(),
-                                               tile_group_ptr);
-  return tile_group_ptr;
 }
 
 /**
@@ -166,12 +117,9 @@ std::shared_ptr<storage::TileGroup> ConstraintsTestsUtil::CreateTileGroup(
  * @param num_rows Number of tuples to insert.
  */
 void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
-                                      concurrency::Transaction *transaction,
-                                      storage::DataTable *table, int num_rows,
-                                      bool mutate, bool random, bool group_by) {
-  // Random values
-  if (random) std::srand(std::time(nullptr));
-
+                                         concurrency::Transaction *transaction,
+                                         storage::DataTable *table,
+                                         int num_rows) {
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
@@ -179,122 +127,28 @@ void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
-    if (mutate) populate_value *= 3;
 
     Value col1, col2, col3, col4;
 
-    if (group_by) {
-      // First column has only two distinct values
-      col1 =  ValueFactory::GetIntegerValue(PopulatedValue(
-                         int(populate_value / (num_rows / 2)), 0));
-    } else {
-      // First column is unique in this case
-      col1 = ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
-    }
+    // First column is unique in this case
+    col1 = ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0));
 
     // In case of random, make sure this column has duplicated values
-    col2 = ValueFactory::GetIntegerValue(PopulatedValue(
-            random ? std::rand() % (num_rows / 3) : populate_value, 1));
+    col2 = ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1));
 
-    col3 = ValueFactory::GetDoubleValue(PopulatedValue(
-                       random ? std::rand() : populate_value, 2));
+    col3 = ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2));
 
     // In case of random, make sure this column has duplicated values
-    col4 = ValueFactory::GetStringValue(std::to_string(PopulatedValue(
-            random ? std::rand() % (num_rows / 3) : populate_value, 3)));
+    col4 = ValueFactory::GetStringValue(
+        std::to_string(PopulatedValue(populate_value, 3)));
 
-    ConstraintsTestsUtil::ExecuteInsert(transaction, table,
-                                        col1, col2, col3, col4);
-//
-//    ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
-//    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
-//    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-//    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-//    txn_manager.PerformInsert(tuple_slot_id.block, tuple_slot_id.offset);
+    ConstraintsTestsUtil::ExecuteInsert(transaction, table, col1, col2, col3,
+                                        col4);
   }
 }
 
-/**
- * @brief  Populates the tiles in the given tile-group in a specific manner.
- * @param tile_group Tile-group to populate with values.
- * @param num_rows Number of tuples to insert.
- */
-void ConstraintsTestsUtil::PopulateTiles(
-    std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
-  // Create tuple schema from tile schemas.
-  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
-  std::unique_ptr<catalog::Schema> schema(
-      catalog::Schema::AppendSchemaList(tile_schemas));
-
-  // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
-
-  // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  const bool allocate = true;
-  txn_manager.BeginTransaction();
-  // const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetBeginCommitId();
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-
-  for (int col_itr = 0; col_itr < num_rows; col_itr++) {
-    storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)),
-                   testing_pool);
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)),
-                   testing_pool);
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)),
-                   testing_pool);
-    Value string_value = ValueFactory::GetStringValue(
-        std::to_string(PopulatedValue(col_itr, 3)));
-    tuple.SetValue(3, string_value, testing_pool);
-
-    oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
-    txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot_id);
-    //    tile_group->CommitInsertedTuple(tuple_slot_id, txn_id, commit_id);
-  }
-
-  txn_manager.CommitTransaction();
-}
-
-/**
- * @brief Convenience function to pass a single logical tile through an
- *        executor which has only one child.
- * @param executor Executor to pass logical tile through.
- * @param source_logical_tile Logical tile to pass through executor.
- * @param check the value of logical tiles
- *
- * @return Pointer to processed logical tile.
- */
-executor::LogicalTile *ConstraintsTestsUtil::ExecuteTile(
-    executor::AbstractExecutor *executor,
-    executor::LogicalTile *source_logical_tile) {
-  MockExecutor child_executor;
-  executor->AddChild(&child_executor);
-
-  // Uneventful init...
-  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
-  EXPECT_TRUE(executor->Init());
-
-  // Where the main work takes place...
-  EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
-
-  EXPECT_CALL(child_executor, GetOutput())
-      .WillOnce(Return(source_logical_tile));
-
-  EXPECT_TRUE(executor->Execute());
-  std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      executor->GetOutput());
-  EXPECT_THAT(result_logical_tile, NotNull());
-  EXPECT_THAT(executor->Execute(), false);
-
-  return result_logical_tile.release();
-}
-
-planner::ProjectInfo* ConstraintsTestsUtil::MakeProjectInfoFromTuple
-    (const storage::Tuple *tuple) {
+planner::ProjectInfo *ConstraintsTestsUtil::MakeProjectInfoFromTuple(
+    const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -310,10 +164,8 @@ planner::ProjectInfo* ConstraintsTestsUtil::MakeProjectInfoFromTuple
 
 bool ConstraintsTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
                                          storage::DataTable *table,
-                                         const Value & col1,
-                                         const Value & col2,
-                                         const Value & col3,
-                                         const Value & col4) {
+                                         const Value &col1, const Value &col2,
+                                         const Value &col3, const Value &col4) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(transaction));
 
@@ -327,7 +179,8 @@ bool ConstraintsTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
   tuple->SetValue(2, col3, testing_pool);
   tuple->SetValue(3, col4, testing_pool);
 
-  auto project_info = ConstraintsTestsUtil::MakeProjectInfoFromTuple(tuple.get());
+  auto project_info =
+      ConstraintsTestsUtil::MakeProjectInfoFromTuple(tuple.get());
 
   // Insert
   planner::InsertPlan node(table, project_info);
@@ -393,7 +246,8 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     index_metadata = new index::IndexMetadata(
         "unique_btree_index", 125, INDEX_TYPE_BTREE,
         INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema, key_schema, unique);
-    index::Index *unique_index = index::IndexFactory::GetInstance(index_metadata);
+    index::Index *unique_index =
+        index::IndexFactory::GetInstance(index_metadata);
 
     table->AddIndex(unique_index);
   }
@@ -411,49 +265,11 @@ storage::DataTable *ConstraintsTestsUtil::CreateAndPopulateTable() {
   storage::DataTable *table = ConstraintsTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  ConstraintsTestsUtil::PopulateTable(
-      txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false);
+  ConstraintsTestsUtil::PopulateTable(txn, table,
+                                      tuple_count * DEFAULT_TILEGROUP_COUNT);
   txn_manager.CommitTransaction();
 
   return table;
-}
-
-storage::Tuple *ConstraintsTestsUtil::GetTuple(storage::DataTable *table,
-                                            oid_t tuple_id, VarlenPool *pool) {
-  storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)),
-                  pool);
-  tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)),
-                  pool);
-  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)),
-                  pool);
-  tuple->SetValue(3, ValueFactory::GetStringValue("12345"), pool);
-
-  return tuple;
-}
-
-storage::Tuple *ConstraintsTestsUtil::GetNullTuple(storage::DataTable *table,
-                                                VarlenPool *pool) {
-  storage::Tuple *tuple = new storage::Tuple(table->GetSchema(), true);
-  tuple->SetValue(0, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(1, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(2, ValueFactory::GetNullValue(), pool);
-  tuple->SetValue(3, ValueFactory::GetNullStringValue(), pool);
-
-  return tuple;
-}
-
-void ConstraintsTestsUtil::PrintTileVector(
-    std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec) {
-  for (auto &tile : tile_vec) {
-    for (oid_t tuple_id : *tile) {
-      LOG_INFO("<");
-      for (oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++) {
-        LOG_INFO("%s", tile->GetValue(tuple_id, col_id).GetInfo().c_str());
-      }
-      LOG_INFO(">");
-    }
-  }
 }
 
 }  // namespace test
