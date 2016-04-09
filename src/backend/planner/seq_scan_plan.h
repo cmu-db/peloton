@@ -44,10 +44,10 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  AbstractPlan *Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const {
     AbstractPlan *new_plan = new SeqScanPlan(
-      this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
-    return new_plan;
+        this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
+    return std::unique_ptr<AbstractPlan>(new_plan);
   }
 };
 

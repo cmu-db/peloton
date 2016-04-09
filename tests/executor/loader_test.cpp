@@ -123,7 +123,7 @@ TEST_F(LoaderTests, LoadingTest) {
                      testing_pool, tilegroup_count_per_loader);
 
   auto expected_tile_group_count =
-      loader_threads_count * tilegroup_count_per_loader;
+      loader_threads_count * tilegroup_count_per_loader + 1;
   auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);

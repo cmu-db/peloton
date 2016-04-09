@@ -241,7 +241,7 @@ TEST_F(MutateTests, StressTests) {
   txn_manager.CommitTransaction();
 
   LaunchParallelTest(1, InsertTuple, table, testing_pool);
-  LOG_TRACE(table->GetInfo().c_str());
+  LOG_TRACE("%s", table->GetInfo().c_str());
 
   LOG_INFO("---------------------------------------------");
 
@@ -251,7 +251,7 @@ TEST_F(MutateTests, StressTests) {
   LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
-  LOG_TRACE(table->GetInfo().c_str());
+  LOG_TRACE("%s",table->GetInfo().c_str());
 
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
@@ -300,7 +300,7 @@ TEST_F(MutateTests, InsertTest) {
       ExecutorTestsUtil::CreateTable());
   const std::vector<storage::Tuple *> tuples;
 
-  EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
+  EXPECT_EQ(source_data_table->GetTileGroupCount(), 4);
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 
   auto txn = txn_manager.BeginTransaction();
@@ -343,7 +343,7 @@ TEST_F(MutateTests, InsertTest) {
   txn_manager.CommitTransaction();
 
   // We have inserted all the tuples in this logical tile
-  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
+  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 2);
 }
 
 TEST_F(MutateTests, DeleteTest) {

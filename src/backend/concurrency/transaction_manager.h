@@ -48,8 +48,61 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  bool IsVisbleOrDirty(const storage::Tuple *, const ItemPointer &) {
-    return false;
+  bool IsVisbleOrDirty(__attribute__((unused)) const storage::Tuple *key, const ItemPointer &position) {
+    auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
+    auto tuple_id = position.offset;
+
+    txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+    cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+    if (tuple_txn_id == INVALID_TXN_ID) {
+      // the tuple is not available.
+      return false;
+    }
+    bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+
+    // there are exactly two versions that can be owned by a transaction.
+    // unless it is an insertion.
+    if (own == true) {
+      if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+        assert(tuple_end_cid == MAX_CID);
+        // the only version that is visible is the newly inserted one.
+        return true;
+      } else {
+        // the older version is not visible.
+        return false;
+      }
+    } else {
+      bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+      bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+      if (tuple_txn_id != INITIAL_TXN_ID) {
+        // if the tuple is owned by other transactions.
+        if (tuple_begin_cid == MAX_CID) {
+          // uncommitted version.
+          if (tuple_end_cid == INVALID_CID) {
+            // dirty delete is invisible
+            return false;
+          } else {
+            // dirty update or insert is visible
+            return true;
+          }
+        } else {
+          // the older version may be visible.
+          if (activated && !invalidated) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      } else {
+        // if the tuple is not owned by any transaction.
+        if (activated && !invalidated) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
   }
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
@@ -97,14 +150,7 @@ class TransactionManager {
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
-  virtual Transaction *BeginTransaction() {
-    txn_id_t txn_id = GetNextTransactionId();
-    cid_t begin_cid = GetNextCommitId();
-    Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
-
-    return txn;
-  }
+  virtual Transaction *BeginTransaction() = 0;
 
   virtual void EndTransaction() = 0;
 
@@ -119,9 +165,7 @@ class TransactionManager {
 
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a precise value.
-  virtual cid_t GetMaxCommittedCid() {
-    return 1;
-  }
+  virtual cid_t GetMaxCommittedCid() = 0;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
