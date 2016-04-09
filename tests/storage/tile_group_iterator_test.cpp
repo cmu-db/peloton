@@ -32,6 +32,7 @@ class TileGroupIteratorTests : public PelotonTest {};
 TEST_F(TileGroupIteratorTests, BasicTest) {
   const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;
   const int expected_tilegroup_count = 5;
+  const int allocated_tilegroup_count = 6;
   const int tuple_count = tuples_per_tilegroup * expected_tilegroup_count;
 
   // Create a table and wrap it in logical tiles
@@ -52,7 +53,7 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
     }
   }  // WHILE
 
-  EXPECT_EQ(expected_tilegroup_count + 1, actual_tile_group_count);
+  EXPECT_EQ(allocated_tilegroup_count, actual_tile_group_count);
 }
 
 }  // End test namespace
