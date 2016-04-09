@@ -146,13 +146,14 @@ void ExchangeSeqScanExecutor::ThreadExecute(oid_t assigned_tile_group_offset,
   auto tile_group_header = tile_group->GetHeader();
 
   oid_t active_tuple_count = tile_group->GetNextTupleSlot();
-
+  LOG_INFO("Scan tile group, %s with header %s", tile_group->GetInfo().c_str(), tile_group_header->GetInfo().c_str());
   // Print tile group visibility
   // Construct position list by looping through tile group
   // and applying the predicate.
   std::vector<oid_t> position_list;
   for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
     // check transaction visibility
+    LOG_INFO("tuple id %lu", tuple_id);
     if (transaction_manager->IsVisible(tile_group_header, tuple_id)) {
       // if the tuple is visible, then perform predicate evaluation.
       if (predicate_ == nullptr) {
