@@ -44,8 +44,6 @@ class WriteAheadBackendLogger : public BackendLogger {
 
  private:
   CopySerializeOutput output_buffer;
-
-  cid_t highest_logged_commit_id = 0;
 };
 
 }  // namespace logging
