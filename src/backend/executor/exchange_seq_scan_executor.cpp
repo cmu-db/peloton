@@ -70,7 +70,9 @@ bool ExchangeSeqScanExecutor::DExecute() {
             std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
                       current_tile_group_offset_,
                       &transaction_manager);
-        ThreadManager::GetInstance().AddTask(f_seq_scan);
+        std::thread thread(f_seq_scan);
+        thread.join();
+        // ThreadManager::GetInstance().AddTask(f_seq_scan);
 
         current_tile_group_offset_++;
       }
