@@ -38,7 +38,6 @@
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
-
 extern CheckpointType peloton_checkpoint_mode;
 
 #define LOG_FILE_SWITCH_LIMIT (1024)
@@ -204,9 +203,11 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
   // Commit each backend logger
   {
-    for (auto backend_logger : backend_loggers) {
-      backend_logger->FinishedFlushing();
+    if (max_collected_commit_id > max_flushed_commit_id) {
+      max_flushed_commit_id = max_collected_commit_id;
     }
+    // signal that we have flushed
+    LogManager::GetInstance().FrontendLoggerFlushed();
   }
 }
 
@@ -369,8 +370,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
     }
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid){
-    	txn_manager.SetNextCid(max_cid + 1);
+    if (txn_manager.GetNextCommitId() < max_cid) {
+      txn_manager.SetNextCid(max_cid + 1);
     }
 
     RecoverIndex();
