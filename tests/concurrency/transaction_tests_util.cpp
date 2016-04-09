@@ -32,9 +32,58 @@ class InsertPlan;
 class ProjectInfo;
 }
 namespace test {
-storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
+
+storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  id_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                              "not_null"));
+  auto value_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
+  value_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                                 "not_null"));
+
+  // Create the table
+  catalog::Schema *table_schema =
+      new catalog::Schema({id_column, value_column});
+  auto table_name = "TEST_TABLE";
+  size_t tuples_per_tilegroup = 100;
+  auto table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup,
+      true, false);
+
+  // Create index on the (id, value) column
+  std::vector<oid_t> key_attrs = {0, 1};
+  auto tuple_schema = table->GetSchema();
+  bool unique = false;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  auto index_metadata = new index::IndexMetadata(
+      "primary_btree_index", 1234, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+
+  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  table->AddIndex(pkey_index);
+
+  // Insert tuple
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  for (int i = 0; i < 10; i++) {
+    ExecuteInsert(txn, table, i, i);
+  }
+  txn_manager.CommitTransaction();
+
+  return table;
+}
+
+
+storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
+  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
+                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  id_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
+                                              "not_null"));
   auto value_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
 
@@ -47,7 +96,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
       INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup,
       true, false);
 
-  // Create index on the id column
+  // Create primary index on the id column
   std::vector<oid_t> key_attrs = {0};
   auto tuple_schema = table->GetSchema();
   bool unique = false;
@@ -56,11 +105,79 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key) {
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
   table->AddIndex(pkey_index);
+
+  // Create unique index on the value column
+  std::vector<oid_t> key_attrs2 = {1};
+  auto tuple_schema2 = table->GetSchema();
+  bool unique2 = false;
+  auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
+  key_schema2->SetIndexedColumns(key_attrs2);
+  auto index_metadata2 = new index::IndexMetadata(
+      "unique_btree_index", 1235, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);
+
+  index::Index *ukey_index = index::IndexFactory::GetInstance(index_metadata2);
+
+  table->AddIndex(ukey_index);
+
+  // Insert tuple
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  for (int i = 0; i < 10; i++) {
+    ExecuteInsert(txn, table, i, i);
+  }
+  txn_manager.CommitTransaction();
+
+  return table;
+}
+
+storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
+                                                      std::string table_name,
+                                                      oid_t database_id,
+                                                      oid_t relation_id,
+                                                      oid_t index_oid,
+                                                      bool need_primary_index) {
+  auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
+                                   GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
+  auto value_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
+
+  // Create the table
+  catalog::Schema *table_schema =
+      new catalog::Schema({id_column, value_column});
+
+  size_t tuples_per_tilegroup = 100;
+  auto table = storage::TableFactory::GetDataTable(
+      database_id, relation_id, table_schema, table_name, tuples_per_tilegroup,
+      true, false);
+
+  // Create index on the id column
+  std::vector<oid_t> key_attrs = {0};
+  auto tuple_schema = table->GetSchema();
+  bool unique = false;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  auto index_metadata = new index::IndexMetadata(
+      "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
+      need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY : INDEX_CONSTRAINT_TYPE_DEFAULT,
+      tuple_schema, key_schema, unique);
+
+  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  table->AddIndex(pkey_index);
+
+  // add this table to current database
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db = manager.GetDatabaseWithOid(database_id);
+  if (db != nullptr) {
+    db->AddTable(table);
+  }
 
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -213,7 +330,7 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 }
 
 bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
-                                storage::DataTable *table, int old_value, int new_value) {
+                                                storage::DataTable *table, int old_value, int new_value) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
