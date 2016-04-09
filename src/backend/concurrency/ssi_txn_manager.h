@@ -91,16 +91,15 @@ class SsiTxnManager : public TransactionManager {
 
   virtual Transaction *BeginTransaction() {
     std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
 
-    // protect beginTransaction with a global lock
-    // to ensure that:
-    //    txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
-    Transaction *txn = TransactionManager::BeginTransaction();
+
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
-
     txn_table_.insert(
         std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
-
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
@@ -110,6 +109,11 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() { assert(false); };
+
+  
+  virtual cid_t GetMaxCommittedCid() {
+    return 1;
+  }
 
   virtual Result CommitTransaction();
 
