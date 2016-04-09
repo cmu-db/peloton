@@ -118,24 +118,6 @@ void CreateYCSBDatabase() {
 
 }
 
-/**
- * Cook a ProjectInfo object from a tuple.
- * Simply use a ConstantValueExpression for each attribute.
- */
-planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple& tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  for (oid_t col_id = START_OID; col_id < tuple.GetColumnCount(); col_id++) {
-    auto value = tuple.GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
-}
-
 void LoadYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
@@ -159,18 +141,16 @@ void LoadYCSBDatabase() {
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
 
-    storage::Tuple tuple(table_schema, allocate);
+    storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
     auto key_value = ValueFactory::GetIntegerValue(rowid);
     auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
-    tuple.SetValue(0, key_value, nullptr);
+    tuple->SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple.SetValue(col_itr, field_value, pool.get());
+      tuple->SetValue(col_itr, field_value, pool.get());
     }
 
-    auto project_info = MakeProjectInfoFromTuple(tuple);
-
-    planner::InsertPlan node(user_table, project_info);
+    planner::InsertPlan node(user_table, nullptr, tuple);
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
