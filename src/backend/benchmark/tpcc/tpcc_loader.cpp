@@ -60,6 +60,58 @@ const bool adapt_table = false;
 const bool is_inlined = true;
 const bool unique_index = false;
 
+// Constants
+static constexpr size_t name_length = 32;
+static constexpr size_t data_length = 64;
+static constexpr double state_length = 16;
+static constexpr double zip_length = 16;
+
+static constexpr double item_min_price = 1.0;
+static constexpr double item_max_price = 100.0;
+
+static constexpr double warehouse_min_tax = 0.0;
+static constexpr double warehouse_max_tax = 0.2;
+static constexpr double warehouse_initial_ytd = 300000.00f;
+
+static constexpr double district_initial_ytd = 30000.00f;
+
+const std::string customers_gcredit = "GC";
+const std::string customers_bcredit = "BC";
+static constexpr double customers_bad_credit_ratio = 0.1;
+static constexpr double customers_init_credit_lim = 50000.0;
+static constexpr double customers_min_discount = 0;
+static constexpr double customers_max_discount = 0.5;
+static constexpr double customers_init_balance = -10.0;
+static constexpr double customers_init_ytd = 10.0;
+static constexpr int customers_init_payment_cnt = 1;
+static constexpr int customers_init_delivery_cnt = 0;
+
+static constexpr double history_init_amount = 10.0;
+
+static constexpr int orders_min_ol_cnt = 5;
+static constexpr int orders_max_ol_cnt = 15;
+static constexpr int orders_init_all_local = 1;
+static constexpr int orders_null_carrier_id = 0;
+static constexpr int orders_min_carrier_id = 1;
+static constexpr int orders_max_carrier_id = 10;
+
+int new_orders_per_district = 900;  // 900
+
+static constexpr int order_line_init_quantity = 5;
+static constexpr int order_line_max_ol_quantity = 10;
+static constexpr double order_line_min_amount = 0.01;
+
+static constexpr double stock_original_ratio = 0.1;
+static constexpr int stock_min_quantity = 10;
+static constexpr int stock_max_quantity = 100;
+static constexpr int stock_dist_count = 10;
+
+static constexpr double payment_min_amount = 1.0;
+static constexpr double payment_max_amount = 5000.0;
+
+static constexpr int stock_min_threshold = 10;
+static constexpr int stock_max_threshold = 20;
+
 index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
                                          const catalog::Schema *tuple_schema,
                                          std::string index_name,
@@ -236,11 +288,11 @@ void CreateItemTable() {
   item_columns.push_back(i_id_column);
   auto i_im_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "I_IM_ID", is_inlined);
   item_columns.push_back(i_im_id_column);
-  auto i_name_column = catalog::Column(VALUE_TYPE_VARCHAR, 32, "I_NAME", is_inlined);
+  auto i_name_column = catalog::Column(VALUE_TYPE_VARCHAR, name_length, "I_NAME", is_inlined);
   item_columns.push_back(i_name_column);
   auto i_price_column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "I_PRICE", is_inlined);
   item_columns.push_back(i_price_column);
-  auto i_data_column = catalog::Column(VALUE_TYPE_VARCHAR, 64, "I_DATA", is_inlined);
+  auto i_data_column = catalog::Column(VALUE_TYPE_VARCHAR, data_length, "I_DATA", is_inlined);
   item_columns.push_back(i_data_column);
 
   catalog::Schema *table_schema = new catalog::Schema(item_columns);
@@ -766,53 +818,104 @@ void CreateTPCCDatabase() {
 // Load in the tables
 /////////////////////////////////////////////////////////
 
-void LoadWarehouseTable() {
+std::random_device rd;
+std::mt19937 rng(rd());
+
+std::string GetRandomAlphaNumericString(const size_t string_length) {
+  const char alphanumeric[] = "0123456789"
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      "abcdefghijklmnopqrstuvwxyz";
+
+  std::uniform_int_distribution<> dist (0, sizeof(alphanumeric) - 1);
+
+  char repeated_char = alphanumeric[dist(rng)];
+  std::string sample(string_length, repeated_char);
+  return sample;
+}
+
+bool GetRandomBoolean() {
+  std::uniform_int_distribution<> dist (0, 1);
+
+  bool sample = dist(rng);
+  return sample;
+}
+
+int GetRandomInteger(const int lower_bound,
+                     const int upper_bound) {
+  std::uniform_int_distribution<> dist (lower_bound, upper_bound);
+
+  int sample = dist(rng);
+  return sample;
+}
+
+int GetRandomIntegerExcluding(const int lower_bound,
+                              const int upper_bound,
+                              const int exclude_sample) {
+  int sample;
+  while (1) {
+    sample = GetRandomInteger(lower_bound, upper_bound);
+    if (sample != exclude_sample)
+      break;
+  }
+  return sample;
+}
+
+double GetRandomDouble(const double lower_bound, const double upper_bound) {
+  std::mt19937 rng;
+  std::uniform_real_distribution<> dist (lower_bound, upper_bound);
+
+  double sample = dist(rng);
+  return sample;
+}
+
+void LoadItems() {
+
+  // Insert tuples into tile_group.
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  const bool allocate = true;
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  auto item_table_schema = item_table->GetSchema();
+
+  for (auto item_itr = 0; item_itr < state.item_count; item_itr++) {
+    storage::Tuple* tuple = new storage::Tuple(item_table_schema, allocate);
+
+    // I_ID
+    tuple->SetValue(0, ValueFactory::GetIntegerValue(item_itr), nullptr);
+    // I_IM_ID
+    tuple->SetValue(1, ValueFactory::GetIntegerValue(item_itr * 10), nullptr);
+    // I_NAME
+    auto i_name = GetRandomAlphaNumericString(name_length);
+    tuple->SetValue(2, ValueFactory::GetStringValue(i_name), pool.get());
+    // I_PRICE
+    double i_price = GetRandomDouble(item_min_price, item_max_price);
+    tuple->SetValue(3, ValueFactory::GetDoubleValue(i_price), nullptr);
+    // I_DATA
+    auto i_data = GetRandomAlphaNumericString(data_length);
+    tuple->SetValue(4, ValueFactory::GetStringValue(i_data), pool.get());
+
+    std::cout << *tuple;
+
+    planner::InsertPlan node(item_table, nullptr, tuple);
+    executor::InsertExecutor executor(&node, context.get());
+    executor.Execute();
+  }
+
+  txn_manager.CommitTransaction(txn);
 
 }
 
-void LoadDistrictTable() {
-
-}
-
-void LoadItemTable() {
-
-}
-
-void LoadCustomerTable() {
-
-}
-
-void LoadHistoryTable() {
-
-}
-
-void LoadStockTable() {
-
-}
-
-void LoadOrdersTable() {
-
-}
-
-void LoadNewOrderTable() {
-
-}
-
-void LoadOrderLineTable() {
+void LoadWarehouses() {
 
 }
 
 void LoadTPCCDatabase() {
 
-  LoadWarehouseTable();
-  LoadDistrictTable();
-  LoadItemTable();
-  LoadCustomerTable();
-  LoadHistoryTable();
-  LoadStockTable();
-  LoadOrdersTable();
-  LoadNewOrderTable();
-  LoadOrderLineTable();
+  LoadItems();
+
+  LoadWarehouses();
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManager::GetInstance();

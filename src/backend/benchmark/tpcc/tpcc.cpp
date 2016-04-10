@@ -39,10 +39,11 @@ static void WriteOutput(double stat) {
 // Main Entry Point
 void RunBenchmark() {
 
-  // Create and load the user table
+  // Create the database
   CreateTPCCDatabase();
 
-  //LoadtpccDatabase();
+  // Load the database
+  LoadTPCCDatabase();
 
   WriteOutput(0);
 }
