@@ -184,9 +184,9 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
         LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
         new_tuple_tile_group->GetDatabaseId(), new_location,
         INVALID_ITEMPOINTER, tuple.get());
-
-    delete executor_context;
     logger->Log(record);
+    delete executor_context;
+
   }
 }
 
