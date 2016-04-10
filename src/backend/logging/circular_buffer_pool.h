@@ -14,7 +14,11 @@
 
 #include <atomic>
 #include "backend/logging/buffer_pool.h"
+#include "backend/common/logger.h"
+#include <cstring>
 
+#define BUFFER_POOL_SIZE 32
+#define BUFFER_POOL_MASK (BUFFER_POOL_SIZE - 1)
 namespace peloton {
 namespace logging {
 
@@ -22,24 +26,19 @@ namespace logging {
 // Buffer Pool
 //===--------------------------------------------------------------------===//
 
-template <unsigned int Capacity>
 class CircularBufferPool : public BufferPool {
  public:
-  CircularBufferPool(const CircularBufferPool &) = delete;
-  CircularBufferPool &operator=(const CircularBufferPool &) = delete;
-  CircularBufferPool(CircularBufferPool &&) = delete;
-  CircularBufferPool &operator=(CircularBufferPool &&) = delete;
+  CircularBufferPool();
+  ~CircularBufferPool();
 
-  CircularBufferPool(){};
-  ~CircularBufferPool(void){};
-
-  bool Put(std::shared_ptr<LogBuffer>);
-  std::shared_ptr<LogBuffer> Get();
+  bool Put(std::unique_ptr<LogBuffer>);
+  std::unique_ptr<LogBuffer> Get();
 
  private:
-  std::atomic<LogBuffer *> buffer_[Capacity];
-  std::atomic<unsigned> head_;
-  std::atomic<unsigned> tail_;
+  // TODO make BUFFER_POOL_SIZE as class template
+  std::unique_ptr<LogBuffer> buffers_[BUFFER_POOL_SIZE];
+  std::atomic<unsigned int> head_;
+  std::atomic<unsigned int> tail_;
 };
 
 }  // namespace logging
