@@ -180,10 +180,10 @@ bool TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                       const ItemPointer &new_location) {
   LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
 
-  auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -233,11 +233,11 @@ bool TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
                                       const oid_t &tuple_id,
                                       const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
-  
-  auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -264,12 +264,11 @@ void TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
                                       const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
 
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  
+
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
@@ -293,7 +292,6 @@ Result TsOrderTxnManager::CommitTransaction() {
 
     return ret;
   }
-
 
   auto &manager = catalog::Manager::GetInstance();
 
