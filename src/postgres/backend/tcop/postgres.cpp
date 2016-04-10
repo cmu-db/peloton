@@ -185,7 +185,7 @@ thread_local static bool RecoveryConflictPending = false;
 thread_local static bool RecoveryConflictRetryable = true;
 thread_local static ProcSignalReason RecoveryConflictReason;
 
-enum MC_OP { GET, SET, ADD, REPLACE };
+enum MC_OP { GET, SET, ADD, REPLACE};
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
@@ -4346,7 +4346,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     if(mc_sock.read_line(query_line)) {
       printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
 
-      // TODO parse the Memcached request into calls to the prepared statements
+      // TODO parse the Memcached request into calls to the prepared statement
       peloton::memcached::QueryParser qp = peloton::memcached::QueryParser(query_line);//, &mc_sock);
 
       query_line = qp.parseQuery();
@@ -4384,6 +4384,19 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         case 3: {
           op = REPLACE;
           break;
+        }
+        case -100:{
+          if (!mc_sock.write_response(query_line + "\r\n")) {
+            printf("\nVersion queried, returning dummy \n");
+          }
+          continue;
+        }
+        case -101:{
+          mc_sock.close_socket();
+//          printf("\nQuit/ close socket failed, terminating thread\n");
+          terminate = true;
+
+          continue;
         }
         default:{
           printf("\nRead line failed, terminating thread\n");
