@@ -40,7 +40,7 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   return predicate;
 }
 
-planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
+std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
   // Create the plan node
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
@@ -64,8 +64,9 @@ planner::ProjectInfo *JoinTestsUtil::CreateProjection() {
   direct_map_list.push_back(direct_map3);
   direct_map_list.push_back(direct_map4);
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
+  return std::unique_ptr<const planner::ProjectInfo>(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 }
 
 // Create complicated join predicate
