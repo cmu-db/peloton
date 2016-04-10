@@ -33,15 +33,18 @@ class ProjectionPlan : public AbstractPlan {
   ProjectionPlan(ProjectionPlan &&) = delete;
   ProjectionPlan &operator=(ProjectionPlan &&) = delete;
 
-  ProjectionPlan(const planner::ProjectInfo *project_info,
-                 const catalog::Schema *schema)
-      : project_info_(project_info), schema_(schema) {}
+  ProjectionPlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
+                 std::shared_ptr<const catalog::Schema> &schema)
+      : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const planner::ProjectInfo *GetProjectInfo() const {
+  inline const planner::ProjectInfo *GetProjectInfo()
+      const {
     return project_info_.get();
   }
 
-  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
+  inline const catalog::Schema *GetSchema() const {
+    return schema_.get();
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_PROJECTION;
@@ -56,8 +59,10 @@ class ProjectionPlan : public AbstractPlan {
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    ProjectionPlan *new_plan = new ProjectionPlan(
-        project_info_->Copy(), catalog::Schema::CopySchema(schema_.get()));
+    std::shared_ptr<const catalog::Schema> schema_copy(
+        catalog::Schema::CopySchema(schema_.get()));
+    ProjectionPlan *new_plan =
+        new ProjectionPlan(project_info_->Copy(), schema_copy);
     new_plan->SetColumnIds(column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
@@ -67,7 +72,7 @@ class ProjectionPlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   /** @brief Schema of projected tuples. */
-  std::unique_ptr<const catalog::Schema> schema_;
+  std::shared_ptr<const catalog::Schema> schema_;
 
   /** @brief Columns involved */
   std::vector<oid_t> column_ids_;
