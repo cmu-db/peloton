@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// optimistic_transaction_manager_test.cpp
+// optimistic_txn_manager_test.cpp
 //
 // Identification: tests/concurrency/optimistic_txn_manager_test.cpp
 //
