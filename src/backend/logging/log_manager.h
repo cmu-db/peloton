@@ -20,6 +20,7 @@
 #include "backend_logger.h"
 #include "frontend_logger.h"
 #include "backend/concurrency/transaction.h"
+#include "loggers/wal_frontend_logger.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -117,6 +118,8 @@ class LogManager {
   void LogDelete(oid_t commit_id, ItemPointer &delete_location);
 
   void LogCommitTransaction(oid_t commit_id);
+
+  void TruncateLogs(txn_id_t commit_id);
 
  private:
   LogManager();
