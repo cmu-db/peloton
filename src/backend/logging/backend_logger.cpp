@@ -19,12 +19,9 @@
 namespace peloton {
 namespace logging {
 
-BackendLogger::BackendLogger() {
-  logger_type = LOGGER_TYPE_BACKEND;
-}
+BackendLogger::BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; }
 
 BackendLogger::~BackendLogger() {
-
   // Wait for flushing
   WaitForFlushing();
 }
@@ -75,6 +72,5 @@ void BackendLogger::WaitForFlushing(void) {
     }
   }
 }
-
 }  // namespace logging
 }

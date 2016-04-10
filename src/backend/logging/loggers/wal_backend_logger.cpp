@@ -72,9 +72,5 @@ LogRecord *WriteAheadBackendLogger::GetTupleRecord(
   return record;
 }
 
-cid_t WriteAheadBackendLogger::GetHighestLoggedCommitId() {
-  return highest_logged_commit_id;
-}
-
 }  // namespace logging
 }  // namespace peloton

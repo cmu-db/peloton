@@ -51,6 +51,7 @@ LogManager &LogManager::GetInstance() {
  */
 void LogManager::StartStandbyMode() {
   // If frontend logger doesn't exist
+  LOG_INFO("TRACKING: LogManager::StartStandbyMode()");
   if (frontend_loggers.size() == 0) {
     for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
       std::unique_ptr<FrontendLogger> frontend_logger(
@@ -81,10 +82,12 @@ void LogManager::StartStandbyMode() {
 
 void LogManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
+  LOG_INFO("TRACKING: LogManager::StartRecoveryMode()");
   SetLoggingStatus(LOGGING_STATUS_TYPE_RECOVERY);
 }
 
 void LogManager::TerminateLoggingMode() {
+  LOG_INFO("TRACKING: LogManager::TerminateLoggingMode()");
   SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
 
   // We set the frontend logger status to Terminate
@@ -111,6 +114,7 @@ void LogManager::WaitForModeTransition(LoggingStatus logging_status_,
  */
 bool LogManager::EndLogging() {
   // Wait if current status is recovery
+  LOG_INFO("TRACKING: LogManager::EndLogging()");
   WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
 
   LOG_INFO("Wait until frontend logger escapes main loop..");
@@ -221,7 +225,7 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     auto record =
         new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
     logger->Log(record);
-    logger->WaitForFlushing();
+    WaitForFlush(commit_id);
   }
 }
 
@@ -308,6 +312,43 @@ void LogManager::TruncateLogs(txn_id_t commit_id) {
     FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
     reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
         ->TruncateLog(commit_id);
+  }
+}
+
+cid_t LogManager::GetMaxFlushedCommitId() {
+
+  int num_loggers;
+  num_loggers = this->frontend_loggers.size();
+  cid_t max_flushed_commit_id = UINT64_MAX, id;
+
+  // TODO confirm with mperron if this is correct or not
+  for (int i = 0; i < num_loggers; i++) {
+    FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
+    id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
+        ->GetMaxFlushedCommitId();
+    if (id < max_flushed_commit_id)
+      max_flushed_commit_id = id;
+  }
+
+  return max_flushed_commit_id;
+}
+
+void LogManager::FrontendLoggerFlushed() {
+  {
+    std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
+
+    flush_notify_cv.notify_all();
+  }
+}
+
+void LogManager::WaitForFlush(cid_t cid) {
+  {
+    std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
+
+    // TODO confirm with mperron if this is correct or not
+    while (this->GetMaxFlushedCommitId() < cid) {
+      flush_notify_cv.wait(wait_lock);
+    }
   }
 }
 

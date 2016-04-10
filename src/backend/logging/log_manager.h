@@ -73,6 +73,12 @@ class LogManager {
   // End the actual logging
   bool EndLogging();
 
+  void FrontendLoggerFlushed();
+
+  void WaitForFlush(cid_t cid);
+
+  cid_t GetMaxFlushedCommitId();
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -138,6 +144,12 @@ class LogManager {
   // To synch the status
   std::mutex logging_status_mutex;
   std::condition_variable logging_status_cv;
+
+  // To wait for flush
+  std::mutex flush_notify_mutex;
+  std::condition_variable flush_notify_cv;
+
+  cid_t max_flushed_cid = 0;
 
   bool syncronization_commit = false;
 
