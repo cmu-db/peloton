@@ -32,7 +32,7 @@ public:
 
   inline void close_socket() {
     for (;;) {
-      int status = (port->sock);
+      int status = close(port->sock);
       if (status < 0) {
         // failed close
         if (errno == EINTR) {
