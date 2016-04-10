@@ -510,6 +510,7 @@ Result SsiTxnManager::CommitTransaction() {
   }
   log_manager.LogCommitTransaction(end_commit_id);
   current_txn = nullptr;
+  current_txn_ctx->is_finish_ = true;
   return ret;
 }
 
@@ -654,7 +655,7 @@ void SsiTxnManager::CleanUp() {
     }
 
     // remove committed transactions, whose end_cid < min_begin
-    for (auto itr = txn_table_.begin(); itr != txn_table_.end(); itr++) {
+    for (auto itr = txn_table_.begin(); itr != txn_table_.end();) {
       auto &ctx = itr->second;
       auto end_cid = ctx->transaction_->GetEndCommitId();
       if (end_cid == INVALID_TXN_ID) {
@@ -665,19 +666,14 @@ void SsiTxnManager::CleanUp() {
       }
 
       // record garbage
-      if (end_cid < min_begin) {
+      if (end_cid < min_begin && ctx->is_finish_) {
         // we can safely remove it from table
         LOG_INFO("remove %ld in table", ctx->transaction_->GetTransactionId());
         garbage_ctx.insert(ctx);
+        itr = txn_table_.erase(itr);
+      }else{
+        itr++;
       }
-    }
-  }
-
-  // remove garbage from table
-  {
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    for(auto ctx : garbage_ctx) {
-      txn_table_.erase(ctx->transaction_->GetTransactionId());
     }
   }
 

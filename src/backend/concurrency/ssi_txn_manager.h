@@ -24,11 +24,12 @@ namespace concurrency {
 
 struct SsiTxnContext {
   SsiTxnContext(Transaction *t)
-      : transaction_(t), in_conflict_(false), out_conflict_(false), is_abort_(false) {}
+      : transaction_(t), in_conflict_(false), out_conflict_(false), is_abort_(false), is_finish_(false) {}
   Transaction *transaction_;
   bool in_conflict_;
   bool out_conflict_;
   bool is_abort_;
+  bool is_finish_; // is commit finished
   Spinlock lock_;
 };
 
