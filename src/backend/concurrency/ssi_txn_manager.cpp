@@ -634,6 +634,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
 // Current implementation might be very expensive, consider using dependency
 // count
 void SsiTxnManager::CleanUp() {
+  std::lock_guard<std::mutex> lock(clean_mutex_);
 
   std::unordered_set<SsiTxnContext *> garbage_ctx;
   {
@@ -655,7 +656,7 @@ void SsiTxnManager::CleanUp() {
     }
 
     // remove committed transactions, whose end_cid < min_begin
-    for (auto itr = txn_table_.begin(); itr != txn_table_.end();) {
+    for (auto itr = txn_table_.begin(); itr != txn_table_.end(); itr++) {
       auto &ctx = itr->second;
       auto end_cid = ctx->transaction_->GetEndCommitId();
       if (end_cid == INVALID_TXN_ID) {
@@ -670,10 +671,15 @@ void SsiTxnManager::CleanUp() {
         // we can safely remove it from table
         LOG_INFO("remove %ld in table", ctx->transaction_->GetTransactionId());
         garbage_ctx.insert(ctx);
-        itr = txn_table_.erase(itr);
-      }else{
-        itr++;
       }
+    }
+  }
+
+  // remove garbage from table
+  {
+    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    for(auto ctx : garbage_ctx) {
+      txn_table_.erase(ctx->transaction_->GetTransactionId());
     }
   }
 
