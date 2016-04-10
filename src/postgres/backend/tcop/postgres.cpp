@@ -4423,49 +4423,50 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
  */
 static void parse_select_result_cols(StringInfoData *buf, std::string& result, MC_OP op, int len) {
   if (op != GET) {
-    result += "STORED\r\n";
-    printf("RESULT SAYS NOT GET:%s\n",result.c_str());
+    result += "STORED";
+//    printf("RESULT SAYS NOT GET:%s\n",result.c_str());
   } else {
     // VALUE <key> <flags> <bytes> [<cas unique>]\r\n
     // <data block>\r\n
     if (len == 0) {
-      result += "NOT_FOUND\r\n";
+      result += "NOT_FOUND";
       return;
     }
     result += "VALUE ";
     buf->cursor = 0;
     // base 2 int, 16 bits
-    buf->len = 2;
+//    buf->len = 2;
     int nattrs = pq_getmsgint(buf, 2);
     if (nattrs != 4) {
       printf("nattrs:%d != 4\n", nattrs);
       result += "ERROR";
-      printf("RESULT ERROR:%s\n",result.c_str());
+//      printf("RESULT ERROR:%s\n",result.c_str());
       return;
     }
     int col_length;
-    buf->len += 4;
+//    buf->len += 4;
+//    buf->cursor += 4;
     // key
     col_length = pq_getmsgint(buf, 4);
-    buf->len += col_length;
+//    buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
     result += " ";
     // flag
     col_length = pq_getmsgint(buf, 4);
-    buf->len += col_length;
+//    buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
     result += " ";
     // size
     col_length = pq_getmsgint(buf, 4);
-    buf->len += col_length;
+//    buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
     result += "\r\n";
     // value
     col_length = pq_getmsgint(buf, 4);
-    buf->len += col_length;
+//    buf->len += col_length;
     result += pq_getmsgbytes(buf, col_length);
-    result += "\r\n";
-    printf("RESULT no ERROR:%s\n",result.c_str());
+    result += "\r\nEND";
+//    printf("RESULT no ERROR:%s\n",result.c_str());
     return;
   }
 }
