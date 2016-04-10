@@ -222,7 +222,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         break;
       }
       case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
-    	LOG_TRACE("Read checkpoint begin entry");
+        LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
         if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
                                         checkpoint_file_size_) == false) {
@@ -282,8 +282,8 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
-  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)", target_location.block, target_location.offset);
-
+  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)",
+            target_location.block, target_location.offset);
 }
 
 bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
@@ -419,10 +419,11 @@ void SimpleCheckpoint::Cleanup() {
   }
 
   // Truncate logs
-  auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
-  assert(frontend_logger);
-  reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
-      ->TruncateLog(start_commit_id);
+  // auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
+  // assert(frontend_logger);
+  // reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
+  //  ->TruncateLog(start_commit_id);
+  LogManager::GetInstance().TruncateLogs(start_commit_id);
 }
 
 void SimpleCheckpoint::InitVersionNumber() {

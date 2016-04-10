@@ -299,5 +299,17 @@ void LogManager::ResetFrontendLogger() {
       FrontendLogger::GetFrontendLogger(peloton_logging_mode));
 }
 
+void LogManager::TruncateLogs(txn_id_t commit_id) {
+  int num_loggers;
+
+  num_loggers = this->frontend_loggers.size();
+
+  for (int i = 0; i < num_loggers; i++) {
+    FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
+    reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
+        ->TruncateLog(commit_id);
+  }
+}
+
 }  // namespace logging
 }  // namespace peloton

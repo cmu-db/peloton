@@ -89,21 +89,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
 
-  /*LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
-
-  // open log file and file descriptor
-  // we open it in append + binary mode
-  log_file = fopen(GetLogFileName().c_str(), "ab+");
-  if (log_file == NULL) {
-    LOG_ERROR("LogFile is NULL");
-  }
-
-  // also, get the descriptor
-  log_file_fd = fileno(log_file);
-  if (log_file_fd == -1) {
-    LOG_ERROR("log_file_fd is -1");
-  }*/
-
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
   if (for_testing) {
@@ -113,7 +98,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     // TODO cleanup later
     this->checkpoint.Init();
 
-    // abj1 adding code here!
     LOG_INFO("Log dir before getting ID is %s",
              this->peloton_log_directory.c_str());
     this->SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
@@ -1011,7 +995,6 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
       // TODO set max commit ID here!
       if (max_commit_id == 0 || max_commit_id == UINT64_MAX) {
-        // TODO uncomment
         max_commit_id = this->ExtractMaxCommitIdFromLogFileRecords(fp);
         LOG_INFO("ExtractMaxCommitId returned %d", (int)max_commit_id);
       }
