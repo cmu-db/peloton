@@ -95,7 +95,8 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    txn_manager_mutex_.WriteLock();
 
     // protect beginTransaction with a global lock
     // to ensure that:
@@ -104,7 +105,7 @@ class SsiTxnManager : public TransactionManager {
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
     current_txn_ctx = new SsiTxnContext(txn);
     txn_table_[txn->GetTransactionId()] = current_txn_ctx;
-
+    txn_manager_mutex_.Unlock();
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
@@ -121,7 +122,7 @@ class SsiTxnManager : public TransactionManager {
 
  private:
   // Mutex to protect txn_table_ and sireadlocks
-  std::mutex txn_manager_mutex_;
+  RWLock txn_manager_mutex_;
   // mutex to avoid re-enter clean up
   std::mutex clean_mutex_;
   // Transaction contexts
