@@ -36,9 +36,9 @@ class BackendLogger : public Logger {
 
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
 
-  void FinishedFlushing(void);
+  void FinishedFlushing();
 
-  void WaitForFlushing(void);
+  void WaitForFlushing();
 
   //===--------------------------------------------------------------------===//
   // Virtual Functions
@@ -54,15 +54,18 @@ class BackendLogger : public Logger {
                                     ItemPointer delete_location,
                                     void *data = nullptr) = 0;
 
-  virtual cid_t GetHighestLoggedCommitId() { return 0; };
+  cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
+
+  void SetHighestLoggedCommitId(cid_t cid) { highest_logged_commit_id = cid; };
 
  protected:
   std::vector<std::unique_ptr<LogRecord>> local_queue;
   std::mutex local_queue_mutex;
-
+  cid_t highest_logged_commit_id = 0;
   // Used for notify any waiting thread that backend is flushed
   std::mutex flush_notify_mutex;
   std::condition_variable flush_notify_cv;
+  cid_t highest_flushed_cid = 0;
 };
 
 }  // namespace logging
