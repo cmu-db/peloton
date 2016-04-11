@@ -35,7 +35,7 @@ class TransactionManagerFactory {
       case CONCURRENCY_TYPE_SSI:
         return SsiTxnManager::GetInstance();
       default:
-        return EagerWriteTxnManager::GetInstance();
+        return OptimisticTxnManager::GetInstance();
     }
   }
 

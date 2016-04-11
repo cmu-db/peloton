@@ -114,19 +114,19 @@ class EagerWriteTxnManager : public TransactionManager {
       std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
 
       // No more dependency can be added.
-      // Theoretically we don't need the lock below
-      // current_txn_ctx->wait_list_lock_.Lock();
+
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
-          running_txn_map_[wtid]->wait_for_counter_ --;
+          running_txn_map_[wtid]->wait_for_counter_--;
         }
       }
-      // current_txn_ctx->wait_list_lock_.Unlock();
       running_txn_map_.erase(txn_id);
-      delete current_txn;
     }
 
+    delete current_txn;
+    delete current_txn_ctx;
     current_txn = nullptr;
+    current_txn_ctx = nullptr;
   }
 
   virtual cid_t GetMaxCommittedCid() {
@@ -191,12 +191,14 @@ class EagerWriteTxnManager : public TransactionManager {
   // Add the current txn into the reader list of a tuple
   void AddReader(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
+    LOG_INFO("Add reader %lu, tuple_id = %lu", txn_id, tuple_id);
+
     TxnList *reader = new TxnList(txn_id);
 
     GetEwReaderLock(tile_group_header, tuple_id);
     TxnList *headp = (TxnList *)(
       tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
-    reader->next = headp;
+    reader->next = headp->next;
     headp->next = reader;
     ReleaseEwReaderLock(tile_group_header, tuple_id);
   }
@@ -204,6 +206,7 @@ class EagerWriteTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveReader(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id,
                       txn_id_t txn_id) {
+    LOG_INFO("Remove reader with txn_id = %lu", txn_id);
     GetEwReaderLock(tile_group_header, tuple_id);
 
     TxnList *headp = (TxnList *)(
@@ -235,6 +238,17 @@ class EagerWriteTxnManager : public TransactionManager {
 
   void DecreaseReaderCount(const storage::TileGroupHeader *const tile_group_header,
                            const oid_t &tuple_id);
+
+  inline void AtomicSetOnlyTxnId(const storage::TileGroupHeader *const tile_group_header,
+                          const oid_t &tuple_id, txn_id_t tid) {
+    auto old_tid = tile_group_header->GetTransactionId(tuple_id);
+    while (true) {
+      auto new_tid = PACK_TXNID(tid, EXTRACT_READ_COUNT(old_tid));
+      auto real_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
+      if (real_tid == old_tid) return;
+      old_tid = real_tid;
+    }
+  }
 
   std::mutex running_txn_map_mutex_;
   std::unordered_map<txn_id_t, EagerWriteTxnContext*> running_txn_map_;
