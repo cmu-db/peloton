@@ -115,16 +115,11 @@ void SpeculativeReadTxnManager::SetOwnership(const oid_t &tile_group_id,
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
-  auto txn_begin_id = current_txn->GetBeginCommitId();
 
   // Set MVCC info
   assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
-
-  COMPILER_MEMORY_FENCE;
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 }
