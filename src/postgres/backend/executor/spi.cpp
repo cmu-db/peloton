@@ -2401,8 +2401,12 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 
-	_SPI_current->processed = queryDesc->estate->es_processed;
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
+	if (_SPI_current->tuptable)
+		_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
+	else
+		_SPI_current->processed = queryDesc->estate->es_processed;
+
 
 	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
 		queryDesc->dest->mydest == DestSPI)
