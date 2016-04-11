@@ -28,6 +28,7 @@ namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
   eager_write_released_rdlock;
+thread_local EagerWriteTxnContext *current_txn_ctx;
 
 
 EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
@@ -144,7 +145,7 @@ bool EagerWriteTxnManager::IsOwnable(
 
 bool EagerWriteTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   LOG_TRACE("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
@@ -181,15 +182,13 @@ bool EagerWriteTxnManager::AcquireOwnership(
         // skip my self
         if (reader_tid == current_tid) continue;
 
-        // Reader must exist, or we will get a exception here
-        EagerWriteTxnContext *reader_ctx;
-
         // Lock the txn bucket
         {
           std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
 
           if (running_txn_map_.count(reader_tid) != 0) {
               // Add myself to the wait_for set of reader
+              auto reader_ctx = running_txn_map_[reader_tid];
               LOG_TRACE("Add dependency to %lu", reader_tid);
               if (reader_ctx->wait_list_.insert(current_tid).second == true) {
                 // New dependency

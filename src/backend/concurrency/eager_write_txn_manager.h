@@ -33,10 +33,10 @@ struct TxnList {
 struct EagerWriteTxnContext {
 //  Spinlock wait_list_lock_;
   std::atomic<int> wait_for_counter_;
-  cid_t begin_cid_;
   std::unordered_set<txn_id_t> wait_list_;
+  cid_t begin_cid_;
 
-  EagerWriteTxnContext(): /*wait_list_lock_(),*/ wait_for_counter_(0), wait_list_(), begin_cid_(INVALID_CID){}
+  EagerWriteTxnContext(): wait_for_counter_(0), wait_list_(), begin_cid_(INVALID_CID){}
   ~EagerWriteTxnContext() {}
 };
 
@@ -116,7 +116,6 @@ class EagerWriteTxnManager : public TransactionManager {
       // No more dependency can be added.
       // Theoretically we don't need the lock below
       // current_txn_ctx->wait_list_lock_.Lock();
-      EagerWriteTxnContext *writer_ctx;
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_ --;
