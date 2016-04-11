@@ -162,9 +162,10 @@ void LoadYCSBDatabase() {
       tuple.SetValue(col_itr, field_value, pool.get());
     }
 
-    auto project_info = MakeProjectInfoFromTuple(tuple);
+    std::unique_ptr<const planner::ProjectInfo> project_info{
+      MakeProjectInfoFromTuple(tuple)};
 
-    planner::InsertPlan node(user_table, project_info);
+    planner::InsertPlan node(user_table, std::move(project_info));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }

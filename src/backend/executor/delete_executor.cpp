@@ -96,7 +96,8 @@ bool DeleteExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
+        true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
       transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
@@ -106,7 +107,8 @@ bool DeleteExecutor::DExecute() {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id,
+                                               physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
@@ -130,8 +132,9 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
-      if(!res){
+      auto res = transaction_manager.PerformDelete(tile_group_id,
+                                                   physical_tuple_id, location);
+      if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
