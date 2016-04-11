@@ -78,9 +78,9 @@ oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetNextTupleSlot();
 }
 
-oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
-  return tile_group_header->GetActiveTupleCount(txn_id);
-}
+// oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
+//   return tile_group_header->GetActiveTupleCount(txn_id);
+// }
 
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();

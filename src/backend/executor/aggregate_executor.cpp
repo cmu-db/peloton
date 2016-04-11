@@ -95,8 +95,6 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
-  auto transaction = executor_context_->GetTransaction();
-  auto transaction_id = transaction->GetTransactionId();
 
   // Get an aggregator
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
@@ -156,8 +154,11 @@ bool AggregateExecutor::DExecute() {
       tuple->SetAllNulls();
       auto location = output_table->InsertTuple(tuple.get());
       assert(location.block != INVALID_OID);
-      concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
-          location.block, location.offset);
+      auto tile_group_header = output_table->GetTileGroup(location.block)->GetHeader();
+      tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
+
+      //concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
+      //    location.block, location.offset);
     } else {
       done = true;
       return false;
@@ -175,7 +176,7 @@ bool AggregateExecutor::DExecute() {
 
     // Get the logical tiles corresponding to the given tile group
     auto logical_tile =
-        LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
+        LogicalTileFactory::WrapTileGroup(tile_group);
 
     result.push_back(logical_tile);
   }
