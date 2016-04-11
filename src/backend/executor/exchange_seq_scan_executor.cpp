@@ -66,14 +66,15 @@ bool ExchangeSeqScanExecutor::DExecute() {
         std::function<void()> f_seq_scan =
             std::bind(&ExchangeSeqScanExecutor::ThreadExecute, this,
                       current_tile_group_offset_);
-        // std::thread thread(f_seq_scan);
-        // thread.join();
-         ThreadManager::GetInstance().AddTask(f_seq_scan);
+        std::thread thread(f_seq_scan);
+        thread.join();
+        // ThreadManager::GetInstance().AddTask(f_seq_scan);
 
         current_tile_group_offset_++;
       }
 
       parallelize_done_ = true;
+      current_tile_group_offset_ = START_OID;
     } else {
       // When exchange_seq_scan_executor, should use a single thread to create
       // parallel tasks.
@@ -108,8 +109,6 @@ bool ExchangeSeqScanExecutor::DExecute() {
       return false;
     }
   }
-
-  current_tile_group_offset_ = START_OID;
 
   while (current_tile_group_offset_ < table_tile_group_count_) {
     std::unique_ptr<AbstractParallelTaskResponse> response_ptr(queue_.Get());
