@@ -45,6 +45,8 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "libpq/libpq.h"
+#include "../interfaces/libpq/libpq-fe.h" //TODO: Move this to includes
+//#include "../interfaces/libpq/fe-exec.cpp
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "optimizer/planner.h"
@@ -4364,7 +4366,15 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
         else{
           auto temp_loc = query_line.find("$$$$");
-          query_line.replace(temp_loc, 4, value);
+          char escaped_value[value.length()];
+//          size_t length_escapsed = 0;
+          auto val_size = PQescapeString(&escaped_value[0], &value[0], value.length());
+//          escaped_value = PQescapeLiteral(nullptr, value.c_str(), value.length());
+//          assert(val_size == value.length());
+          printf("%s\n",escaped_value);
+          assert(1==0);
+          query_line.replace(temp_loc, 4, std::string(escaped_value));
+          PQfreemem(escaped_value);
         }
       }
 
