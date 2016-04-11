@@ -224,7 +224,9 @@ class EagerWriteTxnManager : public TransactionManager {
     }
 
     ReleaseEwReaderLock(tile_group_header, tuple_id);
-    assert(find == true);
+    if (find == false) {
+      assert(false);
+    }
   }
 
   void RemoveReader();
