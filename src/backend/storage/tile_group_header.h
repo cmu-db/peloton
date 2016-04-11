@@ -29,6 +29,10 @@
 namespace peloton {
 namespace storage {
 
+static std::mutex result_mutex;
+static std::unordered_map<oid_t, oid_t> peak_tuple_id;
+static FILE *result_file = NULL;
+
 //===--------------------------------------------------------------------===//
 // Tile Group Header
 //===--------------------------------------------------------------------===//
@@ -98,8 +102,30 @@ class TileGroupHeader : public Printable {
         next_tuple_slot++;
       }
     }
-    LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
-    LOG_INFO("###### TUPLE SLOT USED = %lu", tuple_slot_id);
+
+    if(result_file == NULL) {
+      result_file = fopen("/tmp/result.file", "w");
+      assert(!result_file);
+    }
+
+    {
+      std::lock_guard<std::mutex> lock(result_mutex);
+
+      auto table_id = tile_group->GetTableId();
+      if(peak_tuple_id.find(table_id) == peak_tuple_id.end()) {
+        peak_tuple_id[table_id] = 0;
+      }
+
+      if(peak_tuple_id[table_id] < tuple_slot_id) {
+        peak_tuple_id.erase(table_id);
+        peak_tuple_id[table_id] = tuple_slot_id;
+        fprintf(result_file, "%lu %lu\n", table_id, tuple_slot_id);
+        fflush(result_file);
+      }
+    }
+
+    //LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
+    //LOG_INFO("###### TUPLE SLOT USED = %lu", tuple_slot_id);
     return tuple_slot_id;
   }
 
