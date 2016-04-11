@@ -12,10 +12,10 @@ extern "C" {
 PG_MODULE_MAGIC;
 #endif
 
-int execq(text *sql, int cnt);
+int execq(text *sql);
 
 int
-execq(text *sql, int cnt)
+execq(text *sql)
 {
   char *command;
   int ret;
@@ -26,7 +26,7 @@ execq(text *sql, int cnt)
 
   SPI_connect();
 
-  ret = SPI_exec(command, cnt);
+  ret = SPI_exec(command, 0);
 
   proc = SPI_processed;
   /*
