@@ -166,9 +166,7 @@ std::string BackendTypeToString(BackendType type) {
       return "FILE";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: {
-      return "UNKNOWN " + std::to_string(type);
-    }
+    default: { return "UNKNOWN " + std::to_string(type); }
   }
   return (ret);
 }
@@ -461,12 +459,6 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_OPERATOR_COALESCE: {
       return "COALESCE";
     }
-    case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
-      return "OPERATOR_CASE_WHEN";
-    }
-    case EXPRESSION_TYPE_OPERATOR_ALTERNATIVE: {
-      return "OPERATOR_ALTERNATIVE";
-    }
     case EXPRESSION_TYPE_ROW_SUBQUERY: {
       return "ROW_SUBQUERY";
     }
@@ -629,10 +621,6 @@ ExpressionType StringToExpressionType(std::string str) {
     return EXPRESSION_TYPE_VALUE_VECTOR;
   } else if (str == "HASH_RANGE") {
     return EXPRESSION_TYPE_HASH_RANGE;
-  } else if (str == "OPERATOR_CASE_WHEN") {
-    return EXPRESSION_TYPE_OPERATOR_CASE_WHEN;
-  } else if (str == "OPERATOR_ALTERNATIVE") {
-    return EXPRESSION_TYPE_OPERATOR_ALTERNATIVE;
   } else if (str == "ROW_SUBQUERY") {
     return EXPRESSION_TYPE_ROW_SUBQUERY;
   } else if (str == "SELECT_SUBQUERY") {

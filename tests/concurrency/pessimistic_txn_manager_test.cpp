@@ -24,7 +24,8 @@ namespace test {
 class PessimisticTxnManagerTests : public PelotonTest {};
 
 TEST_F(PessimisticTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_PESSIMISTIC);
+  concurrency::TransactionManagerFactory::Configure(
+      CONCURRENCY_TYPE_PESSIMISTIC);
   EXPECT_TRUE(true);
 }
 
