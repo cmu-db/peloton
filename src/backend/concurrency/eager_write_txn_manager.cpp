@@ -27,7 +27,8 @@ namespace peloton {
 namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
-    eager_write_released_rdlock;
+  eager_write_released_rdlock;
+
 
 EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
   static EagerWriteTxnManager txn_manager;
@@ -90,6 +91,34 @@ bool EagerWriteTxnManager::IsVisible(
   }
 }
 
+void EagerWriteTxnManager::RemoveReader() {
+  LOG_INFO("release all reader lock");
+
+  // Remove from the read list of accessed tuples
+  auto txn = current_txn;
+  auto &rw_set = txn->GetRWSet();
+
+  for (auto &tile_group_entry : rw_set) {
+    oid_t tile_group_id = tile_group_entry.first;
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    if (tile_group == nullptr)
+      continue;
+
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto &tuple_entry : tile_group_entry.second) {
+      auto tuple_slot = tuple_entry.first;
+
+      // we don't have reader lock on insert
+      if (tuple_entry.second == RW_TYPE_INSERT) {
+        continue;
+      }
+      RemoveReader(tile_group_header, tuple_slot, txn->GetTransactionId());
+    }
+  }
+  LOG_INFO("release EWreader finish");
+}
+
 // check whether the current transaction owns the tuple.
 // this function is called by update/delete executors.
 bool EagerWriteTxnManager::IsOwner(
@@ -119,19 +148,66 @@ bool EagerWriteTxnManager::AcquireOwnership(
   LOG_TRACE("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
-  // acquire write lock.
-  // No writer, release read lock that is acquired before
-  // Must success
-  ReleaseReadLock(tile_group_header, tuple_id);
+  // Try to get write lock
+  auto old_tid = tile_group_header->GetTransactionId(tuple_id);
+  auto current_tid = current_txn->GetTransactionId();
 
-  eager_write_released_rdlock[tile_group_id].insert(tuple_id);
+  // Release the read count of myself
+  DecreaseReaderCount(tile_group_header, tuple_id);
 
-  // Try get write lock
-  auto current_txn_id = current_txn->GetTransactionId();
-  bool res = tile_group_header->SetAtomicTransactionId(
-      tuple_id, PACK_TXNID(current_txn_id, 0));
+  while(EXTRACT_TXNID(old_tid) == INITIAL_TXN_ID){
+    auto read_count = EXTRACT_READ_COUNT(old_tid);
+    auto new_tid = PACK_TXNID(current_tid, read_count);
+    auto real_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
+
+    if (real_tid != old_tid) {
+      old_tid = real_tid;
+    }
+  }
+
+  // Check if we successfully get the write lock
+  bool res = (EXTRACT_TXNID(old_tid) == current_tid);
 
   if (res) {
+    // Install wait for dependency on all reader txn
+    int wait_count = 0;
+    GetEwReaderLock(tile_group_header, tuple_id);
+    {
+      auto ptr = GetEwReaderList(tile_group_header, tuple_id);
+      while (ptr->next != nullptr) {
+        // try to install a wait for in every reader
+        auto reader_tid = ptr->next->txn_id_;
+
+        // skip my self
+        if (reader_tid == current_tid) continue;
+
+        // Reader must exist, or we will get a exception here
+        EagerWriteTxnContext *reader_ctx;
+
+        // Lock the txn bucket
+        {
+          std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+
+          if (running_txn_map_.count(reader_tid) != 0) {
+              // Add myself to the wait_for set of reader
+              LOG_TRACE("Add dependency to %lu", reader_tid);
+              if (reader_ctx->wait_list_.insert(current_tid).second == true) {
+                // New dependency
+                wait_count += 1;
+              }
+          } else {
+            assert(false);
+          }
+        }
+        ptr = ptr->next;
+      }
+    }
+    ReleaseEwReaderLock(tile_group_header, tuple_id);
+
+    // Atomically increase the wait_for counter
+    current_txn_ctx->wait_for_counter_ += wait_count;
+    assert(current_txn_ctx->wait_for_counter_ >= 0);
+
     return true;
   } else {
     LOG_INFO("Fail to acquire write lock. Set txn failure.");
@@ -140,28 +216,22 @@ bool EagerWriteTxnManager::AcquireOwnership(
   }
 }
 
-void EagerWriteTxnManager::ReleaseReadLock(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) {
+void EagerWriteTxnManager::DecreaseReaderCount(
+  const storage::TileGroupHeader *const tile_group_header,
+  const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
 
-  if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
-    assert(false);
-  }
-
-  // No writer
   // Decrease read count
   while (true) {
     assert(EXTRACT_READ_COUNT(old_txn_id) != 0);
     auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
     auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
     txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
-        tuple_id, old_txn_id, new_txn_id);
+      tuple_id, old_txn_id, new_txn_id);
     if (real_txn_id != old_txn_id) {
-      // Assert there's no other writer
-      assert(EXTRACT_TXNID(real_txn_id) == INITIAL_TXN_ID);
+      old_txn_id = real_txn_id;
     } else {
       break;
     }
@@ -213,6 +283,7 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
     return false;
   }
 
+  AddReader(tile_group_header, tuple_id);
   current_txn->RecordRead(tile_group_id, tuple_id);
 
   return true;
@@ -268,8 +339,7 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
+  // no one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
   new_tile_group_header->SetPrevItemPointer(
@@ -365,6 +435,9 @@ Result EagerWriteTxnManager::CommitTransaction() {
   //*****************************************************
   // we can optimize read-only transaction.
   if (current_txn->IsReadOnly() == true) {
+    // no dependency
+    assert(current_txn_ctx->wait_for_counter_ == 0);
+
     // validate read set.
     for (auto &tile_group_entry : rw_set) {
       oid_t tile_group_id = tile_group_entry.first;
@@ -379,7 +452,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
                   eager_write_released_rdlock.end() ||
               eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                   eager_write_released_rdlock[tile_group_id].end()) {
-            ReleaseReadLock(tile_group_header, tuple_slot);
+            DecreaseReaderCount(tile_group_header, tuple_slot);
             eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
           }
         } else {
@@ -393,6 +466,15 @@ Result EagerWriteTxnManager::CommitTransaction() {
     return ret;
   }
   //*****************************************************
+
+  // Check if we cause dead lock
+  if (CauseDeadLock()) {
+    // Abort
+    AbortTransaction();
+  }
+
+  // Wait for all dependencies to finish
+  while (current_txn_ctx->wait_for_counter_ != 0);
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
@@ -413,7 +495,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
                 eager_write_released_rdlock.end() ||
             eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                 eager_write_released_rdlock[tile_group_id].end()) {
-          ReleaseReadLock(tile_group_header, tuple_slot);
+          ReleaseEwReaderLock(tile_group_header, tuple_slot);
           eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -525,7 +607,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
                 eager_write_released_rdlock.end() ||
             eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                 eager_write_released_rdlock[tile_group_id].end()) {
-          ReleaseReadLock(tile_group_header, tuple_slot);
+          DecreaseReaderCount(tile_group_header, tuple_slot);
           eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -588,6 +670,49 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
   eager_write_released_rdlock.clear();
   return Result::RESULT_ABORTED;
+}
+
+bool EagerWriteTxnManager::CauseDeadLock() {
+  std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+
+  // Always acquire the running_txn_map_mutex_ before acquiring the per context lock
+  std::unordered_set<txn_id_t> dependencies = current_txn_ctx->wait_list_;
+  auto current_tid = current_txn->GetTransactionId();
+  assert(dependencies.count(current_tid));
+  dependencies.insert(current_tid);
+
+  std::queue<txn_id_t> traverse[2];
+  int turn = 0;
+
+  // init
+  for (auto tid : current_txn_ctx->wait_list_) {
+    traverse[turn].push(tid);
+  }
+
+  // BFS start from current txn to detect ring
+  while (!traverse[turn].empty()) {
+    auto tid = traverse[turn].front();
+    traverse[turn].pop();
+    auto txn_ctx = running_txn_map_[tid];
+
+    // Get all next level dependencies
+    for (auto ttid : txn_ctx->wait_list_) {
+      if (dependencies.count(ttid) == 0) {
+        traverse[1-turn].push(ttid);
+        dependencies.insert(ttid);
+      } else {
+        // A ring must cause by the current txn
+        assert(ttid == current_tid);
+        return false;
+      }
+    }
+
+    if (traverse[turn].empty()) {
+      turn = 1 - turn;
+    }
+  }
+
+  return false;
 }
 }
 }
