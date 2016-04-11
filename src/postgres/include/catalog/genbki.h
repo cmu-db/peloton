@@ -43,8 +43,15 @@
 
 /* Declarations that provide the initial content of a catalog */
 /* In C, these need to expand into some harmless, repeatable declaration */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #define DATA(x)   extern int no_such_variable
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* GENBKI_H */
