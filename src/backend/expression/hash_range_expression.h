@@ -113,8 +113,12 @@ class HashRangeExpression : public AbstractExpression {
 
   AbstractExpression *Copy() const {
     srange_type *copied_ranges = new srange_type();
-    copied_ranges->first = ranges.get()->first;
-    copied_ranges->second = ranges.get()->second;
+    for (int ii = 0; ii < num_ranges; ii++) {
+      copied_ranges[ii].first = ranges[ii].first;
+      copied_ranges[ii].second = ranges[ii].second;
+    }
+//    copied_ranges->first = ranges.get()->first;
+//    copied_ranges->second = ranges.get()->second;
     return new HashRangeExpression(value_idx, copied_ranges, num_ranges);
   }
 
