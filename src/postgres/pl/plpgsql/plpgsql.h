@@ -23,6 +23,10 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 /**********************************************************************
  * Definitions
  **********************************************************************/
@@ -1056,5 +1060,9 @@ extern void plpgsql_scanner_finish(void);
  * ----------
  */
 extern int	plpgsql_yyparse(void);
+#ifdef __cplusplus
+}
+#endif
 
 #endif   /* PLPGSQL_H */
+
