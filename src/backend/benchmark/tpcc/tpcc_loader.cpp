@@ -97,6 +97,7 @@ static constexpr int customers_init_payment_cnt = 1;
 static constexpr int customers_init_delivery_cnt = 0;
 
 static constexpr double history_init_amount = 10.0;
+static constexpr size_t history_data_length = 32;
 
 static constexpr int orders_min_ol_cnt = 5;
 static constexpr int orders_max_ol_cnt = 15;
@@ -110,6 +111,7 @@ int new_orders_per_district = 900;  // 900
 static constexpr int order_line_init_quantity = 5;
 static constexpr int order_line_max_ol_quantity = 10;
 static constexpr double order_line_min_amount = 0.01;
+static constexpr size_t order_line_dist_info_length = 32;
 
 static constexpr double stock_original_ratio = 0.1;
 static constexpr int stock_min_quantity = 10;
@@ -480,11 +482,11 @@ void CreateHistoryTable() {
   history_columns.push_back(h_date_column);
   auto h_amount_column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "H_AMOUNT", is_inlined);
   history_columns.push_back(h_amount_column);
-  auto h_data_column = catalog::Column(VALUE_TYPE_VARCHAR, data_length, "H_DATA", is_inlined);
+  auto h_data_column = catalog::Column(VALUE_TYPE_VARCHAR, history_data_length, "H_DATA", is_inlined);
   history_columns.push_back(h_data_column);
 
   catalog::Schema *table_schema = new catalog::Schema(history_columns);
-  std::string table_name("CUSTOMER");
+  std::string table_name("HISTORY");
 
   history_table = storage::TableFactory::GetDataTable(
       tpcc_database_oid,
@@ -752,7 +754,7 @@ void CreateOrderLineTable() {
   order_line_columns.push_back(ol_quantity_column);
   auto ol_amount_column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "OL_AMOUNT", is_inlined);
   order_line_columns.push_back(ol_amount_column);
-  auto ol_dist_info_column = catalog::Column(VALUE_TYPE_VARCHAR, data_length, "OL_DIST_INFO", is_inlined);
+  auto ol_dist_info_column = catalog::Column(VALUE_TYPE_VARCHAR, order_line_dist_info_length, "OL_DIST_INFO", is_inlined);
   order_line_columns.push_back(ol_dist_info_column);
 
   catalog::Schema *table_schema = new catalog::Schema(order_line_columns);
@@ -921,6 +923,42 @@ int GetTimeStamp() {
   return time_stamp;
 }
 
+storage::Tuple* BuildItemTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildWarehouseTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildDistrictTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildCustomerTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildHistoryTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildOrdersTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildNewOrderTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildOrderLineTuple() {
+  return nullptr;
+}
+
+storage::Tuple* BuildStockTuple() {
+  return nullptr;
+}
+
 void LoadItems() {
 
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
@@ -997,9 +1035,9 @@ void LoadWarehouses() {
     // W_YTD
     warehouse_tuple->SetValue(8, ValueFactory::GetDoubleValue(warehouse_initial_ytd), nullptr);
 
-    planner::InsertPlan node(warehouse_table, nullptr, warehouse_tuple);
-    executor::InsertExecutor executor(&node, context.get());
-    executor.Execute();
+    planner::InsertPlan warehouse_node(warehouse_table, nullptr, warehouse_tuple);
+    executor::InsertExecutor warehouse_executor(&warehouse_node, context.get());
+    warehouse_executor.Execute();
 
     txn_manager.CommitTransaction(txn);
 
@@ -1040,9 +1078,9 @@ void LoadWarehouses() {
       auto next_o_id = state.customers_per_district + 1;
       district_tuple->SetValue(10, ValueFactory::GetIntegerValue(next_o_id), nullptr);
 
-      planner::InsertPlan node(district_table, nullptr, district_tuple);
-      executor::InsertExecutor executor(&node, context.get());
-      executor.Execute();
+      planner::InsertPlan district_node(district_table, nullptr, district_tuple);
+      executor::InsertExecutor district_executor(&district_node, context.get());
+      district_executor.Execute();
 
       txn_manager.CommitTransaction(txn);
 
@@ -1103,17 +1141,224 @@ void LoadWarehouses() {
         // C_DELIVERY_CNT
         customer_tuple->SetValue(19, ValueFactory::GetDoubleValue(customers_init_delivery_cnt), nullptr);
         // C_DATA
-        customer_tuple->SetValue(20, ValueFactory::GetStringValue(c_first), pool.get());
+        auto c_data = GetRandomAlphaNumericString(data_length);
+        customer_tuple->SetValue(20, ValueFactory::GetStringValue(c_data), pool.get());
 
-        planner::InsertPlan node(customer_table, nullptr, customer_tuple);
-        executor::InsertExecutor executor(&node, context.get());
-        executor.Execute();
+        planner::InsertPlan customer_node(customer_table, nullptr, customer_tuple);
+        executor::InsertExecutor customer_executor(&customer_node, context.get());
+        customer_executor.Execute();
+
+        // HISTORY
+        auto history_table_schema = history_table->GetSchema();
+        storage::Tuple* history_tuple = new storage::Tuple(history_table_schema, allocate);
+
+        // H_C_ID
+        history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_itr), nullptr);
+        // H_C_D_ID
+        history_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_itr), nullptr);
+        // H_C_W_ID
+        history_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_itr), nullptr);
+        // H_D_ID
+        auto history_district_id = district_itr;
+        history_tuple->SetValue(3, ValueFactory::GetTinyIntValue(history_district_id), nullptr);
+        // H_W_ID
+        auto history_warehouse_id = warehouse_itr;
+        history_tuple->SetValue(4, ValueFactory::GetSmallIntValue(history_warehouse_id), nullptr);
+        // H_DATE
+        auto h_date = GetTimeStamp();
+        history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date) , nullptr);
+        // H_AMOUNT
+        history_tuple->SetValue(6, ValueFactory::GetDoubleValue(history_init_amount), nullptr);
+        // H_DATA
+        auto h_data = GetRandomAlphaNumericString(history_data_length);
+        history_tuple->SetValue(7, ValueFactory::GetStringValue(h_data), pool.get());
+
+        planner::InsertPlan history_node(history_table, nullptr, history_tuple);
+        executor::InsertExecutor history_executor(&history_node, context.get());
+        history_executor.Execute();
+
+        txn_manager.CommitTransaction(txn);
+
+      } // END CUSTOMERS
+
+
+      // ORDERS
+      for(auto orders_itr = 0; orders_itr < state.customers_per_district; orders_itr++) {
+        auto txn = txn_manager.BeginTransaction();
+        context.reset(new executor::ExecutorContext(txn));
+
+        auto orders_table_schema = orders_table->GetSchema();
+        storage::Tuple* orders_tuple = new storage::Tuple(orders_table_schema, allocate);
+
+        // New order ?
+        auto new_order_threshold = state.customers_per_district-new_orders_per_district;
+        bool new_order = (orders_itr > new_order_threshold);
+
+        // O_ID
+        orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_itr), nullptr);
+        // O_C_ID
+        auto o_c_id = GetRandomInteger(0, state.customers_per_district);
+        orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(o_c_id), nullptr);
+        // O_D_ID
+        orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_itr), nullptr);
+        // O_W_ID
+        orders_tuple->SetValue(3, ValueFactory::GetSmallIntValue(warehouse_itr), nullptr);
+        // O_ENTRY_D
+        auto o_entry_d = GetTimeStamp();
+        orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(o_entry_d) , nullptr);
+        // O_CARRIER_ID
+        auto o_carrier_id = orders_null_carrier_id;
+        if(new_order == false) {
+          o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
+        }
+        orders_tuple->SetValue(5, ValueFactory::GetIntegerValue(o_carrier_id), nullptr);
+        // O_OL_CNT
+        auto o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
+        orders_tuple->SetValue(6, ValueFactory::GetIntegerValue(o_ol_cnt), nullptr);
+        // O_ALL_LOCAL
+        orders_tuple->SetValue(7, ValueFactory::GetIntegerValue(orders_init_all_local), nullptr);
+
+        planner::InsertPlan orders_node(orders_table, nullptr, orders_tuple);
+        executor::InsertExecutor orders_executor(&orders_node, context.get());
+        orders_executor.Execute();
+
+        // NEW_ORDER
+        if(new_order){
+          auto new_order_table_schema = new_order_table->GetSchema();
+          storage::Tuple* new_order_tuple = new storage::Tuple(new_order_table_schema, allocate);
+
+          // NO_O_ID
+          new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_itr), nullptr);
+          // NO_D_ID
+          new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_itr), nullptr);
+          // NO_W_ID
+          new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_itr), nullptr);
+
+          planner::InsertPlan new_order_node(new_order_table, nullptr, new_order_tuple);
+          executor::InsertExecutor new_order_executor(&new_order_node, context.get());
+          new_order_executor.Execute();
+        }
+
+        // ORDER_LINE
+        for (auto order_line_itr = 0; order_line_itr < o_ol_cnt; order_line_itr++) {
+          auto order_line_table_schema = order_line_table->GetSchema();
+          storage::Tuple* order_line_tuple = new storage::Tuple(order_line_table_schema, allocate);
+
+          // OL_O_ID
+          order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_itr), nullptr);
+          // OL_D_ID
+          order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_itr), nullptr);
+          // OL_W_ID
+          order_line_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_itr), nullptr);
+          // OL_NUMBER
+          order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(order_line_itr), nullptr);
+          // OL_I_ID
+          auto ol_i_id = GetRandomInteger(0, state.item_count);
+          order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(ol_i_id), nullptr);
+          // OL_SUPPLY_W_ID
+          auto ol_supply_w_id = warehouse_itr;
+          order_line_tuple->SetValue(5, ValueFactory::GetSmallIntValue(ol_supply_w_id), nullptr);
+          // OL_DELIVERY_D
+          int64_t ol_delivery_d = GetTimeStamp();
+          if(new_order == true) {
+            ol_delivery_d = PELOTON_INT64_MIN;
+          }
+          order_line_tuple->SetValue(6, ValueFactory::GetTimestampValue(ol_delivery_d) , nullptr);
+          // OL_QUANTITY
+          order_line_tuple->SetValue(7, ValueFactory::GetIntegerValue(order_line_init_quantity), nullptr);
+          // OL_AMOUNT
+          double ol_amount = 0;
+          if(new_order == true) {
+            ol_amount = GetRandomDouble(order_line_min_amount, order_line_max_ol_quantity * item_max_price);
+          }
+          order_line_tuple->SetValue(8, ValueFactory::GetDoubleValue(ol_amount), nullptr);
+          // OL_DIST_INFO
+          auto ol_dist_info = GetRandomAlphaNumericString(order_line_dist_info_length);
+          order_line_tuple->SetValue(9, ValueFactory::GetStringValue(ol_dist_info), pool.get());
+
+          planner::InsertPlan order_line_node(order_line_table, nullptr, order_line_tuple);
+          executor::InsertExecutor order_line_executor(&order_line_node, context.get());
+          order_line_executor.Execute();
+        }
 
         txn_manager.CommitTransaction(txn);
 
       }
+
+    } // END DISTRICTS
+
+    // STOCK
+    for(auto stock_itr = 0; stock_itr < state.item_count; stock_itr++) {
+      auto txn = txn_manager.BeginTransaction();
+      context.reset(new executor::ExecutorContext(txn));
+
+      auto stock_table_schema = stock_table->GetSchema();
+      storage::Tuple* stock_tuple = new storage::Tuple(stock_table_schema, allocate);
+
+      /*
+       CREATE TABLE STOCK (
+       S_I_ID INTEGER DEFAULT '0' NOT NULL REFERENCES ITEM (I_ID),
+       S_W_ID SMALLINT DEFAULT '0 ' NOT NULL REFERENCES WAREHOUSE (W_ID),
+       S_QUANTITY INTEGER DEFAULT '0' NOT NULL,
+       S_DIST_01 VARCHAR(32) DEFAULT NULL,
+       S_DIST_02 VARCHAR(32) DEFAULT NULL,
+       S_DIST_03 VARCHAR(32) DEFAULT NULL,
+       S_DIST_04 VARCHAR(32) DEFAULT NULL,
+       S_DIST_05 VARCHAR(32) DEFAULT NULL,
+       S_DIST_06 VARCHAR(32) DEFAULT NULL,
+       S_DIST_07 VARCHAR(32) DEFAULT NULL,
+       S_DIST_08 VARCHAR(32) DEFAULT NULL,
+       S_DIST_09 VARCHAR(32) DEFAULT NULL,
+       S_DIST_10 VARCHAR(32) DEFAULT NULL,
+       S_YTD INTEGER DEFAULT NULL,
+       S_ORDER_CNT INTEGER DEFAULT NULL,
+       S_REMOTE_CNT INTEGER DEFAULT NULL,
+       S_DATA VARCHAR(64) DEFAULT NULL,
+       PRIMARY KEY (S_W_ID,S_I_ID)
+       );
+       */
+
+      // S_I_ID
+      stock_tuple->SetValue(0, ValueFactory::GetIntegerValue(stock_itr), nullptr);
+      // S_W_ID
+      auto s_w_id = warehouse_itr;
+      stock_tuple->SetValue(1, ValueFactory::GetSmallIntValue(s_w_id), nullptr);
+      // S_QUANTITY
+      auto s_quantity = GetRandomInteger(stock_min_quantity, stock_max_quantity);
+      stock_tuple->SetValue(2, ValueFactory::GetIntegerValue(s_quantity), nullptr);
+      // S_DIST_01 .. S_DIST_10
+      auto s_dist = GetRandomAlphaNumericString(name_length);
+      stock_tuple->SetValue(3, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(4, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(5, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(6, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(7, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(8, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(9, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(10, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(11, ValueFactory::GetStringValue(s_dist), pool.get());
+      stock_tuple->SetValue(12, ValueFactory::GetStringValue(s_dist), pool.get());
+      // S_YTD
+      auto s_ytd = 0;
+      stock_tuple->SetValue(13, ValueFactory::GetIntegerValue(s_ytd), nullptr);
+      // S_ORDER_CNT
+      auto s_order_cnt = 0;
+      stock_tuple->SetValue(14, ValueFactory::GetIntegerValue(s_order_cnt), nullptr);
+      // S_REMOTE_CNT
+      auto s_remote_cnt = 0;
+      stock_tuple->SetValue(15, ValueFactory::GetIntegerValue(s_remote_cnt), nullptr);
+      // S_DATA
+      auto s_data = GetRandomAlphaNumericString(data_length);
+      stock_tuple->SetValue(16, ValueFactory::GetStringValue(s_data), pool.get());
+
+      planner::InsertPlan stock_node(stock_table, nullptr, stock_tuple);
+      executor::InsertExecutor stock_executor(&stock_node, context.get());
+      stock_executor.Execute();
+
+      txn_manager.CommitTransaction(txn);
     }
-  }
+
+  } // END WAREHOUSES
 
 }
 
