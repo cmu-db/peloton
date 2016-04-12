@@ -15,7 +15,7 @@
 #include "backend/logging/log_buffer.h"
 #include <memory>
 
-#define BUFFER_POOL_SIZE 32
+#define BUFFER_POOL_SIZE 8
 
 namespace peloton {
 namespace logging {
