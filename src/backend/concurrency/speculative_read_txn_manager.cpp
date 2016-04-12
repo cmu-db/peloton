@@ -306,14 +306,10 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // we do not start validation until the all the dependencies have been
-  // cleared.
-  if (IsCommittable() == false) {
-    AbortTransaction();
-  }
-
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+
+  // validation must be performed. otherwise, deadlock can occur.
   // validate read set.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -331,19 +327,21 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
           if (tile_group_header->GetBeginCommitId(tuple_slot) <=
                   end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-            // the version is not locked and still visible.
+            // the version is still visible.
             continue;
           } else {
-            // the dependencies have been cleared above. so no other txns can
-            // hold the lock.
-            assert(tile_group_header->GetTransactionId(tuple_slot ==
-                                                       INITIAL_TXN_ID));
             // otherwise, validation fails. abort transaction.
             return AbortTransaction();
           }
         }
       }
     }
+  }
+
+  // we do not start installation until the all the dependencies have been
+  // cleared.
+  if (IsCommittable() == false) {
+    return AbortTransaction();
   }
   //////////////////////////////////////////////////////////
 
