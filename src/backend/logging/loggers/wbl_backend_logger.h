@@ -42,6 +42,16 @@ class WriteBehindBackendLogger : public BackendLogger {
                             ItemPointer insert_location,
                             ItemPointer delete_location, void *data = nullptr);
 
+
+  //FIXME temporarily defined for wbl_backend_logger to compile code
+   std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers() {
+	  return local_queue;
+  }
+
+   void GrantEmptyBuffer(__attribute__((unused)) std::unique_ptr<LogBuffer>) {
+ 	  //FIXME temporarily defined for wbl_backend_logger to compile code
+  }
+
  private:
 
   CopySerializeOutput output_buffer;

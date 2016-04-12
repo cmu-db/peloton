@@ -142,34 +142,36 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
   {
     cid_t max_possible_commit_id = MAX_CID;
+
     // TODO: handle edge cases here (backend logger has not yet sent a log
     // message)
+
     // Look at the local queues of the backend loggers
     while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
       ;
     for (auto backend_logger : backend_loggers) {
       {
-        std::lock_guard<std::mutex> lock(backend_logger->local_queue_mutex);
-        auto cid = backend_logger->GetHighestLoggedCommitId();
-        LOG_INFO("backend logger had cid %lu", cid);
-        if (cid != INVALID_CID) {
-          max_possible_commit_id = std::min(cid, max_possible_commit_id);
-        }
-        auto local_queue_size = backend_logger->local_queue.size();
+        auto &log_buffers = backend_logger->CollectLogBuffers();
+        auto log_buffer_size = log_buffers.size();
 
         // Skip current backend_logger, nothing to do
-        if (local_queue_size == 0) continue;
+        if (log_buffer_size == 0) continue;
 
         // Move the log record from backend_logger to here
-        for (oid_t log_record_itr = 0; log_record_itr < local_queue_size;
+        for (oid_t log_record_itr = 0; log_record_itr < log_buffer_size;
              log_record_itr++) {
-          LOG_INFO("Found a log record to push in global queue");
-          global_queue.push_back(
-              std::move(backend_logger->local_queue[log_record_itr]));
-        }
+          // copy to front end logger
+          auto cid = log_buffers[log_record_itr]->GetHighestCommitId();
+          LOG_INFO("Found a log buffer to push with commit id: %lu", cid);
+          global_queue.push_back(std::move(log_buffers[log_record_itr]));
 
+          //update max_possible_commit_id with the latest buffer
+          if (log_record_itr == log_buffer_size - 1 && cid != INVALID_CID) {
+            max_possible_commit_id = std::min(cid, max_possible_commit_id);
+          }
+        }
         // cleanup the local queue
-        backend_logger->local_queue.clear();
+        log_buffers.clear();
       }
     }
 
@@ -191,13 +193,17 @@ void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
 }
 
 /**
- * @brief Store backend logger
+ * @brief Add backend logger to the list of backend loggers
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
+  // Grant empty buffers
+  for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
+    std::unique_ptr<LogBuffer> buffer(new LogBuffer(backend_logger));
+    backend_logger->GrantEmptyBuffer(std::move(buffer));
+  }
   // Add backend logger to the list of backend loggers
-  while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
-    ;
+  while (backend_loggers_lock.test_and_set(std::memory_order_acquire));
   backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
   backend_loggers_lock.clear(std::memory_order_release);
