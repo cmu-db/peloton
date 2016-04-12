@@ -108,7 +108,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     this->log_file = nullptr;
 
   } else {
-    // TODO cleanup later
     this->checkpoint.Init();
 
     // abj1 adding code here!
@@ -425,7 +424,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
       std::unique_ptr<executor::SeqScanExecutor> scan_executor(
           new executor::SeqScanExecutor(scan_plan_node.get(),
                                         executor_context.get()));
-      scan_executor->SetForbidDirtyRead(true);
+      scan_executor->SetCheckpointMode(true);
       if (!RecoverIndexHelper(scan_executor.get(), target_table)) {
         break;
       }

@@ -106,10 +106,11 @@ void SimpleCheckpoint::DoCheckpoint() {
 
   while (true) {
     // get txn
-    std::unique_ptr<concurrency::Transaction> txn(
-        txn_manager.BeginTransaction());
-    start_commit_id = txn->GetBeginCommitId();
-    assert(txn);
+    auto start_commit_id =
+        log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+    std::unique_ptr<concurrency::Transaction> txn(new concurrency::Transaction(
+        txn_manager.GetNextTransactionId(), start_commit_id));
+    concurrency::current_txn = txn.get();
     LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
               start_commit_id);
 
@@ -158,7 +159,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         std::unique_ptr<executor::SeqScanExecutor> scan_executor(
             new executor::SeqScanExecutor(scan_plan_node.get(),
                                           executor_context.get()));
-        scan_executor->SetForbidDirtyRead(true);
+        scan_executor->SetCheckpointMode(true);
         if (!Execute(scan_executor.get(), txn.get(), target_table,
                      database_oid)) {
           break;
@@ -222,7 +223,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         break;
       }
       case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
-    	LOG_TRACE("Read checkpoint begin entry");
+        LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
         if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
                                         checkpoint_file_size_) == false) {
@@ -282,8 +283,8 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
-  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)", target_location.block, target_location.offset);
-
+  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)",
+            target_location.block, target_location.offset);
 }
 
 bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,

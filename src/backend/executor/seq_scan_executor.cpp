@@ -114,11 +114,13 @@ bool SeqScanExecutor::DExecute() {
     assert(column_ids_.size() > 0);
 
     // Force to use occ txn manager if dirty read is forbidden
-    concurrency::TransactionManager &transaction_manager = forbid_dirty_read_ ?
-      concurrency::OptimisticTxnManager::GetInstance() :
-	  concurrency::TransactionManagerFactory::GetInstance();
+    concurrency::TransactionManager &transaction_manager =
+        checkpoint_mode_
+            ? concurrency::OptimisticTxnManager::GetInstance()
+            : concurrency::TransactionManagerFactory::GetInstance();
 
-    //LOG_INFO("Number of tuples: %f", target_table_->GetIndex(0)->GetNumberOfTuples());
+    // LOG_INFO("Number of tuples: %f",
+    // target_table_->GetIndex(0)->GetNumberOfTuples());
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
@@ -135,8 +137,10 @@ bool SeqScanExecutor::DExecute() {
       // and applying the predicate.
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-        // txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-        // cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+        // txn_id_t tuple_txn_id =
+        // tile_group_header->GetTransactionId(tuple_id);
+        // cid_t tuple_begin_cid =
+        // tile_group_header->GetBeginCommitId(tuple_id);
         // cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
         // check transaction visibility
@@ -144,10 +148,13 @@ bool SeqScanExecutor::DExecute() {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
-            if(!res){
-              transaction_manager.SetTransactionResult(RESULT_FAILURE);
-              return res;
+            if (!checkpoint_mode_) {
+              auto res = transaction_manager.PerformRead(
+                  tile_group->GetTileGroupId(), tuple_id);
+              if (!res) {
+                transaction_manager.SetTransactionResult(RESULT_FAILURE);
+                return res;
+              }
             }
           } else {
             expression::ContainerTuple<storage::TileGroup> tuple(
@@ -156,10 +163,13 @@ bool SeqScanExecutor::DExecute() {
                             .IsTrue();
             if (eval == true) {
               position_list.push_back(tuple_id);
-              auto res = transaction_manager.PerformRead(tile_group->GetTileGroupId(), tuple_id);
-              if(!res){
-                transaction_manager.SetTransactionResult(RESULT_FAILURE);
-                return res;
+              if (!checkpoint_mode_) {
+                auto res = transaction_manager.PerformRead(
+                    tile_group->GetTileGroupId(), tuple_id);
+                if (!res) {
+                  transaction_manager.SetTransactionResult(RESULT_FAILURE);
+                  return res;
+                }
               }
             }
           }
@@ -184,10 +194,9 @@ bool SeqScanExecutor::DExecute() {
   return false;
 }
 
-void SeqScanExecutor::SetForbidDirtyRead(bool forbid_dirty_read){
-	forbid_dirty_read_ = forbid_dirty_read;
+void SeqScanExecutor::SetCheckpointMode(bool checkpoint_mode) {
+  checkpoint_mode_ = checkpoint_mode;
 }
-
 
 }  // namespace executor
 }  // namespace peloton
