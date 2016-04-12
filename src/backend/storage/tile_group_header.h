@@ -88,9 +88,10 @@ class TileGroupHeader : public Printable {
         // check if there are recycled tuple slots
         auto& gc_manager = gc::GCManager::GetInstance();
         if(gc_manager.GetStatus() == GC_STATUS_RUNNING) {
-          LOG_INFO("getting recycled tuple");
+          //LOG_INFO("getting recycled tuple");
           auto free_slot = gc_manager.ReturnFreeSlot(tile_group->GetDatabaseId(), tile_group->GetTableId());
           if(free_slot != INVALID_OID) {
+            LOG_INFO("using recycled tuple for allocation");
             tuple_slot_id = free_slot;
             this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
             this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
@@ -165,6 +166,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline void RecycleTupleSlot(const oid_t db_id, const oid_t tb_id, const oid_t tg_id, const oid_t t_id, const txn_id_t t) {
+    LOG_INFO("%s", __func__);
     auto& gc_manager = gc::GCManager::GetInstance();
     struct TupleMetadata tm;
     tm.database_id = db_id;

@@ -23,6 +23,8 @@
 namespace peloton {
 namespace concurrency {
 
+//static uint64_t num_deletes = 0;
+
 OptimisticTxnManager &OptimisticTxnManager::GetInstance() {
   static OptimisticTxnManager txn_manager;
   return txn_manager;
@@ -209,7 +211,8 @@ void OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
 bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id,
                                          const ItemPointer &new_location) {
-  RecycleTupleSlot(tile_group_id, tuple_id);
+  //LOG_INFO("num_deletes = %lu", ++num_deletes);
+  //RecycleTupleSlot(tile_group_id, tuple_id);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =
@@ -242,7 +245,8 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 
 void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
-  RecycleTupleSlot(tile_group_id, tuple_id);
+  //LOG_INFO("num_deletes = %lu", ++num_deletes);
+  //RecycleTupleSlot(tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -410,6 +414,8 @@ Result OptimisticTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        RecycleTupleSlot(tile_group_id, tuple_slot);
+
         /*
          * Call transaction_manager.cpp's AddToPossiblyFreeList(TxnId, tuple_slot);
          */
@@ -439,6 +445,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        RecycleTupleSlot(tile_group_id, tuple_slot);
       }
     }
   }
