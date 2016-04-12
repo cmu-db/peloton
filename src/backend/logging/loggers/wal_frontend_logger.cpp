@@ -108,7 +108,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     this->log_file = nullptr;
 
   } else {
-    // TODO cleanup later
     this->checkpoint.Init();
 
     // abj1 adding code here!
@@ -155,31 +154,41 @@ void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
  * @brief flush all the log records to the file
  */
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
+
+  size_t global_queue_size = global_queue.size();
+  // Nothing to flush
+  if (global_queue_size == 0) {
+	  return;
+  }
+
   // First, write all the record in the queue
-  if (global_queue.size() != 0 && this->log_file_fd == -1) {
+  if (this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
   }
 
-  size_t global_queue_size = global_queue.size();
+  LOG_INFO("Flushing %lu log buffers..", global_queue_size);
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
     if (this->FileSwitchCondIsTrue()) {
       fflush_and_sync(log_file, log_file_fd, fsync_count);
       this->CreateNewLogFile(true);
     }
-    auto &record = global_queue[global_queue_itr];
+    auto &log_buffer = global_queue[global_queue_itr];
 
-    fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
+    fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
            log_file);
-    LOG_INFO("TransactionID of this Log is %d",
-             (int)record->GetTransactionId());
-    if (record->GetTransactionId() > this->max_commit_id) {
+    if (log_buffer->GetHighestCommitId() > this->max_commit_id) {
+      this->max_commit_id = log_buffer->GetHighestCommitId();
       LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
-      this->max_commit_id = record->GetTransactionId();
     }
+
+    // return empty buffer
+    auto backend_logger = log_buffer->GetBackendLogger();
+    log_buffer->ResetData();
+    backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
-  if (global_queue_size > 0) {
+  assert(global_queue_size > 0);
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
@@ -193,20 +202,19 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       LOG_INFO("Wrote delimiter log file with commit_id %ld",
                this->max_collected_commit_id);
     }
-  }
+
   fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
   global_queue.clear();
 
   // Commit each backend logger
-  {
-    if (max_collected_commit_id > max_flushed_commit_id) {
-      max_flushed_commit_id = max_collected_commit_id;
-    }
-    // signal that we have flushed
-    LogManager::GetInstance().FrontendLoggerFlushed();
+  if (max_collected_commit_id > max_flushed_commit_id) {
+    max_flushed_commit_id = max_collected_commit_id;
   }
+  // signal that we have flushed
+  LogManager::GetInstance().FrontendLoggerFlushed();
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -422,7 +430,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
       std::unique_ptr<executor::SeqScanExecutor> scan_executor(
           new executor::SeqScanExecutor(scan_plan_node.get(),
                                         executor_context.get()));
-      scan_executor->SetForbidDirtyRead(true);
+      scan_executor->SetCheckpointMode(true);
       if (!RecoverIndexHelper(scan_executor.get(), target_table)) {
         break;
       }

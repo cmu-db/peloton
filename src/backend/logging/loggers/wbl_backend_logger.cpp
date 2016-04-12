@@ -29,8 +29,9 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
   record->Serialize(output_buffer);
 
   {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(std::unique_ptr<LogRecord>(record));
+// FIXME change the interface of write behind logging
+//    std::lock_guard<std::mutex> lock(local_queue_mutex);
+//    local_queue.push_back(std::unique_ptr<LogRecord>(record));
   }
 }
 

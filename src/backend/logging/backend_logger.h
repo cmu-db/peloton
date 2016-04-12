@@ -18,6 +18,7 @@
 
 #include "backend/logging/logger.h"
 #include "backend/logging/log_record.h"
+#include "backend/logging/log_buffer.h"
 
 namespace peloton {
 namespace logging {
@@ -35,10 +36,6 @@ class BackendLogger : public Logger {
   ~BackendLogger();
 
   static BackendLogger *GetBackendLogger(LoggingType logging_type);
-
-  void FinishedFlushing();
-
-  void WaitForFlushing();
 
   //===--------------------------------------------------------------------===//
   // Virtual Functions
@@ -58,14 +55,22 @@ class BackendLogger : public Logger {
 
   void SetHighestLoggedCommitId(cid_t cid) { highest_logged_commit_id = cid; };
 
+  // FIXME The following methods should be exposed to FrontendLogger only
+  // Collect all log buffers to be persisted
+  virtual std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers() = 0;
+
+  // Grant an empty buffer to use
+  virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
+
  protected:
-  std::vector<std::unique_ptr<LogRecord>> local_queue;
-  std::mutex local_queue_mutex;
+
+  std::vector<std::unique_ptr<LogBuffer>> local_queue;
+
   cid_t highest_logged_commit_id = 0;
-  // Used for notify any waiting thread that backend is flushed
-  std::mutex flush_notify_mutex;
-  std::condition_variable flush_notify_cv;
+
   cid_t highest_flushed_cid = 0;
+
+
 };
 
 }  // namespace logging

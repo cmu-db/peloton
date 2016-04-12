@@ -17,25 +17,28 @@
 #include "backend/common/logger.h"
 #include <cstring>
 
-#define BUFFER_POOL_SIZE 32
 #define BUFFER_POOL_MASK (BUFFER_POOL_SIZE - 1)
+#define GET_BUFFER_POOL_INDEX(a) (a & BUFFER_POOL_MASK)
+
 namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
 // Buffer Pool
 //===--------------------------------------------------------------------===//
-
 class CircularBufferPool : public BufferPool {
  public:
   CircularBufferPool();
+
   ~CircularBufferPool();
 
   bool Put(std::unique_ptr<LogBuffer>);
+
   std::unique_ptr<LogBuffer> Get();
 
+  unsigned int GetSize();
+
  private:
-  // TODO make BUFFER_POOL_SIZE as class template
   std::unique_ptr<LogBuffer> buffers_[BUFFER_POOL_SIZE];
   std::atomic<unsigned int> head_;
   std::atomic<unsigned int> tail_;
