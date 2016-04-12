@@ -178,12 +178,18 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
 
 /**
- * @brief Store backend logger
+ * @brief Add backend logger to the list of backend loggers
  * @param backend logger
  */
 void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
-  // Add backend logger to the list of backend loggers
-  backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
+  backend_logger->SetHighestLoggedCommitId(max_flushed_commit_id);
+
+  // Grant empty buffers
+  for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
+    std::unique_ptr<LogBuffer> buffer(new LogBuffer(max_flushed_commit_id));
+    backend_logger->GrantEmptyBuffer(std::move(buffer));
+  }
+
   backend_loggers.push_back(backend_logger);
 }
 

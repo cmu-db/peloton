@@ -22,6 +22,8 @@
 
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
+#include "backend/logging/log_buffer.h"
+#include "backend/logging/buffer_pool.h"
 #include "backend/logging/backend_logger.h"
 #include "backend/logging/checkpoint.h"
 
@@ -69,7 +71,7 @@ class FrontendLogger : public Logger {
   std::vector<BackendLogger *> backend_loggers;
 
   // Global queue
-  std::vector<std::unique_ptr<LogRecord>> global_queue;
+  std::vector<std::unique_ptr<LogBuffer>> global_queue;
 
   // period with which it collects log records from backend loggers
   // (in microseconds)

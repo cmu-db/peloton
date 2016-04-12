@@ -32,6 +32,16 @@ class WriteBehindBackendLogger : public BackendLogger {
 
   WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
 
+  //FIXME temporarily defined for wbl_backend_logger to compile code
+   std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers() {
+	  return log_buffers_to_collect;
+  }
+
+  // Grant an empty buffer to use
+  void GrantEmptyBuffer(__attribute__((unused)) std::unique_ptr<LogBuffer>) {
+ 	  //FIXME temporarily defined for wbl_backend_logger to compile code
+  }
+
   void Log(LogRecord *record);
 
   void TruncateLocalQueue(oid_t offset);

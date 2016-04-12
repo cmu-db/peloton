@@ -248,6 +248,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
     manager.SetNextOid(max_oid_);
   }
 
+  //FIXME
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
   return commit_id;
 }
