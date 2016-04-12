@@ -147,7 +147,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // message)
 
     // Look at the local queues of the backend loggers
-    backend_loggers_lock.lock();
+    while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
+      ;
     for (auto backend_logger : backend_loggers) {
       {
         auto &log_buffers = backend_logger->CollectLogBuffers();
@@ -173,15 +174,23 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         log_buffers.clear();
       }
     }
-    backend_loggers_lock.unlock();
-    if (max_possible_commit_id != MAX_CID &&
-        max_possible_commit_id >= max_collected_commit_id) {
+
+    if (max_possible_commit_id != MAX_CID) {
+      assert(max_possible_commit_id >= max_collected_commit_id);
       max_collected_commit_id = max_possible_commit_id;
     }
+    backend_loggers_lock.clear(std::memory_order_release);
   }
 }
 
 cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
+
+void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
+  while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
+    ;
+  bel.SetHighestLoggedCommitId(max_collected_commit_id);
+  backend_loggers_lock.clear(std::memory_order_release);
+}
 
 /**
  * @brief Add backend logger to the list of backend loggers
@@ -189,15 +198,15 @@ cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
  */
 void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   // Grant empty buffers
-  backend_logger->SetHighestLoggedCommitId(max_flushed_commit_id);
   for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
     std::unique_ptr<LogBuffer> buffer(new LogBuffer(backend_logger));
     backend_logger->GrantEmptyBuffer(std::move(buffer));
   }
-  // Add to list
-  backend_loggers_lock.lock();
+  // Add backend logger to the list of backend loggers
+  while (backend_loggers_lock.test_and_set(std::memory_order_acquire));
+  backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
-  backend_loggers_lock.unlock();
+  backend_loggers_lock.clear(std::memory_order_release);
 }
 
 }  // namespace logging
