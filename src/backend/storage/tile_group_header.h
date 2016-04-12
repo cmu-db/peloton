@@ -155,10 +155,6 @@ class TileGroupHeader : public Printable {
   // Setters
   inline void SetTransactionId(const oid_t &tuple_slot_id,
                                const txn_id_t &transaction_id) {
-    if(transaction_id == 3){
-      printf("set transaction id=3!!!!!!\n");
-
-    }
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
   }
 
