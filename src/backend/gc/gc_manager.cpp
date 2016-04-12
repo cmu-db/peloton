@@ -14,7 +14,6 @@
 #include "backend/gc/gc_manager.h"
 #include "backend/index/index.h"
 #include "backend/concurrency/transaction_manager_factory.h"
-
 namespace peloton {
 namespace gc {
 
@@ -72,12 +71,14 @@ void GCManager::Poll() {
    * list.
    */
   {
-    std::lock_guard<std::mutex> lock(gc_mutex);
+    // std::lock_guard<std::mutex> lock(gc_mutex);
     if(!possibly_free_list.empty()) {
       auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
       auto oldest_trans = trans_mgr.GetMaxCommittedCid();
-      for(auto it=possibly_free_list.begin(); it != possibly_free_list.end(); ) {
-        auto tm = *it;
+
+      // for(auto it=possibly_free_list.begin(); it != possibly_free_list.end(); ) {
+        struct TupleMetadata tm;
+        possibly_free_list.pop(tm);
         if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {
           /*
            * Now that we know we need to recycle tuple, we need to delete all
@@ -86,16 +87,22 @@ void GCManager::Poll() {
           DeleteTupleFromIndexes(tm);
 
           auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(tm.database_id, tm.table_id));
-          std::deque<struct TupleMetadata> free_list;
           if(free_map_it != free_map.end()) {
             // we need to create list
-            free_list = free_map_it->second;
-            free_map.erase(free_map_it);
+            free_map_it->second -> push(tm);
+            // free_list = free_map_it->second;
+            // free_map.erase(free_map_it);
+          } else {
+            boost::lockfree::queue<struct TupleMetadata> *free_list = new boost::lockfree::queue<struct TupleMetadata>();
+            free_list -> push(tm);
+            std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
+            std::pair<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> p(key, free_list);
+            free_map.insert(p);
           }
-          free_list.push_back(tm);
-          LOG_INFO("The free_list size is %lu", free_list.size());
-          std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-          free_map[key] = free_list;
+          // free_list.push_back(tm);
+          // LOG_INFO("The free_list size is %lu", free_list.size());
+          //
+          // free_map[key] = free_list;
 
 
           /*if(free_map_it != free_map.end()) {
@@ -112,39 +119,39 @@ void GCManager::Poll() {
             std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
             free_map[key] = free_list;
             }*/
-          it = possibly_free_list.erase(it);
+          // it = possibly_free_list.erase(it);
         } else {
-          it++;
+          possibly_free_list.push(tm);
         }
-      }
+      // }
     }
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(30));
   Poll();
 }
 
 oid_t GCManager::ReturnFreeSlot(oid_t db_id, oid_t tb_id) {
   auto return_slot = INVALID_OID;
-  {
-    std::lock_guard<std::mutex> lock(gc_mutex);
+  // {
+    // std::lock_guard<std::mutex> lock(gc_mutex);
     auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(db_id, tb_id));
     if(free_map_it != free_map.end()) {
-      auto free_list = free_map_it->second;
-      if(!free_list.empty()) {
-        auto tm = free_list.front();
-        free_list.pop_front();
+      if(!(free_map_it->second)->empty()) {
+        struct TupleMetadata tm ;
+        (free_map_it->second)->pop(tm);
         return_slot = tm.tuple_slot_id;
+        return return_slot;
       }
     }
-  }
-  return return_slot;
+  // }
+  return INVALID_OID;
 }
 
 void GCManager::AddPossiblyFreeTuple(struct TupleMetadata tm) {
   {
-    std::lock_guard<std::mutex> lock(gc_mutex);
-    this->possibly_free_list.push_back(tm);
+    // std::lock_guard<std::mutex> lock(gc_mutex);
+    this->possibly_free_list.push(tm);
   }
 }
 
