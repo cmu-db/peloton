@@ -17,6 +17,7 @@
 #include <deque>
 #include <map>
 #include <list>
+#include <boost/lockfree/queue.hpp>
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -50,8 +51,8 @@ class GCManager {
 
  private:
   GCStatus status;
-  std::map<std::pair<oid_t, oid_t>, std::deque<struct TupleMetadata>> free_map;
-  std::list<struct TupleMetadata> possibly_free_list;
+  std::map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
+  boost::lockfree::queue<struct TupleMetadata> possibly_free_list;
   std::mutex gc_mutex;
   void DeleteTupleFromIndexes(struct TupleMetadata tm);
   GCManager();
