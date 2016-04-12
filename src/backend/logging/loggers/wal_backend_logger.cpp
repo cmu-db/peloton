@@ -20,6 +20,15 @@
 namespace peloton {
 namespace logging {
 
+
+WriteAheadBackendLogger::WriteAheadBackendLogger() :
+		log_buffer_(std::unique_ptr<LogBuffer>(nullptr)),
+				available_buffer_pool_(std::unique_ptr<BufferPool>(new CircularBufferPool())),
+		persist_buffer_pool_(std::unique_ptr<BufferPool>(new CircularBufferPool()))
+		{
+	logging_type = LOGGING_TYPE_DRAM_NVM;
+}
+
 /**
  * @brief log LogRecord
  * @param log record

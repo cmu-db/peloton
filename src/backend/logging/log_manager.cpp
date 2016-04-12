@@ -287,8 +287,8 @@ cid_t LogManager::GetMaxFlushedCommitId() {
 void LogManager::FrontendLoggerFlushed() {
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
-
     flush_notify_cv.notify_all();
+    LOG_INFO("FrontendLoggerFlushed - notify all waiting backend loggers");
   }
 }
 
@@ -297,6 +297,8 @@ void LogManager::WaitForFlush(cid_t cid) {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
     while (frontend_logger->GetMaxFlushedCommitId() < cid) {
+      LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
+    		  frontend_logger->GetMaxFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
   }

@@ -201,13 +201,13 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   global_queue.clear();
 
   // Commit each backend logger
-  {
+
     if (max_collected_commit_id > max_flushed_commit_id) {
       max_flushed_commit_id = max_collected_commit_id;
     }
     // signal that we have flushed
     LogManager::GetInstance().FrontendLoggerFlushed();
-  }
+
 }
 
 //===--------------------------------------------------------------------===//
