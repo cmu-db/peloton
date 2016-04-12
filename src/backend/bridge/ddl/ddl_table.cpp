@@ -150,6 +150,11 @@ bool DDLTable::ExecDropStmt(Node *parsetree) {
         DDLTable::DropTable(table_oid);
       } break;
 
+      case OBJECT_FUNCTION: {
+        LOG_TRACE("UDF function dropped.");
+        break;
+      }
+
       default: {
         LOG_WARN("Unsupported drop object %d ", drop->removeType);
       } break;
