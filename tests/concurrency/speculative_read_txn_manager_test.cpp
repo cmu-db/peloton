@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// pessimistic_transaction_manager_test.cpp
+// speculative_read_txn_manager_test.cpp
 //
 // Identification: tests/concurrency/speculative_read_txn_manager_test.cpp
 //
@@ -21,11 +21,10 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-class SpecOptimisticTxnManagerTests : public PelotonTest {};
+class SpeculativeReadTxnManagerTests : public PelotonTest {};
 
-TEST_F(SpecOptimisticTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(
-      CONCURRENCY_TYPE_SPECULATIVE_READ);
+TEST_F(SpeculativeReadTxnManagerTests, Test) {
+  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_SPECULATIVE_READ);
   EXPECT_TRUE(true);
 }
 
