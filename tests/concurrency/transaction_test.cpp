@@ -26,8 +26,9 @@ class TransactionTests : public PelotonTest {};
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI
-  // CONCURRENCY_TYPE_SPECULATIVE_READ
+  CONCURRENCY_TYPE_SSI,
+  CONCURRENCY_TYPE_SPECULATIVE_READ,
+  CONCURRENCY_TYPE_TO
 };
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
