@@ -27,7 +27,9 @@ namespace peloton {
 namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
-    eager_write_released_rdlock;
+  eager_write_released_rdlock;
+thread_local EagerWriteTxnContext *current_txn_ctx;
+
 
 EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
   static EagerWriteTxnManager txn_manager;
@@ -90,6 +92,35 @@ bool EagerWriteTxnManager::IsVisible(
   }
 }
 
+void EagerWriteTxnManager::RemoveReader() {
+  LOG_INFO("release all reader lock");
+
+  // Remove from the read list of accessed tuples
+  auto txn = current_txn;
+  auto &rw_set = txn->GetRWSet();
+
+  for (auto &tile_group_entry : rw_set) {
+    oid_t tile_group_id = tile_group_entry.first;
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    if (tile_group == nullptr)
+      continue;
+
+    auto tile_group_header = tile_group->GetHeader();
+    for (auto &tuple_entry : tile_group_entry.second) {
+      auto tuple_slot = tuple_entry.first;
+
+      // we don't have reader lock on insert
+      if (tuple_entry.second == RW_TYPE_INSERT || tuple_entry.second == RW_TYPE_INS_DEL) {
+        continue;
+      }
+
+      RemoveReader(tile_group_header, tuple_slot, txn->GetTransactionId());
+    }
+  }
+  LOG_INFO("release EWreader finish");
+}
+
 // check whether the current transaction owns the tuple.
 // this function is called by update/delete executors.
 bool EagerWriteTxnManager::IsOwner(
@@ -115,23 +146,67 @@ bool EagerWriteTxnManager::IsOwnable(
 
 bool EagerWriteTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id, const oid_t &tuple_id) {
-  LOG_TRACE("AcquireOwnership");
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+  LOG_INFO("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
-  // acquire write lock.
-  // No writer, release read lock that is acquired before
-  // Must success
-  ReleaseReadLock(tile_group_header, tuple_id);
+  // Try to get write lock
+  auto current_tid = current_txn->GetTransactionId();
+  auto old_tid = tile_group_header->GetTransactionId(tuple_id);
 
-  eager_write_released_rdlock[tile_group_id].insert(tuple_id);
+  while(EXTRACT_TXNID(old_tid) == INITIAL_TXN_ID){
+    auto read_count = EXTRACT_READ_COUNT(old_tid);
+    auto new_tid = PACK_TXNID(current_tid, read_count);
+    auto real_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
 
-  // Try get write lock
-  auto current_txn_id = current_txn->GetTransactionId();
-  bool res = tile_group_header->SetAtomicTransactionId(
-      tuple_id, PACK_TXNID(current_txn_id, 0));
+    if (real_tid != old_tid) {
+      old_tid = real_tid;
+    }
+  }
+
+  // Check if we successfully get the write lock
+  bool res = (EXTRACT_TXNID(old_tid) == current_tid);
 
   if (res) {
+    // Decrease reader count
+    DecreaseReaderCount(tile_group_header, tuple_id);
+
+    // Install wait for dependency on all reader txn
+    GetEwReaderLock(tile_group_header, tuple_id);
+    {
+      auto ptr = GetEwReaderList(tile_group_header, tuple_id);
+      while (ptr->next != nullptr) {
+        // try to install a wait for in every reader
+        auto reader_tid = ptr->next->txn_id_;
+        // skip my self
+        if (reader_tid == current_tid) {
+          ptr = ptr->next;
+          continue;
+        }
+
+        // Lock the txn bucket
+        {
+          std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+          if (running_txn_map_.count(reader_tid) != 0) {
+              // Add myself to the wait_for set of reader
+              auto reader_ctx = running_txn_map_[reader_tid];
+              LOG_INFO("Add dependency to %lu", reader_tid);
+              if (reader_ctx->wait_list_.insert(current_tid).second == true) {
+                // New dependency
+                current_txn_ctx->wait_for_counter_++;
+              }
+          } else {
+            assert(false);
+          }
+        }
+        ptr = ptr->next;
+      }
+    }
+    ReleaseEwReaderLock(tile_group_header, tuple_id);
+
+    // Atomically increase the wait_for counter
+    assert(current_txn_ctx->wait_for_counter_ >= 0);
+
     return true;
   } else {
     LOG_INFO("Fail to acquire write lock. Set txn failure.");
@@ -140,29 +215,27 @@ bool EagerWriteTxnManager::AcquireOwnership(
   }
 }
 
-void EagerWriteTxnManager::ReleaseReadLock(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) {
+void EagerWriteTxnManager::DecreaseReaderCount(
+  const storage::TileGroupHeader *const tile_group_header,
+  const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
-  LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
+  LOG_INFO("ReleaseReadLock on %lx", old_txn_id);
 
-  if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
-    assert(false);
-  }
-
-  // No writer
   // Decrease read count
   while (true) {
     assert(EXTRACT_READ_COUNT(old_txn_id) != 0);
+    LOG_INFO("ReleaseReadLock inside %lx", old_txn_id);
     auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
-    auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
+    auto new_txn_id = PACK_TXNID(EXTRACT_TXNID(old_txn_id), new_read_count);
+
     txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
-        tuple_id, old_txn_id, new_txn_id);
+      tuple_id, old_txn_id, new_txn_id);
+
     if (real_txn_id != old_txn_id) {
-      // Assert there's no other writer
-      assert(EXTRACT_TXNID(real_txn_id) == INITIAL_TXN_ID);
+      old_txn_id = real_txn_id;
     } else {
+      LOG_INFO("ReleaseReadLock end %lx -> %lx", old_txn_id, new_txn_id);
       break;
     }
   }
@@ -170,7 +243,7 @@ void EagerWriteTxnManager::ReleaseReadLock(
 
 bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
                                        const oid_t &tuple_id) {
-  LOG_TRACE("Perform read");
+  LOG_INFO("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -185,6 +258,7 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
   }
 
   if (IsOwner(tile_group_header, tuple_id)) {
+    LOG_INFO("It's already the owner");
     return true;
   }
 
@@ -192,27 +266,34 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
   // No one is holding the write lock
   if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
-    LOG_TRACE("No one holding the lock");
+    LOG_INFO("No one holding the lock");
     while (true) {
-      LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
+      LOG_INFO("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
       auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
+
       // Try add read count
       auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
-      LOG_TRACE("New txn id %lx", new_txn_id);
+      LOG_INFO("New txn id %lx", new_txn_id);
+
       txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
           tuple_id, old_txn_id, new_txn_id);
+
       if (real_txn_id != old_txn_id) {
         // See if there's writer
-        if (EXTRACT_TXNID(real_txn_id) != INITIAL_TXN_ID) return false;
+        if (EXTRACT_TXNID(real_txn_id) != INITIAL_TXN_ID) {
+          return false;
+        }
+        old_txn_id = real_txn_id;
       } else {
         break;
       }
     }
   } else {
-    // SetTransactionResult(RESULT_FAILURE);
+    LOG_INFO("Own by others: %lu", EXTRACT_TXNID(old_txn_id));
     return false;
   }
 
+  AddReader(tile_group_header, tuple_id);
   current_txn->RecordRead(tile_group_id, tuple_id);
 
   return true;
@@ -220,6 +301,7 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
 
 void EagerWriteTxnManager::SetOwnership(const oid_t &tile_group_id,
                                         const oid_t &tuple_id) {
+  LOG_INFO("Set ownership");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
@@ -229,17 +311,19 @@ void EagerWriteTxnManager::SetOwnership(const oid_t &tile_group_id,
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
+  assert(EXTRACT_READ_COUNT(tile_group_header->GetTransactionId(tuple_id)) == 0);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 }
 
 bool EagerWriteTxnManager::PerformInsert(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
-  LOG_TRACE("Perform insert");
+  LOG_INFO("Perform insert");
   SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
   current_txn->RecordInsert(tile_group_id, tuple_id);
+  InitTupleReserved(tile_group_id, tuple_id);
   return true;
 }
 
@@ -258,24 +342,24 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
   // if we can perform update, then we must have already locked the older
   // version.
-  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
+  // no one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
   new_tile_group_header->SetPrevItemPointer(
       new_location.offset, ItemPointer(tile_group_id, tuple_id));
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  InitTupleReserved(new_location.block, new_location.offset);
+
 
   // Add the old tuple into the update set
   current_txn->RecordUpdate(tile_group_id, tuple_id);
@@ -284,11 +368,12 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
 void EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
+  LOG_INFO("Performing Inplace Write %lu %lu", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) ==
          current_txn->GetTransactionId());
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -304,7 +389,7 @@ void EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id,
                                          const ItemPointer &new_location) {
-  LOG_TRACE("Performing Delete");
+  LOG_INFO("Performing Delete %lu %lu", tile_group_id, tuple_id);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =
@@ -313,7 +398,7 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -327,6 +412,7 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
+  InitTupleReserved(new_location.block, new_location.offset);
 
   current_txn->RecordDelete(tile_group_id, tuple_id);
   return true;
@@ -334,10 +420,11 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
 
 void EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
+  LOG_INFO("Performing Inplace Delete %lu %lu", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) ==
          current_txn->GetTransactionId());
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -356,7 +443,7 @@ void EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
 }
 
 Result EagerWriteTxnManager::CommitTransaction() {
-  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -365,6 +452,10 @@ Result EagerWriteTxnManager::CommitTransaction() {
   //*****************************************************
   // we can optimize read-only transaction.
   if (current_txn->IsReadOnly() == true) {
+    // no dependency
+    assert(current_txn_ctx->wait_for_counter_ == 0);
+    LOG_INFO("Read Only txn: %lu ", current_txn->GetTransactionId());
+
     // validate read set.
     for (auto &tile_group_entry : rw_set) {
       oid_t tile_group_id = tile_group_entry.first;
@@ -379,7 +470,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
                   eager_write_released_rdlock.end() ||
               eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                   eager_write_released_rdlock[tile_group_id].end()) {
-            ReleaseReadLock(tile_group_header, tuple_slot);
+            DecreaseReaderCount(tile_group_header, tuple_slot);
             eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
           }
         } else {
@@ -393,6 +484,21 @@ Result EagerWriteTxnManager::CommitTransaction() {
     return ret;
   }
   //*****************************************************
+
+  // Check if we cause dead lock
+  if (CauseDeadLock()) {
+    // Abort
+    return AbortTransaction();
+  }
+
+  // Wait for all dependencies to finish
+  LOG_INFO("Start waiting");
+  LOG_INFO("Current wait for counter = %d", current_txn_ctx->wait_for_counter_ - 0);
+  while (current_txn_ctx->wait_for_counter_ != 0) {
+    std::chrono::microseconds sleep_time(1);
+    std::this_thread::sleep_for(sleep_time);
+  }
+  LOG_INFO("End waiting");
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
@@ -413,7 +519,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
                 eager_write_released_rdlock.end() ||
             eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                 eager_write_released_rdlock[tile_group_id].end()) {
-          ReleaseReadLock(tile_group_header, tuple_slot);
+          ReleaseEwReaderLock(tile_group_header, tuple_slot);
           eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -442,6 +548,8 @@ Result EagerWriteTxnManager::CommitTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
+
+        assert(EXTRACT_READ_COUNT(tile_group_header->GetTransactionId(tuple_slot)) == 0);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -471,7 +579,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_slot)) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
@@ -485,7 +593,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_slot)) ==
                current_txn->GetTransactionId());
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -508,7 +616,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
 }
 
 Result EagerWriteTxnManager::AbortTransaction() {
-  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -525,7 +633,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
                 eager_write_released_rdlock.end() ||
             eager_write_released_rdlock[tile_group_id].find(tuple_slot) ==
                 eager_write_released_rdlock[tile_group_id].end()) {
-          ReleaseReadLock(tile_group_header, tuple_slot);
+          DecreaseReaderCount(tile_group_header, tuple_slot);
           eager_write_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
@@ -544,7 +652,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        AtomicSetOnlyTxnId(tile_group_header, tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -564,7 +672,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        AtomicSetOnlyTxnId(tile_group_header, tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -588,6 +696,46 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
   eager_write_released_rdlock.clear();
   return Result::RESULT_ABORTED;
+}
+
+bool EagerWriteTxnManager::CauseDeadLock() {
+  LOG_INFO("Detecting dead lock");
+  std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+
+  // Always acquire the running_txn_map_mutex_ before acquiring the per context lock
+  std::unordered_set<txn_id_t> dependencies;
+  auto current_tid = current_txn->GetTransactionId();
+
+  std::queue<txn_id_t> traverse;
+
+  // init
+  dependencies.insert(current_tid);
+  for (auto tid : current_txn_ctx->wait_list_) {
+      LOG_INFO("visit %lu", tid);
+      traverse.push(tid);
+  }
+
+  // BFS start from current txn to detect ring
+  while (!traverse.empty()) {
+    auto tid = traverse.front();
+    traverse.pop();
+    if (running_txn_map_.count(tid) == 0) {
+      // target txn already exit
+      continue;
+    } else if (dependencies.count(tid) == 0){
+      // find new dependency
+      for (auto ttid : running_txn_map_[tid]->wait_list_){
+        traverse.push(ttid);
+      }
+    } else {
+      // find ring
+      LOG_INFO("find dead lock %lu", tid);
+      assert(tid == current_tid);
+      return true;
+    }
+  }
+
+  return false;
 }
 }
 }
