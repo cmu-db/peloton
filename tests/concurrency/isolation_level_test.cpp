@@ -218,12 +218,7 @@ void FuzzyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-<<<<<<< HEAD
         RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
-=======
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result)
-    {
->>>>>>> eager-write
       EXPECT_EQ(0, scheduler.schedules[0].results[0]);
       EXPECT_EQ(0, scheduler.schedules[0].results[1]);
     }
@@ -242,12 +237,7 @@ void FuzzyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-<<<<<<< HEAD
         RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
-=======
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result)
-    {
->>>>>>> eager-write
       EXPECT_EQ(1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(1, scheduler.schedules[0].results[1]);
     }
