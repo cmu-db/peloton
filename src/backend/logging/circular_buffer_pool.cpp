@@ -15,6 +15,7 @@
 #include <xmmintrin.h>
 
 #include "backend/logging/circular_buffer_pool.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace logging {
@@ -28,22 +29,22 @@ CircularBufferPool::CircularBufferPool()
 }
 
 CircularBufferPool::~CircularBufferPool() {
-  for (unsigned int i = (tail_ & BUFFER_POOL_MASK);
-       i < (head_ & BUFFER_POOL_MASK); i++) {
+  for (unsigned int i = GET_BUFFER_POOL_INDEX(tail_);
+       i < GET_BUFFER_POOL_INDEX(head_); i++) {
     buffers_[i].release();
   }
 }
 
 bool CircularBufferPool::Put(std::unique_ptr<LogBuffer> buffer) {
-  // assume enough place for put..
-  unsigned int current_idx = head_.fetch_add(1) & BUFFER_POOL_MASK;
-  // LOG_INFO("CircularBufferPool::Put - current_idx: %u", current_idx);
+  // assume enough place for put a buffer
+  unsigned int current_idx = GET_BUFFER_POOL_INDEX(head_.fetch_add(1));
+  LOG_TRACE("CircularBufferPool::Put - current_idx: %u", current_idx);
   buffers_[current_idx] = std::move(buffer);
   return true;
 }
 
 std::unique_ptr<LogBuffer> CircularBufferPool::Get() {
-  unsigned int current_idx = tail_.fetch_add(1) & BUFFER_POOL_MASK;
+  unsigned int current_idx = GET_BUFFER_POOL_INDEX(tail_.fetch_add(1));
   while (true) {
     if (buffers_[current_idx]) {
       break;
@@ -52,10 +53,21 @@ std::unique_ptr<LogBuffer> CircularBufferPool::Get() {
       _mm_pause();
     }
   }
-  // LOG_INFO("CircularBufferPool::Get - current_idx: %u", current_idx);
+  LOG_TRACE("CircularBufferPool::Get - current_idx: %u", current_idx);
   std::unique_ptr<LogBuffer> buff = std::move(buffers_[current_idx]);
   memset(buffers_ + current_idx, 0, sizeof(std::unique_ptr<LogBuffer>));
   return buff;
+}
+
+unsigned int CircularBufferPool::GetSize() {
+  auto head = head_.load();
+  auto tail = tail_.load();
+
+  unsigned int size = GET_BUFFER_POOL_INDEX(head) - GET_BUFFER_POOL_INDEX(tail);
+  if (size == 0 && head > tail) {
+    return BUFFER_POOL_SIZE;
+  }
+  return size;
 }
 
 }  // namespace logging
