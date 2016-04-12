@@ -124,7 +124,7 @@ void LogManager::PrepareLogging() {
   if (this->IsInLoggingMode()) {
     this->GetBackendLogger();
     auto logger = this->GetBackendLogger();
-    logger->SetHighestLoggedCommitId(GetMaxFlushedCommitId());
+    frontend_logger->SetBackendLoggerLoggedCid(*logger);
   }
 }
 
