@@ -114,13 +114,13 @@ bool ExchangeHashExecutor::DExecute() {
       return false;
     }
     done_ = true;
-  }
 
-  // make sure building hashmap is done before return any child tiles.
-  size_t task_count = 0;
-  while (task_count < child_tiles_.size()) {
-    queue_.Get();
-    task_count++;
+    // make sure building hashmap is done before return any child tiles.
+    size_t task_count = 0;
+    while (task_count < child_tiles_.size()) {
+      queue_.Get();
+      task_count++;
+    }
   }
 
   // Return logical tiles one at a time
