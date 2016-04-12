@@ -13,7 +13,7 @@
 #pragma once
 
 #include <iostream>
-#include <mutex>
+#include <atomic>
 #include <condition_variable>
 #include <vector>
 #include <unistd.h>
@@ -64,6 +64,8 @@ class FrontendLogger : public Logger {
 
   cid_t GetMaxFlushedCommitId();
 
+  void SetBackendLoggerLoggedCid(BackendLogger &bel);
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -72,7 +74,7 @@ class FrontendLogger : public Logger {
   std::vector<std::unique_ptr<LogRecord>> global_queue;
 
   // To synch the status
-  std::mutex backend_loggers_lock;
+  std::atomic_flag backend_loggers_lock;
 
   // period with which it collects log records from backend loggers
   // (in microseconds)
