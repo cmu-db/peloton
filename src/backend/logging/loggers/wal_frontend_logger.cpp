@@ -161,7 +161,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   size_t global_queue_size = global_queue.size();
-  bool write_del = false;
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
     if (this->FileSwitchCondIsTrue()) {
@@ -178,10 +177,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
       this->max_commit_id = record->GetTransactionId();
     }
-    write_del = true;
   }
 
-  if (write_del) {
+  if (global_queue_size > 0) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);

@@ -145,10 +145,15 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // TODO: handle edge cases here (backend logger has not yet sent a log
     // message)
     // Look at the local queues of the backend loggers
+    backend_loggers_lock.lock();
     for (auto backend_logger : backend_loggers) {
       {
         std::lock_guard<std::mutex> lock(backend_logger->local_queue_mutex);
-
+        auto cid = backend_logger->GetHighestLoggedCommitId();
+        LOG_INFO("backend logger had cid %lu", cid);
+        if (cid != INVALID_CID) {
+          max_possible_commit_id = std::min(cid, max_possible_commit_id);
+        }
         auto local_queue_size = backend_logger->local_queue.size();
 
         // Skip current backend_logger, nothing to do
@@ -161,15 +166,14 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
           global_queue.push_back(
               std::move(backend_logger->local_queue[log_record_itr]));
         }
-        max_possible_commit_id = std::min(
-            backend_logger->GetHighestLoggedCommitId(), max_possible_commit_id);
 
         // cleanup the local queue
         backend_logger->local_queue.clear();
       }
     }
-    if (max_possible_commit_id != MAX_CID) {
-      assert(max_possible_commit_id >= max_collected_commit_id);
+    backend_loggers_lock.unlock();
+    if (max_possible_commit_id != MAX_CID &&
+        max_possible_commit_id >= max_collected_commit_id) {
       max_collected_commit_id = max_possible_commit_id;
     }
   }
@@ -183,8 +187,10 @@ cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
  */
 void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   // Add backend logger to the list of backend loggers
+  backend_loggers_lock.lock();
   backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
+  backend_loggers_lock.unlock();
 }
 
 }  // namespace logging

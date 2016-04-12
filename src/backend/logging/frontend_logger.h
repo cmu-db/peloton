@@ -71,6 +71,9 @@ class FrontendLogger : public Logger {
   // Global queue
   std::vector<std::unique_ptr<LogRecord>> global_queue;
 
+  // To synch the status
+  std::mutex backend_loggers_lock;
+
   // period with which it collects log records from backend loggers
   // (in microseconds)
   int64_t wait_timeout;
