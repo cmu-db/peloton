@@ -104,9 +104,7 @@ class TileGroup : public Printable {
 
   oid_t GetNextTupleSlot() const;
 
-  // Count of tuples that are active w.r.t. this transaction id
-  oid_t GetActiveTupleCount(txn_id_t txn_id) const;
-
+  // this function is called only when building tile groups for aggregation operations.
   oid_t GetActiveTupleCount() const;
 
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
