@@ -242,7 +242,7 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  
+
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
@@ -384,7 +384,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer delete_location(tile_group_id, tuple_slot);
-        
+
         // logging.
         log_manager.LogDelete(end_commit_id, delete_location);
 

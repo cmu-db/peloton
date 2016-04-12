@@ -63,11 +63,13 @@ unsigned int CircularBufferPool::GetSize() {
   auto head = head_.load();
   auto tail = tail_.load();
 
-  unsigned int size = GET_BUFFER_POOL_INDEX(head) - GET_BUFFER_POOL_INDEX(tail);
-  if (size == 0 && head > tail) {
+  int size = GET_BUFFER_POOL_INDEX(head) - GET_BUFFER_POOL_INDEX(tail);
+  LOG_INFO("head: %u, tail: %u, size: %d", GET_BUFFER_POOL_INDEX(head),
+		  GET_BUFFER_POOL_INDEX(tail), size);
+  if (size == 0 && head - tail > 0) {
     return BUFFER_POOL_SIZE;
   }
-  return size;
+  return (size + BUFFER_POOL_SIZE) % BUFFER_POOL_SIZE;
 }
 
 }  // namespace logging
