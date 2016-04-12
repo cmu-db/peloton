@@ -14,6 +14,7 @@
 
 #include "backend/common/printable.h"
 #include "backend/catalog/column.h"
+#include <memory>
 
 namespace peloton {
 namespace catalog {
@@ -37,6 +38,16 @@ class Schema : public Printable {
   // Construct schema from vector of Column
   Schema(const std::vector<Column> &columns);
 
+  // Copy schema
+  static std::shared_ptr<const Schema> CopySchema(
+      const std::shared_ptr<const Schema> &schema);
+
+  // Copy subset of columns in the given schema
+  static std::shared_ptr<const Schema> CopySchema(
+      const std::shared_ptr<const Schema> &schema,
+      const std::vector<oid_t> &set);
+
+  // Backward compatible for raw pointers
   // Copy schema
   static Schema *CopySchema(const Schema *schema);
 

@@ -122,10 +122,8 @@ class TsOrderTxnManager : public TransactionManager {
     }
   }
 
-
   cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 
 };
-
 }
 }
