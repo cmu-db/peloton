@@ -140,10 +140,7 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
-    //auto tile_group_header = output_table->GetTileGroup(location.block)->GetHeader();
     tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
-    //concurrency::TransactionManagerFactory::GetInstance().SetOwnership(
-    //    location.block, location.offset);
   }
 
   return true;
