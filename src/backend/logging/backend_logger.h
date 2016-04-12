@@ -51,22 +51,26 @@ class BackendLogger : public Logger {
                                     ItemPointer delete_location,
                                     void *data = nullptr) = 0;
 
+  cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
+
+  void SetHighestLoggedCommitId(cid_t cid) { highest_logged_commit_id = cid; };
+
+  // FIXME The following methods should be exposed to FrontendLogger only
   // Collect all log buffers to be persisted
   virtual std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers() = 0;
 
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
 
-  cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
-
-  void SetHighestLoggedCommitId(cid_t cid) { highest_logged_commit_id = cid; };
-
  protected:
-  std::vector<std::unique_ptr<LogBuffer>> log_buffers_to_collect;
+
+  std::vector<std::unique_ptr<LogBuffer>> local_queue;
 
   cid_t highest_logged_commit_id = 0;
 
   cid_t highest_flushed_cid = 0;
+
+
 };
 
 }  // namespace logging

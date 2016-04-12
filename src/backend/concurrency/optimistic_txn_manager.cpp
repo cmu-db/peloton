@@ -297,7 +297,9 @@ Result OptimisticTxnManager::CommitTransaction() {
     return ret;
   }
   //*****************************************************
-
+  // must tell the log manager we are going to log
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.PrepareLogging();
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
 
@@ -318,24 +320,28 @@ Result OptimisticTxnManager::CommitTransaction() {
           continue;
         } else {
           if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID && tile_group_header->GetBeginCommitId(
-                                        tuple_slot) <= end_commit_id &&
+                  INITIAL_TXN_ID &&
+              tile_group_header->GetBeginCommitId(tuple_slot) <=
+                  end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
             // the version is not owned by other txns and is still visible.
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu", tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu", tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu", tile_group_header->GetEndCommitId(tuple_slot));
+        LOG_INFO("transaction id=%lu",
+                 tile_group_header->GetTransactionId(tuple_slot));
+        LOG_INFO("begin commit id=%lu",
+                 tile_group_header->GetBeginCommitId(tuple_slot));
+        LOG_INFO("end commit id=%lu",
+                 tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
+        log_manager.DoneLogging();
         return AbortTransaction();
       }
     }
   }
   //////////////////////////////////////////////////////////
 
-  auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
   for (auto &tile_group_entry : rw_set) {
@@ -429,7 +435,7 @@ Result OptimisticTxnManager::CommitTransaction() {
     }
   }
   log_manager.LogCommitTransaction(end_commit_id);
-
+  log_manager.DoneLogging();
   EndTransaction();
 
   return Result::RESULT_SUCCESS;

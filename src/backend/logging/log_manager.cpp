@@ -120,6 +120,21 @@ bool LogManager::EndLogging() {
 // Utility Functions
 //===--------------------------------------------------------------------===//
 
+void LogManager::PrepareLogging() {
+  if (this->IsInLoggingMode()) {
+    this->GetBackendLogger();
+    auto logger = this->GetBackendLogger();
+    logger->SetHighestLoggedCommitId(GetMaxFlushedCommitId());
+  }
+}
+
+void LogManager::DoneLogging() {
+  if (this->IsInLoggingMode()) {
+    auto logger = this->GetBackendLogger();
+    logger->SetHighestLoggedCommitId(INVALID_CID);
+  }
+}
+
 void LogManager::LogBeginTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
@@ -186,7 +201,6 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
         INVALID_ITEMPOINTER, tuple.get());
     logger->Log(record);
     delete executor_context;
-
   }
 }
 

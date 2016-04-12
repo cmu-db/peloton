@@ -37,14 +37,53 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   // Enqueue the serialized log record into the queue
   record->Serialize(output_buffer);
 
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(std::unique_ptr<LogRecord>(record));
-    if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-      assert(record->GetTransactionId() > highest_logged_commit_id);
-      highest_logged_commit_id = record->GetTransactionId();
+    log_buffer_lock_.Lock();
+    if (!log_buffer_) {
+    	LOG_INFO("Acquire the first log buffer in backend logger");
+    	log_buffer_ = std::move(available_buffer_pool_->Get());
     }
-  }
+    if (!log_buffer_->WriteRecord(record)){
+
+      LOG_INFO("Log buffer is full - Attempt to acquire a new one");
+      // put back a buffer
+  	  log_buffer_->SetHighestCommitId(highest_logged_commit_id);
+      persist_buffer_pool_->Put(std::move(log_buffer_));
+      // get a new one
+      log_buffer_ = std::move(available_buffer_pool_->Get());
+      // write to the new log buffer
+      auto success = log_buffer_->WriteRecord(record);
+      assert(success);
+    }
+    // update max logged commit id
+    if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+  	  auto new_log_commit_id = record->GetTransactionId();
+	  assert(new_log_commit_id > highest_logged_commit_id);
+	  highest_logged_commit_id = new_log_commit_id;
+    }
+    log_buffer_lock_.Unlock();
+}
+
+std::vector<std::unique_ptr<LogBuffer>> &WriteAheadBackendLogger::CollectLogBuffers(){
+    log_buffer_lock_.Lock();
+    if (log_buffer_ && log_buffer_->GetSize() > 0){
+      // put back a buffer
+      LOG_INFO("Move the current log buffer to buffer pool");
+  	  log_buffer_->SetHighestCommitId(highest_logged_commit_id);
+      persist_buffer_pool_->Put(std::move(log_buffer_));
+    }
+    log_buffer_lock_.Unlock();
+
+    auto num_log_buffer = persist_buffer_pool_->GetSize();
+    //LOG_INFO("Collect %u log buffers from backend logger", num_log_buffer);
+    while (num_log_buffer > 0) {
+    	local_queue.push_back(persist_buffer_pool_->Get());
+    	num_log_buffer--;
+    }
+	return local_queue;
+}
+
+void WriteAheadBackendLogger::GrantEmptyBuffer(std::unique_ptr<LogBuffer> empty_buffer){
+	available_buffer_pool_->Put(std::move(empty_buffer));
 }
 
 LogRecord *WriteAheadBackendLogger::GetTupleRecord(

@@ -13,12 +13,16 @@
 #pragma once
 #include <cstddef>
 #include <cassert>
+#include <memory>
 #include "backend/logging/log_record.h"
 
 #define LOG_BUFFER_CAPACITY 4096
 
 namespace peloton {
 namespace logging {
+
+
+class BackendLogger;
 
 //===--------------------------------------------------------------------===//
 // Log Buffer
@@ -27,7 +31,7 @@ namespace logging {
 // TODO make capacity_ template parameter
 class LogBuffer {
  public:
-  LogBuffer(cid_t highest_commit_id);
+  LogBuffer(BackendLogger*);
 
   ~LogBuffer(void){};
 
@@ -35,11 +39,17 @@ class LogBuffer {
 
   bool WriteRecord(LogRecord *);
 
+  void ResetData();
+
   cid_t GetHighestCommitId();
+
+  void SetHighestCommitId(cid_t highest_commit_id);
 
   size_t GetSize();
 
   void SetSize(size_t size);
+
+  BackendLogger *GetBackendLogger();
 
  private:
 
@@ -56,6 +66,8 @@ class LogBuffer {
 
   // the highest commit id
   cid_t highest_commit_id_ = 0;
+
+  BackendLogger *backend_logger_;
 
 };
 
