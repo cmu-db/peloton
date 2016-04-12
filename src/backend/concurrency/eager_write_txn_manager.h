@@ -180,18 +180,19 @@ class EagerWriteTxnManager : public TransactionManager {
   }
 
   // Add the current txn into the reader list of a tuple
+  // note: should be protected in EwReaderLock
   void AddReader(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
     LOG_INFO("Add reader %lu, tuple_id = %lu", txn_id, tuple_id);
 
     TxnList *reader = new TxnList(txn_id);
 
-    GetEwReaderLock(tile_group_header, tuple_id);
+    // GetEwReaderLock(tile_group_header, tuple_id);
     TxnList *headp = (TxnList *)(
       tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
     reader->next = headp->next;
     headp->next = reader;
-    ReleaseEwReaderLock(tile_group_header, tuple_id);
+    // ReleaseEwReaderLock(tile_group_header, tuple_id);
   }
 
   // Remove reader from the reader list of a tuple

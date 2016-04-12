@@ -151,6 +151,7 @@ bool EagerWriteTxnManager::AcquireOwnership(
   auto current_tid = current_txn->GetTransactionId();
   auto old_tid = INITIAL_TXN_ID;
 
+  GetEwReaderLock(tile_group_header, tuple_id);
 
   old_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, current_tid);
 
@@ -158,11 +159,12 @@ bool EagerWriteTxnManager::AcquireOwnership(
   bool res = (old_tid == INITIAL_TXN_ID);
   if(!res){
     LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    ReleaseEwReaderLock(tile_group_header, tuple_id);
     return false;
   }
 
   // Install wait for dependency on all reader txn
-  GetEwReaderLock(tile_group_header, tuple_id);
+
   {
     auto ptr = GetEwReaderList(tile_group_header, tuple_id);
     while (ptr->next != nullptr) {
@@ -223,15 +225,20 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
     return true;
   }
 
-  // Try to acquire read lock.
+  GetEwReaderLock(tile_group_header, tuple_id);
+
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
-  // No one is holding the write lock
+
   if (old_txn_id != INITIAL_TXN_ID) {
+    // there is a writer
+    // so reader (myself) should be blocked
     LOG_INFO("Own by others: %lu", old_txn_id);
+    ReleaseEwReaderLock(tile_group_header, tuple_id);
     return false;
   }
 
   AddReader(tile_group_header, tuple_id);
+  ReleaseEwReaderLock(tile_group_header, tuple_id);
   current_txn->RecordRead(tile_group_id, tuple_id);
 
   return true;
