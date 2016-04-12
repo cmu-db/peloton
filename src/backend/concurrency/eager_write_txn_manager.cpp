@@ -172,7 +172,6 @@ bool EagerWriteTxnManager::AcquireOwnership(
     DecreaseReaderCount(tile_group_header, tuple_id);
 
     // Install wait for dependency on all reader txn
-//    int wait_count = 0;
     GetEwReaderLock(tile_group_header, tuple_id);
     {
       auto ptr = GetEwReaderList(tile_group_header, tuple_id);
@@ -290,7 +289,6 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
       }
     }
   } else {
-    // SetTransactionResult(RESULT_FAILURE);
     LOG_INFO("Own by others: %lu", EXTRACT_TXNID(old_txn_id));
     return false;
   }
