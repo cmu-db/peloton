@@ -16,6 +16,7 @@
 #include "backend/concurrency/pessimistic_txn_manager.h"
 #include "backend/concurrency/speculative_read_txn_manager.h"
 #include "backend/concurrency/eager_write_txn_manager.h"
+#include "backend/concurrency/ts_order_txn_manager.h"
 #include "backend/concurrency/ssi_txn_manager.h"
 
 namespace peloton {
