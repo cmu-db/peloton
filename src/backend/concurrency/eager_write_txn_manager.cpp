@@ -168,9 +168,6 @@ bool EagerWriteTxnManager::AcquireOwnership(
   bool res = (EXTRACT_TXNID(old_tid) == current_tid);
 
   if (res) {
-    // Decrease reader count
-    DecreaseReaderCount(tile_group_header, tuple_id);
-
     // Install wait for dependency on all reader txn
     GetEwReaderLock(tile_group_header, tuple_id);
     {
@@ -339,6 +336,8 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto new_tile_group_header = catalog::Manager::GetInstance()
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
+  // Decrease reader count
+  DecreaseReaderCount(tile_group_header, tuple_id);
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -397,6 +396,8 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto new_tile_group_header = catalog::Manager::GetInstance()
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
+  // Decrease reader count
+  DecreaseReaderCount(tile_group_header, tuple_id);
 
   assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
