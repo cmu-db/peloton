@@ -36,7 +36,6 @@
 #include "backend/expression/string_expression.h"
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
-#include "backend/expression/coalesce_expression.h"
 #include "backend/expression/nullif_expression.h"
 #include <json_spirit.h>
 
@@ -64,7 +63,7 @@ AbstractExpression *ExpressionUtil::HashRangeFactory(PlannerDomValue obj) {
 // Parse JSON parameters to create a subquery expression
 AbstractExpression *ExpressionUtil::SubqueryFactory(
     ExpressionType subqueryType, PlannerDomValue obj,
-    const std::vector<AbstractExpression *>& args) {
+    const std::vector<AbstractExpression *> &args) {
   int subqueryId = obj.valueForKey("SUBQUERY_ID").asInt();
   std::vector<int> paramIdxs;
   if (obj.hasNonNullKey("PARAM_IDX")) {
@@ -575,12 +574,6 @@ AbstractExpression *ExpressionUtil::CastFactory(PostgresValueType type,
   return new expression::CastExpression(type, child);
 }
 
-AbstractExpression *ExpressionUtil::CaseWhenFactory(ValueType vt,
-                                                    AbstractExpression *lc,
-                                                    AbstractExpression *rc) {
-  return new OperatorCaseWhenExpression(vt, lc, rc);
-}
-
 // provide an interface for creating constant value expressions that
 // is more useful to testcases
 AbstractExpression *ExpressionUtil::ConstantValueFactory(
@@ -737,7 +730,7 @@ AbstractExpression *ExpressionUtil::ConstantValueFactory(
 }
 
 AbstractExpression *ExpressionUtil::VectorFactory(
-    ValueType elementType, const std::vector<AbstractExpression *>& arguments) {
+    ValueType elementType, const std::vector<AbstractExpression *> &arguments) {
   return new VectorExpression(elementType, arguments);
 }
 
@@ -884,7 +877,7 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
 }
 
 void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
-                               const std::vector<AbstractExpression *>& args) {
+                               const std::vector<AbstractExpression *> &args) {
   char fn_message[1024];
   snprintf(fn_message, sizeof(fn_message),
            "Internal Error: SQL function '%s' with ID (%d) with (%d) "
@@ -895,22 +888,6 @@ void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
   throw Exception(fn_message);
 }
 
-AbstractExpression *ExpressionUtil::CaseExprFactory(
-    ValueType vt, const std::vector<AbstractExpression *> &clauses,
-    AbstractExpression *default_result) {
-  return new expression::CaseExpression(vt, clauses, default_result);
-}
-
-AbstractExpression *ExpressionUtil::CoalesceFactory(
-    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
-  return new expression::CoalesceExpression(vt, expressions);
-}
-
-AbstractExpression *ExpressionUtil::NullIfFactory(
-    ValueType vt, const std::vector<AbstractExpression *> &expressions) {
-  return new expression::NullIfExpression(vt, expressions);
-}
-
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
@@ -918,7 +895,7 @@ AbstractExpression *ExpressionUtil::NullIfFactory(
 AbstractExpression *ExpressionUtil::ExpressionFactory(
     PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
     AbstractExpression *lc, AbstractExpression *rc,
-    const std::vector<AbstractExpression *>& args) {
+    const std::vector<AbstractExpression *> &args) {
   AbstractExpression *ret = NULL;
 
   switch (et) {
@@ -1009,9 +986,6 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
       break;
     case (EXPRESSION_TYPE_HASH_RANGE):
       ret = HashRangeFactory(obj);
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_CASE_WHEN):
-      ret = CaseWhenFactory(vt, lc, rc);
       break;
     // Anyway, this function is not implemented. comment out.
     //    case (EXPRESSION_TYPE_OPERATOR_ALTERNATIVE):

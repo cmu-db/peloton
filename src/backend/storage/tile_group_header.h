@@ -72,37 +72,32 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
+  // this function is only called by DataTable::GetEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
-    oid_t tuple_slot_id = INVALID_OID;
+    oid_t tuple_slot_id = next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
 
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
-      // check tile group capacity
-      if (next_tuple_slot < num_tuple_slots) {
-        tuple_slot_id = next_tuple_slot;
-        next_tuple_slot++;
-      }
+    if (tuple_slot_id >= num_tuple_slots) {
+      return INVALID_OID;
+    } else {
+      return tuple_slot_id;
     }
-
-    return tuple_slot_id;
   }
 
   /**
    * Used by logging
    */
+   // TODO: rewrite the code!!!
   bool GetEmptyTupleSlot(const oid_t &tuple_slot_id) {
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
-      if (tuple_slot_id < num_tuple_slots) {
-        if (next_tuple_slot <= tuple_slot_id) {
-          next_tuple_slot = tuple_slot_id + 1;
-        }
-        return true;
-      } else {
-        return false;
+    tile_header_lock.Lock();
+    if (tuple_slot_id < num_tuple_slots) {
+      if (next_tuple_slot <= tuple_slot_id) {
+        next_tuple_slot = tuple_slot_id + 1;
       }
+      tile_header_lock.Unlock();
+      return true;
+    } else {
+      tile_header_lock.Unlock();
+      return false;
     }
   }
 
@@ -308,10 +303,10 @@ class TileGroupHeader : public Printable {
   oid_t num_tuple_slots;
 
   // next free tuple slot
-  oid_t next_tuple_slot;
+  std::atomic<oid_t> next_tuple_slot;
 
   // synch helpers
-  std::mutex tile_header_mutex;
+  Spinlock tile_header_lock;
 };
 
 }  // End storage namespace
