@@ -32,7 +32,7 @@ struct TxnList {
 
 struct EagerWriteTxnContext {
 //  Spinlock wait_list_lock_;
-  std::atomic<int> wait_for_counter_;
+  volatile std::atomic<int> wait_for_counter_;
   std::unordered_set<txn_id_t> wait_list_;
   cid_t begin_cid_;
 
