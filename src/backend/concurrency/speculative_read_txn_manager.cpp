@@ -309,7 +309,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
   // we do not start validation until the all the dependencies have been
   // cleared.
   if (IsCommittable() == false) {
-    AbortTransaction();
+    return AbortTransaction();
   }
 
   // generate transaction id.
@@ -331,13 +331,9 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
           if (tile_group_header->GetBeginCommitId(tuple_slot) <=
                   end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-            // the version is not locked and still visible.
+            // the version is still visible.
             continue;
           } else {
-            // the dependencies have been cleared above. so no other txns can
-            // hold the lock.
-            assert(tile_group_header->GetTransactionId(tuple_slot ==
-                                                       INITIAL_TXN_ID));
             // otherwise, validation fails. abort transaction.
             return AbortTransaction();
           }
