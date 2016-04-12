@@ -28,7 +28,7 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  *
  */
-const planner::AbstractPlan *PlanTransformer::TransformLockRows(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLockRows(
     const LockRowsPlanState *lr_plan_state) {
   LOG_INFO("Handle LockRows");
 

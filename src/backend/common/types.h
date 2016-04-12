@@ -54,7 +54,7 @@ enum GCStatus {
 
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL  = 1,
+  CHECKPOINT_TYPE_NORMAL = 1,
 };
 //===--------------------------------------------------------------------===//
 // Filesystem directories
@@ -297,8 +297,6 @@ enum ExpressionType {
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
-  EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
   EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
@@ -363,12 +361,12 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OPTIMISTIC = 0, // optimistic
-  CONCURRENCY_TYPE_PESSIMISTIC = 1, // pessimistic
-  CONCURRENCY_TYPE_SPECULATIVE_READ = 2, // optimistic + speculative read
-  CONCURRENCY_TYPE_EAGER_WRITE = 3, // pessimistic + eager write
-  CONCURRENCY_TYPE_TO = 4,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5   // serializable snapshot isolation
+  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
