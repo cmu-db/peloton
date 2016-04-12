@@ -31,17 +31,23 @@ class HashJoinPlan : public AbstractJoinPlan {
   HashJoinPlan(HashJoinPlan &&) = delete;
   HashJoinPlan &operator=(HashJoinPlan &&) = delete;
 
-  HashJoinPlan(PelotonJoinType join_type,
-               const expression::AbstractExpression *predicate,
-               const ProjectInfo *proj_info, const catalog::Schema *proj_schema)
-      : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {}
+  HashJoinPlan(
+      PelotonJoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema)
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema) {}
 
-  HashJoinPlan(PelotonJoinType join_type,
-               const expression::AbstractExpression *predicate,
-               const ProjectInfo *proj_info, const catalog::Schema *proj_schema,
-               const std::vector<oid_t> &
-                   outer_hashkeys)  // outer_hashkeys is added for IN-subquery
-      : AbstractJoinPlan(join_type, predicate, proj_info, proj_schema) {
+  HashJoinPlan(
+      PelotonJoinType join_type,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema,
+      const std::vector<oid_t> &
+          outer_hashkeys)  // outer_hashkeys is added for IN-subquery
+      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
+                         proj_schema) {
     outer_column_ids_ = outer_hashkeys;  // added for IN-subquery
   }
 
@@ -56,9 +62,13 @@ class HashJoinPlan : public AbstractJoinPlan {
   }
 
   std::unique_ptr<AbstractPlan> Copy() const {
+    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
+        GetPredicate()->Copy());
+    std::shared_ptr<const catalog::Schema> schema_copy(
+        catalog::Schema::CopySchema(GetSchema()));
     HashJoinPlan *new_plan = new HashJoinPlan(
-        GetJoinType(), GetPredicate()->Copy(), GetProjInfo()->Copy(),
-        catalog::Schema::CopySchema(GetSchema()), outer_column_ids_);
+        GetJoinType(), std::move(predicate_copy),
+        std::move(GetProjInfo()->Copy()), schema_copy, outer_column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
