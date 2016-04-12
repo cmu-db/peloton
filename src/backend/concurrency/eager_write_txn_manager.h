@@ -145,15 +145,6 @@ class EagerWriteTxnManager : public TransactionManager {
   }
 
  private:
-#define READ_COUNT_MASK 0xFF
-#define TXNID_MASK 0x00FFFFFFFFFFFFFF
-  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
-    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
-  }
-  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
-  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
-    return (txn_id >> 56) & READ_COUNT_MASK;
-  }
 
 
   // init reserved area of a tuple
@@ -236,19 +227,7 @@ class EagerWriteTxnManager : public TransactionManager {
 
   bool CauseDeadLock();
 
-  void DecreaseReaderCount(const storage::TileGroupHeader *const tile_group_header,
-                           const oid_t &tuple_id);
 
-  inline void AtomicSetOnlyTxnId(const storage::TileGroupHeader *const tile_group_header,
-                          const oid_t &tuple_id, txn_id_t tid) {
-    auto old_tid = tile_group_header->GetTransactionId(tuple_id);
-    while (true) {
-      auto new_tid = PACK_TXNID(tid, EXTRACT_READ_COUNT(old_tid));
-      auto real_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
-      if (real_tid == old_tid) return;
-      old_tid = real_tid;
-    }
-  }
 
   std::mutex running_txn_map_mutex_;
   std::unordered_map<txn_id_t, EagerWriteTxnContext*> running_txn_map_;
