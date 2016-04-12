@@ -45,7 +45,10 @@ void RunBenchmark() {
   // Load the database
   LoadTPCCDatabase();
 
-  WriteOutput(0);
+  // Run the workload
+  auto stat = RunWorkload();
+
+  WriteOutput(stat);
 }
 
 }  // namespace tpcc
