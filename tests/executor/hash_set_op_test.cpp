@@ -85,7 +85,6 @@ TEST_F(HashSetOptTests, ExceptTest) {
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
@@ -106,12 +105,10 @@ TEST_F(HashSetOptTests, ExceptTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -158,7 +155,6 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
@@ -183,20 +179,16 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -246,7 +238,6 @@ TEST_F(HashSetOptTests, IntersectTest) {
   size_t tile_size = 10;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
@@ -265,12 +256,10 @@ TEST_F(HashSetOptTests, IntersectTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -317,7 +306,6 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
@@ -342,20 +330,16 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
