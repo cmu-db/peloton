@@ -306,14 +306,10 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // we do not start validation until the all the dependencies have been
-  // cleared.
-  if (IsCommittable() == false) {
-    return AbortTransaction();
-  }
-
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+
+  // validation must be performed. otherwise, deadlock can occur.
   // validate read set.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -340,6 +336,12 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
         }
       }
     }
+  }
+
+  // we do not start installation until the all the dependencies have been
+  // cleared.
+  if (IsCommittable() == false) {
+    return AbortTransaction();
   }
   //////////////////////////////////////////////////////////
 
