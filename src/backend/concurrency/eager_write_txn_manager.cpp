@@ -271,11 +271,14 @@ bool EagerWriteTxnManager::PerformRead(const oid_t &tile_group_id,
     while (true) {
       LOG_INFO("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
       auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
+
       // Try add read count
       auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
       LOG_INFO("New txn id %lx", new_txn_id);
+
       txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
           tuple_id, old_txn_id, new_txn_id);
+
       if (real_txn_id != old_txn_id) {
         // See if there's writer
         if (EXTRACT_TXNID(real_txn_id) != INITIAL_TXN_ID) {
@@ -494,8 +497,8 @@ Result EagerWriteTxnManager::CommitTransaction() {
   LOG_INFO("Start waiting");
   LOG_INFO("Current wait for counter = %d", current_txn_ctx->wait_for_counter_ - 0);
   while (current_txn_ctx->wait_for_counter_ != 0) {
-//    std::chrono::microseconds sleep_time(1);
-//    std::this_thread::sleep_for(sleep_time);
+    std::chrono::microseconds sleep_time(1);
+    std::this_thread::sleep_for(sleep_time);
   }
   LOG_INFO("End waiting");
 
