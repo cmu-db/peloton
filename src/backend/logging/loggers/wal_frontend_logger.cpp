@@ -776,7 +776,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
   // Otherwise, read the log record type
   if (!is_truncated) {
     ret = fread((void *)&buffer, 1, sizeof(char), log_file);
-    if (ret <= 0) LOG_INFO("Failed an fread");
+    if (ret <= 0) { LOG_INFO("Failed an fread"); }
   }
   if (is_truncated || ret <= 0) {
     LOG_INFO("Call OpenNextLogFile");
@@ -1252,7 +1252,8 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
 
     switch (record_type) {
       case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-      case LOGRECORD_TYPE_TRANSACTION_COMMIT: {
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
         // Check for torn log write
         TransactionRecord txn_rec(record_type);
         if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
