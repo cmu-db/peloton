@@ -22,12 +22,9 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // Log Buffer
 //===--------------------------------------------------------------------===//
-LogBuffer::LogBuffer(cid_t highest_commit_id) : highest_commit_id_(highest_commit_id) {
+LogBuffer::LogBuffer(BackendLogger *backend_logger)
+: backend_logger_(backend_logger) {
 	memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
-}
-
-cid_t LogBuffer::GetHighestCommitId(){
-	return highest_commit_id_;
 }
 
 bool LogBuffer::WriteRecord(LogRecord *record) {
@@ -46,13 +43,19 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
 	return true;
 }
 
+cid_t LogBuffer::GetHighestCommitId(){
+	return highest_commit_id_;
+}
+void LogBuffer::SetHighestCommitId(cid_t highest_commit_id){
+	assert(highest_commit_id_ <= highest_commit_id);
+    highest_commit_id_ = highest_commit_id;
+}
+
 char *LogBuffer::GetData() { return data_; }
 
-size_t LogBuffer::GetSize() { return size_; }
-
-void LogBuffer::SetSize(size_t size) {
-  assert(size < capacity_);
-  size_ = size;
+void LogBuffer::ResetData(){
+	size_= 0;
+	memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
 }
 
 // Internal Methods
@@ -68,6 +71,16 @@ bool LogBuffer::WriteData(char *data, size_t len) {
   return true;
 }
 
+size_t LogBuffer::GetSize() { return size_; }
+
+void LogBuffer::SetSize(size_t size) {
+  assert(size < capacity_);
+  size_ = size;
+}
+
+BackendLogger *LogBuffer::GetBackendLogger(){
+	return backend_logger_;
+}
 
 }  // namespace logging
 }  // namespace peloton

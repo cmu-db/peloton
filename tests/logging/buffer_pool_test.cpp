@@ -26,7 +26,7 @@ class BufferPoolTests : public PelotonTest {};
 
 void EnqueueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
   for (unsigned int i = 0; i < count; i++) {
-    std::unique_ptr<logging::LogBuffer> buf(new logging::LogBuffer(0));
+    std::unique_ptr<logging::LogBuffer> buf(new logging::LogBuffer(nullptr));
     buf->SetSize(i);
     buffer_pool->Put(std::move(buf));
   }

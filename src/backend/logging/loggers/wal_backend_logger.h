@@ -36,16 +36,17 @@ class WriteAheadBackendLogger : public BackendLogger {
 
   void Log(LogRecord *record);
 
-  std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers();
-
-  void GrantEmptyBuffer(std::unique_ptr<LogBuffer>);
-
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,
                             ItemPointer insert_location,
                             ItemPointer delete_location, void *data = nullptr);
+  std::vector<std::unique_ptr<LogBuffer>> &CollectLogBuffers();
+
+  void GrantEmptyBuffer(std::unique_ptr<LogBuffer>);
 
  private:
+
+  // temporary serialization buffer
   CopySerializeOutput output_buffer;
 
   // the lock for the buffer being used currently
