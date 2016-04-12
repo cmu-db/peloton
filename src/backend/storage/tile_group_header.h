@@ -29,9 +29,9 @@
 namespace peloton {
 namespace storage {
 
-static std::mutex result_mutex;
-static std::unordered_map<oid_t, oid_t> peak_tuple_id;
-static FILE *result_file = NULL;
+//static std::mutex result_mutex;
+//static std::unordered_map<oid_t, oid_t> peak_tuple_id;
+//static FILE *result_file = NULL;
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -87,12 +87,15 @@ class TileGroupHeader : public Printable {
       if(get_recycled) {
         // check if there are recycled tuple slots
         auto& gc_manager = gc::GCManager::GetInstance();
-        auto free_slot = gc_manager.ReturnFreeSlot(tile_group->GetDatabaseId(), tile_group->GetTableId());
-        if(free_slot != INVALID_OID) {
-          tuple_slot_id = free_slot;
-          this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-          this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
-          this -> SetEndCommitId(tuple_slot_id, MAX_CID);
+        if(gc_manager.GetStatus() == GC_STATUS_RUNNING) {
+          LOG_INFO("getting recycled tuple");
+          auto free_slot = gc_manager.ReturnFreeSlot(tile_group->GetDatabaseId(), tile_group->GetTableId());
+          if(free_slot != INVALID_OID) {
+            tuple_slot_id = free_slot;
+            this -> SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+            this -> SetBeginCommitId(tuple_slot_id, MAX_CID);
+            this -> SetEndCommitId(tuple_slot_id, MAX_CID);
+          }
         }
       }
 
@@ -103,6 +106,7 @@ class TileGroupHeader : public Printable {
       }
     }
 
+#if 0
     if(result_file == NULL) {
       result_file = fopen("/tmp/result.file", "w");
       assert(!result_file);
@@ -126,6 +130,7 @@ class TileGroupHeader : public Printable {
 
     //LOG_INFO("###### LARGEST TUPLE SLOT USED = %lu", GetNextTupleSlot());
     //LOG_INFO("###### TUPLE SLOT USED = %lu", tuple_slot_id);
+#endif
     return tuple_slot_id;
   }
 
