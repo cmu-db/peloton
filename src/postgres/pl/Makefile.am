@@ -14,4 +14,4 @@ postgres_plpgsql_FILES = \
 
 postgres_plpgsql_INCLUDES = \
 							 -I$(srcdir)/postgres/include \
-							 -I$(srcdir)/postgres/backenkd
+							 -I$(srcdir)/postgres/backend
