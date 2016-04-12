@@ -109,27 +109,23 @@ TEST_F(TileGroupTests, BasicTest) {
   // TRANSACTION
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetBeginCommitId();
 
-  EXPECT_EQ(0, tile_group->GetActiveTupleCount(txn_id));
+  EXPECT_EQ(0, tile_group->GetActiveTupleCount());
+
+  txn_manager.BeginTransaction();
 
   auto tuple_slot = tile_group->InsertTuple(tuple1);
   txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot);
-  // tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
   tuple_slot = tile_group->InsertTuple(tuple2);
   txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot);
-  // tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
 
   tuple_slot = tile_group->InsertTuple(tuple1);
   txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot);
-  // tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
-
-  EXPECT_EQ(3, tile_group->GetActiveTupleCount(txn_id));
 
   txn_manager.CommitTransaction();
+
+  EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
   delete tuple1;
   delete tuple2;
@@ -146,8 +142,7 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
-  // txn_id_t txn_id = txn->GetTransactionId();
-  // cid_t commit_id = txn->GetBeginCommitId();
+
   auto pool = tile_group->GetTilePool(1);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), pool);
@@ -160,7 +155,6 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(tuple);
     txn_manager.PerformInsert(tile_group->GetTileGroupId(), tuple_slot);
-    // tile_group->CommitInsertedTuple(tuple_slot, txn_id, commit_id);
   }
 
   txn_manager.CommitTransaction();
@@ -226,9 +220,7 @@ TEST_F(TileGroupTests, StressTest) {
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
-  auto next_txn_id = TestingHarness::GetInstance().GetNextTransactionId();
-
-  EXPECT_EQ(6000, tile_group->GetActiveTupleCount(next_txn_id));
+  EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
   delete schema1;
   delete schema2;
