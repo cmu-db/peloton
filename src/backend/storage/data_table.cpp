@@ -140,6 +140,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     // now we have already obtained a new tuple slot.
     if (tuple_slot != INVALID_OID) {
       tile_group_id = tile_group->GetTileGroupId();
+      LOG_INFO("%s", GetInfo().c_str());
       break;
     }
   }
@@ -619,28 +620,30 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 const std::string DataTable::GetInfo() const {
   std::ostringstream os;
 
-  os << "=====================================================\n";
-  os << "TABLE :\n";
+  //os << "=====================================================\n";
+  //os << "TABLE :\n";
 
   oid_t tile_group_count = GetTileGroupCount();
-  os << "Tile Group Count : " << tile_group_count << "\n";
+  //os << "Tile Group Count : " << tile_group_count << "\n";
 
   oid_t tuple_count = 0;
+  oid_t table_id = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
+    table_id = tile_group->GetTableId();
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    os << "Tile Group Id  : " << tile_group_itr
-        << " Tuple Count : " << tile_tuple_count << "\n";
-    os << (*tile_group);
+    //os << "Tile Group Id  : " << tile_group_itr
+    //    << " Tuple Count : " << tile_tuple_count << "\n";
+    //os << (*tile_group);
 
     tuple_count += tile_tuple_count;
   }
 
-  os << "Table Tuple Count :: " << tuple_count << "\n";
+  os << "Table " << table_id  << " Tuple Count :: " << tuple_count << "\n";
 
-  os << "=====================================================\n";
+  //os << "=====================================================\n";
 
   return os.str();
 }
