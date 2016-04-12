@@ -237,8 +237,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
     while (reached_end_of_file == false) {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
-      auto record_type =
-          this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
+      auto record_type = this->GetNextLogRecordTypeForRecovery();
       cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
       switch (record_type) {
@@ -767,17 +766,16 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   return log_record_type;
 }
 
-LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
-    FILE *log_file, size_t log_file_size) {
+LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   char buffer;
   bool is_truncated = false;
   int ret;
 
   LOG_INFO("Inside GetNextLogRecordForRecovery");
 
-  LOG_INFO("File is at position %d", (int)ftell(log_file));
+  LOG_INFO("File is at position %d", (int)ftell(this->log_file));
   // Check if the log record type is broken
-  if (IsFileTruncated(log_file, 1, log_file_size)) {
+  if (IsFileTruncated(this->log_file, 1, this->log_file_size)) {
     LOG_INFO("Log file is truncated, should open next log file");
     // return LOGRECORD_TYPE_INVALID;
     is_truncated = true;
@@ -785,7 +783,7 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
 
   // Otherwise, read the log record type
   if (!is_truncated) {
-    ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+    ret = fread((void *)&buffer, 1, sizeof(char), this->log_file);
     if (ret <= 0) LOG_INFO("Failed an fread");
   }
   if (is_truncated || ret <= 0) {
@@ -793,14 +791,14 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
     this->OpenNextLogFile();
     if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
 
-    LOG_INFO("Open succeeded. log_file_fd is %d", (int)log_file_fd);
+    LOG_INFO("Open succeeded. log_file_fd is %d", (int)this->log_file_fd);
 
-    if (IsFileTruncated(log_file, 1, log_file_size)) {
+    if (IsFileTruncated(this->log_file, 1, this->log_file_size)) {
       LOG_ERROR("Log file is truncated");
       return LOGRECORD_TYPE_INVALID;
     }
     LOG_INFO("File is not truncated.");
-    ret = fread((void *)&buffer, 1, sizeof(char), log_file);
+    ret = fread((void *)&buffer, 1, sizeof(char), this->log_file);
     if (ret <= 0) {
       LOG_ERROR("Could not read from log file");
       return LOGRECORD_TYPE_INVALID;
