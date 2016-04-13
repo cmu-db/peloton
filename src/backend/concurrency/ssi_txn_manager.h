@@ -95,7 +95,6 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     txn_manager_mutex_.WriteLock();
 
     // protect beginTransaction with a global lock
