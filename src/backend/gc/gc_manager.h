@@ -28,6 +28,8 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
+#define MAX_TUPLES_PER_GC 1000
+
 /**
  * Global GC Manager
  */
@@ -52,20 +54,15 @@ class GCManager {
 
  private:
   GCStatus status;
-  //std::map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
-  //cuckoohash_map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
-  //cuckoohash_map<std::string, boost::lockfree::queue<struct TupleMetadata>*> free_map;
-  std::map<std::string, boost::lockfree::queue<struct TupleMetadata>*> free_map;
-  boost::lockfree::queue<struct TupleMetadata> possibly_free_list {1000};
-  boost::lockfree::queue<struct TupleMetadata> actual_free_list {1000};
-  std::mutex gc_mutex;
+  cuckoohash_map<std::string, boost::lockfree::queue<struct TupleMetadata> *>
+      free_map;
+  boost::lockfree::queue<struct TupleMetadata> possibly_free_list{1000};
   void DeleteTupleFromIndexes(struct TupleMetadata tm);
   GCManager();
   ~GCManager();
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-
 };
 
 }  // namespace gc
