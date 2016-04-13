@@ -164,42 +164,39 @@ bool EagerWriteTxnManager::AcquireOwnership(
   }
 
   // Install wait for dependency on all reader txn
-
-  {
-    auto ptr = GetEwReaderList(tile_group_header, tuple_id);
-    while (ptr->next != nullptr) {
-      // try to install a wait for in every reader
-      auto reader_tid = ptr->next->txn_id_;
-      // skip my self
-      if (reader_tid == current_tid) {
-        ptr = ptr->next;
-        continue;
-      }
-
-      // Lock the txn bucket
-      {
-        std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
-        if (running_txn_map_.count(reader_tid) != 0) {
-            // Add myself to the wait_for set of reader
-            auto reader_ctx = running_txn_map_[reader_tid];
-            LOG_INFO("Add dependency to %lu", reader_tid);
-            if (reader_ctx->wait_list_.insert(current_tid).second == true) {
-              // New dependency
-              current_txn_ctx->wait_for_counter_++;
-            }
-        } else {
-          assert(false);
-        }
-      }
+  auto ptr = GetEwReaderList(tile_group_header, tuple_id);
+  while (ptr->next != nullptr) {
+    // try to install a wait for in every reader
+    auto reader_tid = ptr->next->txn_id_;
+    // skip my self
+    if (reader_tid == current_tid) {
       ptr = ptr->next;
+      continue;
     }
 
-    ReleaseEwReaderLock(tile_group_header, tuple_id);
-    // Atomically increase the wait_for counter
-    assert(current_txn_ctx->wait_for_counter_ >= 0);
-
-    return true;
+    // Lock the txn bucket
+    {
+      std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+      if (running_txn_map_.count(reader_tid) != 0) {
+          // Add myself to the wait_for set of reader
+          auto reader_ctx = running_txn_map_[reader_tid];
+          LOG_INFO("Add dependency to %lu", reader_tid);
+          if (reader_ctx->wait_list_.insert(current_tid).second == true) {
+            // New dependency
+            current_txn_ctx->wait_for_counter_++;
+          }
+      } else {
+        assert(false);
+      }
+    }
+    ptr = ptr->next;
   }
+
+  ReleaseEwReaderLock(tile_group_header, tuple_id);
+  // Atomically increase the wait_for counter
+  assert(current_txn_ctx->wait_for_counter_ >= 0);
+
+  return true;
 }
 
 
@@ -417,8 +414,8 @@ Result EagerWriteTxnManager::CommitTransaction() {
   LOG_INFO("Start waiting");
   LOG_INFO("Current wait for counter = %d", current_txn_ctx->wait_for_counter_ - 0);
   while (current_txn_ctx->wait_for_counter_ != 0) {
-    std::chrono::microseconds sleep_time(1);
-    std::this_thread::sleep_for(sleep_time);
+//    std::chrono::microseconds sleep_time(1);
+//    std::this_thread::sleep_for(sleep_time);
   }
   LOG_INFO("End waiting");
 
@@ -602,13 +599,12 @@ bool EagerWriteTxnManager::CauseDeadLock() {
   std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
 
   // Always acquire the running_txn_map_mutex_ before acquiring the per context lock
-  std::unordered_set<txn_id_t> dependencies;
+  std::unordered_set<txn_id_t> visited;
   auto current_tid = current_txn->GetTransactionId();
 
   std::queue<txn_id_t> traverse;
 
   // init
-  dependencies.insert(current_tid);
   for (auto tid : current_txn_ctx->wait_list_) {
       LOG_INFO("visit %lu", tid);
       traverse.push(tid);
@@ -619,18 +615,18 @@ bool EagerWriteTxnManager::CauseDeadLock() {
     auto tid = traverse.front();
     traverse.pop();
     if (running_txn_map_.count(tid) == 0) {
-      // target txn already exit
       continue;
-    } else if (dependencies.count(tid) == 0){
-      // find new dependency
-      for (auto ttid : running_txn_map_[tid]->wait_list_){
-        traverse.push(ttid);
-      }
-    } else {
-      // find ring
-      LOG_INFO("find dead lock %lu", tid);
-      assert(tid == current_tid);
+    }
+    if (tid == current_tid) {
+      LOG_INFO("Find dead lock");
       return true;
+    }
+    for (auto ttid : running_txn_map_[tid]->wait_list_) {
+      if (visited.count(ttid) != 0) {
+        continue;
+      }
+      traverse.push(ttid);
+      visited.insert(ttid);
     }
   }
 
