@@ -149,10 +149,20 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // Look at the local queues of the backend loggers
     while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
       ;
+    LOG_TRACE("Collect log buffers from %lu backend loggers",
+              backend_loggers.size());
     for (auto backend_logger : backend_loggers) {
       {
-        auto &log_buffers = backend_logger->CollectLogBuffers();
+        auto cid = backend_logger->PrepareLogBuffers();
+        auto &log_buffers = backend_logger->GetLogBuffers();
         auto log_buffer_size = log_buffers.size();
+
+        // update max_possible_commit_id with the latest buffer
+        if (cid != INVALID_CID) {
+          LOG_INFO("Found %lu log buffers to persist with commit id: %lu",
+                   log_buffer_size, cid);
+          max_possible_commit_id = std::min(cid, max_possible_commit_id);
+        }
 
         // Skip current backend_logger, nothing to do
         if (log_buffer_size == 0) continue;
@@ -161,14 +171,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         for (oid_t log_record_itr = 0; log_record_itr < log_buffer_size;
              log_record_itr++) {
           // copy to front end logger
-          auto cid = log_buffers[log_record_itr]->GetHighestCommitId();
-          LOG_INFO("Found a log buffer to push with commit id: %lu", cid);
           global_queue.push_back(std::move(log_buffers[log_record_itr]));
-
-          //update max_possible_commit_id with the latest buffer
-          if (log_record_itr == log_buffer_size - 1 && cid != INVALID_CID) {
-            max_possible_commit_id = std::min(cid, max_possible_commit_id);
-          }
         }
         // cleanup the local queue
         log_buffers.clear();
@@ -176,6 +179,9 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     }
 
     if (max_possible_commit_id != MAX_CID) {
+      // LOG_INFO("compare max_possible_commit_id %lu >= max_collected_commit_id
+      // %lu ",
+      //		  max_possible_commit_id, max_collected_commit_id);
       assert(max_possible_commit_id >= max_collected_commit_id);
       max_collected_commit_id = max_possible_commit_id;
     }
@@ -203,7 +209,8 @@ void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
     backend_logger->GrantEmptyBuffer(std::move(buffer));
   }
   // Add backend logger to the list of backend loggers
-  while (backend_loggers_lock.test_and_set(std::memory_order_acquire));
+  while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
+    ;
   backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
   backend_loggers_lock.clear(std::memory_order_release);
