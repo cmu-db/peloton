@@ -100,9 +100,9 @@ class TileGroupHeader : public Printable {
           (next_tuple_slot < num_tuple_slots)) {
         // check tile group capacity
         tuple_slot_id = next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
-        this->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+        /*this->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
         this->SetBeginCommitId(tuple_slot_id, MAX_CID);
-        this->SetEndCommitId(tuple_slot_id, MAX_CID);
+        this->SetEndCommitId(tuple_slot_id, MAX_CID);*/
       }
     }
 
