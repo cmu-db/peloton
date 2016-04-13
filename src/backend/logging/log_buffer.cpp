@@ -23,39 +23,40 @@ namespace logging {
 // Log Buffer
 //===--------------------------------------------------------------------===//
 LogBuffer::LogBuffer(BackendLogger *backend_logger)
-: backend_logger_(backend_logger) {
-	memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
+    : backend_logger_(backend_logger) {
+  memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
 }
 
 bool LogBuffer::WriteRecord(LogRecord *record) {
-	bool success = WriteData(record->GetMessage(), record->GetMessageLength());
-	if (!success) {
-		return success;
-	}
-	// update max commit id
-    if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-      auto new_log_commit_id = record->GetTransactionId();
-      LOG_INFO("highest_logged_commit_id: %lu, record->GetTransactionId(): %lu",
-    		  highest_commit_id_, new_log_commit_id);
-      assert(new_log_commit_id > highest_commit_id_);
-      highest_commit_id_ = new_log_commit_id;
-    }
-	return true;
+  bool success = WriteData(record->GetMessage(), record->GetMessageLength());
+  if (!success) {
+    return success;
+  }
+  // update max commit id
+  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+    auto new_log_commit_id = record->GetTransactionId();
+    LOG_INFO("highest_logged_commit_id: %lu, record->GetTransactionId(): %lu",
+             highest_commit_id_, new_log_commit_id);
+    assert(new_log_commit_id > highest_commit_id_);
+    highest_commit_id_ = new_log_commit_id;
+  }
+  return true;
 }
 
-cid_t LogBuffer::GetHighestCommitId(){
-	return highest_commit_id_;
-}
-void LogBuffer::SetHighestCommitId(cid_t highest_commit_id){
-	assert(highest_commit_id_ <= highest_commit_id);
-    highest_commit_id_ = highest_commit_id;
+cid_t LogBuffer::GetHighestCommitId() { return highest_commit_id_; }
+
+void LogBuffer::SetHighestCommitId(cid_t highest_commit_id) {
+  // LOG_INFO("compare highest_commit_id_ %lu <= highest_commit_id %lu",
+  //		highest_commit_id_, highest_commit_id);
+  assert(highest_commit_id_ <= highest_commit_id);
+  highest_commit_id_ = highest_commit_id;
 }
 
 char *LogBuffer::GetData() { return data_; }
 
-void LogBuffer::ResetData(){
-	size_= 0;
-	memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
+void LogBuffer::ResetData() {
+  size_ = 0;
+  memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
 }
 
 // Internal Methods
@@ -78,9 +79,7 @@ void LogBuffer::SetSize(size_t size) {
   size_ = size;
 }
 
-BackendLogger *LogBuffer::GetBackendLogger(){
-	return backend_logger_;
-}
+BackendLogger *LogBuffer::GetBackendLogger() { return backend_logger_; }
 
 }  // namespace logging
 }  // namespace peloton

@@ -156,13 +156,9 @@ void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
   size_t global_queue_size = global_queue.size();
-  // Nothing to flush
-  if (global_queue_size == 0) {
-	  return;
-  }
 
   // First, write all the record in the queue
-  if (this->log_file_fd == -1) {
+  if (global_queue_size != 0 && this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
   }
 
@@ -188,7 +184,8 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
-  assert(global_queue_size > 0);
+  //XXX Do we not write delimiter when queue size is 0?
+   if (global_queue_size > 0) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
@@ -202,15 +199,15 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       LOG_INFO("Wrote delimiter log file with commit_id %ld",
                this->max_collected_commit_id);
     }
-
+  }
   fflush_and_sync(log_file, log_file_fd, fsync_count);
 
   // Clean up the frontend logger's queue
   global_queue.clear();
 
   // Commit each backend logger
-  if (max_collected_commit_id > max_flushed_commit_id) {
-    max_flushed_commit_id = max_collected_commit_id;
+  if (this->max_collected_commit_id > max_flushed_commit_id) {
+    max_flushed_commit_id = this->max_collected_commit_id;
   }
   // signal that we have flushed
   LogManager::GetInstance().FrontendLoggerFlushed();
