@@ -152,7 +152,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           else {
             // We can stop scanning if we know that all constraints are equal
             if(all_constraints_are_equal == true) {
-              break;
+//              break;
             }
           }
         }

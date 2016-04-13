@@ -110,13 +110,13 @@ namespace memcached {
     }else  {
       if(memcached_query == "version") {
 //        printf("%s\n",command.c_str());
-        printf("version command 15721\n");
+//        printf("version command 15721\n");
         op_type = -100;
         return "VERSION 1.4.14 (Ubuntu)";
       }
       else if(memcached_query == "quit") {
 //        printf("%s\n",command.c_str());
-        printf("quit command 15721\n");
+//        printf("quit command 15721\n");
         op_type = -101;
         return "quit";
       }

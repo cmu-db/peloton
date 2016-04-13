@@ -4366,15 +4366,13 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
         else{
           auto temp_loc = query_line.find("$$$$");
-//           = "";
-          char *escaped_value = (char*)malloc( sizeof(char) * (2*value.length()) );
 
-//          size_t length_escapsed = 0;
+          printf("%s\n",&value[0]);
+
+          char *escaped_value = (char*)malloc( sizeof(char) * (2*value.length() + 1) );
+
           auto val_size = PQescapeString(escaped_value, &value[0], value.length());
-//          escaped_value = (char*)realloc(escaped_value, sizeof(char) * (val_size) );
-//          val_size = PQescapeString(escaped_value, &value[0], value.length());
-//          escaped_value = PQescapeLiteral(nullptr, value.c_str(), value.length());
-//          assert(val_size == value.length());
+
           printf("%s\n",escaped_value);
 
           query_line.replace(temp_loc, 4, std::string(escaped_value));
