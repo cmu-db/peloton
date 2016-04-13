@@ -156,33 +156,6 @@ double RunWorkload() {
 }
 
 /////////////////////////////////////////////////////////
-// HARNESS
-/////////////////////////////////////////////////////////
-
-static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
-  time_point_ start, end;
-  bool status = false;
-
-  // Run all the executors
-  for (auto executor : executors) {
-    status = executor->Init();
-    if (status == false) {
-      throw Exception("Init failed");
-    }
-
-    std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-    // Execute stuff
-    while (executor->Execute() == true) {
-      std::unique_ptr<executor::LogicalTile> result_tile(
-          executor->GetOutput());
-      result_tiles.emplace_back(result_tile.release());
-    }
-  }
-
-}
-
-/////////////////////////////////////////////////////////
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
@@ -201,6 +174,87 @@ void RunNewOrder(){
      "createOrderLine": "INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", # o_id, d_id, w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info
      }
    */
+
+  int warehouse_id = GetRandomInteger(0, state.warehouse_count);
+  //int district_id = GetRandomInteger(0, state.districts_per_warehouse);
+  //int customer_id = GetRandomInteger(0, state.customers_per_district);
+  int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
+  //auto o_entry_ts = GetTimeStamp();
+
+  std::vector<int> i_ids, i_w_ids, i_qtys;
+  //bool o_all_local = true;
+
+  for (auto ol_itr = 0; ol_itr < o_ol_cnt; ol_itr++) {
+    i_ids.push_back(GetRandomInteger(0, state.item_count));
+    bool remote = GetRandomBoolean(new_order_remote_txns);
+    i_w_ids.push_back(warehouse_id);
+
+    if(remote == true) {
+      i_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count, warehouse_id);
+      //o_all_local = false;
+    }
+
+    i_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
+  }
+
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // getWarehouseTaxRate
+
+  // W_TAX
+  std::vector<oid_t> column_ids;
+  column_ids.push_back(7);
+
+  // Create and set up index scan executor
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+
+  auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
+      warehouse_table_pkey_index_oid);
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      warehouse_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+
+  // Create plan node.
+  auto predicate = nullptr;
+
+  planner::IndexScanPlan index_scan_node(warehouse_table,
+                                         predicate, column_ids,
+                                         index_scan_desc);
+
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
+
+  bool status = false;
+
+  // Run all the executors
+  status = index_scan_executor.Init();
+  if (status == false) {
+    throw Exception("Init failed");
+  }
+
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+  // Execute stuff
+  while (index_scan_executor.Execute() == true) {
+    std::unique_ptr<executor::LogicalTile> result_tile(
+        index_scan_executor.GetOutput());
+    std::cout << (*result_tile);
+    result_tiles.emplace_back(result_tile.release());
+  }
+
+  txn_manager.CommitTransaction(txn);
 
 }
 
@@ -255,10 +309,6 @@ void RunStockLevel() {
      "getStockCount": "SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?
      }
    */
-
-  std::vector<executor::AbstractExecutor *> executors;
-  ExecuteTest(executors);
-
 
 }
 
