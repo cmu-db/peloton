@@ -127,10 +127,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   }
 
   // Static parameters
-  state.item_count = 100 * state.scale_factor;
+  state.item_count = 10 * state.scale_factor;
   state.districts_per_warehouse = 2;
-  state.customers_per_district = 3000;
-  state.new_orders_per_district = 900;
+  state.customers_per_district = 30;
+  state.new_orders_per_district = 9;
 
   // Print configuration
   ValidateBackendCount(state);

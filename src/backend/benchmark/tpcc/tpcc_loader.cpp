@@ -41,6 +41,75 @@ namespace benchmark {
 namespace tpcc {
 
 /////////////////////////////////////////////////////////
+// Constants
+/////////////////////////////////////////////////////////
+
+size_t name_length = 32;
+size_t middle_name_length = 2;
+size_t data_length = 64;
+size_t state_length = 16;
+size_t zip_length = 9;
+size_t street_length = 32;
+size_t city_length = 32;
+size_t credit_length = 2;
+size_t phone_length = 32;
+size_t dist_length = 32;
+
+double item_min_price = 1.0;
+double item_max_price = 100.0;
+
+double warehouse_name_length = 16;
+double warehouse_min_tax = 0.0;
+double warehouse_max_tax = 0.2;
+double warehouse_initial_ytd = 300000.00f;
+
+double district_name_length = 16;
+double district_min_tax = 0.0;
+double district_max_tax = 0.2;
+double district_initial_ytd = 30000.00f;
+
+std::string customers_good_credit = "GC";
+std::string customers_bad_credit = "BC";
+double customers_bad_credit_ratio = 0.1;
+double customers_init_credit_lim = 50000.0;
+double customers_min_discount = 0;
+double customers_max_discount = 0.5;
+double customers_init_balance = -10.0;
+double customers_init_ytd = 10.0;
+int customers_init_payment_cnt = 1;
+int customers_init_delivery_cnt = 0;
+
+double history_init_amount = 10.0;
+size_t history_data_length = 32;
+
+int orders_min_ol_cnt = 5;
+int orders_max_ol_cnt = 15;
+int orders_init_all_local = 1;
+int orders_null_carrier_id = 0;
+int orders_min_carrier_id = 1;
+int orders_max_carrier_id = 10;
+
+int new_orders_per_district = 900;  // 900
+
+int order_line_init_quantity = 5;
+int order_line_max_ol_quantity = 10;
+double order_line_min_amount = 0.01;
+size_t order_line_dist_info_length = 32;
+
+double stock_original_ratio = 0.1;
+int stock_min_quantity = 10;
+int stock_max_quantity = 100;
+int stock_dist_count = 10;
+
+double payment_min_amount = 1.0;
+double payment_max_amount = 5000.0;
+
+int stock_min_threshold = 10;
+int stock_max_threshold = 20;
+
+double new_order_remote_txns = 0.01;
+
+/////////////////////////////////////////////////////////
 // Create the tables
 /////////////////////////////////////////////////////////
 
@@ -60,70 +129,6 @@ const bool adapt_table = false;
 const bool is_inlined = true;
 const bool unique_index = false;
 const bool allocate = true;
-
-// Constants
-static constexpr size_t name_length = 32;
-static constexpr size_t middle_name_length = 2;
-static constexpr size_t data_length = 64;
-static constexpr size_t state_length = 16;
-static constexpr size_t zip_length = 9;
-static constexpr size_t street_length = 32;
-static constexpr size_t city_length = 32;
-static constexpr size_t credit_length = 2;
-static constexpr size_t phone_length = 32;
-static constexpr size_t dist_length = 32;
-
-static constexpr double item_min_price = 1.0;
-static constexpr double item_max_price = 100.0;
-
-static constexpr double warehouse_name_length = 16;
-static constexpr double warehouse_min_tax = 0.0;
-static constexpr double warehouse_max_tax = 0.2;
-static constexpr double warehouse_initial_ytd = 300000.00f;
-
-static constexpr double district_name_length = 16;
-static constexpr double district_min_tax = 0.0;
-static constexpr double district_max_tax = 0.2;
-static constexpr double district_initial_ytd = 30000.00f;
-
-const std::string customers_good_credit = "GC";
-const std::string customers_bad_credit = "BC";
-static constexpr double customers_bad_credit_ratio = 0.1;
-static constexpr double customers_init_credit_lim = 50000.0;
-static constexpr double customers_min_discount = 0;
-static constexpr double customers_max_discount = 0.5;
-static constexpr double customers_init_balance = -10.0;
-static constexpr double customers_init_ytd = 10.0;
-static constexpr int customers_init_payment_cnt = 1;
-static constexpr int customers_init_delivery_cnt = 0;
-
-static constexpr double history_init_amount = 10.0;
-static constexpr size_t history_data_length = 32;
-
-static constexpr int orders_min_ol_cnt = 5;
-static constexpr int orders_max_ol_cnt = 15;
-static constexpr int orders_init_all_local = 1;
-static constexpr int orders_null_carrier_id = 0;
-static constexpr int orders_min_carrier_id = 1;
-static constexpr int orders_max_carrier_id = 10;
-
-int new_orders_per_district = 900;  // 900
-
-static constexpr int order_line_init_quantity = 5;
-static constexpr int order_line_max_ol_quantity = 10;
-static constexpr double order_line_min_amount = 0.01;
-static constexpr size_t order_line_dist_info_length = 32;
-
-static constexpr double stock_original_ratio = 0.1;
-static constexpr int stock_min_quantity = 10;
-static constexpr int stock_max_quantity = 100;
-static constexpr int stock_dist_count = 10;
-
-static constexpr double payment_min_amount = 1.0;
-static constexpr double payment_max_amount = 5000.0;
-
-static constexpr int stock_min_threshold = 10;
-static constexpr int stock_max_threshold = 20;
 
 index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
                                          const catalog::Schema *tuple_schema,
@@ -924,7 +929,8 @@ int GetTimeStamp() {
   return time_stamp;
 }
 
-storage::Tuple* BuildItemTuple(int item_id, const std::unique_ptr<VarlenPool>& pool) {
+storage::Tuple* BuildItemTuple(const int item_id,
+                               const std::unique_ptr<VarlenPool>& pool) {
   auto item_table_schema = item_table->GetSchema();
   storage::Tuple* item_tuple = new storage::Tuple(item_table_schema, allocate);
 
