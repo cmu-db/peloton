@@ -286,8 +286,6 @@ enum ExpressionType {
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
-  EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
   EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
