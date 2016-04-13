@@ -26,8 +26,10 @@ class IsolationLevelTest : public PelotonTest {};
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI
-  // CONCURRENCY_TYPE_SPECULATIVE_READ
+  CONCURRENCY_TYPE_SSI,
+  // CONCURRENCY_TYPE_SPECULATIVE_READ,
+  CONCURRENCY_TYPE_EAGER_WRITE,
+  CONCURRENCY_TYPE_TO
 };
 
 void DirtyWriteTest() {
@@ -152,7 +154,7 @@ void DirtyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -169,7 +171,7 @@ void DirtyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -186,7 +188,7 @@ void DirtyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-                 RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       // Don't read uncommited value
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
@@ -198,7 +200,13 @@ void FuzzyReadTest() {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
-  // The constraints are the value of 0 and 1 should be equal
+  if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
+    // Bypass eager write
+    LOG_INFO("Bypass eager write");
+    return;
+  }
+
+    // The constraints are the value of 0 and 1 should be equal
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
@@ -211,8 +219,7 @@ void FuzzyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) 
-    {
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_EQ(0, scheduler.schedules[0].results[0]);
       EXPECT_EQ(0, scheduler.schedules[0].results[1]);
     }
@@ -231,8 +238,7 @@ void FuzzyReadTest() {
     scheduler.Run();
 
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
-        RESULT_SUCCESS == scheduler.schedules[1].txn_result) 
-    {
+        RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
       EXPECT_EQ(1, scheduler.schedules[0].results[0]);
       EXPECT_EQ(1, scheduler.schedules[0].results[1]);
     }
@@ -245,6 +251,11 @@ void PhantomTest() {
       TransactionTestsUtil::CreateTable());
 
   {
+    if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
+      // Bypass eager write
+      LOG_INFO("Bypass eager write");
+      return;
+    }
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Insert(5, 0);
@@ -304,8 +315,10 @@ void WriteSkewTest() {
     // transactions.
     TransactionScheduler scheduler(3, table.get(), &txn_manager);
 
-    scheduler.Txn(0).UpdateByValue(1, 0); // txn 0 see (1, 1), update it to (1, 0) 
-    scheduler.Txn(1).UpdateByValue(0, 1); // txn 1 see (0, 0), update it to (0, 1)
+    scheduler.Txn(0)
+        .UpdateByValue(1, 0);  // txn 0 see (1, 1), update it to (1, 0)
+    scheduler.Txn(1)
+        .UpdateByValue(0, 1);  // txn 1 see (0, 0), update it to (0, 1)
     scheduler.Txn(0).Commit();
     scheduler.Txn(1).Commit();
     scheduler.Txn(2).Read(0);
@@ -318,7 +331,8 @@ void WriteSkewTest() {
     // Can't all success
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[1].txn_result) {
-      EXPECT_TRUE(scheduler.schedules[2].results[0] == scheduler.schedules[2].results[1]);
+      EXPECT_TRUE(scheduler.schedules[2].results[0] ==
+                  scheduler.schedules[2].results[1]);
     }
   }
 }
@@ -328,6 +342,12 @@ void ReadSkewTest() {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
   {
+    if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
+      // Bypass eager write
+      LOG_INFO("Bypass eager write");
+      return;
+    }
+
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
@@ -364,10 +384,15 @@ void SIAnomalyTest1() {
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
+    if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
+      // Bypass eager write
+      LOG_INFO("Bypass eager write");
+      return;
+    }
     TransactionScheduler scheduler(4, table.get(), &txn_manager);
     // Test against anomaly
     scheduler.Txn(1).ReadStore(current_batch_key, 0);
-    scheduler.Txn(2).Update(current_batch_key, 100+1);
+    scheduler.Txn(2).Update(current_batch_key, 100 + 1);
     scheduler.Txn(2).Commit();
     scheduler.Txn(0).ReadStore(current_batch_key, -1);
     scheduler.Txn(0).Read(TXN_STORED_VALUE);
@@ -383,7 +408,8 @@ void SIAnomalyTest1() {
     if (RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
         RESULT_SUCCESS == scheduler.schedules[2].txn_result) {
-      EXPECT_TRUE(scheduler.schedules[0].results[1] == scheduler.schedules[3].results[1]);
+      EXPECT_TRUE(scheduler.schedules[0].results[1] ==
+                  scheduler.schedules[3].results[1]);
     }
   }
 }
@@ -421,8 +447,8 @@ TEST_F(IsolationLevelTest, SerializableTest) {
 
 // FIXME: CONCURRENCY_TYPE_SPECULATIVE_READ can't pass it for now
 TEST_F(IsolationLevelTest, StressTest) {
-  const int num_txn = 64;
-  const int scale = 5;
+  const int num_txn = 16;
+  const int scale = 20;
   const int num_key = 256;
   srand(15721);
 
@@ -430,10 +456,10 @@ TEST_F(IsolationLevelTest, StressTest) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, ISOLATION_LEVEL_TYPE_FULL);
     std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable(num_key));
+        TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);  
+    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
     scheduler.SetConcurrent(true);
     for (int i = 0; i < num_txn; i++) {
       for (int j = 0; j < scale; j++) {
@@ -470,8 +496,7 @@ TEST_F(IsolationLevelTest, StressTest) {
     // stats
     int nabort = 0;
     for (auto &schedule : scheduler.schedules) {
-      if (schedule.txn_result == RESULT_ABORTED)
-        nabort += 1;
+      if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
     }
     LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }

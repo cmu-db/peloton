@@ -69,15 +69,16 @@ TEST_F(ClustererTests, BasicTest) {
 
   LOG_INFO("COLUMN \t TILE");
   for (auto entry : partitioning1) {
-    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first, entry.second.second);
+    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first,
+             entry.second.second);
   }
 
   auto partitioning2 = clusterer.GetPartitioning(4);
   LOG_INFO("COLUMN \t TILE");
   for (auto entry : partitioning2) {
-    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first, entry.second.second);
+    LOG_INFO("%lu \t %lu : %lu", entry.first, entry.second.first,
+             entry.second.second);
   }
-
 }
 
 }  // End test namespace

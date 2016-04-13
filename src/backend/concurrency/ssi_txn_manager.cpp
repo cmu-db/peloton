@@ -516,6 +516,7 @@ Result SsiTxnManager::CommitTransaction() {
   log_manager.LogCommitTransaction(end_commit_id);
   current_txn = nullptr;
   current_ssi_txn_ctx->is_finish_ = true;
+
   return ret;
 }
 
