@@ -73,7 +73,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void OpenNextLogFile();
 
-  LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
+  LogRecordType GetNextLogRecordTypeForRecovery();
 
   void TruncateLog(txn_id_t);
 

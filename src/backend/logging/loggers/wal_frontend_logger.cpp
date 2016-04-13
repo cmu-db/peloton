@@ -228,7 +228,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
       auto record_type =
-          this->GetNextLogRecordTypeForRecovery(log_file, log_file_size);
+          this->GetNextLogRecordTypeForRecovery();
       cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
       switch (record_type) {
@@ -757,8 +757,7 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   return log_record_type;
 }
 
-LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery(
-    FILE *log_file, size_t log_file_size) {
+LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   char buffer;
   bool is_truncated = false;
   int ret;
