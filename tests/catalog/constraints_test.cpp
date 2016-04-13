@@ -27,13 +27,12 @@
 #include "catalog/constraints_tests_util.h"
 #include "concurrency/transaction_tests_util.h"
 
-//#define NOTNULL_TEST
-//#define PRIMARY_UNIQUEKEY_TEST
+#define NOTNULL_TEST
+#define PRIMARY_UNIQUEKEY_TEST
 #define FOREIGHN_KEY_TEST
 
 namespace peloton {
 namespace test {
-
 
 //===--------------------------------------------------------------------===//
 // Constraints Tests
@@ -52,7 +51,6 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   //  .....
   //  140           141   142     "143"
 
-//  storage::DataTable * data_table = ConstraintsTestsUtil::CreateAndPopulateTable();
   std::unique_ptr<storage::DataTable> data_table(
       ConstraintsTestsUtil::CreateAndPopulateTable());
 
@@ -64,36 +62,39 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
   // Test1: insert a tuple with column 1 = null
   bool hasException = false;
   try {
-    ConstraintsTestsUtil::ExecuteInsert(txn, data_table.get(),
-      ValueFactory::GetNullValue(),
-      ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1)),
-      ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 2)),
-      ValueFactory::GetStringValue(std::to_string(ConstraintsTestsUtil::PopulatedValue(
-                                            15, 3))) );
+    ConstraintsTestsUtil::ExecuteInsert(
+        txn, data_table.get(), ValueFactory::GetNullValue(),
+        ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 1)),
+        ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 2)),
+        ValueFactory::GetStringValue(
+            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
 
-  } catch (ConstraintException e){
+  } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_TRUE(hasException);
 
-
   // Test2: insert a legal tuple
   hasException = false;
   try {
-    ConstraintsTestsUtil::ExecuteInsert(txn, data_table.get(),
-      ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 0)),
-      ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 1)),
-      ValueFactory::GetIntegerValue(ConstraintsTestsUtil::PopulatedValue(15, 2)),
-      ValueFactory::GetStringValue(std::to_string(ConstraintsTestsUtil::PopulatedValue(
-          15, 3))) );
-  } catch (ConstraintException e){
+    ConstraintsTestsUtil::ExecuteInsert(
+        txn, data_table.get(), ValueFactory::GetIntegerValue(
+                                   ConstraintsTestsUtil::PopulatedValue(15, 0)),
+        ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 1)),
+        ValueFactory::GetIntegerValue(
+            ConstraintsTestsUtil::PopulatedValue(15, 2)),
+        ValueFactory::GetStringValue(
+            std::to_string(ConstraintsTestsUtil::PopulatedValue(15, 3))));
+  } catch (ConstraintException e) {
     hasException = true;
   }
   EXPECT_FALSE(hasException);
 
   // commit this transaction
   txn_manager.CommitTransaction();
-
 }
 #endif
 
@@ -107,7 +108,6 @@ TEST_F(ConstraintsTests, CombinedPrimaryKeyTest) {
   //  2             2
   //  .....
   //  9             9
-
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -142,7 +142,6 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
   //  .....
   //  9             9
 
-
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   {
@@ -157,10 +156,10 @@ TEST_F(ConstraintsTests, MultiTransactionUniqueConstraintsTest) {
 
     scheduler.Run();
 
-    EXPECT_TRUE((RESULT_SUCCESS == scheduler.schedules[0].txn_result
-        && RESULT_ABORTED == scheduler.schedules[1].txn_result) ||
-        (RESULT_SUCCESS == scheduler.schedules[1].txn_result
-            && RESULT_ABORTED == scheduler.schedules[0].txn_result));
+    EXPECT_TRUE((RESULT_SUCCESS == scheduler.schedules[0].txn_result &&
+                 RESULT_ABORTED == scheduler.schedules[1].txn_result) ||
+                (RESULT_SUCCESS == scheduler.schedules[1].txn_result &&
+                 RESULT_ABORTED == scheduler.schedules[0].txn_result));
   }
 
   {
@@ -222,18 +221,15 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
   auto newdb = new storage::Database(current_db_oid);
   manager.AddDatabase(newdb);
 
-  auto table_B = TransactionTestsUtil::CreateTable(10, "tableB",0, 1001, 1001, true);
-  auto table_A = TransactionTestsUtil::CreateTable(3, "tableA", 0, 1000, 1000, true);
-
-  (void)table_A;
-  (void)table_B;
+  auto table_A =
+      TransactionTestsUtil::CreateTable(3, "tableA", 0, 1000, 1000, true);
+  // we wouldn't use table_B later here so we don't save the return value
+  TransactionTestsUtil::CreateTable(10, "tableB", 0, 1001, 1001, true);
 
   // add the foreign key constraints for table_A
-  std::unique_ptr<catalog::ForeignKey> foreign_key(
-      new catalog::ForeignKey(1001, {"id"}, {0}, {"id"}, {0},
-                              'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT"));
+  std::unique_ptr<catalog::ForeignKey> foreign_key(new catalog::ForeignKey(
+      1001, {"id"}, {0}, {"id"}, {0}, 'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT"));
   table_A->AddForeignKey(foreign_key.get());
-
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

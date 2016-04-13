@@ -258,7 +258,8 @@ void RunRead() {
     old_to_new_cols[col_itr] = col_itr;
   }
 
-  auto output_schema = catalog::Schema::CopySchema(user_table->GetSchema());
+  std::shared_ptr<const catalog::Schema> output_schema{
+    catalog::Schema::CopySchema(user_table->GetSchema())};
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
                                         output_schema,
@@ -348,9 +349,10 @@ void RunUpdate() {
   Value update_val = ValueFactory::GetStringValue(std::string("updated"));
   target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
-  planner::UpdatePlan update_node(
-      user_table, new planner::ProjectInfo(std::move(target_list),
-                                           std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(user_table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
   update_executor.AddChild(&index_scan_executor);
