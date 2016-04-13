@@ -118,6 +118,7 @@ class EagerWriteTxnManager : public TransactionManager {
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_--;
+          assert(running_txn_map_[wtid]->wait_for_counter_ >= 0);
         }
       }
       running_txn_map_.erase(txn_id);
