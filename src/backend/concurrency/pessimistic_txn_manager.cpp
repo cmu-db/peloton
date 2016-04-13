@@ -119,14 +119,14 @@ bool PessimisticTxnManager::AcquireOwnership(
   LOG_TRACE("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
-  // acquire write lock.
-  // No writer, release read lock that is acquired before
-  // Must success
+  // First release read lock that is acquired before, the executor will always
+  // read the tuple before calling AcquireOwnership().
   ReleaseReadLock(tile_group_header, tuple_id);
 
+  // Mark the tuple as released
   pessimistic_released_rdlock[tile_group_id].insert(tuple_id);
 
-  // Try get write lock
+  // Acquire write lock
   auto current_txn_id = current_txn->GetTransactionId();
   bool res = tile_group_header->SetAtomicTransactionId(
       tuple_id, PACK_TXNID(current_txn_id, 0));
@@ -135,7 +135,6 @@ bool PessimisticTxnManager::AcquireOwnership(
     return true;
   } else {
     LOG_INFO("Fail to acquire write lock. Set txn failure.");
-    // SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
 }
@@ -195,6 +194,10 @@ bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
     LOG_TRACE("No one holding the lock");
     while (true) {
       LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
+      if (old_txn_id == 0xFF) {
+        LOG_TRACE("Reader limit reached, read failed");
+        return false;
+      }
       auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
       // Try add read count
       auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
@@ -209,7 +212,6 @@ bool PessimisticTxnManager::PerformRead(const oid_t &tile_group_id,
       }
     }
   } else {
-    // SetTransactionResult(RESULT_FAILURE);
     return false;
   }
 
@@ -253,8 +255,7 @@ bool PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -268,8 +269,7 @@ bool PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
+  // no one will possibly release the write lock acquired by this txn.
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
   new_tile_group_header->SetPrevItemPointer(
@@ -311,8 +311,7 @@ bool PessimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
