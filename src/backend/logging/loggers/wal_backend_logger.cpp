@@ -74,7 +74,7 @@ std::vector<std::unique_ptr<LogBuffer>> &WriteAheadBackendLogger::CollectLogBuff
     log_buffer_lock_.Unlock();
 
     auto num_log_buffer = persist_buffer_pool_->GetSize();
-    //LOG_INFO("Collect %u log buffers from backend logger", num_log_buffer);
+    LOG_INFO("Collect %u log buffers from backend logger", num_log_buffer);
     while (num_log_buffer > 0) {
     	local_queue.push_back(persist_buffer_pool_->Get());
     	num_log_buffer--;

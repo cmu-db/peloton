@@ -2,6 +2,14 @@ psql < create_table.sql
 psql < insert.sql &
 psql < insert.sql &
 psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
+psql < insert.sql &
 psql < insert.sql 
 sleep 5
 psql < select.sql > before_crash.txt

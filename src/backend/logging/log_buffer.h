@@ -16,7 +16,7 @@
 #include <memory>
 #include "backend/logging/log_record.h"
 
-#define LOG_BUFFER_CAPACITY 4096
+#define LOG_BUFFER_CAPACITY 32768
 
 namespace peloton {
 namespace logging {
