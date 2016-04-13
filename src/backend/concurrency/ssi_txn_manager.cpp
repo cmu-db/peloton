@@ -188,7 +188,6 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     // Another transaction is writting this tuple, add an edge
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
-      // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
       txn_manager_mutex_.ReadLock();
 
       if (txn_table_.count(writer) != 0) {
@@ -208,8 +207,8 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
   // For each new version of the tuple
   {
-    // This is a potential big overhead for read operations
-    // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    // read only section
+    // read-lock
     txn_manager_mutex_.ReadLock();
 
     LOG_INFO("SI read phase 2");
@@ -412,8 +411,6 @@ Result SsiTxnManager::CommitTransaction() {
 
   bool should_abort = false;
   {
-    //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
-    // Dangerous!
     current_ssi_txn_ctx->lock_.Lock();
     if (GetInConflict(current_ssi_txn_ctx) &&
         GetOutConflict(current_ssi_txn_ctx)) {
@@ -598,7 +595,6 @@ Result SsiTxnManager::AbortTransaction() {
 
   // then, we can erase context safely
   {
-    // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     txn_manager_mutex_.WriteLock();
     txn_table_.erase(txn_id);
     txn_manager_mutex_.Unlock();
@@ -645,7 +641,8 @@ void SsiTxnManager::CleanUp() {
 
   std::unordered_set<SsiTxnContext *> garbage_ctx;
   {
-    // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    // iterate the table to collect garbage
+    // read only
     txn_manager_mutex_.ReadLock();
 
     // init it as max() for the case that all transactions are committed
@@ -686,7 +683,6 @@ void SsiTxnManager::CleanUp() {
 
   // remove garbage from table
   {
-    // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     txn_manager_mutex_.WriteLock();
     for (auto ctx : garbage_ctx) {
       txn_table_.erase(ctx->transaction_->GetTransactionId());
