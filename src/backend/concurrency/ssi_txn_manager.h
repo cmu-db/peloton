@@ -33,7 +33,7 @@ struct SsiTxnContext {
   Spinlock lock_;
 };
 
-extern thread_local SsiTxnContext *current_txn_ctx;
+extern thread_local SsiTxnContext *current_ssi_txn_ctx;
 
 struct ReadList {
   SsiTxnContext *txn_ctx;
@@ -103,8 +103,8 @@ class SsiTxnManager : public TransactionManager {
     //    txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
     Transaction *txn = TransactionManager::BeginTransaction();
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
-    current_txn_ctx = new SsiTxnContext(txn);
-    txn_table_[txn->GetTransactionId()] = current_txn_ctx;
+    current_ssi_txn_ctx = new SsiTxnContext(txn);
+    txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
     txn_manager_mutex_.Unlock();
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
@@ -178,7 +178,7 @@ class SsiTxnManager : public TransactionManager {
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    ReadList *reader = new ReadList(current_txn_ctx);
+    ReadList *reader = new ReadList(current_ssi_txn_ctx);
 
     GetReadLock(tile_group->GetHeader(), tuple_id);
     ReadList **headp = (ReadList **)(
