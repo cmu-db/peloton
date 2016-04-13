@@ -4346,7 +4346,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     query_result.clear();
 
     if(mc_sock.read_line(query_line)) {
-      printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
+//      printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
 
       // TODO parse the Memcached request into calls to the prepared statement
       peloton::memcached::QueryParser qp = peloton::memcached::QueryParser(query_line);//, &mc_sock);
@@ -4354,8 +4354,8 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       query_line = qp.parseQuery();
       int op_type = qp.getOpType();
 
-      printf("op_type:%d\n",op_type);
-      printf("query_line:%s\n",query_line.c_str());
+//      printf("op_type:%d\n",op_type);
+//      printf("query_line:%s\n",query_line.c_str());
       // get a flag of the operation
       MC_OP op;
       std::string value;
@@ -4367,13 +4367,13 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         else{
           auto temp_loc = query_line.find("$$$$");
 
-          printf("%s\n",&value[0]);
+//          printf("%s\n",&value[0]);
 
           char *escaped_value = (char*)malloc( sizeof(char) * (2*value.length() + 1) );
 
           auto val_size = PQescapeString(escaped_value, &value[0], value.length());
 
-          printf("%s\n",escaped_value);
+//          printf("%s\n",escaped_value);
 
           query_line.replace(temp_loc, 4, std::string(escaped_value));
           PQfreemem(escaped_value);
@@ -4400,7 +4400,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
         case -100:{
           if (!mc_sock.write_response(query_line + "\r\n")) {
-            printf("\nVersion queried, returning dummy \n");
+//            printf("\nVersion queried, returning dummy \n");
           }
           continue;
         }
@@ -4412,23 +4412,23 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
           continue;
         }
         default:{
-          printf("\nRead line failed, terminating thread\n");
-          terminate=true;
+//          printf("\nRead line failed, terminating thread\n");
+//          terminate=true;
           continue;
         }
       }
 
       auto mc_state = new MemcachedState();
-      printf("Before query run\n");
+//      printf("Before query run\n");
       exec_simple_query(&query_line[0], mc_state);
-      printf("After query run\n");
+//      printf("After query run\n");
       // proceed to frontend write only if response is not empty
       // echo response
       // TODO parse the sql result into Memcached format back to user
       parse_select_result_cols(&mc_state->result, query_result, op, mc_state->result.len);
-      printf("\nMC_RESULT:%s\n",query_result.c_str());
+//      printf("\nMC_RESULT:%s\n",query_result.c_str());
       if (!mc_sock.write_response(query_result + "\r\n")) {
-        printf("\nWrite line failed, terminating thread\n");
+//        printf("\nWrite line failed, terminating thread\n");
         terminate = true;
       }
       // clear the result data
@@ -4436,7 +4436,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         pfree(mc_state->result.data);
       delete mc_state;
     } else {
-      printf("\nRead line failed, terminating thread\n");
+//      printf("\nRead line failed, terminating thread\n");
       // terminate the thread
       terminate = true;
     }
@@ -4464,7 +4464,7 @@ static void parse_select_result_cols(StringInfoData *buf, std::string& result, M
 //    buf->len = 2;
     int nattrs = pq_getmsgint(buf, 2);
     if (nattrs != 4) {
-      printf("nattrs:%d != 4\n", nattrs);
+//      printf("nattrs:%d != 4\n", nattrs);
       result += "ERROR";
 //      printf("RESULT ERROR:%s\n",result.c_str());
       return;
