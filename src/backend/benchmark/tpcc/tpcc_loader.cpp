@@ -877,7 +877,6 @@ int GetRandomIntegerExcluding(const int lower_bound,
 }
 
 double GetRandomDouble(const double lower_bound, const double upper_bound) {
-  std::mt19937 rng;
   std::uniform_real_distribution<> dist (lower_bound, upper_bound);
 
   double sample = dist(rng);
@@ -1291,7 +1290,7 @@ void LoadWarehouses() {
       auto txn = txn_manager.BeginTransaction();
       context.reset(new executor::ExecutorContext(txn));
 
-      auto district_tuple = BuildDistrictTuple(warehouse_itr, district_itr, pool);
+      auto district_tuple = BuildDistrictTuple(district_itr, warehouse_itr, pool);
       planner::InsertPlan district_node(district_table, nullptr, district_tuple);
       executor::InsertExecutor district_executor(&district_node, context.get());
       district_executor.Execute();
