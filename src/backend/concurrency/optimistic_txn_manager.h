@@ -97,9 +97,7 @@ class OptimisticTxnManager : public TransactionManager {
         }
       }
     }
-    if(min_running_cid == MAX_CID) {
-      return MAX_CID;
-    }
+    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
     return min_running_cid - 1;
   }
   
