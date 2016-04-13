@@ -359,6 +359,10 @@ ExecuteTest(executor::AbstractExecutor* executor) {
   while (executor->Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(
         executor->GetOutput());
+
+    if(result_tile == nullptr)
+      break;
+
     auto column_count = result_tile->GetColumnCount();
 
     for (oid_t tuple_id : *result_tile) {
@@ -398,10 +402,6 @@ void RunNewOrder(){
 
   int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-
-  std::cout << "WAREHOUSE_ID: " << warehouse_id << "\n";
-  std::cout << "DISTRICT_ID: " << district_id << "\n";
-
   //int customer_id = GetRandomInteger(0, state.customers_per_district);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
   //auto o_entry_ts = GetTimeStamp();
@@ -415,7 +415,7 @@ void RunNewOrder(){
     i_w_ids.push_back(warehouse_id);
 
     if(remote == true) {
-      i_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count, warehouse_id);
+      i_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count - 1, warehouse_id);
       //o_all_local = false;
     }
 
@@ -505,6 +505,8 @@ void RunNewOrder(){
   std::cout << "D_TAX: " << d_tax << "\n";
   auto d_next_o_id = gd_lists_values[0][1];
   std::cout << "D_NEXT_O_ID: " << d_next_o_id << "\n";
+
+  // incrementNextOrderId
 
   txn_manager.CommitTransaction(txn);
 

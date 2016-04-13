@@ -868,6 +868,9 @@ int GetRandomIntegerExcluding(const int lower_bound,
                               const int upper_bound,
                               const int exclude_sample) {
   int sample;
+  if(lower_bound == upper_bound)
+    return lower_bound;
+
   while (1) {
     sample = GetRandomInteger(lower_bound, upper_bound);
     if (sample != exclude_sample)
