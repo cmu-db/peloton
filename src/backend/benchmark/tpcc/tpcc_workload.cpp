@@ -54,6 +54,7 @@
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/expression_util.h"
+#include "backend/expression/container_tuple.h"
 
 #include "backend/index/index_factory.h"
 
@@ -156,8 +157,226 @@ double RunWorkload() {
 }
 
 /////////////////////////////////////////////////////////
+// TABLES
+/////////////////////////////////////////////////////////
+
+/*
+   CREATE TABLE WAREHOUSE (
+   0 W_ID SMALLINT DEFAULT '0' NOT NULL,
+   1 W_NAME VARCHAR(16) DEFAULT NULL,
+   2 W_STREET_1 VARCHAR(32) DEFAULT NULL,
+   3 W_STREET_2 VARCHAR(32) DEFAULT NULL,
+   4 W_CITY VARCHAR(32) DEFAULT NULL,
+   5 W_STATE VARCHAR(2) DEFAULT NULL,
+   6 W_ZIP VARCHAR(9) DEFAULT NULL,
+   7 W_TAX FLOAT DEFAULT NULL,
+   8 W_YTD FLOAT DEFAULT NULL,
+   CONSTRAINT W_PK_ARRAY PRIMARY KEY (W_ID)
+   );
+
+   INDEXES:
+   0 W_ID
+ */
+
+/*
+   CREATE TABLE DISTRICT (
+   0 D_ID TINYINT DEFAULT '0' NOT NULL,
+   1 D_W_ID SMALLINT DEFAULT '0' NOT NULL REFERENCES WAREHOUSE (W_ID),
+   2 D_NAME VARCHAR(16) DEFAULT NULL,
+   3 D_STREET_1 VARCHAR(32) DEFAULT NULL,
+   4 D_STREET_2 VARCHAR(32) DEFAULT NULL,
+   5 D_CITY VARCHAR(32) DEFAULT NULL,
+   6 D_STATE VARCHAR(2) DEFAULT NULL,
+   7 D_ZIP VARCHAR(9) DEFAULT NULL,
+   8 D_TAX FLOAT DEFAULT NULL,
+   9 D_YTD FLOAT DEFAULT NULL,
+   10 D_NEXT_O_ID INT DEFAULT NULL,
+   PRIMARY KEY (D_W_ID,D_ID)
+   );
+
+   INDEXES:
+   0, 1 D_ID, D_W_ID
+ */
+
+/*
+   CREATE TABLE ITEM (
+   0 I_ID INTEGER DEFAULT '0' NOT NULL,
+   1 I_IM_ID INTEGER DEFAULT NULL,
+   2 I_NAME VARCHAR(32) DEFAULT NULL,
+   3 I_PRICE FLOAT DEFAULT NULL,
+   4 I_DATA VARCHAR(64) DEFAULT NULL,
+   CONSTRAINT I_PK_ARRAY PRIMARY KEY (I_ID)
+   );
+
+   INDEXES:
+   0 I_ID
+ */
+/*
+     CREATE TABLE CUSTOMER (
+     0  C_ID INTEGER DEFAULT '0' NOT NULL,
+     1  C_D_ID TINYINT DEFAULT '0' NOT NULL,
+     2  C_W_ID SMALLINT DEFAULT '0' NOT NULL,
+     3  C_FIRST VARCHAR(32) DEFAULT NULL,
+     4  C_MIDDLE VARCHAR(2) DEFAULT NULL,
+     5  C_LAST VARCHAR(32) DEFAULT NULL,
+     6  C_STREET_1 VARCHAR(32) DEFAULT NULL,
+     7  C_STREET_2 VARCHAR(32) DEFAULT NULL,
+     8  C_CITY VARCHAR(32) DEFAULT NULL,
+     9  C_STATE VARCHAR(2) DEFAULT NULL,
+     10 C_ZIP VARCHAR(9) DEFAULT NULL,
+     11 C_PHONE VARCHAR(32) DEFAULT NULL,
+     12 C_SINCE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+     13 C_CREDIT VARCHAR(2) DEFAULT NULL,
+     14 C_CREDIT_LIM FLOAT DEFAULT NULL,
+     15 C_DISCOUNT FLOAT DEFAULT NULL,
+     16 C_BALANCE FLOAT DEFAULT NULL,
+     17 C_YTD_PAYMENT FLOAT DEFAULT NULL,
+     18 C_PAYMENT_CNT INTEGER DEFAULT NULL,
+     19 C_DELIVERY_CNT INTEGER DEFAULT NULL,
+     20 C_DATA VARCHAR(500),
+     PRIMARY KEY (C_W_ID,C_D_ID,C_ID),
+     UNIQUE (C_W_ID,C_D_ID,C_LAST,C_FIRST),
+     CONSTRAINT C_FKEY_D FOREIGN KEY (C_D_ID, C_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
+     );
+     CREATE INDEX IDX_CUSTOMER ON CUSTOMER (C_W_ID,C_D_ID,C_LAST);
+
+     INDEXES:
+     0, 1, 2 C_ID, C_W_ID, C_D_ID
+     1, 2, 5 C_W_ID, C_D_ID, C_LAST
+ */
+/*
+    CREATE TABLE HISTORY (
+    0 H_C_ID INTEGER DEFAULT NULL,
+    1 H_C_D_ID TINYINT DEFAULT NULL,
+    2 H_C_W_ID SMALLINT DEFAULT NULL,
+    3 H_D_ID TINYINT DEFAULT NULL,
+    4 H_W_ID SMALLINT DEFAULT '0' NOT NULL,
+    5 H_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    6 H_AMOUNT FLOAT DEFAULT NULL,
+    7 H_DATA VARCHAR(32) DEFAULT NULL,
+    CONSTRAINT H_FKEY_C FOREIGN KEY (H_C_ID, H_C_D_ID, H_C_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID),
+    CONSTRAINT H_FKEY_D FOREIGN KEY (H_D_ID, H_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
+    );
+ */
+/*
+   CREATE TABLE STOCK (
+   0  S_I_ID INTEGER DEFAULT '0' NOT NULL REFERENCES ITEM (I_ID),
+   1  S_W_ID SMALLINT DEFAULT '0 ' NOT NULL REFERENCES WAREHOUSE (W_ID),
+   2  S_QUANTITY INTEGER DEFAULT '0' NOT NULL,
+   3  S_DIST_01 VARCHAR(32) DEFAULT NULL,
+   4  S_DIST_02 VARCHAR(32) DEFAULT NULL,
+   5  S_DIST_03 VARCHAR(32) DEFAULT NULL,
+   6  S_DIST_04 VARCHAR(32) DEFAULT NULL,
+   7  S_DIST_05 VARCHAR(32) DEFAULT NULL,
+   8  S_DIST_06 VARCHAR(32) DEFAULT NULL,
+   9  S_DIST_07 VARCHAR(32) DEFAULT NULL,
+   10 S_DIST_08 VARCHAR(32) DEFAULT NULL,
+   11 S_DIST_09 VARCHAR(32) DEFAULT NULL,
+   12 S_DIST_10 VARCHAR(32) DEFAULT NULL,
+   13 S_YTD INTEGER DEFAULT NULL,
+   14 S_ORDER_CNT INTEGER DEFAULT NULL,
+   15 S_REMOTE_CNT INTEGER DEFAULT NULL,
+   16 S_DATA VARCHAR(64) DEFAULT NULL,
+   PRIMARY KEY (S_W_ID,S_I_ID)
+   );
+
+   INDEXES:
+   0, 1 S_I_ID, S_W_ID
+ */
+/*
+   CREATE TABLE ORDERS (
+   0 O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 O_C_ID INTEGER DEFAULT NULL,
+   2 O_D_ID TINYINT DEFAULT '0' NOT NULL,
+   3 O_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   4 O_ENTRY_D TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+   5 O_CARRIER_ID INTEGER DEFAULT NULL,
+   6 O_OL_CNT INTEGER DEFAULT NULL,
+   7 O_ALL_LOCAL INTEGER DEFAULT NULL,
+   PRIMARY KEY (O_W_ID,O_D_ID,O_ID),
+   UNIQUE (O_W_ID,O_D_ID,O_C_ID,O_ID),
+   CONSTRAINT O_FKEY_C FOREIGN KEY (O_C_ID, O_D_ID, O_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID)
+   );
+   CREATE INDEX IDX_ORDERS ON ORDERS (O_W_ID,O_D_ID,O_C_ID);
+
+   INDEXES:
+   0, 2, 3 O_ID, O_D_ID, O_W_ID
+   1, 2, 3 O_C_ID, O_D_ID, O_W_ID
+ */
+/*
+   CREATE TABLE NEW_ORDER (
+   0 NO_O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 NO_D_ID TINYINT DEFAULT '0' NOT NULL,
+   2 NO_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   CONSTRAINT NO_PK_TREE PRIMARY KEY (NO_D_ID,NO_W_ID,NO_O_ID),
+   CONSTRAINT NO_FKEY_O FOREIGN KEY (NO_O_ID, NO_D_ID, NO_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID)
+   );
+
+   INDEXES:
+   0, 1, 2 NO_O_ID, NO_D_ID, NO_W_ID
+ */
+/*
+   CREATE TABLE ORDER_LINE (
+   0 OL_O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 OL_D_ID TINYINT DEFAULT '0' NOT NULL,
+   2 OL_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   3 OL_NUMBER INTEGER DEFAULT '0' NOT NULL,
+   4 OL_I_ID INTEGER DEFAULT NULL,
+   5 OL_SUPPLY_W_ID SMALLINT DEFAULT NULL,
+   6 OL_DELIVERY_D TIMESTAMP DEFAULT NULL,
+   7 OL_QUANTITY INTEGER DEFAULT NULL,
+   8 OL_AMOUNT FLOAT DEFAULT NULL,
+   9 OL_DIST_INFO VARCHAR(32) DEFAULT NULL,
+   PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER),
+   CONSTRAINT OL_FKEY_O FOREIGN KEY (OL_O_ID, OL_D_ID, OL_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID),
+   CONSTRAINT OL_FKEY_S FOREIGN KEY (OL_I_ID, OL_SUPPLY_W_ID) REFERENCES STOCK (S_I_ID, S_W_ID)
+   );
+   CREATE INDEX IDX_ORDER_LINE_TREE ON ORDER_LINE (OL_W_ID,OL_D_ID,OL_O_ID);
+
+   INDEXES:
+   0, 1, 2, 3 OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
+   0, 1, 2 OL_O_ID, OL_D_ID, OL_W_ID
+ */
+
+/////////////////////////////////////////////////////////
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
+
+std::vector<std::vector<Value>>
+ExecuteTest(executor::AbstractExecutor* executor) {
+  time_point_ start, end;
+  bool status = false;
+
+  // Run all the executors
+  status = executor->Init();
+  if (status == false) {
+    throw Exception("Init failed");
+  }
+
+  std::vector<std::vector<Value>> logical_tile_values;
+
+  // Execute stuff
+  while (executor->Execute() == true) {
+    std::unique_ptr<executor::LogicalTile> result_tile(
+        executor->GetOutput());
+    auto column_count = result_tile->GetColumnCount();
+
+    for (oid_t tuple_id : *result_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
+                                                                  tuple_id);
+      std::vector<Value> tuple_values;
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
+        auto value = cur_tuple.GetValue(column_itr);
+        tuple_values.push_back(value);
+      }
+
+      // Move the tuple list
+      logical_tile_values.push_back(std::move(tuple_values));
+    }
+  }
+
+  return std::move(logical_tile_values);
+}
 
 void RunNewOrder(){
   /*
@@ -175,8 +394,14 @@ void RunNewOrder(){
      }
    */
 
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count);
-  //int district_id = GetRandomInteger(0, state.districts_per_warehouse);
+  std::cout << "-------------------------------------\n";
+
+  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+
+  std::cout << "WAREHOUSE_ID: " << warehouse_id << "\n";
+  std::cout << "DISTRICT_ID: " << district_id << "\n";
+
   //int customer_id = GetRandomInteger(0, state.customers_per_district);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
   //auto o_entry_ts = GetTimeStamp();
@@ -205,54 +430,81 @@ void RunNewOrder(){
 
   // getWarehouseTaxRate
 
-  // W_TAX
-  std::vector<oid_t> column_ids;
-  column_ids.push_back(7);
+  std::vector<oid_t> warehouse_column_ids = {7}; // W_TAX
 
   // Create and set up index scan executor
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
+  std::vector<oid_t> warehouse_key_column_ids = {0}; // W_ID
+  std::vector<ExpressionType> warehouse_expr_types;
+  std::vector<Value> warehouse_key_values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  key_column_ids.push_back(0);
-  expr_types.push_back(
+  warehouse_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-
+  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
   auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
       warehouse_table_pkey_index_oid);
-
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      warehouse_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+  planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc(
+      warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
+      warehouse_key_values, runtime_keys);
 
   // Create plan node.
   auto predicate = nullptr;
+  planner::IndexScanPlan warehouse_index_scan_node(warehouse_table, predicate,
+                                                   warehouse_column_ids,
+                                                   warehouse_index_scan_desc);
+  executor::IndexScanExecutor warehouse_index_scan_executor(&warehouse_index_scan_node,
+                                                            context.get());
 
-  planner::IndexScanPlan index_scan_node(warehouse_table,
-                                         predicate, column_ids,
-                                         index_scan_desc);
-
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-                                                  context.get());
-
-  bool status = false;
-
-  // Run all the executors
-  status = index_scan_executor.Init();
-  if (status == false) {
-    throw Exception("Init failed");
+  auto gwtr_lists_values = ExecuteTest(&warehouse_index_scan_executor);
+  if(gwtr_lists_values.empty() == true) {
+    std::cout << "getWarehouseTaxRate failed \n";
+    txn_manager.AbortTransaction();
+    return;
   }
 
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+  auto w_tax = gwtr_lists_values[0][0];
+  std::cout << "W_TAX: " << w_tax << "\n";
 
-  // Execute stuff
-  while (index_scan_executor.Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(
-        index_scan_executor.GetOutput());
-    std::cout << (*result_tile);
-    result_tiles.emplace_back(result_tile.release());
+  // getDistrict
+
+  std::vector<oid_t> district_column_ids = {8, 10}; // D_TAX, D_NEXT_O_ID
+
+  // Create and set up index scan executor
+  std::vector<oid_t> district_key_column_ids = {0, 1}; // D_ID, D_W_ID
+  std::vector<ExpressionType> district_expr_types;
+  std::vector<Value> district_key_values;
+
+  district_expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+
+  auto district_pkey_index = district_table->GetIndexWithOid(
+      district_table_pkey_index_oid);
+  planner::IndexScanPlan::IndexScanDesc district_index_scan_desc(
+      district_pkey_index, district_key_column_ids, district_expr_types,
+      district_key_values, runtime_keys);
+
+  // Create plan node.
+  planner::IndexScanPlan district_index_scan_node(district_table, predicate,
+                                                  district_column_ids,
+                                                  district_index_scan_desc);
+  executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node,
+                                                           context.get());
+
+  auto gd_lists_values = ExecuteTest(&district_index_scan_executor);
+  if(gd_lists_values.empty() == true) {
+    std::cout << "getDistrict failed \n";
+    txn_manager.AbortTransaction();
+    return;
   }
+
+  auto d_tax = gd_lists_values[0][0];
+  std::cout << "D_TAX: " << d_tax << "\n";
+  auto d_next_o_id = gd_lists_values[0][1];
+  std::cout << "D_NEXT_O_ID: " << d_next_o_id << "\n";
 
   txn_manager.CommitTransaction(txn);
 

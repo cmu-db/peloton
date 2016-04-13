@@ -30,14 +30,14 @@ static const oid_t warehouse_table_oid = 1001;
 static const oid_t warehouse_table_pkey_index_oid = 20010; // W_ID
 
 static const oid_t district_table_oid = 1002;
-static const oid_t district_table_pkey_index_oid = 20021; // D_W_ID, D_ID
+static const oid_t district_table_pkey_index_oid = 20021; // D_ID, D_W_ID
 
 static const oid_t item_table_oid = 1003;
 static const oid_t item_table_pkey_index_oid = 20030; // I_ID
 
 static const oid_t customer_table_oid = 1004;
 static const oid_t customer_table_pkey_index_oid = 20040; // C_W_ID, C_D_ID, C_ID
-static const oid_t customer_table_skey_index_oid = 20041; // C_W_ID,C_D_ID,C_LAST
+static const oid_t customer_table_skey_index_oid = 20041; // C_W_ID, C_D_ID, C_LAST
 
 static const oid_t history_table_oid = 1005;
 
