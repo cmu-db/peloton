@@ -27,7 +27,7 @@
 namespace peloton {
 namespace concurrency {
 
-thread_local SsiTxnContext *current_txn_ctx;
+thread_local SsiTxnContext *current_ssi_txn_ctx;
 
 SsiTxnManager &SsiTxnManager::GetInstance() {
   static SsiTxnManager txn_manager;
@@ -128,7 +128,7 @@ bool SsiTxnManager::AcquireOwnership(
       owner_ctx->lock_.Lock();
 
       // Myself, skip
-      if (owner_ctx == current_txn_ctx || owner_ctx->is_abort_ == true) {
+      if (owner_ctx == current_ssi_txn_ctx || owner_ctx->is_abort_ == true) {
         header = header->next;
 
         // Unlock the transaction context
@@ -141,7 +141,7 @@ bool SsiTxnManager::AcquireOwnership(
 
       // Owner is running, then siread lock owner has an out edge to me
       if (end_cid == INVALID_TXN_ID) {
-        SetInConflict(current_txn_ctx);
+        SetInConflict(current_ssi_txn_ctx);
         SetOutConflict(owner_ctx);
         LOG_INFO("set %ld in, set %ld out", txn_id, owner_ctx->transaction_->GetTransactionId());
       } else {
@@ -192,12 +192,12 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
       // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
       txn_manager_mutex_.ReadLock();
 
-      if (txn_table_.count(writer) != 0) {  
+      if (txn_table_.count(writer) != 0) {
         // The writer have not been removed from the txn table
         LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
                  tuple_id);
         SetInConflict(txn_table_.at(writer));
-        SetOutConflict(current_txn_ctx);
+        SetOutConflict(current_ssi_txn_ctx);
       }
 
       txn_manager_mutex_.Unlock();
@@ -245,7 +245,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
         continue;
       }
-      
+
       auto creator_ctx = txn_table_.at(creator);
       // Lock the transaction context
       creator_ctx->lock_.Lock();
@@ -263,7 +263,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         }
         // Creator not commited, add an edge
         SetInConflict(creator_ctx);
-        SetOutConflict(current_txn_ctx);
+        SetOutConflict(current_ssi_txn_ctx);
       }
 
       // Unlock the transaction context
@@ -415,10 +415,10 @@ Result SsiTxnManager::CommitTransaction() {
   {
     //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     // Dangerous!
-    current_txn_ctx->lock_.Lock();
-    if (GetInConflict(current_txn_ctx) && GetOutConflict(current_txn_ctx)) {
+    current_ssi_txn_ctx->lock_.Lock();
+    if (GetInConflict(current_ssi_txn_ctx) && GetOutConflict(current_ssi_txn_ctx)) {
       should_abort = true;
-      current_txn_ctx->is_abort_ = true;
+      current_ssi_txn_ctx->is_abort_ = true;
     }
 
     // generate transaction id.
@@ -426,7 +426,7 @@ Result SsiTxnManager::CommitTransaction() {
     if (should_abort == false && ret == Result::RESULT_SUCCESS) {
       current_txn->SetEndCommitId(end_commit_id);
     }
-    current_txn_ctx->lock_.Unlock();
+    current_ssi_txn_ctx->lock_.Unlock();
   }
 
   if (should_abort) {
@@ -515,18 +515,18 @@ Result SsiTxnManager::CommitTransaction() {
   }
   log_manager.LogCommitTransaction(end_commit_id);
   current_txn = nullptr;
-  current_txn_ctx->is_finish_ = true;
+  current_ssi_txn_ctx->is_finish_ = true;
   return ret;
 }
 
 Result SsiTxnManager::AbortTransaction() {
   LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
 
-  if (current_txn_ctx->is_abort_ == false) {
+  if (current_ssi_txn_ctx->is_abort_ == false) {
     // Set abort flag
-    current_txn_ctx->lock_.Lock();
-    current_txn_ctx->is_abort_ = true;
-    current_txn_ctx->lock_.Unlock();
+    current_ssi_txn_ctx->lock_.Lock();
+    current_ssi_txn_ctx->is_abort_ = true;
+    current_ssi_txn_ctx->lock_.Unlock();
   }
 
   auto &manager = catalog::Manager::GetInstance();
@@ -603,7 +603,7 @@ Result SsiTxnManager::AbortTransaction() {
     txn_manager_mutex_.Unlock();
   }
 
-  delete current_txn_ctx;
+  delete current_ssi_txn_ctx;
   delete current_txn;
   current_txn = nullptr;
 
