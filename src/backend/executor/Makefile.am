@@ -27,7 +27,12 @@ executor_FILES = \
 		 backend/executor/aggregator.cpp \
 		 backend/executor/aggregate_executor.cpp \
 		 backend/executor/append_executor.cpp	\
-		 backend/executor/projection_executor.cpp
+		 backend/executor/projection_executor.cpp   \
+		 backend/executor/abstract_exchange_executor.cpp    \
+		 backend/executor/abstract_parallel_task_response.cpp   \
+		 backend/executor/exchange_seq_scan_executor.cpp    \
+		 backend/executor/parallel_seq_scan_task_response.cpp   \
+		 backend/executor/exchange_hash_executor.cpp
 
 
 executor_INCLUDES = \

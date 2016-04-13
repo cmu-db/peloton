@@ -198,6 +198,11 @@ peloton_dml(PlanState *planstate,
     return;
   }
 
+  bool flag = true;
+  if (flag) {
+    mapped_plan_ptr.reset(peloton::bridge::PlanTransformer::GetInstance().BuildParallelPlan(mapped_plan_ptr.get()));
+  }
+
   std::vector<peloton::oid_t> target_list;
   std::vector<peloton::oid_t> qual;
 

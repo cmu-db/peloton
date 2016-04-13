@@ -787,6 +787,12 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_HASH: {
       return "HASH";
     }
+    case PLAN_NODE_TYPE_EXCHANGE_SEQSCAN: {
+        return "EXCHANGESEQSCAN";
+    }
+    case PLAN_NODE_TYPE_EXCHANGE_HASH: {
+      return "EXCHANGEHASH";
+    }
   }
   return "INVALID";
 }
