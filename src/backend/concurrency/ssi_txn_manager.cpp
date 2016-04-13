@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "ssi_txn_manager.h"
 
 #include "backend/common/platform.h"
@@ -20,8 +19,6 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
-
-
 
 #include <set>
 namespace peloton {
@@ -143,10 +140,12 @@ bool SsiTxnManager::AcquireOwnership(
       if (end_cid == INVALID_TXN_ID) {
         SetInConflict(current_ssi_txn_ctx);
         SetOutConflict(owner_ctx);
-        LOG_INFO("set %ld in, set %ld out", txn_id, owner_ctx->transaction_->GetTransactionId());
+        LOG_INFO("set %ld in, set %ld out", txn_id,
+                 owner_ctx->transaction_->GetTransactionId());
       } else {
         // Owner has commited and ownner commit after I start, then I must abort
-        if (end_cid > current_txn->GetBeginCommitId() && GetInConflict(owner_ctx)) {
+        if (end_cid > current_txn->GetBeginCommitId() &&
+            GetInConflict(owner_ctx)) {
           should_abort = true;
           LOG_INFO("abort in acquire");
 
@@ -234,15 +233,17 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
           should_skip = true;
         else {
           auto ctx = txn_table_.at(creator);
-          if (ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID
-            && ctx->transaction_->GetEndCommitId() < current_txn->GetBeginCommitId()) {
+          if (ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
+              ctx->transaction_->GetEndCommitId() <
+                  current_txn->GetBeginCommitId()) {
             should_skip = true;
           }
         }
       }
 
       if (should_skip) {
-        next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
+        next_item =
+            tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
         continue;
       }
 
@@ -296,8 +297,7 @@ bool SsiTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
@@ -345,8 +345,7 @@ bool SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
@@ -406,7 +405,7 @@ Result SsiTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
-//  auto txn_id = current_txn->GetTransactionId();
+  //  auto txn_id = current_txn->GetTransactionId();
   auto &rw_set = current_txn->GetRWSet();
   cid_t end_commit_id = GetNextCommitId();
   Result ret;
@@ -416,7 +415,8 @@ Result SsiTxnManager::CommitTransaction() {
     //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     // Dangerous!
     current_ssi_txn_ctx->lock_.Lock();
-    if (GetInConflict(current_ssi_txn_ctx) && GetOutConflict(current_ssi_txn_ctx)) {
+    if (GetInConflict(current_ssi_txn_ctx) &&
+        GetOutConflict(current_ssi_txn_ctx)) {
       should_abort = true;
       current_ssi_txn_ctx->is_abort_ = true;
     }
@@ -621,8 +621,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
     oid_t tile_group_id = tile_group_entry.first;
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tile_group_id);
-    if (tile_group == nullptr)
-      continue;
+    if (tile_group == nullptr) continue;
 
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
@@ -689,19 +688,18 @@ void SsiTxnManager::CleanUp() {
   {
     // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
     txn_manager_mutex_.WriteLock();
-    for(auto ctx : garbage_ctx) {
+    for (auto ctx : garbage_ctx) {
       txn_table_.erase(ctx->transaction_->GetTransactionId());
     }
     txn_manager_mutex_.Unlock();
   }
 
   // remove txn's reader list firstly
-  for(auto ctx : garbage_ctx) {
+  for (auto ctx : garbage_ctx) {
     RemoveReader(ctx->transaction_);
     delete ctx->transaction_;
     delete ctx;
   }
-
 
 }
 
