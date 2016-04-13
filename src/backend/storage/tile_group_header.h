@@ -166,7 +166,7 @@ class TileGroupHeader : public Printable {
   }
 
   inline void RecycleTupleSlot(const oid_t db_id, const oid_t tb_id, const oid_t tg_id, const oid_t t_id, const txn_id_t t) {
-    LOG_INFO("%s", __func__);
+    //LOG_INFO("%s", __func__);
     auto& gc_manager = gc::GCManager::GetInstance();
     struct TupleMetadata tm;
     tm.database_id = db_id;

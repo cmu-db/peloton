@@ -17,6 +17,8 @@
 namespace peloton {
 namespace gc {
 
+static std::atomic<uint64_t> possibly_free_count(0);
+
 /**
  * @brief Return the singleton gc manager instance
  */
@@ -65,82 +67,53 @@ void GCManager::DeleteTupleFromIndexes(struct TupleMetadata tm) {
 }
 
 void GCManager::Poll() {
-  LOG_DEBUG("Polling GC thread...");
+  LOG_INFO("Polling GC thread...");
   /*
    * Check if we can move anything from the possibly free list to the free
    * list.
    */
-  {
-    // std::lock_guard<std::mutex> lock(gc_mutex);
-    if(!possibly_free_list.empty()) {
-      auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
-      auto oldest_trans = trans_mgr.GetMaxCommittedCid();
+  int count = 0;
+  LOG_INFO("possibly free count = %lu", possibly_free_count.load());
 
-      // for(auto it=possibly_free_list.begin(); it != possibly_free_list.end(); ) {
-        struct TupleMetadata tm;
-        possibly_free_list.pop(tm);
-        if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {
-          /*
-           * Now that we know we need to recycle tuple, we need to delete all
-           * tuples from the indexes to which it belongs as well.
-           */
-          DeleteTupleFromIndexes(tm);
+  while((!possibly_free_list.empty()) && (count < 10)) {
+    count++;
+    auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
+    auto oldest_trans = trans_mgr.GetMaxCommittedCid();
+    struct TupleMetadata tm;
+    possibly_free_list.pop(tm);
 
-          auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(tm.database_id, tm.table_id));
-          if(free_map_it != free_map.end()) {
-            /*boost::lockfree::queue<struct TupleMetadata> *free_list = new boost::lockfree::queue<struct TupleMetadata>(100);
-            struct TupleMetadata temp_tm;
-            while(free_map_it->second->pop(temp_tm)) {
-              free_list -> push(temp_tm);
-            }
-            free_list->push(tm);
-            std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-            std::pair<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> p(key, free_list);
-            free_map.erase(key);
-            free_map.insert(p);*/
+    if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {
+      /*
+       * Now that we know we need to recycle tuple, we need to delete all
+       * tuples from the indexes to which it belongs as well.
+       */
+      DeleteTupleFromIndexes(tm);
 
-            // we need to create list
-            free_map_it->second -> push(tm);
-            // free_list = free_map_it->second;
-            // free_map.erase(free_map_it);
-          } else {
-            boost::lockfree::queue<struct TupleMetadata> *free_list = new boost::lockfree::queue<struct TupleMetadata>(100);
-            free_list -> push(tm);
-            std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-            std::pair<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> p(key, free_list);
-            free_map.insert(p);
-          }
-          LOG_INFO("adding tuple to be recycled");
-          // free_list.push_back(tm);
-          // LOG_INFO("The free_list size is %lu", free_list.size());
-          //
-          // free_map[key] = free_list;
-
-
-          /*if(free_map_it != free_map.end()) {
-            LOG_INFO("Recycling inside Poll function");
-            auto free_list = free_map_it->second;
-            free_list.push_back(tm);
-            LOG_INFO("The free_list size is %lu", free_list.size());
-            free_map.erase(free_map_it);
-            std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-            free_map[key] = free_list;
-            } else {
-            std::deque<struct TupleMetadata> free_list;
-            free_list.push_back(tm);
-            std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-            free_map[key] = free_list;
-            }*/
-          // it = possibly_free_list.erase(it);
-        } else {
-          LOG_INFO("oldest transaction %lu", oldest_trans);
-          possibly_free_list.push(tm);
-        }
-      // }
+      std::string key = std::to_string(tm.database_id) + std::to_string(tm.table_id);
+      //auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(tm.database_id, tm.table_id));
+      auto free_map_it = free_map.find(key);
+      (void) free_map_it;
+#if 0
+      if(free_map_it != free_map.end()) {
+        // we need to create list
+        free_map_it->second -> push(tm);
+      } else {
+        boost::lockfree::queue<struct TupleMetadata> *free_list = new boost::lockfree::queue<struct TupleMetadata>(100);
+        free_list -> push(tm);
+        std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
+        std::pair<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> p(key, free_list);
+        free_map.insert(p);
+      }
+      LOG_INFO("adding tuple to be recycled");
+#endif
+    } else {
+      LOG_INFO("oldest transaction %lu", oldest_trans);
+      possibly_free_list.push(tm);
     }
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(30));
+  LOG_INFO("just before sleeping");
+  std::this_thread::sleep_for(std::chrono::seconds(10));
   Poll();
 }
 
@@ -148,12 +121,16 @@ oid_t GCManager::ReturnFreeSlot(oid_t db_id, oid_t tb_id) {
   auto return_slot = INVALID_OID;
   // {
     // std::lock_guard<std::mutex> lock(gc_mutex);
-    auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(db_id, tb_id));
-    if(free_map_it != free_map.end()) {
-      if(!(free_map_it->second)->empty()) {
+  std::string key = std::to_string(db_id) + std::to_string(tb_id);
+    //auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(db_id, tb_id));
+  boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
+  if(free_map.find(key, free_list)) {
+    //auto free_map_it = free_map.find(key);
+    //if(free_map_it != free_map.end()) {
+      if(!free_list->empty()) {
         struct TupleMetadata tm ;
         LOG_INFO("using recycled tuple");
-        (free_map_it->second)->pop(tm);
+        free_list->pop(tm);
         return_slot = tm.tuple_slot_id;
         return return_slot;
       }
@@ -165,7 +142,8 @@ oid_t GCManager::ReturnFreeSlot(oid_t db_id, oid_t tb_id) {
 void GCManager::AddPossiblyFreeTuple(struct TupleMetadata tm) {
   {
     // std::lock_guard<std::mutex> lock(gc_mutex);
-    printf("possible free list addition\n");
+    //printf("possible free list addition\n");
+    possibly_free_count.fetch_add(1);
     this->possibly_free_list.push(tm);
   }
 }

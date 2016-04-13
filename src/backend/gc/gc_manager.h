@@ -19,6 +19,7 @@
 #include <list>
 #include <boost/lockfree/queue.hpp>
 #include "backend/common/logger.h"
+#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace gc {
@@ -51,7 +52,9 @@ class GCManager {
 
  private:
   GCStatus status;
-  std::map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
+  //std::map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
+  //cuckoohash_map<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> free_map;
+  cuckoohash_map<std::string, boost::lockfree::queue<struct TupleMetadata>*> free_map;
   boost::lockfree::queue<struct TupleMetadata> possibly_free_list {1000};
   std::mutex gc_mutex;
   void DeleteTupleFromIndexes(struct TupleMetadata tm);
