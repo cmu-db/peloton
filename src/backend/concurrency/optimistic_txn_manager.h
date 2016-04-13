@@ -70,17 +70,21 @@ class OptimisticTxnManager : public TransactionManager {
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
-    
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+
+    {
+      std::lock_guard<std::mutex> lock(bucket_lock);
+      running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+    }
 
     return txn;
   }
 
   virtual void EndTransaction() {
     txn_id_t txn_id = current_txn->GetTransactionId();
-
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
-    
+    {
+      std::lock_guard<std::mutex> lock(bucket_lock);
+      running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+    }
     delete current_txn;
     current_txn = nullptr;
   }
@@ -89,21 +93,36 @@ class OptimisticTxnManager : public TransactionManager {
     cid_t min_running_cid = MAX_CID;
     for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
       {
-        auto iter = running_txn_buckets_[i].lock_table();
-        for (auto &it : iter) {
-          if (it.second < min_running_cid) {
-            min_running_cid = it.second;
+        LOG_INFO("stuck in for 1.1");
+        std::lock_guard<std::mutex> lock(bucket_lock);
+        //auto iter = running_txn_buckets_[i].lock_table();
+        LOG_INFO("stuck in for 1.2 %lu", running_txn_buckets_[i].size());
+        //for (auto &it : iter) {
+        for(auto it = running_txn_buckets_[i].begin(); it != running_txn_buckets_[i].end(); it++) {
+          LOG_INFO("stuck in for 2.0");
+          if (it->second < min_running_cid) {
+            LOG_INFO("stuck in for 2");
+            min_running_cid = it->second;
           }
         }
+        LOG_INFO("got out of for 2");
       }
     }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
+    LOG_INFO("got out of for 1; min_running_cid = %lu and MAX_CID = %lu", min_running_cid, MAX_CID);
+    //assert(min_running_cid > 0 && min_running_cid != MAX_CID);
+    if(min_running_cid == MAX_CID) {
+      LOG_INFO("Returning MAX_CID");
+      return MAX_CID;
+    }
+    LOG_INFO("returning %lu", min_running_cid - 1);
     return min_running_cid - 1;
   }
   
 
 private:
-  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
+  std::mutex bucket_lock;
+  //cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
+  std::map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };
 }
 }

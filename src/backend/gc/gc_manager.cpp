@@ -31,7 +31,9 @@ GCManager::GCManager() {
   this->status = GC_STATUS_OFF;
 }
 
-GCManager::~GCManager() {}
+GCManager::~GCManager() {
+  LOG_INFO("Destructor is caled");
+}
 
 bool GCManager::GetStatus() {
   return this->status;
@@ -67,66 +69,102 @@ void GCManager::DeleteTupleFromIndexes(struct TupleMetadata tm) {
 }
 
 void GCManager::Poll() {
-  LOG_INFO("Polling GC thread...");
   /*
    * Check if we can move anything from the possibly free list to the free
    * list.
    */
-  int count = 0;
-  LOG_INFO("possibly free count = %lu", possibly_free_count.load());
+  while(1) {
+    LOG_INFO("Polling GC thread...");
 
-  while((!possibly_free_list.empty()) && (count < 10)) {
-    count++;
-    auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
-    auto oldest_trans = trans_mgr.GetMaxCommittedCid();
-    struct TupleMetadata tm;
-    possibly_free_list.pop(tm);
+    int count = 0;
+    LOG_INFO("possibly free count = %lu", possibly_free_count.load());
 
-    if(oldest_trans == INVALID_TXN_ID || tm.transaction_id < oldest_trans) {
-      /*
-       * Now that we know we need to recycle tuple, we need to delete all
-       * tuples from the indexes to which it belongs as well.
-       */
-      DeleteTupleFromIndexes(tm);
+    while((!possibly_free_list.empty()) && (count < 10)) {
+      LOG_INFO("line 1");
+      count++;
+//#if 0
+      auto &trans_mgr = concurrency::TransactionManagerFactory::GetInstance();
+      LOG_INFO("line 2");
 
-      std::string key = std::to_string(tm.database_id) + std::to_string(tm.table_id);
-      //auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(tm.database_id, tm.table_id));
-      auto free_map_it = free_map.find(key);
-      (void) free_map_it;
+      auto oldest_trans = trans_mgr.GetMaxCommittedCid();
+      LOG_INFO("oldest trans = %lu", oldest_trans);
+      struct TupleMetadata tm;
+      LOG_INFO("line 3");
+      possibly_free_list.pop(tm);
+      LOG_INFO("line 4");
+
+      if(oldest_trans == INVALID_TXN_ID || oldest_trans == MAX_CID || tm.transaction_id < oldest_trans) {
+        /*
+         * Now that we know we need to recycle tuple, we need to delete all
+         * tuples from the indexes to which it belongs as well.
+         */
+        LOG_INFO("line 5");
+        DeleteTupleFromIndexes(tm);
+        LOG_INFO("line 6");
+
+        LOG_INFO("TM details are: tm.database_id = %lu, tm.table_id = %lu, tm.tile_group_id = %lu, tm.tuple_slot_id = %lu", tm.database_id, tm.table_id, tm.tile_group_id, tm.tuple_slot_id);
+        actual_free_list.push(tm);
+
 #if 0
-      if(free_map_it != free_map.end()) {
-        // we need to create list
-        free_map_it->second -> push(tm);
-      } else {
-        boost::lockfree::queue<struct TupleMetadata> *free_list = new boost::lockfree::queue<struct TupleMetadata>(100);
-        free_list -> push(tm);
-        std::pair<oid_t, oid_t> key(tm.database_id, tm.table_id);
-        std::pair<std::pair<oid_t, oid_t>, boost::lockfree::queue<struct TupleMetadata>*> p(key, free_list);
-        free_map.insert(p);
-      }
-      LOG_INFO("adding tuple to be recycled");
-#endif
-    } else {
-      LOG_INFO("oldest transaction %lu", oldest_trans);
-      possibly_free_list.push(tm);
-    }
-  }
+        std::string key = std::to_string(tm.database_id) + std::to_string(tm.table_id);
+        boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
+        LOG_INFO("before find");
+        {
+          std::lock_guard<std::mutex> lock(gc_mutex);
 
-  LOG_INFO("just before sleeping");
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-  Poll();
+          //if(free_map.find(key, free_list)) {
+          auto free_map_it = free_map.find(key);
+          if(free_map_it != free_map.end()) {
+            // we need to create list
+            LOG_INFO("before push");
+            free_list = free_map_it->second;
+            free_list->push(tm);
+            LOG_INFO("after push");
+          } else {
+            free_list = new boost::lockfree::queue<struct TupleMetadata>(100);
+            LOG_INFO("before new push");
+            free_list -> push(tm);
+            LOG_INFO("after new push");
+            //free_map.insert(key, free_list);
+            //free_map[key] = free_list;
+            free_map.insert(std::pair<std::string, boost::lockfree::queue<struct TupleMetadata> *>(key, free_list));
+            LOG_INFO("after new insert");
+          }
+        }
+#endif
+        } else {
+          LOG_INFO("oldest transaction %lu", oldest_trans);
+          possibly_free_list.push(tm);
+        }
+
+        LOG_INFO("line 7");
+      }
+
+      LOG_INFO("just before sleeping");
+      std::this_thread::sleep_for(std::chrono::seconds(10));
+      LOG_INFO("just after sleeping");
+      //Poll();
+    }
 }
 
-oid_t GCManager::ReturnFreeSlot(oid_t db_id, oid_t tb_id) {
+oid_t GCManager::ReturnFreeSlot(oid_t db_id __attribute__((unused)), oid_t tb_id __attribute__((unused))) {
+  if(!actual_free_list.empty()) {
+    struct TupleMetadata tm ;
+    LOG_INFO("using recycled tuple");
+    actual_free_list.pop(tm);
+    return tm.tuple_slot_id;
+  }
+#if 0
   auto return_slot = INVALID_OID;
-  // {
-    // std::lock_guard<std::mutex> lock(gc_mutex);
-  std::string key = std::to_string(db_id) + std::to_string(tb_id);
+  {
+    std::lock_guard<std::mutex> lock(gc_mutex);
+    std::string key = std::to_string(db_id) + std::to_string(tb_id);
     //auto free_map_it = free_map.find(std::pair<oid_t, oid_t>(db_id, tb_id));
-  boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
-  if(free_map.find(key, free_list)) {
-    //auto free_map_it = free_map.find(key);
-    //if(free_map_it != free_map.end()) {
+    boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
+    //if(free_map.find(key, free_list)) {
+    auto free_map_it = free_map.find(key);
+    if(free_map_it != free_map.end()) {
+      free_list = free_map_it->second;
       if(!free_list->empty()) {
         struct TupleMetadata tm ;
         LOG_INFO("using recycled tuple");
@@ -135,7 +173,8 @@ oid_t GCManager::ReturnFreeSlot(oid_t db_id, oid_t tb_id) {
         return return_slot;
       }
     }
-  // }
+  }
+#endif
   return INVALID_OID;
 }
 
