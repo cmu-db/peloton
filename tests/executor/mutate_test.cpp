@@ -59,7 +59,8 @@ namespace test {
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
+std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
+    const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -69,8 +70,8 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
 }
 
 //===--------------------------------------------------------------------===//
@@ -93,7 +94,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
 
     auto project_info = MakeProjectInfoFromTuple(tuple);
 
-    planner::InsertPlan node(table, project_info);
+    planner::InsertPlan node(table, std::move(project_info));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
 
@@ -123,9 +124,10 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
-  planner::UpdatePlan update_node(
-      table, new planner::ProjectInfo(std::move(target_list),
-                                      std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -142,11 +144,13 @@ void UpdateTuple(storage::DataTable *table) {
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
+                                              context.get());
 
   // Parent-Child relationship
-  update_node.AddChild(&seq_scan_node);
+  update_node.AddChild(std::move(seq_scan_node));
   update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());
@@ -181,11 +185,13 @@ void DeleteTuple(storage::DataTable *table) {
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
+                                              context.get());
 
   // Parent-Child relationship
-  delete_node.AddChild(&seq_scan_node);
+  delete_node.AddChild(std::move(seq_scan_node));
   delete_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(delete_executor.Init());
@@ -213,7 +219,7 @@ TEST_F(MutateTests, StressTests) {
 
   auto project_info = MakeProjectInfoFromTuple(tuple);
 
-  planner::InsertPlan node(table, project_info);
+  planner::InsertPlan node(table, std::move(project_info));
   executor::InsertExecutor executor(&node, context.get());
 
   try {
@@ -226,7 +232,7 @@ TEST_F(MutateTests, StressTests) {
 
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
   project_info = MakeProjectInfoFromTuple(tuple);
-  planner::InsertPlan node2(table, project_info);
+  planner::InsertPlan node2(table, std::move(project_info));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 

@@ -54,7 +54,7 @@ struct SpecTxnContext {
   // whether the inner dependent set is still changeable.
   volatile bool inner_dep_set_changeable_;
 
-  std::atomic<size_t> outer_dep_count_;   // default: 0
+  std::atomic<size_t> outer_dep_count_;            // default: 0
   volatile std::atomic<bool> is_cascading_abort_;  // default: false
 };
 
@@ -196,7 +196,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+          .update_fn(child_txn_id, [](SpecTxnContext * context) {
         assert(context->outer_dep_count_ > 0);
         context->outer_dep_count_--;
       });
@@ -211,7 +211,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+          .update_fn(child_txn_id, [](SpecTxnContext * context) {
         assert(context->outer_dep_count_ > 0);
         context->is_cascading_abort_ = true;
       });

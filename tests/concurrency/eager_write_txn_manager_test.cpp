@@ -24,7 +24,8 @@ namespace test {
 class EagerWriteTxnManagerTests : public PelotonTest {};
 
 TEST_F(EagerWriteTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_EAGER_WRITE);
+  concurrency::TransactionManagerFactory::Configure(
+      CONCURRENCY_TYPE_EAGER_WRITE);
   EXPECT_TRUE(true);
 }
 

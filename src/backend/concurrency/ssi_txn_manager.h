@@ -24,21 +24,31 @@ namespace concurrency {
 
 struct SsiTxnContext {
   SsiTxnContext(Transaction *t)
-      : transaction_(t), in_conflict_(false), out_conflict_(false) {}
+      : transaction_(t),
+        in_conflict_(false),
+        out_conflict_(false),
+        is_abort_(false),
+        is_finish_(false) {}
   Transaction *transaction_;
   bool in_conflict_;
   bool out_conflict_;
+  bool is_abort_;
+  bool is_finish_;  // is commit finished
+  Spinlock lock_;
 };
 
+extern thread_local SsiTxnContext *current_ssi_txn_ctx;
+
 struct ReadList {
-  txn_id_t txn_id;
+  SsiTxnContext *txn_ctx;
   ReadList *next;
-  ReadList() : txn_id(INVALID_TXN_ID), next(nullptr) {}
-  ReadList(txn_id_t t) : txn_id(t), next(nullptr) {}
+  ReadList() : txn_ctx(nullptr), next(nullptr) {}
+  ReadList(SsiTxnContext *t) : txn_ctx(t), next(nullptr) {}
 };
 
 struct SIReadLock {
-  SIReadLock() : list(nullptr) {};
+  SIReadLock() : list(nullptr) {}
+  ;
   ReadList *list;
   std::mutex mutex;
   void Lock() { mutex.lock(); }
@@ -46,7 +56,7 @@ struct SIReadLock {
 };
 
 class SsiTxnManager : public TransactionManager {
-  public:
+ public:
   SsiTxnManager() : stopped(false), cleaned(false) {
     vaccum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
@@ -90,30 +100,33 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual Transaction *BeginTransaction() {
-    std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    //std::lock_guard<std::mutex> lock(txn_manager_mutex_);
+    txn_manager_mutex_.WriteLock();
+
+    // protect beginTransaction with a global lock
+    // to ensure that:
+    //    txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
-
-
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
-    txn_table_.insert(
-        std::make_pair(txn->GetTransactionId(), SsiTxnContext(txn)));
+    current_ssi_txn_ctx = new SsiTxnContext(txn);
+    current_txn = txn;
+    txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
+    txn_manager_mutex_.Unlock();
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
 
-  virtual void DroppingTileGroup(const oid_t &tile_group_id __attribute__((unused))) {
+  virtual void DroppingTileGroup(const oid_t &tile_group_id
+                                 __attribute__((unused))) {
     CleanUp();
   }
 
-  virtual void EndTransaction() { assert(false); };
+  virtual void EndTransaction() { assert(false); }
+  ;
 
-  
-  virtual cid_t GetMaxCommittedCid() {
-    return 1;
-  }
+  virtual cid_t GetMaxCommittedCid() { return 1; }
 
   virtual Result CommitTransaction();
 
@@ -121,9 +134,11 @@ class SsiTxnManager : public TransactionManager {
 
  private:
   // Mutex to protect txn_table_ and sireadlocks
-  std::mutex txn_manager_mutex_;
+  RWLock txn_manager_mutex_;
+  // mutex to avoid re-enter clean up
+  std::mutex clean_mutex_;
   // Transaction contexts
-  std::map<txn_id_t, SsiTxnContext> txn_table_;
+  std::map<txn_id_t, SsiTxnContext *> txn_table_;
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
   std::map<std::pair<oid_t, oid_t>, std::unique_ptr<SIReadLock>> sireadlocks;
@@ -142,8 +157,7 @@ class SsiTxnManager : public TransactionManager {
              tuple_id);
 
     auto tile_group_header = catalog::Manager::GetInstance()
-                                 .GetTileGroup(tile_group_id)
-                                 ->GetHeader();
+        .GetTileGroup(tile_group_id)->GetHeader();
 
     assert(tile_group_header->GetTransactionId(tuple_id) == txn_id);
     assert(current_txn->GetTransactionId() == txn_id);
@@ -158,25 +172,27 @@ class SsiTxnManager : public TransactionManager {
   // Get creator of a tuple
   inline txn_id_t GetCreatorTxnId(storage::TileGroup *tile_group,
                                   const oid_t &tuple_id) {
-    return *(
-        txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(tuple_id) +
-                    CREATOR_OFFSET);
+    return *(txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(
+        tuple_id) + CREATOR_OFFSET);
   }
 
-  void GetReadLock(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  void GetReadLock(const storage::TileGroupHeader *const tile_group_header,
+                   const oid_t &tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                             LOCK_OFFSET);
     lock->Lock();
   }
 
-  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header, const oid_t tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                             LOCK_OFFSET);
     lock->Unlock();
   }
 
   // Add the current txn into the reader list of a tuple
   void AddSIReader(storage::TileGroup *tile_group, const oid_t &tuple_id) {
-    auto txn_id = current_txn->GetTransactionId();
-    ReadList *reader = new ReadList(txn_id);
+    ReadList *reader = new ReadList(current_ssi_txn_ctx);
 
     GetReadLock(tile_group->GetHeader(), tuple_id);
     ReadList **headp = (ReadList **)(
@@ -187,8 +203,8 @@ class SsiTxnManager : public TransactionManager {
   }
 
   // Remove reader from the reader list of a tuple
-  void RemoveSIReader(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id,
-                      txn_id_t txn_id) {
+  void RemoveSIReader(storage::TileGroupHeader *tile_group_header,
+                      const oid_t &tuple_id, txn_id_t txn_id) {
     LOG_INFO("Acquire read lock");
     GetReadLock(tile_group_header, tuple_id);
     LOG_INFO("Acquired");
@@ -203,7 +219,7 @@ class SsiTxnManager : public TransactionManager {
     bool find = false;
 
     while (next != nullptr) {
-      if (next->txn_id == txn_id) {
+      if (next->txn_ctx->transaction_->GetTransactionId() == txn_id) {
         find = true;
         prev->next = next->next;
         delete next;
@@ -221,34 +237,35 @@ class SsiTxnManager : public TransactionManager {
     }
   }
 
-  ReadList *GetReaderList(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
-    return *(ReadList **)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+  ReadList *GetReaderList(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) {
+    return *(ReadList **)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                          LIST_OFFSET);
   }
 
-  bool GetInConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
-    return txn_table_.at(txn_id).in_conflict_;
+  inline bool GetInConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
+    return txn_ctx->in_conflict_;
   }
 
-  bool GetOutConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
-
-    return txn_table_.at(txn_id).out_conflict_;
+  inline bool GetOutConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
+    return txn_ctx->out_conflict_;
   }
 
-  void SetInConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
+  inline void SetInConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
 
-    LOG_INFO("Set in conflict %lu", txn_id);
-    txn_table_.at(txn_id).in_conflict_ = true;
+    LOG_INFO("Set in conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    txn_ctx->in_conflict_ = true;
   }
 
-  void SetOutConflict(txn_id_t txn_id) {
-    assert(txn_table_.count(txn_id) != 0);
+  inline void SetOutConflict(SsiTxnContext *txn_ctx) {
+    //assert(txn_table_.count(txn_id) != 0);
 
-    LOG_INFO("Set out conflict %lu", txn_id);
-    txn_table_.at(txn_id).out_conflict_ = true;
+    LOG_INFO("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    txn_ctx->out_conflict_ = true;
   }
 
   void RemoveReader(Transaction *txn);
