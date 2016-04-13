@@ -12,10 +12,14 @@
 
 #pragma once
 
+#include <iostream>
+#include <memory>
 #include <cstdint>
 #include <vector>
 #include <map>
 #include <vector>
+
+#include <memory>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -50,9 +54,9 @@ class AbstractPlan : public Printable {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(const AbstractPlan *child);
+  void AddChild(std::unique_ptr<AbstractPlan> &&child);
 
-  const std::vector<const AbstractPlan *> &GetChildren() const;
+  const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
   const AbstractPlan *GetParent();
 
@@ -71,12 +75,11 @@ class AbstractPlan : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
-  virtual AbstractPlan *Copy() const = 0;
-
-private:
+ private:
   // A plan node can have multiple children
-  std::vector<const AbstractPlan *> children_;
+  std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
 };

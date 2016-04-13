@@ -289,26 +289,35 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
       oid_t PrimaryKeyTableId =
           db->GetTableWithName(constraint->pktable->relname)->GetOid();
 
-      // Each table column names
+      // Each table column names and offsets
       std::vector<std::string> pk_column_names;
       std::vector<std::string> fk_column_names;
+      std::vector<oid_t> pk_column_offsets, fk_column_offsets;
 
       ListCell *column;
       if (constraint->pk_attrs != NULL && constraint->pk_attrs->length > 0) {
+        oid_t offset = 0;
         foreach (column, constraint->pk_attrs) {
           char *attname = strVal(lfirst(column));
           pk_column_names.push_back(attname);
+          pk_column_offsets.push_back(offset);
+          offset ++;
         }
       }
       if (constraint->fk_attrs != NULL && constraint->fk_attrs->length > 0) {
+        oid_t offset = 0;
         foreach (column, constraint->fk_attrs) {
           char *attname = strVal(lfirst(column));
           fk_column_names.push_back(attname);
+          fk_column_offsets.push_back(offset);
+          offset ++;
         }
       }
 
+
       catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
-          PrimaryKeyTableId, pk_column_names, fk_column_names,
+          PrimaryKeyTableId, pk_column_names, pk_column_offsets,
+          fk_column_names, fk_column_offsets,
           constraint->fk_upd_action, constraint->fk_del_action, conname);
       foreign_keys.push_back(*foreign_key);
 

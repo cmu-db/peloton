@@ -21,15 +21,15 @@
  * To schedule a txn tests, you need a TransactionScheduler (scheduler). Then
  * write the schedule in the following way: scheduler.Txn(n).ACTION(args)
  * scheduler.Txn(0).Insert(0, 1);
- * scheduler.Txn(0).Read(0); 
- * scheduler.Commit(); 
+ * scheduler.Txn(0).Read(0);
+ * scheduler.Commit();
  *  => Notice that this order will be the serial order to excute the operaions
- * 
- * There's a CreateTable() method, it will create a table with two columns: 
+ *
+ * There's a CreateTable() method, it will create a table with two columns:
  * key and value, and a primiary index on the key column. The table is pre-
  * populated with the following tuples:
  * (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0),(9, 0)
- * 
+ *
  * ACTION supported:
  * * Insert(key, value): Insert (key, value) into DB, key must be unique
  * * Read(key): Read value from DB, if the key does not exist, will read a value
@@ -44,10 +44,10 @@
  * *                         any above operations.
  * * Commit(): Commit the txn
  * * Abort(): Abort the txn
- * 
+ *
  * Then, run the schedules by scheduler.Run(), it will schedule the txns to
  * execute corresponding opersions.
- * The results of executing Run() can be fetched from 
+ * The results of executing Run() can be fetched from
  * scheduler.schedules[TXN_ID].results[]. It will store the results from Read()
  * and Scan(), in the order they executed. The txn result (SUCCESS, FAILURE)
  * can be retrieved from scheduler.schedules[TXN_ID].txn_result.
@@ -117,7 +117,20 @@ class TransactionTestsUtil {
   // Create a simple table with two columns: the id column and the value column
   // Further add a unique index on the id column. The table has one tuple (0, 0)
   // when created
-  static storage::DataTable *CreateTable(int num_key = 10);
+  static storage::DataTable *CreateTable(int num_key = 10,
+                                         std::string table_name = "TEST_TABLE",
+                                         oid_t database_id = INVALID_OID,
+                                         oid_t relation_id = INVALID_OID,
+                                         oid_t index_oid = 1234,
+                                         bool need_primary_index = false);
+
+  // Create the same table as CreateTable with primary key constrainst on id and
+  // unique key constraints on value
+  static storage::DataTable *CreatePrimaryKeyUniqueKeyTable();
+
+  // Create the same table with combined primary key constrainst on (id, value)
+  static storage::DataTable *CreateCombinedPrimaryKeyTable();
+
   static bool ExecuteInsert(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteRead(concurrency::Transaction *txn,
@@ -127,13 +140,13 @@ class TransactionTestsUtil {
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
-                            storage::DataTable *table, int old_value, int new_value);
+                                   storage::DataTable *table, int old_value, int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
 
  private:
-  static planner::ProjectInfo *MakeProjectInfoFromTuple(
+  static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
       const storage::Tuple *tuple);
   static expression::ComparisonExpression<expression::CmpEq> *MakePredicate(
       int id);
@@ -260,7 +273,7 @@ class TransactionThread {
         int old_value = id;
         int new_value = value;
         execute_result = TransactionTestsUtil::ExecuteUpdateByValue(
-          txn, table, old_value, new_value);
+            txn, table, old_value, new_value);
         break;
       }
       case TXN_OP_ABORT: {
@@ -320,7 +333,7 @@ class TransactionScheduler {
     for (int i = 0; i < (int)schedules.size(); i++) {
       tthreads.emplace_back(&schedules[i], table, txn_manager);
     }
-    if (!concurrent) { 
+    if (!concurrent) {
       for (int i = 0; i < (int)schedules.size(); i++) {
         std::thread t = tthreads[i].Run();
         t.detach();
@@ -333,7 +346,7 @@ class TransactionScheduler {
           std::this_thread::sleep_for(sleep_time);
         }
         LOG_INFO("Done %d", (int)itr->second);
-      }  
+      }
     } else {
       // Run the txns concurrently
       std::vector<std::thread> threads(schedules.size());
@@ -385,7 +398,7 @@ class TransactionScheduler {
     schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
     sequence[time++] = cur_txn_id;
   }
-  // ReadStore will store the (result of read + modify) to the schedule, the 
+  // ReadStore will store the (result of read + modify) to the schedule, the
   // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
   // to a schedule. See usage in isolation_level_test SIAnomalyTest.
   void ReadStore(int id, int modify) {

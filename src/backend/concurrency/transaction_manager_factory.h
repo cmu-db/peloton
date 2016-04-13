@@ -16,6 +16,7 @@
 #include "backend/concurrency/pessimistic_txn_manager.h"
 #include "backend/concurrency/speculative_read_txn_manager.h"
 #include "backend/concurrency/eager_write_txn_manager.h"
+#include "backend/concurrency/ts_order_txn_manager.h"
 #include "backend/concurrency/ssi_txn_manager.h"
 
 namespace peloton {
@@ -34,6 +35,8 @@ class TransactionManagerFactory {
         return EagerWriteTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SSI:
         return SsiTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_TO:
+        return TsOrderTxnManager::GetInstance();
       default:
         return SsiTxnManager::GetInstance();
     }
