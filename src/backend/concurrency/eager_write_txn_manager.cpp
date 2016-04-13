@@ -27,9 +27,8 @@ namespace peloton {
 namespace concurrency {
 
 thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
-  eager_write_released_rdlock;
+    eager_write_released_rdlock;
 thread_local EagerWriteTxnContext *current_txn_ctx;
-
 
 EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
   static EagerWriteTxnManager txn_manager;
@@ -103,15 +102,15 @@ void EagerWriteTxnManager::RemoveReader() {
     oid_t tile_group_id = tile_group_entry.first;
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tile_group_id);
-    if (tile_group == nullptr)
-      continue;
+    if (tile_group == nullptr) continue;
 
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
 
       // we don't have reader lock on insert
-      if (tuple_entry.second == RW_TYPE_INSERT || tuple_entry.second == RW_TYPE_INS_DEL) {
+      if (tuple_entry.second == RW_TYPE_INSERT ||
+          tuple_entry.second == RW_TYPE_INS_DEL) {
         continue;
       }
 
@@ -154,10 +153,11 @@ bool EagerWriteTxnManager::AcquireOwnership(
   auto current_tid = current_txn->GetTransactionId();
   auto old_tid = tile_group_header->GetTransactionId(tuple_id);
 
-  while(EXTRACT_TXNID(old_tid) == INITIAL_TXN_ID){
+  while (EXTRACT_TXNID(old_tid) == INITIAL_TXN_ID) {
     auto read_count = EXTRACT_READ_COUNT(old_tid);
     auto new_tid = PACK_TXNID(current_tid, read_count);
-    auto real_tid = tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
+    auto real_tid =
+        tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
 
     if (real_tid != old_tid) {
       old_tid = real_tid;
@@ -185,13 +185,13 @@ bool EagerWriteTxnManager::AcquireOwnership(
         {
           std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
           if (running_txn_map_.count(reader_tid) != 0) {
-              // Add myself to the wait_for set of reader
-              auto reader_ctx = running_txn_map_[reader_tid];
-              LOG_INFO("Add dependency to %lu", reader_tid);
-              if (reader_ctx->wait_list_.insert(current_tid).second == true) {
-                // New dependency
-                current_txn_ctx->wait_for_counter_++;
-              }
+            // Add myself to the wait_for set of reader
+            auto reader_ctx = running_txn_map_[reader_tid];
+            LOG_INFO("Add dependency to %lu", reader_tid);
+            if (reader_ctx->wait_list_.insert(current_tid).second == true) {
+              // New dependency
+              current_txn_ctx->wait_for_counter_++;
+            }
           } else {
             assert(false);
           }
@@ -213,8 +213,8 @@ bool EagerWriteTxnManager::AcquireOwnership(
 }
 
 void EagerWriteTxnManager::DecreaseReaderCount(
-  const storage::TileGroupHeader *const tile_group_header,
-  const oid_t &tuple_id) {
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
   LOG_INFO("ReleaseReadLock on %lx", old_txn_id);
@@ -227,7 +227,7 @@ void EagerWriteTxnManager::DecreaseReaderCount(
     auto new_txn_id = PACK_TXNID(EXTRACT_TXNID(old_txn_id), new_read_count);
 
     txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
-      tuple_id, old_txn_id, new_txn_id);
+        tuple_id, old_txn_id, new_txn_id);
 
     if (real_txn_id != old_txn_id) {
       old_txn_id = real_txn_id;
@@ -308,7 +308,8 @@ void EagerWriteTxnManager::SetOwnership(const oid_t &tile_group_id,
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  assert(EXTRACT_READ_COUNT(tile_group_header->GetTransactionId(tuple_id)) == 0);
+  assert(EXTRACT_READ_COUNT(tile_group_header->GetTransactionId(tuple_id)) ==
+         0);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 }
 
@@ -334,14 +335,14 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
   // Decrease reader count
   DecreaseReaderCount(tile_group_header, tuple_id);
 
   // if we can perform update, then we must have already locked the older
   // version.
-  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) == transaction_id);
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -358,7 +359,6 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   InitTupleReserved(new_location.block, new_location.offset);
-
 
   // Add the old tuple into the update set
   current_txn->RecordUpdate(tile_group_id, tuple_id);
@@ -394,12 +394,12 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
   // Decrease reader count
   DecreaseReaderCount(tile_group_header, tuple_id);
 
-  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) == transaction_id);
+  assert(EXTRACT_TXNID(tile_group_header->GetTransactionId(tuple_id)) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -494,7 +494,8 @@ Result EagerWriteTxnManager::CommitTransaction() {
 
   // Wait for all dependencies to finish
   LOG_INFO("Start waiting");
-  LOG_INFO("Current wait for counter = %d", current_txn_ctx->wait_for_counter_ - 0);
+  LOG_INFO("Current wait for counter = %d",
+           current_txn_ctx->wait_for_counter_ - 0);
   while (current_txn_ctx->wait_for_counter_ != 0) {
     std::chrono::microseconds sleep_time(1);
     std::this_thread::sleep_for(sleep_time);
@@ -550,7 +551,8 @@ Result EagerWriteTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
 
-        assert(EXTRACT_READ_COUNT(tile_group_header->GetTransactionId(tuple_slot)) == 0);
+        assert(EXTRACT_READ_COUNT(
+            tile_group_header->GetTransactionId(tuple_slot)) == 0);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -703,7 +705,8 @@ bool EagerWriteTxnManager::CauseDeadLock() {
   LOG_INFO("Detecting dead lock");
   std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
 
-  // Always acquire the running_txn_map_mutex_ before acquiring the per context lock
+  // Always acquire the running_txn_map_mutex_ before acquiring the per context
+  // lock
   std::unordered_set<txn_id_t> dependencies;
   auto current_tid = current_txn->GetTransactionId();
 
@@ -712,8 +715,8 @@ bool EagerWriteTxnManager::CauseDeadLock() {
   // init
   dependencies.insert(current_tid);
   for (auto tid : current_txn_ctx->wait_list_) {
-      LOG_INFO("visit %lu", tid);
-      traverse.push(tid);
+    LOG_INFO("visit %lu", tid);
+    traverse.push(tid);
   }
 
   // BFS start from current txn to detect ring
@@ -723,9 +726,9 @@ bool EagerWriteTxnManager::CauseDeadLock() {
     if (running_txn_map_.count(tid) == 0) {
       // target txn already exit
       continue;
-    } else if (dependencies.count(tid) == 0){
+    } else if (dependencies.count(tid) == 0) {
       // find new dependency
-      for (auto ttid : running_txn_map_[tid]->wait_list_){
+      for (auto ttid : running_txn_map_[tid]->wait_list_) {
         traverse.push(ttid);
       }
     } else {

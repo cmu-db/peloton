@@ -38,7 +38,7 @@ class TransactionManagerFactory {
       case CONCURRENCY_TYPE_TO:
         return TsOrderTxnManager::GetInstance();
       default:
-        return SsiTxnManager::GetInstance();
+        return OptimisticTxnManager::GetInstance();
     }
   }
 

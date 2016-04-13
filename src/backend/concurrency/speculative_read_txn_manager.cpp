@@ -177,8 +177,7 @@ bool SpeculativeReadTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
@@ -242,8 +241,7 @@ bool SpeculativeReadTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==

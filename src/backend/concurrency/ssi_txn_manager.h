@@ -24,12 +24,16 @@ namespace concurrency {
 
 struct SsiTxnContext {
   SsiTxnContext(Transaction *t)
-      : transaction_(t), in_conflict_(false), out_conflict_(false), is_abort_(false), is_finish_(false) {}
+      : transaction_(t),
+        in_conflict_(false),
+        out_conflict_(false),
+        is_abort_(false),
+        is_finish_(false) {}
   Transaction *transaction_;
   bool in_conflict_;
   bool out_conflict_;
   bool is_abort_;
-  bool is_finish_; // is commit finished
+  bool is_finish_;  // is commit finished
   Spinlock lock_;
 };
 
@@ -43,7 +47,8 @@ struct ReadList {
 };
 
 struct SIReadLock {
-  SIReadLock() : list(nullptr) {};
+  SIReadLock() : list(nullptr) {}
+  ;
   ReadList *list;
   std::mutex mutex;
   void Lock() { mutex.lock(); }
@@ -51,7 +56,7 @@ struct SIReadLock {
 };
 
 class SsiTxnManager : public TransactionManager {
-  public:
+ public:
   SsiTxnManager() : stopped(false), cleaned(false) {
     vaccum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
@@ -113,16 +118,15 @@ class SsiTxnManager : public TransactionManager {
     return txn;
   }
 
-  virtual void DroppingTileGroup(const oid_t &tile_group_id __attribute__((unused))) {
+  virtual void DroppingTileGroup(const oid_t &tile_group_id
+                                 __attribute__((unused))) {
     CleanUp();
   }
 
-  virtual void EndTransaction() { assert(false); };
+  virtual void EndTransaction() { assert(false); }
+  ;
 
-  
-  virtual cid_t GetMaxCommittedCid() {
-    return 1;
-  }
+  virtual cid_t GetMaxCommittedCid() { return 1; }
 
   virtual Result CommitTransaction();
 
@@ -153,8 +157,7 @@ class SsiTxnManager : public TransactionManager {
              tuple_id);
 
     auto tile_group_header = catalog::Manager::GetInstance()
-                                 .GetTileGroup(tile_group_id)
-                                 ->GetHeader();
+        .GetTileGroup(tile_group_id)->GetHeader();
 
     assert(tile_group_header->GetTransactionId(tuple_id) == txn_id);
     assert(current_txn->GetTransactionId() == txn_id);
@@ -169,18 +172,21 @@ class SsiTxnManager : public TransactionManager {
   // Get creator of a tuple
   inline txn_id_t GetCreatorTxnId(storage::TileGroup *tile_group,
                                   const oid_t &tuple_id) {
-    return *(
-        txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(tuple_id) +
-                    CREATOR_OFFSET);
+    return *(txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(
+        tuple_id) + CREATOR_OFFSET);
   }
 
-  void GetReadLock(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  void GetReadLock(const storage::TileGroupHeader *const tile_group_header,
+                   const oid_t &tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                             LOCK_OFFSET);
     lock->Lock();
   }
 
-  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header, const oid_t tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t tuple_id) {
+    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                             LOCK_OFFSET);
     lock->Unlock();
   }
 
@@ -197,8 +203,8 @@ class SsiTxnManager : public TransactionManager {
   }
 
   // Remove reader from the reader list of a tuple
-  void RemoveSIReader(storage::TileGroupHeader *tile_group_header, const oid_t &tuple_id,
-                      txn_id_t txn_id) {
+  void RemoveSIReader(storage::TileGroupHeader *tile_group_header,
+                      const oid_t &tuple_id, txn_id_t txn_id) {
     LOG_INFO("Acquire read lock");
     GetReadLock(tile_group_header, tuple_id);
     LOG_INFO("Acquired");
@@ -231,9 +237,11 @@ class SsiTxnManager : public TransactionManager {
     }
   }
 
-  ReadList *GetReaderList(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
-    return *(ReadList **)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+  ReadList *GetReaderList(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) {
+    return *(ReadList **)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                          LIST_OFFSET);
   }
 
   inline bool GetInConflict(SsiTxnContext *txn_ctx) {
