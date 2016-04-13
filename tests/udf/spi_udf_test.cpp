@@ -47,7 +47,7 @@ execq(text *sql)
         snprintf(buf + strlen (buf), sizeof(buf) - strlen(buf), " %s%s",
                  SPI_getvalue(tuple, tupdesc, i),
                  (i == tupdesc->natts) ? " " : " |");
-      elog(INFO, "EXECQ: %s", buf);
+      elog(INFO, "%s", buf);
     }
   }
 
