@@ -149,7 +149,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // Look at the local queues of the backend loggers
     while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
       ;
-    LOG_INFO("Collect log buffers from %lu backend loggers",
+    LOG_TRACE("Collect log buffers from %lu backend loggers",
               backend_loggers.size());
     for (auto backend_logger : backend_loggers) {
       {
