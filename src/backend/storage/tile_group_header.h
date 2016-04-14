@@ -75,42 +75,18 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
-  oid_t GetNextEmptyTupleSlot(int get_recycled) {
-    oid_t tuple_slot_id = INVALID_OID;
-
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
-      if (get_recycled) {
-        // check if there are recycled tuple slots
-        auto &gc_manager = gc::GCManager::GetInstance();
-        if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
-          auto free_slot = gc_manager.ReturnFreeSlot(
-              tile_group->GetDatabaseId(), tile_group->GetTableId());
-          if (free_slot != INVALID_OID) {
-            tuple_slot_id = free_slot;
-            this->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-            this->SetBeginCommitId(tuple_slot_id, MAX_CID);
-            this->SetEndCommitId(tuple_slot_id, MAX_CID);
-          }
-        }
-      }
-
-      if ((tuple_slot_id == INVALID_OID) &&
-          (next_tuple_slot < num_tuple_slots)) {
-        // check tile group capacity
-        tuple_slot_id = next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
-        /*this->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
-        this->SetBeginCommitId(tuple_slot_id, MAX_CID);
-        this->SetEndCommitId(tuple_slot_id, MAX_CID);*/
-      }
-    }
-
-    return tuple_slot_id;
-  }
-
   // this function is only called by DataTable::GetEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
+    // check if there are recycled tuple slots
+    // auto &gc_manager = gc::GCManager::GetInstance();
+    // if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
+    //   auto free_slot = gc_manager.ReturnFreeSlot(
+    //     tile_group->GetDatabaseId(), tile_group->GetTableId());
+    //   if (free_slot != INVALID_OID) {
+    //     tuple_slot_id = free_slot;
+    //   }
+    // }
+
     oid_t tuple_slot_id =
         next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
 
@@ -152,9 +128,7 @@ class TileGroupHeader : public Printable {
     gc_manager.AddPossiblyFreeTuple(tm);
   }
 
-  oid_t GetNextTupleSlot() const { return next_tuple_slot; }
-
-  // oid_t GetActiveTupleCount(const txn_id_t &txn_id);
+  oid_t GetCurrentNextTupleSlot() const { return next_tuple_slot; }
 
   oid_t GetActiveTupleCount();
 
@@ -320,9 +294,6 @@ class TileGroupHeader : public Printable {
 
   // next free tuple slot
   std::atomic<oid_t> next_tuple_slot;
-
-  // synch helpers
-  std::mutex tile_header_mutex;
 
   Spinlock tile_header_lock;
 };
