@@ -172,7 +172,6 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);

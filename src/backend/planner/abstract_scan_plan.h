@@ -54,7 +54,7 @@ class AbstractScan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  AbstractPlan *Copy() const = 0;
+  std::unique_ptr<AbstractPlan> Copy() const = 0;
 
  private:
   /** @brief Pointer to table to scan from. */
