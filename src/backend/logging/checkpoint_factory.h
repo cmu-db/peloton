@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// transaction_manager.h
+// checkpoint_manager.h
 //
-// Identification: src/backend/concurrency/transaction_manager_factory.h
+// Identification: src/backend/logging/checkpoint_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -16,6 +16,7 @@
 
 namespace peloton {
   namespace logging {
+    //TODO change to checkpoint manager..
     class CheckpointFactory {
     public:
       static Checkpoint &GetInstance() {
