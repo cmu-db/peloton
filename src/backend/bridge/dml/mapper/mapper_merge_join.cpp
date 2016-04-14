@@ -69,7 +69,8 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
 
   project_info.reset(BuildProjectInfoFromTLSkipJunk(mj_plan_state->targetlist));
 
-  bool non_trivial = project_info.get()->isNonTrivial();
+  bool non_trivial = (project_info.get() != nullptr &&
+                      project_info.get()->isNonTrivial());
   if (non_trivial) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
