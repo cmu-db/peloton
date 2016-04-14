@@ -104,14 +104,14 @@ void PlanTransformer::GetGenericInfoFromScanState(
         "Non-trivial projections are found. Projection node will be "
         "created. ");
 
-    auto project_schema =
-        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor);
+    std::shared_ptr<const catalog::Schema> project_schema(
+        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor));
 
     auto column_ids =
         BuildColumnListFromTargetList(project_info->GetTargetList());
 
-    parent =
-        new planner::ProjectionPlan(project_info.release(), project_schema);
+    parent = new planner::ProjectionPlan(std::move(project_info),
+                                         project_schema);
 
     ((planner::ProjectionPlan *)parent)->SetColumnIds(column_ids);
   }
@@ -551,9 +551,9 @@ void PlanTransformer::GetColumnsAccessed(const planner::AbstractPlan *plan,
   }
 
   // Recurse through children
-  auto children = plan->GetChildren();
-  for (auto child : children)
-    GetColumnsAccessed(child, target_list, qual, database_oid, table_oid);
+  auto &children = plan->GetChildren();
+  for (auto &child : children)
+    GetColumnsAccessed(child.get(), target_list, qual, database_oid, table_oid);
 }
 
 }  // namespace bridge
