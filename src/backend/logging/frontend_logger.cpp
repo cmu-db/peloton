@@ -149,7 +149,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // Look at the local queues of the backend loggers
     while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
       ;
-    LOG_TRACE("Collect log buffers from %lu backend loggers",
+    LOG_INFO("Collect log buffers from %lu backend loggers",
               backend_loggers.size());
     for (auto backend_logger : backend_loggers) {
       {
@@ -194,6 +194,7 @@ cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
 void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
   while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
     ;
+  LOG_INFO("FrontendLogger::GetMaxFlushedCommitId gonna set backend logger max collected commit id to %d", (int)max_collected_commit_id);
   bel.SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers_lock.clear(std::memory_order_release);
 }
@@ -211,6 +212,7 @@ void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
   // Add backend logger to the list of backend loggers
   while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
     ;
+  LOG_INFO("FrontendLogger::AddBackendLogger gonna set backend logger max collected commit id to %d", (int)max_collected_commit_id);
   backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
   backend_loggers_lock.clear(std::memory_order_release);

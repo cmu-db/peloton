@@ -28,6 +28,7 @@ WriteAheadBackendLogger::WriteAheadBackendLogger()
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
   frontend_logger_id = -1; // invalid
+  LOG_INFO("INSIDE CONSTRUCTOR");
 }
 
 /**
@@ -39,6 +40,7 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   record->Serialize(output_buffer);
 
   this->log_buffer_lock.Lock();
+  LOG_INFO("Inside BackendLogger::Log, highest_logged_commit_id = %d", (int)highest_logged_commit_id);
   if (!log_buffer_) {
     LOG_INFO("Acquire the first log buffer in backend logger");
     log_buffer_ = std::move(available_buffer_pool_->Get());
@@ -58,7 +60,8 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
     auto new_log_commit_id = record->GetTransactionId();
     assert(new_log_commit_id > highest_logged_commit_id);
-    highest_logged_commit_id = new_log_commit_id;
+    this->highest_logged_commit_id = new_log_commit_id;
+    LOG_INFO("Inside BackendLogger::Log, have hit COMMIT, update highest logged commit id to %d", (int)highest_logged_commit_id);
   }
   this->log_buffer_lock.Unlock();
 }
@@ -67,6 +70,7 @@ cid_t WriteAheadBackendLogger::PrepareLogBuffers() {
   cid_t commit_id = INVALID_CID;
   this->log_buffer_lock.Lock();
   commit_id = highest_logged_commit_id;
+  LOG_INFO("Inside PrepareLogBuffers");
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
     LOG_INFO("Move the current log buffer to buffer pool");

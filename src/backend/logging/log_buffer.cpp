@@ -28,6 +28,7 @@ LogBuffer::LogBuffer(BackendLogger *backend_logger)
 }
 
 bool LogBuffer::WriteRecord(LogRecord *record) {
+  LOG_INFO("Inside write record of log buffer, highest_commit_id_ is %d", (int)highest_commit_id_);
   bool success = WriteData(record->GetMessage(), record->GetMessageLength());
   if (!success) {
     return success;
@@ -35,10 +36,12 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
   // update max commit id
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
     auto new_log_commit_id = record->GetTransactionId();
-    LOG_INFO("highest_logged_commit_id: %lu, record->GetTransactionId(): %lu",
+    LOG_INFO("Have hit commit in write record.");
+    LOG_INFO("highest_commit_id: %lu, record->GetTransactionId(): %lu",
              highest_commit_id_, new_log_commit_id);
     assert(new_log_commit_id > highest_commit_id_);
     highest_commit_id_ = new_log_commit_id;
+    LOG_INFO("Update LogBuffer::highest_commit_id_ to %d", (int)highest_commit_id_);
   }
   return true;
 }
@@ -48,7 +51,7 @@ cid_t LogBuffer::GetHighestCommitId() { return highest_commit_id_; }
 void LogBuffer::SetHighestCommitId(cid_t highest_commit_id) {
   // LOG_INFO("compare highest_commit_id_ %lu <= highest_commit_id %lu",
   //		highest_commit_id_, highest_commit_id);
-  LOG_INFO("highest_commit self : %d, new : %d", (int)highest_commit_id_, (int)highest_commit_id);
+  LOG_INFO("Inside SetHighestCommitId: highest_commit self : %d, new : %d", (int)highest_commit_id_, (int)highest_commit_id);
   assert(highest_commit_id_ <= highest_commit_id);
   highest_commit_id_ = highest_commit_id;
 }
