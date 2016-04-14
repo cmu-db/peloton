@@ -25,7 +25,6 @@
 #include <map>
 
 #include "backend/networking/rpc_client.h"
-#include "backend/networking/rpc_utils.h"
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
@@ -208,10 +207,9 @@ peloton_dml(PlanState *planstate,
    *
    * The query plan message of protobuf is:
    * 1. type      : int       casted from PlanNodeType
-   * 2. TupleDesc : message   converted from TupleDesc
-   * 3. num value : int       the size of value_list
-   * 4. value_list: bytes     value Serialize
-   * 5. plan      : bytes     plan Serialize
+   * 2. num value : int       the size of value_list
+   * 3. value_list: bytes     value Serialize
+   * 4. plan      : bytes     plan Serialize
    */
 
   // First set type
@@ -221,28 +219,28 @@ peloton_dml(PlanState *planstate,
   request.set_plan_type(static_cast<int>(type));
 
   // Second prepare TupleDesc and set it into QueryPlanExecRequest
-  peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
-  peloton::networking::SetTupleDescMsg(tuple_desc, *tuple_desc_msg);
+  //peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
+  //peloton::networking::SetTupleDescMsg(tuple_desc, *tuple_desc_msg);
 
-  // Third set size of parameter list
+  // Second set size of parameter list
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
   int param_count = param_values.size();
   request.set_param_num(param_count);
 
-  // Fourth Serialize param_values from param_list
+  // Third Serialize param_values from param_list
   peloton::CopySerializeOutput output_params;
   for (int it = 0; it < param_count; it++) {
       param_values[it].SerializeTo(output_params);
   }
   request.set_param_list(output_params.Data(), output_params.Size());
 
-  // Fifth Serialize plan with plan
+  // Fourth Serialize plan with plan
   peloton::CopySerializeOutput output_plan;
   mapped_plan_ptr->SerializeTo(output_plan);
   request.set_plan(output_plan.Data(), output_plan.Size());
 
   // Finally send the request
-  //pclient->QueryPlan(&request, NULL);
+  pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
