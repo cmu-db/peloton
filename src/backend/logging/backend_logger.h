@@ -73,6 +73,12 @@ class BackendLogger : public Logger {
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
 
+  // Set FrontendLoggerID
+  void SetFrontendLoggerID(int id) { frontend_logger_id = id; }
+
+  // Get FrontendLoggerID
+  int GetFrontendLoggerID() { return frontend_logger_id; }
+
  protected:
   // XXX the lock for the buffer being used currently
   Spinlock log_buffer_lock;
@@ -82,6 +88,8 @@ class BackendLogger : public Logger {
   cid_t highest_logged_commit_id = INVALID_CID;
 
   cid_t highest_flushed_cid = 0;
+
+  int frontend_logger_id;
 };
 
 }  // namespace logging

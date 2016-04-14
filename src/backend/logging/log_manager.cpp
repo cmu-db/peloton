@@ -27,7 +27,7 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
-#define NUM_FRONTEND_LOGGERS 16
+#define NUM_FRONTEND_LOGGERS 1
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
@@ -139,7 +139,8 @@ void LogManager::PrepareLogging() {
   if (this->IsInLoggingMode()) {
     this->GetBackendLogger();
     auto logger = this->GetBackendLogger();
-    frontend_logger->SetBackendLoggerLoggedCid(*logger);
+    int frontend_logger_id = logger->GetFrontendLoggerID();
+    frontend_loggers[frontend_logger_id]->SetBackendLoggerLoggedCid(*logger);
   }
 }
 
@@ -255,11 +256,11 @@ BackendLogger *LogManager::GetBackendLogger() {
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
     backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
-    // TODO for now, add all backend loggers to FrontendLogger(0), change this
     int i;
     i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
     frontend_loggers[i % NUM_FRONTEND_LOGGERS].get()->AddBackendLogger(
         backend_logger);
+    backend_logger->SetFrontendLoggerID(i);
   }
 
   return backend_logger;
@@ -361,9 +362,9 @@ void LogManager::WaitForFlush(cid_t cid) {
 
     // TODO confirm with mperron if this is correct or not
     while (this->GetMaxFlushedCommitId() < cid) {
-    // while (frontend_logger->GetMaxFlushedCommitId() < cid) {
+    /* while (frontend_logger->GetMaxFlushedCommitId() < cid) {
       LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
-    		  frontend_logger->GetMaxFlushedCommitId(), cid);
+    		  frontend_logger->GetMaxFlushedCommitId(), cid); */
       flush_notify_cv.wait(wait_lock);
     }
   }

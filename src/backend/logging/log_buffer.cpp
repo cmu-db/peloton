@@ -48,6 +48,7 @@ cid_t LogBuffer::GetHighestCommitId() { return highest_commit_id_; }
 void LogBuffer::SetHighestCommitId(cid_t highest_commit_id) {
   // LOG_INFO("compare highest_commit_id_ %lu <= highest_commit_id %lu",
   //		highest_commit_id_, highest_commit_id);
+  LOG_INFO("highest_commit self : %d, new : %d", (int)highest_commit_id_, (int)highest_commit_id);
   assert(highest_commit_id_ <= highest_commit_id);
   highest_commit_id_ = highest_commit_id;
 }
