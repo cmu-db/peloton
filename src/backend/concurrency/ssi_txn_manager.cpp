@@ -107,6 +107,13 @@ bool SsiTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
   LOG_INFO("AcquireOwnership %lu", txn_id);
 
+  // jump to abort directly
+  if(current_ssi_txn_ctx->is_abort()){
+    assert(current_ssi_txn_ctx->is_abort_ == false);
+    LOG_INFO("detect conflicts");
+    return false;
+  }
+
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     return false;
@@ -172,6 +179,14 @@ bool SsiTxnManager::AcquireOwnership(
 bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
                                 const oid_t &tuple_id) {
   LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+
+  // jump to abort directly
+  if(current_ssi_txn_ctx->is_abort()){
+    assert(current_ssi_txn_ctx->is_abort_ == false);
+    LOG_INFO("detect conflicts");
+    return false;
+  }
+
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
