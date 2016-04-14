@@ -28,6 +28,8 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/loggers/wal_backend_logger.h"
+#include "backend/logging/checkpoint_tile_scanner.h"
+
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
@@ -155,7 +157,6 @@ void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
  * @brief flush all the log records to the file
  */
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
-
   size_t global_queue_size = global_queue.size();
 
   // First, write all the record in the queue
@@ -166,7 +167,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // LOG_INFO("Flushing %lu log buffers..", global_queue_size);
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
-
     auto &log_buffer = global_queue[global_queue_itr];
 
     fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
@@ -215,7 +215,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
   // signal that we have flushed
   LogManager::GetInstance().FrontendLoggerFlushed();
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -389,85 +388,57 @@ void WriteAheadFrontendLogger::DoRecovery() {
 void WriteAheadFrontendLogger::RecoverIndex() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   LOG_INFO("Recovering the indexes");
-
-  // get txn
-  std::unique_ptr<concurrency::Transaction> txn(txn_manager.BeginTransaction());
-  assert(txn);
-  LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
-            start_commit_id);
-
-  // build executor context
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(
-          txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
+  cid_t cid = txn_manager.GetNextCommitId();
 
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto database_count = catalog_manager.GetDatabaseCount();
-  bool failure = false;
+
   // loop all databases
-  for (oid_t database_idx = 0; database_idx < database_count && !failure;
-       database_idx++) {
+  for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
     auto database = catalog_manager.GetDatabase(database_idx);
     auto table_count = database->GetTableCount();
 
     // loop all tables
-    for (oid_t table_idx = 0; table_idx < table_count && !failure;
-         table_idx++) {
+    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
       assert(target_table);
       LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
                table_idx, target_table->GetName().c_str());
 
-      auto schema = target_table->GetSchema();
-      assert(schema);
-      std::vector<oid_t> column_ids;
-      column_ids.resize(schema->GetColumnCount());
-      std::iota(column_ids.begin(), column_ids.end(), 0);
-
-      // Construct the plan node
-      LOG_TRACE("Initializing the executor tree");
-      std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
-          new planner::SeqScanPlan(target_table, nullptr, column_ids));
-      std::unique_ptr<executor::SeqScanExecutor> scan_executor(
-          new executor::SeqScanExecutor(scan_plan_node.get(),
-                                        executor_context.get()));
-      scan_executor->SetCheckpointMode(true);
-      if (!RecoverIndexHelper(scan_executor.get(), target_table)) {
+      if (!RecoverTableIndexHelper(target_table, cid)) {
         break;
       }
     }
   }
 }
 
-bool WriteAheadFrontendLogger::RecoverIndexHelper(
-    executor::AbstractExecutor *scan_executor,
-    storage::DataTable *target_table) {
-  // Prepare columns
+bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
+    storage::DataTable *target_table, cid_t start_cid) {
   auto schema = target_table->GetSchema();
+  assert(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
 
-  // Initialize the seq scan executor
-  auto status = scan_executor->Init();
-  // Abort and cleanup
-  if (status == false) {
-    LOG_ERROR("Failed to init scan executor during recovery");
-    return false;
-  }
+  oid_t current_tile_group_offset = START_OID;
+  auto table_tile_group_count = target_table->GetTileGroupCount();
+  CheckpointTileScanner scanner;
 
-  // Execute seq scan until we get result tiles
-  for (;;) {
-    status = scan_executor->Execute();
-    // Stop
-    if (status == false) {
-      break;
-    }
+  while (current_tile_group_offset < table_tile_group_count) {
+    // Retrieve a tile group
+    auto tile_group = target_table->GetTileGroup(current_tile_group_offset);
 
     // Retrieve a logical tile
     std::unique_ptr<executor::LogicalTile> logical_tile(
-        scan_executor->GetOutput());
+        scanner.Scan(tile_group, column_ids, start_cid));
+
+    // Empty result
+    if (!logical_tile) {
+      current_tile_group_offset++;
+      continue;
+    }
+
     auto tile_group_id = logical_tile->GetColumnInfo(0)
                              .base_tile->GetTileGroup()
                              ->GetTileGroupId();
@@ -491,6 +462,7 @@ bool WriteAheadFrontendLogger::RecoverIndexHelper(
         InsertIndexEntry(tuple.get(), target_table, location);
       }
     }
+    current_tile_group_offset++;
   }
   return true;
 }
@@ -794,7 +766,9 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   // Otherwise, read the log record type
   if (!is_truncated) {
     ret = fread((void *)&buffer, 1, sizeof(char), this->log_file);
-    if (ret <= 0) { LOG_INFO("Failed an fread"); }
+    if (ret <= 0) {
+      LOG_INFO("Failed an fread");
+    }
   }
   if (is_truncated || ret <= 0) {
     LOG_INFO("Call OpenNextLogFile");

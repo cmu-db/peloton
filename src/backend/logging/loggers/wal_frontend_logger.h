@@ -88,8 +88,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
  private:
   std::string GetLogFileName(void);
 
-  bool RecoverIndexHelper(executor::AbstractExecutor *scan_executor,
-                          storage::DataTable *target_table);
+  bool RecoverTableIndexHelper(storage::DataTable *target_table, cid_t start_cid);
 
   void InsertIndexEntry(storage::Tuple *tuple, storage::DataTable *table,
                         ItemPointer target_location);
