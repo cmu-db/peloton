@@ -31,6 +31,8 @@ struct SsiTxnContext {
         is_finish_(false) {}
   Transaction *transaction_;
 
+  // is_abort() could run without any locks
+  // because if it returns wrong result, it just leads to a false abort
   inline bool is_abort() {
     return is_abort_ || (in_conflict_ && out_conflict_);
   }

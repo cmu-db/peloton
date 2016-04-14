@@ -206,8 +206,9 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
         writer != txn_id) {
       txn_manager_mutex_.ReadLock();
 
-      if (txn_table_.count(writer) != 0) {
+      if (txn_table_.count(writer) != 0 && !txn_table_[writer]->is_abort()) {
         // The writer have not been removed from the txn table
+        // && the writer is a health txn
         LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
                  tuple_id);
         SetInConflict(txn_table_.at(writer));
