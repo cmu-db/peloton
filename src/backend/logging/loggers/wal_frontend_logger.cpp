@@ -154,7 +154,6 @@ void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
  * @brief flush all the log records to the file
  */
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
-
   size_t global_queue_size = global_queue.size();
 
   // First, write all the record in the queue
@@ -173,8 +172,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
            log_file);
-    if (log_buffer->GetHighestCommitId() > this->max_commit_id) {
-      this->max_commit_id = log_buffer->GetHighestCommitId();
+    // TODO this is not correct and must be fixed, should be max seen cid
+    if (log_buffer->GetHighestCommittedTransaction() > this->max_commit_id) {
+      this->max_commit_id = log_buffer->GetHighestCommittedTransaction();
       LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
     }
 
@@ -184,8 +184,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
-  //XXX Do we not write delimiter when queue size is 0?
-   if (global_queue_size > 0) {
+  if (max_collected_commit_id != max_flushed_commit_id) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
@@ -211,7 +210,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
   // signal that we have flushed
   LogManager::GetInstance().FrontendLoggerFlushed();
-
 }
 
 //===--------------------------------------------------------------------===//

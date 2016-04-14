@@ -21,7 +21,6 @@
 namespace peloton {
 namespace logging {
 
-
 class BackendLogger;
 
 //===--------------------------------------------------------------------===//
@@ -31,7 +30,7 @@ class BackendLogger;
 // TODO make capacity_ template parameter
 class LogBuffer {
  public:
-  LogBuffer(BackendLogger*);
+  LogBuffer(BackendLogger *);
 
   ~LogBuffer(void){};
 
@@ -41,9 +40,13 @@ class LogBuffer {
 
   void ResetData();
 
-  cid_t GetHighestCommitId();
+  cid_t GetHighestCommittedTransaction();
 
-  void SetHighestCommitId(cid_t highest_commit_id);
+  void SetHighestCommittedTransaction(cid_t highest_commit_id);
+
+  cid_t GetLoggingCidLowerBound();
+
+  void SetLoggingCidLowerBound(cid_t cid_lower_bound);
 
   size_t GetSize();
 
@@ -52,7 +55,6 @@ class LogBuffer {
   BackendLogger *GetBackendLogger();
 
  private:
-
   // write data to the log buffer, return false if not enough space
   bool WriteData(char *data, size_t len);
 
@@ -65,10 +67,11 @@ class LogBuffer {
   char data_[LOG_BUFFER_CAPACITY];
 
   // the highest commit id
-  cid_t highest_commit_id_ = 0;
+  cid_t highest_committed_transaction_ = 0;
+
+  cid_t logging_cid_lower_bound_ = 0;
 
   BackendLogger *backend_logger_;
-
 };
 
 }  // namespace logging
