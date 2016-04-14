@@ -26,12 +26,11 @@
 #include <cassert>
 #include <getopt.h>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 #include "backend/common/timer.h"
-#include "backend/storage/storage_manager.h"
-
-// Logging mode
-extern LoggingType     peloton_logging_mode;
+#include "backend/common/types.h"
 
 namespace peloton {
 namespace test {
@@ -42,27 +41,56 @@ namespace test {
 
 class DeviceTest : public PelotonTest {};
 
-#define CACHELINE_SIZE 64
-
-#define roundup2(x, y)  (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
+#define DATA_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
+#define DATA_FILE_NAME "peloton.pmem"
 
 TEST_F(DeviceTest, BenchmarkTest) {
 
-  peloton_logging_mode = LOGGING_TYPE_HDD_HDD;
+  std::vector<std::string> data_file_dirs = {NVM_DIR, HDD_DIR};
+  int data_fd;
+  size_t data_file_len = DATA_FILE_LEN;
+  oid_t num_trials = 3;
+  std::size_t begin_chunk_size = 9, end_chunk_size = 21; // lg base 2
 
-  auto &storage_manager = storage::StorageManager::GetInstance();
+  // Go over all the dirs
+  for(auto data_file_dir : data_file_dirs){
 
-  size_t chunk_size = 1024;
-  std::string source_buf(chunk_size, 'a');
+    // Create a data file
+    std::string data_file_name = data_file_dir + DATA_FILE_NAME;
+    std::cout << "Data File Name : " << data_file_name << "\n";
 
-  auto data = reinterpret_cast<char *>(storage_manager.Allocate(BACKEND_TYPE_HDD,
-                                                                chunk_size));
+    if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR | O_DIRECT | O_SYNC, 0666)) < 0) {
+      perror(data_file_name.c_str());
+      exit(EXIT_FAILURE);
+    }
 
-  EXPECT_NE(data, nullptr);
+    // Allocate the data file
+    if ((errno = posix_fallocate(data_fd, 0, data_file_len)) != 0) {
+      perror("posix_fallocate");
+      exit(EXIT_FAILURE);
+    }
 
-  std::memcpy(data, source_buf.c_str(), chunk_size);
+    // Go over all the chunk sizes
+    for(oid_t chunk_size_itr = begin_chunk_size;
+        chunk_size_itr <= end_chunk_size;
+        chunk_size_itr++){
 
-  storage_manager.Sync(BACKEND_TYPE_HDD, data, 0);
+      // READS
+      for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
+
+      }
+
+      // WRITES
+      for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
+
+      }
+
+    }
+
+    // Close the pmem file
+    close(data_fd);
+  }
+
 }
 
 }  // End test namespace
