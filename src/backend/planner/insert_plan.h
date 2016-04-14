@@ -31,11 +31,12 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(InsertPlan &&) = delete;
   InsertPlan &operator=(InsertPlan &&) = delete;
 
-  explicit InsertPlan(storage::DataTable *table,
-                      const planner::ProjectInfo *project_info,
-                      oid_t bulk_insert_count = 1)
+  explicit InsertPlan(
+      storage::DataTable *table,
+      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+      oid_t bulk_insert_count = 1)
       : target_table_(table),
-        project_info_(project_info),
+        project_info_(std::move(project_info)),
         bulk_insert_count(bulk_insert_count) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
@@ -50,9 +51,9 @@ class InsertPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
-  AbstractPlan *Copy() const {
-    return new InsertPlan(target_table_, project_info_->Copy(),
-                          bulk_insert_count);
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new InsertPlan(
+        target_table_, std::move(project_info_->Copy()), bulk_insert_count));
   }
 
  private:
