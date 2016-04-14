@@ -36,14 +36,15 @@ class AbstractJoinPlan : public AbstractPlan {
   AbstractJoinPlan(AbstractJoinPlan &&) = delete;
   AbstractJoinPlan &operator=(AbstractJoinPlan &&) = delete;
 
-  AbstractJoinPlan(PelotonJoinType joinType,
-                   const expression::AbstractExpression *predicate,
-                   const ProjectInfo *proj_info,
-                   const catalog::Schema *proj_schema)
+  AbstractJoinPlan(
+      PelotonJoinType joinType,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      std::unique_ptr<const ProjectInfo> &&proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema)
       : AbstractPlan(),
         join_type_(joinType),
-        predicate_(predicate),
-        proj_info_(proj_info),
+        predicate_(std::move(predicate)),
+        proj_info_(std::move(proj_info)),
         proj_schema_(proj_schema) {
     // Fuck off!
   }
@@ -58,11 +59,15 @@ class AbstractJoinPlan : public AbstractPlan {
     return predicate_.get();
   }
 
-  const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
+  const ProjectInfo* GetProjInfo() const {
+    return proj_info_.get();
+  }
 
-  const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
+  const catalog::Schema *GetSchema() const {
+    return proj_schema_.get();
+  }
 
-  AbstractPlan *Copy() const = 0;
+  std::unique_ptr<AbstractPlan> Copy() const = 0;
 
  private:
   /** @brief The type of join that we're going to perform */
@@ -75,7 +80,7 @@ class AbstractJoinPlan : public AbstractPlan {
   std::unique_ptr<const ProjectInfo> proj_info_;
 
   /** @brief Projection schema */
-  std::unique_ptr<const catalog::Schema> proj_schema_;
+  std::shared_ptr<const catalog::Schema> proj_schema_;
 };
 
 }  // namespace planner

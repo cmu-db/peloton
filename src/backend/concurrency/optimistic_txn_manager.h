@@ -64,6 +64,46 @@ class OptimisticTxnManager : public TransactionManager {
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();
+
+  virtual Transaction *BeginTransaction() {
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
+    
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+
+    return txn;
+  }
+
+  virtual void EndTransaction() {
+    txn_id_t txn_id = current_txn->GetTransactionId();
+
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+    
+    delete current_txn;
+    current_txn = nullptr;
+  }
+
+  virtual cid_t GetMaxCommittedCid() {
+    cid_t min_running_cid = MAX_CID;
+    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
+      {
+        auto iter = running_txn_buckets_[i].lock_table();
+        for (auto &it : iter) {
+          if (it.second < min_running_cid) {
+            min_running_cid = it.second;
+          }
+        }
+      }
+    }
+    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
+    return min_running_cid - 1;
+  }
+  
+
+private:
+  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };
 }
 }
