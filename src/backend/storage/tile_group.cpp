@@ -74,10 +74,12 @@ peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
+// TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
-  return tile_group_header->GetNextTupleSlot();
+  return tile_group_header->GetCurrentNextTupleSlot();
 }
 
+// this function is called only when building tile groups for aggregation operations.
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
@@ -125,7 +127,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
-  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot(1);
+  oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
