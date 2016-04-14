@@ -150,11 +150,10 @@ class TransactionManager {
    */
   void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
     auto &manager = catalog::Manager::GetInstance();
-    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
-    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-    auto transaction_id = current_txn->GetTransactionId();
-    tile_group_header -> RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id);
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    auto begin_cid = current_txn->GetBeginCommitId();
+    tile_group_header->RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, begin_cid);
   }
 
   // Txn manager may store related information in TileGroupHeader, so when

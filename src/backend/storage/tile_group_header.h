@@ -20,7 +20,6 @@
 #include "backend/expression/container_tuple.h"
 
 #include <atomic>
-#include <mutex>
 #include <iostream>
 #include <cassert>
 #include <queue>
@@ -115,17 +114,18 @@ class TileGroupHeader : public Printable {
     }
   }
 
-  inline void RecycleTupleSlot(const oid_t db_id, const oid_t tb_id,
-                               const oid_t tg_id, const oid_t t_id,
-                               const txn_id_t t) {
+  // called by transaction manager.
+  inline void RecycleTupleSlot(const oid_t &database_id, const oid_t &table_id,
+                               const oid_t &tile_group_id, const oid_t &tuple_id,
+                               const cid_t &begin_cid) {
     auto &gc_manager = gc::GCManager::GetInstance();
-    struct TupleMetadata tm;
-    tm.database_id = db_id;
-    tm.tile_group_id = tg_id;
-    tm.table_id = tb_id;
-    tm.tuple_slot_id = t_id;
-    tm.transaction_id = t;
-    gc_manager.AddPossiblyFreeTuple(tm);
+    TupleMetadata tuple_metadata;
+    tuple_metadata.database_id = database_id;
+    tuple_metadata.table_id = table_id;
+    tuple_metadata.tile_group_id = tile_group_id;
+    tuple_metadata.tuple_slot_id = tuple_id;
+    tuple_metadata.begin_cid = begin_cid;
+    gc_manager.AddPossiblyFreeTuple(tuple_metadata);
   }
 
   oid_t GetCurrentNextTupleSlot() const { return next_tuple_slot; }

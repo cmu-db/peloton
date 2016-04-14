@@ -747,12 +747,12 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 // TupleMetadata
 //===--------------------------------------------------------------------===//
 struct TupleMetadata {
-  oid_t database_id=0;
-  oid_t table_id=0;
-  oid_t tile_id=0;
-  oid_t tile_group_id=0;
-  oid_t tuple_slot_id=0;
-  txn_id_t transaction_id=0; // the last transaction which modified this tuple.
+  oid_t database_id = 0;
+  oid_t table_id = 0;
+  oid_t tile_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t begin_cid = 0; // begin_cid of the last txn that modified the tuple.
 };
 
 //===--------------------------------------------------------------------===//
