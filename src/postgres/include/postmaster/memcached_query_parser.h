@@ -1,23 +1,27 @@
-//
-// Created by siddharth on 17/3/16.
-//
+
+#pragma once
+
 #include <string>
 #include <cstring>
 #include <vector>
 #include <algorithm>
+
 
 namespace peloton {
 namespace memcached {
 
 class QueryParser {
 private:
+  //MemcachedSocket* mcsocket;
   std::string memcached_query;
-  void parseQuery();
-
+  int op_type;
 public:
+  int getOpType();
+  std::string parseQuery();
+//  QueryParser(std::string query, MemcachedSocket* mc_sock) {
   QueryParser(std::string query) {
+      //mcsocket=mc_sock;
     memcached_query = query;
-    parseQuery();
   };
 
   ~QueryParser() {};
