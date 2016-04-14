@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <unordered_map>
+#include <list>
 
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
@@ -21,6 +22,9 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
+#include "backend/catalog/manager.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/tuple.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 
@@ -138,6 +142,20 @@ class TransactionManager {
 
   virtual void PerformDelete(const oid_t &tile_group_id,
                              const oid_t &tuple_id) = 0;
+
+  /*
+   * Write a virtual function to push deleted and verified (acc to optimistic
+   * concurrency control) tuples into possibly free from all underlying
+   * concurrency implementations of transactions.
+   */
+  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
+    auto &manager = catalog::Manager::GetInstance();
+    storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id).get();
+    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
+    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    auto transaction_id = current_txn->GetTransactionId();
+    tile_group_header -> RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, transaction_id);
+  }
 
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified

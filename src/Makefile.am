@@ -26,6 +26,7 @@ include $(srcdir)/backend/networking/Makefile.am
 include $(srcdir)/backend/planner/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
+include $(srcdir)/backend/gc/Makefile.am
 include $(srcdir)/backend/benchmark/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
@@ -64,7 +65,8 @@ libpeloton_la_SOURCES = \
 			$(networking_FILES) \
 			$(planner_FILES) \
 			$(storage_FILES) \
-			$(logging_FILES)
+			$(logging_FILES) \
+			$(gc_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
 
