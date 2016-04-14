@@ -52,6 +52,12 @@ class PlanExecutor {
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                     const std::vector<Value> &params,
                                     TupleDesc m_tuple_desc);
+
+  static int ExecutePlan(const planner::AbstractPlan *plan,
+                         const std::vector<Value> &params,
+                         std::vector<std::unique_ptr<executor::LogicalTile>>&
+                         logical_tile_list);
+
  private:
 };
 

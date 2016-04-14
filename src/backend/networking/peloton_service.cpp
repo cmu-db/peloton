@@ -13,11 +13,11 @@
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/peloton_endpoint.h"
 #include "backend/networking/rpc_server.h"
-#include "backend/networking/rpc_utils.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/common/serializer.h"
 #include "backend/common/assert.h"
+#include "backend/storage/tile.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 
@@ -272,31 +272,6 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
     } else {
       LOG_ERROR("No response: site is null");
     }
-
-
-    /*
-     * If request is not null, this is a rpc  call, server should handle the reqeust
-     */
-    if (request != NULL) {
-
-        LOG_TRACE("Received from client, sender site: %d, last_txn_id: %lld",
-                request->sender_site(),
-                request->last_transaction_id());
-
-        response->set_sender_site(9876);
-        Status status = ABORT_SPECULATIVE;
-        response->set_status(status);
-
-        // if callback exist, run it
-        if (done) {
-            done->Run();
-        }
-    if (response->has_status() == true) {
-      LOG_TRACE("Status: %d", response->status());
-    } else {
-      LOG_ERROR("No response: status is null");
-    }
-  }
   }
 }
 
@@ -370,7 +345,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         }
 
         // construct TupleDesc
-        std::unique_ptr<tupleDesc> tuple_desc = ParseTupleDescMsg(request->tuple_dec());
+        //std::unique_ptr<tupleDesc> tuple_desc = ParseTupleDescMsg(request->tuple_dec());
 
         PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
 
@@ -382,18 +357,46 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
             }
 
             case PLAN_NODE_TYPE_SEQSCAN: {
-                LOG_TRACE("SEQSCAN revieved");
+                LOG_INFO("SEQSCAN revieved");
                 std::string plan = request->plan();
                 ReferenceSerializeInputBE input(plan.c_str(), plan.size());
                 std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan =
                         std::make_shared<peloton::planner::SeqScanPlan>();
                 ss_plan->DeserializeFrom(input);
 
-                //peloton_status status =
+                std::vector<std::unique_ptr<executor::LogicalTile>> logical_tile_list;
+                int tuple_count =
                         peloton::bridge::PlanExecutor::ExecutePlan(ss_plan.get(),
-                                                                    params,
-                                                                    tuple_desc.get());
-                // TODO: We should return the result here
+                                                                   params,
+                                                                   logical_tile_list);
+                // Return result
+                if (tuple_count < 0) {
+                  // ExecutePlan fails
+                  LOG_ERROR("ExecutePlan fails");
+                  return;
+                }
+
+                // Set the basic metadata
+                response->set_tuple_count(tuple_count);
+                response->set_tile_count(logical_tile_list.size());
+
+                // Loop the logical_tile_list to set the response
+                std::vector<std::unique_ptr<executor::LogicalTile>>::iterator it;
+                for (it = logical_tile_list.begin(); it != logical_tile_list.end(); it ++) {
+                  // First materialize logicalTile to physical tile
+                  std::unique_ptr<storage::Tile> tile = (*it)->Materialize();
+
+                  // Then serialize physical tile
+                  CopySerializeOutput output_tiles;
+                  tile->SerializeTo(output_tiles, tile->GetActiveTupleCount());
+
+                  // Finally set the response, which be automatically sent back
+                  response->add_result(output_tiles.Data(), output_tiles.Size());
+
+                  // Debug
+                  LOG_INFO("Tile content is: %s", tile->GetInfo().c_str());
+                }
+
                 break;
             }
 
@@ -404,7 +407,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
             }
         }
 
-        // if callback exist, run it
+        // If callback exist, run it
         if (done) {
             done->Run();
         }
@@ -413,9 +416,31 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
      * Here is for the client callback for Heartbeat
      */
     else {
-        // proecess the response
-        LOG_TRACE("proecess the Query response");
+        // Process the response
+        LOG_INFO("proecess the Query response");
         ASSERT(response);
+
+        int tuple_count = response->tuple_count();
+        int tile_count = response->tile_count();
+
+        int result_size = response->result_size();
+        ASSERT(result_size == tile_count);
+
+        for (int idx = 0; idx < result_size; idx++) {
+          // Get the tile bytes
+          std::string tile_bytes = response->result(idx);
+          ReferenceSerializeInputBE tile_input(tile_bytes.c_str(), tile_bytes.size());
+          storage::Tile tile;
+
+          // TODO: Make sure why varlen_pool is used as parameter
+          std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BACKEND_TYPE_MM));
+
+          // Tile deserialization
+          tile.DeserializeTuplesFrom(tile_input, var_pool);
+
+          // Debug
+          LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
+        }
     }
 }
 
