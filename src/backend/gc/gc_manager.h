@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * gc_manager.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/gc/gc_manager.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// gc_manager.h
+//
+// Identification: src/backend/gc/gc_manager.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -17,7 +17,8 @@
 #include <deque>
 #include <map>
 #include <list>
-#include <boost/lockfree/queue.hpp>
+
+#include "backend/common/lockfree_queue.h"
 #include "backend/common/logger.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
@@ -29,6 +30,7 @@ namespace gc {
 //===--------------------------------------------------------------------===//
 
 #define MAX_TUPLES_PER_GC 1000
+#define MAX_FREE_LIST_LENGTH 1000
 
 /**
  * Global GC Manager
@@ -43,26 +45,34 @@ class GCManager {
   // global singleton
   static GCManager &GetInstance(void);
 
-  // Get status of whether GC thread is running or not
-  bool GetStatus();
-
-  void SetStatus(GCStatus status);
   void Poll();
 
-  void AddPossiblyFreeTuple(struct TupleMetadata tm);
-  oid_t ReturnFreeSlot(oid_t db_id, oid_t tb_id);
+  // Get status of whether GC thread is running or not
+  bool GetStatus() { return this->status; }
+
+  void SetStatus(const GCStatus &status) { this->status = status; }
+
+
+  void AddPossiblyFreeTuple(const TupleMetadata &);
+
+  oid_t ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
 
  private:
-  GCStatus status;
-  cuckoohash_map<std::string, boost::lockfree::queue<struct TupleMetadata> *>
-      free_map;
-  boost::lockfree::queue<struct TupleMetadata> possibly_free_list{1000};
+  GCManager() : possibly_free_list_(MAX_FREE_LIST_LENGTH) { this->status = GC_STATUS_OFF; }
+
+  ~GCManager() {}
+
   void DeleteTupleFromIndexes(struct TupleMetadata tm);
-  GCManager();
-  ~GCManager();
+
+
+ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+  GCStatus status;
+  cuckoohash_map<oid_t, LockfreeQueue<TupleMetadata>*> free_map_;
+  LockfreeQueue<TupleMetadata> possibly_free_list_;
+
 };
 
 }  // namespace gc
