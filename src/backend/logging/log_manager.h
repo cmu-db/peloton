@@ -113,6 +113,8 @@ class LogManager {
 
   void ResetFrontendLogger();
 
+  void PrepareLogging();
+
   void LogBeginTransaction(oid_t commit_id);
 
   void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
@@ -126,6 +128,8 @@ class LogManager {
   void LogCommitTransaction(oid_t commit_id);
 
   void TruncateLogs(txn_id_t commit_id);
+
+  void DoneLogging();
 
  private:
   LogManager();

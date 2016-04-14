@@ -61,7 +61,8 @@ std::atomic<int> tuple_id;
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
+std::unique_ptr<const planner::ProjectInfo>
+MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -71,8 +72,9 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
+  return std::unique_ptr<const planner::ProjectInfo>(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 }
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
@@ -91,7 +93,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
   auto project_info = MakeProjectInfoFromTuple(tuple.get());
 
-  planner::InsertPlan node(table, project_info);
+  planner::InsertPlan node(table, std::move(project_info));
 
   // Insert the desired # of tuples
   for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
@@ -123,7 +125,7 @@ TEST_F(LoaderTests, LoadingTest) {
                      testing_pool, tilegroup_count_per_loader);
 
   auto expected_tile_group_count =
-      loader_threads_count * tilegroup_count_per_loader;
+      loader_threads_count * tilegroup_count_per_loader + 1;
   auto bytes_to_megabytes_converter = (1024 * 1024);
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);

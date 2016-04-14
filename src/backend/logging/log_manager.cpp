@@ -135,6 +135,21 @@ bool LogManager::EndLogging() {
 // Utility Functions
 //===--------------------------------------------------------------------===//
 
+void LogManager::PrepareLogging() {
+  if (this->IsInLoggingMode()) {
+    this->GetBackendLogger();
+    auto logger = this->GetBackendLogger();
+    frontend_logger->SetBackendLoggerLoggedCid(*logger);
+  }
+}
+
+void LogManager::DoneLogging() {
+  if (this->IsInLoggingMode()) {
+    auto logger = this->GetBackendLogger();
+    logger->SetHighestLoggedCommitId(INVALID_CID);
+  }
+}
+
 void LogManager::LogBeginTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
@@ -199,9 +214,8 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
         LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
         new_tuple_tile_group->GetDatabaseId(), new_location,
         INVALID_ITEMPOINTER, tuple.get());
-
-    delete executor_context;
     logger->Log(record);
+    delete executor_context;
   }
 }
 
@@ -336,8 +350,8 @@ cid_t LogManager::GetMaxFlushedCommitId() {
 void LogManager::FrontendLoggerFlushed() {
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
-
     flush_notify_cv.notify_all();
+    // LOG_INFO("FrontendLoggerFlushed - notify all waiting backend loggers");
   }
 }
 
@@ -347,6 +361,9 @@ void LogManager::WaitForFlush(cid_t cid) {
 
     // TODO confirm with mperron if this is correct or not
     while (this->GetMaxFlushedCommitId() < cid) {
+    // while (frontend_logger->GetMaxFlushedCommitId() < cid) {
+      LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
+    		  frontend_logger->GetMaxFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
   }

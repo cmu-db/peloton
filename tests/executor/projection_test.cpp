@@ -62,7 +62,6 @@ TEST_F(ProjectionTests, BasicTest) {
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
@@ -70,8 +69,7 @@ TEST_F(ProjectionTests, BasicTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -89,17 +87,18 @@ TEST_F(ProjectionTests, BasicTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -121,7 +120,6 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
@@ -129,8 +127,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -150,7 +147,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   columns.push_back(orig_schema->GetColumn(1));
   columns.push_back(orig_schema->GetColumn(3));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap map0 =
@@ -163,10 +160,11 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -188,7 +186,6 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   // Create a table and wrap it in logical tile
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size, false,
@@ -196,8 +193,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -215,7 +211,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   columns.push_back(orig_schema->GetColumn(0));
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
@@ -233,10 +229,11 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
