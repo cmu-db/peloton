@@ -131,7 +131,7 @@ void LogManager::PrepareLogging() {
 void LogManager::DoneLogging() {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    logger->SetHighestLoggedCommitId(INVALID_CID);
+    logger->SetLoggingCidLowerBound(INVALID_CID);
   }
 }
 
@@ -311,8 +311,9 @@ void LogManager::WaitForFlush(cid_t cid) {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
     while (frontend_logger->GetMaxFlushedCommitId() < cid) {
-      LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
-    		  frontend_logger->GetMaxFlushedCommitId(), cid);
+      LOG_INFO(
+          "Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
+          frontend_logger->GetMaxFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
   }
