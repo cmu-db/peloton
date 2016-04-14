@@ -140,6 +140,7 @@ void LogManager::PrepareLogging() {
     this->GetBackendLogger();
     auto logger = this->GetBackendLogger();
     int frontend_logger_id = logger->GetFrontendLoggerID();
+    LOG_INFO("Got frontend_logger_id as %d", (int)frontend_logger_id);
     frontend_loggers[frontend_logger_id]->SetBackendLoggerLoggedCid(*logger);
   }
 }
@@ -147,6 +148,7 @@ void LogManager::PrepareLogging() {
 void LogManager::DoneLogging() {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
+    LOG_INFO("DoneLogging setting highest logged commit id to 0!");
     logger->SetHighestLoggedCommitId(INVALID_CID);
   }
 }
@@ -255,12 +257,13 @@ BackendLogger *LogManager::GetBackendLogger() {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
+    LOG_INFO("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
     int i;
     i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
     frontend_loggers[i % NUM_FRONTEND_LOGGERS].get()->AddBackendLogger(
         backend_logger);
-    backend_logger->SetFrontendLoggerID(i);
+    backend_logger->SetFrontendLoggerID(i % NUM_FRONTEND_LOGGERS);
   }
 
   return backend_logger;

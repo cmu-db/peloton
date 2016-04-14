@@ -59,6 +59,7 @@ class BackendLogger : public Logger {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
     highest_logged_commit_id = cid;
+    LOG_INFO("Setting BackendLogger::highest_logged_commit_id to %d", (int)cid);
     log_buffer_lock.Unlock();
   }
 
