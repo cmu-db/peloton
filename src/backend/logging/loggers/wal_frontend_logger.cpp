@@ -570,6 +570,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
   if (tile_group == nullptr) {
+    // TODO this is not thread safe
     table->AddTileGroupWithOid(insert_loc.block);
     tile_group = manager.GetTileGroup(insert_loc.block);
     if (max_tg < insert_loc.block) {
@@ -579,6 +580,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
+    // TODO this is not thread safe!
     table->IncreaseNumberOfTuplesBy(1);
   }
   delete tuple;
@@ -596,6 +598,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
     tile_group = manager.GetTileGroup(delete_loc.block);
@@ -603,6 +606,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = delete_loc.block;
     }
   }
+  // TODO this is not thread safe!
   table->DecreaseNumberOfTuplesBy(1);
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
 }
@@ -621,6 +625,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
     tile_group = manager.GetTileGroup(remove_loc.block);

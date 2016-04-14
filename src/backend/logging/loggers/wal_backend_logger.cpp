@@ -70,7 +70,7 @@ cid_t WriteAheadBackendLogger::PrepareLogBuffers() {
   cid_t commit_id = INVALID_CID;
   this->log_buffer_lock.Lock();
   commit_id = highest_logged_commit_id;
-  LOG_INFO("Inside PrepareLogBuffers");
+  // LOG_INFO("Inside PrepareLogBuffers");
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
     LOG_INFO("Move the current log buffer to buffer pool");
