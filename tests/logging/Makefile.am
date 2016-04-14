@@ -6,7 +6,7 @@
 
 check_PROGRAMS += logging_test \
 				buffer_pool_test
-				
+
 logging_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp \
 						logging/logging_tests_util.cpp

@@ -17,6 +17,7 @@ logging_FILES = \
 			   backend/logging/records/transaction_record.cpp \
 			   backend/logging/records/log_record_pool.cpp \
 			   backend/logging/checkpoint.cpp \
+			   backend/logging/checkpoint_tile_scanner.cpp \
 			   backend/logging/checkpoint/simple_checkpoint.cpp \
 			   backend/logging/log_file.cpp \ 
 			   backend/logging/circular_buffer_pool.cpp \ 
