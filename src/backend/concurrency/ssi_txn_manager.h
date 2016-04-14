@@ -30,6 +30,11 @@ struct SsiTxnContext {
         is_abort_(false),
         is_finish_(false) {}
   Transaction *transaction_;
+
+  inline bool is_abort() {
+    return is_abort_ || (in_conflict_ && out_conflict_);
+  }
+
   bool in_conflict_;
   bool out_conflict_;
   bool is_abort_;
