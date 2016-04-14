@@ -302,7 +302,7 @@ void LogManager::FrontendLoggerFlushed() {
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
     flush_notify_cv.notify_all();
-    LOG_INFO("FrontendLoggerFlushed - notify all waiting backend loggers");
+    // LOG_INFO("FrontendLoggerFlushed - notify all waiting backend loggers");
   }
 }
 
