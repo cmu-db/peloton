@@ -40,7 +40,8 @@ class WriteBehindFrontendLogger : public FrontendLogger {
   void FlushLogRecords(void);
 
   // Collect the tuple log records for flushing
-  std::pair<bool, ItemPointer> CollectTupleRecord(std::unique_ptr<TupleRecord> record);
+  std::pair<bool, ItemPointer> CollectTupleRecord(
+      std::unique_ptr<TupleRecord> record);
 
   //===--------------------------------------------------------------------===//
   // Recovery
