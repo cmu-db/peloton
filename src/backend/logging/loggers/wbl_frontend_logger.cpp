@@ -91,56 +91,61 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       continue;
     }
 
-    switch (global_queue[global_queue_itr]->GetType()) {
-      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        global_peloton_log_record_pool.CreateTxnLogList(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-        committed_txn_list.push_back(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_ABORT:
-        // Nothing to be done for abort
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_END:
-      case LOGRECORD_TYPE_TRANSACTION_DONE:
-        // if a txn is not committed (aborted or active), log records will be
-        // removed here
-        // Note that list is not be removed immediately, it is removed only
-        // after flush and commit.
-        not_committed_txn_list.push_back(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
-      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
-      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-        LogRecord *log_record = global_queue[global_queue_itr].release();
-        TupleRecord *tuple_record = reinterpret_cast<TupleRecord *>(log_record);
-
-        // Check the commit information
-        auto status =
-            CollectTupleRecord(std::unique_ptr<TupleRecord>(tuple_record));
-
-        // Add it to the set of modified tile groups
-        if (status.first == true) {
-          auto location = status.second.block;
-          if (location != INVALID_OID) {
-            modified_tile_group_set.insert(location);
-          }
-        }
-
-      } break;
-
-      case LOGRECORD_TYPE_INVALID:
-      default:
-        throw Exception("Invalid or unrecogized log record found");
-        break;
-    }
+    // FIXME change the interface of write behind logging
+    //    switch (global_queue[global_queue_itr]->GetType()) {
+    //      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+    //        global_peloton_log_record_pool.CreateTxnLogList(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+    //        committed_txn_list.push_back(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_ABORT:
+    //        // Nothing to be done for abort
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_END:
+    //      case LOGRECORD_TYPE_TRANSACTION_DONE:
+    //        // if a txn is not committed (aborted or active), log records will
+    //        be
+    //        // removed here
+    //        // Note that list is not be removed immediately, it is removed
+    //        only
+    //        // after flush and commit.
+    //        not_committed_txn_list.push_back(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    //      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    //      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+    //
+    //        LogRecord* log_record = global_queue[global_queue_itr].release();
+    //        TupleRecord* tuple_record =
+    //        reinterpret_cast<TupleRecord*>(log_record);
+    //
+    //        // Check the commit information
+    //        auto status =
+    //            CollectTupleRecord(std::unique_ptr<TupleRecord>(tuple_record));
+    //
+    //        // Add it to the set of modified tile groups
+    //        if (status.first == true) {
+    //          auto location = status.second.block;
+    //          if (location != INVALID_OID) {
+    //            modified_tile_group_set.insert(location);
+    //          }
+    //        }
+    //
+    //      } break;
+    //
+    //      case LOGRECORD_TYPE_INVALID:
+    //      default:
+    //        throw Exception("Invalid or unrecogized log record found");
+    //        break;
+    //    }
   }
 
   // Clean up the frontend logger's queue
@@ -201,7 +206,9 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   // Notify the backend loggers
   {
     for (auto backend_logger : backend_loggers) {
-      backend_logger->FinishedFlushing();
+      // FIXME
+      assert(backend_logger);
+      // backend_logger->FinishedFlushing();
     }
   }
 }

@@ -106,10 +106,11 @@ void SimpleCheckpoint::DoCheckpoint() {
 
   while (true) {
     // get txn
-    std::unique_ptr<concurrency::Transaction> txn(
-        txn_manager.BeginTransaction());
-    start_commit_id = txn->GetBeginCommitId();
-    assert(txn);
+    auto start_commit_id =
+        log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+    std::unique_ptr<concurrency::Transaction> txn(new concurrency::Transaction(
+        txn_manager.GetNextTransactionId(), start_commit_id));
+    concurrency::current_txn = txn.get();
     LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
               start_commit_id);
 
@@ -158,7 +159,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         std::unique_ptr<executor::SeqScanExecutor> scan_executor(
             new executor::SeqScanExecutor(scan_plan_node.get(),
                                           executor_context.get()));
-        scan_executor->SetForbidDirtyRead(true);
+        scan_executor->SetCheckpointMode(true);
         if (!Execute(scan_executor.get(), txn.get(), target_table,
                      database_oid)) {
           break;
@@ -247,6 +248,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
     manager.SetNextOid(max_oid_);
   }
 
+  //FIXME
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
   return commit_id;
 }
