@@ -124,8 +124,9 @@ bool SsiTxnManager::AcquireOwnership(
       // Lock the transaction context
       owner_ctx->lock_.Lock();
 
-      // Myself, skip
-      if (owner_ctx == current_ssi_txn_ctx || owner_ctx->is_abort_ == true) {
+      // Myself || owner is (or should be) aborted
+      // skip
+      if (owner_ctx == current_ssi_txn_ctx || owner_ctx->is_abort()) {
         header = header->next;
 
         // Unlock the transaction context
@@ -250,7 +251,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
       // Lock the transaction context
       creator_ctx->lock_.Lock();
 
-      if (creator_ctx->is_abort_ == false) {
+      if (!creator_ctx->is_abort()) {
         // If creator committed and has out_confict, since creator has commited,
         // I must abort
         if (creator_ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
