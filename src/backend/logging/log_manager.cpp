@@ -344,6 +344,7 @@ cid_t LogManager::GetMaxFlushedCommitId() {
     FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
     id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
         ->GetMaxFlushedCommitId();
+    LOG_INFO("FrontendLogger%d has max flushed commit id as %d", (int)i, (int)id);
     if (id < max_flushed_commit_id)
       max_flushed_commit_id = id;
   }
@@ -360,16 +361,18 @@ void LogManager::FrontendLoggerFlushed() {
 }
 
 void LogManager::WaitForFlush(cid_t cid) {
+  LOG_INFO("Waiting for flush with %d", (int)cid);
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
     // TODO confirm with mperron if this is correct or not
     while (this->GetMaxFlushedCommitId() < cid) {
-    /* while (frontend_logger->GetMaxFlushedCommitId() < cid) {
+    /* while (frontend_logger->GetMaxFlushedCommitId() < cid) { */
       LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
-    		  frontend_logger->GetMaxFlushedCommitId(), cid); */
+    		  this->GetMaxFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
+    LOG_INFO("Flushes done! Can return! Got maxflush commit id as %d", (int)this->GetMaxFlushedCommitId());
   }
 }
 

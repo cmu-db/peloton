@@ -90,7 +90,7 @@ class FrontendLogger : public Logger {
   // checkpoint
   Checkpoint &checkpoint;
 
-  cid_t max_flushed_commit_id = UINT64_MAX;
+  cid_t max_flushed_commit_id = 0;
 
   cid_t max_collected_commit_id = 0;
 };
