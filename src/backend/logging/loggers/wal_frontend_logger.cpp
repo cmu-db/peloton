@@ -163,17 +163,15 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     this->CreateNewLogFile(false);
   }
 
-  LOG_INFO("Flushing %lu log buffers..", global_queue_size);
+  // LOG_INFO("Flushing %lu log buffers..", global_queue_size);
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
-    if (this->FileSwitchCondIsTrue()) {
-      fflush_and_sync(log_file, log_file_fd, fsync_count);
-      this->CreateNewLogFile(true);
-    }
+
     auto &log_buffer = global_queue[global_queue_itr];
 
     fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
            log_file);
+
     if (log_buffer->GetHighestCommitId() > this->max_commit_id) {
       this->max_commit_id = log_buffer->GetHighestCommitId();
       LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
@@ -186,23 +184,28 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   //XXX Do we not write delimiter when queue size is 0?
-   if (global_queue_size > 0) {
+  if (global_queue_size > 0) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
-    if (this->FileSwitchCondIsTrue()) {
-      fflush_and_sync(log_file, log_file_fd, fsync_count);
-      this->CreateNewLogFile(true);
-    }
+
+    assert(log_file_fd != -1);
+
     if (log_file_fd != -1) {
       fwrite(delimiter_rec.GetMessage(), sizeof(char),
              delimiter_rec.GetMessageLength(), log_file);
-      LOG_INFO("Wrote delimiter log file with commit_id %ld",
+
+      LOG_INFO("Wrote delimiter to log file with commit_id %ld",
                this->max_collected_commit_id);
+
+      // by moving the fflush and sync here, we ensure that this file will have at least 1 delimiter
+      fflush_and_sync(log_file, log_file_fd, fsync_count);
+      if (this->FileSwitchCondIsTrue())
+        this->CreateNewLogFile(true);
     }
   }
-  fflush_and_sync(log_file, log_file_fd, fsync_count);
-
+  
+  /* For now, fflush after every iteration of collecting buffers */
   // Clean up the frontend logger's queue
   global_queue.clear();
 
@@ -244,6 +247,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
       auto record_type = this->GetNextLogRecordTypeForRecovery();
+      LOG_INFO("Record_type is %d", (int)record_type);
       cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
       switch (record_type) {
@@ -755,7 +759,7 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
 
   // Check if the log record type is broken
   if (IsFileTruncated(log_file, 1, log_file_size)) {
-    LOG_ERROR("Log file is truncated");
+    LOG_INFO("Log file is truncated");
     return LOGRECORD_TYPE_INVALID;
   }
 
@@ -862,7 +866,7 @@ bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
   char header[header_size];
   size_t ret = fread(header, 1, sizeof(header), log_file);
   if (ret <= 0) {
-    LOG_ERROR("Error occured in fread ");
+    LOG_ERROR("Error occured in fread");
   }
 
   CopySerializeInputBE tuple_header(header, header_size);
@@ -940,6 +944,7 @@ storage::DataTable *GetTable(TupleRecord &tuple_record) {
   }
   assert(db);
 
+  LOG_INFO("Table ID for this tuple: %d", (int)tuple_record.GetTableId());
   auto table = db->GetTableWithOid(tuple_record.GetTableId());
   if (!table) {
     return nullptr;
