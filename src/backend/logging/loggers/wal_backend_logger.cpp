@@ -27,6 +27,7 @@ WriteAheadBackendLogger::WriteAheadBackendLogger()
       persist_buffer_pool_(
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
+  frontend_logger_id = -1; // invalid
 }
 
 /**

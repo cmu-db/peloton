@@ -19,7 +19,7 @@
 namespace peloton {
 namespace logging {
 
-BackendLogger::BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; }
+BackendLogger::BackendLogger() { logger_type = LOGGER_TYPE_BACKEND; frontend_logger_id = -1; }
 
 BackendLogger::~BackendLogger() {}
 
