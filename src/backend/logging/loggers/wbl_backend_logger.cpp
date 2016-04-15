@@ -40,7 +40,7 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_typ
                                                     oid_t db_oid,
                                                     ItemPointer insert_location,
                                                     ItemPointer delete_location,
-                                                    void *data) {
+                                                    __attribute__((unused)) const void *data) {
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
@@ -65,12 +65,10 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_typ
   }
 
   // Don't make use of "data" in case of peloton log records
-  data = nullptr;
-
   // Build the tuple log record
   LogRecord *tuple_record =
       new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
-                      delete_location, data, db_oid);
+                      delete_location, nullptr, db_oid);
 
   return tuple_record;
 }
