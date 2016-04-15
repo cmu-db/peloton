@@ -60,14 +60,14 @@ TEST_F(DeviceTest, BenchmarkTest) {
     std::cout << "Data File Name : " << data_file_name << "\n";
 
     if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR | O_DIRECT | O_SYNC, 0666)) < 0) {
-      perror(data_file_name.c_str());
-      exit(EXIT_FAILURE);
+      LOG_ERROR("%s: No such file or directory", data_file_name.c_str());
+      return;
     }
 
     // Allocate the data file
     if ((errno = posix_fallocate(data_fd, 0, data_file_len)) != 0) {
-      perror("posix_fallocate");
-      exit(EXIT_FAILURE);
+      LOG_ERROR("%s: posix_fallocate", data_file_name.c_str());
+      return;
     }
 
     // Go over all the chunk sizes
