@@ -218,10 +218,6 @@ peloton_dml(PlanState *planstate,
   peloton::networking::QueryPlanExecRequest request;
   request.set_plan_type(static_cast<int>(type));
 
-  // Second prepare TupleDesc and set it into QueryPlanExecRequest
-  //peloton::networking::TupleDescMsg* tuple_desc_msg = request.mutable_tuple_dec();
-  //peloton::networking::SetTupleDescMsg(tuple_desc, *tuple_desc_msg);
-
   // Second set size of parameter list
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
   int param_count = param_values.size();
@@ -240,7 +236,7 @@ peloton_dml(PlanState *planstate,
   request.set_plan(output_plan.Data(), output_plan.Size());
 
   // Finally send the request
-  pclient->QueryPlan(&request, NULL);
+  //pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
