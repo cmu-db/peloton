@@ -94,7 +94,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
           "%lu th attribute in the tuple was NULL. It is non-nullable "
-              "attribute.",
+          "attribute.",
           column_itr);
       return false;
     }
@@ -107,7 +107,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " +
-        std::string(tuple->GetInfo()));
+                              std::string(tuple->GetInfo()));
     return false;
   }
   return true;
@@ -117,10 +117,12 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // this function first checks whether there's available slot.
 // if yes, then directly return the available slot.
 // in particular, if this is the last slot, a new tile group is created.
-// if there's no available slot, then some other threads must be allocating a new tile group.
-// we just wait until a new tuple slot in the newly allocated tile group is available.
+// if there's no available slot, then some other threads must be allocating a
+// new tile group.
+// we just wait until a new tuple slot in the newly allocated tile group is
+// available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                    bool check_constraint) {
+                                         bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
@@ -259,9 +261,10 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
-      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
-                  std::placeholders::_1, std::placeholders::_2);
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn =
+      std::bind(&concurrency::TransactionManager::IsVisbleOrDirty,
+                &transaction_manager, std::placeholders::_1,
+                std::placeholders::_2);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -307,9 +310,10 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
-      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
-                  std::placeholders::_1, std::placeholders::_2);
+  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn =
+      std::bind(&concurrency::TransactionManager::IsVisbleOrDirty,
+                &transaction_manager, std::placeholders::_1,
+                std::placeholders::_2);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -353,7 +357,8 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  *
  * FIXME: this still does not guarantee correctness under concurrent transaction
  *   because it only check if the key exists the referred table's index
- *   -- however this key might be a uncommitted key that is not visible to others
+ *   -- however this key might be a uncommitted key that is not visible to
+ *others
  *   and it might be deleted if that txn abort.
  *   We should modify this function and add logic to check
  *   if the result of the ScanKey is visible.
@@ -361,7 +366,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
-
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -370,7 +374,8 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
 
     int ref_table_index_count = ref_table->GetIndexCount();
 
-    for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
+    for (int index_itr = ref_table_index_count - 1; index_itr >= 0;
+         --index_itr) {
       auto index = ref_table->GetIndex(index_itr);
 
       // The foreign key constraints only refer to the primary key
@@ -378,9 +383,11 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
         LOG_INFO("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
-        std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
-        std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
-        //FIXME: what is the 3rd arg should be?
+        std::unique_ptr<catalog::Schema> foreign_key_schema(
+            catalog::Schema::CopySchema(schema, key_attrs));
+        std::unique_ptr<storage::Tuple> key(
+            new storage::Tuple(foreign_key_schema.get(), true));
+        // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
         LOG_INFO("check key: %s", key->GetInfo().c_str());
@@ -493,13 +500,13 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
-    // pure column layout map
+  // pure column layout map
   else if (layout_type == LAYOUT_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
-    // hybrid layout map
+  // hybrid layout map
   else if (layout_type == LAYOUT_HYBRID) {
     // TODO: Fallback option for regular tables
     if (col_count < 10) {
@@ -511,7 +518,7 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
     }
   } else {
     throw Exception("Unknown tilegroup layout option : " +
-        std::to_string(layout_type));
+                    std::to_string(layout_type));
   }
 
   return column_map;
@@ -536,8 +543,9 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-    
-    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+
+    // we must guarantee that the compiler always add tile group before adding
+    // tile_group_count_.
     COMPILER_MEMORY_FENCE;
 
     tile_group_count_++;
@@ -565,14 +573,14 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup_));
 
-  
   LOG_TRACE("Added a tile group ");
   tile_groups_.push_back(tile_group->GetTileGroupId());
 
-    // add tile group metadata in locator
+  // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
-    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+  // we must guarantee that the compiler always add tile group before adding
+  // tile_group_count_.
   COMPILER_MEMORY_FENCE;
 
   tile_group_count_++;
@@ -586,14 +594,14 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   tile_groups_.push_back(tile_group->GetTileGroupId());
   oid_t tile_group_id = tile_group->GetTileGroupId();
 
-    // add tile group in catalog
+  // add tile group in catalog
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
-    // we must guarantee that the compiler always add tile group before adding tile_group_count_.
+  // we must guarantee that the compiler always add tile group before adding
+  // tile_group_count_.
   COMPILER_MEMORY_FENCE;
 
   tile_group_count_++;
-
 
   LOG_TRACE("Recording tile group : %lu ", tile_group_id);
 }
@@ -616,6 +624,17 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
   return manager.GetTileGroup(tile_group_id);
 }
 
+void DataTable::DropTileGroups() {
+  tile_group_count_ = 0;
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  for (auto tile_group_id : tile_groups_) {
+    // add tile group in catalog
+    catalog_manager.DropTileGroup(tile_group_id);
+    LOG_TRACE("Dropping tile group : %lu ", tile_group_id);
+  }
+  tile_groups_.clear();
+}
+
 const std::string DataTable::GetInfo() const {
   std::ostringstream os;
 
@@ -632,7 +651,7 @@ const std::string DataTable::GetInfo() const {
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     os << "Tile Group Id  : " << tile_group_itr
-        << " Tuple Count : " << tile_tuple_count << "\n";
+       << " Tuple Count : " << tile_tuple_count << "\n";
     os << (*tile_group);
 
     tuple_count += tile_tuple_count;
@@ -835,7 +854,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
       TileGroupFactory::GetTileGroup(
           tile_group->GetDatabaseId(), tile_group->GetTableId(),
           tile_group->GetTileGroupId(), tile_group->GetAbstractTable(),
-          new_schema, default_partition_, tile_group->GetAllocatedTupleCount()));
+          new_schema, default_partition_,
+          tile_group->GetAllocatedTupleCount()));
 
   // Set the transformed tile group column-at-a-time
   SetTransformedTileGroup(tile_group.get(), new_tile_group.get());

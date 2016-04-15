@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 
 #include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint_manager.h"
 #include "backend/logging/backend_logger.h"
 #include "backend/common/pool.h"
 #include "backend/storage/tile.h"
@@ -35,14 +36,16 @@ class Checkpoint {
 
   virtual ~Checkpoint(void) { pool.reset(); }
 
+  void MainLoop(void);
+
   // Do checkpoint periodically
   virtual void DoCheckpoint() = 0;
 
-  // Initialize resources for checkpoint
-  virtual void Init() = 0;
-
   // Do recovery from most recent version of checkpoint
   virtual cid_t DoRecovery() = 0;
+
+  // Get a checkpointer
+  static std::unique_ptr<Checkpoint> GetCheckpoint(CheckpointType checkpoint_type);
 
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);
@@ -51,6 +54,9 @@ class Checkpoint {
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
+
+  // Default checkpoint interval (seconds)
+  int64_t checkpoint_interval_ = 10;
 
   // variable length memory pool
   std::unique_ptr<VarlenPool> pool;
@@ -65,6 +71,10 @@ class Checkpoint {
 
   // suffix for checkpoint file name
   const std::string FILE_SUFFIX = ".log";
+
+  // current status
+  CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
+
 };
 
 }  // namespace logging

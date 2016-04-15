@@ -34,9 +34,6 @@
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 
-// configuration for testing
-extern CheckpointType peloton_checkpoint_mode;
-
 namespace peloton {
 namespace logging {
 //===--------------------------------------------------------------------===//
@@ -70,15 +67,8 @@ storage::DataTable *GetTable(TupleRecord &tupleRecord);
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
-SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
-  static SimpleCheckpoint simple_checkpoint;
-  return simple_checkpoint;
-}
 
 SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
-    return;
-  }
   InitDirectory();
   InitVersionNumber();
 }
@@ -90,67 +80,52 @@ SimpleCheckpoint::~SimpleCheckpoint() {
   records_.clear();
 }
 
-void SimpleCheckpoint::Init() {
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
-    return;
-  }
-  std::thread checkpoint_thread(&SimpleCheckpoint::DoCheckpoint, this);
-  checkpoint_thread.detach();
-}
-
 void SimpleCheckpoint::DoCheckpoint() {
-  sleep(checkpoint_interval_);
   auto &log_manager = LogManager::GetInstance();
-  // wait if recovery is in process
-  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
-  logger_ = log_manager.GetBackendLogger();
+  // XXX get default backend logger
+  logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_DRAM_NVM);
 
-  while (true) {
-    // get txn
-    auto start_cid = log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+  // FIXME make sure everything up to start_cid is not garbage collected
+  auto start_cid = log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
 
-    // Add txn begin record
-    std::shared_ptr<LogRecord> begin_record(
-        new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_cid));
-    CopySerializeOutput begin_output_buffer;
-    begin_record->Serialize(begin_output_buffer);
-    records_.push_back(begin_record);
+  // Add txn begin record
+  std::shared_ptr<LogRecord> begin_record(
+      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_cid));
+  CopySerializeOutput begin_output_buffer;
+  begin_record->Serialize(begin_output_buffer);
+  records_.push_back(begin_record);
 
-    auto &catalog_manager = catalog::Manager::GetInstance();
-    auto database_count = catalog_manager.GetDatabaseCount();
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto database_count = catalog_manager.GetDatabaseCount();
 
-    // loop all databases
-    for (oid_t database_idx = 0; database_idx < database_count;
-         database_idx++) {
-      auto database = catalog_manager.GetDatabase(database_idx);
-      auto table_count = database->GetTableCount();
-      auto database_oid = database->GetOid();
+  // loop all databases
+  for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
+    auto database = catalog_manager.GetDatabase(database_idx);
+    auto table_count = database->GetTableCount();
+    auto database_oid = database->GetOid();
 
-      // loop all tables
-      for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
-        // Get the target table
-        storage::DataTable *target_table = database->GetTable(table_idx);
-        assert(target_table);
-        LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
-                 table_idx, target_table->GetName().c_str());
-        Scan(target_table, start_cid, database_oid);
-      }
+    // loop all tables
+    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+      // Get the target table
+      storage::DataTable *target_table = database->GetTable(table_idx);
+      assert(target_table);
+      LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
+               table_idx, target_table->GetName().c_str());
+      Scan(target_table, start_cid, database_oid);
     }
+  }
 
-    // if anything other than begin record is added
-    if (records_.size() > 1) {
-      std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
-      CopySerializeOutput commit_output_buffer;
-      commit_record->Serialize(commit_output_buffer);
-      records_.push_back(commit_record);
+  // if anything other than begin record is added
+  if (records_.size() > 1) {
+    std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
+        LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
+    CopySerializeOutput commit_output_buffer;
+    commit_record->Serialize(commit_output_buffer);
+    records_.push_back(commit_record);
 
-      CreateFile();
-      Persist();
-      Cleanup();
-    }
-
-    sleep(checkpoint_interval_);
+    CreateFile();
+    Persist();
+    Cleanup();
   }
 }
 
@@ -218,7 +193,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
     manager.SetNextOid(max_oid_);
   }
 
-  // FIXME
+  // FIXME this is not thread safe for concurrent checkpoint recovery
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
   return commit_id;
 }
@@ -317,7 +292,6 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table, cid_t start_cid,
     current_tile_group_offset++;
   }
 }
-
 
 void SimpleCheckpoint::SetLogger(BackendLogger *logger) { logger_ = logger; }
 
