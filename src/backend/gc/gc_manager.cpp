@@ -26,8 +26,7 @@ GCManager &GCManager::GetInstance() {
 
 void GCManager::Poll() {
   /*
-   * Check if we can move anything from the possibly free list to the free
-   * list.
+   * Check if we can move anything from the possibly free list to the free list.
    */
   auto &manager = catalog::Manager::GetInstance();
 
@@ -67,8 +66,8 @@ void GCManager::Poll() {
 
           // if the entry for packed_id exists.
           if (free_map_.find(packed_id, free_list) == true) {
-              // if the entry for tuple_metadata.table_id exists.
-              free_list->Push(tuple_metadata);
+            // if the entry for tuple_metadata.table_id exists.
+            free_list->Push(tuple_metadata);
           } else {
             // if the entry for tuple_metadata.table_id does not exist.
             free_list = new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC);
@@ -93,19 +92,21 @@ void GCManager::AddPossiblyFreeTuple(const TupleMetadata &tuple_metadata) {
 }
 
 // this function returns a free tuple slot, if one exists
-oid_t GCManager::ReturnFreeSlot(const oid_t &database_id __attribute__((unused)), const oid_t &table_id __attribute__((unused))) {
-  // auto return_slot = INVALID_OID;
-  // std::string key = std::to_string(db_id) + std::to_string(tb_id);
-  // boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
-  // if (free_map.find(key, free_list)) {
-  //   if (!free_list->empty()) {
-  //     TupleMetadata tuple_metadata;
-  //     free_list->pop(tuple_metadata);
-  //     return_slot = tuple_metadata.tuple_slot_id;
-  //     return return_slot;
-  //   }
-  // }
-  return INVALID_OID;
+ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id) {
+  
+  ItemPointer ret_item_pointer;
+  oid_t packed_id = PACK_ID(database_id, table_id);
+
+  LockfreeQueue<TupleMetadata> *free_list = nullptr;
+  // if there exists free_list
+  if (free_map_.find(packed_id, free_list) == true) {
+    TupleMetadata tuple_metadata;
+    if (free_list->Pop() == true) {
+      ret_item_pointer.block = tuple_metadata.tile_group_id;
+      ret_item_pointer.offset = tuple_metadata.tuple_slot_id;
+    }
+  }
+  return ret_item_pointer;
 }
 
 // delete a tuple from all its indexes it belongs in
