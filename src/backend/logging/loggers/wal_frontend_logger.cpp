@@ -116,8 +116,8 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
     this->InitLogDirectory();
     this->InitLogFilesList();
-    this->log_file_fd = -1;   // this is a restart or a new start
-    this->max_commit_id = 0;  // 0 is unused
+    this->log_file_fd = -1;     // this is a restart or a new start
+    this->max_log_id_file = 0;  // 0 is unused
   }
 }
 
@@ -138,7 +138,7 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
 
 void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
   // First, flush
-  assert (log_file_fd != -1);
+  assert(log_file_fd != -1);
   if (log_file_fd == -1) return;
 
   int ret = fflush(log_file);
@@ -172,10 +172,10 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
            log_file);
     // TODO this is not correct and must be fixed, should be max seen cid
-    if (log_buffer->GetHighestCommittedTransaction() > this->max_commit_id) {
-      this->max_commit_id = log_buffer->GetHighestCommittedTransaction();
+    if (log_buffer->GetHighestCommittedTransaction() > this->max_log_id_file) {
+      this->max_log_id_file = log_buffer->GetHighestCommittedTransaction();
 
-      LOG_INFO("MaxSoFar is %d", (int)this->max_commit_id);
+      LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
     }
 
     // return empty buffer
@@ -198,13 +198,13 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       LOG_INFO("Wrote delimiter to log file with commit_id %ld",
                this->max_collected_commit_id);
 
-      // by moving the fflush and sync here, we ensure that this file will have at least 1 delimiter
+      // by moving the fflush and sync here, we ensure that this file will have
+      // at least 1 delimiter
       fflush_and_sync(log_file, log_file_fd, fsync_count);
-      if (this->FileSwitchCondIsTrue())
-        this->CreateNewLogFile(true);
+      if (this->FileSwitchCondIsTrue()) this->CreateNewLogFile(true);
     }
   }
-  
+
   /* For now, fflush after every iteration of collecting buffers */
   // Clean up the frontend logger's queue
   global_queue.clear();
@@ -954,8 +954,8 @@ bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
 void WriteAheadFrontendLogger::InitLogFilesList() {
   struct dirent *file;
   DIR *dirp;
-  txn_id_t max_commit_id;
-  int version_number;
+  cid_t temp_max_log_id_file;
+  int version_number, ret_val;
   FILE *fp;
 
   // TODO need a better regular expression to match file name
@@ -975,30 +975,46 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
       version_number = extract_number_from_filename(file->d_name);
 
-      fp = fopen(this->GetFileNameFromVersion(version_number).c_str(), "rb");
-      max_commit_id = UINT64_MAX;
+      fp = fopen(GetFileNameFromVersion(version_number).c_str(), "rb+");
+      temp_max_log_id_file = UINT64_MAX;
 
-      size_t read_size =
-          fread((void *)&max_commit_id, sizeof(max_commit_id), 1, fp);
+      size_t read_size = fread((void *)&temp_max_log_id_file,
+                               sizeof(temp_max_log_id_file), 1, fp);
       if (read_size != 1) {
         LOG_ERROR("Read from file %s failed",
                   this->GetFileNameFromVersion(version_number).c_str());
         fclose(fp);
         continue;
       }
-      LOG_INFO("Got max_commit_id as %d", (int)max_commit_id);
+      LOG_INFO("Got temp_max_log_id_file as %d", (int)temp_max_log_id_file);
 
-      // TODO set max commit ID here!
-      if (max_commit_id == 0 || max_commit_id == UINT64_MAX) {
-        // TODO uncomment
-        max_commit_id = this->ExtractMaxCommitIdFromLogFileRecords(fp);
-        LOG_INFO("ExtractMaxCommitId returned %d", (int)max_commit_id);
+      if (temp_max_log_id_file == 0 || temp_max_log_id_file == UINT64_MAX) {
+        temp_max_log_id_file = ExtractMaxLogIdFromLogFileRecords(fp);
+        LOG_INFO("ExtractMaxLogId returned %d, write it back in the file!",
+                 (int)temp_max_log_id_file);
+
+        ret_val = fseek(fp, 0, SEEK_SET);
+        if (ret_val != 0) {
+          LOG_ERROR("Could not seek to the beginning of file: %s",
+                    strerror(errno));
+          fclose(fp);
+          continue;
+        }
+        ret_val = fwrite((void *)&(temp_max_log_id_file),
+                         sizeof(temp_max_log_id_file), 1, fp);
+
+        if (ret_val <= 0) {
+          LOG_ERROR("Could not write Max Log ID to file header: %s",
+                    strerror(errno));
+          fclose(fp);
+          continue;
+        }
       }
 
       fclose(fp);
 
-      LogFile *new_log_file =
-          new LogFile(NULL, file->d_name, -1, version_number, max_commit_id);
+      LogFile *new_log_file = new LogFile(NULL, file->d_name, -1,
+                                          version_number, temp_max_log_id_file);
       this->log_files_.push_back(new_log_file);
     }
   }
@@ -1014,7 +1030,8 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
   if (num_log_files) {
     // @abj please follow CamelCase convention for function name :)
-    int max_num = extract_number_from_filename(
+    // @haibinl haha gotcha :P old habits die hard :(
+    int max_num = ExtractNumberFromFileName(
         this->log_files_[num_log_files - 1]->GetLogFileName().c_str());
     LOG_INFO("Got maximum log file version as %d", max_num);
     this->log_file_counter_ = ++max_num;
@@ -1026,7 +1043,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   int new_file_num;
   std::string new_file_name;
-  txn_id_t default_commit_id = 0;
+  cid_t default_commit_id = 0;
   struct stat log_stats;
   int fd;
 
@@ -1038,14 +1055,14 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
     if (file_list_size != 0) {
       fseek(this->log_files_[file_list_size - 1]->GetFilePtr(), 0, SEEK_SET);
 
-      fwrite((void *)&(this->max_commit_id), sizeof(this->max_commit_id), 1,
+      fwrite((void *)&(this->max_log_id_file), sizeof(this->max_log_id_file), 1,
              this->log_files_[file_list_size - 1]->GetFilePtr());
 
-      this->log_files_[file_list_size - 1]->SetMaxCommitId(this->max_commit_id);
-      LOG_INFO("MaxCommitID of the last closed file is %d",
-               (int)this->max_commit_id);
+      this->log_files_[file_list_size - 1]->SetMaxLogId(this->max_log_id_file);
+      LOG_INFO("MaxLogID of the last closed file is %d",
+               (int)this->max_log_id_file);
 
-      this->max_commit_id = 0;  // reset
+      this->max_log_id_file = 0;  // reset
 
       fd = fileno(this->log_files_[file_list_size - 1]->GetFilePtr());
 
@@ -1111,7 +1128,7 @@ bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
 }
 
 void WriteAheadFrontendLogger::OpenNextLogFile() {
-  txn_id_t max_commit_id;
+  cid_t temp_max_log_id_file;
 
   if (this->log_files_.size() == 0) {  // no log files, fresh start
     LOG_INFO("Size of log files list is 0.");
@@ -1156,8 +1173,8 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   LOG_INFO("FD of opened file is %d", (int)this->log_file_fd);
 
   // Skip first 8 bytes of max commit id
-  size_t read_size =
-      fread((void *)&max_commit_id, sizeof(max_commit_id), 1, this->log_file);
+  size_t read_size = fread((void *)&temp_max_log_id_file,
+                           sizeof(temp_max_log_id_file), 1, this->log_file);
   if (read_size != 1) {
     LOG_ERROR(
         "Read failed after opening file %s",
@@ -1166,7 +1183,8 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
             .c_str());
   }
 
-  LOG_INFO("On startup: MaxCommitId of this file is %d", (int)max_commit_id);
+  LOG_INFO("On startup: MaxLogId of this file is %d",
+           (int)temp_max_log_id_file);
 
   struct stat stat_buf;
 
@@ -1177,12 +1195,12 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   LOG_INFO("Cursor is now %d", (int)this->log_file_cursor_);
 }
 
-void WriteAheadFrontendLogger::TruncateLog(txn_id_t max_commit_id) {
+void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
   int return_val;
 
   // delete stale log files except the one currently being used
   for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
-    if (max_commit_id >= this->log_files_[i]->GetMaxCommitId()) {
+    if (truncate_log_id >= this->log_files_[i]->GetMaxLogId()) {
       return_val = remove(this->log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s error: %s",
@@ -1222,12 +1240,12 @@ std::string WriteAheadFrontendLogger::GetFileNameFromVersion(int version) {
          LOG_FILE_PREFIX + std::to_string(version) + LOG_FILE_SUFFIX;
 }
 
-txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
+cid_t WriteAheadFrontendLogger::ExtractMaxLogIdFromLogFileRecords(
     FILE *log_file) {
   bool reached_end_of_file = false;
   int fd;
   struct stat log_stats;
-  txn_id_t max_commit_id = 0;
+  cid_t max_log_id_so_far = 0;
   int log_file_size;
 
   fd = fileno(log_file);
@@ -1255,7 +1273,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
           return UINT64_MAX;  // TODO verify if this is correct or not
         }
         commit_id = txn_rec.GetTransactionId();
-        if (commit_id > max_commit_id) max_commit_id = commit_id;
+        if (commit_id > max_log_id_so_far) max_log_id_so_far = commit_id;
         break;
       }
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -1280,7 +1298,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
                               // fails
         } */
 
-        if (cid > max_commit_id) max_commit_id = cid;
+        if (cid > max_log_id_so_far) max_log_id_so_far = cid;
 
         auto table = GetTable(*tuple_record);
         if (!table) {
@@ -1314,7 +1332,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
                               // fails
         } */
 
-        if (cid > max_commit_id) max_commit_id = cid;
+        if (cid > max_log_id_so_far) max_log_id_so_far = cid;
         delete tuple_record;
         break;
       }
@@ -1323,7 +1341,7 @@ txn_id_t WriteAheadFrontendLogger::ExtractMaxCommitIdFromLogFileRecords(
         break;
     }
   }
-  return max_commit_id;
+  return max_log_id_so_far;
 }
 
 }  // namespace logging
