@@ -53,7 +53,8 @@ class DeviceTest : public PelotonTest {};
 #define DATA_FILE_NAME "peloton.pmem"
 #define DATA_ALIGNMENT 4096
 
-#define NUM_TRIALS     100
+#define NUM_READ_TRIALS     10000
+#define NUM_WRITE_TRIALS    1000
 
 #define roundup2(x, y)  (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
 
@@ -91,7 +92,7 @@ void ReadTest(const int data_fd,
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
   // Figure out # of trials
-  oid_t num_trials = NUM_TRIALS;
+  oid_t num_trials = NUM_READ_TRIALS;
 
   // Clean up buffer
   bzero(buffer, max_chunk_size);
@@ -122,7 +123,7 @@ void ReadTest(const int data_fd,
 
   // Set duration
   average_time = timer.GetDuration() / num_trials;
-  std::cout << "Chunk size : " << chunk_size << " Average READ  time : " << average_time << "\n";
+  std::cout << "Chunk size : " << chunk_size << " Average READ  time : " << average_time * 1000 << "\n";
 }
 
 void WriteTest(const int data_fd,
@@ -140,7 +141,7 @@ void WriteTest(const int data_fd,
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
   // Figure out # of trials
-  oid_t num_trials = NUM_TRIALS;
+  oid_t num_trials = NUM_WRITE_TRIALS;
 
   // Set up buffer
   memset(buffer, 'f', max_chunk_size);
@@ -171,7 +172,7 @@ void WriteTest(const int data_fd,
 
   // Set duration
   average_time = timer.GetDuration() / num_trials;
-  std::cout << "Chunk size : " << chunk_size << " Average WRITE time : " << average_time << "\n";
+  std::cout << "Chunk size : " << chunk_size << " Average WRITE time : " << average_time * 1000 << "\n";
 }
 
 TEST_F(DeviceTest, BenchmarkTest) {
