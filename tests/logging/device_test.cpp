@@ -53,8 +53,8 @@ class DeviceTest : public PelotonTest {};
 #define DATA_FILE_NAME "peloton.pmem"
 #define DATA_ALIGNMENT 4096
 
-#define NUM_READ_TRIALS     10000
-#define NUM_WRITE_TRIALS    1000
+#define NUM_READ_TRIALS     1000
+#define NUM_WRITE_TRIALS    10
 
 #define roundup2(x, y)  (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
 
@@ -179,7 +179,7 @@ void WriteTest(const int data_fd,
 
 TEST_F(DeviceTest, BenchmarkTest) {
 
-  std::vector<std::string> data_file_dirs = {NVM_DIR, HDD_DIR};
+  std::vector<std::string> data_file_dirs = {NVM_DIR, HDD_DIR, "/data1/", "/data2/"};
   int data_fd;
   std::size_t begin_chunk_size = 9, end_chunk_size = 21; // lg base 2
 
