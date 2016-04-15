@@ -456,7 +456,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
 oid_t Tile::GetActiveTupleCount() const {
   // For normal tiles
   if (tile_group_header != nullptr) {
-    return tile_group_header->GetNextTupleSlot();
+    return tile_group_header->GetCurrentNextTupleSlot();
   }
   // For temp tiles
   else {

@@ -54,7 +54,7 @@ class BackendLogger : public Logger {
                                     oid_t db_oid,
                                     ItemPointer insert_location,
                                     ItemPointer delete_location,
-                                    void *data = nullptr) = 0;
+                                    const void *data = nullptr) = 0;
 
  protected:
 
