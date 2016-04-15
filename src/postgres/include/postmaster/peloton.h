@@ -28,6 +28,7 @@
 //===--------------------------------------------------------------------===//
 
 extern LoggingType peloton_logging_mode;
+extern GCType peloton_gc_mode;
 
 //===--------------------------------------------------------------------===//
 // Peloton_Status     Sent by the peloton to share the status with backend.

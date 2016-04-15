@@ -95,10 +95,10 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
-                                  VarlenPool *pool);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table,
-                                      VarlenPool *pool);
+  static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table, oid_t tuple_id,
+                                                  VarlenPool *pool);
+  static std::unique_ptr<storage::Tuple> GetNullTuple(storage::DataTable *table,
+                                                      VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(

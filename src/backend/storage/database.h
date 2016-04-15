@@ -30,6 +30,7 @@ namespace storage {
 
 class Database : public Printable {
  public:
+  Database() = delete;
   Database(Database const &) = delete;
 
   Database(oid_t database_oid) : database_oid(database_oid) {}

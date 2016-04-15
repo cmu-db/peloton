@@ -4,6 +4,13 @@
 # BENCHMARK
 ######################################################################
 
+benchmark_common_cppflags = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \
+            				$(third_party_INCLUDES) \
+			            	-I$(srcdir)/backend/benchmark
+
+
+benchmark_common_ldadd = libpelotonpg.la libpeloton.la -lpthread
+
 ######################################################################
 # HYADAPT
 ######################################################################
@@ -15,11 +22,8 @@ hyadapt_SOURCES =  \
                     backend/benchmark/hyadapt/hyadapt_loader.cpp
 
 hyadapt_LDFLAGS =
-hyadapt_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \
-				   $(third_party_INCLUDES) \
-				   -I$(srcdir)/backend/benchmark
-
-hyadapt_LDADD = libpelotonpg.la libpeloton.la -lpthread
+hyadapt_CPPFLAGS = $(benchmark_common_cppflags)
+hyadapt_LDADD = $(benchmark_common_ldadd)
 
 ######################################################################
 # LOGGER
@@ -35,11 +39,8 @@ logger_SOURCES =  \
                     backend/benchmark/ycsb/ycsb_loader.cpp
 
 logger_LDFLAGS =
-logger_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \
-				   $(third_party_INCLUDES) \
-				   -I$(srcdir)/backend/benchmark
-
-logger_LDADD = libpelotonpg.la libpeloton.la -lpthread
+logger_CPPFLAGS = $(benchmark_common_cppflags)
+logger_LDADD = $(benchmark_common_ldadd)
 
 ######################################################################
 # YCSB
@@ -52,8 +53,19 @@ ycsb_SOURCES =  \
                     backend/benchmark/ycsb/ycsb_loader.cpp
 
 ycsb_LDFLAGS =
-ycsb_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)  \
-				   $(third_party_INCLUDES) \
-				   -I$(srcdir)/backend/benchmark
+ycsb_CPPFLAGS = $(benchmark_common_cppflags)
+ycsb_LDADD = $(benchmark_common_ldadd)
 
-ycsb_LDADD = libpelotonpg.la libpeloton.la -lpthread
+######################################################################
+# TPCC
+######################################################################
+
+tpcc_SOURCES =  \
+					backend/benchmark/tpcc/tpcc.cpp \
+                    backend/benchmark/tpcc/tpcc_configuration.cpp \
+                    backend/benchmark/tpcc/tpcc_workload.cpp \
+                    backend/benchmark/tpcc/tpcc_loader.cpp
+
+tpcc_LDFLAGS =
+tpcc_CPPFLAGS = $(benchmark_common_cppflags)
+tpcc_LDADD = $(benchmark_common_ldadd)
