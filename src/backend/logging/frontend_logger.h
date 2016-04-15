@@ -29,9 +29,6 @@
 
 namespace peloton {
 namespace logging {
-
-class Checkpoint;
-
 //===--------------------------------------------------------------------===//
 // Frontend Logger
 //===--------------------------------------------------------------------===//
@@ -84,9 +81,6 @@ class FrontendLogger : public Logger {
 
   // stats
   size_t fsync_count = 0;
-
-  // checkpoint
-  Checkpoint &checkpoint;
 
   cid_t max_flushed_commit_id = 0;
 

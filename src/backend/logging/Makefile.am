@@ -6,6 +6,7 @@
 
 logging_FILES = \
 			   backend/logging/log_manager.cpp \
+			   backend/logging/checkpoint_manager.cpp \
 			   backend/logging/logger.cpp \
 			   backend/logging/frontend_logger.cpp \
 			   backend/logging/backend_logger.cpp \

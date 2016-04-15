@@ -32,6 +32,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint_manager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -91,13 +92,34 @@ peloton_bootstrap() {
     // Process the utility statement
     peloton::bridge::Bootstrap::BootstrapPeloton();
 
-    // Sart logging
+    // Start logging
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
       elog(DEBUG2, "Logging Mode : %d", peloton_logging_mode);
 
       // Finished checking logging module
       logging_module_check = true;
+
+      if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    	  // launch checkpoint thread
+    	  auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
+          if (!checkpoint_manager.IsInCheckpointingMode()) {
+
+            // Wait for standby mode
+            std::thread(&peloton::logging::CheckpointManager::StartStandbyMode,
+                        &checkpoint_manager).detach();
+            checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY, true);
+            elog(DEBUG2, "Standby mode");
+
+            // Do any recovery
+            checkpoint_manager.StartRecoveryMode();
+            elog(DEBUG2, "Wait for logging mode");
+
+            // Wait for standby mode
+            checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY, true);
+            elog(DEBUG2, "Standby mode");
+          }
+      }
 
       if(peloton_logging_mode != LOGGING_TYPE_INVALID) {
 
@@ -123,9 +145,15 @@ peloton_bootstrap() {
           log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
           elog(DEBUG2, "Logging mode");
         }
-
       }
 
+      // start checkpointing mode after recovery
+      if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    	  auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
+    	  // Now, enter CHECKPOINTING mode
+    	  checkpoint_manager.SetCheckpointStatus(peloton::CHECKPOINT_STATUS_CHECKPOINTING);
+          elog(DEBUG2, "Checkpointing mode");
+      }
     }
 
   }
