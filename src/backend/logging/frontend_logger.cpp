@@ -191,7 +191,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     } else if (lower_bound == MAX_CID) {
       max_possible_commit_id = max_committed_cid;
     } else {
-      max_possible_commit_id = std::min(max_committed_cid, lower_bound);
+      max_possible_commit_id = lower_bound;
     }
     // max_collected_commit_id should never decrease
     assert(max_possible_commit_id >= max_collected_commit_id);
