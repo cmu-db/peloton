@@ -3816,15 +3816,6 @@ struct config_enum ConfigureNamesEnum[] =
   },
 
   {
-    {"peloton_logging_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
-      gettext_noop("Change peloton logging mode"),
-      gettext_noop("This determines the logging mode.")
-    },
-    reinterpret_cast<int *>(&peloton_logging_mode),
-    LOGGING_TYPE_INVALID, peloton_logging_mode_options,
-    NULL, NULL, NULL
-  },
-  {
     {"peloton_gc_mode", PGC_USERSET, PELOTON_GC_OPTIONS,
       gettext_noop("Change peloton gc mode"),
       gettext_noop("This determines the gc mode.")
@@ -3833,15 +3824,26 @@ struct config_enum ConfigureNamesEnum[] =
     GC_TYPE_OFF, peloton_gc_mode_options,
     NULL, NULL, NULL
   },
+
   {
-      {"peloton_checkpoint_mode", PGC_USERSET, PELOTON_CHECKPOINT_OPTIONS,
-        gettext_noop("Change peloton checkpoint mode"),
-        gettext_noop("This determines the checkpoint mode.")
-      },
-      reinterpret_cast<int *>(&peloton_checkpoint_mode),
-      CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
-      NULL, NULL, NULL
+    {"peloton_logging_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton logging mode"),
+      gettext_noop("This determines the logging mode.")
     },
+    reinterpret_cast<int *>(&peloton_logging_mode),
+    LOGGING_TYPE_INVALID, peloton_logging_mode_options,
+    NULL, NULL, NULL
+  },
+  
+  {
+    {"peloton_checkpoint_mode", PGC_USERSET, PELOTON_CHECKPOINT_OPTIONS,
+      gettext_noop("Change peloton checkpoint mode"),
+      gettext_noop("This determines the checkpoint mode.")
+    },
+    reinterpret_cast<int *>(&peloton_checkpoint_mode),
+    CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
+    NULL, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{

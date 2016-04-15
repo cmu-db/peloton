@@ -115,7 +115,7 @@ class TileGroupHeader : public Printable {
     tuple_metadata.tile_group_id = tile_group_id;
     tuple_metadata.tuple_slot_id = tuple_id;
     tuple_metadata.tuple_end_cid = tuple_end_cid;
-    gc_manager.AddPossiblyFreeTuple(tuple_metadata);
+    gc_manager.AddPossiblyFreeTuple(database_id, tuple_metadata);
   }
 
   oid_t GetCurrentNextTupleSlot() const { return next_tuple_slot; }
