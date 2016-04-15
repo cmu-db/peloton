@@ -53,9 +53,7 @@ class DeviceTest : public PelotonTest {};
 #define DATA_FILE_NAME "peloton.pmem"
 #define DATA_ALIGNMENT 4096
 
-#define SMALL_SIZE_NUM_TRIALS     10000
-#define LARGE_SIZE_NUM_TRIALS     1000
-#define LARGE_SIZE_THRESHOLD      32768
+#define NUM_TRIALS     100
 
 #define roundup2(x, y)  (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
 
@@ -93,10 +91,7 @@ void ReadTest(const int data_fd,
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
   // Figure out # of trials
-  oid_t num_trials = SMALL_SIZE_NUM_TRIALS;
-  if(chunk_size > LARGE_SIZE_THRESHOLD) {
-    num_trials = LARGE_SIZE_NUM_TRIALS;
-  }
+  oid_t num_trials = NUM_TRIALS;
 
   // Clean up buffer
   bzero(buffer, max_chunk_size);
@@ -145,10 +140,7 @@ void WriteTest(const int data_fd,
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
   // Figure out # of trials
-  oid_t num_trials = SMALL_SIZE_NUM_TRIALS;
-  if(chunk_size > LARGE_SIZE_THRESHOLD) {
-    num_trials = LARGE_SIZE_NUM_TRIALS;
-  }
+  oid_t num_trials = NUM_TRIALS;
 
   // Set up buffer
   memset(buffer, 'f', max_chunk_size);
