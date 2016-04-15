@@ -179,7 +179,7 @@ void WriteTest(const int data_fd,
 
 TEST_F(DeviceTest, BenchmarkTest) {
 
-  std::vector<std::string> data_file_dirs = {NVM_DIR, HDD_DIR, "/data1/", "/data2/"};
+  std::vector<std::string> data_file_dirs = {NVM_DIR, HDD_DIR, SSD_DIR};
   int data_fd;
   std::size_t begin_chunk_size = 9, end_chunk_size = 21; // lg base 2
 
@@ -189,17 +189,27 @@ TEST_F(DeviceTest, BenchmarkTest) {
     // Create a data file
     std::string data_file_name = data_file_dir + DATA_FILE_NAME;
     std::cout << "--------------------------------------------------\n\n";
-    std::cout << "Data File Name : " << data_file_name << "\n";
-    std::cout << "Data File Len  : " << DATA_FILE_LEN << "\n";
+    if(data_file_dir == NVM_DIR) {
+        std::cout << "NVM";
+    }
+    else if(data_file_dir == HDD_DIR) {
+        std::cout << "HDD";
+    }
+    else if(data_file_dir == SSD_DIR) {
+        std::cout << "SSD";
+    }
+    std::cout <<"\n";
 
     if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR | O_DIRECT | O_SYNC, 0666)) < 0) {
-      LOG_ERROR("%s: No such file or directory", data_file_name.c_str());
+      perror("No such file or directory");
+      std::cout << "No such file or directory: " << data_file_name << "\n";
       return;
     }
 
     // Allocate the data file
     if ((errno = posix_fallocate(data_fd, 0, DATA_FILE_LEN)) != 0) {
       LOG_ERROR("%s: posix_fallocate", data_file_name.c_str());
+      std::cout << "posix_fallocate: " << data_file_name << "\n";
       return;
     }
 

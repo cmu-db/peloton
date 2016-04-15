@@ -47,6 +47,7 @@ enum LoggingType {
 
 #define NVM_DIR "/mnt/pmfs/"
 #define HDD_DIR "/data/"
+#define SSD_DIR "/data1/"
 
 #define TMP_DIR "/tmp/"
 
