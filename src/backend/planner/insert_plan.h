@@ -31,13 +31,27 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(InsertPlan &&) = delete;
   InsertPlan &operator=(InsertPlan &&) = delete;
 
+  // This constructor takes in neither a project info nor a tuple
+  // It must be used when the input is a logical tile
+  explicit InsertPlan(storage::DataTable *table,
+                      oid_t bulk_insert_count = 1)
+      : target_table_(table),
+        bulk_insert_count(bulk_insert_count) {}
+
+  // This constructor takes in a project info
   explicit InsertPlan(storage::DataTable *table,
                       std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                      storage::Tuple *tuple = nullptr,
                       oid_t bulk_insert_count = 1)
       : target_table_(table),
         project_info_(std::move(project_info)),
-        tuple_(std::unique_ptr<storage::Tuple>(tuple)),
+        bulk_insert_count(bulk_insert_count) {}
+
+  // This constructor takes in a tuple
+  explicit InsertPlan(storage::DataTable *table,
+                      std::unique_ptr<storage::Tuple> &&tuple,
+                      oid_t bulk_insert_count = 1)
+      : target_table_(table),
+        tuple_(std::move(tuple)),
         bulk_insert_count(bulk_insert_count) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }

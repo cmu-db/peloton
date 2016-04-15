@@ -142,7 +142,7 @@ void LoadYCSBDatabase() {
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
 
-    storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
     auto key_value = ValueFactory::GetIntegerValue(rowid);
     auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
@@ -151,7 +151,7 @@ void LoadYCSBDatabase() {
       tuple->SetValue(col_itr, field_value, pool.get());
     }
 
-    planner::InsertPlan node(user_table, nullptr, tuple);
+    planner::InsertPlan node(user_table, std::move(tuple));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }

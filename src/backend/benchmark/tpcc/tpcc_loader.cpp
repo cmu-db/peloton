@@ -932,10 +932,10 @@ int GetTimeStamp() {
   return time_stamp;
 }
 
-storage::Tuple* BuildItemTuple(const int item_id,
-                               const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildItemTuple(const int item_id,
+                                               const std::unique_ptr<VarlenPool>& pool) {
   auto item_table_schema = item_table->GetSchema();
-  storage::Tuple* item_tuple = new storage::Tuple(item_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> item_tuple(new storage::Tuple(item_table_schema, allocate));
 
   // I_ID
   item_tuple->SetValue(0, ValueFactory::GetIntegerValue(item_id), nullptr);
@@ -954,10 +954,10 @@ storage::Tuple* BuildItemTuple(const int item_id,
   return item_tuple;
 }
 
-storage::Tuple* BuildWarehouseTuple(const int warehouse_id,
-                                    const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildWarehouseTuple(const int warehouse_id,
+                                                    const std::unique_ptr<VarlenPool>& pool) {
   auto warehouse_table_schema = warehouse_table->GetSchema();
-  storage::Tuple* warehouse_tuple = new storage::Tuple(warehouse_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> warehouse_tuple(new storage::Tuple(warehouse_table_schema, allocate));
 
   // W_ID
   warehouse_tuple->SetValue(0, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
@@ -986,11 +986,11 @@ storage::Tuple* BuildWarehouseTuple(const int warehouse_id,
   return warehouse_tuple;
 }
 
-storage::Tuple* BuildDistrictTuple(const int district_id,
-                                   const int warehouse_id,
-                                   const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
+                                                   const int warehouse_id,
+                                                   const std::unique_ptr<VarlenPool>& pool) {
   auto district_table_schema = district_table->GetSchema();
-  storage::Tuple* district_tuple = new storage::Tuple(district_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> district_tuple(new storage::Tuple(district_table_schema, allocate));
 
   // D_ID
   district_tuple->SetValue(0, ValueFactory::GetIntegerValue(district_id), nullptr);
@@ -1024,12 +1024,12 @@ storage::Tuple* BuildDistrictTuple(const int district_id,
   return district_tuple;
 }
 
-storage::Tuple* BuildCustomerTuple(const int customer_id,
-                                   const int district_id,
-                                   const int warehouse_id,
-                                   const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
+                                                   const int district_id,
+                                                   const int warehouse_id,
+                                                   const std::unique_ptr<VarlenPool>& pool) {
   auto customer_table_schema = customer_table->GetSchema();
-  storage::Tuple* customer_tuple = new storage::Tuple(customer_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> customer_tuple(new storage::Tuple(customer_table_schema, allocate));
 
   // C_ID
   customer_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
@@ -1086,14 +1086,14 @@ storage::Tuple* BuildCustomerTuple(const int customer_id,
   return customer_tuple;
 }
 
-storage::Tuple* BuildHistoryTuple(const int customer_id,
-                                  const int district_id,
-                                  const int warehouse_id,
-                                  const int history_district_id,
-                                  const int history_warehouse_id,
-                                  const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildHistoryTuple(const int customer_id,
+                                                  const int district_id,
+                                                  const int warehouse_id,
+                                                  const int history_district_id,
+                                                  const int history_warehouse_id,
+                                                  const std::unique_ptr<VarlenPool>& pool) {
   auto history_table_schema = history_table->GetSchema();
-  storage::Tuple* history_tuple = new storage::Tuple(history_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> history_tuple(new storage::Tuple(history_table_schema, allocate));
 
   // H_C_ID
   history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
@@ -1117,13 +1117,13 @@ storage::Tuple* BuildHistoryTuple(const int customer_id,
   return history_tuple;
 }
 
-storage::Tuple* BuildOrdersTuple(const int orders_id,
-                                 const int district_id,
-                                 const int warehouse_id,
-                                 const bool new_order,
-                                 const int o_ol_cnt) {
+std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
+                                                 const int district_id,
+                                                 const int warehouse_id,
+                                                 const bool new_order,
+                                                 const int o_ol_cnt) {
   auto orders_table_schema = orders_table->GetSchema();
-  storage::Tuple* orders_tuple = new storage::Tuple(orders_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table_schema, allocate));
 
   // O_ID
   orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_id), nullptr);
@@ -1151,11 +1151,11 @@ storage::Tuple* BuildOrdersTuple(const int orders_id,
   return orders_tuple;
 }
 
-storage::Tuple* BuildNewOrderTuple(const int orders_id,
-                                   const int district_id,
-                                   const int warehouse_id) {
+std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
+                                                   const int district_id,
+                                                   const int warehouse_id) {
   auto new_order_table_schema = new_order_table->GetSchema();
-  storage::Tuple* new_order_tuple = new storage::Tuple(new_order_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table_schema, allocate));
 
   // NO_O_ID
   new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_id), nullptr);
@@ -1167,15 +1167,15 @@ storage::Tuple* BuildNewOrderTuple(const int orders_id,
   return new_order_tuple;
 }
 
-storage::Tuple* BuildOrderLineTuple(const int orders_id,
-                                    const int district_id,
-                                    const int warehouse_id,
-                                    const int order_line_id,
-                                    const int ol_supply_w_id,
-                                    const bool new_order,
-                                    const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildOrderLineTuple(const int orders_id,
+                                                    const int district_id,
+                                                    const int warehouse_id,
+                                                    const int order_line_id,
+                                                    const int ol_supply_w_id,
+                                                    const bool new_order,
+                                                    const std::unique_ptr<VarlenPool>& pool) {
   auto order_line_table_schema = order_line_table->GetSchema();
-  storage::Tuple* order_line_tuple = new storage::Tuple(order_line_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table_schema, allocate));
 
   // OL_O_ID
   order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(orders_id), nullptr);
@@ -1211,11 +1211,11 @@ storage::Tuple* BuildOrderLineTuple(const int orders_id,
   return order_line_tuple;
 }
 
-storage::Tuple* BuildStockTuple(const int stock_id,
-                                const int s_w_id,
-                                const std::unique_ptr<VarlenPool>& pool) {
+std::unique_ptr<storage::Tuple> BuildStockTuple(const int stock_id,
+                                                const int s_w_id,
+                                                const std::unique_ptr<VarlenPool>& pool) {
   auto stock_table_schema = stock_table->GetSchema();
-  storage::Tuple* stock_tuple = new storage::Tuple(stock_table_schema, allocate);
+  std::unique_ptr<storage::Tuple> stock_tuple(new storage::Tuple(stock_table_schema, allocate));
 
   // S_I_ID
   stock_tuple->SetValue(0, ValueFactory::GetIntegerValue(stock_id), nullptr);
@@ -1263,7 +1263,7 @@ void LoadItems() {
   for (auto item_itr = 0; item_itr < state.item_count; item_itr++) {
 
     auto item_tuple = BuildItemTuple(item_itr, pool);
-    planner::InsertPlan node(item_table, nullptr, item_tuple);
+    planner::InsertPlan node(item_table, std::move(item_tuple));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
@@ -1283,7 +1283,7 @@ void LoadWarehouses() {
     context.reset(new executor::ExecutorContext(txn));
 
     auto warehouse_tuple = BuildWarehouseTuple(warehouse_itr, pool);
-    planner::InsertPlan warehouse_node(warehouse_table, nullptr, warehouse_tuple);
+    planner::InsertPlan warehouse_node(warehouse_table, std::move(warehouse_tuple));
     executor::InsertExecutor warehouse_executor(&warehouse_node, context.get());
     warehouse_executor.Execute();
 
@@ -1295,7 +1295,7 @@ void LoadWarehouses() {
       context.reset(new executor::ExecutorContext(txn));
 
       auto district_tuple = BuildDistrictTuple(district_itr, warehouse_itr, pool);
-      planner::InsertPlan district_node(district_table, nullptr, district_tuple);
+      planner::InsertPlan district_node(district_table, std::move(district_tuple));
       executor::InsertExecutor district_executor(&district_node, context.get());
       district_executor.Execute();
 
@@ -1307,7 +1307,7 @@ void LoadWarehouses() {
         context.reset(new executor::ExecutorContext(txn));
 
         auto customer_tuple = BuildCustomerTuple(customer_itr, district_itr, warehouse_itr, pool);
-        planner::InsertPlan customer_node(customer_table, nullptr, customer_tuple);
+        planner::InsertPlan customer_node(customer_table, std::move(customer_tuple));
         executor::InsertExecutor customer_executor(&customer_node, context.get());
         customer_executor.Execute();
 
@@ -1317,7 +1317,7 @@ void LoadWarehouses() {
         int history_warehouse_id = warehouse_itr;
         auto history_tuple = BuildHistoryTuple(customer_itr, district_itr, warehouse_itr,
                                                history_district_id, history_warehouse_id, pool);
-        planner::InsertPlan history_node(history_table, nullptr, history_tuple);
+        planner::InsertPlan history_node(history_table, std::move(history_tuple));
         executor::InsertExecutor history_executor(&history_node, context.get());
         history_executor.Execute();
 
@@ -1338,14 +1338,14 @@ void LoadWarehouses() {
 
         auto orders_tuple = BuildOrdersTuple(orders_itr, district_itr, warehouse_itr,
                                              new_order, o_ol_cnt);
-        planner::InsertPlan orders_node(orders_table, nullptr, orders_tuple);
+        planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
         executor::InsertExecutor orders_executor(&orders_node, context.get());
         orders_executor.Execute();
 
         // NEW_ORDER
         if(new_order){
           auto new_order_tuple = BuildNewOrderTuple(orders_itr, district_itr, warehouse_itr);
-          planner::InsertPlan new_order_node(new_order_table, nullptr, new_order_tuple);
+          planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
           executor::InsertExecutor new_order_executor(&new_order_node, context.get());
           new_order_executor.Execute();
         }
@@ -1356,7 +1356,7 @@ void LoadWarehouses() {
           int ol_supply_w_id = warehouse_itr;
           auto order_line_tuple = BuildOrderLineTuple(orders_itr, district_itr, warehouse_itr,
                                                       order_line_itr, ol_supply_w_id, new_order, pool);
-          planner::InsertPlan order_line_node(order_line_table, nullptr, order_line_tuple);
+          planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
           executor::InsertExecutor order_line_executor(&order_line_node, context.get());
           order_line_executor.Execute();
         }
@@ -1374,7 +1374,7 @@ void LoadWarehouses() {
 
       int s_w_id = warehouse_itr;
       auto stock_tuple = BuildStockTuple(stock_itr, s_w_id, pool);
-      planner::InsertPlan stock_node(stock_table, nullptr, stock_tuple);
+      planner::InsertPlan stock_node(stock_table, std::move(stock_tuple));
       executor::InsertExecutor stock_executor(&stock_node, context.get());
       stock_executor.Execute();
 

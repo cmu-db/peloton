@@ -314,9 +314,7 @@ void RunDirectTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -475,7 +473,6 @@ void RunAggregateTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -621,7 +618,6 @@ void RunArithmeticTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -883,9 +879,7 @@ void RunInsertTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -2074,11 +2068,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
 
-  auto bulk_insert_count = 1;
-
-  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
