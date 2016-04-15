@@ -5,27 +5,19 @@
 ######################################################################
 
 BUILT_SOURCES += \
-                 backend/networking/queryplan.pb.cc \
 				 backend/networking/abstract_service.pb.cc 
 
 dist_noinst_DATA = \
-				    backend/networking/queryplan.proto \
 				    backend/networking/abstract_service.proto
 
 MOSTLYCLEANFILES = \
 				    backend/networking/abstract_service.pb.cc \
 				    backend/networking/abstract_service.pb.h \
-				    backend/networking/queryplan.pb.cc \
 				    backend/networking/queryplan.pb.h 
 
 backend/networking/abstract_service.pb.cc:
 	$(PROTOC) --proto_path=$(srcdir)/backend/networking \
 	$(srcdir)/backend/networking/abstract_service.proto \
-	--cpp_out=$(srcdir)/backend/networking
-	
-backend/networking/queryplan.pb.cc:
-	$(PROTOC) --proto_path=$(srcdir)/backend/networking \
-	$(srcdir)/backend/networking/queryplan.proto \
 	--cpp_out=$(srcdir)/backend/networking
 
 ######################################################################
@@ -35,7 +27,6 @@ backend/networking/queryplan.pb.cc:
 networking_FILES = \
 networking_FILES = \
 				backend/networking/abstract_service.pb.cc \
-				backend/networking/queryplan.pb.cc \
 				backend/networking/rpc_channel.cpp \
 				backend/networking/rpc_server.cpp \
 				backend/networking/rpc_client.cpp \

@@ -122,6 +122,8 @@ void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg) {
  * @brief Parse TupleDesc Message and create Postgres's TupleDesc
  * @param  TupleDescMsg&
  * @return TupleDesc
+ *
+ * Note: This method is deprecated, but we can refer it when using nested protobuf msg
  */
 std::unique_ptr<tupleDesc> ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg) {
     /*

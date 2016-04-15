@@ -512,7 +512,7 @@ class CopySerializeOutput : public SerializeOutput {
  public:
   // Start with something sizeable so we avoid a ton of initial
   // allocations.
-  static const int INITIAL_SIZE = 1024*4; // the previous value is 8388608 which is too big for network
+  static const int INITIAL_SIZE = 1024*4; // 4KB. The previous value is 8388608 which is too big for network
 
   CopySerializeOutput() : bytes_(INITIAL_SIZE) {
     Initialize(bytes_.Data(), INITIAL_SIZE);
