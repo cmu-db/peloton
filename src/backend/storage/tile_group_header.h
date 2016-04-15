@@ -119,6 +119,7 @@ class TileGroupHeader : public Printable {
   }
 
   oid_t GetCurrentNextTupleSlot() const {
+    // Carefully check if the next_tuple_slot is out of boundary
     oid_t next_tid = next_tuple_slot;
     if (next_tid < num_tuple_slots) {
       return next_tid;
@@ -290,6 +291,8 @@ class TileGroupHeader : public Printable {
   oid_t num_tuple_slots;
 
   // next free tuple slot
+  // WARNING: this variable may not be the right boundary of the tile
+  // IT MAY OUT OF BOUNDARY! ALWAYS CHECK IF IT EXCEEDS num_tuple_slots
   std::atomic<oid_t> next_tuple_slot;
 
   Spinlock tile_header_lock;
