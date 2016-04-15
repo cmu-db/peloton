@@ -53,7 +53,9 @@ class DeviceTest : public PelotonTest {};
 #define DATA_FILE_NAME "peloton.pmem"
 #define DATA_ALIGNMENT 4096
 
-#define NUM_TRIALS     10
+#define SMALL_SIZE_NUM_TRIALS     10000
+#define LARGE_SIZE_NUM_TRIALS     1000
+#define LARGE_SIZE_THRESHOLD      32768
 
 #define roundup2(x, y)  (((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
 
@@ -90,29 +92,41 @@ void ReadTest(const int data_fd,
   // Compute chunk size
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
-  // Start timer
+  // Figure out # of trials
+  oid_t num_trials = SMALL_SIZE_NUM_TRIALS;
+  if(chunk_size > LARGE_SIZE_THRESHOLD) {
+    num_trials = LARGE_SIZE_NUM_TRIALS;
+  }
+
+  // Clean up buffer
+  bzero(buffer, max_chunk_size);
+
+  // Reset timer
   timer.Reset();
-  timer.Start();
 
   // READS
-  for(oid_t trial_itr = 0; trial_itr < NUM_TRIALS; trial_itr++) {
+  for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
     // Compute a random offset if needed
     if(random == true) {
       offset = GetFileOffset(max_chunk_size);
     }
+
+    // Start timer
+    timer.Start();
 
     result = pread(data_fd, buffer, chunk_size, offset);
     if(result == -1){
       LOG_ERROR("pread");
       return;
     }
+
+    // Stop timer
+    timer.Stop();
   }
 
-  // Stop timer
-  timer.Stop();
 
   // Set duration
-  average_time = timer.GetDuration() / NUM_TRIALS;
+  average_time = timer.GetDuration() / num_trials;
   std::cout << "Chunk size : " << chunk_size << " Average READ  time : " << average_time << "\n";
 }
 
@@ -130,29 +144,41 @@ void WriteTest(const int data_fd,
   // Compute chunk size
   std::size_t chunk_size = pow(2, chunk_size_itr);
 
-  // Start timer
+  // Figure out # of trials
+  oid_t num_trials = SMALL_SIZE_NUM_TRIALS;
+  if(chunk_size > LARGE_SIZE_THRESHOLD) {
+    num_trials = LARGE_SIZE_NUM_TRIALS;
+  }
+
+  // Set up buffer
+  memset(buffer, 'f', max_chunk_size);
+
+  // Reset timer
   timer.Reset();
-  timer.Start();
 
   // WRITES
-  for(oid_t trial_itr = 0; trial_itr < NUM_TRIALS; trial_itr++) {
+  for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
     // Compute a random offset if needed
     if(random == true) {
       offset = GetFileOffset(max_chunk_size);
     }
+
+    // Start timer
+    timer.Start();
 
     result = pwrite(data_fd, buffer, chunk_size, offset);
     if(result == -1){
       LOG_ERROR("pwrite");
       return;
     }
+
+    // Stop timer
+    timer.Stop();
+
   }
 
-  // Stop timer
-  timer.Stop();
-
   // Set duration
-  average_time = timer.GetDuration() / NUM_TRIALS;
+  average_time = timer.GetDuration() / num_trials;
   std::cout << "Chunk size : " << chunk_size << " Average WRITE time : " << average_time << "\n";
 }
 
@@ -185,6 +211,7 @@ TEST_F(DeviceTest, BenchmarkTest) {
     std::size_t max_chunk_size = pow(2, end_chunk_size);
     void *buffer;
     int result;
+    oid_t chunk_size_interval = 4;
 
     // Randomize stuff
     srand(time(NULL));
@@ -201,7 +228,7 @@ TEST_F(DeviceTest, BenchmarkTest) {
     // SEQUENTIAL READ
     for(oid_t chunk_size_itr = begin_chunk_size;
         chunk_size_itr <= end_chunk_size;
-        chunk_size_itr++){
+        chunk_size_itr += chunk_size_interval){
 
       ReadTest(data_fd, chunk_size_itr, max_chunk_size, buffer, false);
 
@@ -212,7 +239,7 @@ TEST_F(DeviceTest, BenchmarkTest) {
     // SEQUENTIAL WRITE
     for(oid_t chunk_size_itr = begin_chunk_size;
         chunk_size_itr <= end_chunk_size;
-        chunk_size_itr++){
+        chunk_size_itr += chunk_size_interval){
 
       WriteTest(data_fd, chunk_size_itr, max_chunk_size, buffer, false);
 
@@ -223,7 +250,7 @@ TEST_F(DeviceTest, BenchmarkTest) {
     // RANDOM READ
     for(oid_t chunk_size_itr = begin_chunk_size;
         chunk_size_itr <= end_chunk_size;
-        chunk_size_itr++){
+        chunk_size_itr += chunk_size_interval){
 
       ReadTest(data_fd, chunk_size_itr, max_chunk_size, buffer, true);
 
@@ -234,7 +261,7 @@ TEST_F(DeviceTest, BenchmarkTest) {
     // RANDOM WRITE
     for(oid_t chunk_size_itr = begin_chunk_size;
         chunk_size_itr <= end_chunk_size;
-        chunk_size_itr++){
+        chunk_size_itr += chunk_size_interval){
 
       WriteTest(data_fd, chunk_size_itr, max_chunk_size, buffer, true);
 
