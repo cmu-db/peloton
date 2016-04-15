@@ -45,11 +45,25 @@ storage::Database* ycsb_database;
 
 storage::DataTable* user_table;
 
-static const oid_t ycsb_field_length = 100;
-
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
+
+  /////////////////////////////////////////////////////////
+  // Create tables
+  /////////////////////////////////////////////////////////
+
+  // Clean up
+  delete ycsb_database;
+  ycsb_database = nullptr;
+  user_table = nullptr;
+
+  auto& manager = catalog::Manager::GetInstance();
+  ycsb_database = new storage::Database(ycsb_database_oid);
+  manager.AddDatabase(ycsb_database);
+
+  bool own_schema = true;
+  bool adapt_table = false;
 
   // Create schema first
   std::vector<catalog::Column> columns;
@@ -69,24 +83,13 @@ void CreateYCSBDatabase() {
   catalog::Schema *table_schema = new catalog::Schema(columns);
   std::string table_name("USERTABLE");
 
-  /////////////////////////////////////////////////////////
-  // Create table.
-  /////////////////////////////////////////////////////////
-
-  // Clean up
-  delete ycsb_database;
-  ycsb_database = nullptr;
-  user_table = nullptr;
-
-  auto& manager = catalog::Manager::GetInstance();
-  ycsb_database = new storage::Database(ycsb_database_oid);
-  manager.AddDatabase(ycsb_database);
-
-  bool own_schema = true;
-  bool adapt_table = false;
   user_table = storage::TableFactory::GetDataTable(
-		  ycsb_database_oid, user_table_oid, table_schema, table_name,
-		  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+      ycsb_database_oid,
+      user_table_oid,
+      table_schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP,
+      own_schema,
+      adapt_table);
 
   ycsb_database->AddTable(user_table);
 
@@ -105,8 +108,10 @@ void CreateYCSBDatabase() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", user_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      "primary_index",
+      user_table_pkey_index_oid,
+      INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_INVALID,
       tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -114,29 +119,13 @@ void CreateYCSBDatabase() {
 
 }
 
-/**
- * Cook a ProjectInfo object from a tuple.
- * Simply use a ConstantValueExpression for each attribute.
- */
-planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple& tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
-
-  for (oid_t col_id = START_OID; col_id < tuple.GetColumnCount(); col_id++) {
-    auto value = tuple.GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  return new planner::ProjectInfo(std::move(target_list),
-                                  std::move(direct_map_list));
-}
-
 void LoadYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
+  // Pick the user table
   auto table_schema = user_table->GetSchema();
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -153,19 +142,16 @@ void LoadYCSBDatabase() {
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
 
-    storage::Tuple tuple(table_schema, allocate);
+    storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
     auto key_value = ValueFactory::GetIntegerValue(rowid);
-    auto field_value = ValueFactory::GetStringValue(std::to_string(rowid));
+    auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
-    tuple.SetValue(0, key_value, nullptr);
+    tuple->SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple.SetValue(col_itr, field_value, pool.get());
+      tuple->SetValue(col_itr, field_value, pool.get());
     }
 
-    std::unique_ptr<const planner::ProjectInfo> project_info{
-      MakeProjectInfoFromTuple(tuple)};
-
-    planner::InsertPlan node(user_table, std::move(project_info));
+    planner::InsertPlan node(user_table, nullptr, tuple);
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
