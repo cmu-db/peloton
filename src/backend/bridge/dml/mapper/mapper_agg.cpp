@@ -39,7 +39,12 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
+  if (proj_info.get() != nullptr) {
+    LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
+  } else {
+    LOG_INFO("empty projection info");
+  }
+
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(

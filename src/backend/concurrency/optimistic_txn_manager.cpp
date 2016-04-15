@@ -112,7 +112,7 @@ bool OptimisticTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to acquire tuple. Set txn failure.");
+    LOG_ERROR("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -259,7 +259,7 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -327,11 +327,11 @@ Result OptimisticTxnManager::CommitTransaction() {
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu",
+        LOG_TRACE("transaction id=%lu",
                  tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu",
+        LOG_TRACE("begin commit id=%lu",
                  tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu",
+        LOG_TRACE("end commit id=%lu",
                  tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -441,7 +441,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 }
 
 Result OptimisticTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
