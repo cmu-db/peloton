@@ -84,9 +84,7 @@ void ReadTest(const int data_fd,
               const bool random) {
   int result;
   double average_time;
-
-  // Figure out offset
-  ssize_t offset = GetFileOffset(max_chunk_size);
+  ssize_t offset = 0;
 
   // Compute chunk size
   std::size_t chunk_size = pow(2, chunk_size_itr);
@@ -102,9 +100,12 @@ void ReadTest(const int data_fd,
 
   // READS
   for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
-    // Compute a random offset if needed
+    // Figure out offset
     if(random == true) {
       offset = GetFileOffset(max_chunk_size);
+    }
+    else {
+      offset += chunk_size;
     }
 
     // Start timer
@@ -133,9 +134,7 @@ void WriteTest(const int data_fd,
                const bool random) {
   int result;
   double average_time;
-
-  // Figure out offset
-  ssize_t offset = GetFileOffset(max_chunk_size);
+  ssize_t offset = 0;
 
   // Compute chunk size
   std::size_t chunk_size = pow(2, chunk_size_itr);
@@ -151,9 +150,12 @@ void WriteTest(const int data_fd,
 
   // WRITES
   for(oid_t trial_itr = 0; trial_itr < num_trials; trial_itr++) {
-    // Compute a random offset if needed
+    // Figure out offset
     if(random == true) {
       offset = GetFileOffset(max_chunk_size);
+    }
+    else {
+      offset += chunk_size;
     }
 
     // Start timer
