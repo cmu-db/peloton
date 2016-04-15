@@ -135,6 +135,8 @@ bool IndexScanExecutor::ExecIndexLookup() {
    * for now, the flag params_exec_ is set to 1 only in nestloop join
    * in this case, the params is the results of the outer plan
    * We can add more cases in future
+   *
+   * TODO: Remove this if there is other proper way to execute
    */
   //TODO: we probably need to add more for other cases in the future
   if (executor_context_->GetParamsExecFlag() == IN_NESTLOOP) {
