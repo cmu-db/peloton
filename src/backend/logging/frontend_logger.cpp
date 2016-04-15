@@ -140,28 +140,23 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   std::this_thread::sleep_for(sleep_period);
 
   {
-    cid_t max_possible_commit_id = MAX_CID;
+    cid_t max_committed_cid = 0;
+    cid_t lower_bound = MAX_CID;
 
     // TODO: handle edge cases here (backend logger has not yet sent a log
     // message)
 
     // Look at the local queues of the backend loggers
-    while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
-      ;
+    backend_loggers_lock.Lock();
     LOG_TRACE("Collect log buffers from %lu backend loggers",
               backend_loggers.size());
     for (auto backend_logger : backend_loggers) {
       {
-        auto cid = backend_logger->PrepareLogBuffers();
+        backend_logger->PrepareLogBuffers();
         auto &log_buffers = backend_logger->GetLogBuffers();
         auto log_buffer_size = log_buffers.size();
 
         // update max_possible_commit_id with the latest buffer
-        if (cid != INVALID_CID) {
-          LOG_INFO("Found %lu log buffers to persist with commit id: %lu",
-                   log_buffer_size, cid);
-          max_possible_commit_id = std::min(cid, max_possible_commit_id);
-        }
 
         // Skip current backend_logger, nothing to do
         if (log_buffer_size == 0) continue;
@@ -170,31 +165,48 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         for (oid_t log_record_itr = 0; log_record_itr < log_buffer_size;
              log_record_itr++) {
           // copy to front end logger
+          cid_t buffer_lower_bound =
+              log_buffers[log_record_itr]->GetLoggingCidLowerBound();
+          cid_t buffer_committed =
+              log_buffers[log_record_itr]->GetHighestCommittedTransaction();
+          if (buffer_lower_bound != INVALID_CID) {
+            lower_bound = std::min(lower_bound, buffer_lower_bound);
+          }
+          if (buffer_committed != INVALID_CID) {
+            max_committed_cid = std::max(max_committed_cid, buffer_committed);
+          }
+
           global_queue.push_back(std::move(log_buffers[log_record_itr]));
         }
         // cleanup the local queue
         log_buffers.clear();
       }
     }
-
-    if (max_possible_commit_id != MAX_CID) {
-      // LOG_INFO("compare max_possible_commit_id %lu >= max_collected_commit_id
-      // %lu ",
-      //		  max_possible_commit_id, max_collected_commit_id);
-      assert(max_possible_commit_id >= max_collected_commit_id);
-      max_collected_commit_id = max_possible_commit_id;
+    cid_t max_possible_commit_id;
+    if (max_committed_cid == 0 && lower_bound == MAX_CID) {
+      // nothing collected
+      max_possible_commit_id = max_collected_commit_id;
+    } else if (max_committed_cid == 0) {
+      max_possible_commit_id = lower_bound;
+    } else if (lower_bound == MAX_CID) {
+      max_possible_commit_id = max_committed_cid;
+    } else {
+      max_possible_commit_id = std::min(max_committed_cid, lower_bound);
     }
-    backend_loggers_lock.clear(std::memory_order_release);
+    // max_collected_commit_id should never decrease
+    assert(max_possible_commit_id >= max_collected_commit_id);
+    max_collected_commit_id = max_possible_commit_id;
+
+    backend_loggers_lock.Unlock();
   }
 }
 
 cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
 
 void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
-  while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
-    ;
-  bel.SetHighestLoggedCommitId(max_collected_commit_id);
-  backend_loggers_lock.clear(std::memory_order_release);
+  backend_loggers_lock.Lock();
+  bel.SetLoggingCidLowerBound(max_collected_commit_id);
+  backend_loggers_lock.Unlock();
 }
 
 /**
@@ -208,11 +220,10 @@ void FrontendLogger::AddBackendLogger(BackendLogger *backend_logger) {
     backend_logger->GrantEmptyBuffer(std::move(buffer));
   }
   // Add backend logger to the list of backend loggers
-  while (backend_loggers_lock.test_and_set(std::memory_order_acquire))
-    ;
-  backend_logger->SetHighestLoggedCommitId(max_collected_commit_id);
+  backend_loggers_lock.Lock();
+  backend_logger->SetLoggingCidLowerBound(max_collected_commit_id);
   backend_loggers.push_back(backend_logger);
-  backend_loggers_lock.clear(std::memory_order_release);
+  backend_loggers_lock.Unlock();
 }
 
 }  // namespace logging
