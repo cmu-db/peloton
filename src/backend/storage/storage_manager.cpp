@@ -20,10 +20,6 @@
 #include <string.h>
 #include <sys/mman.h>
 
-#ifdef NVML
-#include <libpmem.h>
-#endif
-
 #include <string>
 #include <iostream>
 
@@ -44,6 +40,19 @@ size_t peloton_data_file_size = 0;
 namespace peloton {
 namespace storage {
 
+// 64B cache line size
+#define ALIGN 64
+
+static inline void pmem_flush_cache(void *addr, size_t len) {
+  uintptr_t uptr = (uintptr_t) addr & ~(ALIGN - 1);
+  uintptr_t end = (uintptr_t) addr + len;
+
+  // loop through 64B-aligned chunks covering the given range
+  for (; uptr < end; uptr += ALIGN) {
+    __builtin_ia32_clflush((void *) uptr);
+  }
+}
+
 #define DATA_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
 #define DATA_FILE_NAME "peloton.pmem"
 
@@ -54,10 +63,9 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-    : data_file_address(nullptr),
-      is_pmem(false),
-      data_file_len(0),
-      data_file_offset(0) {
+: data_file_address(nullptr),
+  data_file_len(0),
+  data_file_offset(0) {
   // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
@@ -130,18 +138,15 @@ StorageManager::StorageManager()
     exit(EXIT_FAILURE);
   }
 
-#ifdef NVML
-  // memory map the data file
-  if ((data_file_address = reinterpret_cast<char *>(pmem_map(data_fd))) ==
-      NULL) {
-    perror("pmem_map");
+  // map the data file in memory
+  if ((data_file_address =  mmap(NULL,
+                                 data_file_len,
+                                 PROT_READ | PROT_WRITE,
+                                 MAP_SHARED,
+                                 data_fd, 0)) == MAP_FAILED) {
+    perror("mmap");
     exit(EXIT_FAILURE);
   }
-
-  // true only if the entire range [addr, addr+len) consists of persistent
-  // memory
-  is_pmem = pmem_is_pmem(data_file_address, data_file_len);
-#endif
 
   // close the pmem file -- it will remain mapped
   close(data_fd);
@@ -151,12 +156,21 @@ StorageManager::~StorageManager() {
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
 
-// unmap the pmem file
-#ifdef NVML
-  if (is_pmem == true) {
-    pmem_unmap(data_file_address, data_file_len);
+  // sync and unmap the data file
+  if(data_file_address != nullptr) {
+    // sync the mmap'ed file to SSD or HDD
+    int status = msync(data_file_address, data_file_len, MS_SYNC);
+    if(status != 0) {
+      perror("msync");
+      exit(EXIT_FAILURE);
+    }
+
+    if (munmap(data_file_address, data_file_len) == MAP_FAILED) {
+      perror("munmap");
+      exit(EXIT_FAILURE);
+    }
   }
-#endif
+
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
@@ -165,13 +179,16 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       return ::operator new(size);
     } break;
 
-    case BACKEND_TYPE_FILE: {
+    case BACKEND_TYPE_NVM:
+    case BACKEND_TYPE_SSD:
+    case BACKEND_TYPE_HDD: {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
         if (data_file_offset >= data_file_len) return nullptr;
 
-        void *address = data_file_address + data_file_offset;
+        void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
+
         // offset by requested size
         data_file_offset += size;
         return address;
@@ -189,7 +206,9 @@ void StorageManager::Release(BackendType type, void *address) {
       ::operator delete(address);
     } break;
 
-    case BACKEND_TYPE_FILE: {
+    case BACKEND_TYPE_NVM:
+    case BACKEND_TYPE_SSD:
+    case BACKEND_TYPE_HDD: {
       // Nothing to do here
     } break;
 
@@ -202,24 +221,30 @@ void StorageManager::Release(BackendType type, void *address) {
 }
 
 void StorageManager::Sync(BackendType type,
-                          __attribute__((unused)) void *address,
-                          __attribute__((unused)) size_t length) {
+                          void *address,
+                          size_t length) {
   switch (type) {
     case BACKEND_TYPE_MM: {
       // Nothing to do here
     } break;
 
-    case BACKEND_TYPE_FILE: {
-// flush writes for persistence
-#ifdef NVML
-      if (is_pmem) {
-        pmem_persist(address, length);
-        clflush_count++;
-      } else {
-        pmem_msync(address, length);
-        msync_count++;
+    case BACKEND_TYPE_NVM: {
+      // flush writes to NVM
+      pmem_flush_cache(address, length);
+      __builtin_ia32_sfence();
+      clflush_count++;
+    } break;
+
+    case BACKEND_TYPE_SSD:
+    case BACKEND_TYPE_HDD: {
+      // sync the mmap'ed file to SSD or HDD
+      int status = msync(data_file_address, data_file_len, MS_SYNC);
+      if(status != 0) {
+        perror("msync");
+        exit(EXIT_FAILURE);
       }
-#endif
+
+      msync_count++;
     } break;
 
     case BACKEND_TYPE_INVALID:
