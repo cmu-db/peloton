@@ -54,11 +54,11 @@ class AbstractPlan : public Printable {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(const AbstractPlan *child);
+  void AddChild(std::unique_ptr<AbstractPlan> &&child);
 
-  const std::vector<const AbstractPlan *> &GetChildren() const;
+  const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
-  const AbstractPlan *GetParent() const;
+  const AbstractPlan *GetParent();
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -77,8 +77,8 @@ class AbstractPlan : public Printable {
 
   virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
-  // A plan will be sent to anther node
-  // So serialization is should be implemented by the derived classes
+  // A plan will be sent to anther node via serialization
+  // So serialization should be implemented by the derived classes
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
@@ -103,7 +103,7 @@ class AbstractPlan : public Printable {
 
  private:
   // A plan node can have multiple children
-  std::vector<const AbstractPlan *> children_;
+  std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
 };

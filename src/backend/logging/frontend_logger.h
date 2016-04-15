@@ -70,7 +70,7 @@ class FrontendLogger : public Logger {
   std::vector<std::unique_ptr<LogRecord>> global_queue;
 
   // period with which it collects log records from backend loggers
-  // (in microseconds)
+  // (in milliseconds)
   int64_t wait_timeout;
 
   // stats

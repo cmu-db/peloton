@@ -74,10 +74,6 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-std::ofstream out("outputfile.summary");
-
-static void WriteOutput(double stat);
-
 /////////////////////////////////////////////////////////
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
@@ -123,7 +119,7 @@ void RunBackend(oid_t thread_id) {
   durations[thread_id] = timer.GetDuration();
 }
 
-void RunWorkload() {
+double RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
@@ -148,22 +144,7 @@ void RunWorkload() {
 
   double throughput = (state.transaction_count * num_threads)/max_duration;
 
-  WriteOutput(throughput);
-}
-
-static void WriteOutput(double stat) {
-  LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d :: %lf tps",
-           state.update_ratio,
-           state.scale_factor,
-           state.column_count,
-           stat);
-
-  out << state.update_ratio << " ";
-  out << state.scale_factor << " ";
-  out << state.column_count << " ";
-  out << stat << "\n";
-  out.flush();
+  return throughput;
 }
 
 /////////////////////////////////////////////////////////
@@ -232,7 +213,8 @@ void RunRead() {
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(
+      user_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -258,7 +240,8 @@ void RunRead() {
     old_to_new_cols[col_itr] = col_itr;
   }
 
-  auto output_schema = catalog::Schema::CopySchema(user_table->GetSchema());
+  std::shared_ptr<const catalog::Schema> output_schema{
+    catalog::Schema::CopySchema(user_table->GetSchema())};
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
                                         output_schema,
@@ -314,7 +297,8 @@ void RunUpdate() {
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(
+      user_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -345,12 +329,14 @@ void RunUpdate() {
     }
   }
 
-  Value update_val = ValueFactory::GetStringValue(std::string("updated"));
+  std::string update_raw_value(ycsb_field_length - 1, 'u');
+  Value update_val = ValueFactory::GetStringValue(update_raw_value);
   target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
-  planner::UpdatePlan update_node(
-      user_table, new planner::ProjectInfo(std::move(target_list),
-                                           std::move(direct_map_list)));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(user_table, std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
   update_executor.AddChild(&index_scan_executor);

@@ -30,7 +30,8 @@ void Usage(FILE *out) {
           "   -t --transactions      :  # of transactions \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
-          "   -b --backend_count     :  # of backends \n");
+          "   -b --backend_count     :  # of backends \n"
+          );
   exit(EXIT_FAILURE);
 }
 
@@ -121,11 +122,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'h':
         Usage(stderr);
+        exit(EXIT_FAILURE);
         break;
 
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
+        exit(EXIT_FAILURE);
     }
   }
 

@@ -32,7 +32,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -97,8 +97,9 @@ bool InsertExecutor::DExecute() {
             peloton::Result::RESULT_FAILURE);
         return false;
       }
-      auto res = transaction_manager.PerformInsert(location.block, location.offset);
-      if(!res){
+      auto res =
+          transaction_manager.PerformInsert(location.block, location.offset);
+      if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
@@ -115,23 +116,34 @@ bool InsertExecutor::DExecute() {
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
+    auto tuple = node.GetTuple();
+    std::unique_ptr<storage::Tuple> project_tuple;
 
-    // There should be no direct maps
-    assert(project_info);
-    assert(project_info->GetDirectMapList().size() == 0);
+    // Check if this is not a raw tuple
+    if(tuple == nullptr) {
+      // Otherwise, there must exist a project info
+      assert(project_info);
+      // There should be no direct maps
+      assert(project_info->GetDirectMapList().size() == 0);
 
-    for (auto target : project_info->GetTargetList()) {
-      peloton::Value value =
-          target.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(target.first, value, executor_pool);
+      project_tuple.reset(new storage::Tuple(schema, true));
+
+      for (auto target : project_info->GetTargetList()) {
+        peloton::Value value =
+            target.second->Evaluate(nullptr, nullptr, executor_context_);
+        project_tuple->SetValue(target.first, value, executor_pool);
+      }
+
+      // Set tuple to point to temporary project tuple
+      tuple = project_tuple.get();
     }
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
+
       // Carry out insertion
-      ItemPointer location = target_table->InsertTuple(tuple.get());
+      ItemPointer location = target_table->InsertTuple(tuple);
       LOG_TRACE("Inserted into location: %lu, %lu", location.block,
                 location.offset);
 
@@ -141,14 +153,17 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location.block, location.offset);
-      if(!res){
+      auto res =
+          transaction_manager.PerformInsert(location.block, location.offset);
+      if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
+
+      executor_context_->num_processed += 1;  // insert one
+
     }
 
-    executor_context_->num_processed += 1;  // insert one
     done_ = true;
     return true;
   }
