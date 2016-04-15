@@ -29,7 +29,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d :: %d tps",
+  LOG_INFO("%d :: %lf tps",
            state.scale_factor,
            stat);
 
