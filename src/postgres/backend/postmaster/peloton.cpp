@@ -127,8 +127,7 @@ peloton_bootstrap() {
       }
 
     }
-
-    //peloton_gc_mode = GC_TYPE_VACUUM; //FIXME: get through config
+    
     if(peloton_gc_mode == GC_TYPE_VACUUM) {
       // Start GC vacuuming thread
       auto& gc_manager = peloton::gc::GCManager::GetInstance();

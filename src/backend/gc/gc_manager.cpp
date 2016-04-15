@@ -16,39 +16,24 @@
 #include "backend/concurrency/transaction_manager_factory.h"
 namespace peloton {
 namespace gc {
-/**
- * @brief Return the singleton gc manager instance
- */
-GCManager &GCManager::GetInstance() {
-  static GCManager gc_manager;
-  return gc_manager;
-}
 
-void GCManager::StartGC(const oid_t &database_id) {
-  if (this->status_ == GC_STATUS_OFF) {
+void GCManager::StartGC() {
+  if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
-  GCContext *context = new GCContext();
-  std::thread *gc_thread = new std::thread(&GCManager::Poll, this, context);
-  gc_contexts_[database_id] = std::make_pair(gc_thread, context);
+  gc_thread_.reset(new std::thread(&GCManager::Poll, this));
 }
 
-void GCManager::StopGC(const oid_t &database_id) {
-  if (this->status_ == GC_STATUS_OFF) {
+void GCManager::StopGC() {
+  if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
-  auto entry = gc_contexts_.find(database_id);
-  std::thread *gc_thread = entry.first;
-  GCContext *context = entry.second;
-  context->is_running_ = false;
-  gc_thread->join();
-  gc_contexts_.erase(database_id);
-  delete context;
-  delete gc_thread;
+  this->is_running_ = false;
+  this->gc_thread_->join();
 }
 
-void GCManager::Poll(GCContext *context) {
-   // Check if we can move anything from the possibly free list to the free list.
+void GCManager::Poll() {
+  // Check if we can move anything from the possibly free list to the free list.
   auto &manager = catalog::Manager::GetInstance();
 
   while (true) {
@@ -62,10 +47,10 @@ void GCManager::Poll(GCContext *context) {
 
       // every time we garbage collect at most 1000 tuples.
       for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
-        
+
         TupleMetadata tuple_metadata;
         // if there's no more tuples in the queue, then break.
-        if (context->possibly_free_list_.Pop(tuple_metadata) == false) {
+        if (possibly_free_list_.Pop(tuple_metadata) == false) {
           break;
         }
 
@@ -76,16 +61,21 @@ void GCManager::Poll(GCContext *context) {
           // as we do not have a concurrent index yet. --Yingjun
           //DeleteTupleFromIndexes(tuple_metadata);
 
-          auto tile_group_header = manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
-                    
-          tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id, INVALID_TXN_ID);
-          tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
-          tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
-          
+          auto tile_group_header =
+              manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
+
+          tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id,
+                                              INVALID_TXN_ID);
+          tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id,
+                                              MAX_CID);
+          tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id,
+                                            MAX_CID);
+
           LockfreeQueue<TupleMetadata> *free_list = nullptr;
 
           // if the entry for table_id exists.
-          if (context->free_map_.find(tuple_metadata.table_id, free_list) == true) {
+          if (free_map_.find(tuple_metadata.table_id, free_list) ==
+              true) {
             // if the entry for tuple_metadata.table_id exists.
             free_list->Push(tuple_metadata);
           } else {
@@ -94,13 +84,13 @@ void GCManager::Poll(GCContext *context) {
             free_list->Push(tuple_metadata);
             context->free_map_[tuple_metadata.table_id] = free_list;
           }
-          
+
         } else {
           // if a tuple can't be reaped, add it back to the list.
           context->possibly_free_list_.Push(tuple_metadata);
         }
-      } // end for
-    } // end if
+      }  // end for
+    }    // end if
     if (context->is_running_ == false) {
       return;
     }
@@ -109,19 +99,21 @@ void GCManager::Poll(GCContext *context) {
 }
 
 // this function adds a tuple to the possibly free list
-void GCManager::AddPossiblyFreeTuple(const oid_t &database_id, const TupleMetadata &tuple_metadata) {
+void GCManager::AddPossiblyFreeTuple(const oid_t &database_id,
+                                     const TupleMetadata &tuple_metadata) {
   if (this->status_ == GC_STATUS_OFF) {
     return;
   }
   assert(gc_contexts_.contains(database_id));
 
   GCContext *context = gc_contexts_.find(database_id).second;
-  
+
   context->possibly_free_list_.Push(tuple_metadata);
 }
 
 // this function returns a free tuple slot, if one exists
-ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id) {
+ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id,
+                                      const oid_t &table_id) {
   if (this->status_ == GC_STATUS_OFF) {
     return ItemPointer();
   }
@@ -130,7 +122,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id, const oid_t &tab
   GCContext *context = gc_contexts_.find(database_id).second;
 
   ItemPointer ret_item_pointer;
-  
+
   LockfreeQueue<TupleMetadata> *free_list = nullptr;
   // if there exists free_list
   if (context->free_map_.find(table_id, free_list) == true) {
@@ -156,12 +148,14 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
     for (oid_t j = 0; j < index_count; j++) {
       // delete tuple from each index
       auto index = table->GetIndex(j);
-      ItemPointer item(tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id);
+      ItemPointer item(tuple_metadata.tile_group_id,
+                       tuple_metadata.tuple_slot_id);
       auto index_schema = index->GetKeySchema();
       auto indexed_columns = index_schema->GetIndexedColumns();
       std::unique_ptr<storage::Tuple> key(
           new storage::Tuple(index_schema, true));
-      char *tile_tuple_location = tile->GetTupleLocation(tuple_metadata.tuple_slot_id);
+      char *tile_tuple_location =
+          tile->GetTupleLocation(tuple_metadata.tuple_slot_id);
       assert(tile_tuple_location);
       storage::Tuple tuple(tile->GetSchema(), tile_tuple_location);
       key->SetFromTuple(&tuple, indexed_columns, index->GetPool());
