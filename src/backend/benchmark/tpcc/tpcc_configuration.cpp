@@ -60,11 +60,11 @@ void ValidateBackendCount(const configuration &state) {
 
 void ValidateTransactionCount(const configuration &state) {
   if (state.transaction_count <= 0) {
-    LOG_ERROR("Invalid transaction_count :: %d", state.transaction_count);
+    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "transaction_count", state.transaction_count);
+  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
 }
 
 void ValidateWarehouseCount(const configuration &state) {
