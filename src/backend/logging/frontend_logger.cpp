@@ -14,9 +14,9 @@
 
 #include "backend/common/logger.h"
 #include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint_manager.h"
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/checkpoint.h"
-#include "backend/logging/checkpoint_factory.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 
@@ -26,8 +26,7 @@ extern int64_t peloton_wait_timeout;
 namespace peloton {
 namespace logging {
 
-FrontendLogger::FrontendLogger()
-    : checkpoint(CheckpointFactory::GetInstance()) {
+FrontendLogger::FrontendLogger(){
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout

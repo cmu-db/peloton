@@ -110,9 +110,6 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
     this->log_file = nullptr;
 
   } else {
-    this->checkpoint.Init();
-
-    // abj1 adding code here!
     LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
     this->InitLogDirectory();
     this->InitLogFilesList();
@@ -225,10 +222,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
-  cid_t start_commit_id = 0;
-  if (peloton_checkpoint_mode == CHECKPOINT_TYPE_NORMAL) {
-    start_commit_id = this->checkpoint.DoRecovery();
-  }
+
+  //FIXME GetNextCommitId() increments next_cid!!!
+  cid_t start_commit_id = concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
 
   log_file_cursor_ = 0;
 
