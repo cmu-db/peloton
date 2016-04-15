@@ -67,7 +67,9 @@ class GCManager {
   ItemPointer ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
 
  private:
-  GCManager() { this->status_ = GC_STATUS_OFF; }
+  GCManager() { 
+    this->status_ = GC_STATUS_OFF;
+  }
 
   ~GCManager() {}
 

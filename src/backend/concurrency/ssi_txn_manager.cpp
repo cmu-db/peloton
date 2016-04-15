@@ -133,7 +133,6 @@ bool SsiTxnManager::AcquireOwnership(
         continue;
       }
 
-      // auto &ctx = txn_table_.at(owner_ctx);
       auto end_cid = owner_ctx->transaction_->GetEndCommitId();
 
       // Owner is running, then siread lock owner has an out edge to me
@@ -209,6 +208,7 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
   {
     // read only section
     // read-lock
+    // This is a potential big overhead for read operations
     txn_manager_mutex_.ReadLock();
 
     LOG_INFO("SI read phase 2");
@@ -377,8 +377,6 @@ void SsiTxnManager::PerformDelete(const oid_t &tile_group_id,
     // delete an inserted version
     current_txn->RecordDelete(old_location.block, old_location.offset);
   }
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 void SsiTxnManager::SetOwnership(const oid_t &tile_group_id,
@@ -395,16 +393,12 @@ void SsiTxnManager::SetOwnership(const oid_t &tile_group_id,
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-
-  // tile_group_header->SetInsertCommit(tuple_id, false); // unused
-  // tile_group_header->SetDeleteCommit(tuple_id, false); // unused
 }
 
 Result SsiTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
-  //  auto txn_id = current_txn->GetTransactionId();
   auto &rw_set = current_txn->GetRWSet();
   cid_t end_commit_id = GetNextCommitId();
   Result ret;
@@ -641,8 +635,6 @@ void SsiTxnManager::CleanUp() {
 
   std::unordered_set<SsiTxnContext *> garbage_ctx;
   {
-    // iterate the table to collect garbage
-    // read only
     txn_manager_mutex_.ReadLock();
 
     // init it as max() for the case that all transactions are committed

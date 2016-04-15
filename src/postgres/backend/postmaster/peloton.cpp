@@ -134,7 +134,7 @@ peloton_bootstrap() {
       auto& gc_manager = peloton::gc::GCManager::GetInstance();
       if(gc_manager.GetStatus() != GC_STATUS_RUNNING) {
         elog(DEBUG2, "Starting GC Vacuuming thread.");
-        gc_manager.SetStatus(GC_STATUS_RUNNING);
+        gc_manager.SetStatus(GC_STATUS_OFF);
       }
     }
   }
