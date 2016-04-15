@@ -84,9 +84,9 @@ bool NestedLoopJoinExecutor::DExecute() {
       return BuildOuterJoinOutput();
     }
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Pick left and right tiles
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
@@ -156,9 +156,9 @@ bool NestedLoopJoinExecutor::DExecute() {
     right_tile = right_result_tiles_.back().get();
     left_tile = left_result_tiles_[left_result_itr_].get();
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Build Join Tile
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);

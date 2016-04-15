@@ -13,12 +13,14 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -60,6 +62,7 @@ namespace storage {
 
 class Tuple;
 class TileGroup;
+
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -190,9 +193,9 @@ class DataTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  bool HasPrimaryKey() { return has_primary_key; }
+  bool HasPrimaryKey() { return has_primary_key_; }
 
-  bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
+  bool HasUniqueConstraints() { return (unique_constraint_count_ > 0); }
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
@@ -232,6 +235,8 @@ class DataTable : public AbstractTable {
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple, ItemPointer location);
 
+  // check the foreign key constraints
+  bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
  private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -239,43 +244,49 @@ class DataTable : public AbstractTable {
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup
-  size_t tuples_per_tilegroup;
+  size_t tuples_per_tilegroup_;
 
+  // TILE GROUPS
   // set of tile groups
-  std::vector<oid_t> tile_groups;
+  std::vector<oid_t> tile_groups_;
+  std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
+  // current tile group
+  //size_t tile_group_offset_ = 0;
+
+  // tile group mutex
+  std::mutex tile_group_mutex_;
+  Spinlock tile_group_lock_;
 
   // INDEXES
-  std::vector<index::Index *> indexes;
+  std::vector<index::Index *> indexes_;
 
   // CONSTRAINTS
-  std::vector<catalog::ForeignKey *> foreign_keys;
+  std::vector<catalog::ForeignKey *> foreign_keys_;
 
-  // table mutex
-  std::mutex table_mutex;
 
   // has a primary key ?
-  std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
+  std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);
 
   // # of unique constraints
-  std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
+  std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples
-  float number_of_tuples = 0.0;
+  float number_of_tuples_ = 0.0;
 
   // dirty flag
-  bool dirty = false;
+  bool dirty_ = false;
 
   // clustering mutex
-  std::mutex clustering_mutex;
+  std::mutex clustering_mutex_;
 
   // adapt table
-  bool adapt_table = true;
+  bool adapt_table_ = true;
 
   // default partition map for table
-  column_map_type default_partition;
+  column_map_type default_partition_;
 
   // samples for clustering
-  std::vector<brain::Sample> samples;
+  std::vector<brain::Sample> samples_;
 };
 
 }  // End storage namespace

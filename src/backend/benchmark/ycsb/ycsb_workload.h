@@ -25,9 +25,9 @@ namespace ycsb {
 
 extern configuration state;
 
-extern storage::DataTable *user_table;
+extern storage::DataTable* user_table;
 
-void RunWorkload();
+double RunWorkload();
 
 }  // namespace ycsb
 }  // namespace benchmark
