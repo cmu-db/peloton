@@ -130,7 +130,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   auto &gc_manager = gc::GCManager::GetInstance();
   if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
     auto free_item_pointer = gc_manager.ReturnFreeSlot(
-    tile_group->GetDatabaseId(), tile_group->GetTableId());
+    this->database_oid, this->table_oid);
     if (free_item_pointer.IsNull() == false) {
       return free_item_pointer;
     }

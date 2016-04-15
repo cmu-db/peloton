@@ -12,11 +12,8 @@
 
 #pragma once
 
-#include <mutex>
 #include <thread>
-#include <deque>
-#include <map>
-#include <list>
+#include <unordered_map>
 
 #include "backend/common/lockfree_queue.h"
 #include "backend/common/logger.h"
@@ -32,6 +29,15 @@ namespace gc {
 #define MAX_TUPLES_PER_GC 1000
 #define MAX_FREE_LIST_LENGTH 1000
 
+struct GCContext {
+  GCContext() : possibly_free_list_(MAX_FREE_LIST_LENGTH) {
+    is_running_ = true;
+  }
+  volatile bool is_running_;
+  cuckoohash_map<oid_t, LockfreeQueue<TupleMetadata>*> free_map_;
+  LockfreeQueue<TupleMetadata> possibly_free_list_;
+};
+
 /**
  * Global GC Manager
  */
@@ -45,39 +51,35 @@ class GCManager {
   // global singleton
   static GCManager &GetInstance();
 
-  void Poll();
+  void Poll(GCContext *);
 
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->status_; }
 
   void SetStatus(const GCStatus &status) { this->status_ = status; }
 
+  void StartGC(const oid_t &database_id);
 
-  void AddPossiblyFreeTuple(const TupleMetadata &);
+  void StopGC(const oid_t &database_id);
 
-  oid_t ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
+  void AddPossiblyFreeTuple(const oid_t &database_id, const TupleMetadata &);
+
+  ItemPointer ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
 
  private:
-  GCManager() : possibly_free_list_(MAX_FREE_LIST_LENGTH) { this->status_ = GC_STATUS_OFF; }
+  GCManager() { this->status_ = GC_STATUS_OFF; }
 
   ~GCManager() {}
 
-  //void DeleteTupleFromIndexes(TupleMetadata tm);
-
-#define DATABASE_ID_MASK 0xFFFFFFFF
-#define TABLE_ID_MASK 0x00000000FFFFFFFF
-  inline oid_t PACK_ID(oid_t database_id, oid_t table_id) {
-    return ((long)(database_id & DATABASE_ID_MASK) << 32) | (table_id & TABLE_ID_MASK);
-  }
-
+  void DeleteTupleFromIndexes(const TupleMetadata&);
 
  private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
   GCStatus status_;
-  cuckoohash_map<oid_t, LockfreeQueue<TupleMetadata>*> free_map_;
-  LockfreeQueue<TupleMetadata> possibly_free_list_;
+  cuckoohash_map<oid_t, std::pair<std::thread*, GCContext*>> gc_contexts_;
+
 
 };
 
