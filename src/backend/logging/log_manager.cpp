@@ -289,6 +289,43 @@ std::string LogManager::GetLogFileName(void) {
   return log_file_name;
 }
 
+void LogManager::PrepareRecovery() {
+  if (prepared_recovery_) {
+    return;
+  }
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  // for all database
+  auto db_count = catalog_manager.GetDatabaseCount();
+  for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+    auto database = catalog_manager.GetDatabase(db_idx);
+    // for all tables
+    auto table_count = database->GetTableCount();
+    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+      auto table = database->GetTable(table_idx);
+      // drop existing tile groups
+      table->DropTileGroups();
+    }
+  }
+  prepared_recovery_ = true;
+}
+
+void LogManager::DoneRecovery() {
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  // for all database
+  auto db_count = catalog_manager.GetDatabaseCount();
+  for (oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+    auto database = catalog_manager.GetDatabase(db_idx);
+    // for all tables
+    auto table_count = database->GetTableCount();
+    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+      auto table = database->GetTable(table_idx);
+      if (table->GetTileGroupCount() == 0) {
+        table->AddDefaultTileGroup();
+      }
+    }
+  }
+}
+
 void LogManager::ResetFrontendLogger() {
   frontend_logger.reset(
       FrontendLogger::GetFrontendLogger(peloton_logging_mode));
