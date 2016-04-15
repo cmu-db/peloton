@@ -117,14 +117,14 @@ class TileGroupHeader : public Printable {
   // called by transaction manager.
   inline void RecycleTupleSlot(const oid_t &database_id, const oid_t &table_id,
                                const oid_t &tile_group_id, const oid_t &tuple_id,
-                               const cid_t &begin_cid) {
+                               const cid_t &tuple_end_cid) {
     auto &gc_manager = gc::GCManager::GetInstance();
     TupleMetadata tuple_metadata;
     tuple_metadata.database_id = database_id;
     tuple_metadata.table_id = table_id;
     tuple_metadata.tile_group_id = tile_group_id;
     tuple_metadata.tuple_slot_id = tuple_id;
-    tuple_metadata.begin_cid = begin_cid;
+    tuple_metadata.tuple_end_cid = tuple_end_cid;
     gc_manager.AddPossiblyFreeTuple(tuple_metadata);
   }
 

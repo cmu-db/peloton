@@ -43,14 +43,14 @@ class GCManager {
   GCManager &operator=(GCManager &&) = delete;
 
   // global singleton
-  static GCManager &GetInstance(void);
+  static GCManager &GetInstance();
 
   void Poll();
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->status; }
+  bool GetStatus() { return this->status_; }
 
-  void SetStatus(const GCStatus &status) { this->status = status; }
+  void SetStatus(const GCStatus &status) { this->status_ = status; }
 
 
   void AddPossiblyFreeTuple(const TupleMetadata &);
@@ -58,18 +58,24 @@ class GCManager {
   oid_t ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
 
  private:
-  GCManager() : possibly_free_list_(MAX_FREE_LIST_LENGTH) { this->status = GC_STATUS_OFF; }
+  GCManager() : possibly_free_list_(MAX_FREE_LIST_LENGTH) { this->status_ = GC_STATUS_OFF; }
 
   ~GCManager() {}
 
-  void DeleteTupleFromIndexes(struct TupleMetadata tm);
+  //void DeleteTupleFromIndexes(TupleMetadata tm);
+
+#define DATABASE_ID_MASK 0xFFFFFFFF
+#define TABLE_ID_MASK 0x00000000FFFFFFFF
+  inline oid_t PACK_ID(oid_t database_id, oid_t table_id) {
+    return ((long)(database_id & DATABASE_ID_MASK) << 32) | (table_id & TABLE_ID_MASK);
+  }
 
 
  private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-  GCStatus status;
+  GCStatus status_;
   cuckoohash_map<oid_t, LockfreeQueue<TupleMetadata>*> free_map_;
   LockfreeQueue<TupleMetadata> possibly_free_list_;
 

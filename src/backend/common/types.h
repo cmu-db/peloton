@@ -752,7 +752,7 @@ struct TupleMetadata {
   oid_t tile_id = 0;
   oid_t tile_group_id = 0;
   oid_t tuple_slot_id = 0;
-  cid_t begin_cid = 0; // begin_cid of the last txn that modified the tuple.
+  cid_t tuple_end_cid = 0;
 };
 
 //===--------------------------------------------------------------------===//
