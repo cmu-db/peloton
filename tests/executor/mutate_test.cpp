@@ -222,6 +222,7 @@ TEST_F(MutateTests, StressTests) {
   LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
+
   LOG_TRACE("%s",table->GetInfo().c_str());
 
   // PRIMARY KEY
