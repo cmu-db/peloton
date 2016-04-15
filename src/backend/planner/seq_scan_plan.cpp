@@ -46,7 +46,7 @@ namespace planner {
    * TODO: parent_ seems never be set or used
    */
 
-bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
+bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
 
     // A placeholder for the total size written at the end
     int start = output.Position();
