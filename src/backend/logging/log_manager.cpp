@@ -289,6 +289,16 @@ std::string LogManager::GetLogFileName(void) {
   return log_file_name;
 }
 
+void LogManager::PrepareRecovery() {
+  auto &checkpoint_manager = CheckpointManager::GetInstance();
+  // prepare clean state for recovery if not done yet
+  if (checkpoint_manager.GetCheckpointStatus() ==
+      CHECKPOINT_STATUS_DONE_RECOVERY) {
+    return;
+  }
+  checkpoint_manager.PrepareRecovery();
+}
+
 void LogManager::ResetFrontendLogger() {
   frontend_logger.reset(
       FrontendLogger::GetFrontendLogger(peloton_logging_mode));

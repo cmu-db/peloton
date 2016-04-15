@@ -55,8 +55,7 @@ void Checkpoint::MainLoop(void) {
       break;
   }
 
-  // Now, enter CHECKPOINTING mode
-  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_STANDBY);
+  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_DONE_RECOVERY);
   checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_CHECKPOINTING,
                                            true);
 
