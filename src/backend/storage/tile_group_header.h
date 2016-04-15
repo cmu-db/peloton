@@ -76,16 +76,6 @@ class TileGroupHeader : public Printable {
 
   // this function is only called by DataTable::GetEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
-    // check if there are recycled tuple slots
-    // auto &gc_manager = gc::GCManager::GetInstance();
-    // if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
-    //   auto free_slot = gc_manager.ReturnFreeSlot(
-    //     tile_group->GetDatabaseId(), tile_group->GetTableId());
-    //   if (free_slot != INVALID_OID) {
-    //     tuple_slot_id = free_slot;
-    //   }
-    // }
-
     oid_t tuple_slot_id =
         next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
 
