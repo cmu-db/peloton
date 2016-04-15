@@ -41,21 +41,17 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 31,
 };
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL = 1,
+};
+
 enum GCType {
   GC_TYPE_OFF = 0,
   GC_TYPE_VACUUM = 1,
   GC_TYPE_COOPERATIVE = 2,
 };
 
-enum GCStatus {
-  GC_STATUS_OFF = 0,
-  GC_STATUS_RUNNING = 1,
-};
-
-enum CheckpointType {
-  CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL = 1,
-};
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
