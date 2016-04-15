@@ -28,8 +28,6 @@ class SeqScanExecutor : public AbstractScanExecutor {
   explicit SeqScanExecutor(const planner::AbstractPlan *node,
                            ExecutorContext *executor_context);
 
-  void SetCheckpointMode(bool checkpoint_mode);
-
  protected:
   bool DInit();
 
@@ -52,9 +50,6 @@ class SeqScanExecutor : public AbstractScanExecutor {
 
   /** @brief Pointer to table to scan from. */
   storage::DataTable *target_table_ = nullptr;
-
-  /** @brief Checkpoint mode forbids dirty reads during scan */
-  bool checkpoint_mode_ = false;
 };
 
 }  // namespace executor

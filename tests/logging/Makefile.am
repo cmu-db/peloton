@@ -12,9 +12,9 @@ logging_tests_common= 	executor/executor_tests_util.cpp \
 						logging/logging_tests_util.cpp
 
 buffer_pool_test_SOURCES = \
-							$(logging_tests_common) \ 
+							$(logging_tests_common) \
 							logging/buffer_pool_test.cpp 
 							
 logging_test_SOURCES = \
-							$(logging_tests_common) \ 
+							$(logging_tests_common) \
 							logging/logging_test.cpp 

@@ -75,7 +75,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   LogRecordType GetNextLogRecordTypeForRecovery();
 
-  void TruncateLog(txn_id_t);
+  void TruncateLog(cid_t);
 
   void SetLogDirectory(char *);
 
@@ -83,15 +83,15 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
-  txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
+  cid_t ExtractMaxLogIdFromLogFileRecords(FILE *);
 
   void SetLoggerID(int);
 
  private:
   std::string GetLogFileName(void);
 
-  bool RecoverIndexHelper(executor::AbstractExecutor *scan_executor,
-                          storage::DataTable *target_table);
+  bool RecoverTableIndexHelper(storage::DataTable *target_table,
+                               cid_t start_cid);
 
   void InsertIndexEntry(storage::Tuple *tuple, storage::DataTable *table,
                         ItemPointer target_location);
@@ -135,7 +135,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string LOG_FILE_SUFFIX = ".log";
 
-  txn_id_t max_commit_id;
+  cid_t max_log_id_file;
 
   CopySerializeOutput output_buffer;
 
