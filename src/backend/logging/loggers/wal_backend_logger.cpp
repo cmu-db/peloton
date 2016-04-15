@@ -40,15 +40,26 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   record->Serialize(output_buffer);
 
   this->log_buffer_lock.Lock();
-  LOG_INFO("Inside BackendLogger::Log, highest_logged_commit_id = %d", (int)highest_logged_commit_id);
   if (!log_buffer_) {
     LOG_INFO("Acquire the first log buffer in backend logger");
     log_buffer_ = std::move(available_buffer_pool_->Get());
   }
+  // update max logged commit id
+  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+    auto new_log_commit_id = record->GetTransactionId();
+    assert(new_log_commit_id > highest_logged_commit_message);
+    highest_logged_commit_message = new_log_commit_id;
+  }
   if (!log_buffer_->WriteRecord(record)) {
     LOG_INFO("Log buffer is full - Attempt to acquire a new one");
     // put back a buffer
-    log_buffer_->SetHighestCommitId(highest_logged_commit_id);
+
+    log_buffer_->SetHighestCommittedTransaction(highest_logged_commit_message);
+    // we only need to add set the lower bound if it is not superseded by a
+    // commit message
+    if (logging_cid_lower_bound > highest_logged_commit_message) {
+      log_buffer_->SetLoggingCidLowerBound(logging_cid_lower_bound);
+    }
     persist_buffer_pool_->Put(std::move(log_buffer_));
     // get a new one
     log_buffer_ = std::move(available_buffer_pool_->Get());
@@ -56,25 +67,21 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
     auto success = log_buffer_->WriteRecord(record);
     assert(success);
   }
-  // update max logged commit id
-  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-    auto new_log_commit_id = record->GetTransactionId();
-    assert(new_log_commit_id > highest_logged_commit_id);
-    this->highest_logged_commit_id = new_log_commit_id;
-    LOG_INFO("Inside BackendLogger::Log, have hit COMMIT, update highest logged commit id to %d", (int)highest_logged_commit_id);
-  }
+
   this->log_buffer_lock.Unlock();
 }
 
-cid_t WriteAheadBackendLogger::PrepareLogBuffers() {
-  cid_t commit_id = INVALID_CID;
+void WriteAheadBackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
-  commit_id = highest_logged_commit_id;
-  // LOG_INFO("Inside PrepareLogBuffers");
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
     LOG_INFO("Move the current log buffer to buffer pool");
-    log_buffer_->SetHighestCommitId(commit_id);
+    log_buffer_->SetHighestCommittedTransaction(highest_logged_commit_message);
+    // we only need to add set the lower bound if it is not superseded by a
+    // commit message
+    if (logging_cid_lower_bound > highest_logged_commit_message) {
+      log_buffer_->SetLoggingCidLowerBound(logging_cid_lower_bound);
+    }
     persist_buffer_pool_->Put(std::move(log_buffer_));
   }
   this->log_buffer_lock.Unlock();
@@ -85,7 +92,6 @@ cid_t WriteAheadBackendLogger::PrepareLogBuffers() {
     local_queue.push_back(persist_buffer_pool_->Get());
     num_log_buffer--;
   }
-  return commit_id;
 }
 
 void WriteAheadBackendLogger::GrantEmptyBuffer(

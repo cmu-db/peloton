@@ -105,6 +105,12 @@ class LogManager {
     return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
   }
 
+  // Drop all default tiles for tables before recovery
+  void PrepareRecovery();
+
+  // Add default tiles for tables if necessary
+  void DoneRecovery();
+
   //===--------------------------------------------------------------------===//
   // Utility Functions
   //===--------------------------------------------------------------------===//
@@ -144,6 +150,8 @@ class LogManager {
   std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
   LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
+
+  bool prepared_recovery_ = false;
 
   // To synch the status
   std::mutex logging_status_mutex;

@@ -683,6 +683,14 @@ enum LogRecordType {
   LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
 };
 
+enum CheckpointStatus {
+  CHECKPOINT_STATUS_INVALID = 0,
+  CHECKPOINT_STATUS_STANDBY = 1,
+  CHECKPOINT_STATUS_RECOVERY = 2,
+  CHECKPOINT_STATUS_DONE_RECOVERY = 3,
+  CHECKPOINT_STATUS_CHECKPOINTING = 4,
+};
+
 static const int INVALID_FILE_DESCRIPTOR = -1;
 
 // ------------------------------------------------------------------

@@ -55,11 +55,12 @@ class BackendLogger : public Logger {
 
   // cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
 
-  void SetHighestLoggedCommitId(cid_t cid) {
+  void SetLoggingCidLowerBound(cid_t cid) {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
-    highest_logged_commit_id = cid;
-    LOG_INFO("Setting BackendLogger::highest_logged_commit_id to %d", (int)cid);
+
+    logging_cid_lower_bound = cid;
+
     log_buffer_lock.Unlock();
   }
 
@@ -69,7 +70,7 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  virtual cid_t PrepareLogBuffers() = 0;
+  virtual void PrepareLogBuffers() = 0;
 
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
@@ -86,11 +87,11 @@ class BackendLogger : public Logger {
 
   std::vector<std::unique_ptr<LogBuffer>> local_queue;
 
-  cid_t highest_logged_commit_id = INVALID_CID;
-
-  cid_t highest_flushed_cid = 0;
+  cid_t highest_logged_commit_message = INVALID_CID;
 
   int frontend_logger_id;
+
+  cid_t logging_cid_lower_bound = INVALID_CID;
 };
 
 }  // namespace logging

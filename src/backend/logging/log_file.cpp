@@ -21,11 +21,11 @@ namespace logging {
 // Logger
 //===--------------------------------------------------------------------===//
 
-void LogFile::SetMaxCommitId(txn_id_t max_commit_id) {
-  max_commit_id_ = max_commit_id;
+void LogFile::SetMaxLogId(cid_t max_log_id_file) {
+  max_log_id_file_ = max_log_id_file;
 }
 
-txn_id_t LogFile::GetMaxCommitId() { return max_commit_id_; }
+cid_t LogFile::GetMaxLogId() { return max_log_id_file_; }
 
 int LogFile::GetLogNumber() { return log_number_; }
 
