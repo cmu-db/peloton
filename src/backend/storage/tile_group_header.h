@@ -118,7 +118,14 @@ class TileGroupHeader : public Printable {
     gc_manager.AddPossiblyFreeTuple(database_id, tuple_metadata);
   }
 
-  oid_t GetCurrentNextTupleSlot() const { return next_tuple_slot; }
+  oid_t GetCurrentNextTupleSlot() const {
+    oid_t next_tid = next_tuple_slot;
+    if (next_tid < num_tuple_slots) {
+      return next_tid;
+    } else {
+      return num_tuple_slots;
+    }
+  }
 
   oid_t GetActiveTupleCount();
 
