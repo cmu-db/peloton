@@ -104,6 +104,8 @@ class LogManager {
     return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
   }
 
+  void PrepareRecovery();
+
   //===--------------------------------------------------------------------===//
   // Utility Functions
   //===--------------------------------------------------------------------===//

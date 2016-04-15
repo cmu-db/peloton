@@ -111,12 +111,15 @@ peloton_bootstrap() {
             checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY, true);
             elog(DEBUG2, "Standby mode");
 
+            // Clean up database storage state before recovery from checkpoint
+            checkpoint_manager.PrepareRecovery();
+
             // Do any recovery
             checkpoint_manager.StartRecoveryMode();
             elog(DEBUG2, "Wait for logging mode");
 
             // Wait for standby mode
-            checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY, true);
+            checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_DONE_RECOVERY, true);
             elog(DEBUG2, "Standby mode");
           }
       }
@@ -136,6 +139,9 @@ peloton_bootstrap() {
                       &log_manager).detach();
           log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
           elog(DEBUG2, "Standby mode");
+
+          // Clean up database storage state before recovery from logging
+          log_manager.PrepareRecovery();
 
           // Do any recovery
           log_manager.StartRecoveryMode();

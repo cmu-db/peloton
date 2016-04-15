@@ -62,7 +62,6 @@ namespace storage {
 class Tuple;
 class TileGroup;
 
-
 //===--------------------------------------------------------------------===//
 // DataTable
 //===--------------------------------------------------------------------===//
@@ -128,6 +127,9 @@ class DataTable : public AbstractTable {
 
   // Get a tile group with given layout
   TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
+
+  // Drop all tile groups of the table. Used by recovery
+  void DropTileGroups();
 
   //===--------------------------------------------------------------------===//
   // INDEX

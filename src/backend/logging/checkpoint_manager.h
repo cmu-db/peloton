@@ -50,10 +50,13 @@ class CheckpointManager {
 
   CheckpointStatus GetCheckpointStatus();
 
+  void PrepareRecovery();
+
  private:
   CheckpointManager() {}
   ~CheckpointManager() {}
 
+  // the status of checkpoint manager
   CheckpointStatus checkpoint_status_ = CHECKPOINT_STATUS_INVALID;
 
   // used for multiple checkpointer
