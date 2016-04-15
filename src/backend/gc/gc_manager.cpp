@@ -25,12 +25,18 @@ GCManager &GCManager::GetInstance() {
 }
 
 void GCManager::StartGC(const oid_t &database_id) {
+  if (this->status_ == GC_STATUS_OFF) {
+    return;
+  }
   GCContext *context = new GCContext();
   std::thread *gc_thread = new std::thread(&GCManager::Poll, this, context);
   gc_contexts_[database_id] = std::make_pair(gc_thread, context);
 }
 
 void GCManager::StopGC(const oid_t &database_id) {
+  if (this->status_ == GC_STATUS_OFF) {
+    return;
+  }
   auto entry = gc_contexts_.find(database_id);
   std::thread *gc_thread = entry.first;
   GCContext *context = entry.second;
@@ -104,6 +110,9 @@ void GCManager::Poll(GCContext *context) {
 
 // this function adds a tuple to the possibly free list
 void GCManager::AddPossiblyFreeTuple(const oid_t &database_id, const TupleMetadata &tuple_metadata) {
+  if (this->status_ == GC_STATUS_OFF) {
+    return;
+  }
   assert(gc_contexts_.contains(database_id));
 
   GCContext *context = gc_contexts_.find(database_id).second;
@@ -113,6 +122,9 @@ void GCManager::AddPossiblyFreeTuple(const oid_t &database_id, const TupleMetada
 
 // this function returns a free tuple slot, if one exists
 ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id) {
+  if (this->status_ == GC_STATUS_OFF) {
+    return ItemPointer();
+  }
   assert(gc_contexts_.contains(database_id));
 
   GCContext *context = gc_contexts_.find(database_id).second;
