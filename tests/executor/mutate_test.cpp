@@ -69,7 +69,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
 
-    planner::InsertPlan node(table, nullptr, tuple);
+    planner::InsertPlan node(table, std::move(tuple));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
@@ -187,10 +187,9 @@ TEST_F(MutateTests, StressTests) {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
-  storage::Tuple *tuple;
-  tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
+  auto null_tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
-  planner::InsertPlan node(table, nullptr, tuple);
+  planner::InsertPlan node(table, std::move(null_tuple));
   executor::InsertExecutor executor(&node, context.get());
 
   try {
@@ -199,8 +198,8 @@ TEST_F(MutateTests, StressTests) {
     LOG_ERROR("%s", ce.what());
   }
 
-  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
-  planner::InsertPlan node2(table, nullptr, tuple);
+  auto non_empty_tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
+  planner::InsertPlan node2(table, std::move(non_empty_tuple));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
@@ -279,7 +278,7 @@ TEST_F(MutateTests, InsertTest) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  planner::InsertPlan node(dest_data_table.get(), nullptr);
+  planner::InsertPlan node(dest_data_table.get());
   executor::InsertExecutor executor(&node, context.get());
 
   MockExecutor child_executor;
