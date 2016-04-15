@@ -100,7 +100,7 @@ struct PelotonWriteLock {
 // Spinlock
 //===--------------------------------------------------------------------===//
 
-enum LockState : bool { Locked, Unlocked };
+enum LockState : bool { Unlocked = 0, Locked };
 
 class Spinlock {
  public:
