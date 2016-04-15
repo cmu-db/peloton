@@ -41,6 +41,17 @@ enum LoggingType {
   LOGGING_TYPE_HDD_HDD = 31,
 };
 
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_VACUUM = 1,
+  GC_TYPE_COOPERATIVE = 2,
+};
+
+enum GCStatus {
+  GC_STATUS_OFF = 0,
+  GC_STATUS_RUNNING = 1,
+};
+
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
   CHECKPOINT_TYPE_NORMAL = 1,
@@ -101,7 +112,7 @@ class Value;
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
+extern int DEFAULT_TUPLES_PER_TILEGROUP;
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
@@ -368,7 +379,9 @@ enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
   BACKEND_TYPE_MM = 1,   // on volatile memory
-  BACKEND_TYPE_FILE = 2  // on mmap file
+  BACKEND_TYPE_NVM = 2,  // on non-volatile memory
+  BACKEND_TYPE_SSD = 3,  // on ssd
+  BACKEND_TYPE_HDD = 4   // on hdd
 };
 
 //===--------------------------------------------------------------------===//
@@ -733,6 +746,18 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t database_id = 0;
+  oid_t table_id = 0;
+  oid_t tile_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t tuple_end_cid = 0;
+};
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -770,9 +795,11 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+
+BackendType GetBackendType(const LoggingType& logging_type);
 
 //===--------------------------------------------------------------------===//
 // Transformers
