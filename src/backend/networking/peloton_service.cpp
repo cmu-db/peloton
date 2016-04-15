@@ -18,6 +18,7 @@
 #include "backend/common/serializer.h"
 #include "backend/common/assert.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 
@@ -420,7 +421,6 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         LOG_INFO("proecess the Query response");
         ASSERT(response);
 
-        int tuple_count = response->tuple_count();
         int tile_count = response->tile_count();
 
         int result_size = response->result_size();
@@ -430,16 +430,25 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
           // Get the tile bytes
           std::string tile_bytes = response->result(idx);
           ReferenceSerializeInputBE tile_input(tile_bytes.c_str(), tile_bytes.size());
-          storage::Tile tile;
+
+          // Create a tile or tuple that depends on our protocol.
+          // Tuple is prefered, since it voids copying from tile again
+          // But we should prepare schema before creating tuple/tile.
+          // Can we get the schema from local catalog?
+          //storage::Tile tile;
+          storage::Tuple tuple;
 
           // TODO: Make sure why varlen_pool is used as parameter
-          std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BACKEND_TYPE_MM));
+          // std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BACKEND_TYPE_MM));
 
-          // Tile deserialization
-          tile.DeserializeTuplesFrom(tile_input, var_pool);
+          // Tile deserialization.
+          //tile.DeserializeTuplesFrom(tile_input, var_pool);
+
+          // We should remove tile header or no header when serialize, then use tuple deserialize
+          tuple.DeserializeWithHeaderFrom(tile_input);
 
           // Debug
-          LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
+          //LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
         }
     }
 }
