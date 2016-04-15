@@ -58,13 +58,13 @@ struct SIReadLock {
 class SsiTxnManager : public TransactionManager {
  public:
   SsiTxnManager() : stopped(false), cleaned(false) {
-    vaccum = std::thread(&SsiTxnManager::CleanUpBg, this);
+    vacuum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
 
   virtual ~SsiTxnManager() {
     LOG_INFO("Deconstruct SSI manager");
     stopped = true;
-    vaccum.join();
+    vacuum.join();
   }
 
   static SsiTxnManager &GetInstance();
@@ -124,7 +124,6 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() { assert(false); }
-  ;
 
   virtual cid_t GetMaxCommittedCid() { return 1; }
 
@@ -142,11 +141,11 @@ class SsiTxnManager : public TransactionManager {
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
   std::map<std::pair<oid_t, oid_t>, std::unique_ptr<SIReadLock>> sireadlocks;
-  // Used to make the vaccum thread stop
+  // Used to make the vacuum thread stop
   bool stopped;
   bool cleaned;
-  // Vaccum thread, GC over 20 ms
-  std::thread vaccum;
+  // Vacuum thread, GC over 20 ms
+  std::thread vacuum;
 
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
