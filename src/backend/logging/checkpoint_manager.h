@@ -50,8 +50,6 @@ class CheckpointManager {
 
   CheckpointStatus GetCheckpointStatus();
 
-  void PrepareRecovery();
-
  private:
   CheckpointManager() {}
   ~CheckpointManager() {}

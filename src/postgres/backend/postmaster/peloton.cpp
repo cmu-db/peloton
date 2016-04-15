@@ -100,10 +100,12 @@ peloton_bootstrap() {
       // Finished checking logging module
       logging_module_check = true;
 
+      auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
+      auto& log_manager = peloton::logging::LogManager::GetInstance();
+
       if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
     	  // launch checkpoint thread
-    	  auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
-          if (!checkpoint_manager.IsInCheckpointingMode()) {
+    	  if (!checkpoint_manager.IsInCheckpointingMode()) {
 
             // Wait for standby mode
             std::thread(&peloton::logging::CheckpointManager::StartStandbyMode,
@@ -111,8 +113,8 @@ peloton_bootstrap() {
             checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY, true);
             elog(DEBUG2, "Standby mode");
 
-            // Clean up database storage state before recovery from checkpoint
-            checkpoint_manager.PrepareRecovery();
+            // Clean up table tile state before recovery from checkpoint
+            log_manager.PrepareRecovery();
 
             // Do any recovery
             checkpoint_manager.StartRecoveryMode();
@@ -120,14 +122,13 @@ peloton_bootstrap() {
 
             // Wait for standby mode
             checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_DONE_RECOVERY, true);
-            elog(DEBUG2, "Standby mode");
+            elog(DEBUG2, "Done recovery mode");
           }
       }
 
       if(peloton_logging_mode != LOGGING_TYPE_INVALID) {
 
         // Launching a thread for logging
-        auto& log_manager = peloton::logging::LogManager::GetInstance();
         if (!log_manager.IsInLoggingMode()) {
 
           // Set default logging mode
@@ -140,7 +141,7 @@ peloton_bootstrap() {
           log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
           elog(DEBUG2, "Standby mode");
 
-          // Clean up database storage state before recovery from logging
+          // Clean up database tile state before recovery from checkpoint
           log_manager.PrepareRecovery();
 
           // Do any recovery
@@ -150,15 +151,19 @@ peloton_bootstrap() {
           // Wait for logging mode
           log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
           elog(DEBUG2, "Logging mode");
+
+          // Done recovery
+          log_manager.DoneRecovery();
         }
       }
 
       // start checkpointing mode after recovery
       if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
-    	  auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
+    	if (!checkpoint_manager.IsInCheckpointingMode()) {
     	  // Now, enter CHECKPOINTING mode
-    	  checkpoint_manager.SetCheckpointStatus(peloton::CHECKPOINT_STATUS_CHECKPOINTING);
-          elog(DEBUG2, "Checkpointing mode");
+		  checkpoint_manager.SetCheckpointStatus(peloton::CHECKPOINT_STATUS_CHECKPOINTING);
+		  elog(DEBUG2, "Checkpointing mode");
+    	}
       }
     }
 
