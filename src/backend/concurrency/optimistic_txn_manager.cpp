@@ -112,7 +112,7 @@ bool OptimisticTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to acquire tuple. Set txn failure.");
+    LOG_ERROR("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -259,7 +259,7 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -327,11 +327,11 @@ Result OptimisticTxnManager::CommitTransaction() {
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu",
+        LOG_TRACE("transaction id=%lu",
                  tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu",
+        LOG_TRACE("begin commit id=%lu",
                  tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu",
+        LOG_TRACE("end commit id=%lu",
                  tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -404,6 +404,11 @@ Result OptimisticTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+        //RecycleTupleSlot(tile_group_id, tuple_slot);
+
+        /*
+         * Call transaction_manager.cpp's AddToPossiblyFreeList(TxnId, tuple_slot);
+         */
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -430,6 +435,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        //RecycleTupleSlot(tile_group_id, tuple_slot);
       }
     }
   }
@@ -441,7 +447,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 }
 
 Result OptimisticTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -471,6 +477,7 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+        //RecycleTupleSlot(manager.GetTileGroup(new_version.block)->GetTileGroupId(), new_version.offset);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -491,6 +498,7 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+        //RecycleTupleSlot(manager.GetTileGroup(new_version.block)->GetTileGroupId(), new_version.offset);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
@@ -500,6 +508,7 @@ Result OptimisticTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        //RecycleTupleSlot(tile_group_id, tuple_slot);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -507,6 +516,7 @@ Result OptimisticTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        //RecycleTupleSlot(tile_group_id, tuple_slot);
       }
     }
   }

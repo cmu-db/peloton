@@ -32,6 +32,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/gc/gc_manager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -90,7 +91,6 @@ peloton_bootstrap() {
   try {
     // Process the utility statement
     peloton::bridge::Bootstrap::BootstrapPeloton();
-
     // Sart logging
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
@@ -128,6 +128,15 @@ peloton_bootstrap() {
 
     }
 
+    //peloton_gc_mode = GC_TYPE_VACUUM; //FIXME: get through config
+    if(peloton_gc_mode == GC_TYPE_VACUUM) {
+      // Start GC vacuuming thread
+      auto& gc_manager = peloton::gc::GCManager::GetInstance();
+      if(gc_manager.GetStatus() != GC_STATUS_RUNNING) {
+        elog(DEBUG2, "Starting GC Vacuuming thread.");
+        gc_manager.SetStatus(GC_STATUS_RUNNING);
+      }
+    }
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());

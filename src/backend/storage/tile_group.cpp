@@ -74,10 +74,12 @@ peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
+// TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
-  return tile_group_header->GetNextTupleSlot();
+  return tile_group_header->GetCurrentNextTupleSlot();
 }
 
+// this function is called only when building tile groups for aggregation operations.
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }

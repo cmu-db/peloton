@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
