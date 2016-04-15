@@ -73,7 +73,7 @@ class FrontendLogger : public Logger {
   std::vector<std::unique_ptr<LogBuffer>> global_queue;
 
   // To synch the status
-  std::atomic_flag backend_loggers_lock;
+  Spinlock backend_loggers_lock;
 
   // period with which it collects log records from backend loggers
   // (in microseconds)
