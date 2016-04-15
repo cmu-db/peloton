@@ -87,8 +87,9 @@ void Manager::AddDatabase(storage::Database *database) {
 }
 
 storage::Database *Manager::GetDatabaseWithOid(const oid_t database_oid) const {
-  for (auto database : databases)
+  for (auto database : databases) {
     if (database->GetOid() == database_oid) return database;
+  }
 
   return nullptr;
 }

@@ -31,12 +31,13 @@ class InsertPlan : public AbstractPlan {
   InsertPlan(InsertPlan &&) = delete;
   InsertPlan &operator=(InsertPlan &&) = delete;
 
-  explicit InsertPlan(
-      storage::DataTable *table,
-      std::unique_ptr<const planner::ProjectInfo> &&project_info,
-      oid_t bulk_insert_count = 1)
+  explicit InsertPlan(storage::DataTable *table,
+                      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+                      storage::Tuple *tuple = nullptr,
+                      oid_t bulk_insert_count = 1)
       : target_table_(table),
         project_info_(std::move(project_info)),
+        tuple_(std::unique_ptr<storage::Tuple>(tuple)),
         bulk_insert_count(bulk_insert_count) {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
@@ -49,11 +50,17 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
+  const storage::Tuple *GetTuple() const {
+    return tuple_.get();
+  }
+
   const std::string GetInfo() const { return "InsertPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
+    // TODO: Fix tuple copy
     return std::unique_ptr<AbstractPlan>(new InsertPlan(
-        target_table_, std::move(project_info_->Copy()), bulk_insert_count));
+        target_table_,
+        std::move(project_info_->Copy())));
   }
 
  private:
@@ -63,8 +70,12 @@ class InsertPlan : public AbstractPlan {
   /** @brief Projection Info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-  // Number of times to insert
+  /** @brief Tuple */
+  std::unique_ptr<storage::Tuple> tuple_;
+
+  /** @brief Number of times to insert */
   oid_t bulk_insert_count;
+
 };
 
 }  // namespace planner

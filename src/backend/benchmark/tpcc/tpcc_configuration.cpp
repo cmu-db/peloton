@@ -4,43 +4,40 @@
 //
 // configuration.cpp
 //
-// Identification: benchmark/ycsb/configuration.cpp
+// Identification: benchmark/tpcc/configuration.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
 
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
 namespace benchmark {
-namespace ycsb {
+namespace tpcc {
 
 void Usage(FILE *out) {
   fprintf(out,
-          "Command line options : ycsb <options> \n"
+          "Command line options : tpcc <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transactions      :  # of transactions \n"
-          "   -c --column_count      :  # of columns \n"
-          "   -u --write_ratio       :  Fraction of updates \n"
+          "   -k --scale_factor      :  scale factor \n"
+          "   -w --warehouse_count   :  # of warehouses \n"
           "   -b --backend_count     :  # of backends \n"
+          "   -t --transaction_count :  # of transactions \n"
           );
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"transactions", optional_argument, NULL, 't'},
-    {"column_count", optional_argument, NULL, 'c'},
-    {"update_ratio", optional_argument, NULL, 'u'},
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"warehouse_count", optional_argument, NULL, 'w'},
     {"backend_count", optional_argument, NULL, 'b'},
+    {"transaction_count", optional_argument, NULL, 't'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -50,24 +47,6 @@ void ValidateScaleFactor(const configuration &state) {
   }
 
   LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
-}
-
-void ValidateColumnCount(const configuration &state) {
-  if (state.column_count <= 0) {
-    LOG_ERROR("Invalid column_count :: %d", state.column_count);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("%s : %d", "column_count", state.column_count);
-}
-
-void ValidateUpdateRatio(const configuration &state) {
-  if (state.update_ratio < 0 || state.update_ratio > 1) {
-    LOG_ERROR("Invalid update_ratio :: %lf", state.update_ratio);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("%s : %lf", "update_ratio", state.update_ratio);
 }
 
 void ValidateBackendCount(const configuration &state) {
@@ -81,26 +60,34 @@ void ValidateBackendCount(const configuration &state) {
 
 void ValidateTransactionCount(const configuration &state) {
   if (state.transaction_count <= 0) {
-    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
+    LOG_ERROR("Invalid transaction_count :: %d", state.transaction_count);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
+  LOG_INFO("%s : %d", "transaction_count", state.transaction_count);
+}
+
+void ValidateWarehouseCount(const configuration &state) {
+  if (state.warehouse_count <= 0) {
+    LOG_ERROR("Invalid warehouse_count :: %d", state.warehouse_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "warehouse_count", state.warehouse_count);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
+  state.backend_count = 1;
+  state.warehouse_count = 1;
+  state.transaction_count = 100;
   state.scale_factor = 1;
-  state.transaction_count = 10000;
-  state.column_count = 10;
-  state.update_ratio = 0.5;
-  state.backend_count = 2;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ah:k:w:b:t:", opts, &idx);
 
     if (c == -1) break;
 
@@ -108,18 +95,19 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
-      case 't':
-        state.transaction_count = atoi(optarg);
+
+      case 'w':
+        state.warehouse_count = atoi(optarg);
         break;
-      case 'c':
-        state.column_count = atoi(optarg);
-        break;
-      case 'u':
-        state.update_ratio = atof(optarg);
-        break;
+
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+
+      case 't':
+        state.transaction_count = atoi(optarg);
+        break;
+
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -132,15 +120,20 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     }
   }
 
+  // Static parameters
+  state.item_count = 10 * state.scale_factor;
+  state.districts_per_warehouse = 2;
+  state.customers_per_district = 30;
+  state.new_orders_per_district = 9;
+
   // Print configuration
-  ValidateScaleFactor(state);
-  ValidateColumnCount(state);
-  ValidateUpdateRatio(state);
   ValidateBackendCount(state);
+  ValidateWarehouseCount(state);
+  ValidateScaleFactor(state);
   ValidateTransactionCount(state);
 
 }
 
-}  // namespace ycsb
+}  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
