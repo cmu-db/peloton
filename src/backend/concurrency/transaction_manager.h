@@ -148,12 +148,11 @@ class TransactionManager {
    * concurrency control) tuples into possibly free from all underlying
    * concurrency implementations of transactions.
    */
-  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
+  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id, const cid_t &tuple_end_cid) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
-    auto begin_cid = current_txn->GetBeginCommitId();
-    tile_group_header->RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, begin_cid);
+    tile_group_header->RecycleTupleSlot(tile_group->GetDatabaseId(), tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
   }
 
   // Txn manager may store related information in TileGroupHeader, so when

@@ -24,6 +24,90 @@ GCManager &GCManager::GetInstance() {
   return gc_manager;
 }
 
+void GCManager::Poll() {
+  /*
+   * Check if we can move anything from the possibly free list to the free
+   * list.
+   */
+  auto &manager = catalog::Manager::GetInstance();
+
+  while (true) {
+    LOG_DEBUG("Polling GC thread...");
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto max_cid = txn_manager.GetMaxCommittedCid();
+
+    // if max_cid == MAX_CID, then it means there's no running transaction.
+    if (max_cid != MAX_CID) {
+
+      // every time we garbage collect at most 1000 tuples.
+      for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
+        
+        TupleMetadata tuple_metadata;
+        // if there's no more tuples in the queue, then break.
+        if (possibly_free_list_.Pop(tuple_metadata) == false) {
+          break;
+        }
+
+        if (tuple_metadata.tuple_end_cid < max_cid) {
+          // Now that we know we need to recycle tuple, we need to delete all
+          // tuples from the indexes to which it belongs as well.
+          //DeleteTupleFromIndexes(tuple_metadata);
+
+          auto tile_group_header = manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
+                    
+          tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id, INVALID_TXN_ID);
+          tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
+          tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
+
+
+          oid_t packed_id = PACK_ID(tuple_metadata.database_id, tuple_metadata.table_id);
+          
+          LockfreeQueue<TupleMetadata> *free_list = nullptr;
+
+          // if the entry for packed_id exists.
+          if (free_map_.find(packed_id, free_list) == true) {
+              // if the entry for tuple_metadata.table_id exists.
+              free_list->Push(tuple_metadata);
+          } else {
+            // if the entry for tuple_metadata.table_id does not exist.
+            free_list = new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC);
+            free_list->Push(tuple_metadata);
+            free_map_[packed_id] = free_list;
+          }
+          
+        } else {
+          // if a tuple can't be reaped, add it back to the list.
+          possibly_free_list_.Push(tuple_metadata);
+        }
+      } // end for
+    } // end if
+    
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+  }
+}
+
+// this function adds a tuple to the possibly free list
+void GCManager::AddPossiblyFreeTuple(const TupleMetadata &tuple_metadata) {
+  this->possibly_free_list_.Push(tuple_metadata);
+}
+
+// this function returns a free tuple slot, if one exists
+oid_t GCManager::ReturnFreeSlot(const oid_t &database_id __attribute__((unused)), const oid_t &table_id __attribute__((unused))) {
+  // auto return_slot = INVALID_OID;
+  // std::string key = std::to_string(db_id) + std::to_string(tb_id);
+  // boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
+  // if (free_map.find(key, free_list)) {
+  //   if (!free_list->empty()) {
+  //     TupleMetadata tuple_metadata;
+  //     free_list->pop(tuple_metadata);
+  //     return_slot = tuple_metadata.tuple_slot_id;
+  //     return return_slot;
+  //   }
+  // }
+  return INVALID_OID;
+}
+
 // delete a tuple from all its indexes it belongs in
 // void GCManager::DeleteTupleFromIndexes(TupleMetadata tuple_metadata) {
 //   auto &manager = catalog::Manager::GetInstance();
@@ -50,85 +134,6 @@ GCManager &GCManager::GetInstance() {
 //     }
 //   }
 // }
-
-void GCManager::Poll() {
-  /*
-   * Check if we can move anything from the possibly free list to the free
-   * list.
-   */
-  auto &manager = catalog::Manager::GetInstance();
-
-  while (true) {
-    LOG_DEBUG("Polling GC thread...");
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto max_cid = txn_manager.GetMaxCommittedCid();
-    // TODO:: calculating oldest_trans just once is conservative. We might get
-    // better recycling by calculating oldest_trans more often, but calculating
-    // it is expensive.
-
-    for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
-      TupleMetadata tuple_metadata;
-
-      if (possibly_free_list_.Pop(tuple_metadata) == false) {
-        break;
-      }
-
-      if (max_cid == INVALID_TXN_ID || max_cid == MAX_CID ||
-          tuple_metadata.begin_cid < max_cid) {
-        // Now that we know we need to recycle tuple, we need to delete all
-        // tuples from the indexes to which it belongs as well.
-        //DeleteTupleFromIndexes(tuple_metadata);
-
-        auto tile_group_header = manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
-        tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id,
-                                                  INVALID_TXN_ID);
-        tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
-        tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
-
-        // std::string key =
-        //     std::to_string(tuple_metadata.database_id) + std::to_string(tuple_metadata.table_id);
-        // boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
-
-        // we can now put the possibly free tuple into the actually free list
-        // if (free_map.find(key, free_list)) {
-        //   free_list->push(tuple_metadata);
-        // } else {
-        //   free_list = new boost::lockfree::queue<struct TupleMetadata>(
-        //       MAX_TUPLES_PER_GC);
-        //   free_list->push(tuple_metadata);
-        //   free_map.insert(key, free_list);
-        // }
-      } else {
-        // if a tuple can't be reaped, add it back to the list.
-        possibly_free_list_.Push(tuple_metadata);
-      }
-    }
-    
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-  }
-}
-
-// this function returns a free tuple slot, if one exists
-oid_t GCManager::ReturnFreeSlot(const oid_t &database_id __attribute__((unused)), const oid_t &table_id __attribute__((unused))) {
-  // auto return_slot = INVALID_OID;
-  // std::string key = std::to_string(db_id) + std::to_string(tb_id);
-  // boost::lockfree::queue<struct TupleMetadata> *free_list = nullptr;
-  // if (free_map.find(key, free_list)) {
-  //   if (!free_list->empty()) {
-  //     TupleMetadata tuple_metadata;
-  //     free_list->pop(tuple_metadata);
-  //     return_slot = tuple_metadata.tuple_slot_id;
-  //     return return_slot;
-  //   }
-  // }
-  return INVALID_OID;
-}
-
-// this function adds a tuple to the possibly free list
-void GCManager::AddPossiblyFreeTuple(const TupleMetadata &tuple_metadata) {
-  this->possibly_free_list_.Push(tuple_metadata);
-}
 
 }  // namespace gc
 }  // namespace peloton
