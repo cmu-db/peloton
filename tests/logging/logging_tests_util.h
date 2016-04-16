@@ -141,10 +141,35 @@ class LoggingThread {
       case LOGGING_OP_INSERT: {
         LOG_INFO("Execute Insert %d", (int)cid);
         auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
-        logging::LogRecord *tuple_record = backend_logger->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_INSERT, cid, 1, DEFAULT_DB_ID,
-            INVALID_ITEMPOINTER, INVALID_ITEMPOINTER, tuple.get());
-        backend_logger->Log(tuple_record);
+        std::unique_ptr<logging::LogRecord> tuple_record(
+            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, cid, 1,
+                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                           INVALID_ITEMPOINTER, tuple.get()));
+        backend_logger->Log(tuple_record.get());
+        tuple.reset();
+
+        break;
+      }
+      case LOGGING_OP_UPDATE: {
+        LOG_INFO("Execute Update %d", (int)cid);
+        auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
+        std::unique_ptr<logging::LogRecord> tuple_record(
+            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, cid, 1,
+                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                           INVALID_ITEMPOINTER, tuple.get()));
+        backend_logger->Log(tuple_record.get());
+        tuple.reset();
+        break;
+      }
+      case LOGGING_OP_DELETE: {
+        LOG_INFO("Execute Delete %d", (int)cid);
+        auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
+        std::unique_ptr<logging::LogRecord> tuple_record(
+            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, cid, 1,
+                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
+                                           INVALID_ITEMPOINTER, tuple.get()));
+        backend_logger->Log(tuple_record.get());
+        tuple.reset();
         break;
       }
       case LOGGING_OP_DONE: {
@@ -154,10 +179,20 @@ class LoggingThread {
       }
       case LOGGING_OP_COMMIT: {
         LOG_INFO("Execute Commit %d", (int)cid);
-        auto record =
-            new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, cid);
+        std::unique_ptr<logging::LogRecord> record(
+            new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+                                           cid));
         assert(backend_logger);
-        backend_logger->Log(record);
+        backend_logger->Log(record.get());
+        break;
+      }
+      case LOGGING_OP_ABORT: {
+        LOG_INFO("Execute Abort %d", (int)cid);
+        std::unique_ptr<logging::LogRecord> record(
+            new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
+                                           cid));
+        assert(backend_logger);
+        backend_logger->Log(record.get());
         break;
       }
       case LOGGING_OP_COLLECT: {
@@ -171,12 +206,6 @@ class LoggingThread {
         assert(frontend_logger);
         frontend_logger->FlushLogRecords();
         results.push_back(frontend_logger->GetMaxFlushedCommitId());
-        break;
-      }
-      case LOGGING_OP_UPDATE:
-      case LOGGING_OP_DELETE:
-      case LOGGING_OP_ABORT: {
-        LOG_ERROR("This is not implemented yet. Lazy Eric.");
         break;
       }
     }
@@ -299,7 +328,7 @@ class LoggingScheduler {
     return *this;
   }
 
-  //FIXME use smart pointers
+  // FIXME use smart pointers
   int time = 0;
   logging::LogManager *log_manager;
   std::vector<LoggingSchedule> schedules;
