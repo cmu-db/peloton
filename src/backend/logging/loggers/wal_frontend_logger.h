@@ -100,7 +100,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   // File pointer and descriptor
   FILE *log_file;
-  int log_file_fd;
+  int log_file_fd = INVALID_FILE_DESCRIPTOR;
 
   // Size of the log file
   size_t log_file_size;
@@ -133,7 +133,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string LOG_FILE_SUFFIX = ".log";
 
-  cid_t max_log_id_file;
+  cid_t max_log_id_file = INVALID_CID;
 
   CopySerializeOutput output_buffer;
 

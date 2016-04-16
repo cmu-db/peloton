@@ -63,7 +63,10 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
     log_buffer_ = std::move(available_buffer_pool_->Get());
     // write to the new log buffer
     auto success = log_buffer_->WriteRecord(record);
-    assert(success);
+    if (!success) {
+      LOG_ERROR("Write record to log buffer failed");
+      return;
+    }
   }
 
   this->log_buffer_lock.Unlock();
