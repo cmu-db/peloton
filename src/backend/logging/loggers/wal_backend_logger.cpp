@@ -57,7 +57,11 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
     // get a new one
     log_buffer_ = std::move(available_buffer_pool_->Get());
     // write to the new log buffer
-    log_buffer_->WriteRecord(record);
+    auto success = log_buffer_->WriteRecord(record);
+    if (!success) {
+      LOG_ERROR("Write record to log buffer failed");
+      return;
+    }
   }
 
   this->log_buffer_lock.Unlock();
@@ -100,7 +104,7 @@ void WriteAheadBackendLogger::GrantEmptyBuffer(
 LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
-    void *data) {
+    const void *data) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {

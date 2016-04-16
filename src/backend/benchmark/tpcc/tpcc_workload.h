@@ -1,18 +1,19 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
-// ycsb_workload.h
+// workload.h
 //
-// Identification: src/backend/benchmark/ycsb_workload.h
+// Identification: benchmark/tpcc/workload.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_loader.h"
 
 namespace peloton {
 
@@ -21,14 +22,12 @@ class DataTable;
 }
 
 namespace benchmark {
-namespace ycsb {
+namespace tpcc {
 
 extern configuration state;
 
-extern storage::DataTable* user_table;
-
 double RunWorkload();
 
-}  // namespace ycsb
+}  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
