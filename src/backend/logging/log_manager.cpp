@@ -135,9 +135,8 @@ void LogManager::DoneLogging() {
 void LogManager::LogBeginTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    auto record =
-        new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
-    logger->Log(record);
+    TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_BEGIN, commit_id);
+    logger->Log(&record);
   }
 }
 
@@ -154,19 +153,20 @@ void LogManager::LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
     auto schema = manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
                                           new_tuple_tile_group->GetTableId())
                       ->GetSchema();
-
+    // Can we avoid allocate tuple in head each time?
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
       tuple->SetValue(col,
                       new_tuple_tile_group->GetValue(new_version.offset, col),
                       executor_pool);
     }
-    auto record = logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
-                                         new_tuple_tile_group->GetTableId(),
-                                         new_tuple_tile_group->GetDatabaseId(),
-                                         new_version, old_version, tuple.get());
+    std::unique_ptr<LogRecord> record(
+        logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+                               new_tuple_tile_group->GetTableId(),
+                               new_tuple_tile_group->GetDatabaseId(),
+                               new_version, old_version, tuple.get()));
 
-    logger->Log(record);
+    logger->Log(record.get());
     delete executor_context;
   }
 }
@@ -192,11 +192,11 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
                       executor_pool);
     }
 
-    auto record = logger->GetTupleRecord(
+    std::unique_ptr<LogRecord> record(logger->GetTupleRecord(
         LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
         new_tuple_tile_group->GetDatabaseId(), new_location,
-        INVALID_ITEMPOINTER, tuple.get());
-    logger->Log(record);
+        INVALID_ITEMPOINTER, tuple.get()));
+    logger->Log(record.get());
     delete executor_context;
   }
 }
@@ -207,20 +207,19 @@ void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(delete_location.block);
 
-    auto record = logger->GetTupleRecord(
+    std::unique_ptr<LogRecord> record(logger->GetTupleRecord(
         LOGRECORD_TYPE_TUPLE_DELETE, commit_id, tile_group->GetTableId(),
-        tile_group->GetDatabaseId(), INVALID_ITEMPOINTER, delete_location);
+        tile_group->GetDatabaseId(), INVALID_ITEMPOINTER, delete_location));
 
-    logger->Log(record);
+    logger->Log(record.get());
   }
 }
 
 void LogManager::LogCommitTransaction(cid_t commit_id) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
-    auto record =
-        new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
-    logger->Log(record);
+    TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
+    logger->Log(&record);
     WaitForFlush(commit_id);
   }
 }

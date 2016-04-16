@@ -38,7 +38,8 @@ class WriteAheadBackendLogger : public BackendLogger {
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,
                             ItemPointer insert_location,
-                            ItemPointer delete_location, void *data = nullptr);
+                            ItemPointer delete_location,
+                            const void *data = nullptr);
 
   std::pair<cid_t, cid_t> PrepareLogBuffers();
 

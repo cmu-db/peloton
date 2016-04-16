@@ -44,13 +44,10 @@ class StorageManager {
 
  private:
   // pmem file address
-  char *data_file_address;
+  void *data_file_address;
 
   // pmem file synch mutex
   std::mutex pmem_mutex;
-
-  // is it actually pmem ?
-  int is_pmem;
 
   // pmem file len
   size_t data_file_len;
