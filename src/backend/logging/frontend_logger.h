@@ -39,7 +39,8 @@ class FrontendLogger : public Logger {
 
   ~FrontendLogger();
 
-  static FrontendLogger *GetFrontendLogger(LoggingType logging_type);
+  static FrontendLogger *GetFrontendLogger(LoggingType logging_type,
+                                           bool test_mode = false);
 
   void MainLoop(void);
 
@@ -62,6 +63,8 @@ class FrontendLogger : public Logger {
   void ReplayLog(const char *, size_t len);
 
   cid_t GetMaxFlushedCommitId();
+
+  void SetMaxFlushedCommitId(cid_t cid);
 
   void SetBackendLoggerLoggedCid(BackendLogger &bel);
 

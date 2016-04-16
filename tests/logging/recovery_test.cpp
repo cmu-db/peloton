@@ -31,10 +31,10 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Logging Tests
+// Recovery Tests
 //===--------------------------------------------------------------------===//
 
-class LoggingTests : public PelotonTest {};
+class RecoveryTests : public PelotonTest {};
 
 std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
                                                  int num_rows, bool mutate,
@@ -85,7 +85,7 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
   return tuples;
 }
 
-TEST_F(LoggingTests, BasicInsertTest) {
+TEST_F(RecoveryTests, BasicInsertTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
@@ -128,7 +128,7 @@ TEST_F(LoggingTests, BasicInsertTest) {
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
-TEST_F(LoggingTests, BasicUpdateTest) {
+TEST_F(RecoveryTests, BasicUpdateTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
@@ -173,7 +173,7 @@ TEST_F(LoggingTests, BasicUpdateTest) {
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
-TEST_F(LoggingTests, BasicDeleteTest) {
+TEST_F(RecoveryTests, BasicDeleteTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
@@ -200,7 +200,7 @@ TEST_F(LoggingTests, BasicDeleteTest) {
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
-TEST_F(LoggingTests, OutOfOrderCommitTest) {
+TEST_F(RecoveryTests, OutOfOrderCommitTest) {
   auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
   auto &manager = catalog::Manager::GetInstance();
   storage::Database db(DEFAULT_DB_ID);
