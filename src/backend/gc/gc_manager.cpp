@@ -98,13 +98,22 @@ void GCManager::Poll() {
   }
 }
 
-// this function adds a tuple to the possibly free list
-void GCManager::AddPossiblyFreeTuple(const TupleMetadata &tuple_metadata) {
+
+// called by transaction manager.
+void GCManager::RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id, const cid_t &tuple_end_cid) {
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
+  
+  TupleMetadata tuple_metadata;
+  tuple_metadata.table_id = table_id;
+  tuple_metadata.tile_group_id = tile_group_id;
+  tuple_metadata.tuple_slot_id = tuple_id;
+  tuple_metadata.tuple_end_cid = tuple_end_cid;
+
   possibly_free_list_.Push(tuple_metadata);
 }
+
 
 // this function returns a free tuple slot, if one exists
 ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
@@ -123,34 +132,36 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
   return ItemPointer();
 }
 
-// delete a tuple from all its indexes it belongs in
-void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto db = manager.GetDatabaseWithOid(tuple_metadata.database_id);
-  auto table = db->GetTableWithOid(tuple_metadata.table_id);
-  auto index_count = table->GetIndexCount();
-  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id).get();
-  auto tile_count = tile_group->GetTileCount();
-  for (oid_t i = 0; i < tile_count; i++) {
-    auto tile = tile_group->GetTile(i);
-    for (oid_t j = 0; j < index_count; j++) {
-      // delete tuple from each index
-      auto index = table->GetIndex(j);
-      ItemPointer item(tuple_metadata.tile_group_id,
-                       tuple_metadata.tuple_slot_id);
-      auto index_schema = index->GetKeySchema();
-      auto indexed_columns = index_schema->GetIndexedColumns();
-      std::unique_ptr<storage::Tuple> key(
-          new storage::Tuple(index_schema, true));
-      char *tile_tuple_location =
-          tile->GetTupleLocation(tuple_metadata.tuple_slot_id);
-      assert(tile_tuple_location);
-      storage::Tuple tuple(tile->GetSchema(), tile_tuple_location);
-      key->SetFromTuple(&tuple, indexed_columns, index->GetPool());
-      index->DeleteEntry(key.get(), item);
-    }
-  }
-}
+// delete a tuple from all its indexes it belongs to.
+// TODO: we do not perform this function, 
+// as we do not have concurrent bw tree right now.
+// void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata __attribute__((unused))) {
+//   auto &manager = catalog::Manager::GetInstance();
+//   auto db = manager.GetDatabaseWithOid(tuple_metadata.database_id);
+//   auto table = db->GetTableWithOid(tuple_metadata.table_id);
+//   auto index_count = table->GetIndexCount();
+//   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id).get();
+//   auto tile_count = tile_group->GetTileCount();
+//   for (oid_t i = 0; i < tile_count; i++) {
+//     auto tile = tile_group->GetTile(i);
+//     for (oid_t j = 0; j < index_count; j++) {
+//       // delete tuple from each index
+//       auto index = table->GetIndex(j);
+//       ItemPointer item(tuple_metadata.tile_group_id,
+//                        tuple_metadata.tuple_slot_id);
+//       auto index_schema = index->GetKeySchema();
+//       auto indexed_columns = index_schema->GetIndexedColumns();
+//       std::unique_ptr<storage::Tuple> key(
+//           new storage::Tuple(index_schema, true));
+//       char *tile_tuple_location =
+//           tile->GetTupleLocation(tuple_metadata.tuple_slot_id);
+//       assert(tile_tuple_location);
+//       storage::Tuple tuple(tile->GetSchema(), tile_tuple_location);
+//       key->SetFromTuple(&tuple, indexed_columns, index->GetPool());
+//       index->DeleteEntry(key.get(), item);
+//     }
+//   }
+// }
 
 }  // namespace gc
 }  // namespace peloton

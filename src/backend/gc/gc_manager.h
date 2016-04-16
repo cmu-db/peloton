@@ -48,7 +48,7 @@ class GCManager {
 
   void StopGC();
 
-  void AddPossiblyFreeTuple(const TupleMetadata &);
+  void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id, const cid_t &tuple_end_cid);
 
   ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
