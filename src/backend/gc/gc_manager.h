@@ -39,7 +39,9 @@ class GCManager {
 
   GCManager(const GCType type) : is_running_(true), gc_type_(type), possibly_free_list_(MAX_FREE_LIST_LENGTH) {}
 
-  ~GCManager() {}
+  ~GCManager() {
+    StopGC();
+  }
 
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }

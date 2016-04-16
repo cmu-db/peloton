@@ -57,6 +57,7 @@ void GCManager::Poll() {
         if (tuple_metadata.tuple_end_cid < max_cid) {
           // Now that we know we need to recycle tuple, we need to delete all
           // tuples from the indexes to which it belongs as well.
+          
           // TODO: currently, we do not delete tuple from indexes,
           // as we do not have a concurrent index yet. --Yingjun
           //DeleteTupleFromIndexes(tuple_metadata);
@@ -135,33 +136,8 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
 // delete a tuple from all its indexes it belongs to.
 // TODO: we do not perform this function, 
 // as we do not have concurrent bw tree right now.
-// void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata __attribute__((unused))) {
-//   auto &manager = catalog::Manager::GetInstance();
-//   auto db = manager.GetDatabaseWithOid(tuple_metadata.database_id);
-//   auto table = db->GetTableWithOid(tuple_metadata.table_id);
-//   auto index_count = table->GetIndexCount();
-//   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id).get();
-//   auto tile_count = tile_group->GetTileCount();
-//   for (oid_t i = 0; i < tile_count; i++) {
-//     auto tile = tile_group->GetTile(i);
-//     for (oid_t j = 0; j < index_count; j++) {
-//       // delete tuple from each index
-//       auto index = table->GetIndex(j);
-//       ItemPointer item(tuple_metadata.tile_group_id,
-//                        tuple_metadata.tuple_slot_id);
-//       auto index_schema = index->GetKeySchema();
-//       auto indexed_columns = index_schema->GetIndexedColumns();
-//       std::unique_ptr<storage::Tuple> key(
-//           new storage::Tuple(index_schema, true));
-//       char *tile_tuple_location =
-//           tile->GetTupleLocation(tuple_metadata.tuple_slot_id);
-//       assert(tile_tuple_location);
-//       storage::Tuple tuple(tile->GetSchema(), tile_tuple_location);
-//       key->SetFromTuple(&tuple, indexed_columns, index->GetPool());
-//       index->DeleteEntry(key.get(), item);
-//     }
-//   }
-// }
+void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata __attribute__((unused))) {
+}
 
 }  // namespace gc
 }  // namespace peloton
