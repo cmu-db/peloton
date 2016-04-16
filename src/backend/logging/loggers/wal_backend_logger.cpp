@@ -106,7 +106,7 @@ void WriteAheadBackendLogger::GrantEmptyBuffer(
 LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
-    void *data) {
+    const void *data) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
