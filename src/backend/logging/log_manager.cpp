@@ -30,8 +30,10 @@ namespace logging {
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
+LoggingType LogManager::logging_type_ = LOGGING_TYPE_INVALID;
+bool LogManager::test_mode_ = false;
 
-LogManager::LogManager() {}
+LogManager::LogManager() { LogManager::Configure(peloton_logging_mode, false); }
 
 LogManager::~LogManager() {}
 
@@ -49,12 +51,7 @@ LogManager &LogManager::GetInstance() {
  * @param logging type can be stdout(debug), aries, peloton
  */
 void LogManager::StartStandbyMode() {
-  // If frontend logger doesn't exist
-  if (frontend_logger == nullptr) {
-    frontend_logger.reset(
-        FrontendLogger::GetFrontendLogger(peloton_logging_mode));
-  }
-
+  GetFrontendLogger();
   // If frontend logger still doesn't exist, then we have disabled logging
   if (frontend_logger == nullptr) {
     LOG_INFO("We have disabled logging");
@@ -239,7 +236,7 @@ BackendLogger *LogManager::GetBackendLogger() {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-    backend_logger = BackendLogger::GetBackendLogger(peloton_logging_mode);
+    backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     frontend_logger->AddBackendLogger(backend_logger);
   }
 
@@ -252,6 +249,11 @@ BackendLogger *LogManager::GetBackendLogger() {
  * @return the frontend logger otherwise nullptr
  */
 FrontendLogger *LogManager::GetFrontendLogger() {
+  // If frontend logger doesn't exist
+  if (frontend_logger == nullptr) {
+    frontend_logger.reset(
+        FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
+  }
   return frontend_logger.get();
 }
 

@@ -51,6 +51,12 @@ class LogManager {
   // global singleton
   static LogManager &GetInstance(void);
 
+  // configuration
+  static void Configure(LoggingType logging_type, bool test_mode = false) {
+    logging_type_ = logging_type;
+    test_mode_ = test_mode;
+  }
+
   // Wait for the system to begin
   void StartStandbyMode();
 
@@ -141,6 +147,8 @@ class LogManager {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+  static LoggingType logging_type_;
+  static bool test_mode_;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging

@@ -26,7 +26,7 @@ extern int64_t peloton_wait_timeout;
 namespace peloton {
 namespace logging {
 
-FrontendLogger::FrontendLogger(){
+FrontendLogger::FrontendLogger() {
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout
@@ -42,11 +42,12 @@ FrontendLogger::~FrontendLogger() {
 /** * @brief Return the frontend logger based on logging type
  * @param logging type can be write ahead logging or write behind logging
  */
-FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type) {
+FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
+                                                  bool test_mode) {
   FrontendLogger *frontend_logger = nullptr;
 
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
-    frontend_logger = new WriteAheadFrontendLogger();
+    frontend_logger = new WriteAheadFrontendLogger(test_mode);
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
     frontend_logger = new WriteBehindFrontendLogger();
   } else {
@@ -196,12 +197,16 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // max_collected_commit_id should never decrease
     assert(max_possible_commit_id >= max_collected_commit_id);
     max_collected_commit_id = max_possible_commit_id;
-
+    LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);
     backend_loggers_lock.Unlock();
   }
 }
 
 cid_t FrontendLogger::GetMaxFlushedCommitId() { return max_flushed_commit_id; }
+
+void FrontendLogger::SetMaxFlushedCommitId(cid_t cid) {
+  max_flushed_commit_id = cid;
+}
 
 void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
   backend_loggers_lock.Lock();

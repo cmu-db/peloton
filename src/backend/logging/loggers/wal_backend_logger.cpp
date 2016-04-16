@@ -73,7 +73,10 @@ void WriteAheadBackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
-    LOG_INFO("Move the current log buffer to buffer pool");
+    LOG_INFO(
+        "Move the current log buffer to buffer pool, "
+        "highest_logged_commit_message: %d, logging_cid_lower_bound: %d",
+        (int)highest_logged_commit_message, (int)logging_cid_lower_bound);
     log_buffer_->SetHighestCommittedTransaction(highest_logged_commit_message);
     // we only need to add set the lower bound if it is not superseded by a
     // commit message
