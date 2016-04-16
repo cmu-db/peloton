@@ -127,15 +127,6 @@ peloton_bootstrap() {
       }
 
     }
-    
-    if(peloton_gc_mode == GC_TYPE_VACUUM) {
-      // Start GC vacuuming thread
-      auto& gc_manager = peloton::gc::GCManager::GetInstance();
-      if(gc_manager.GetStatus() != GC_STATUS_RUNNING) {
-        elog(DEBUG2, "Starting GC Vacuuming thread.");
-        gc_manager.SetStatus(GC_STATUS_OFF);
-      }
-    }
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
