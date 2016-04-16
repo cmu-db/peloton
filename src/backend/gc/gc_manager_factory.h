@@ -18,8 +18,9 @@ namespace peloton {
 namespace gc {
 class GCManagerFactory {
  public:
-  static GCManager *CreateInstance() {
-    return new GCManager(gc_type_);
+  static GCManager &GetInstance() {
+    static GCManager gc_manager(GC_TYPE_OFF);
+    return gc_manager;
   }
 
   static void Configure(GCType gc_type) {

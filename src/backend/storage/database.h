@@ -16,7 +16,6 @@
 
 #include "backend/common/printable.h"
 #include "backend/storage/data_table.h"
-#include "backend/gc/gc_manager_factory.h"
 
 struct peloton_status;
 struct dirty_table_info;
@@ -34,17 +33,9 @@ class Database : public Printable {
   Database() = delete;
   Database(Database const &) = delete;
 
-  Database(oid_t database_oid) : database_oid(database_oid) {
-    gc_manager.reset(gc::GCManagerFactory::CreateInstance());
-    gc_manager->StartGC();
-  }
+  Database(const oid_t &database_oid);
 
-  ~Database(){
-    // Clean up all the tables
-    for (auto table : tables) delete table;
-
-    gc_manager->StopGC();
-  }
+  ~Database();
 
   //===--------------------------------------------------------------------===//
   // OPERATIONS
@@ -96,7 +87,7 @@ class Database : public Printable {
 
   std::mutex database_mutex;
 
-  std::shared_ptr<gc::GCManager> gc_manager;
+  //std::shared_ptr<gc::GCManager> gc_manager;
 
 };
 

@@ -21,6 +21,14 @@
 namespace peloton {
 namespace storage {
 
+Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
+
+Database::~Database(){
+  // Clean up all the tables
+  for (auto table : tables) delete table;
+}
+
+
 //===--------------------------------------------------------------------===//
 // TABLE
 //===--------------------------------------------------------------------===//
