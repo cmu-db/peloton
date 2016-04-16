@@ -71,7 +71,7 @@ void GCManager::Poll() {
           tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id,
                                             MAX_CID);
 
-          LockfreeQueue<TupleMetadata> *free_list = nullptr;
+          std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
 
           // if the entry for table_id exists.
           if (free_map_.find(tuple_metadata.table_id, free_list) ==
@@ -80,18 +80,18 @@ void GCManager::Poll() {
             free_list->Push(tuple_metadata);
           } else {
             // if the entry for tuple_metadata.table_id does not exist.
-            free_list = new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC);
+            free_list.reset(new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
             free_list->Push(tuple_metadata);
-            context->free_map_[tuple_metadata.table_id] = free_list;
+            free_map_[tuple_metadata.table_id] = free_list;
           }
 
         } else {
           // if a tuple can't be reaped, add it back to the list.
-          context->possibly_free_list_.Push(tuple_metadata);
+          possibly_free_list_.Push(tuple_metadata);
         }
       }  // end for
     }    // end if
-    if (context->is_running_ == false) {
+    if (is_running_ == false) {
       return;
     }
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -99,40 +99,28 @@ void GCManager::Poll() {
 }
 
 // this function adds a tuple to the possibly free list
-void GCManager::AddPossiblyFreeTuple(const oid_t &database_id,
-                                     const TupleMetadata &tuple_metadata) {
-  if (this->status_ == GC_STATUS_OFF) {
+void GCManager::AddPossiblyFreeTuple(const TupleMetadata &tuple_metadata) {
+  if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
-  assert(gc_contexts_.contains(database_id));
-
-  GCContext *context = gc_contexts_.find(database_id).second;
-
-  context->possibly_free_list_.Push(tuple_metadata);
+  possibly_free_list_.Push(tuple_metadata);
 }
 
 // this function returns a free tuple slot, if one exists
-ItemPointer GCManager::ReturnFreeSlot(const oid_t &database_id,
-                                      const oid_t &table_id) {
-  if (this->status_ == GC_STATUS_OFF) {
+ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
+  if (this->gc_type_ == GC_TYPE_OFF) {
     return ItemPointer();
   }
-  assert(gc_contexts_.contains(database_id));
 
-  GCContext *context = gc_contexts_.find(database_id).second;
-
-  ItemPointer ret_item_pointer;
-
-  LockfreeQueue<TupleMetadata> *free_list = nullptr;
+  std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
   // if there exists free_list
-  if (context->free_map_.find(table_id, free_list) == true) {
+  if (free_map_.find(table_id, free_list) == true) {
     TupleMetadata tuple_metadata;
     if (free_list->Pop(tuple_metadata) == true) {
-      ret_item_pointer.block = tuple_metadata.tile_group_id;
-      ret_item_pointer.offset = tuple_metadata.tuple_slot_id;
+      return ItemPointer(tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id);
     }
   }
-  return ret_item_pointer;
+  return ItemPointer();
 }
 
 // delete a tuple from all its indexes it belongs in

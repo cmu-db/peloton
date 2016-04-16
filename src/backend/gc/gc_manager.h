@@ -37,6 +37,10 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
+  GCManager(const GCType type) : is_running_(true), gc_type_(type), possibly_free_list_(MAX_FREE_LIST_LENGTH) {}
+
+  ~GCManager() {}
+
   // Get status of whether GC thread is running or not
   bool GetStatus() { return this->is_running_; }
 
@@ -44,15 +48,11 @@ class GCManager {
 
   void StopGC();
 
-  void AddPossiblyFreeTuple(const oid_t &database_id, const TupleMetadata &);
+  void AddPossiblyFreeTuple(const TupleMetadata &);
 
-  ItemPointer ReturnFreeSlot(const oid_t &database_id, const oid_t &table_id);
+  ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
  private:
-  GCManager(const GC_TYPE type) : is_running_(true), gc_type_(type), possibly_free_list_(MAX_FREE_LIST_LENGTH) {}
-
-  ~GCManager() {}
-  
   void Poll();
   void DeleteTupleFromIndexes(const TupleMetadata &);
 
@@ -64,7 +64,7 @@ class GCManager {
   volatile bool is_running_;
   GCType gc_type_;
   LockfreeQueue<TupleMetadata> possibly_free_list_;
-  cuckoohash_map<oid_t, LockfreeQueue<TupleMetadata>*> free_map_;
+  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> free_map_;
   std::unique_ptr<std::thread> gc_thread_;
 
 };

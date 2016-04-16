@@ -127,14 +127,14 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   }
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  auto &gc_manager = gc::GCManager::GetInstance();
-  if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
-    auto free_item_pointer = gc_manager.ReturnFreeSlot(
-    this->database_oid, this->table_oid);
-    if (free_item_pointer.IsNull() == false) {
-      return free_item_pointer;
-    }
-  }
+  // auto &gc_manager = gc::GCManager::GetInstance();
+  // if (gc_manager.GetStatus() == GC_STATUS_RUNNING) {
+  //   auto free_item_pointer = gc_manager.ReturnFreeSlot(
+  //   this->database_oid, this->table_oid);
+  //   if (free_item_pointer.IsNull() == false) {
+  //     return free_item_pointer;
+  //   }
+  // }
   //====================================================
 
   std::shared_ptr<storage::TileGroup> tile_group;

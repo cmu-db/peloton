@@ -90,10 +90,6 @@ void Manager::AddDatabase(storage::Database *database) {
   {
     std::lock_guard<std::mutex> lock(catalog_mutex);
     databases.push_back(database);
-
-    // start gc for this database.
-    auto& gc_manager = peloton::gc::GCManager::GetInstance();
-    gc_manager.StartGC(database->GetOid());
   }
 }
 
@@ -112,11 +108,6 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
     oid_t database_offset = 0;
     for (auto database : databases) {
       if (database->GetOid() == database_oid) {
-
-        // stop gc for this database.
-        auto& gc_manager = peloton::gc::GCManager::GetInstance();
-        gc_manager.StopGC(database->GetOid());
-
         delete database;
         break;
       }

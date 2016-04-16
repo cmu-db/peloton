@@ -21,11 +21,6 @@
 namespace peloton {
 namespace storage {
 
-Database::~Database() {
-  // Clean up all the tables
-  for (auto table : tables) delete table;
-}
-
 //===--------------------------------------------------------------------===//
 // TABLE
 //===--------------------------------------------------------------------===//
