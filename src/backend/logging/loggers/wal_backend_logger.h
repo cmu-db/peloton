@@ -40,7 +40,7 @@ class WriteAheadBackendLogger : public BackendLogger {
                             ItemPointer insert_location,
                             ItemPointer delete_location, void *data = nullptr);
 
-  void PrepareLogBuffers();
+  std::pair<cid_t, cid_t> PrepareLogBuffers();
 
   void GrantEmptyBuffer(std::unique_ptr<LogBuffer>);
 
