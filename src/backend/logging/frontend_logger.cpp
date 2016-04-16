@@ -144,44 +144,42 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     cid_t max_committed_cid = 0;
     cid_t lower_bound = MAX_CID;
 
-    // TODO: handle edge cases here (backend logger has not yet sent a log
-    // message)
-
     // Look at the local queues of the backend loggers
     backend_loggers_lock.Lock();
     LOG_TRACE("Collect log buffers from %lu backend loggers",
               backend_loggers.size());
+    int i = 0;
     for (auto backend_logger : backend_loggers) {
-      {
-        backend_logger->PrepareLogBuffers();
-        auto &log_buffers = backend_logger->GetLogBuffers();
-        auto log_buffer_size = log_buffers.size();
+      auto cid_pair = backend_logger->PrepareLogBuffers();
+      auto &log_buffers = backend_logger->GetLogBuffers();
+      auto log_buffer_size = log_buffers.size();
 
-        // update max_possible_commit_id with the latest buffer
-
-        // Skip current backend_logger, nothing to do
-        if (log_buffer_size == 0) continue;
-
-        // Move the log record from backend_logger to here
-        for (oid_t log_record_itr = 0; log_record_itr < log_buffer_size;
-             log_record_itr++) {
-          // copy to front end logger
-          cid_t buffer_lower_bound =
-              log_buffers[log_record_itr]->GetLoggingCidLowerBound();
-          cid_t buffer_committed =
-              log_buffers[log_record_itr]->GetHighestCommittedTransaction();
-          if (buffer_lower_bound != INVALID_CID) {
-            lower_bound = std::min(lower_bound, buffer_lower_bound);
-          }
-          if (buffer_committed != INVALID_CID) {
-            max_committed_cid = std::max(max_committed_cid, buffer_committed);
-          }
-
-          global_queue.push_back(std::move(log_buffers[log_record_itr]));
-        }
-        // cleanup the local queue
-        log_buffers.clear();
+      // update max_possible_commit_id with the latest buffer
+      cid_t backend_lower_bound = cid_pair.first;
+      cid_t backend_committed = cid_pair.second;
+      if (backend_committed > backend_lower_bound) {
+        LOG_INFO("bel: %d got max_committed_cid:%lu", i, backend_committed);
+        max_committed_cid = std::max(max_committed_cid, backend_committed);
+      } else if (backend_lower_bound != INVALID_CID) {
+        LOG_INFO("bel: %d got lower_bound_cid:%lu", i, backend_lower_bound);
+        lower_bound = std::min(lower_bound, backend_lower_bound);
       }
+      // Skip current backend_logger, nothing to do
+      if (log_buffer_size == 0) {
+        i++;
+        continue;
+      }
+
+      // Move the log record from backend_logger to here
+      for (oid_t log_record_itr = 0; log_record_itr < log_buffer_size;
+           log_record_itr++) {
+        // copy to front end logger
+        global_queue.push_back(std::move(log_buffers[log_record_itr]));
+      }
+
+      // cleanup the local queue
+      log_buffers.clear();
+      i++;
     }
     cid_t max_possible_commit_id;
     if (max_committed_cid == 0 && lower_bound == MAX_CID) {
@@ -195,6 +193,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       max_possible_commit_id = lower_bound;
     }
     // max_collected_commit_id should never decrease
+    LOG_INFO("Before assert");
     assert(max_possible_commit_id >= max_collected_commit_id);
     max_collected_commit_id = max_possible_commit_id;
     LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);

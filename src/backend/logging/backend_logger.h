@@ -68,7 +68,7 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  virtual void PrepareLogBuffers() = 0;
+  virtual std::pair<cid_t, cid_t> PrepareLogBuffers() = 0;
 
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;

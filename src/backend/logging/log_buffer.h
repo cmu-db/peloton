@@ -40,14 +40,6 @@ class LogBuffer {
 
   void ResetData();
 
-  cid_t GetHighestCommittedTransaction();
-
-  void SetHighestCommittedTransaction(cid_t highest_commit_id);
-
-  cid_t GetLoggingCidLowerBound();
-
-  void SetLoggingCidLowerBound(cid_t cid_lower_bound);
-
   size_t GetSize();
 
   void SetSize(size_t size);
@@ -65,11 +57,6 @@ class LogBuffer {
   size_t capacity_ = LOG_BUFFER_CAPACITY;
 
   char data_[LOG_BUFFER_CAPACITY];
-
-  // the highest commit id
-  cid_t highest_committed_transaction_ = 0;
-
-  cid_t logging_cid_lower_bound_ = 0;
 
   BackendLogger *backend_logger_;
 };
