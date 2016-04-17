@@ -105,6 +105,9 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
     LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
     InitLogDirectory();
     InitLogFilesList();
+    UpdateMaxDelimiterForRecovery();
+    LOG_INFO("Updated Max Delimiter for Recovery as %d",
+             (int)max_delimiter_for_recovery);
     log_file_fd = -1;     // this is a restart or a new start
     max_log_id_file = 0;  // 0 is unused
   }
@@ -242,10 +245,14 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // FIXME GetNextCommitId() increments next_cid!!!
   cid_t start_commit_id =
       concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
-  LOG_INFO("Got start_commit_id as %d", (int)start_commit_id);
+  auto &log_manager = logging::LogManager::GetInstance();
   int num_inserts = 0;
-
+  cid_t global_max_flushed_id;
   log_file_cursor_ = 0;
+
+  global_max_flushed_id = log_manager.GetGlobalMaxFlushedId();
+  LOG_INFO("Got start_commit_id as %d, global max flushed as %d",
+           (int)start_commit_id, (int)global_max_flushed_id);
 
   // Set log file size
   // log_file_size = GetLogFileSize(log_file_fd);
@@ -276,7 +283,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
             return;
           }
           commit_id = txn_rec.GetTransactionId();
-          if (commit_id <= start_commit_id) {
+          if (commit_id <= start_commit_id ||
+              commit_id > global_max_flushed_id) {
             LOG_INFO("SKIP");
             continue;
           }
@@ -296,7 +304,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           auto cid = tuple_record->GetTransactionId();
           auto table = GetTable(*tuple_record);
-          if (!table || cid <= start_commit_id) {
+          if (!table || cid <= start_commit_id ||
+              commit_id > global_max_flushed_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
             LOG_INFO("SKIP");
@@ -325,7 +334,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          if (cid <= start_commit_id) {
+          if (cid <= start_commit_id || commit_id > global_max_flushed_id) {
             delete tuple_record;
             continue;
           }
@@ -1427,6 +1436,34 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
 void WriteAheadFrontendLogger::SetLoggerID(int id) {
   this->logger_id = id;
   this->peloton_log_directory += std::to_string(id);
+}
+
+void WriteAheadFrontendLogger::UpdateMaxDelimiterForRecovery() {
+  // this method must update the max delimiter id to be used for recovery
+  int num_log_files = log_files_.size();
+  cid_t max_delimiter_last_file;
+
+  if (num_log_files == 0) {
+    return;  // no delimiter, default is 0
+  }
+
+  max_delimiter_last_file = log_files_[num_log_files - 1]->GetMaxDelimiter();
+
+  if (max_delimiter_last_file != 0) {
+    // found a delimiter in the last file! use it to update max delimiter for
+    // recovery
+    max_delimiter_for_recovery = max_delimiter_last_file;
+    return;
+  }
+
+  // we didn't find a delimiter in the last file
+
+  if (num_log_files == 1) {
+    return;  // no other file to pick up delimiter from, return
+  }
+
+  // take delimiter from the last-but-one file!
+  max_delimiter_for_recovery = log_files_[num_log_files - 2]->GetMaxDelimiter();
 }
 
 }  // namespace logging

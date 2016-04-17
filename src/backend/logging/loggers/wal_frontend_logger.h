@@ -87,6 +87,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void SetLoggerID(int);
 
+  void UpdateMaxDelimiterForRecovery();
+
  private:
   std::string GetLogFileName(void);
 

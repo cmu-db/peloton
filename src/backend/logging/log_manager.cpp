@@ -83,6 +83,20 @@ void LogManager::StartStandbyMode() {
     std::thread(&FrontendLogger::MainLoop, frontend_loggers[i].get()).detach();
     // frontend_loggers[i].get()->MainLoop();
   }
+
+  // before returning, query each frontend logger for its
+  // max_delimiter_for_recovery, and choose the min of
+  // all of them to be set as the global persistent log number
+  // TODO handle corner case like no logs for a particular logger
+  for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
+    cid_t logger_max_flushed_id =
+        frontend_loggers[i].get()->GetMaxDelimiterForRecovery();
+    if (logger_max_flushed_id)
+      global_max_flushed_id =
+          std::min(global_max_flushed_id, logger_max_flushed_id);
+  }
+  LOG_INFO("Log manager set global_max_flushed_id as %d",
+           (int)global_max_flushed_id);
 }
 
 void LogManager::StartRecoveryMode() {

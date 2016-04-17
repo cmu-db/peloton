@@ -145,6 +145,8 @@ class LogManager {
 
   void DoneLogging();
 
+  cid_t GetGlobalMaxFlushedId() { return global_max_flushed_id; }
+
  private:
   LogManager();
   ~LogManager();
@@ -180,6 +182,8 @@ class LogManager {
   std::string log_file_name;
 
   int frontend_logger_assign_counter;
+
+  cid_t global_max_flushed_id = UINT64_MAX;
 };
 
 }  // namespace logging
