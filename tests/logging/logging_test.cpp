@@ -36,12 +36,12 @@ namespace test {
 class LoggingTests : public PelotonTest {};
 
 TEST_F(LoggingTests, BasicLoggingTest) {
-  std::unique_ptr<storage::DataTable> table(
-	ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
-  LoggingScheduler scheduler(1, &log_manager, table.get());
+  unsigned int num_backend_logger = 1;
+  LoggingScheduler scheduler(num_backend_logger, &log_manager, table.get());
 
   scheduler.Init();
   // Logger 0 is always the front end logger

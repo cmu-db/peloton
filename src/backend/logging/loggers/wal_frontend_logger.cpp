@@ -23,12 +23,14 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
+
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint_tile_scanner.h"
+#include "backend/logging/logging_util.h"
 
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
@@ -39,8 +41,6 @@
 #include "backend/executor/executor_context.h"
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-
-extern CheckpointType peloton_checkpoint_mode;
 
 #define LOG_FILE_SWITCH_LIMIT (1024)
 
@@ -70,22 +70,12 @@ void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
 
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
 
-// Wrappers
-storage::DataTable *GetTable(TupleRecord &tupleRecord);
-
-int ExtractNumberFromFileName(const char *name);
-
-/**
- * @brief Open logfile and file descriptor
- */
-
 WriteAheadFrontendLogger::WriteAheadFrontendLogger()
     : WriteAheadFrontendLogger(false) {}
 
 /**
  * @brief Open logfile and file descriptor
  */
-
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
     : test_mode_(for_testing) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
@@ -118,6 +108,7 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   delete recovery_pool;
 }
 
+//TODO remove me
 void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
   // First, flush
   assert(log_file_fd != -1);
@@ -277,7 +268,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          auto table = GetTable(*tuple_record);
+          auto table = LoggingUtil::GetTable(*tuple_record);
           if (!table || cid <= start_commit_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
@@ -657,6 +648,7 @@ void WriteAheadFrontendLogger::UpdateTuple(TupleRecord *record) {
  * @brief Measure the size of log file
  * @return the size if the log file exists otherwise 0
  */
+// TODO remove me
 size_t GetLogFileSize(int log_file_fd) {
   struct stat log_stats;
 
@@ -664,6 +656,7 @@ size_t GetLogFileSize(int log_file_fd) {
   return log_stats.st_size;
 }
 
+// TODO remove me
 bool IsFileTruncated(FILE *log_file, size_t size_to_read,
                      size_t log_file_size) {
   // Cache current position
@@ -685,6 +678,7 @@ bool IsFileTruncated(FILE *log_file, size_t size_to_read,
  *  Transaction Record has a single frame
  * @return the next frame size
  */
+// TODO remove me
 size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
   size_t frame_size;
   char buffer[sizeof(int32_t)];
@@ -724,7 +718,7 @@ size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
  * @return log record type otherwise return invalid log record type,
  * which menas there is no more log in the log file
  */
-
+// TODO remove me
 LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
   char buffer;
 
@@ -902,48 +896,9 @@ void SkipTupleRecordBody(FILE *log_file, size_t log_file_size) {
   CopySerializeInputBE tuple_body(body, body_size);
 }
 
-/**
- * @brief Read get table based on tuple record
- * @param tuple record
- * @return data table
- */
-storage::DataTable *GetTable(TupleRecord &tuple_record) {
-  // Get db, table, schema to insert tuple
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database *db =
-      manager.GetDatabaseWithOid(tuple_record.GetDatabaseOid());
-  if (!db) {
-    return nullptr;
-  }
-  assert(db);
-
-  LOG_INFO("Table ID for this tuple: %d", (int)tuple_record.GetTableId());
-  auto table = db->GetTableWithOid(tuple_record.GetTableId());
-  if (!table) {
-    return nullptr;
-  }
-  assert(table);
-
-  return table;
-}
-
 std::string WriteAheadFrontendLogger::GetLogFileName(void) {
   auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
-}
-
-int extract_number_from_filename(const char *name) {
-  std::string str(name);
-  size_t start_index = str.find_first_of("0123456789");
-  if (start_index != std::string::npos) {
-    int end_index = str.find_first_not_of("0123456789", start_index);
-    return atoi(str.substr(start_index, end_index - start_index).c_str());
-  }
-  LOG_ERROR("The last found log file doesn't have a version number.");
-  return 0;
-}
-int ExtractNumberFromFileName(const char *name) {
-  return extract_number_from_filename(name);
 }
 
 bool CompareByLogNumber(class LogFile *left, class LogFile *right) {
@@ -973,7 +928,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       // found a log file!
       LOG_INFO("Found a log file with name %s", file->d_name);
 
-      version_number = extract_number_from_filename(file->d_name);
+      version_number = LoggingUtil::ExtractNumberFromFileName(file->d_name);
 
       fp = fopen(GetFileNameFromVersion(version_number).c_str(), "rb+");
       temp_max_log_id_file = UINT64_MAX;
@@ -1060,9 +1015,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
             CompareByLogNumber);
 
   if (num_log_files) {
-    // @abj please follow CamelCase convention for function name :)
-    // @haibinl haha gotcha :P old habits die hard :(
-    int max_num = ExtractNumberFromFileName(
+    int max_num = LoggingUtil::ExtractNumberFromFileName(
         this->log_files_[num_log_files - 1]->GetLogFileName().c_str());
     LOG_INFO("Got maximum log file version as %d", max_num);
     this->log_file_counter_ = ++max_num;
@@ -1359,7 +1312,7 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
 
         if (cid > max_log_id_so_far) max_log_id_so_far = cid;
 
-        auto table = GetTable(*tuple_record);
+        auto table = LoggingUtil::GetTable(*tuple_record);
         if (!table) {
           SkipTupleRecordBody(log_file, log_file_size);
           delete tuple_record;

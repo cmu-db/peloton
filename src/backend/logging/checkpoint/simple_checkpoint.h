@@ -61,12 +61,7 @@ class SimpleCheckpoint : public Checkpoint {
 
   std::vector<std::shared_ptr<LogRecord>> records_;
 
-  FILE *checkpoint_file_ = nullptr;
-
-  int checkpoint_file_fd_ = INVALID_FILE_DESCRIPTOR;
-
-  // Size of the checkpoint file
-  size_t checkpoint_file_size_ = 0;
+  FileHandle file_handle_ = INVALID_FILE_HANDLE;
 
   BackendLogger *logger_ = nullptr;
 
