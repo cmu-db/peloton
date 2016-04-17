@@ -146,8 +146,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
     // Look at the local queues of the backend loggers
     backend_loggers_lock.Lock();
-    LOG_TRACE("Collect log buffers from %lu backend loggers",
-              backend_loggers.size());
+    // LOG_TRACE("Collect log buffers from %lu backend loggers",
+    //           backend_loggers.size());
     int i = 0;
     for (auto backend_logger : backend_loggers) {
       auto cid_pair = backend_logger->PrepareLogBuffers();
@@ -196,7 +196,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // LOG_INFO("Before assert");
     assert(max_possible_commit_id >= max_collected_commit_id);
     max_collected_commit_id = max_possible_commit_id;
-    LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);
+    // LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);
     backend_loggers_lock.Unlock();
   }
 }
