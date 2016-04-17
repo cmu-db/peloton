@@ -30,9 +30,9 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
       ItemPointer location(block, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       assert(tuple->GetSchema());
-      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT,
-                                  INITIAL_TXN_ID, INVALID_OID, location,
-                                  INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+      logging::TupleRecord record(
+          LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID, INVALID_OID,
+          location, INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
       record.SetTuple(tuple.get());
       records.push_back(record);
     }

@@ -51,7 +51,7 @@ class BackendLogger : public Logger {
                                     txn_id_t txn_id, oid_t table_oid,
                                     oid_t db_oid, ItemPointer insert_location,
                                     ItemPointer delete_location,
-                                    void *data = nullptr) = 0;
+                                    const void *data = nullptr) = 0;
 
   // cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
 
@@ -60,6 +60,8 @@ class BackendLogger : public Logger {
     log_buffer_lock.Lock();
 
     logging_cid_lower_bound = cid;
+
+    highest_logged_commit_message = INVALID_CID;
 
     log_buffer_lock.Unlock();
   }
@@ -70,7 +72,7 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  virtual void PrepareLogBuffers() = 0;
+  virtual std::pair<cid_t, cid_t> PrepareLogBuffers() = 0;
 
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
@@ -92,6 +94,8 @@ class BackendLogger : public Logger {
   int frontend_logger_id;
 
   cid_t logging_cid_lower_bound = INVALID_CID;
+
+  cid_t max_log_id_buffer = 0;
 };
 
 }  // namespace logging

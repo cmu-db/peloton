@@ -25,12 +25,13 @@ namespace logging {
 class LogFile {
  public:
   LogFile(FILE *log_file, std::string log_file_name, int log_file_fd,
-          int log_number, cid_t max_log_id_file)
+          int log_number, cid_t max_log_id_file, cid_t max_delimiter_file)
       : log_file_(log_file),
         log_file_name_(log_file_name),
         log_file_fd_(log_file_fd),
         log_number_(log_number),
-        max_log_id_file_(max_log_id_file) {
+        max_log_id_file_(max_log_id_file),
+	max_delimiter_file_(max_delimiter_file) {
     log_file_size_ = 0;
   };
 
@@ -52,6 +53,10 @@ class LogFile {
 
   void SetFilePtr(FILE *);
 
+  void SetMaxDelimiter(cid_t);
+
+  cid_t GetMaxDelimiter();
+
  private:
   FILE *log_file_;
   std::string log_file_name_;
@@ -59,6 +64,7 @@ class LogFile {
   int log_file_size_;
   int log_number_;
   cid_t max_log_id_file_;
+  cid_t max_delimiter_file_;
 
  protected:
 };
