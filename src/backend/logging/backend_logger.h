@@ -82,6 +82,8 @@ class BackendLogger : public Logger {
   cid_t highest_logged_commit_message = INVALID_CID;
 
   cid_t logging_cid_lower_bound = INVALID_CID;
+
+  cid_t max_log_id_buffer = 0;
 };
 
 }  // namespace logging

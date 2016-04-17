@@ -52,6 +52,10 @@ class LogBuffer {
 
   void SetSize(size_t size);
 
+  void SetMaxLogId(cid_t new_max) { max_log_id = new_max; }
+
+  cid_t GetMaxLogId() { return max_log_id; }
+
   BackendLogger *GetBackendLogger();
 
  private:
@@ -72,6 +76,8 @@ class LogBuffer {
   cid_t logging_cid_lower_bound_ = 0;
 
   BackendLogger *backend_logger_;
+
+  cid_t max_log_id = 0;
 };
 
 }  // namespace logging
