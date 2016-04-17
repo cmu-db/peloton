@@ -177,7 +177,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
       // TODO @mperron I think we both implemented this :P let's confirm
       // tomorrow
-      /* if (max_collected_commit_id > this->max_log_id_file) {
+      /* if (max_collected_commit_id > this->max_log_id_file)
         this->max_log_id_file = max_collected_commit_id; */
 
       LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
@@ -192,6 +192,8 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   if (global_queue_size) {
     LOG_INFO("max_collected_commit_id: %d, max_flushed_commit_id: %d",
              (int)max_collected_commit_id, (int)max_flushed_commit_id);
+
+    fflush_and_sync(log_file, log_file_fd, fsync_count);
   }
   if (max_collected_commit_id != max_flushed_commit_id) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
@@ -575,7 +577,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        storage::Tuple *tuple,
                        bool should_increase_tuple_count = true) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(insert_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -585,19 +586,27 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  // TODO this is not thread safe, lock table here or manager
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(insert_loc.block);
+
   if (tile_group == nullptr) {
-    // TODO this is not thread safe
     table->AddTileGroupWithOid(insert_loc.block);
     tile_group = manager.GetTileGroup(insert_loc.block);
     if (max_tg < insert_loc.block) {
       max_tg = insert_loc.block;
     }
   }
+  table->GetTileGroupLock().Unlock();
+  // unlock table here
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
     // TODO this is not thread safe!
+    table->GetTileGroupLock().Lock();
     table->IncreaseNumberOfTuplesBy(1);
+    table->GetTileGroupLock().Unlock();
   }
   delete tuple;
 }
@@ -605,7 +614,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(delete_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -614,6 +622,9 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(delete_loc.block);
   // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
@@ -624,6 +635,8 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   // TODO this is not thread safe!
   table->DecreaseNumberOfTuplesBy(1);
+  table->GetTileGroupLock().Unlock();
+
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
 }
 
@@ -631,7 +644,6 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &remove_loc,
                        const ItemPointer &insert_loc, storage::Tuple *tuple) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(remove_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -641,6 +653,9 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(remove_loc.block);
   // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
@@ -649,6 +664,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = remove_loc.block;
     }
   }
+  table->GetTileGroupLock().Unlock();
   InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple,
                     false);
 
