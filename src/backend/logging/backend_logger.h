@@ -59,6 +59,7 @@ class BackendLogger : public Logger {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
     logging_cid_lower_bound = cid;
+    highest_logged_commit_message = INVALID_CID;
     log_buffer_lock.Unlock();
   }
 
