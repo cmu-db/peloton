@@ -20,8 +20,8 @@ logging_FILES = \
 			   backend/logging/checkpoint.cpp \
 			   backend/logging/checkpoint_tile_scanner.cpp \
 			   backend/logging/checkpoint/simple_checkpoint.cpp \
-			   backend/logging/log_file.cpp \ 
-			   backend/logging/circular_buffer_pool.cpp \ 
+			   backend/logging/log_file.cpp \
+			   backend/logging/circular_buffer_pool.cpp \
 			   backend/logging/log_buffer.cpp
 
 logging_INCLUDES = \

@@ -157,9 +157,14 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     LOG_INFO("Log buffer get max log id returned %d",
              (int)log_buffer->GetMaxLogId());
+
     // TODO this is not correct and must be fixed, should be max seen cid
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetHighestCommittedTransaction();
+
+    // TODO @mperron I think we both implemented this :P let's confirm tomorrow
+    /* if (max_collected_commit_id > this->max_log_id_file) {
+      this->max_log_id_file = max_collected_commit_id; */
 
       LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
     }

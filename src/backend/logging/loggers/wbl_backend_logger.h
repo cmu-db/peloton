@@ -43,7 +43,9 @@ class WriteBehindBackendLogger : public BackendLogger {
                             const void *data = nullptr);
 
   // FIXME temporarily defined for wbl_backend_logger to compile code
-  void PrepareLogBuffers() {  }
+  std::pair<cid_t, cid_t> PrepareLogBuffers() {
+    return std::pair<cid_t, cid_t>(INVALID_CID, INVALID_CID);
+  }
 
   void GrantEmptyBuffer(__attribute__((unused)) std::unique_ptr<LogBuffer>) {
     // FIXME temporarily defined for wbl_backend_logger to compile code
