@@ -83,7 +83,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
-  cid_t ExtractMaxLogIdFromLogFileRecords(FILE *);
+  std::pair<cid_t, cid_t> ExtractMaxLogIdAndMaxDelimFromLogFileRecords(FILE *);
 
   void SetLoggerID(int);
 
@@ -102,7 +102,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   // File pointer and descriptor
   FILE *log_file;
-  int log_file_fd;
+  int log_file_fd = INVALID_FILE_DESCRIPTOR;
 
   // Size of the log file
   size_t log_file_size;
@@ -135,13 +135,18 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string LOG_FILE_SUFFIX = ".log";
 
-  cid_t max_log_id_file;
+  cid_t max_log_id_file = INVALID_CID;
 
   CopySerializeOutput output_buffer;
 
   std::set<cid_t> pending_commits;
 
   int logger_id;
+
+  cid_t max_delimiter_file = 0;
+
+  bool test_mode_ = false;
+
 };
 
 }  // namespace logging

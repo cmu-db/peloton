@@ -42,9 +42,6 @@ class configuration {
   // logging type
   LoggingType logging_type;
 
-  // # of backends (i.e. backend loggers)
-  int backend_count;
-
   // log file dir
   std::string log_file_dir;
 
