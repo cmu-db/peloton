@@ -48,11 +48,22 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
     assert(new_log_commit_id > highest_logged_commit_message);
     highest_logged_commit_message = new_log_commit_id;
   }
+
+  // update the max logged id for the current buffer
+  cid_t cur_log_id = record->GetTransactionId();
+
+  if (cur_log_id > max_log_id_buffer) {
+    log_buffer_->SetMaxLogId(cur_log_id);
+  }
+
   if (!log_buffer_->WriteRecord(record)) {
     LOG_INFO("Log buffer is full - Attempt to acquire a new one");
     // put back a buffer
 
     log_buffer_->SetHighestCommittedTransaction(highest_logged_commit_message);
+
+    max_log_id_buffer = 0;  // reset
+
     // we only need to add set the lower bound if it is not superseded by a
     // commit message
     if (logging_cid_lower_bound > highest_logged_commit_message) {
