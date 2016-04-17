@@ -260,7 +260,6 @@ BackendLogger *LogManager::GetBackendLogger() {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-
     LOG_INFO("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i;
@@ -268,7 +267,6 @@ BackendLogger *LogManager::GetBackendLogger() {
     frontend_loggers[i % NUM_FRONTEND_LOGGERS].get()->AddBackendLogger(
         backend_logger);
     backend_logger->SetFrontendLoggerID(i % NUM_FRONTEND_LOGGERS);
-
   }
 
   return backend_logger;
@@ -280,7 +278,6 @@ BackendLogger *LogManager::GetBackendLogger() {
  * @return the frontend logger otherwise nullptr
  */
 FrontendLogger *LogManager::GetFrontendLogger() {
-
   /* int i = 0;
   return frontend_loggers[i].get(); */
 
@@ -288,9 +285,9 @@ FrontendLogger *LogManager::GetFrontendLogger() {
   /* if (frontend_logger == nullptr) {
     frontend_logger.reset(
         FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
-  } */ 
-  return std::unique_ptr<FrontendLogger>(FrontendLogger::GetFrontendLogger(logging_type_, test_mode_)).get();
-
+  } */
+  return std::unique_ptr<FrontendLogger>(FrontendLogger::GetFrontendLogger(
+                                             logging_type_, test_mode_)).get();
 }
 
 bool LogManager::ContainsFrontendLogger(void) {
@@ -384,7 +381,6 @@ void LogManager::TruncateLogs(txn_id_t commit_id) {
 }
 
 cid_t LogManager::GetMaxFlushedCommitId() {
-
   int num_loggers;
   num_loggers = this->frontend_loggers.size();
   cid_t max_flushed_commit_id = UINT64_MAX, id;
@@ -393,10 +389,11 @@ cid_t LogManager::GetMaxFlushedCommitId() {
   for (int i = 0; i < num_loggers; i++) {
     FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
     id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
-        ->GetMaxFlushedCommitId();
-    LOG_INFO("FrontendLogger%d has max flushed commit id as %d", (int)i, (int)id);
-    if (id < max_flushed_commit_id)
-      max_flushed_commit_id = id;
+             ->GetMaxFlushedCommitId();
+    LOG_INFO("FrontendLogger%d has max flushed commit id as %d", (int)i,
+             (int)id);
+    // assume 0 is INACTIVE STATE
+    if (id && id < max_flushed_commit_id) max_flushed_commit_id = id;
   }
 
   return max_flushed_commit_id;
@@ -417,12 +414,14 @@ void LogManager::WaitForFlush(cid_t cid) {
 
     // TODO confirm with mperron if this is correct or not
     while (this->GetMaxFlushedCommitId() < cid) {
-    /* while (frontend_logger->GetMaxFlushedCommitId() < cid) { */
-      LOG_INFO("Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
-    		  this->GetMaxFlushedCommitId(), cid);
+      /* while (frontend_logger->GetMaxFlushedCommitId() < cid) { */
+      LOG_INFO(
+          "Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
+          this->GetMaxFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
-    LOG_INFO("Flushes done! Can return! Got maxflush commit id as %d", (int)this->GetMaxFlushedCommitId());
+    LOG_INFO("Flushes done! Can return! Got maxflush commit id as %d",
+             (int)this->GetMaxFlushedCommitId());
   }
 }
 
@@ -430,7 +429,8 @@ void LogManager::NotifyRecoveryDone() {
   LOG_INFO("One frontend logger has notified that it has completed recovery");
 
   int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
-  LOG_INFO("%d loggers have done recovery so far.", (int)recovery_to_logging_counter);
+  LOG_INFO("%d loggers have done recovery so far.",
+           (int)recovery_to_logging_counter);
   if (i == NUM_FRONTEND_LOGGERS) {
     LOG_INFO("This was the last one! Change to LOGGING mode.");
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);

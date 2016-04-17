@@ -151,6 +151,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // First, write all the record in the queue
   if (global_queue_size != 0 && this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
+  } else if (should_create_new_file) {
+    this->CreateNewLogFile(true);
+    should_create_new_file = false;
   }
 
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
@@ -183,6 +186,10 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
+  if (global_queue_size) {
+    LOG_INFO("max_collected_commit_id: %d, max_flushed_commit_id: %d",
+             (int)max_collected_commit_id, (int)max_flushed_commit_id);
+  }
   if (max_collected_commit_id != max_flushed_commit_id) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
@@ -207,7 +214,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
           LOG_INFO("Max_delimiter_file is now %d", (int)max_delimiter_file);
         }
 
-        if (this->FileSwitchCondIsTrue()) this->CreateNewLogFile(true);
+        if (this->FileSwitchCondIsTrue()) should_create_new_file = true;
       }
     }
   }
@@ -235,6 +242,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // FIXME GetNextCommitId() increments next_cid!!!
   cid_t start_commit_id =
       concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
+  LOG_INFO("Got start_commit_id as %d", (int)start_commit_id);
+  int num_inserts = 0;
 
   log_file_cursor_ = 0;
 
@@ -268,12 +277,14 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
           commit_id = txn_rec.GetTransactionId();
           if (commit_id <= start_commit_id) {
+            LOG_INFO("SKIP");
             continue;
           }
           break;
         }
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+          num_inserts++;
           tuple_record = new TupleRecord(record_type);
           // Check for torn log write
           if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
@@ -288,6 +299,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (!table || cid <= start_commit_id) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
+            LOG_INFO("SKIP");
             continue;
           }
 
@@ -376,17 +388,20 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
-    auto &manager = catalog::Manager::GetInstance();
-    if (max_oid > manager.GetNextOid()) {
-      manager.SetNextOid(max_oid);
-    }
+    if (num_inserts) {
+      LOG_INFO("This thread did %d inserts", (int)num_inserts);
+      auto &manager = catalog::Manager::GetInstance();
+      if (max_oid > manager.GetNextOid()) {
+        manager.SetNextOid(max_oid);
+      }
 
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid) {
-      txn_manager.SetNextCid(max_cid + 1);
-    }
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      if (txn_manager.GetNextCommitId() < max_cid) {
+        txn_manager.SetNextCid(max_cid + 1);
+      }
 
-    RecoverIndex();
+      RecoverIndex();
+    }
   }
   this->log_file_fd = -1;
 }
@@ -501,6 +516,7 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
 void WriteAheadFrontendLogger::AbortActiveTransactions() {
   for (auto it = recovery_txn_table.begin(); it != recovery_txn_table.end();
        it++) {
+    LOG_INFO("Aborting some active transactions!");
     for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++) {
       delete *it2;
     }

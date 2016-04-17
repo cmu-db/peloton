@@ -147,6 +147,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   bool test_mode_ = false;
 
+  bool should_create_new_file = false;
 };
 
 }  // namespace logging
