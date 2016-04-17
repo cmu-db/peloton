@@ -198,6 +198,13 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       // by moving the fflush and sync here, we ensure that this file will have
       // at least 1 delimiter
       fflush_and_sync(log_file, log_file_fd, fsync_count);
+
+      if (this->max_collected_commit_id > max_delimiter_file)
+      {
+        max_delimiter_file = this->max_collected_commit_id;
+	LOG_INFO("Max_delimiter_file is now %d", (int)max_delimiter_file);
+      }
+
       if (this->FileSwitchCondIsTrue()) this->CreateNewLogFile(true);
     }
   }
@@ -1009,8 +1016,9 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 
       fclose(fp);
 
+      // TODO update max_delimiter here in this constructor
       LogFile *new_log_file = new LogFile(NULL, file->d_name, -1,
-                                          version_number, temp_max_log_id_file);
+                                          version_number, temp_max_log_id_file, 0);
       this->log_files_.push_back(new_log_file);
     }
   }
@@ -1089,7 +1097,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   }
 
   // TODO what if we fail here? The next file may have garbage in the header
-  // now set the first 4 bytes to 0
+  // now set the first 8 bytes to 0
   fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1, log_file);
 
   this->log_file = log_file;
@@ -1103,8 +1111,9 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   this->log_file_fd = log_file_fd;
   LOG_INFO("log_file_fd of newly created file is %d", this->log_file_fd);
 
+  //TODO update max delimiter here in constructor
   LogFile *new_log_file_object =
-      new LogFile(log_file, new_file_name, log_file_fd, new_file_num, 0);
+      new LogFile(log_file, new_file_name, log_file_fd, new_file_num, 0, 0);
 
   this->log_files_.push_back(new_log_file_object);
 
