@@ -83,7 +83,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
-  cid_t ExtractMaxLogIdFromLogFileRecords(FILE *);
+  std::pair<cid_t, cid_t> ExtractMaxLogIdAndMaxDelimFromLogFileRecords(FILE *);
 
  private:
   std::string GetLogFileName(void);
@@ -142,7 +142,6 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   cid_t max_delimiter_file = 0;
 
   bool test_mode_ = false;
-
 };
 
 }  // namespace logging
