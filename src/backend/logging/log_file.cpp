@@ -41,5 +41,9 @@ void LogFile::SetLogFileFD(int fd) { log_file_fd_ = fd; }
 
 void LogFile::SetFilePtr(FILE *fp) { log_file_ = fp; }
 
+void LogFile::SetMaxDelimiter(cid_t max_delimiter) { max_delimiter_file_ = max_delimiter; }
+
+cid_t LogFile::GetMaxDelimiter() { return max_delimiter_file_; }
+
 }  // namespace logging
 }  // namespace peloton

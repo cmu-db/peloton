@@ -138,6 +138,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   CopySerializeOutput output_buffer;
 
   std::set<cid_t> pending_commits;
+
+  cid_t max_delimiter_file = 0;
 };
 
 }  // namespace logging
