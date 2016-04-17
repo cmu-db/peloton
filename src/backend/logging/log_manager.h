@@ -85,6 +85,8 @@ class LogManager {
 
   cid_t GetMaxFlushedCommitId();
 
+  void NotifyRecoveryDone();
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -168,6 +170,8 @@ class LogManager {
   // To wait for flush
   std::mutex flush_notify_mutex;
   std::condition_variable flush_notify_cv;
+
+  int recovery_to_logging_counter = 0;
 
   cid_t max_flushed_cid = 0;
 
