@@ -193,7 +193,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       max_possible_commit_id = lower_bound;
     }
     // max_collected_commit_id should never decrease
-    LOG_INFO("Before assert");
+    // LOG_INFO("Before assert");
     assert(max_possible_commit_id >= max_collected_commit_id);
     max_collected_commit_id = max_possible_commit_id;
     LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);
