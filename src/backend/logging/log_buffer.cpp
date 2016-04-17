@@ -32,36 +32,7 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
   if (!success) {
     return success;
   }
-  // update max commit id
-  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-    auto new_log_commit_id = record->GetTransactionId();
-    LOG_INFO(
-        "highest_committed_transaction_: %lu, logging_cid_lower_bound_ %lu, "
-        "record->GetTransactionId(): %lu",
-        highest_committed_transaction_, logging_cid_lower_bound_,
-        new_log_commit_id);
-    assert(new_log_commit_id > highest_committed_transaction_);
-    assert(new_log_commit_id > logging_cid_lower_bound_);
-    highest_committed_transaction_ = new_log_commit_id;
-    logging_cid_lower_bound_ = INVALID_CID;
-  }
   return true;
-}
-
-cid_t LogBuffer::GetHighestCommittedTransaction() {
-  return highest_committed_transaction_;
-}
-
-void LogBuffer::SetHighestCommittedTransaction(cid_t highest_commit_id) {
-  assert(highest_committed_transaction_ <= highest_commit_id);
-  highest_committed_transaction_ = highest_commit_id;
-}
-
-cid_t LogBuffer::GetLoggingCidLowerBound() { return logging_cid_lower_bound_; }
-
-void LogBuffer::SetLoggingCidLowerBound(cid_t cid_lower_bound) {
-  assert(logging_cid_lower_bound_ <= cid_lower_bound);
-  logging_cid_lower_bound_ = cid_lower_bound;
 }
 
 char *LogBuffer::GetData() { return data_; }

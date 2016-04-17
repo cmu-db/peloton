@@ -59,6 +59,7 @@ class BackendLogger : public Logger {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
     logging_cid_lower_bound = cid;
+    highest_logged_commit_message = INVALID_CID;
     log_buffer_lock.Unlock();
   }
 
@@ -68,7 +69,7 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  virtual void PrepareLogBuffers() = 0;
+  virtual std::pair<cid_t, cid_t> PrepareLogBuffers() = 0;
 
   // Grant an empty buffer to use
   virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
