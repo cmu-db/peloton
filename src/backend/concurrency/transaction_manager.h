@@ -48,8 +48,10 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  bool IsVisbleOrDirty(__attribute__((unused)) const storage::Tuple *key, const ItemPointer &position) {
-    auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
+  bool IsVisbleOrDirty(__attribute__((unused)) const storage::Tuple *key,
+                       const ItemPointer &position) {
+    auto tile_group_header = catalog::Manager::GetInstance()
+        .GetTileGroup(position.block)->GetHeader();
     auto tuple_id = position.offset;
 
     txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -137,10 +139,17 @@ class TransactionManager {
   virtual void PerformDelete(const oid_t &tile_group_id,
                              const oid_t &tuple_id) = 0;
 
+  // Txn manager may store related information in TileGroupHeader, so when
+  // TileGroup is dropped, txn manager might need to be notified
+  virtual void DroppingTileGroup(const oid_t &tile_group_id
+                                 __attribute__((unused))) {
+    return;
+  }
+
   void SetTransactionResult(const Result result) {
     current_txn->SetResult(result);
   }
-  
+
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
@@ -158,13 +167,14 @@ class TransactionManager {
   }
 
   // this function generates the maximum commit id of committed transactions.
-  // please note that this function only returns a "safe" value instead of a precise value.
+  // please note that this function only returns a "safe" value instead of a
+  // precise value.
   virtual cid_t GetMaxCommittedCid() = 0;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
-  
+
 };
 }  // End storage namespace
 }  // End peloton namespace

@@ -204,13 +204,13 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   }
 
   // Notify the backend loggers
-  {
-    for (auto backend_logger : backend_loggers) {
-      // FIXME
-      assert(backend_logger);
-      // backend_logger->FinishedFlushing();
-    }
-  }
+  //  {
+  //    for (auto backend_logger : backend_loggers) {
+  //      // FIXME
+  //      assert(backend_logger);
+  //      // backend_logger->FinishedFlushing();
+  //    }
+  //  }
 }
 
 size_t WriteBehindFrontendLogger::WriteLogRecords(

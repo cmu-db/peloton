@@ -63,7 +63,10 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
     log_buffer_ = std::move(available_buffer_pool_->Get());
     // write to the new log buffer
     auto success = log_buffer_->WriteRecord(record);
-    assert(success);
+    if (!success) {
+      LOG_ERROR("Write record to log buffer failed");
+      return;
+    }
   }
 
   this->log_buffer_lock.Unlock();
@@ -73,7 +76,10 @@ void WriteAheadBackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
-    LOG_INFO("Move the current log buffer to buffer pool");
+    LOG_INFO(
+        "Move the current log buffer to buffer pool, "
+        "highest_logged_commit_message: %d, logging_cid_lower_bound: %d",
+        (int)highest_logged_commit_message, (int)logging_cid_lower_bound);
     log_buffer_->SetHighestCommittedTransaction(highest_logged_commit_message);
     // we only need to add set the lower bound if it is not superseded by a
     // commit message
@@ -100,7 +106,7 @@ void WriteAheadBackendLogger::GrantEmptyBuffer(
 LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
-    void *data) {
+    const void *data) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
