@@ -14,6 +14,7 @@
 #include <condition_variable>
 #include <memory>
 
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/common/logger.h"
@@ -448,6 +449,21 @@ void LogManager::NotifyRecoveryDone() {
   if (i == NUM_FRONTEND_LOGGERS) {
     LOG_INFO("This was the last one! Change to LOGGING mode.");
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  }
+}
+
+void LogManager::UpdateCatalogAndTxnManagers(oid_t max_oid, cid_t max_cid) {
+  {
+    std::unique_lock<std::mutex> wait_lock(update_managers_mutex);
+    auto &manager = catalog::Manager::GetInstance();
+    if (max_oid > manager.GetNextOid()) {
+      manager.SetNextOid(max_oid);
+    }
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    if (txn_manager.GetNextCommitId() < max_cid) {
+      txn_manager.SetNextCid(max_cid + 1);
+    }
   }
 }
 

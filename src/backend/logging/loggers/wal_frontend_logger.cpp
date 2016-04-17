@@ -154,7 +154,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // First, write all the record in the queue
   if (global_queue_size != 0 && this->log_file_fd == -1) {
     this->CreateNewLogFile(false);
-  } else if (should_create_new_file) {
+  } else if (global_queue_size && should_create_new_file) {
     this->CreateNewLogFile(true);
     should_create_new_file = false;
   }
@@ -397,20 +397,21 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
-    if (num_inserts) {
-      LOG_INFO("This thread did %d inserts", (int)num_inserts);
-      auto &manager = catalog::Manager::GetInstance();
-      if (max_oid > manager.GetNextOid()) {
-        manager.SetNextOid(max_oid);
-      }
+    log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
 
-      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-      if (txn_manager.GetNextCommitId() < max_cid) {
-        txn_manager.SetNextCid(max_cid + 1);
-      }
+    LOG_INFO("This thread did %d inserts", (int)num_inserts);
 
-      RecoverIndex();
+    /* auto &manager = catalog::Manager::GetInstance();
+    if (max_oid > manager.GetNextOid()) {
+      manager.SetNextOid(max_oid);
     }
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    if (txn_manager.GetNextCommitId() < max_cid) {
+      txn_manager.SetNextCid(max_cid + 1);
+    } */
+
+    RecoverIndex();
   }
   this->log_file_fd = -1;
 }

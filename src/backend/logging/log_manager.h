@@ -147,6 +147,8 @@ class LogManager {
 
   cid_t GetGlobalMaxFlushedId() { return global_max_flushed_id; }
 
+  void UpdateCatalogAndTxnManagers(oid_t, cid_t);
+
  private:
   LogManager();
   ~LogManager();
@@ -172,6 +174,9 @@ class LogManager {
   // To wait for flush
   std::mutex flush_notify_mutex;
   std::condition_variable flush_notify_cv;
+
+  // To update catalog and txn managers
+  std::mutex update_managers_mutex;
 
   int recovery_to_logging_counter = 0;
 
