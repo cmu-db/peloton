@@ -86,29 +86,14 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
  * @brief Open logfile and file descriptor
  */
 
-WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
+WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
+    : test_mode_(for_testing) {
   logging_type = LOGGING_TYPE_DRAM_NVM;
-
-  /*LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
-
-  // open log file and file descriptor
-  // we open it in append + binary mode
-  log_file = fopen(GetLogFileName().c_str(), "ab+");
-  if (log_file == NULL) {
-    LOG_ERROR("LogFile is NULL");
-  }
-
-  // also, get the descriptor
-  log_file_fd = fileno(log_file);
-  if (log_file_fd == -1) {
-    LOG_ERROR("log_file_fd is -1");
-  }*/
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
-  if (for_testing) {
+  if (test_mode_) {
     this->log_file = nullptr;
-
   } else {
     LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
     this->InitLogDirectory();
@@ -161,13 +146,15 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     this->CreateNewLogFile(false);
   }
 
-  // LOG_INFO("Flushing %lu log buffers..", global_queue_size);
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
     auto &log_buffer = global_queue[global_queue_itr];
 
-    fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
-           log_file);
+    if (!test_mode_) {
+      fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
+             log_file);
+    }
+
     // TODO this is not correct and must be fixed, should be max seen cid
     if (log_buffer->GetHighestCommittedTransaction() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetHighestCommittedTransaction();
@@ -186,14 +173,14 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
 
-    assert(log_file_fd != -1);
+    if (!test_mode_) {
+      assert(log_file_fd != -1);
+      if (log_file_fd != -1) {
+        fwrite(delimiter_rec.GetMessage(), sizeof(char),
+               delimiter_rec.GetMessageLength(), log_file);
 
-    if (log_file_fd != -1) {
-      fwrite(delimiter_rec.GetMessage(), sizeof(char),
-             delimiter_rec.GetMessageLength(), log_file);
-
-      LOG_INFO("Wrote delimiter to log file with commit_id %ld",
-               this->max_collected_commit_id);
+        LOG_INFO("Wrote delimiter to log file with commit_id %ld",
+                 this->max_collected_commit_id);
 
       // by moving the fflush and sync here, we ensure that this file will have
       // at least 1 delimiter
@@ -229,9 +216,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteAheadFrontendLogger::DoRecovery() {
-
-  //FIXME GetNextCommitId() increments next_cid!!!
-  cid_t start_commit_id = concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
+  // FIXME GetNextCommitId() increments next_cid!!!
+  cid_t start_commit_id =
+      concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
 
   log_file_cursor_ = 0;
 
@@ -1045,6 +1032,10 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
 }
 
 void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
+  if (test_mode_) {
+    return;
+  }
+
   int new_file_num;
   std::string new_file_name;
   cid_t default_commit_id = 0;

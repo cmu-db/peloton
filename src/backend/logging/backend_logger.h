@@ -51,7 +51,7 @@ class BackendLogger : public Logger {
                                     txn_id_t txn_id, oid_t table_oid,
                                     oid_t db_oid, ItemPointer insert_location,
                                     ItemPointer delete_location,
-                                    void *data = nullptr) = 0;
+                                    const void *data = nullptr) = 0;
 
   // cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
 
