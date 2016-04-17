@@ -160,11 +160,12 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     // TODO this is not correct and must be fixed, should be max seen cid
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
-      this->max_log_id_file = log_buffer->GetHighestCommittedTransaction();
+      this->max_log_id_file = log_buffer->GetMaxLogId();
 
-    // TODO @mperron I think we both implemented this :P let's confirm tomorrow
-    /* if (max_collected_commit_id > this->max_log_id_file) {
-      this->max_log_id_file = max_collected_commit_id; */
+      // TODO @mperron I think we both implemented this :P let's confirm
+      // tomorrow
+      /* if (max_collected_commit_id > this->max_log_id_file) {
+        this->max_log_id_file = max_collected_commit_id; */
 
       LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
     }
@@ -1106,7 +1107,8 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
       LOG_INFO("MaxDelimiter of the last closed file is %d",
                (int)this->max_delimiter_file);
 
-      this->max_log_id_file = 0;  // reset
+      this->max_log_id_file = 0;     // reset
+      this->max_delimiter_file = 0;  // reset
 
       fd = fileno(this->log_files_[file_list_size - 1]->GetFilePtr());
 
