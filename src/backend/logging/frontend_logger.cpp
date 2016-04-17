@@ -87,7 +87,12 @@ void FrontendLogger::MainLoop(void) {
       LOG_INFO("Log manager: DoRecovery done");
 
       // Now, enter LOGGING mode
-      log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+      // log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+      // Notify log manager that this frontend logger has completed recovery
+      log_manager.NotifyRecoveryDone();
+
+      // Now wait until the other frontend loggers also complete their recovery
+      log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
       break;
     }

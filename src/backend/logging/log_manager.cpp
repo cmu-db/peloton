@@ -27,7 +27,7 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
-#define NUM_FRONTEND_LOGGERS 1
+#define NUM_FRONTEND_LOGGERS 2
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
@@ -423,6 +423,17 @@ void LogManager::WaitForFlush(cid_t cid) {
       flush_notify_cv.wait(wait_lock);
     }
     LOG_INFO("Flushes done! Can return! Got maxflush commit id as %d", (int)this->GetMaxFlushedCommitId());
+  }
+}
+
+void LogManager::NotifyRecoveryDone() {
+  LOG_INFO("One frontend logger has notified that it has completed recovery");
+
+  int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
+  LOG_INFO("%d loggers have done recovery so far.", (int)recovery_to_logging_counter);
+  if (i == NUM_FRONTEND_LOGGERS) {
+    LOG_INFO("This was the last one! Change to LOGGING mode.");
+    SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   }
 }
 
