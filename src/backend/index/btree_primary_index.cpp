@@ -86,11 +86,42 @@ bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-                KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key __attribute__((unused)),
-                                                 const ItemPointer &location __attribute__((unused))) {
-  assert(false);
+                KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key,
+                                                 const ItemPointer &location) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  {
+    index_lock.WriteLock();
+
+    // Delete the < key, location > pair
+    bool try_again = true;
+    while (try_again == true) {
+      // Unset try again
+      try_again = false;
+
+      // Lookup matching entries
+      auto entries = container.equal_range(index_key);
+      for (auto iterator = entries.first; iterator != entries.second;
+           iterator++) {
+        ItemPointer &value = iterator->second->header;
+
+        if ((value.block == location.block) &&
+            (value.offset == location.offset)) {
+          container.erase(iterator);
+          // Set try again
+          try_again = true;
+          break;
+        }
+      }
+    }
+
+    index_lock.Unlock();
+  }
+
   return true;
 }
+
 
 template <typename KeyType, typename ValueType, class KeyComparator,
     class KeyEqualityChecker>

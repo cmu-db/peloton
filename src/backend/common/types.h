@@ -778,8 +778,8 @@ extern ItemPointer INVALID_ITEMPOINTER;
 //===--------------------------------------------------------------------===//
 // ItemPointerHeader
 //===--------------------------------------------------------------------===//
+
 struct ItemPointerHeader {
-  ItemPointerHeader() {}
 
   ItemPointerHeader(const ItemPointer &item_pointer) {
     header = item_pointer;
