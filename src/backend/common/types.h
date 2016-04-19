@@ -18,6 +18,8 @@
 #include <limits>
 #include <cassert>
 
+#include "backend/common/MyRWLock.h"
+
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -45,6 +47,13 @@ enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
   CHECKPOINT_TYPE_NORMAL = 1,
 };
+
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_VACUUM = 1,
+  GC_TYPE_COOPERATIVE = 2,
+};
+
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -735,6 +744,17 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t table_id = 0;
+  oid_t tile_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t tuple_end_cid = 0;
+};
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -754,6 +774,19 @@ struct ItemPointer {
 };
 
 extern ItemPointer INVALID_ITEMPOINTER;
+
+//===--------------------------------------------------------------------===//
+// ItemPointerHeader
+//===--------------------------------------------------------------------===//
+
+struct ItemPointerHeader {
+
+  ItemPointerHeader(const ItemPointer &item_pointer) {
+    header = item_pointer;
+  }
+  ItemPointer header;
+  MyRWLock rw_lock;
+};
 
 //===--------------------------------------------------------------------===//
 // Utilities

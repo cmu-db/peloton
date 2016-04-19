@@ -125,6 +125,14 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
   }
+  //=============== garbage collection==================
+  // check if there are recycled tuple slots
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  if (free_item_pointer.IsNull() == false) {
+    return free_item_pointer;
+  }
+  //====================================================
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
@@ -140,6 +148,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     // now we have already obtained a new tuple slot.
     if (tuple_slot != INVALID_OID) {
       tile_group_id = tile_group->GetTileGroupId();
+      LOG_INFO("%s", GetInfo().c_str());
       break;
     }
   }
@@ -360,41 +369,41 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple __attribute__((unused))) {
 
-  for (auto foreign_key : foreign_keys_) {
-    oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
-            database_oid, sink_table_id);
+  // for (auto foreign_key : foreign_keys_) {
+  //   oid_t sink_table_id = foreign_key->GetSinkTableOid();
+  //   storage::DataTable *ref_table =
+  //       (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
+  //           database_oid, sink_table_id);
 
-    int ref_table_index_count = ref_table->GetIndexCount();
+  //   int ref_table_index_count = ref_table->GetIndexCount();
 
-    for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
-      auto index = ref_table->GetIndex(index_itr);
+  //   for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
+  //     auto index = ref_table->GetIndex(index_itr);
 
-      // The foreign key constraints only refer to the primary key
-      if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
+  //     // The foreign key constraints only refer to the primary key
+  //     if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+  //       LOG_INFO("BEGIN checking referred table");
+  //       auto key_attrs = foreign_key->GetFKColumnOffsets();
 
-        std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
-        std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
-        //FIXME: what is the 3rd arg should be?
-        key->SetFromTuple(tuple, key_attrs, index->GetPool());
+  //       std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
+  //       std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
+  //       //FIXME: what is the 3rd arg should be?
+  //       key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_INFO("check key: %s", key->GetInfo().c_str());
-        auto locations = index->ScanKey(key.get());
+  //       LOG_INFO("check key: %s", key->GetInfo().c_str());
+  //       auto locations = index->ScanKey(key.get());
 
-        // if this key doesn't exist in the refered column
-        if (locations.size() == 0) {
-          return false;
-        }
+  //       // if this key doesn't exist in the refered column
+  //       if (locations.size() == 0) {
+  //         return false;
+  //       }
 
-        break;
-      }
-    }
-  }
+  //       break;
+  //     }
+  //   }
+  // }
 
   return true;
 }
@@ -619,28 +628,30 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 const std::string DataTable::GetInfo() const {
   std::ostringstream os;
 
-  os << "=====================================================\n";
-  os << "TABLE :\n";
+  //os << "=====================================================\n";
+  //os << "TABLE :\n";
 
   oid_t tile_group_count = GetTileGroupCount();
-  os << "Tile Group Count : " << tile_group_count << "\n";
+  //os << "Tile Group Count : " << tile_group_count << "\n";
 
   oid_t tuple_count = 0;
+  oid_t table_id = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
+    table_id = tile_group->GetTableId();
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    os << "Tile Group Id  : " << tile_group_itr
-        << " Tuple Count : " << tile_tuple_count << "\n";
-    os << (*tile_group);
+    //os << "Tile Group Id  : " << tile_group_itr
+    //    << " Tuple Count : " << tile_tuple_count << "\n";
+    //os << (*tile_group);
 
     tuple_count += tile_tuple_count;
   }
 
-  os << "Table Tuple Count :: " << tuple_count << "\n";
+  os << "Table " << table_id  << " Tuple Count :: " << tuple_count << "\n";
 
-  os << "=====================================================\n";
+  //os << "=====================================================\n";
 
   return os.str();
 }
