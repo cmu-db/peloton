@@ -42,8 +42,7 @@ class SimpleCheckpoint : public Checkpoint {
   // Internal functions
   void InsertTuple(cid_t commit_id);
 
-  void Scan(storage::DataTable *target_table, cid_t start_cid,
-            oid_t database_oid);
+  void Scan(storage::DataTable *target_table, oid_t database_oid);
 
   // Getters and Setters
   void SetLogger(BackendLogger *logger);
