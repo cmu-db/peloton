@@ -125,12 +125,12 @@ bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-std::vector<ItemPointer>
+void
 BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
-    const ScanDirectionType &scan_direction) {
-  std::vector<ItemPointer> result;
+    const ScanDirectionType &scan_direction,
+    std::vector<ItemPointer> &result) {
   KeyType index_key;
 
   // Check if we have leading (leftmost) column equality
@@ -208,16 +208,12 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     index_lock.Unlock();
   }
-
-  return result;
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-std::vector<ItemPointer> BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-                                    KeyEqualityChecker>::ScanAllKeys() {
-  std::vector<ItemPointer> result;
-
+void BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
+                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &result) {  
   {
     index_lock.ReadLock();
 
@@ -232,8 +228,6 @@ std::vector<ItemPointer> BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 
     index_lock.Unlock();
   }
-
-  return result;
 }
 
 /**
@@ -241,10 +235,9 @@ std::vector<ItemPointer> BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
  */
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-std::vector<ItemPointer>
+void
 BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
-    const storage::Tuple *key) {
-  std::vector<ItemPointer> result;
+    const storage::Tuple *key, std::vector<ItemPointer> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -260,7 +253,6 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKe
     index_lock.Unlock();
   }
 
-  return result;
 }
 
 

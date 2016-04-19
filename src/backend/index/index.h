@@ -124,10 +124,8 @@ class Index : public Printable {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer &location) = 0;
 
-  virtual bool UpdateEntry(const storage::Tuple *key __attribute__((unused)), const ItemPointer &location __attribute__((unused))){
-    assert(false);
-    return false;
-  }
+  virtual bool UpdateEntry(const storage::Tuple *key, 
+                           const ItemPointer &location) = 0;
 
   // First retrieve all Key-Value pairs of the given key
   // Return false if any of those k-v pairs satisfy the predicate
@@ -143,36 +141,28 @@ class Index : public Printable {
 
   // scan all keys in the index matching an arbitrary key
   // used by index scan executor
-  virtual std::vector<ItemPointer> Scan(
-      const std::vector<Value> &values __attribute__((unused)),
-      const std::vector<oid_t> &key_column_ids __attribute__((unused)),
-      const std::vector<ExpressionType> &exprs __attribute__((unused)),
-      const ScanDirectionType &scan_direction __attribute__((unused))) {
-    assert(false);
-    return std::vector<ItemPointer>();
-  }
+  virtual void Scan(
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType &scan_direction,
+      std::vector<ItemPointer> &) = 0;
 
   // scan the entire index, working like a sort
-  virtual std::vector<ItemPointer> ScanAllKeys() {
-    assert(false);
-    return std::vector<ItemPointer>();
-  }
-
-  virtual std::vector<ItemPointer> ScanKey(const storage::Tuple *key __attribute__((unused))) {
-    assert(false);
-    return std::vector<ItemPointer>();
-  }
+  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
+  
+  virtual void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &) = 0;
 
   virtual void Scan(
-      const std::vector<Value> &values __attribute__((unused)),
-      const std::vector<oid_t> &key_column_ids __attribute__((unused)),
-      const std::vector<ExpressionType> &exprs __attribute__((unused)),
-      const ScanDirectionType &scan_direction __attribute__((unused)),
-      std::vector<std::shared_ptr<ItemPointerHeader>> &result __attribute__((unused))) { }
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType &scan_direction,
+      std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
 
-  virtual void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result __attribute__((unused))) { }
+  virtual void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
 
-  virtual void ScanKey(const storage::Tuple *key __attribute__((unused)), std::vector<std::shared_ptr<ItemPointerHeader>> &result __attribute__((unused))) { }
+  virtual void ScanKey(const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS

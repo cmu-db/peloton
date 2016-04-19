@@ -44,7 +44,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   // Helper
   //===--------------------------------------------------------------------===//
-  bool ExecIndexLookup();
+  bool ExecPrimaryIndexLookup();
+  bool ExecSecondaryIndexLookup();
 
   //===--------------------------------------------------------------------===//
   // Executor State
