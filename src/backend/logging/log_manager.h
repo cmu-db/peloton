@@ -53,9 +53,11 @@ class LogManager {
   static LogManager &GetInstance(void);
 
   // configuration
-  static void Configure(LoggingType logging_type, bool test_mode = false) {
+  static void Configure(LoggingType logging_type, bool test_mode = false,
+                        unsigned int num_frontend_loggers = 1) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
+    num_frontend_loggers_ = num_frontend_loggers;
   }
 
   // Wait for the system to begin
@@ -123,7 +125,11 @@ class LogManager {
   // Utility Functions
   //===--------------------------------------------------------------------===//
 
-  FrontendLogger *GetFrontendLogger();
+  // initialize a list of frontend loggers
+  void InitFrontendLoggers();
+
+  // get a frontend logger at given index
+  FrontendLogger *GetFrontendLogger(unsigned int logger_idx);
 
   void ResetFrontendLogger();
 
@@ -168,6 +174,7 @@ class LogManager {
   //===--------------------------------------------------------------------===//
   static LoggingType logging_type_;
   static bool test_mode_;
+  static unsigned int num_frontend_loggers_;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
@@ -188,7 +195,7 @@ class LogManager {
   // To update catalog and txn managers
   std::mutex update_managers_mutex;
 
-  int recovery_to_logging_counter = 0;
+  unsigned int recovery_to_logging_counter = 0;
 
   cid_t max_flushed_cid = 0;
 
