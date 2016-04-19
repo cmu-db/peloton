@@ -187,7 +187,6 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
     // Another transaction is writting this tuple, add an edge
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
-      // std::lock_guard<std::mutex> lock(txn_manager_mutex_);
       txn_manager_mutex_.ReadLock();
 
       if (txn_table_.count(writer) != 0) {
@@ -207,6 +206,8 @@ bool SsiTxnManager::PerformRead(const oid_t &tile_group_id,
 
   // For each new version of the tuple
   {
+    // read only section
+    // read-lock
     // This is a potential big overhead for read operations
     txn_manager_mutex_.ReadLock();
 

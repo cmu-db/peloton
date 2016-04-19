@@ -14,12 +14,13 @@
 
 #include <memory>
 #include <queue>
+#include <map>
+#include <mutex>
 
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/concurrency/transaction.h"
 #include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//

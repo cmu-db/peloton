@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <functional>
+#include <memory>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -123,6 +124,9 @@ class Index : public Printable {
   virtual bool DeleteEntry(const storage::Tuple *key,
                            const ItemPointer &location) = 0;
 
+  virtual bool UpdateEntry(const storage::Tuple *key, 
+                           const ItemPointer &location) = 0;
+
   // First retrieve all Key-Value pairs of the given key
   // Return false if any of those k-v pairs satisfy the predicate
   // If not any of those k-v pair satisfy the predicate, insert the k-v pair into the index and return true.
@@ -137,16 +141,28 @@ class Index : public Printable {
 
   // scan all keys in the index matching an arbitrary key
   // used by index scan executor
-  virtual std::vector<ItemPointer> Scan(
+  virtual void Scan(
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs,
-      const ScanDirectionType &scan_direction) = 0;
+      const ScanDirectionType &scan_direction,
+      std::vector<ItemPointer> &) = 0;
 
   // scan the entire index, working like a sort
-  virtual std::vector<ItemPointer> ScanAllKeys() = 0;
+  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
+  
+  virtual void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &) = 0;
 
-  virtual std::vector<ItemPointer> ScanKey(const storage::Tuple *key) = 0;
+  virtual void Scan(
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType &scan_direction,
+      std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
+
+  virtual void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
+
+  virtual void ScanKey(const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
