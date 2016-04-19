@@ -149,7 +149,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ycsb::state.transaction_count = 10000;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
-  ycsb::state.backend_count = 1;
+  ycsb::state.backend_count = 2;
 
   // Parse args
   while (1) {
