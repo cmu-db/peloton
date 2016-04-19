@@ -201,6 +201,12 @@ class LogManager {
   cid_t global_max_flushed_id_for_recovery = UINT64_MAX;
 
   cid_t global_max_flushed_commit_id = 0;
+
+  int update_managers_count = 0;
+
+  oid_t max_oid = 0;
+
+  cid_t max_cid = 0;
 };
 
 }  // namespace logging

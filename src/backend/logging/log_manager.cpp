@@ -28,7 +28,7 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
-#define NUM_FRONTEND_LOGGERS 1
+#define NUM_FRONTEND_LOGGERS 2
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
@@ -308,8 +308,20 @@ FrontendLogger *LogManager::GetFrontendLogger() {
     frontend_logger.reset(
         FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
   } */
-  return std::unique_ptr<FrontendLogger>(FrontendLogger::GetFrontendLogger(
-                                             logging_type_, test_mode_)).get();
+
+  if (frontend_loggers.size() == 0) {
+    LOG_INFO("Create a new frontend logger");
+    std::unique_ptr<FrontendLogger> frontend_logger(
+        FrontendLogger::GetFrontendLogger(LOGGING_TYPE_DRAM_NVM));
+
+    if (frontend_logger.get() != nullptr) {
+      // frontend_logger.get()->SetLoggerID(i);
+      frontend_loggers.push_back(std::move(frontend_logger));
+    }
+  }
+
+  // return 0th frontend logger
+  return frontend_loggers[0].get();
 }
 
 bool LogManager::ContainsFrontendLogger(void) {
@@ -471,16 +483,21 @@ void LogManager::NotifyRecoveryDone() {
   }
 }
 
-void LogManager::UpdateCatalogAndTxnManagers(oid_t max_oid, cid_t max_cid) {
+void LogManager::UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid) {
   {
     std::unique_lock<std::mutex> wait_lock(update_managers_mutex);
-    auto &manager = catalog::Manager::GetInstance();
-    if (max_oid > manager.GetNextOid()) {
-      manager.SetNextOid(max_oid);
-    }
 
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid) {
+    update_managers_count++;
+
+    max_oid = std::max(max_oid, new_oid);
+
+    max_cid = std::max(max_cid, new_cid);
+
+    if (update_managers_count == NUM_FRONTEND_LOGGERS) {
+      auto &manager = catalog::Manager::GetInstance();
+      manager.SetNextOid(max_oid);
+
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       txn_manager.SetNextCid(max_cid + 1);
     }
   }
