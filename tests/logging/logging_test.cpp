@@ -41,21 +41,21 @@ TEST_F(LoggingTests, BasicLoggingTest) {
 
   auto &log_manager = logging::LogManager::GetInstance();
 
-  LoggingScheduler scheduler(1, &log_manager, table.get());
+  LoggingScheduler scheduler(1, 1, &log_manager, table.get());
 
   scheduler.Init();
   // Logger 0 is always the front end logger
   // The first txn to commit starts with cid 2
-  scheduler.Logger(1).Prepare();
-  scheduler.Logger(1).Begin(2);
-  scheduler.Logger(1).Insert(2);
-  scheduler.Logger(1).Commit(2);
-  scheduler.Logger(0).Collect();
-  scheduler.Logger(0).Flush();
-  scheduler.Logger(1).Done(1);
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
   scheduler.Run();
 
-  auto results = scheduler.log_threads[0].results;
+  auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(2, results[0]);
 }
 

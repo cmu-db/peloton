@@ -32,13 +32,18 @@ namespace logging {
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
+
+// static configurations for logging
 LoggingType LogManager::logging_type_ = LOGGING_TYPE_INVALID;
 bool LogManager::test_mode_ = false;
 unsigned int LogManager::num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
+LoggerMappingStrategyType LogManager::logger_mapping_strategy_ =
+    LOGGER_MAPPING_INVALID;
 
 LogManager::LogManager() {
   LogManager::Configure(peloton_logging_mode, false,
-                        DEFAULT_NUM_FRONTEND_LOGGERS);
+                        DEFAULT_NUM_FRONTEND_LOGGERS,
+                        LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -267,19 +272,33 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     and store it into the vector
  * @param logging type can be stdout(debug), aries, peloton
  */
-BackendLogger *LogManager::GetBackendLogger() {
+BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
   assert(frontend_loggers.size() != 0);
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
+    assert(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
     LOG_INFO("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
-    int i;
-    i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
-    frontend_loggers[i % num_frontend_loggers_].get()->AddBackendLogger(
-        backend_logger);
-    backend_logger->SetFrontendLoggerID(i % num_frontend_loggers_);
+    int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
+
+    // round robin mapping
+    if (logger_mapping_strategy_ == LOGGER_MAPPING_ROUND_ROBIN) {
+      frontend_loggers[i % num_frontend_loggers_].get()->AddBackendLogger(
+          backend_logger);
+      backend_logger->SetFrontendLoggerID(i % num_frontend_loggers_);
+
+    } else if (logger_mapping_strategy_ == LOGGER_MAPPING_MANUAL) {
+      // manual mapping with hint
+      assert(hint_idx < frontend_loggers.size());
+      frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);
+      backend_logger->SetFrontendLoggerID(hint_idx);
+    } else {
+      LOG_ERROR("Unsupported Logger Mapping Strategy");
+      assert(false);
+      return nullptr;
+    }
   }
 
   return backend_logger;
