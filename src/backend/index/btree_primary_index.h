@@ -62,6 +62,17 @@ class BTreePrimaryIndex : public Index {
 
   std::vector<ItemPointer> ScanKey(const storage::Tuple *key);
 
+  void Scan(
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs,
+      const ScanDirectionType &scan_direction,
+      std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+
+  void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+
+  void ScanKey(const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+
   std::string GetTypeName() const;
 
   bool Cleanup() { return true; }

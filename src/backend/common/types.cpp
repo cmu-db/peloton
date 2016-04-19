@@ -680,9 +680,6 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_HASH: {
       return "HASH";
     }
-    case INDEX_TYPE_BTREE_PRIMARY: {
-      return "BTREE_PRIMARY";
-    }
   }
   return "INVALID";
 }
