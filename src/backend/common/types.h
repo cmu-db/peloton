@@ -18,6 +18,8 @@
 #include <limits>
 #include <cassert>
 
+#include "backend/common/MyRWLock.h"
+
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -389,7 +391,8 @@ enum IndexType {
 
   INDEX_TYPE_BTREE = 1,   // btree
   INDEX_TYPE_BWTREE = 2,  // bwtree
-  INDEX_TYPE_HASH = 3     // hash
+  INDEX_TYPE_HASH = 3,     // hash
+  INDEX_TYPE_BTREE_PRIMARY = 4 // temporarily used. 
 };
 
 enum IndexConstraintType {
@@ -772,6 +775,19 @@ struct ItemPointer {
 };
 
 extern ItemPointer INVALID_ITEMPOINTER;
+
+//===--------------------------------------------------------------------===//
+// ItemPointerHeader
+//===--------------------------------------------------------------------===//
+struct ItemPointerHeader {
+  ItemPointerHeader() {}
+
+  ItemPointerHeader(const ItemPointer &item_pointer) {
+    header = item_pointer;
+  }
+  ItemPointer header;
+  MyRWLock rw_lock;
+};
 
 //===--------------------------------------------------------------------===//
 // Utilities
