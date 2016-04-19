@@ -79,12 +79,17 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
      */
     case POSTGRES_VALUE_TYPE_BPCHAR: {
       struct varlena *bpcharptr = reinterpret_cast<struct varlena *>(datum);
-      int len = VARSIZE(bpcharptr) - VARHDRSZ;
-      char *varchar = static_cast<char *>(VARDATA(bpcharptr));
-      VarlenPool *data_pool = nullptr;
-      std::string str(varchar, len);
-      LOG_TRACE("len = %d , bpchar = \"%s\"", len, str.c_str());
-      value = ValueFactory::GetStringValue(str, data_pool);
+      if (bpcharptr != nullptr) {
+        int len = VARSIZE(bpcharptr) - VARHDRSZ;
+        char *varchar = static_cast<char *>(VARDATA(bpcharptr));
+        VarlenPool *data_pool = nullptr;
+        std::string str(varchar, len);
+        LOG_TRACE("len = %d , bpchar = \"%s\"", len, str.c_str());
+        value = ValueFactory::GetStringValue(str, data_pool);
+      } else {
+        LOG_TRACE("empty bpchar");
+        value = ValueFactory::GetStringValue("", nullptr);
+      }
 
     } break;
 
@@ -130,22 +135,32 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     case POSTGRES_VALUE_TYPE_VARCHAR2: {
       struct varlena *varlenptr = reinterpret_cast<struct varlena *>(datum);
-      int len = VARSIZE(varlenptr) - VARHDRSZ;
-      char *varchar = static_cast<char *>(VARDATA(varlenptr));
-      VarlenPool *data_pool = nullptr;
-      std::string str(varchar, len);
-      LOG_TRACE("len = %u , varchar = \"%s\"", len, str.c_str());
-      value = ValueFactory::GetStringValue(str, data_pool);
+      if (varlenptr != nullptr) {
+        int len = VARSIZE(varlenptr) - VARHDRSZ;
+        char *varchar = static_cast<char *>(VARDATA(varlenptr));
+        VarlenPool *data_pool = nullptr;
+        std::string str(varchar, len);
+        LOG_TRACE("len = %u , varchar = \"%s\"", len, str.c_str());
+        value = ValueFactory::GetStringValue(str, data_pool);
+      } else {
+        LOG_TRACE("empty varchar");
+        value = ValueFactory::GetStringValue("", nullptr);
+      }
     } break;
 
     case POSTGRES_VALUE_TYPE_TEXT: {
       struct varlena *textptr = reinterpret_cast<struct varlena *>(datum);
-      int len = VARSIZE(textptr) - VARHDRSZ;
-      char *varchar = static_cast<char *>(VARDATA(textptr));
-      VarlenPool *data_pool = nullptr;
-      std::string str(varchar, len);
-      LOG_TRACE("len = %u , text = \"%s\"", len, str.c_str());
-      value = ValueFactory::GetStringValue(str, data_pool);
+      if (textptr != nullptr) {
+        int len = VARSIZE(textptr) - VARHDRSZ;
+        char *varchar = static_cast<char *>(VARDATA(textptr));
+        VarlenPool *data_pool = nullptr;
+        std::string str(varchar, len);
+        LOG_TRACE("len = %u , text = \"%s\"", len, str.c_str());
+        value = ValueFactory::GetStringValue(str, data_pool);
+      } else {
+        LOG_TRACE("empty text");
+        value = ValueFactory::GetStringValue("", nullptr);
+      }
     } break;
 
     case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
