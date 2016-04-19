@@ -168,6 +168,7 @@ void FrontendLogger::MainLoop(void) {
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   auto sleep_period = std::chrono::milliseconds(wait_timeout);
   std::this_thread::sleep_for(sleep_period);
+  int debug_flag = 0;
 
   auto &log_manager = LogManager::GetInstance();
 
@@ -221,15 +222,25 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         max_collected_commit_id = global_max;
 
       max_possible_commit_id = max_collected_commit_id;
+      debug_flag = 1;
     } else if (max_committed_cid == 0) {
       max_possible_commit_id = lower_bound;
+      debug_flag = 2;
     } else if (lower_bound == MAX_CID) {
+      debug_flag = 3;
       max_possible_commit_id = max_committed_cid;
     } else {
       max_possible_commit_id = lower_bound;
+      debug_flag = 4;
     }
     // max_collected_commit_id should never decrease
     // LOG_INFO("Before assert");
+    if (max_possible_commit_id < max_collected_commit_id) {
+      LOG_INFO(
+          "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
+          (int)max_possible_commit_id, (int)max_collected_commit_id);
+      LOG_INFO("Had entered Case %d", (int)debug_flag);
+    }
     assert(max_possible_commit_id >= max_collected_commit_id);
     if (max_committed_cid > max_seen_commit_id) {
       max_seen_commit_id = max_committed_cid;
