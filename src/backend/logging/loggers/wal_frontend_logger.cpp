@@ -60,7 +60,7 @@ storage::DataTable *GetTable(TupleRecord tupleRecord);
  * @brief Open logfile and file descriptor
  */
 WriteAheadFrontendLogger::WriteAheadFrontendLogger() {
-  logging_type = LOGGING_TYPE_DRAM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WAL;
 
   LOG_INFO("Log File Name :: %s", GetLogFileName().c_str());
 

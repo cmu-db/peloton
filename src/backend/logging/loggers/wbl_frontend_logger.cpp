@@ -42,7 +42,7 @@ bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
  * @brief create NVM backed log pool
  */
 WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
-  logging_type = LOGGING_TYPE_NVM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WBL;
 
   // open log file and file descriptor
   // we open it in append + binary mode

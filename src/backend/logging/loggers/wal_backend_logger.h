@@ -29,7 +29,7 @@ class WriteAheadBackendLogger : public BackendLogger {
   WriteAheadBackendLogger(WriteAheadBackendLogger &&) = delete;
   WriteAheadBackendLogger &operator=(WriteAheadBackendLogger &&) = delete;
 
-  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
+  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_NVM_WAL; }
 
   void Log(LogRecord *record);
 
