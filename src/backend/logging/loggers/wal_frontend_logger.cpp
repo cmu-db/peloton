@@ -189,12 +189,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
-  if (global_queue_size) {
-   LOG_INFO("max_collected_commit_id - %d, max_flushed_commit_id: %d",
-             (int)max_collected_commit_id, (int)max_flushed_commit_id); 
-
-    fflush_and_sync(log_file, log_file_fd, fsync_count);
-  }
   if (max_collected_commit_id != max_flushed_commit_id) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
