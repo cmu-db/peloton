@@ -83,14 +83,17 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 void SimpleCheckpoint::DoCheckpoint() {
   auto &log_manager = LogManager::GetInstance();
   // XXX get default backend logger
-  logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_DRAM_NVM);
+  if (logger_ == nullptr) {
+    logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_DRAM_NVM);
+  }
 
   // FIXME make sure everything up to start_cid is not garbage collected
-  auto start_cid = log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+  start_commit_id = log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+  LOG_INFO("DoCheckpoint cid = %lu", start_commit_id);
 
   // Add txn begin record
   std::shared_ptr<LogRecord> begin_record(
-      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_cid));
+      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id));
   CopySerializeOutput begin_output_buffer;
   begin_record->Serialize(begin_output_buffer);
   records_.push_back(begin_record);
@@ -111,7 +114,7 @@ void SimpleCheckpoint::DoCheckpoint() {
       assert(target_table);
       LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
                table_idx, target_table->GetName().c_str());
-      Scan(target_table, start_cid, database_oid);
+      Scan(target_table, database_oid);
     }
   }
 
@@ -233,7 +236,7 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
             target_location.block, target_location.offset);
 }
 
-void SimpleCheckpoint::Scan(storage::DataTable *target_table, cid_t start_cid,
+void SimpleCheckpoint::Scan(storage::DataTable *target_table,
                             oid_t database_oid) {
   auto schema = target_table->GetSchema();
   assert(schema);
@@ -251,7 +254,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table, cid_t start_cid,
 
     // Retrieve a logical tile
     std::unique_ptr<executor::LogicalTile> logical_tile(
-        scanner.Scan(tile_group, column_ids, start_cid));
+        scanner.Scan(tile_group, column_ids, start_commit_id));
 
     // Empty result
     if (!logical_tile) {

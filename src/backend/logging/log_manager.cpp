@@ -166,10 +166,10 @@ void LogManager::PrepareLogging() {
 }
 
 void LogManager::DoneLogging() {
-  if (this->IsInLoggingMode()) {
-    auto logger = this->GetBackendLogger();
-    logger->SetLoggingCidLowerBound(INVALID_CID);
-  }
+  //  if (this->IsInLoggingMode()) {
+  //    auto logger = this->GetBackendLogger();
+  //    logger->SetLoggingCidLowerBound(INVALID_CID);
+  //  }
 }
 
 void LogManager::LogBeginTransaction(cid_t commit_id) {
@@ -260,7 +260,7 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     auto logger = this->GetBackendLogger();
     TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
     logger->Log(&record);
-    WaitForFlush(commit_id);
+    //    WaitForFlush(commit_id);
   }
 }
 

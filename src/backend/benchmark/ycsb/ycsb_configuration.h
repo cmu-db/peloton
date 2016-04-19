@@ -34,7 +34,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // size of the table
   int scale_factor;
 
@@ -50,6 +49,7 @@ class configuration {
   // number of backends
   int backend_count;
 
+  bool logging_enabled;
 };
 
 extern configuration state;

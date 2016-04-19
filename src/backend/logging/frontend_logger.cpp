@@ -201,6 +201,9 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     // max_collected_commit_id should never decrease
     // LOG_INFO("Before assert");
     assert(max_possible_commit_id >= max_collected_commit_id);
+    if (max_committed_cid > max_seen_commit_id) {
+      max_seen_commit_id = max_committed_cid;
+    }
     max_collected_commit_id = max_possible_commit_id;
     // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d", (int)max_collected_commit_id, (int)max_possible_commit_id);
     backend_loggers_lock.Unlock();
@@ -215,7 +218,7 @@ void FrontendLogger::SetMaxFlushedCommitId(cid_t cid) {
 
 void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
   backend_loggers_lock.Lock();
-  bel.SetLoggingCidLowerBound(max_collected_commit_id);
+  bel.SetLoggingCidLowerBound(max_seen_commit_id);
   backend_loggers_lock.Unlock();
 }
 
