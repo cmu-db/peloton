@@ -34,20 +34,9 @@ INSERT INTO B VALUES(22, 22);
 INSERT INTO B VALUES(23, 23);
 INSERT INTO B VALUES(24, 24);
 
--- join with non empty tables
-SELECT * FROM A INNER JOIN B ON A.value = B.value;
-SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value;
-SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value;
-SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value;
-
 -- load in some more data
 
 INSERT INTO B VALUES(25, 25);
 INSERT INTO B VALUES(26, 26);
 INSERT INTO A VALUES(4, 14);
 
--- join with non empty tables
-SELECT * FROM A INNER JOIN B ON A.value = B.value;
-SELECT * FROM A LEFT OUTER JOIN B ON A.value = B.value;
-SELECT * FROM A RIGHT OUTER JOIN B ON A.value = B.value;
-SELECT * FROM A FULL OUTER JOIN B ON A.value = B.value;

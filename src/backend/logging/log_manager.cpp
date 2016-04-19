@@ -28,7 +28,7 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
-#define NUM_FRONTEND_LOGGERS 2
+#define NUM_FRONTEND_LOGGERS 1
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
