@@ -191,22 +191,18 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       // nothing collected
       // TODO update self with max val from log manager
       max_possible_commit_id = max_collected_commit_id;
-      { LOG_INFO("Case 1"); }
     } else if (max_committed_cid == 0) {
-      { LOG_INFO("Case 2"); }
       max_possible_commit_id = lower_bound;
     } else if (lower_bound == MAX_CID) {
-      LOG_INFO("Case 3");
       max_possible_commit_id = max_committed_cid;
     } else {
-      LOG_INFO("Case 4");
       max_possible_commit_id = lower_bound;
     }
     // max_collected_commit_id should never decrease
     // LOG_INFO("Before assert");
     assert(max_possible_commit_id >= max_collected_commit_id);
     max_collected_commit_id = max_possible_commit_id;
-    LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d", (int)max_collected_commit_id, (int)max_possible_commit_id);
+    // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d", (int)max_collected_commit_id, (int)max_possible_commit_id);
     backend_loggers_lock.Unlock();
   }
 }
