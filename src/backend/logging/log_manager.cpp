@@ -28,14 +28,24 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
-#define NUM_FRONTEND_LOGGERS 2
+
+#define DEFAULT_NUM_FRONTEND_LOGGERS 1
 
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
+
+// static configurations for logging
 LoggingType LogManager::logging_type_ = LOGGING_TYPE_INVALID;
 bool LogManager::test_mode_ = false;
+unsigned int LogManager::num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
+LoggerMappingStrategyType LogManager::logger_mapping_strategy_ =
+    LOGGER_MAPPING_INVALID;
 
-LogManager::LogManager() { LogManager::Configure(peloton_logging_mode, false); }
+LogManager::LogManager() {
+  LogManager::Configure(peloton_logging_mode, false,
+                        DEFAULT_NUM_FRONTEND_LOGGERS,
+                        LOGGER_MAPPING_ROUND_ROBIN);
+}
 
 LogManager::~LogManager() {}
 
@@ -55,20 +65,7 @@ LogManager &LogManager::GetInstance() {
 void LogManager::StartStandbyMode() {
   // If frontend logger doesn't exist
   LOG_INFO("TRACKING: LogManager::StartStandbyMode()");
-  if (frontend_loggers.size() == 0) {
-    for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
-      std::unique_ptr<FrontendLogger> frontend_logger(
-          FrontendLogger::GetFrontendLogger(peloton_logging_mode));
-
-      if (frontend_logger.get() != nullptr) {
-        // frontend_logger.get()->SetLoggerID(i);
-        frontend_loggers.push_back(std::move(frontend_logger));
-      }
-    }
-  }
-
-  // TODO resolve this with eric
-  // GetFrontendLogger();
+  InitFrontendLoggers();
 
   // If frontend logger still doesn't exist, then we have disabled logging
   if (frontend_loggers.size() == 0) {
@@ -77,14 +74,14 @@ void LogManager::StartStandbyMode() {
   }
 
   // assign a distinguished logger thread only if we have more than 1 loggers
-  if (NUM_FRONTEND_LOGGERS > 1)
+  if (num_frontend_loggers_ > 1)
     frontend_loggers[0].get()->SetIsDistinguishedLogger(true);
 
   // Toggle status in log manager map
   SetLoggingStatus(LOGGING_STATUS_TYPE_STANDBY);
 
   // Launch the frontend logger's main loop
-  for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
+  for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
     std::thread(&FrontendLogger::MainLoop, frontend_loggers[i].get()).detach();
     // frontend_loggers[i].get()->MainLoop();
   }
@@ -93,7 +90,7 @@ void LogManager::StartStandbyMode() {
   // max_delimiter_for_recovery, and choose the min of
   // all of them to be set as the global persistent log number
   // TODO handle corner case like no logs for a particular logger
-  for (int i = 0; i < NUM_FRONTEND_LOGGERS; i++) {
+  for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
     cid_t logger_max_flushed_id =
         frontend_loggers[i].get()->GetMaxDelimiterForRecovery();
     if (logger_max_flushed_id)
@@ -276,22 +273,50 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     and store it into the vector
  * @param logging type can be stdout(debug), aries, peloton
  */
-BackendLogger *LogManager::GetBackendLogger() {
+BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
   assert(frontend_loggers.size() != 0);
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
+    assert(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
     LOG_INFO("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
-    int i;
-    i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
-    frontend_loggers[i % NUM_FRONTEND_LOGGERS].get()->AddBackendLogger(
-        backend_logger);
-    backend_logger->SetFrontendLoggerID(i % NUM_FRONTEND_LOGGERS);
+    int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
+
+    // round robin mapping
+    if (logger_mapping_strategy_ == LOGGER_MAPPING_ROUND_ROBIN) {
+      frontend_loggers[i % num_frontend_loggers_].get()->AddBackendLogger(
+          backend_logger);
+      backend_logger->SetFrontendLoggerID(i % num_frontend_loggers_);
+
+    } else if (logger_mapping_strategy_ == LOGGER_MAPPING_MANUAL) {
+      // manual mapping with hint
+      assert(hint_idx < frontend_loggers.size());
+      frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);
+      backend_logger->SetFrontendLoggerID(hint_idx);
+    } else {
+      LOG_ERROR("Unsupported Logger Mapping Strategy");
+      assert(false);
+      return nullptr;
+    }
   }
 
   return backend_logger;
+}
+
+void LogManager::InitFrontendLoggers() {
+  if (frontend_loggers.size() == 0) {
+    for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
+      std::unique_ptr<FrontendLogger> frontend_logger(
+          FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
+
+      if (frontend_logger.get() != nullptr) {
+        // frontend_logger.get()->SetLoggerID(i);
+        frontend_loggers.push_back(std::move(frontend_logger));
+      }
+    }
+  }
 }
 
 /**
@@ -299,29 +324,9 @@ BackendLogger *LogManager::GetBackendLogger() {
  * @param logging type can be stdout(debug), aries, peloton
  * @return the frontend logger otherwise nullptr
  */
-FrontendLogger *LogManager::GetFrontendLogger() {
-  /* int i = 0;
-  return frontend_loggers[i].get(); */
-
-  // If frontend logger doesn't exist
-  /* if (frontend_logger == nullptr) {
-    frontend_logger.reset(
-        FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
-  } */
-
-  if (frontend_loggers.size() == 0) {
-    LOG_INFO("Create a new frontend logger");
-    std::unique_ptr<FrontendLogger> frontend_logger(
-        FrontendLogger::GetFrontendLogger(LOGGING_TYPE_DRAM_NVM));
-
-    if (frontend_logger.get() != nullptr) {
-      // frontend_logger.get()->SetLoggerID(i);
-      frontend_loggers.push_back(std::move(frontend_logger));
-    }
-  }
-
-  // return 0th frontend logger
-  return frontend_loggers[0].get();
+FrontendLogger *LogManager::GetFrontendLogger(unsigned int logger_idx) {
+  assert(logger_idx < frontend_loggers.size());
+  return frontend_loggers[logger_idx].get();
 }
 
 bool LogManager::ContainsFrontendLogger(void) {
@@ -399,7 +404,7 @@ void LogManager::ResetFrontendLogger() {
   // TODO don't know what to do here, so just reset the first one among them
   int i = 0;
   frontend_loggers[i].reset(
-      FrontendLogger::GetFrontendLogger(peloton_logging_mode));
+      FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
 }
 
 void LogManager::TruncateLogs(txn_id_t commit_id) {
@@ -474,10 +479,10 @@ void LogManager::WaitForFlush(cid_t cid) {
 void LogManager::NotifyRecoveryDone() {
   LOG_INFO("One frontend logger has notified that it has completed recovery");
 
-  int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
+  unsigned int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
   LOG_INFO("%d loggers have done recovery so far.",
            (int)recovery_to_logging_counter);
-  if (i == NUM_FRONTEND_LOGGERS) {
+  if (i == num_frontend_loggers_) {
     LOG_INFO("This was the last one! Change to LOGGING mode.");
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   }
