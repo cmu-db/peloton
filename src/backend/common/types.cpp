@@ -929,16 +929,16 @@ std::string LoggingTypeToString(LoggingType type) {
 
     // WAL Based
     case LOGGING_TYPE_NVM_WAL:
-      return "DRAM_NVM";
+      return "NVM_WAL";
     case LOGGING_TYPE_HDD_WAL:
-      return "DRAM_HDD";
+      return "HDD_WAL";
 
     // WBL Based
 
     case LOGGING_TYPE_NVM_WBL:
-      return "NVM_NVM";
+      return "NVM_WBL";
     case LOGGING_TYPE_HDD_WBL:
-      return "HDD_HDD";
+      return "HDD_WBL";
 
     default:
       LOG_ERROR("Invalid logging_type :: %d", type);
