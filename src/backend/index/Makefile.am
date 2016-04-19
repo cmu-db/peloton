@@ -10,7 +10,9 @@ index_FILES = \
 			  backend/index/btree_index.cpp \
 			  backend/index/hash_index.cpp \
 			  backend/index/bwtree.cpp \
-			  backend/index/bwtree_index.cpp
+			  backend/index/bwtree_index.cpp \
+        backend/index/btree_primary_index.cpp \
+        backend/index/btree_primary_index_explicit.cpp
 
 index_INCLUDES = \
 				 -I$(srcdir)/backend/common    
