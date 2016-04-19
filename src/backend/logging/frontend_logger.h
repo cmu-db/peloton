@@ -72,6 +72,10 @@ class FrontendLogger : public Logger {
 
   cid_t GetMaxDelimiterForRecovery() { return max_delimiter_for_recovery; }
 
+  void SetIsDistinguishedLogger(bool flag) { is_distinguished_logger = flag; }
+
+  void UpdateGlobalMaxFlushId();
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -97,6 +101,7 @@ class FrontendLogger : public Logger {
 
   cid_t max_seen_commit_id = 0;
 
+  bool is_distinguished_logger = false;
 };
 
 }  // namespace logging

@@ -152,9 +152,14 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t global_queue_size = global_queue.size();
 
   // First, write all the record in the queue
-  if (global_queue_size != 0 && this->log_file_fd == -1) {
+  // TODO refactor this! extremely messy
+  if ((((max_collected_commit_id != max_flushed_commit_id) ||
+        global_queue_size) &&
+       this->log_file_fd == -1)) {
     this->CreateNewLogFile(false);
-  } else if (global_queue_size && should_create_new_file) {
+  } else if (((max_collected_commit_id != max_flushed_commit_id) ||
+              global_queue_size) &&
+             should_create_new_file) {
     this->CreateNewLogFile(true);
     should_create_new_file = false;
   }
@@ -171,7 +176,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     LOG_INFO("Log buffer get max log id returned %d",
              (int)log_buffer->GetMaxLogId());
 
-    // TODO this is not correct and must be fixed, should be max seen cid
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetMaxLogId();
 
@@ -243,12 +247,13 @@ void WriteAheadFrontendLogger::DoRecovery() {
       concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
   auto &log_manager = logging::LogManager::GetInstance();
   int num_inserts = 0;
-  cid_t global_max_flushed_id;
+  cid_t global_max_flushed_id_for_recovery;
   log_file_cursor_ = 0;
 
-  global_max_flushed_id = log_manager.GetGlobalMaxFlushedId();
+  global_max_flushed_id_for_recovery =
+      log_manager.GetGlobalMaxFlushedIdForRecovery();
   LOG_INFO("Got start_commit_id as %d, global max flushed as %d",
-           (int)start_commit_id, (int)global_max_flushed_id);
+           (int)start_commit_id, (int)global_max_flushed_id_for_recovery);
 
   // Set log file size
   // log_file_size = GetLogFileSize(log_file_fd);
@@ -280,7 +285,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
           commit_id = txn_rec.GetTransactionId();
           if (commit_id <= start_commit_id ||
-              commit_id > global_max_flushed_id) {
+              commit_id > global_max_flushed_id_for_recovery) {
             LOG_INFO("SKIP");
             continue;
           }
@@ -301,7 +306,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           auto cid = tuple_record->GetTransactionId();
           auto table = GetTable(*tuple_record);
           if (!table || cid <= start_commit_id ||
-              commit_id > global_max_flushed_id) {
+              commit_id > global_max_flushed_id_for_recovery) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
             LOG_INFO("SKIP");
@@ -330,7 +335,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          if (cid <= start_commit_id || commit_id > global_max_flushed_id) {
+          if (cid <= start_commit_id ||
+              commit_id > global_max_flushed_id_for_recovery) {
             delete tuple_record;
             continue;
           }
