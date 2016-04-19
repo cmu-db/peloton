@@ -17,6 +17,7 @@
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
 #include "parser/parsetree.h"
+#include "fmgr.h"
 
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
@@ -301,35 +302,38 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
-  // FIXME It will generate incorrect results.
   if (!retval) {
-//    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
     assert(list_length(fn_es->args) > 0);
 
-    LOG_INFO("Trying to convert to UDF Function, Op Function ID: %u", pg_func_id);
+    // Check if the function is a UDF function.
+    if(CheckUserDefinedFunction(pg_func_id)) {
+      LOG_TRACE("Validating if it is a UDF Function, Op Function ID: %u", pg_func_id);
 
-    auto function_id = fn_expr->funcid;
-    auto collation = fn_es->fcinfo_data.fncollation;
-    auto args = fn_es->args;
+      auto function_id = fn_expr->funcid;
+      auto collation = fn_es->fcinfo_data.fncollation;
+      auto args = fn_es->args;
 
-    std::vector<expression::AbstractExpression*> m_args;
+      std::vector<expression::AbstractExpression*> m_args;
 
-    // Convert arguments to Peloton's expression
-    int i = 0;
-    ListCell *arg;
-    foreach (arg, args) {
-      ExprState *argstate = (ExprState *)lfirst(arg);
-      m_args.push_back(TransformExpr(argstate));
-      i++;
+      // Convert arguments to Peloton's expression
+      int i = 0;
+      ListCell *arg;
+      foreach (arg, args) {
+        ExprState *argstate = (ExprState *)lfirst(arg);
+        m_args.push_back(TransformExpr(argstate));
+        i++;
+      }
+
+      // Check if the number of arguments are less then maximum allowed.
+      assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
+
+      return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
+    } else {
+      // FIXME It will generate incorrect results.
+      LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
+      ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
+      return TransformExpr(first_child);
     }
-
-    // Check if the number of arguments are less then maximum allowed.
-    assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
-
-    return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
-//
-//    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
-//    return TransformExpr(first_child);
   }
 
   if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
