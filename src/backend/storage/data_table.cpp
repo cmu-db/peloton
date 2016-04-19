@@ -369,41 +369,41 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple) {
+bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple __attribute__((unused))) {
 
-  for (auto foreign_key : foreign_keys_) {
-    oid_t sink_table_id = foreign_key->GetSinkTableOid();
-    storage::DataTable *ref_table =
-        (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
-            database_oid, sink_table_id);
+  // for (auto foreign_key : foreign_keys_) {
+  //   oid_t sink_table_id = foreign_key->GetSinkTableOid();
+  //   storage::DataTable *ref_table =
+  //       (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(
+  //           database_oid, sink_table_id);
 
-    int ref_table_index_count = ref_table->GetIndexCount();
+  //   int ref_table_index_count = ref_table->GetIndexCount();
 
-    for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
-      auto index = ref_table->GetIndex(index_itr);
+  //   for (int index_itr = ref_table_index_count - 1; index_itr >= 0; --index_itr) {
+  //     auto index = ref_table->GetIndex(index_itr);
 
-      // The foreign key constraints only refer to the primary key
-      if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
-        auto key_attrs = foreign_key->GetFKColumnOffsets();
+  //     // The foreign key constraints only refer to the primary key
+  //     if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+  //       LOG_INFO("BEGIN checking referred table");
+  //       auto key_attrs = foreign_key->GetFKColumnOffsets();
 
-        std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
-        std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
-        //FIXME: what is the 3rd arg should be?
-        key->SetFromTuple(tuple, key_attrs, index->GetPool());
+  //       std::unique_ptr<catalog::Schema> foreign_key_schema(catalog::Schema::CopySchema(schema, key_attrs));
+  //       std::unique_ptr<storage::Tuple> key(new storage::Tuple(foreign_key_schema.get(), true));
+  //       //FIXME: what is the 3rd arg should be?
+  //       key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_INFO("check key: %s", key->GetInfo().c_str());
-        auto locations = index->ScanKey(key.get());
+  //       LOG_INFO("check key: %s", key->GetInfo().c_str());
+  //       auto locations = index->ScanKey(key.get());
 
-        // if this key doesn't exist in the refered column
-        if (locations.size() == 0) {
-          return false;
-        }
+  //       // if this key doesn't exist in the refered column
+  //       if (locations.size() == 0) {
+  //         return false;
+  //       }
 
-        break;
-      }
-    }
-  }
+  //       break;
+  //     }
+  //   }
+  // }
 
   return true;
 }
