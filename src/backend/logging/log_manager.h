@@ -83,7 +83,7 @@ class LogManager {
 
   void WaitForFlush(cid_t cid);
 
-  cid_t GetMaxFlushedCommitId();
+  cid_t GetPersistentFlushedCommitId();
 
   void NotifyRecoveryDone();
 
@@ -145,9 +145,19 @@ class LogManager {
 
   void DoneLogging();
 
-  cid_t GetGlobalMaxFlushedId() { return global_max_flushed_id; }
+  cid_t GetGlobalMaxFlushedIdForRecovery() {
+    return global_max_flushed_id_for_recovery;
+  }
 
   void UpdateCatalogAndTxnManagers(oid_t, cid_t);
+
+  void SetGlobalMaxFlushedCommitId(cid_t);
+
+  cid_t GetGlobalMaxFlushedCommitId();
+
+  std::vector<std::unique_ptr<FrontendLogger>> &GetFrontendLoggersList() {
+    return frontend_loggers;
+  }
 
  private:
   LogManager();
@@ -188,7 +198,9 @@ class LogManager {
 
   int frontend_logger_assign_counter;
 
-  cid_t global_max_flushed_id = UINT64_MAX;
+  cid_t global_max_flushed_id_for_recovery = UINT64_MAX;
+
+  cid_t global_max_flushed_commit_id = 0;
 };
 
 }  // namespace logging

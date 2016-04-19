@@ -57,6 +57,27 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
   return frontend_logger;
 }
 
+// only the distinguished logger does this
+void FrontendLogger::UpdateGlobalMaxFlushId() {
+  if (is_distinguished_logger) {
+    cid_t global_max_flushed_commit_id = INVALID_CID;
+
+    auto &log_manager = LogManager::GetInstance();
+    std::vector<std::unique_ptr<FrontendLogger>> &frontend_loggers =
+        log_manager.GetFrontendLoggersList();
+    int num_loggers = frontend_loggers.size();
+
+    for (int i = 0; i < num_loggers; i++) {
+      cid_t logger_max_commit_id;
+      logger_max_commit_id = frontend_loggers[i].get()->GetMaxFlushedCommitId();
+      global_max_flushed_commit_id =
+          std::max(global_max_flushed_commit_id, logger_max_commit_id);
+    }
+
+    log_manager.SetGlobalMaxFlushedCommitId(global_max_flushed_commit_id);
+  }
+}
+
 /**
  * @brief MainLoop
  */
@@ -118,6 +139,9 @@ void FrontendLogger::MainLoop(void) {
     // Flush the data to the file
     // LOG_INFO("Log manager: Invoking FlushLogRecords");
     FlushLogRecords();
+
+    // update the global max flushed ID (only distinguished logger does this)
+    UpdateGlobalMaxFlushId();
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -144,6 +168,8 @@ void FrontendLogger::MainLoop(void) {
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   auto sleep_period = std::chrono::milliseconds(wait_timeout);
   std::this_thread::sleep_for(sleep_period);
+
+  auto &log_manager = LogManager::GetInstance();
 
   {
     cid_t max_committed_cid = 0;
@@ -189,7 +215,11 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     cid_t max_possible_commit_id;
     if (max_committed_cid == 0 && lower_bound == MAX_CID) {
       // nothing collected
-      // TODO update self with max val from log manager
+      cid_t global_max = log_manager.GetGlobalMaxFlushedCommitId();
+
+      if (global_max > max_collected_commit_id)
+        max_collected_commit_id = global_max;
+
       max_possible_commit_id = max_collected_commit_id;
     } else if (max_committed_cid == 0) {
       max_possible_commit_id = lower_bound;
@@ -205,7 +235,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       max_seen_commit_id = max_committed_cid;
     }
     max_collected_commit_id = max_possible_commit_id;
-    // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d", (int)max_collected_commit_id, (int)max_possible_commit_id);
+    // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d",
+    // (int)max_collected_commit_id, (int)max_possible_commit_id);
     backend_loggers_lock.Unlock();
   }
 }

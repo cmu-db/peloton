@@ -88,7 +88,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   }
 
   // FIXME make sure everything up to start_cid is not garbage collected
-  start_commit_id = log_manager.GetFrontendLogger()->GetMaxFlushedCommitId();
+  start_commit_id = log_manager.GetPersistentFlushedCommitId();
   LOG_INFO("DoCheckpoint cid = %lu", start_commit_id);
 
   // Add txn begin record

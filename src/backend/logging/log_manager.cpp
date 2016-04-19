@@ -76,6 +76,10 @@ void LogManager::StartStandbyMode() {
     return;
   }
 
+  // assign a distinguished logger thread only if we have more than 1 loggers
+  if (NUM_FRONTEND_LOGGERS > 1)
+    frontend_loggers[0].get()->SetIsDistinguishedLogger(true);
+
   // Toggle status in log manager map
   SetLoggingStatus(LOGGING_STATUS_TYPE_STANDBY);
 
@@ -93,11 +97,14 @@ void LogManager::StartStandbyMode() {
     cid_t logger_max_flushed_id =
         frontend_loggers[i].get()->GetMaxDelimiterForRecovery();
     if (logger_max_flushed_id)
-      global_max_flushed_id =
-          std::min(global_max_flushed_id, logger_max_flushed_id);
+      global_max_flushed_id_for_recovery =
+          std::min(global_max_flushed_id_for_recovery, logger_max_flushed_id);
   }
-  LOG_INFO("Log manager set global_max_flushed_id as %d",
-           (int)global_max_flushed_id);
+  if (global_max_flushed_id_for_recovery ==
+      UINT64_MAX)  // no one has logged anything
+    global_max_flushed_id_for_recovery = 0;
+  LOG_INFO("Log manager set global_max_flushed_id_for_recovery as %d",
+           (int)global_max_flushed_id_for_recovery);
 }
 
 void LogManager::StartRecoveryMode() {
@@ -395,33 +402,44 @@ void LogManager::TruncateLogs(txn_id_t commit_id) {
   }
 }
 
-cid_t LogManager::GetMaxFlushedCommitId() {
+cid_t LogManager::GetGlobalMaxFlushedCommitId() {
+  return global_max_flushed_commit_id;
+}
+
+void LogManager::SetGlobalMaxFlushedCommitId(cid_t new_max) {
+  if (new_max != global_max_flushed_commit_id) {
+    LOG_INFO("Setting global_max_flushed_commit_id to %d", (int)new_max);
+  }
+  global_max_flushed_commit_id = new_max;
+}
+
+cid_t LogManager::GetPersistentFlushedCommitId() {
   int num_loggers;
   num_loggers = this->frontend_loggers.size();
-  cid_t max_flushed_commit_id = UINT64_MAX, id;
+  cid_t persistent_flushed_commit_id = UINT64_MAX, id;
 
-  // TODO confirm with mperron if this is correct or not
   for (int i = 0; i < num_loggers; i++) {
     FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
     id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
              ->GetMaxFlushedCommitId();
     LOG_INFO("FrontendLogger%d has max flushed commit id as %d", (int)i,
              (int)id);
+
     // assume 0 is INACTIVE STATE
-    if (id && id < max_flushed_commit_id) max_flushed_commit_id = id;
+    if (id != INVALID_CID && id < persistent_flushed_commit_id)
+      persistent_flushed_commit_id = id;
   }
 
-  if (max_flushed_commit_id == UINT64_MAX) // no one is doing anything
+  if (persistent_flushed_commit_id == UINT64_MAX)  // no one is doing anything
     return INVALID_CID;
 
-  return max_flushed_commit_id;
+  return persistent_flushed_commit_id;
 }
 
 void LogManager::FrontendLoggerFlushed() {
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
     flush_notify_cv.notify_all();
-    // LOG_INFO("FrontendLoggerFlushed - notify all waiting backend loggers");
   }
 }
 
@@ -430,16 +448,14 @@ void LogManager::WaitForFlush(cid_t cid) {
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
-    // TODO confirm with mperron if this is correct or not
-    while (this->GetMaxFlushedCommitId() < cid) {
-      /* while (frontend_logger->GetMaxFlushedCommitId() < cid) { */
+    while (this->GetPersistentFlushedCommitId() < cid) {
       LOG_INFO(
           "Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
-          this->GetMaxFlushedCommitId(), cid);
+          this->GetPersistentFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
-    LOG_INFO("Flushes done! Can return! Got maxflush commit id as %d",
-             (int)this->GetMaxFlushedCommitId());
+    LOG_INFO("Flushes done! Can return! Got persistent flushed commit id as %d",
+             (int)this->GetPersistentFlushedCommitId());
   }
 }
 
