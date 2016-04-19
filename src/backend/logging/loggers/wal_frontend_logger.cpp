@@ -190,8 +190,8 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   if (global_queue_size) {
-    LOG_INFO("max_collected_commit_id: %d, max_flushed_commit_id: %d",
-             (int)max_collected_commit_id, (int)max_flushed_commit_id);
+   LOG_INFO("max_collected_commit_id - %d, max_flushed_commit_id: %d",
+             (int)max_collected_commit_id, (int)max_flushed_commit_id); 
 
     fflush_and_sync(log_file, log_file_fd, fsync_count);
   }
