@@ -94,6 +94,9 @@ class FrontendLogger : public Logger {
   cid_t max_collected_commit_id = 0;
 
   cid_t max_delimiter_for_recovery = 0;
+
+  cid_t max_seen_commit_id = 0;
+
 };
 
 }  // namespace logging

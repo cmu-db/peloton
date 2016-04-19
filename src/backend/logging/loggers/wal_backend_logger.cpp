@@ -42,7 +42,10 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
   this->log_buffer_lock.Lock();
   if (!log_buffer_) {
     LOG_INFO("Acquire the first log buffer in backend logger");
-    log_buffer_ = std::move(available_buffer_pool_->Get());
+    this->log_buffer_lock.Unlock();
+    std::unique_ptr<LogBuffer> new_buff = std::move(available_buffer_pool_->Get());
+    this->log_buffer_lock.Lock();
+    log_buffer_ = std::move(new_buff);
   }
   // update max logged commit id
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
@@ -57,21 +60,26 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
 
   if (cur_log_id > max_log_id_buffer) {
     log_buffer_->SetMaxLogId(cur_log_id);
+    max_log_id_buffer = cur_log_id;
   }
 
   if (!log_buffer_->WriteRecord(record)) {
     LOG_INFO("Log buffer is full - Attempt to acquire a new one");
     // put back a buffer
-
     max_log_id_buffer = 0;  // reset
-
     persist_buffer_pool_->Put(std::move(log_buffer_));
+    this->log_buffer_lock.Unlock();
+
     // get a new one
-    log_buffer_ = std::move(available_buffer_pool_->Get());
+    std::unique_ptr<LogBuffer> new_buff = std::move(available_buffer_pool_->Get());
+    this->log_buffer_lock.Lock();
+    log_buffer_ = std::move(new_buff);
+
     // write to the new log buffer
     auto success = log_buffer_->WriteRecord(record);
     if (!success) {
       LOG_ERROR("Write record to log buffer failed");
+      this->log_buffer_lock.Unlock();
       return;
     }
   }

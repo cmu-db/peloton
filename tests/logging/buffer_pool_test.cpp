@@ -14,6 +14,7 @@
 #include "backend/logging/circular_buffer_pool.h"
 #include "logging/logging_tests_util.h"
 #include "executor/executor_tests_util.h"
+#include <stdlib.h>
 
 namespace peloton {
 namespace test {
@@ -37,6 +38,33 @@ void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
     auto buf = std::move(buffer_pool->Get());
     assert(buf);
     EXPECT_EQ(buf->GetSize(), i);
+  }
+}
+
+void BackendThread(logging::WriteAheadBackendLogger *logger,
+                   unsigned int count) {
+  for (unsigned int i = 1; i <= count; i++) {
+    logging::TransactionRecord begin_record(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+                                            i);
+    logger->Log(&begin_record);
+  }
+}
+
+void FrontendThread(logging::WriteAheadFrontendLogger *logger,
+                    unsigned int count) {
+  srand(time(NULL));
+  while (true) {
+    for (int i = 0; i < 10; i++) {
+      logger->CollectLogRecordsFromBackendLoggers();
+    }
+    logger->FlushLogRecords();
+    auto cid = logger->GetMaxFlushedCommitId();
+    if (cid == count) {
+      break;
+    }
+    int rand_num = rand() % 5 + 1;
+    std::chrono::milliseconds sleep_time(rand_num);
+    std::this_thread::sleep_for(sleep_time);
   }
 }
 
@@ -88,6 +116,26 @@ TEST_F(BufferPoolTests, LogBufferBasicTest) {
     log_buffer.WriteRecord(&record);
   }
   EXPECT_EQ(log_buffer.GetSize(), total_length);
+}
+
+TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
+  unsigned int txn_count = 1000000;
+
+  auto &log_manager = logging::LogManager::GetInstance();
+  logging::LogManager::Configure(LOGGING_TYPE_DRAM_NVM, true);
+  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+
+  logging::WriteAheadFrontendLogger *frontend_logger =
+      reinterpret_cast<logging::WriteAheadFrontendLogger *>(
+          log_manager.GetFrontendLogger());
+  logging::WriteAheadBackendLogger *backend_logger =
+      reinterpret_cast<logging::WriteAheadBackendLogger *>(
+          log_manager.GetBackendLogger());
+
+  std::thread backend_thread(BackendThread, backend_logger, txn_count);
+  std::thread frontend_thread(FrontendThread, frontend_logger, txn_count);
+  backend_thread.join();
+  frontend_thread.join();
 }
 
 }  // End test namespace
