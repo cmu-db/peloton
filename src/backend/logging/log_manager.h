@@ -54,10 +54,13 @@ class LogManager {
 
   // configuration
   static void Configure(LoggingType logging_type, bool test_mode = false,
-                        unsigned int num_frontend_loggers = 1) {
+                        unsigned int num_frontend_loggers = 1,
+                        LoggerMappingStrategyType logger_mapping_strategy =
+                            LOGGER_MAPPING_ROUND_ROBIN) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
     num_frontend_loggers_ = num_frontend_loggers;
+    logger_mapping_strategy_ = logger_mapping_strategy;
   }
 
   // Wait for the system to begin
@@ -105,7 +108,7 @@ class LogManager {
 
   bool ContainsFrontendLogger(void);
 
-  BackendLogger *GetBackendLogger();
+  BackendLogger *GetBackendLogger(unsigned int hint = 0);
 
   void SetLogFileName(std::string log_file);
 
@@ -175,6 +178,7 @@ class LogManager {
   static LoggingType logging_type_;
   static bool test_mode_;
   static unsigned int num_frontend_loggers_;
+  static LoggerMappingStrategyType logger_mapping_strategy_;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
