@@ -30,15 +30,12 @@ enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
   // Based on write ahead logging
-  LOGGING_TYPE_DRAM_NVM = 10,
-  LOGGING_TYPE_DRAM_HDD = 11,
+  LOGGING_TYPE_NVM_WAL = 1,
+  LOGGING_TYPE_HDD_WAL = 2,
 
   // Based on write behind logging
-  LOGGING_TYPE_NVM_NVM = 20,
-  LOGGING_TYPE_NVM_HDD = 21,
-
-  LOGGING_TYPE_HDD_NVM = 30,
-  LOGGING_TYPE_HDD_HDD = 31,
+  LOGGING_TYPE_NVM_WBL = 3,
+  LOGGING_TYPE_HDD_WBL = 4
 };
 
 //===--------------------------------------------------------------------===//

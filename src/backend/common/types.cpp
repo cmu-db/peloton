@@ -289,8 +289,8 @@ bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type) {
   bool status = false;
 
   switch (logging_type) {
-    case LOGGING_TYPE_DRAM_NVM:
-    case LOGGING_TYPE_DRAM_HDD:
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_HDD_WAL:
       status = true;
       break;
 
@@ -306,11 +306,8 @@ bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type) {
   bool status = true;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD:
-
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_NVM_WBL:
+    case LOGGING_TYPE_HDD_WBL:
       status = true;
       break;
 
@@ -327,13 +324,11 @@ BackendType GetBackendType(const LoggingType& logging_type) {
   BackendType backend_type = BACKEND_TYPE_MM;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_NVM_WBL:
       backend_type = BACKEND_TYPE_NVM;
       break;
 
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_HDD_WBL:
       backend_type = BACKEND_TYPE_HDD;
       break;
 
@@ -933,21 +928,16 @@ std::string LoggingTypeToString(LoggingType type) {
       return "INVALID";
 
     // WAL Based
-    case LOGGING_TYPE_DRAM_NVM:
+    case LOGGING_TYPE_NVM_WAL:
       return "DRAM_NVM";
-    case LOGGING_TYPE_DRAM_HDD:
+    case LOGGING_TYPE_HDD_WAL:
       return "DRAM_HDD";
 
     // WBL Based
 
-    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_NVM_WBL:
       return "NVM_NVM";
-    case LOGGING_TYPE_NVM_HDD:
-      return "NVM_HDD";
-
-    case LOGGING_TYPE_HDD_NVM:
-      return "HDD_NVM";
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_HDD_WBL:
       return "HDD_HDD";
 
     default:

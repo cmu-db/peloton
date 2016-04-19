@@ -242,7 +242,7 @@ class TileGroupHeader : public Printable {
     // overwrite activated/invalidated if using peloton logging
     {
       auto &log_manager = logging::LogManager::GetInstance();
-      if (log_manager.HasPelotonFrontendLogger() == LOGGING_TYPE_NVM_NVM) {
+      if (log_manager.HasPelotonFrontendLogger() == LOGGING_TYPE_NVM_WBL) {
         bool insert_commit = GetInsertCommit(tuple_slot_id);
         bool delete_commit = GetDeleteCommit(tuple_slot_id);
 
