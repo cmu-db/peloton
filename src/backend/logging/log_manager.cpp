@@ -28,6 +28,7 @@ namespace peloton {
 namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
+
 #define DEFAULT_NUM_FRONTEND_LOGGERS 1
 
 // Each thread gets a backend logger
@@ -487,16 +488,21 @@ void LogManager::NotifyRecoveryDone() {
   }
 }
 
-void LogManager::UpdateCatalogAndTxnManagers(oid_t max_oid, cid_t max_cid) {
+void LogManager::UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid) {
   {
     std::unique_lock<std::mutex> wait_lock(update_managers_mutex);
-    auto &manager = catalog::Manager::GetInstance();
-    if (max_oid > manager.GetNextOid()) {
-      manager.SetNextOid(max_oid);
-    }
 
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid) {
+    update_managers_count++;
+
+    max_oid = std::max(max_oid, new_oid);
+
+    max_cid = std::max(max_cid, new_cid);
+
+    if (update_managers_count == NUM_FRONTEND_LOGGERS) {
+      auto &manager = catalog::Manager::GetInstance();
+      manager.SetNextOid(max_oid);
+
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       txn_manager.SetNextCid(max_cid + 1);
     }
   }
