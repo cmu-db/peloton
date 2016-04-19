@@ -56,7 +56,7 @@ class Checkpoint {
   void InitDirectory();
 
   // Default checkpoint interval (seconds)
-  int64_t checkpoint_interval_ = 10;
+  int64_t checkpoint_interval_ = 5;
 
   // variable length memory pool
   std::unique_ptr<VarlenPool> pool;
