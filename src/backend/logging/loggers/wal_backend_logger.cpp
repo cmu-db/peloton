@@ -55,6 +55,7 @@ void WriteAheadBackendLogger::Log(LogRecord *record) {
 
   if (cur_log_id > max_log_id_buffer) {
     log_buffer_->SetMaxLogId(cur_log_id);
+    max_log_id_buffer = cur_log_id;
   }
 
   if (!log_buffer_->WriteRecord(record)) {
