@@ -411,6 +411,9 @@ cid_t LogManager::GetMaxFlushedCommitId() {
     if (id && id < max_flushed_commit_id) max_flushed_commit_id = id;
   }
 
+  if (max_flushed_commit_id == UINT64_MAX) // no one is doing anything
+    return INVALID_CID;
+
   return max_flushed_commit_id;
 }
 
