@@ -34,9 +34,11 @@ FrontendLogger::FrontendLogger() {
 }
 
 FrontendLogger::~FrontendLogger() {
+  backend_loggers_lock.Lock();
   for (auto backend_logger : backend_loggers) {
     delete backend_logger;
   }
+  backend_loggers_lock.Unlock();
 }
 
 /** * @brief Return the frontend logger based on logging type
@@ -243,6 +245,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
           (int)max_possible_commit_id, (int)max_collected_commit_id);
       LOG_INFO("Had entered Case %d", (int)debug_flag);
       (void) debug_flag;
+
     }
     assert(max_possible_commit_id >= max_collected_commit_id);
     if (max_committed_cid > max_seen_commit_id) {
