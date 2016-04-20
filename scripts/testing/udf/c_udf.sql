@@ -20,7 +20,6 @@ INSERT INTO B VALUES (1.522, 2.5425);
 INSERT INTO B VALUES (2.321312, 9.3213);
 INSERT INTO B VALUES (8.231312, -2.664);
 
-DROP FUNCTION IF EXISTS add_one_c(integer);
 DROP FUNCTION IF EXISTS add_c(integer, integer);
 DROP FUNCTION IF EXISTS multiply_c(integer, integer);
 DROP FUNCTION IF EXISTS add_one_float8_c(float8);
@@ -30,12 +29,10 @@ DROP FUNCTION IF EXISTS concat_text_c(text, text);
 
 CREATE FUNCTION add_c(integer, integer) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'add' LANGUAGE C STRICT;
 CREATE FUNCTION multiply_c(integer, integer) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'multiply' LANGUAGE C STRICT;
-CREATE FUNCTION divide_c(integer, integer) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'divide' LANGUAGE C STRICT;
-CREATE FUNCTION add_one_float8_c(float8) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'add_one_float8' LANGUAGE C STRICT;
+CREATE FUNCTION add_one_float8_c(float8) RETURNS float8 AS '/usr/local/lib/sample_udf.so', 'add_one_float8' LANGUAGE C STRICT;
 CREATE FUNCTION makepoint(point, point) RETURNS point AS '/usr/local/lib/sample_udf.so', 'makepoint' LANGUAGE C STRICT;
 CREATE FUNCTION copy_text_c(text) RETURNS text AS '/usr/local/lib/sample_udf.so', 'copy_text' LANGUAGE C STRICT;
 CREATE FUNCTION concat_text_c(text, text) RETURNS text AS '/usr/local/lib/sample_udf.so', 'concat_text' LANGUAGE C STRICT;
-CREATE FUNCTION add_one_float8_c(float8) RETURNS float8 AS '/usr/local/lib/sample_udf.so', 'add_one_float8' LANGUAGE C STRICT;
 
 -- test select x()
 SELECT x, y, add_c(x,y) FROM A;
