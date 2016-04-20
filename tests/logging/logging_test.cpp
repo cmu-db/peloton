@@ -36,27 +36,30 @@ namespace test {
 class LoggingTests : public PelotonTest {};
 
 TEST_F(LoggingTests, BasicLoggingTest) {
-  std::unique_ptr<storage::DataTable> table(
-	ExecutorTestsUtil::CreateTable(1));
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
   auto &log_manager = logging::LogManager::GetInstance();
 
-  LoggingScheduler scheduler(1, 1, &log_manager, table.get());
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
   scheduler.Init();
-  // Logger 0 is always the front end logger
   // The first txn to commit starts with cid 2
   scheduler.BackendLogger(0, 0).Prepare();
   scheduler.BackendLogger(0, 0).Begin(2);
   scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+
   scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
   scheduler.FrontendLogger(0).Collect();
   scheduler.FrontendLogger(0).Flush();
   scheduler.BackendLogger(0, 0).Done(1);
   scheduler.Run();
 
   auto results = scheduler.frontend_threads[0].results;
-  EXPECT_EQ(2, results[0]);
+  EXPECT_EQ(3, results[0]);
 }
 
 }  // End test namespace
