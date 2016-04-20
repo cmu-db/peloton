@@ -46,6 +46,7 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
                                                   bool test_mode) {
   FrontendLogger *frontend_logger = nullptr;
 
+  LOG_INFO("Logging_type is %d", (int)logging_type);
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
     frontend_logger = new WriteAheadFrontendLogger(test_mode);
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
@@ -222,6 +223,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
         max_collected_commit_id = global_max;
 
       max_possible_commit_id = max_collected_commit_id;
+      max_seen_commit_id = max_collected_commit_id;
       debug_flag = 1;
     } else if (max_committed_cid == 0) {
       max_possible_commit_id = lower_bound;
@@ -240,6 +242,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
           "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
           (int)max_possible_commit_id, (int)max_collected_commit_id);
       LOG_INFO("Had entered Case %d", (int)debug_flag);
+      (void) debug_flag;
     }
     assert(max_possible_commit_id >= max_collected_commit_id);
     if (max_committed_cid > max_seen_commit_id) {

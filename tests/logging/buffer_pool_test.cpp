@@ -124,10 +124,11 @@ TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
   auto &log_manager = logging::LogManager::GetInstance();
   logging::LogManager::Configure(LOGGING_TYPE_DRAM_NVM, true);
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  log_manager.InitFrontendLoggers();
 
   logging::WriteAheadFrontendLogger *frontend_logger =
       reinterpret_cast<logging::WriteAheadFrontendLogger *>(
-          log_manager.GetFrontendLogger());
+          log_manager.GetFrontendLogger(0));
   logging::WriteAheadBackendLogger *backend_logger =
       reinterpret_cast<logging::WriteAheadBackendLogger *>(
           log_manager.GetBackendLogger());
