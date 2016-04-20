@@ -158,6 +158,9 @@ StorageManager::~StorageManager() {
 
   // sync and unmap the data file
   if(data_file_address != nullptr) {
+    std::cout << "Capacity : " << data_file_offset/(1024 * 1024)
+        << " MB out of " <<  data_file_len/(1024 * 1024) << " MB \n";
+
     // sync the mmap'ed file to SSD or HDD
     int status = msync(data_file_address, data_file_len, MS_SYNC);
     if(status != 0) {
@@ -189,12 +192,6 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
           throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
                           " length : " + std::to_string(data_file_len));
           return nullptr;
-        }
-
-        if(rand() % (1024 * 16) == 0){
-          printf("offset : %lu MB out of %lu MB \n",
-                 data_file_offset/(1024 * 1024),
-                 data_file_len/(1024 * 1024));
         }
 
         void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
