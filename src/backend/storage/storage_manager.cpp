@@ -158,9 +158,6 @@ StorageManager::~StorageManager() {
 
   // sync and unmap the data file
   if(data_file_address != nullptr) {
-    std::cout << "Capacity : " << data_file_offset/(1024 * 1024)
-        << " MB out of " <<  data_file_len/(1024 * 1024) << " MB \n";
-
     // sync the mmap'ed file to SSD or HDD
     int status = msync(data_file_address, data_file_len, MS_SYNC);
     if(status != 0) {
