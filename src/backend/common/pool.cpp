@@ -69,6 +69,7 @@ void *VarlenPool::Allocate(std::size_t size) {
     if (size > current_chunk->size - current_chunk->offset) {
       // Not enough space. Check if it is greater than our allocation size.
       if (size > allocation_size) {
+        printf("VarlenPool Allocation \n");
         // Allocate an oversize chunk that will not be reused.
         auto &storage_manager = storage::StorageManager::GetInstance();
         char *storage = reinterpret_cast<char *>(
