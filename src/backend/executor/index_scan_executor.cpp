@@ -176,7 +176,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+          auto res = transaction_manager.PerformRead(tuple_location);
           if(!res){
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
             return res;
@@ -188,7 +188,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tile_group_id].push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+            auto res = transaction_manager.PerformRead(tuple_location);
             if(!res){
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
               return res;
@@ -278,7 +278,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+          auto res = transaction_manager.PerformRead(tuple_location);
           if(!res){
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
             return res;
@@ -290,7 +290,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tile_group_id].push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(tile_group_id, tuple_id);
+            auto res = transaction_manager.PerformRead(tuple_location);
             if(!res){
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
               return res;

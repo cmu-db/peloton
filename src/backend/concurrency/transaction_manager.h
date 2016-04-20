@@ -123,27 +123,21 @@ class TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+  
 
-  virtual void SetOwnership(const oid_t &tile_group_id,
-                            const oid_t &tuple_id) = 0;
+  virtual bool PerformInsert(const ItemPointer &location) = 0;
 
-  virtual bool PerformInsert(const oid_t &tile_group_id,
-                             const oid_t &tuple_id) = 0;
+  virtual bool PerformRead(const ItemPointer &location) = 0;
 
-  virtual bool PerformRead(const oid_t &tile_group_id,
-                           const oid_t &tuple_id) = 0;
-
-  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformUpdate(const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;
 
-  virtual void PerformUpdate(const oid_t &tile_group_id,
-                             const oid_t &tuple_id) = 0;
+  virtual void PerformUpdate(const ItemPointer &location) = 0;
 
-  virtual void PerformDelete(const oid_t &tile_group_id,
-                             const oid_t &tuple_id) = 0;
+  virtual void PerformDelete(const ItemPointer &location) = 0;
 
   /*
    * Write a virtual function to push deleted and verified (acc to optimistic
