@@ -70,9 +70,9 @@ static void WriteOutput(double value) {
 		fsync_count = frontend_logger->GetFsyncCount();
 	}
 
-	std::cout << "fsync count : " << fsync_count << " ";
-	std::cout << "clflush count : " << storage_manager.GetClflushCount() << " ";
-	std::cout << "msync count : " << storage_manager.GetMsyncCount() << "\n";
+	std::cout << "LOG  :: FSYNC count         : " << fsync_count << "\n";
+	std::cout << "DATA :: CLFLUSH count (NVM) : " << storage_manager.GetClflushCount() << "\n";
+	std::cout << "DATA :: MSYNC count   (HDD) : " << storage_manager.GetMsyncCount() << "\n";
 
 	out << state.logging_type << " ";
 	out << ycsb::state.update_ratio << " ";

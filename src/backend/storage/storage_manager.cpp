@@ -185,7 +185,17 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
-        if (data_file_offset >= data_file_len) return nullptr;
+        if (data_file_offset >= data_file_len) {
+          throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
+                          " length : " + std::to_string(data_file_len));
+          return nullptr;
+        }
+
+        if(rand() % (1024 * 16) == 0){
+          printf("offset : %lu MB out of %lu MB \n",
+                 data_file_offset/(1024 * 1024),
+                 data_file_len/(1024 * 1024));
+        }
 
         void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
 
@@ -196,7 +206,10 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
     } break;
 
     case BACKEND_TYPE_INVALID:
-    default: { return nullptr; }
+    default: {
+      throw Exception("invalid backend: " + std::to_string(data_file_len));
+      return nullptr;
+    }
   }
 }
 
