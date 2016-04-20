@@ -392,10 +392,10 @@ void SsiTxnManager::PerformDelete(const ItemPointer &location) {
     // delete an inserted version
     current_txn->RecordDelete(old_location);
   } 
-  // else {
-  //   // if this version is newly inserted.
-  //   current_txn->RecordDelete(location);
-  // }
+  else {
+    // if this version is newly inserted.
+    current_txn->RecordDelete(location);
+  }
 }
 
 
@@ -622,7 +622,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
       auto tuple_slot = tuple_entry.first;
 
       // we don't have reader lock on insert
-      if (tuple_entry.second == RW_TYPE_INSERT) {
+      if (tuple_entry.second == RW_TYPE_INSERT || tuple_entry.second == RW_TYPE_INS_DEL) {
         continue;
       }
       RemoveSIReader(tile_group_header, tuple_slot, txn->GetTransactionId());
