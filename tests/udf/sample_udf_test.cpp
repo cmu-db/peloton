@@ -2,6 +2,11 @@
 #include <string.h>
 #include "fmgr.h"
 #include "utils/geo_decls.h"
+#include "access/htup_details.h"
+#include "utils/array.h"
+#include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "utils/lsyscache.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,10 +103,10 @@ makepoint(PG_FUNCTION_ARGS) {
 
 /* by reference, variable length */
 
-PG_FUNCTION_INFO_V1(copytext);
+PG_FUNCTION_INFO_V1(copy_text);
 
 Datum
-copytext(PG_FUNCTION_ARGS) {
+copy_text(PG_FUNCTION_ARGS) {
     text *t = PG_GETARG_TEXT_P(0);
     /*
      * VARSIZE is the total size of the struct in bytes.
@@ -131,6 +136,25 @@ concat_text(PG_FUNCTION_ARGS) {
     memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
            VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
     PG_RETURN_TEXT_P(new_text);
+}
+
+PG_FUNCTION_INFO_V1(sum_columns);
+
+Datum
+sum_columns(PG_FUNCTION_ARGS)
+{
+    HeapTupleHeader t = PG_GETARG_HEAPTUPLEHEADER(0);
+    bool isnullx, isnully;
+    int32 x, y;
+
+    x = DatumGetInt32(GetAttributeByName(t, "x", &isnullx));
+    y = DatumGetInt32(GetAttributeByName(t, "y", &isnully));
+    if (isnullx || isnully) {
+        PG_RETURN_INT32(0);
+    } else {
+        PG_RETURN_INT32(x + y);
+    }
+
 }
 
 #ifdef __cplusplus
