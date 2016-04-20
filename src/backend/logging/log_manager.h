@@ -63,6 +63,13 @@ class LogManager {
     logger_mapping_strategy_ = logger_mapping_strategy;
   }
 
+  // reset all frontend loggers, for testing
+  void ResetFrontendLoggers() {
+    for (auto &frontend_logger : frontend_loggers) {
+      frontend_logger->Reset();
+    }
+  }
+
   // Wait for the system to begin
   void StartStandbyMode();
 
