@@ -13,52 +13,44 @@
 #include "backend/storage/rollback_segment.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/abstract_table.h"
+#include "backend/catalog/schema.h"
 
 namespace peloton {
 namespace storage {
 
-RollbackSegmentHeader *RollbackSegmentManager::GetRollbackSegment(
+RollbackSegment *RollbackSegmentManager::GetRollbackSegment(
+  const catalog::Schema *schema,
   const peloton::planner::ProjectInfo::TargetList &target_list) {
+
+  RollbackSegment *rb_seg = new RollbackSegment();
+  assert(rb_seg);
 
   // Figure out the size of the data field
   size_t data_size = 0;
-
   for (auto target : target_list) {
     auto col_id = target.first;
-    data_size += table_->GetSchema()->GetLength(col_id);
+
+    // set the col map
+    rb_seg->col_offset_map_[col_id] = data_size;
+
+    data_size += schema->GetLength(col_id);
   }
 
-  // Allocate space from the varlen pool
-  size_t allocate_size = sizeof(RollbackSegmentHeader) + data_size;
-  char *raw_rollback_seg = reinterpret_cast<char*>(pool_->Allocate(allocate_size));
-  std::memset(raw_rollback_seg, 0, allocate_size);
+  // Allocate space for the data
+  rb_seg->data_ = reinterpret_cast<char*>(::operator new(data_size));
+  std::memset(rb_seg->data_, 0, data_size);
 
-  // Make a header
-  new (raw_rollback_seg) RollbackSegmentHeader();
-  RollbackSegmentHeader *rb_seg_header = reinterpret_cast<RollbackSegmentHeader *>(raw_rollback_seg);
-
-  // Set the col map
-  size_t offset = sizeof(RollbackSegmentHeader);
-  for (auto target : target_list) {
-    auto col_id = target.first;
-    rb_seg_header->col_offset_map_[target.first] = offset;
-    offset += table_->GetSchema()->GetLength(col_id);
-  }
-
-  return rb_seg_header;
+  return rb_seg;
 }
 
-void RollbackSegmentManager::SetSegmentValue(RollbackSegmentHeader *rb_header, const oid_t col_id,
+void RollbackSegment::SetSegmentValue(const catalog::Schema *schema, const oid_t col_id,
                                              const Value &value, VarlenPool *data_pool) {
-  assert(rb_header);
-  assert(rb_header->HasColumn(col_id));
+  assert(HasColumn(col_id));
 
-  auto schema = table_->GetSchema();
   const ValueType type  = schema->GetType(col_id);
   const bool is_inlined = schema->IsInlined(col_id);
 
-  char *raw_rollback_seg = reinterpret_cast<char*>(rb_header);
-  char *value_location = raw_rollback_seg + rb_header->col_offset_map_[col_id];
+  char *value_location = data_ + col_offset_map_[col_id];
   int32_t column_length = schema->GetLength(col_id);
 
   if (is_inlined == false)
@@ -91,16 +83,13 @@ void RollbackSegmentManager::SetSegmentValue(RollbackSegmentHeader *rb_header, c
   }
 }
 
-Value RollbackSegmentManager::GetSegmentValue(RollbackSegmentHeader *rb_header, const oid_t col_id) const {
-  assert(rb_header);
-  assert(rb_header->HasColumn(col_id));
-
-  auto schema = table_->GetSchema();
+Value RollbackSegment::GetSegmentValue(const catalog::Schema *schema,
+                                       const oid_t col_id) const {
+  assert(HasColumn(col_id));
 
   const ValueType type = schema->GetType(col_id);
 
-  const char *raw_rollback_seg = reinterpret_cast<char*>(rb_header);
-  const char *data_ptr = raw_rollback_seg + rb_header->col_offset_map_[col_id];
+  const char *data_ptr = data_ + col_offset_map_[col_id];
   const bool is_inlined = schema->IsInlined(col_id);
 
   return Value::InitFromTupleStorage(data_ptr, type, is_inlined);

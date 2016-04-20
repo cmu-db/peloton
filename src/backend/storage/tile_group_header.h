@@ -23,6 +23,7 @@
 #include <iostream>
 #include <cassert>
 #include <queue>
+#include <vector>
 #include <cstring>
 
 namespace peloton {
@@ -48,6 +49,8 @@ namespace storage {
  *
  */
 
+class RollbackSegment;
+
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
 
 class TileGroupHeader : public Printable {
@@ -68,6 +71,8 @@ class TileGroupHeader : public Printable {
     num_tuple_slots = other.num_tuple_slots;
     unsigned long long val = other.next_tuple_slot;
     next_tuple_slot = val;
+
+    rb_seg_headers = other.rb_seg_headers;
 
     return *this;
   }
@@ -220,6 +225,10 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
+  inline std::shared_ptr<RollbackSegment> GetRollbackSegmentHeader(const oid_t &tuple_slot_id) const {
+    return rb_seg_headers[tuple_slot_id];
+  }
+
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Sync the contents
@@ -282,6 +291,9 @@ class TileGroupHeader : public Printable {
   std::atomic<oid_t> next_tuple_slot;
 
   Spinlock tile_header_lock;
+
+  // FIXME: only used in occ-rb protocol
+  std::vector<std::shared_ptr<RollbackSegment>> rb_seg_headers;
 };
 
 }  // End storage namespace

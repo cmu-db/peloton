@@ -26,28 +26,55 @@
 #include <unordered_map>
 
 namespace peloton {
+
+namespace catalog {
+  class Schema;
+}
+
 namespace storage {
 
 class AbstractTable;
 class Tuple;
 
-class RollbackSegmentHeader {
+class RollbackSegment {
   friend class RollbackSegmentManager;
 
-  RollbackSegmentHeader &operator=(const RollbackSegmentHeader &) = delete;
-  RollbackSegmentHeader(const RollbackSegmentHeader &) = delete;
+  RollbackSegment &operator=(const RollbackSegment &) = delete;
+  RollbackSegment(const RollbackSegment &) = delete;
 
 private:
-  RollbackSegmentHeader()
-    :begin_cid_(INVALID_CID), end_cid_(INVALID_CID), col_offset_map_()
-  {}
+  RollbackSegment()
+    :begin_cid_(INVALID_CID), end_cid_(INVALID_CID), col_offset_map_(),
+    next_segment_(), data_(nullptr) {}
 
-  inline bool HasColumn(oid_t col_id) {
+public:
+  ~RollbackSegment(){
+    if (data_ != nullptr) delete data_;
+  }
+
+  inline bool HasColumn(oid_t col_id) const {
     return col_offset_map_.find(col_id) != col_offset_map_.end();
   }
 
-public:
-  ~RollbackSegmentHeader(){}
+  inline void SetBeginCommitId(const oid_t &begin_cid) {
+    begin_cid_ = begin_cid;
+  }
+
+  inline void SetEndCommitId(const oid_t &end_cid) {
+    end_cid_ = end_cid;
+  }
+
+  inline cid_t GetBeginCommitId() const {
+    return begin_cid_;
+  }
+
+  inline cid_t GetEndCommitId() const {
+    return end_cid_;
+  }
+
+  void SetSegmentValue(const catalog::Schema *schema, const oid_t col_id, const Value &value, VarlenPool *data_pool);
+
+  Value GetSegmentValue(const catalog::Schema *schema, const oid_t col_id) const;
 
 private:
   // begin and end timestamps
@@ -58,52 +85,22 @@ private:
   // col_id -> col offset count from the header
   std::unordered_map<oid_t, size_t> col_offset_map_;
 
+  // Next rollback segment
+  std::shared_ptr<RollbackSegment> next_segment_;
+
+  // Data
+  char *data_;
 };
 
 class RollbackSegmentManager {
-  RollbackSegmentManager() = delete;
   RollbackSegmentManager(const RollbackSegmentManager&) = delete;
   RollbackSegmentManager &operator=(const RollbackSegmentManager&) = delete;
 public:
-  RollbackSegmentManager(BackendType backend_type, AbstractTable *table)
-    :table_(table) {
-    // TODO: tune the setting of the pool
-    pool_ = new VarlenPool(backend_type);
-  }
+  RollbackSegmentManager() {}
+  ~RollbackSegmentManager() {}
 
-  ~RollbackSegmentManager() {
-    delete pool_;
-  }
-
-  RollbackSegmentHeader *GetRollbackSegment(const peloton::planner::ProjectInfo::TargetList &target_list);
-
-  void SetSegmentValue(RollbackSegmentHeader *rb_header,const oid_t col_id, const Value &value, VarlenPool *data_pool);
-
-  Value GetSegmentValue(RollbackSegmentHeader *rb_header, const oid_t col_id) const;
-
-  inline void SetBeginCommitId(RollbackSegmentHeader *rb_header, const oid_t &begin_cid) {
-    rb_header->begin_cid_ = begin_cid;
-  }
-
-  inline void SetEndCommitId(RollbackSegmentHeader *rb_header, const oid_t &end_cid) {
-    rb_header->end_cid_ = end_cid;
-  }
-
-  inline cid_t GetBeginCommitId(const RollbackSegmentHeader *rb_header) {
-    return rb_header->begin_cid_;
-  }
-
-  inline cid_t GetEndCommitId(const RollbackSegmentHeader *rb_header) {
-    return rb_header->end_cid_;
-  }
-
-
-private:
-  // abstract table
-  AbstractTable *table_;
-
-  // varlen pool
-  VarlenPool *pool_;
+  RollbackSegment *GetRollbackSegment(const catalog::Schema *schema,
+                                      const peloton::planner::ProjectInfo::TargetList &target_list);
 };
 
 }  // End storage namespace
