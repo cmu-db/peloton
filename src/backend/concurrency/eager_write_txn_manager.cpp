@@ -274,7 +274,7 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
 
 void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Write %lu %lu", old_location.block, old_location.offset);
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -333,7 +333,7 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Delete %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Delete %lu %lu", old_location.block, old_location.offset);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =

@@ -295,10 +295,7 @@ bool SsiTxnManager::PerformInsert(const ItemPointer &location) {
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
 
-  //SetOwnership(tile_group_id, tuple_id);
   // No need to set next item pointer.
   current_txn->RecordInsert(location);
   // Init the creator of this tuple
@@ -394,10 +391,11 @@ void SsiTxnManager::PerformDelete(const ItemPointer &location) {
   if (old_location.IsNull() == false) {
     // delete an inserted version
     current_txn->RecordDelete(old_location);
-  } else {
-    // if this version is newly inserted.
-    current_txn->RecordDelete(location);
-  }
+  } 
+  // else {
+  //   // if this version is newly inserted.
+  //   current_txn->RecordDelete(location);
+  // }
 }
 
 
