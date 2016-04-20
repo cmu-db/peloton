@@ -115,9 +115,6 @@ void FrontendLoggingThread::RunLoop() {
   frontend_logger = reinterpret_cast<logging::WriteAheadFrontendLogger *>(
       log_manager->GetFrontendLogger(frontend_id));
 
-  LOG_INFO("Frontend thread %u has %d ops", frontend_id,
-           (int)schedule->operations.size());
-
   // Assume txns up to cid = 1 is committed
   frontend_logger->SetMaxFlushedCommitId(1);
 
@@ -154,13 +151,9 @@ void FrontendLoggingThread::ExecuteNext() {
 }
 
 void BackendLoggingThread::RunLoop() {
-  {
-    backend_logger = reinterpret_cast<logging::WriteAheadBackendLogger *>(
-        log_manager->GetBackendLogger());
+  backend_logger = reinterpret_cast<logging::WriteAheadBackendLogger *>(
+      log_manager->GetBackendLogger());
 
-    LOG_INFO("Backend thread (%u, %u) has %d ops", frontend_id, backend_id,
-             (int)schedule->operations.size());
-  }
   MainLoop();
 }
 
@@ -282,7 +275,7 @@ void LoggingScheduler::Run() {
 
 void LoggingScheduler::Init() {
   logging::LogManager::Configure(LOGGING_TYPE_DRAM_NVM, true,
-                                 LOGGER_MAPPING_MANUAL);
+                                 num_frontend_logger, LOGGER_MAPPING_MANUAL);
   log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager->InitFrontendLoggers();
 
@@ -294,17 +287,18 @@ void LoggingScheduler::Init() {
        i < num_frontend_logger * num_backend_logger_per_frontend; i++) {
     backend_threads.emplace_back(&backend_schedules[i], log_manager, i, table,
                                  i % num_backend_logger_per_frontend);
-    // Spawn frontend logger threads
-    for (int i = 0; i < (int)frontend_schedules.size(); i++) {
-      std::thread t = frontend_threads[i].Run();
-      t.detach();
-    }
+  }
 
-    // Spawn backend logger threads
-    for (int i = 0; i < (int)backend_schedules.size(); i++) {
-      std::thread t = backend_threads[i].Run();
-      t.detach();
-    }
+  // Spawn frontend logger threads
+  for (int i = 0; i < (int)frontend_schedules.size(); i++) {
+    std::thread t = frontend_threads[i].Run();
+    t.detach();
+  }
+
+  // Spawn backend logger threads
+  for (int i = 0; i < (int)backend_schedules.size(); i++) {
+    std::thread t = backend_threads[i].Run();
+    t.detach();
   }
 }
 
