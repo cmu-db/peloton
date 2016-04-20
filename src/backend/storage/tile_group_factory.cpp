@@ -31,6 +31,7 @@ TileGroup *TileGroupFactory::GetTileGroup(
   // Allocate the data on appropriate backend
   BackendType backend_type = GetBackendType(peloton_logging_mode);
 
+  printf("Tile Group Allocation \n");
   TileGroupHeader *tile_header = new TileGroupHeader(backend_type, tuple_count);
   TileGroup *tile_group = new TileGroup(backend_type, tile_header, table,
                                         schemas, column_map, tuple_count);
