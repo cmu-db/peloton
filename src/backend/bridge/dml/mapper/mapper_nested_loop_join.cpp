@@ -60,14 +60,19 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
 
   project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo));
 
-  LOG_INFO("%s", project_info.get()->Debug().c_str());
+  if (project_info.get() != nullptr) {
+    LOG_INFO("%s", project_info.get()->Debug().c_str());
+  } else {
+    LOG_INFO("empty projection info");
+  }
 
   std::unique_ptr<planner::AbstractPlan> result;
   std::shared_ptr<const catalog::Schema> project_schema(
       SchemaTransformer::GetSchemaFromTupleDesc(
           nl_plan_state->tts_tupleDescriptor));
 
-  bool non_trivial = project_info.get()->isNonTrivial();
+  bool non_trivial = (project_info.get() != nullptr &&
+                      project_info.get()->isNonTrivial());
   if (non_trivial) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");

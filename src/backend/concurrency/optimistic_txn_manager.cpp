@@ -112,7 +112,7 @@ bool OptimisticTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to acquire tuple. Set txn failure.");
+    LOG_ERROR("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -161,8 +161,7 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -172,7 +171,6 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
-  //tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   // Set double linked list
   tile_group_header->SetNextItemPointer(tuple_id, new_location);
@@ -214,8 +212,7 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-                                   .GetTileGroup(new_location.block)
-                                   ->GetHeader();
+      .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -262,7 +259,7 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -323,19 +320,18 @@ Result OptimisticTxnManager::CommitTransaction() {
           continue;
         } else {
           if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID &&
-              tile_group_header->GetBeginCommitId(tuple_slot) <=
-                  end_commit_id &&
+                  INITIAL_TXN_ID && tile_group_header->GetBeginCommitId(
+                                        tuple_slot) <= end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
             // the version is not owned by other txns and is still visible.
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu",
+        LOG_TRACE("transaction id=%lu",
                  tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu",
+        LOG_TRACE("begin commit id=%lu",
                  tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu",
+        LOG_TRACE("end commit id=%lu",
                  tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -445,7 +441,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 }
 
 Result OptimisticTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();

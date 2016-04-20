@@ -50,7 +50,6 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
@@ -59,12 +58,10 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -121,7 +118,6 @@ TEST_F(AggregateTests, SortedDistinctTest) {
       .WillOnce(Return(source_logical_tile2.release()));
 
   EXPECT_TRUE(executor.Init());
-
   EXPECT_TRUE(executor.Execute());
   txn_manager.CommitTransaction();
 
@@ -152,7 +148,6 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
@@ -161,12 +156,10 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -259,7 +252,6 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
 
@@ -268,12 +260,10 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -371,7 +361,6 @@ TEST_F(AggregateTests, HashDistinctTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
@@ -380,12 +369,10 @@ TEST_F(AggregateTests, HashDistinctTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -465,7 +452,6 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
   ExecutorTestsUtil::PopulateTable(txn, data_table.get(), 2 * tuple_count,
@@ -473,12 +459,10 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -559,7 +543,6 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
@@ -568,12 +551,10 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 
@@ -672,7 +653,6 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   // Create a table and wrap it in logical tiles
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
 
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
@@ -681,12 +661,10 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
   // (1-5) Setup plan node
 

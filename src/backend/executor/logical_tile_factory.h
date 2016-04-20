@@ -40,9 +40,6 @@ class LogicalTileFactory {
       const std::vector<std::shared_ptr<storage::Tile>> &base_tile_refs);
 
   static LogicalTile *WrapTileGroup(
-      const std::shared_ptr<storage::TileGroup> &tile_group, txn_id_t txn_id);
-
-  static LogicalTile *WrapTileGroup(
       const std::shared_ptr<storage::TileGroup> &tile_group);
 };
 
