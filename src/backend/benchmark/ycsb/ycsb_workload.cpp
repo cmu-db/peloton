@@ -46,7 +46,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/executor/materialization_executor.h"
-#include "backend/executor/update_executor.h"
+#include "backend/executor/insert_executor.h"
 #include "backend/executor/index_scan_executor.h"
 
 #include "backend/expression/abstract_expression.h"
@@ -78,7 +78,7 @@ namespace ycsb {
 
 void RunRead();
 
-void RunUpdate();
+void RunInsert();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -102,7 +102,7 @@ void RunBackend(oid_t thread_id) {
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
-      RunUpdate();
+      RunInsert();
     }
     else {
       RunRead();
@@ -259,90 +259,42 @@ void RunRead() {
   txn_manager.CommitTransaction(txn);
 }
 
-void RunUpdate() {
+void RunInsert() {
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
 
+  const oid_t col_count = state.column_count + 1;
+  auto table_schema = user_table->GetSchema();
+  const bool allocate = true;
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
+
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+
   auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids;
-  oid_t column_count = state.column_count + 1;
-
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(col_itr);
-  }
-
-  // Create and set up index scan executor
-
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
-
-  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-  auto lookup_key = rand() % tuple_count;
-
-  key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(
-      user_table_pkey_index_oid);
-
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-  // Create plan node.
-  auto predicate = nullptr;
-
-  planner::IndexScanPlan index_scan_node(user_table,
-                                         predicate, column_ids,
-                                         index_scan_desc);
-
-  // Run the executor
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
-                                                  context.get());
-
   /////////////////////////////////////////////////////////
-  // UPDATE
+  // INSERT
   /////////////////////////////////////////////////////////
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
+  auto key_value = ValueFactory::GetIntegerValue(0);
+  auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
-  // Update the second attribute
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    if(col_itr != 1) {
-      direct_map_list.emplace_back(col_itr,
-                                   std::pair<oid_t, oid_t>(0, col_itr));
-    }
+  tuple->SetValue(0, key_value, nullptr);
+  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+    tuple->SetValue(col_itr, field_value, pool.get());
   }
 
-  std::string update_raw_value(ycsb_field_length - 1, 'u');
-  Value update_val = ValueFactory::GetStringValue(update_raw_value);
-  target_list.emplace_back(1, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
-  planner::UpdatePlan update_node(
-      user_table, new planner::ProjectInfo(std::move(target_list),
-                                           std::move(direct_map_list)));
-
-  executor::UpdateExecutor update_executor(&update_node, context.get());
-  update_executor.AddChild(&index_scan_executor);
+  planner::InsertPlan insert_node(user_table, nullptr, tuple);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&update_executor);
+  executors.push_back(&insert_executor);
 
   ExecuteTest(executors);
 
