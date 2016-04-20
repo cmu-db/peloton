@@ -19,6 +19,10 @@
 #include "backend/storage/tuple.h"
 
 namespace peloton {
+namespace storage {
+  class RollbackSegment;
+}
+
 namespace planner {
 
 /**
@@ -76,6 +80,9 @@ class ProjectInfo {
   bool Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                 const AbstractTuple *tuple2,
                 executor::ExecutorContext *econtext) const;
+
+  bool DeltaEvaluate(storage::RollbackSegment *dest, const AbstractTuple *tuple,
+                     executor::ExecutorContext *econtext, const catalog::Schema *schema) const;
 
   std::string Debug() const;
 
