@@ -244,8 +244,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
           "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
           (int)max_possible_commit_id, (int)max_collected_commit_id);
       LOG_INFO("Had entered Case %d", (int)debug_flag);
-      (void) debug_flag;
-
+      (void)debug_flag;
     }
     assert(max_possible_commit_id >= max_collected_commit_id);
     if (max_committed_cid > max_seen_commit_id) {

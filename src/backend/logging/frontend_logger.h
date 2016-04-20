@@ -77,17 +77,16 @@ class FrontendLogger : public Logger {
   void UpdateGlobalMaxFlushId();
 
   // reset the frontend logger to its original state (for testing
-  void Reset(){
-	  backend_loggers_lock.Lock();
-	  fsync_count = 0;
-	  max_flushed_commit_id = 0;
-	  max_collected_commit_id = 0;
-	  max_seen_commit_id = 0;
-	  global_queue.clear();
-	  backend_loggers.clear();
-	  backend_loggers_lock.Unlock();
+  void Reset() {
+    backend_loggers_lock.Lock();
+    fsync_count = 0;
+    max_flushed_commit_id = 0;
+    max_collected_commit_id = 0;
+    max_seen_commit_id = 0;
+    global_queue.clear();
+    backend_loggers.clear();
+    backend_loggers_lock.Unlock();
   }
-
 
  protected:
   // Associated backend loggers
