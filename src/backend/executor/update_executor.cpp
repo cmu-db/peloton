@@ -83,6 +83,10 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+
+    ItemPointer old_location(tile_group_id, physical_tuple_id);
+
+
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
@@ -99,7 +103,7 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
       tile_group->CopyTuple(new_tuple, physical_tuple_id);
 
-      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformUpdate(old_location);
       delete new_tuple;
       new_tuple = nullptr;
 
@@ -127,20 +131,19 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
 
       // finally insert updated tuple into the table
-      ItemPointer location = target_table_->InsertVersion(new_tuple);
+      ItemPointer new_location = target_table_->InsertVersion(new_tuple);
 
       // FIXME: PerformUpdate() will not be executed if the insertion failed,
       // There is a write lock, acquired, but since it is not in the write set,
       // the acquired lock can't be released when the txn is aborted.
-      if (location.IsNull() == true) {
+      if (new_location.IsNull() == true) {
         delete new_tuple;
         new_tuple = nullptr;
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-      transaction_manager.PerformUpdate(tile_group_id, physical_tuple_id,
-                                        location);
+      transaction_manager.PerformUpdate(old_location, new_location);
 
       executor_context_->num_processed += 1;  // updated one
 
