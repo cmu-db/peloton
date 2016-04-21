@@ -34,11 +34,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint();
   ~SimpleCheckpoint();
 
-  static SimpleCheckpoint &GetInstance();
-
   // Inherited functions
-  void Init();
-
   void DoCheckpoint();
 
   cid_t DoRecovery();
@@ -46,9 +42,7 @@ class SimpleCheckpoint : public Checkpoint {
   // Internal functions
   void InsertTuple(cid_t commit_id);
 
-  bool Execute(executor::AbstractExecutor *scan_executor,
-               concurrency::Transaction *txn, storage::DataTable *target_table,
-               oid_t database_oid);
+  void Scan(storage::DataTable *target_table, oid_t database_oid);
 
   // Getters and Setters
   void SetLogger(BackendLogger *logger);
@@ -72,9 +66,6 @@ class SimpleCheckpoint : public Checkpoint {
 
   // Size of the checkpoint file
   size_t checkpoint_file_size_ = 0;
-
-  // Default checkpoint interval
-  int64_t checkpoint_interval_ = 15;
 
   BackendLogger *logger_ = nullptr;
 

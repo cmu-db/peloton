@@ -14,6 +14,8 @@
 
 #include "backend/common/types.h"
 #include "backend/logging/backend_logger.h"
+#include "backend/logging/log_buffer.h"
+#include "backend/logging/circular_buffer_pool.h"
 
 namespace peloton {
 namespace logging {
@@ -29,11 +31,9 @@ class WriteAheadBackendLogger : public BackendLogger {
   WriteAheadBackendLogger(WriteAheadBackendLogger &&) = delete;
   WriteAheadBackendLogger &operator=(WriteAheadBackendLogger &&) = delete;
 
-  WriteAheadBackendLogger() { logging_type = LOGGING_TYPE_DRAM_NVM; }
+  WriteAheadBackendLogger();
 
   void Log(LogRecord *record);
-
-  void TruncateLocalQueue(oid_t offset);
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,
@@ -41,9 +41,22 @@ class WriteAheadBackendLogger : public BackendLogger {
                             ItemPointer delete_location,
                             const void *data = nullptr);
 
- private:
+  std::pair<cid_t, cid_t> PrepareLogBuffers();
 
+  void GrantEmptyBuffer(std::unique_ptr<LogBuffer>);
+
+ private:
+  // temporary serialization buffer
   CopySerializeOutput output_buffer;
+
+  // the current buffer
+  std::unique_ptr<LogBuffer> log_buffer_;
+
+  // the pool of available buffers
+  std::unique_ptr<BufferPool> available_buffer_pool_;
+
+  // the pool of buffers to persist
+  std::unique_ptr<BufferPool> persist_buffer_pool_;
 };
 
 }  // namespace logging
