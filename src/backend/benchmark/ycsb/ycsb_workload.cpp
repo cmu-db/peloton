@@ -279,10 +279,11 @@ void RunInsert() {
 
   storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
   auto key_value = ValueFactory::GetIntegerValue(0);
+  auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
   tuple->SetValue(0, key_value, nullptr);
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    tuple->SetValue(col_itr, key_value, pool.get());
+    tuple->SetValue(col_itr, field_value, pool.get());
   }
 
   planner::InsertPlan insert_node(user_table, nullptr, tuple);

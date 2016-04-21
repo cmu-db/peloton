@@ -74,7 +74,7 @@ void CreateYCSBDatabase() {
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+        catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
                         "FIELD" + std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
@@ -124,6 +124,7 @@ void LoadYCSBDatabase() {
 
   // Pick the user table
   auto table_schema = user_table->GetSchema();
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -142,10 +143,11 @@ void LoadYCSBDatabase() {
 
     storage::Tuple* tuple = new storage::Tuple(table_schema, allocate);
     auto key_value = ValueFactory::GetIntegerValue(rowid);
+    auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
     tuple->SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple->SetValue(col_itr, key_value, pool.get());
+      tuple->SetValue(col_itr, field_value, pool.get());
     }
 
     planner::InsertPlan node(user_table, nullptr, tuple);
