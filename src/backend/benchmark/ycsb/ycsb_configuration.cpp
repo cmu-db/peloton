@@ -31,7 +31,8 @@ void Usage(FILE *out) {
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
-          "   -l --enable_logging    :  enable_logging \n");
+          "   -l --enable_logging    :  enable_logging (0 or 1) \n"
+		  "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
   exit(EXIT_FAILURE);
 }
 
@@ -40,7 +41,8 @@ static struct option opts[] = {{"scale-factor", optional_argument, NULL, 'k'},
                                {"column_count", optional_argument, NULL, 'c'},
                                {"update_ratio", optional_argument, NULL, 'u'},
                                {"backend_count", optional_argument, NULL, 'b'},
-                               {"enable_logging", no_argument, NULL, 'l'},
+                               {"enable_logging", optional_argument, NULL, 'l'},
+                               {"sync_commit", optional_argument, NULL, 's'},
                                {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -88,6 +90,12 @@ void ValidateTransactionCount(const configuration &state) {
   LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
 }
 
+void ValidateLogging(const configuration &state) {
+  //TODO validate that sync_commit is enabled only when logging is enabled
+  LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
+  LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
@@ -95,12 +103,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
-  state.logging_enabled = false;
+  state.logging_enabled = 0;
+  state.sync_commit = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "alhk:t:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:", opts, &idx);
 
     if (c == -1) break;
 
@@ -121,7 +130,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.backend_count = atoi(optarg);
         break;
       case 'l':
-        state.logging_enabled = true;
+        state.sync_commit = atoi(optarg);
+        break;
+      case 's':
+        state.logging_enabled = atoi(optarg);
         break;
       case 'h':
         Usage(stderr);
@@ -141,6 +153,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
   ValidateTransactionCount(state);
+  ValidateLogging(state);
 }
 
 }  // namespace ycsb
