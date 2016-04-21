@@ -91,9 +91,8 @@ static void ValidateLogFileDir(configuration& state) {
   // Assign log file dir based on logging type
   switch (state.logging_type) {
     // Log file on NVM
-    case LOGGING_TYPE_DRAM_NVM:
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_HDD_NVM: {
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = NVM_DIR;
@@ -101,9 +100,8 @@ static void ValidateLogFileDir(configuration& state) {
     } break;
 
     // Log file on HDD
-    case LOGGING_TYPE_DRAM_HDD:
-    case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_HDD_HDD: {
+    case LOGGING_TYPE_HDD_WAL:
+    case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
@@ -127,7 +125,7 @@ static void ValidateLogFileDir(configuration& state) {
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
-  state.logging_type = LOGGING_TYPE_DRAM_NVM;
+  state.logging_type = LOGGING_TYPE_NVM_WAL;
 
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
@@ -140,7 +138,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.transaction_count = 10000;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
-  ycsb::state.backend_count = 1;
+  ycsb::state.backend_count = 2;
 
   // Parse args
   while (1) {

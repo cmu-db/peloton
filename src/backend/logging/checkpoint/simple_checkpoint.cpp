@@ -84,7 +84,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   auto &log_manager = LogManager::GetInstance();
   // XXX get default backend logger
   if (logger_ == nullptr) {
-    logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_DRAM_NVM);
+    logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_NVM_WAL);
   }
 
   // FIXME make sure everything up to start_cid is not garbage collected

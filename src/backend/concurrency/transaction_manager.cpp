@@ -18,5 +18,5 @@ namespace concurrency {
 // Current transaction for the backend thread
 thread_local Transaction *current_txn;
 
-}  // End storage namespace
+}  // End concurrency namespace
 }  // End peloton namespace

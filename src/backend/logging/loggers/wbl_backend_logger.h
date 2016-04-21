@@ -30,7 +30,7 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
+  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
 
   void Log(LogRecord *record);
 
