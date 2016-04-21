@@ -76,6 +76,8 @@ class TileGroup : public Printable {
   // copy tuple in place.
   void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);
 
+  void CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple);
+
   // insert tuple at next available slot in tile if a slot exists
   oid_t InsertTuple(const Tuple *tuple);
 
@@ -180,7 +182,7 @@ class TileGroup : public Printable {
   TileGroupHeader *tile_group_header;
 
   // associated table
-  AbstractTable *table;  // TODO: Remove this! It is a waste of space!!
+  AbstractTable *table;  // this design is fantastic!!!
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

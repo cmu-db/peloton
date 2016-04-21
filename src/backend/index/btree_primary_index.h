@@ -43,15 +43,13 @@ class BTreePrimaryIndex : public Index {
 
   ~BTreePrimaryIndex();
 
-  bool InsertEntry(const storage::Tuple *key, ItemPointer &location);
+  bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
-  bool UpdateEntry(const storage::Tuple *key, const ItemPointer &location);
-
-  bool ConditionalInsertEntry(const storage::Tuple *key,
+  bool CondInsertEntry(const storage::Tuple *key,
       const ItemPointer &location,
-      std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate);
+      std::function<bool(const ItemPointer &)> predicate);
 
   void Scan(const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
@@ -68,11 +66,11 @@ class BTreePrimaryIndex : public Index {
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs,
       const ScanDirectionType &scan_direction,
-      std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+      std::vector<ItemPointerHeader*> &result);
 
-  void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+  void ScanAllKeys(std::vector<ItemPointerHeader*> &result);
 
-  void ScanKey(const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result);
+  void ScanKey(const storage::Tuple *key, std::vector<ItemPointerHeader*> &result);
 
   std::string GetTypeName() const;
 

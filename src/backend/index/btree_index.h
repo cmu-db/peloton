@@ -47,7 +47,7 @@
 
 //   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
-//   bool ConditionalInsertEntry(const storage::Tuple *key,
+//   bool CondInsertEntry(const storage::Tuple *key,
 //       const ItemPointer &location,
 //       std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate);
 

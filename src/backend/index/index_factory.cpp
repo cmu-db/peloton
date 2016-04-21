@@ -174,16 +174,16 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 
   if (ints_only && (index_type == INDEX_TYPE_BTREE)) {
     if (key_size <= sizeof(uint64_t)) {
-      return new BTreePrimaryIndex<IntsKey<1>, std::shared_ptr<ItemPointerHeader>, IntsComparator<1>,
+      return new BTreePrimaryIndex<IntsKey<1>, ItemPointerHeader*, IntsComparator<1>,
                              IntsEqualityChecker<1>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 2) {
-      return new BTreePrimaryIndex<IntsKey<2>, std::shared_ptr<ItemPointerHeader>, IntsComparator<2>,
+      return new BTreePrimaryIndex<IntsKey<2>, ItemPointerHeader*, IntsComparator<2>,
                              IntsEqualityChecker<2>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 3) {
-      return new BTreePrimaryIndex<IntsKey<3>, std::shared_ptr<ItemPointerHeader>, IntsComparator<3>,
+      return new BTreePrimaryIndex<IntsKey<3>, ItemPointerHeader*, IntsComparator<3>,
                              IntsEqualityChecker<3>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 4) {
-      return new BTreePrimaryIndex<IntsKey<4>, std::shared_ptr<ItemPointerHeader>, IntsComparator<4>,
+      return new BTreePrimaryIndex<IntsKey<4>, ItemPointerHeader*, IntsComparator<4>,
                              IntsEqualityChecker<4>>(metadata);
     } else {
       throw IndexException(
@@ -194,46 +194,46 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 
   if (index_type == INDEX_TYPE_BTREE) {
     if (key_size <= 4) {
-      return new BTreePrimaryIndex<GenericKey<4>, std::shared_ptr<ItemPointerHeader>, GenericComparator<4>,
+      return new BTreePrimaryIndex<GenericKey<4>, ItemPointerHeader*, GenericComparator<4>,
                              GenericEqualityChecker<4>>(metadata);
     } else if (key_size <= 8) {
-      return new BTreePrimaryIndex<GenericKey<8>, std::shared_ptr<ItemPointerHeader>, GenericComparator<8>,
+      return new BTreePrimaryIndex<GenericKey<8>, ItemPointerHeader*, GenericComparator<8>,
                              GenericEqualityChecker<8>>(metadata);
     } else if (key_size <= 12) {
-      return new BTreePrimaryIndex<GenericKey<12>, std::shared_ptr<ItemPointerHeader>, GenericComparator<12>,
+      return new BTreePrimaryIndex<GenericKey<12>, ItemPointerHeader*, GenericComparator<12>,
                              GenericEqualityChecker<12>>(metadata);
     } else if (key_size <= 16) {
-      return new BTreePrimaryIndex<GenericKey<16>, std::shared_ptr<ItemPointerHeader>, GenericComparator<16>,
+      return new BTreePrimaryIndex<GenericKey<16>, ItemPointerHeader*, GenericComparator<16>,
                              GenericEqualityChecker<16>>(metadata);
     } else if (key_size <= 24) {
-      return new BTreePrimaryIndex<GenericKey<24>, std::shared_ptr<ItemPointerHeader>, GenericComparator<24>,
+      return new BTreePrimaryIndex<GenericKey<24>, ItemPointerHeader*, GenericComparator<24>,
                              GenericEqualityChecker<24>>(metadata);
     } else if (key_size <= 32) {
-      return new BTreePrimaryIndex<GenericKey<32>, std::shared_ptr<ItemPointerHeader>, GenericComparator<32>,
+      return new BTreePrimaryIndex<GenericKey<32>, ItemPointerHeader*, GenericComparator<32>,
                              GenericEqualityChecker<32>>(metadata);
     } else if (key_size <= 48) {
-      return new BTreePrimaryIndex<GenericKey<48>, std::shared_ptr<ItemPointerHeader>, GenericComparator<48>,
+      return new BTreePrimaryIndex<GenericKey<48>, ItemPointerHeader*, GenericComparator<48>,
                              GenericEqualityChecker<48>>(metadata);
     } else if (key_size <= 64) {
-      return new BTreePrimaryIndex<GenericKey<64>, std::shared_ptr<ItemPointerHeader>, GenericComparator<64>,
+      return new BTreePrimaryIndex<GenericKey<64>, ItemPointerHeader*, GenericComparator<64>,
                              GenericEqualityChecker<64>>(metadata);
     } else if (key_size <= 96) {
-      return new BTreePrimaryIndex<GenericKey<96>, std::shared_ptr<ItemPointerHeader>, GenericComparator<96>,
+      return new BTreePrimaryIndex<GenericKey<96>, ItemPointerHeader*, GenericComparator<96>,
                              GenericEqualityChecker<96>>(metadata);
     } else if (key_size <= 128) {
-      return new BTreePrimaryIndex<GenericKey<128>, std::shared_ptr<ItemPointerHeader>,
+      return new BTreePrimaryIndex<GenericKey<128>, ItemPointerHeader*,
                              GenericComparator<128>,
                              GenericEqualityChecker<128>>(metadata);
     } else if (key_size <= 256) {
-      return new BTreePrimaryIndex<GenericKey<256>, std::shared_ptr<ItemPointerHeader>,
+      return new BTreePrimaryIndex<GenericKey<256>, ItemPointerHeader*,
                              GenericComparator<256>,
                              GenericEqualityChecker<256>>(metadata);
     } else if (key_size <= 512) {
-      return new BTreePrimaryIndex<GenericKey<512>, std::shared_ptr<ItemPointerHeader>,
+      return new BTreePrimaryIndex<GenericKey<512>, ItemPointerHeader*,
                              GenericComparator<512>,
                              GenericEqualityChecker<512>>(metadata);
     } else {
-      return new BTreePrimaryIndex<TupleKey, std::shared_ptr<ItemPointerHeader>, TupleKeyComparator,
+      return new BTreePrimaryIndex<TupleKey, ItemPointerHeader*, TupleKeyComparator,
                              TupleKeyEqualityChecker>(metadata);
     }
   }

@@ -58,9 +58,7 @@ void GCManager::Poll() {
           // Now that we know we need to recycle tuple, we need to delete all
           // tuples from the indexes to which it belongs as well.
           
-          // TODO: currently, we do not delete tuple from indexes,
-          // as we do not have a concurrent index yet. --Yingjun
-          //DeleteTupleFromIndexes(tuple_metadata);
+          DeleteTupleFromIndexes(tuple_metadata);
 
           auto tile_group_header =
               manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
@@ -71,6 +69,8 @@ void GCManager::Poll() {
                                               MAX_CID);
           tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id,
                                             MAX_CID);
+          tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id, INVALID_ITEMPOINTER);
+          tile_group_header->SetPrevItemPointer(tuple_metadata.tuple_slot_id, INVALID_ITEMPOINTER);
 
           std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
 
@@ -87,7 +87,7 @@ void GCManager::Poll() {
           }
 
         } else {
-          // if a tuple can't be reaped, add it back to the list.
+          // if a tuple cannot be reclaimed, then add it back to the list.
           possibly_free_list_.Push(tuple_metadata);
         }
       }  // end for
@@ -117,6 +117,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_
 
 
 // this function returns a free tuple slot, if one exists
+// called by data_table.
 ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (this->gc_type_ == GC_TYPE_OFF) {
     return ItemPointer();
@@ -134,9 +135,44 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
 }
 
 // delete a tuple from all its indexes it belongs to.
-// TODO: we do not perform this function, 
-// as we do not have concurrent bw tree right now.
-void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata __attribute__((unused))) {
+void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
+  
+  storage::DataTable *table = dynamic_cast<storage::DataTable*>(tile_group->GetAbstractTable());
+  assert(table != nullptr);
+
+  std::unique_ptr<storage::Tuple> expired_tuple(new storage::Tuple(table->GetSchema(), true));
+  tile_group->CopyTuple(tuple_metadata.tuple_slot_id, expired_tuple.get());
+
+  for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+    auto index = table->GetIndex(idx);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(table->GetSchema(), true));
+    key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
+
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+        auto tile_group_header = tile_group->GetHeader();
+        ItemPointer next_version = tile_group_header->GetNextItemPointer(tuple_metadata.tuple_slot_id);
+        // do we need to reset the prev_item_pointer for next_version??
+        assert(next_version.IsNull() == false);
+
+        std::vector<ItemPointerHeader*> item_pointer_headers;
+        index->ScanKey(key.get(), item_pointer_headers);
+        assert(item_pointer_headers.size() == 1);
+
+        item_pointer_headers[0]->rw_lock.AcquireWriteLock();
+        item_pointer_headers[0]->header = next_version;
+        item_pointer_headers[0]->rw_lock.ReleaseWriteLock();
+      } break;
+      default: {
+        index->DeleteEntry(key.get(), ItemPointer(tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id));
+      }
+    }
+
+  }
 }
 
 }  // namespace gc

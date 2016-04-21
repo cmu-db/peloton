@@ -137,7 +137,7 @@ bool IndexScanExecutor::DExecute() {
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
 
-  std::vector<std::shared_ptr<ItemPointerHeader>> tuple_location_headers;
+  std::vector<ItemPointerHeader*> tuple_location_headers;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
@@ -227,8 +227,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
 
-    // Print tile group visibility
-    // tile_group_header->PrintVisibility(txn_id, commit_id);
     result_.push_back(logical_tile.release());
   }
 
@@ -271,7 +269,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     auto tile_group_id = tuple_location.block;
     auto tuple_id = tuple_location.offset;
 
-    //while (true) {
 
       // if the tuple is visible.
       if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
@@ -297,18 +294,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             }
           }
         }
-        //break;
-      // } else {
-      //   ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
-      //   // if there is no next tuple.
-      //   if (next_item.IsNull() == true) {
-      //     break;
-      //   }
-      //   tile_group_id = next_item.block;
-      //   tuple_id = next_item.offset;
-      //   tile_group = manager.GetTileGroup(tile_group_id);
-      //   tile_group_header = tile_group.get()->GetHeader();
-      // }
       }
   }
   // Construct a logical tile for each block

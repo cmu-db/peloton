@@ -261,16 +261,15 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-// TODO: this function MUST be rewritten!!! --Yingjun
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   int index_count = GetIndexCount();
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
-      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
-                  std::placeholders::_1, std::placeholders::_2);
+  std::function<bool(const ItemPointer &)> fn
+      = std::bind(&concurrency::TransactionManager::IsOccupied, &transaction_manager,
+                  std::placeholders::_1);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -287,7 +286,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
         // TODO: get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
-        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+        if (index->CondInsertEntry(key.get(), location, fn) == false) {
           return false;
         }
 
@@ -316,9 +315,9 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const storage::Tuple *, const ItemPointer &)> fn
-      = std::bind(&concurrency::TransactionManager::IsVisbleOrDirty, &transaction_manager,
-                  std::placeholders::_1, std::placeholders::_2);
+  std::function<bool(const ItemPointer &)> fn
+      = std::bind(&concurrency::TransactionManager::IsOccupied, &transaction_manager,
+                  std::placeholders::_1);
 
   // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
@@ -335,7 +334,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
-        if (index->ConditionalInsertEntry(key.get(), location, fn) == false) {
+        if (index->CondInsertEntry(key.get(), location, fn) == false) {
           return false;
         }
         // auto locations = index->ScanKey(key.get());
