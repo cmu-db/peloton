@@ -15,8 +15,11 @@
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/log_file.h"
+#include "backend/executor/executors.h"
+
 #include <dirent.h>
 #include <vector>
+#include <set>
 
 namespace peloton {
 
@@ -48,6 +51,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void DoRecovery(void);
 
+  void RecoverIndex();
+
   void StartTransactionRecovery(cid_t commit_id);
 
   void CommitTransactionRecovery(cid_t commit_id);
@@ -68,9 +73,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void OpenNextLogFile();
 
-  LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
+  LogRecordType GetNextLogRecordTypeForRecovery();
 
-  void TruncateLog(txn_id_t);
+  void TruncateLog(cid_t);
 
   void SetLogDirectory(char *);
 
@@ -78,10 +83,20 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
-  txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
+  std::pair<cid_t, cid_t> ExtractMaxLogIdAndMaxDelimFromLogFileRecords(FILE *);
+
+  void SetLoggerID(int);
+
+  void UpdateMaxDelimiterForRecovery();
 
  private:
   std::string GetLogFileName(void);
+
+  bool RecoverTableIndexHelper(storage::DataTable *target_table,
+                               cid_t start_cid);
+
+  void InsertIndexEntry(storage::Tuple *tuple, storage::DataTable *table,
+                        ItemPointer target_location);
 
   //===--------------------------------------------------------------------===//
   // Member Variables
@@ -89,7 +104,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   // File pointer and descriptor
   FILE *log_file;
-  int log_file_fd;
+  int log_file_fd = INVALID_FILE_DESCRIPTOR;
 
   // Size of the log file
   size_t log_file_size;
@@ -122,7 +137,19 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string LOG_FILE_SUFFIX = ".log";
 
-  txn_id_t max_commit_id;
+  cid_t max_log_id_file = INVALID_CID;
+
+  CopySerializeOutput output_buffer;
+
+  std::set<cid_t> pending_commits;
+
+  int logger_id;
+
+  cid_t max_delimiter_file = 0;
+
+  bool test_mode_ = false;
+
+  bool should_create_new_file = false;
 };
 
 }  // namespace logging

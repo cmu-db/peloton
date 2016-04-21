@@ -58,8 +58,6 @@ void Transaction::RecordUpdate(const oid_t &tile_group_id,
       return;
     }
     assert(false);
-  } else {
-    assert(false);
   }
 }
 

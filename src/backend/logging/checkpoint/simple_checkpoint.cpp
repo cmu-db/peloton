@@ -21,6 +21,8 @@
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/log_record.h"
+#include "backend/logging/checkpoint_tile_scanner.h"
+
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
@@ -31,9 +33,6 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
-
-// configuration for testing
-extern CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace logging {
@@ -63,20 +62,13 @@ storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
 void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
 
 // Wrappers
-storage::DataTable *GetTable(TupleRecord tupleRecord);
+storage::DataTable *GetTable(TupleRecord &tupleRecord);
 
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
-SimpleCheckpoint &SimpleCheckpoint::GetInstance() {
-  static SimpleCheckpoint simple_checkpoint;
-  return simple_checkpoint;
-}
 
 SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
-    return;
-  }
   InitDirectory();
   InitVersionNumber();
 }
@@ -88,95 +80,55 @@ SimpleCheckpoint::~SimpleCheckpoint() {
   records_.clear();
 }
 
-void SimpleCheckpoint::Init() {
-  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_NORMAL) {
-    return;
-  }
-  std::thread checkpoint_thread(&SimpleCheckpoint::DoCheckpoint, this);
-  checkpoint_thread.detach();
-}
-
 void SimpleCheckpoint::DoCheckpoint() {
-  sleep(checkpoint_interval_);
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &log_manager = LogManager::GetInstance();
-  // wait if recovery is in process
-  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
-  logger_ = log_manager.GetBackendLogger();
+  // XXX get default backend logger
+  if (logger_ == nullptr) {
+    logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_DRAM_NVM);
+  }
 
-  while (true) {
-    // build executor context
-    std::unique_ptr<concurrency::Transaction> txn(
-        txn_manager.BeginTransaction());
-    start_commit_id = txn->GetBeginCommitId();
-    assert(txn);
-    assert(txn.get());
-    LOG_TRACE("Txn ID = %lu, Start commit id = %lu ", txn->GetTransactionId(),
-              start_commit_id);
+  // FIXME make sure everything up to start_cid is not garbage collected
+  start_commit_id = log_manager.GetPersistentFlushedCommitId();
+  LOG_INFO("DoCheckpoint cid = %lu", start_commit_id);
 
-    std::unique_ptr<executor::ExecutorContext> executor_context(
-        new executor::ExecutorContext(
-            txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
-    LOG_TRACE("Building the executor tree");
+  // Add txn begin record
+  std::shared_ptr<LogRecord> begin_record(
+      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id));
+  CopySerializeOutput begin_output_buffer;
+  begin_record->Serialize(begin_output_buffer);
+  records_.push_back(begin_record);
 
-    auto &catalog_manager = catalog::Manager::GetInstance();
-    auto database_count = catalog_manager.GetDatabaseCount();
-    bool failure = false;
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto database_count = catalog_manager.GetDatabaseCount();
 
-    // Add txn begin record
-    std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id));
-    CopySerializeOutput begin_output_buffer;
-    begin_record->Serialize(begin_output_buffer);
-    records_.push_back(begin_record);
+  // loop all databases
+  for (oid_t database_idx = 0; database_idx < database_count; database_idx++) {
+    auto database = catalog_manager.GetDatabase(database_idx);
+    auto table_count = database->GetTableCount();
+    auto database_oid = database->GetOid();
 
-    for (oid_t database_idx = 0; database_idx < database_count && !failure;
-         database_idx++) {
-      auto database = catalog_manager.GetDatabase(database_idx);
-      auto table_count = database->GetTableCount();
-      auto database_oid = database->GetOid();
-      for (oid_t table_idx = 0; table_idx < table_count && !failure;
-           table_idx++) {
-        /* Get the target table */
-        storage::DataTable *target_table = database->GetTable(table_idx);
-        assert(target_table);
-        LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
-                 table_idx, target_table->GetName().c_str());
-
-        auto schema = target_table->GetSchema();
-        assert(schema);
-        std::vector<oid_t> column_ids;
-        column_ids.resize(schema->GetColumnCount());
-        std::iota(column_ids.begin(), column_ids.end(), 0);
-
-        /* Construct the Peloton plan node */
-        LOG_TRACE("Initializing the executor tree");
-        std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
-            new planner::SeqScanPlan(target_table, nullptr, column_ids));
-        std::unique_ptr<executor::SeqScanExecutor> scan_executor(
-            new executor::SeqScanExecutor(scan_plan_node.get(),
-                                          executor_context.get()));
-        if (!Execute(scan_executor.get(), txn.get(), target_table,
-                     database_oid)) {
-          break;
-        }
-      }
+    // loop all tables
+    for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+      // Get the target table
+      storage::DataTable *target_table = database->GetTable(table_idx);
+      assert(target_table);
+      LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
+               table_idx, target_table->GetName().c_str());
+      Scan(target_table, database_oid);
     }
+  }
 
-    // if anything other than begin record is added
-    if (records_.size() > 1) {
-      std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
-      CopySerializeOutput commit_output_buffer;
-      commit_record->Serialize(commit_output_buffer);
-      records_.push_back(commit_record);
+  // if anything other than begin record is added
+  if (records_.size() > 1) {
+    std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
+        LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
+    CopySerializeOutput commit_output_buffer;
+    commit_record->Serialize(commit_output_buffer);
+    records_.push_back(commit_record);
 
-      CreateFile();
-      Persist();
-      Cleanup();
-    }
-
-    sleep(checkpoint_interval_);
+    CreateFile();
+    Persist();
+    Cleanup();
   }
 }
 
@@ -210,7 +162,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
     switch (record_type) {
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
-        LOG_INFO("Read checkpoint insert entry");
+        LOG_TRACE("Read checkpoint insert entry");
         InsertTuple(commit_id);
         break;
       }
@@ -219,7 +171,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
         break;
       }
       case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
-        LOG_INFO("Read checkpoint begin entry");
+        LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
         if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
                                         checkpoint_file_size_) == false) {
@@ -244,6 +196,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
     manager.SetNextOid(max_oid_);
   }
 
+  // FIXME this is not thread safe for concurrent checkpoint recovery
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
   return commit_id;
 }
@@ -273,45 +226,42 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
     LOG_ERROR("Torn checkpoint write.");
     return;
   }
-
   auto target_location = tuple_record.GetInsertLocation();
   auto tile_group_id = target_location.block;
   RecoverTuple(tuple.get(), table, target_location, commit_id);
-  RecoverIndex(tuple.get(), table, target_location);
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
+  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)",
+            target_location.block, target_location.offset);
 }
 
-bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
-                               concurrency::Transaction *txn,
-                               storage::DataTable *target_table,
-                               oid_t database_oid) {
-  // Prepare columns
+void SimpleCheckpoint::Scan(storage::DataTable *target_table,
+                            oid_t database_oid) {
   auto schema = target_table->GetSchema();
+  assert(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
 
-  // Initialize the seq scan executor
-  auto status = scan_executor->Init();
-  // Abort and cleanup
-  if (status == false) {
-    return false;
-  }
-  LOG_TRACE("Running the seq scan executor");
+  oid_t current_tile_group_offset = START_OID;
+  auto table_tile_group_count = target_table->GetTileGroupCount();
+  CheckpointTileScanner scanner;
 
-  // Execute seq scan until we get result tiles
-  for (;;) {
-    status = scan_executor->Execute();
-    // Stop
-    if (status == false) {
-      break;
-    }
+  while (current_tile_group_offset < table_tile_group_count) {
+    // Retrieve a tile group
+    auto tile_group = target_table->GetTileGroup(current_tile_group_offset);
 
     // Retrieve a logical tile
     std::unique_ptr<executor::LogicalTile> logical_tile(
-        scan_executor->GetOutput());
+        scanner.Scan(tile_group, column_ids, start_commit_id));
+
+    // Empty result
+    if (!logical_tile) {
+      current_tile_group_offset++;
+      continue;
+    }
+
     auto tile_group_id = logical_tile->GetColumnInfo(0)
                              .base_tile->GetTileGroup()
                              ->GetTileGroupId();
@@ -332,9 +282,8 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         ItemPointer location(tile_group_id, tuple_id);
         assert(logger_);
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
-            LOGRECORD_TYPE_TUPLE_INSERT, txn->GetTransactionId(),
-            target_table->GetOid(), database_oid, location, INVALID_ITEMPOINTER,
-            tuple.get()));
+            LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
+            database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
@@ -343,9 +292,10 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         records_.push_back(record);
       }
     }
+    current_tile_group_offset++;
   }
-  return true;
 }
+
 void SimpleCheckpoint::SetLogger(BackendLogger *logger) { logger_ = logger; }
 
 std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
@@ -415,10 +365,11 @@ void SimpleCheckpoint::Cleanup() {
   }
 
   // Truncate logs
-  auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
-  assert(frontend_logger);
-  reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
-      ->TruncateLog(start_commit_id);
+  // auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
+  // assert(frontend_logger);
+  // reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
+  //  ->TruncateLog(start_commit_id);
+  LogManager::GetInstance().TruncateLogs(start_commit_id);
 }
 
 void SimpleCheckpoint::InitVersionNumber() {

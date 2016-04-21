@@ -6,6 +6,7 @@
 
 logging_FILES = \
 			   backend/logging/log_manager.cpp \
+			   backend/logging/checkpoint_manager.cpp \
 			   backend/logging/logger.cpp \
 			   backend/logging/frontend_logger.cpp \
 			   backend/logging/backend_logger.cpp \
@@ -17,9 +18,11 @@ logging_FILES = \
 			   backend/logging/records/transaction_record.cpp \
 			   backend/logging/records/log_record_pool.cpp \
 			   backend/logging/checkpoint.cpp \
+			   backend/logging/checkpoint_tile_scanner.cpp \
 			   backend/logging/checkpoint/simple_checkpoint.cpp \
-			   backend/logging/log_file.cpp
-			   
+			   backend/logging/log_file.cpp \
+			   backend/logging/circular_buffer_pool.cpp \
+			   backend/logging/log_buffer.cpp
 
 logging_INCLUDES = \
                   -I$(srcdir)/logging

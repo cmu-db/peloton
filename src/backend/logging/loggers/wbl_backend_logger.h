@@ -37,14 +37,21 @@ class WriteBehindBackendLogger : public BackendLogger {
   void TruncateLocalQueue(oid_t offset);
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
-                            oid_t table_oid,
-                            oid_t db_oid,
+                            oid_t table_oid, oid_t db_oid,
                             ItemPointer insert_location,
                             ItemPointer delete_location,
                             const void *data = nullptr);
 
- private:
+  // FIXME temporarily defined for wbl_backend_logger to compile code
+  std::pair<cid_t, cid_t> PrepareLogBuffers() {
+    return std::pair<cid_t, cid_t>(INVALID_CID, INVALID_CID);
+  }
 
+  void GrantEmptyBuffer(__attribute__((unused)) std::unique_ptr<LogBuffer>) {
+    // FIXME temporarily defined for wbl_backend_logger to compile code
+  }
+
+ private:
   CopySerializeOutput output_buffer;
 };
 
