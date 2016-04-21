@@ -35,7 +35,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d %d %d:: %lf tps", state.update_ratio, state.scale_factor,
+  LOG_INFO("%lf %d %d %d %d :: %lf tps", state.update_ratio, state.scale_factor,
            state.column_count, state.logging_enabled, state.sync_commit,  stat);
 
   out << state.update_ratio << " ";
