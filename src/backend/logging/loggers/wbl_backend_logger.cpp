@@ -20,21 +20,6 @@
 namespace peloton {
 namespace logging {
 
-/**
- * @brief log LogRecord
- * @param log record
- */
-void WriteBehindBackendLogger::Log(LogRecord *record) {
-  // Enqueue the serialized log record into the queue
-  record->Serialize(output_buffer);
-
-  {
-    // FIXME change the interface of write behind logging
-    //    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    //    local_queue.push_back(std::unique_ptr<LogRecord>(record));
-  }
-}
-
 LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
