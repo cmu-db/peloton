@@ -127,7 +127,9 @@ StorageManager::StorageManager()
   std::cout << "Data path :: " << data_file_name << "\n";
 
   // Create a data file
-  if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
+  if ((data_fd = open(data_file_name.c_str(), 
+                  O_CREAT | O_TRUNC | O_RDWR, 
+                  S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
     perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
@@ -192,6 +194,9 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
         }
 
         void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
+
+        if(rand() % 64 == 0)
+            printf("Offset : %lu MB \n", data_file_offset / (1024 * 1024));
 
         // offset by requested size
         data_file_offset += size;
