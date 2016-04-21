@@ -195,9 +195,6 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 
         void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
 
-        if(rand() % 64 == 0)
-            printf("Offset : %lu MB \n", data_file_offset / (1024 * 1024));
-
         // offset by requested size
         data_file_offset += size;
         return address;
