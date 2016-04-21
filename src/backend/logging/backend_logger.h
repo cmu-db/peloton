@@ -53,8 +53,6 @@ class BackendLogger : public Logger {
                                     ItemPointer delete_location,
                                     const void *data = nullptr) = 0;
 
-  // cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
-
   void SetLoggingCidLowerBound(cid_t cid) {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
@@ -84,7 +82,7 @@ class BackendLogger : public Logger {
   int GetFrontendLoggerID() { return frontend_logger_id; }
 
  protected:
-  // XXX the lock for the buffer being used currently
+  // the lock for the buffer being used currently
   Spinlock log_buffer_lock;
 
   std::vector<std::unique_ptr<LogBuffer>> local_queue;
