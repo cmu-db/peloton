@@ -96,7 +96,7 @@
 // template <typename KeyType, typename ValueType, class KeyComparator,
 //     class KeyEqualityChecker>
 // bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
-// ::ConditionalInsertEntry(const storage::Tuple *key,
+// ::CondInsertEntry(const storage::Tuple *key,
 //     const ItemPointer &location,
 //     std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate) {
 

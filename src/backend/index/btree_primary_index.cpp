@@ -30,52 +30,28 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeP
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-           KeyEqualityChecker>::~BTreePrimaryIndex() {}
+           KeyEqualityChecker>::~BTreePrimaryIndex() {
+            for (auto entry = container.begin(); entry != container.end(); ++entry) {
+              delete entry->second;
+              entry->second = nullptr;
+            }
+           }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
-                                                 ItemPointer &location) {
+                                                 const ItemPointer &location) {
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, std::shared_ptr<ItemPointerHeader>(new ItemPointerHeader(location)));
+  std::pair<KeyType, ValueType> entry(index_key, new ItemPointerHeader(location));
 
   {
     index_lock.WriteLock();
 
     // Insert the key, val pair
     container.insert(entry);
-
-    index_lock.Unlock();
-  }
-
-  return true;
-}
-
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-                KeyEqualityChecker>::UpdateEntry(const storage::Tuple *key,
-                                                 const ItemPointer &location) {
-
-  KeyType index_key;
-  index_key.SetFromKey(key);
-
-  {
-    index_lock.ReadLock();
-
-    // find the <key, location> pair
-    auto entries = container.equal_range(index_key);
-    // for (auto entry = entries.first; entry != entries.second; ++entry) {
-    //   result.push_back(entry->second.header);
-    // }
-    std::shared_ptr<ItemPointerHeader> ip_header = entries.first->second;
-
-    ip_header->rw_lock.AcquireWriteLock();
-    ip_header->header = location;
-    ip_header->rw_lock.ReleaseWriteLock();
 
     index_lock.Unlock();
   }
@@ -126,9 +102,9 @@ bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
     class KeyEqualityChecker>
 bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
-::ConditionalInsertEntry(const storage::Tuple *key,
+::CondInsertEntry(const storage::Tuple *key,
     const ItemPointer &location,
-    std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate) {
+    std::function<bool(const ItemPointer &)> predicate) {
 
   KeyType index_key;
   index_key.SetFromKey(key);
@@ -139,14 +115,14 @@ bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      if (predicate(key, entry->second->header)) {
+      if (predicate(entry->second->header)) {
         // this key is already visible or dirty in the index
         return false;
       }
     }
 
     // Insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(index_key, std::shared_ptr<ItemPointerHeader>(new ItemPointerHeader(location))));
+    container.insert(std::pair<KeyType, ValueType>(index_key, new ItemPointerHeader(location)));
 
     index_lock.Unlock();
   }
@@ -219,7 +195,7 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            std::shared_ptr<ItemPointerHeader> location_header = scan_itr->second;
+            ItemPointerHeader* location_header = scan_itr->second;
             result.push_back(location_header->header);
           } else {
             // We can stop scanning if we know that all constraints are equal
@@ -252,7 +228,7 @@ void BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 
     // scan all entries
     while (itr != container.end()) {
-      std::shared_ptr<ItemPointerHeader> location = itr->second;
+      ItemPointerHeader *location = itr->second;
       result.push_back(location->header);
       itr++;
     }
@@ -298,7 +274,7 @@ void
 BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
-    const ScanDirectionType &scan_direction, std::vector<std::shared_ptr<ItemPointerHeader>> &result) {
+    const ScanDirectionType &scan_direction, std::vector<ItemPointerHeader*> &result) {
   KeyType index_key;
 
   // Check if we have leading (leftmost) column equality
@@ -356,7 +332,7 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            std::shared_ptr<ItemPointerHeader> location_header = scan_itr->second;
+            ItemPointerHeader *location_header = scan_itr->second;
             result.push_back(location_header);
           } else {
             // We can stop scanning if we know that all constraints are equal
@@ -381,7 +357,7 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-                                    KeyEqualityChecker>::ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result) {
+                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointerHeader*> &result) {
   {
     index_lock.ReadLock();
 
@@ -389,7 +365,7 @@ void BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 
     // scan all entries
     while (itr != container.end()) {
-      std::shared_ptr<ItemPointerHeader> location = itr->second;
+      ItemPointerHeader *location = itr->second;
       result.push_back(location);
       itr++;
     }
@@ -406,7 +382,7 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
-    const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result) {
+    const storage::Tuple *key, std::vector<ItemPointerHeader*> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -439,41 +415,41 @@ std::string BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 }
 
 // Explicit template instantiation
-template class BTreePrimaryIndex<IntsKey<1>, std::shared_ptr<ItemPointerHeader>, IntsComparator<1>,
+template class BTreePrimaryIndex<IntsKey<1>, ItemPointerHeader*, IntsComparator<1>,
                           IntsEqualityChecker<1>>;
-template class BTreePrimaryIndex<IntsKey<2>, std::shared_ptr<ItemPointerHeader>, IntsComparator<2>,
+template class BTreePrimaryIndex<IntsKey<2>, ItemPointerHeader*, IntsComparator<2>,
                           IntsEqualityChecker<2>>;
-template class BTreePrimaryIndex<IntsKey<3>, std::shared_ptr<ItemPointerHeader>, IntsComparator<3>,
+template class BTreePrimaryIndex<IntsKey<3>, ItemPointerHeader*, IntsComparator<3>,
                           IntsEqualityChecker<3>>;
-template class BTreePrimaryIndex<IntsKey<4>, std::shared_ptr<ItemPointerHeader>, IntsComparator<4>,
+template class BTreePrimaryIndex<IntsKey<4>, ItemPointerHeader*, IntsComparator<4>,
                           IntsEqualityChecker<4>>;
 
-template class BTreePrimaryIndex<GenericKey<4>, std::shared_ptr<ItemPointerHeader>, GenericComparator<4>,
+template class BTreePrimaryIndex<GenericKey<4>, ItemPointerHeader*, GenericComparator<4>,
                           GenericEqualityChecker<4>>;
-template class BTreePrimaryIndex<GenericKey<8>, std::shared_ptr<ItemPointerHeader>, GenericComparator<8>,
+template class BTreePrimaryIndex<GenericKey<8>, ItemPointerHeader*, GenericComparator<8>,
                           GenericEqualityChecker<8>>;
-template class BTreePrimaryIndex<GenericKey<12>, std::shared_ptr<ItemPointerHeader>, GenericComparator<12>,
+template class BTreePrimaryIndex<GenericKey<12>, ItemPointerHeader*, GenericComparator<12>,
                           GenericEqualityChecker<12>>;
-template class BTreePrimaryIndex<GenericKey<16>, std::shared_ptr<ItemPointerHeader>, GenericComparator<16>,
+template class BTreePrimaryIndex<GenericKey<16>, ItemPointerHeader*, GenericComparator<16>,
                           GenericEqualityChecker<16>>;
-template class BTreePrimaryIndex<GenericKey<24>, std::shared_ptr<ItemPointerHeader>, GenericComparator<24>,
+template class BTreePrimaryIndex<GenericKey<24>, ItemPointerHeader*, GenericComparator<24>,
                           GenericEqualityChecker<24>>;
-template class BTreePrimaryIndex<GenericKey<32>, std::shared_ptr<ItemPointerHeader>, GenericComparator<32>,
+template class BTreePrimaryIndex<GenericKey<32>, ItemPointerHeader*, GenericComparator<32>,
                           GenericEqualityChecker<32>>;
-template class BTreePrimaryIndex<GenericKey<48>, std::shared_ptr<ItemPointerHeader>, GenericComparator<48>,
+template class BTreePrimaryIndex<GenericKey<48>, ItemPointerHeader*, GenericComparator<48>,
                           GenericEqualityChecker<48>>;
-template class BTreePrimaryIndex<GenericKey<64>, std::shared_ptr<ItemPointerHeader>, GenericComparator<64>,
+template class BTreePrimaryIndex<GenericKey<64>, ItemPointerHeader*, GenericComparator<64>,
                           GenericEqualityChecker<64>>;
-template class BTreePrimaryIndex<GenericKey<96>, std::shared_ptr<ItemPointerHeader>, GenericComparator<96>,
+template class BTreePrimaryIndex<GenericKey<96>, ItemPointerHeader*, GenericComparator<96>,
                           GenericEqualityChecker<96>>;
-template class BTreePrimaryIndex<GenericKey<128>, std::shared_ptr<ItemPointerHeader>, GenericComparator<128>,
+template class BTreePrimaryIndex<GenericKey<128>, ItemPointerHeader*, GenericComparator<128>,
                           GenericEqualityChecker<128>>;
-template class BTreePrimaryIndex<GenericKey<256>, std::shared_ptr<ItemPointerHeader>, GenericComparator<256>,
+template class BTreePrimaryIndex<GenericKey<256>, ItemPointerHeader*, GenericComparator<256>,
                           GenericEqualityChecker<256>>;
-template class BTreePrimaryIndex<GenericKey<512>, std::shared_ptr<ItemPointerHeader>, GenericComparator<512>,
+template class BTreePrimaryIndex<GenericKey<512>, ItemPointerHeader*, GenericComparator<512>,
                           GenericEqualityChecker<512>>;
 
-template class BTreePrimaryIndex<TupleKey, std::shared_ptr<ItemPointerHeader>, TupleKeyComparator,
+template class BTreePrimaryIndex<TupleKey, ItemPointerHeader*, TupleKeyComparator,
                           TupleKeyEqualityChecker>;
 
 }  // End index namespace

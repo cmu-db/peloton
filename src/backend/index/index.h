@@ -118,22 +118,19 @@ class Index : public Printable {
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
-                           ItemPointer &location) = 0;
+                           const ItemPointer &location) = 0;
 
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
-                           const ItemPointer &location) = 0;
-
-  virtual bool UpdateEntry(const storage::Tuple *key, 
                            const ItemPointer &location) = 0;
 
   // First retrieve all Key-Value pairs of the given key
   // Return false if any of those k-v pairs satisfy the predicate
   // If not any of those k-v pair satisfy the predicate, insert the k-v pair into the index and return true.
   // This function should be called for all primary/unique index insert
-  virtual bool ConditionalInsertEntry(const storage::Tuple *key,
+  virtual bool CondInsertEntry(const storage::Tuple *key,
                                       const ItemPointer &location,
-                                      std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate) = 0;
+                                      std::function<bool(const ItemPointer &)> predicate) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -158,11 +155,11 @@ class Index : public Printable {
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &exprs,
       const ScanDirectionType &scan_direction,
-      std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
+      std::vector<ItemPointerHeader*> &result) = 0;
 
-  virtual void ScanAllKeys(std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
+  virtual void ScanAllKeys(std::vector<ItemPointerHeader*> &result) = 0;
 
-  virtual void ScanKey(const storage::Tuple *key, std::vector<std::shared_ptr<ItemPointerHeader>> &result) = 0;
+  virtual void ScanKey(const storage::Tuple *key, std::vector<ItemPointerHeader*> &result) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS

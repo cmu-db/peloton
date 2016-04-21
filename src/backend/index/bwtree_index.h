@@ -48,7 +48,7 @@
 //   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
 //   // TODO: implement this
-//   bool ConditionalInsertEntry(const storage::Tuple *key __attribute__((unused)),
+//   bool CondInsertEntry(const storage::Tuple *key __attribute__((unused)),
 //                               const ItemPointer &location __attribute__((unused)),
 //                               std::function<bool(const storage::Tuple *, const ItemPointer &)> predicate __attribute__((unused)))
 //                               {return true;}
