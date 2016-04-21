@@ -111,8 +111,8 @@ void TransactionManager::EndTransaction(Transaction *txn,
           LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
       logger->Log(record);
 
-      // TODO: Wait for flushing ?
-      //logger->WaitForFlushing();
+      // Wait for flushing
+      logger->WaitForFlushing();
     }
   }
 }
