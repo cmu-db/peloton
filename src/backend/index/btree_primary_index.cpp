@@ -84,6 +84,8 @@ bool BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
 
         if ((value.block == location.block) &&
             (value.offset == location.offset)) {
+          delete iterator->second;
+          iterator->second = nullptr;
           container.erase(iterator);
           // Set try again
           try_again = true;
