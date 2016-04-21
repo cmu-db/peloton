@@ -22,10 +22,11 @@
 #include "backend/concurrency/transaction.h"
 #include "loggers/wal_frontend_logger.h"
 
+#define DEFAULT_NUM_FRONTEND_LOGGERS 1
+
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
-
 extern LoggingType peloton_logging_mode;
 
 namespace peloton {
@@ -53,10 +54,10 @@ class LogManager {
   static LogManager &GetInstance(void);
 
   // configuration
-  static void Configure(LoggingType logging_type, bool test_mode = false,
-                        unsigned int num_frontend_loggers = 1,
-                        LoggerMappingStrategyType logger_mapping_strategy =
-                            LOGGER_MAPPING_ROUND_ROBIN) {
+  void Configure(LoggingType logging_type, bool test_mode = false,
+                 unsigned int num_frontend_loggers = 1,
+                 LoggerMappingStrategyType logger_mapping_strategy =
+                     LOGGER_MAPPING_ROUND_ROBIN) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
     num_frontend_loggers_ = num_frontend_loggers;
@@ -182,10 +183,15 @@ class LogManager {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-  static LoggingType logging_type_;
-  static bool test_mode_;
-  static unsigned int num_frontend_loggers_;
-  static LoggerMappingStrategyType logger_mapping_strategy_;
+
+  // static configurations for logging
+  LoggingType logging_type_ = LOGGING_TYPE_INVALID;
+
+  bool test_mode_ = false;
+
+  unsigned int num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
+
+  LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
