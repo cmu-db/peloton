@@ -274,7 +274,7 @@ void LoggingScheduler::Run() {
 }
 
 void LoggingScheduler::Init() {
-  logging::LogManager::Configure(LOGGING_TYPE_DRAM_NVM, true,
+  logging::LogManager::Configure(LOGGING_TYPE_NVM_WAL, true,
                                  num_frontend_logger, LOGGER_MAPPING_MANUAL);
   log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager->ResetFrontendLoggers();

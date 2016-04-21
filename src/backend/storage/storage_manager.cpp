@@ -87,8 +87,7 @@ StorageManager::StorageManager()
 
   switch (peloton_logging_mode) {
     // Check for NVM FS for data
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD: {
+    case LOGGING_TYPE_NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
@@ -98,8 +97,7 @@ StorageManager::StorageManager()
     } break;
 
     // Check for HDD FS
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD: {
+    case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
@@ -127,7 +125,9 @@ StorageManager::StorageManager()
   LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
-  if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
+  if ((data_fd = open(data_file_name.c_str(), 
+                  O_CREAT | O_TRUNC | O_RDWR, 
+                  S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
     perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
@@ -154,7 +154,7 @@ StorageManager::StorageManager()
 
 StorageManager::~StorageManager() {
   // Check if we need a PMEM pool
-  if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
+  if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
 
   // sync and unmap the data file
   if(data_file_address != nullptr) {
@@ -185,7 +185,11 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       {
         std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
 
-        if (data_file_offset >= data_file_len) return nullptr;
+        if (data_file_offset >= data_file_len) {
+          throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
+                          " length : " + std::to_string(data_file_len));
+          return nullptr;
+        }
 
         void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
 
@@ -196,7 +200,10 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
     } break;
 
     case BACKEND_TYPE_INVALID:
-    default: { return nullptr; }
+    default: {
+      throw Exception("invalid backend: " + std::to_string(data_file_len));
+      return nullptr;
+    }
   }
 }
 

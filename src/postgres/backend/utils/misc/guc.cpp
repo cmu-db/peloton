@@ -417,14 +417,19 @@ typedef enum LoggingType
 {
   LOGGING_TYPE_INVALID, /* No logging */
 
-  LOGGING_TYPE_DRAM_NVM = 10,   /* Aries */
-  LOGGING_TYPE_NVM_NVM /* Peloton */
+  // NVM
+  LOGGING_TYPE_NVM_WAL,
+  LOGGING_TYPE_NVM_WBL,
+
+  // HDD
+  LOGGING_TYPE_HDD_WAL,
+  LOGGING_TYPE_HDD_WBL
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
   {"invalid", LOGGING_TYPE_INVALID, false},
-  {"aries", LOGGING_TYPE_DRAM_NVM, false},
-  {"peloton", LOGGING_TYPE_NVM_NVM, false},
+  {"aries", LOGGING_TYPE_NVM_WAL, false},
+  {"peloton", LOGGING_TYPE_NVM_WBL, false},
   {NULL, 0, false}
 };
 

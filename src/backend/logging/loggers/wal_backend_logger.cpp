@@ -26,7 +26,7 @@ WriteAheadBackendLogger::WriteAheadBackendLogger()
           std::unique_ptr<BufferPool>(new CircularBufferPool())),
       persist_buffer_pool_(
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
-  logging_type = LOGGING_TYPE_DRAM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WAL;
   frontend_logger_id = -1; // invalid
   LOG_INFO("INSIDE CONSTRUCTOR");
 }

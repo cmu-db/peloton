@@ -77,9 +77,9 @@ static void WriteOutput(double value) {
     fsync_count = frontend_logger->GetFsyncCount();
   }
 
-  LOG_INFO("fsync count : %d", fsync_count);
-  LOG_INFO("clflush count : %lu", storage_manager.GetClflushCount());
-  LOG_INFO("msync count : %lu", storage_manager.GetMsyncCount());
+  LOG_INFO("LOG  :: FSYNC count         : %d", fsync_count);
+  LOG_INFO("DATA :: CLFLUSH count (NVM) : %lu", storage_manager.GetClflushCount());
+  LOG_INFO("DATA :: MSYNC count   (HDD) : %lu", storage_manager.GetMsyncCount());
 
   out << state.logging_type << " ";
   out << ycsb::state.update_ratio << " ";
