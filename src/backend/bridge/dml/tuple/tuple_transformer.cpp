@@ -164,59 +164,71 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     } break;
 
     case POSTGRES_VALUE_TYPE_TEXT_ARRAY: {
-      ArrayType *arr = DatumGetArrayTypeP(datum);
-      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      Datum *elems = nullptr;
-      int i;
-      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
-          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
-        LOG_ERROR("expected 1-D text array");
+      if (datum == 0) {
+        value = ValueFactory::GetArrayValueFromSizeAndType(0, VALUE_TYPE_ARRAY);
+        std::vector<Value> vecValue;
+        value.SetArrayElements(vecValue);
+      } else {
+        ArrayType *arr = DatumGetArrayTypeP(datum);
+        int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+        Datum *elems = nullptr;
+        int i;
+        if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+            ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_TEXT)
+          LOG_ERROR("expected 1-D text array");
 
-      deconstruct_array(arr, POSTGRES_VALUE_TYPE_TEXT, -1, false, 'i', &elems,
-                        NULL, &nelems);
+        deconstruct_array(arr, POSTGRES_VALUE_TYPE_TEXT, -1, false, 'i', &elems,
+            NULL, &nelems);
 
-      value =
+        value =
           ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-      std::vector<Value> vecValue;
+        std::vector<Value> vecValue;
 
-      for (i = 0; i < nelems; ++i) {
-        char *pText = TextDatumGetCString(elems[i]);
-        std::string str(pText);
-        LOG_TRACE("%s %u", pText, ARR_ELEMTYPE(arr));
-        VarlenPool *data_pool = nullptr;
-        LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
-        Value val = ValueFactory::GetStringValue(str, data_pool);
-        vecValue.push_back(val);
+        for (i = 0; i < nelems; ++i) {
+          char *pText = TextDatumGetCString(elems[i]);
+          std::string str(pText);
+          LOG_TRACE("%s %u", pText, ARR_ELEMTYPE(arr));
+          VarlenPool *data_pool = nullptr;
+          LOG_TRACE("len = %lu , text = \"%s\"", str.length(), str.c_str());
+          Value val = ValueFactory::GetStringValue(str, data_pool);
+          vecValue.push_back(val);
+        }
+
+        value.SetArrayElements(vecValue);
+
       }
-
-      value.SetArrayElements(vecValue);
-
     } break;
 
     case POSTGRES_VALUE_TYPE_INT2_ARRAY: {
-      ArrayType *arr = DatumGetArrayTypeP(datum);
-      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      int i;
-      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
-          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_SMALLINT)
-        LOG_ERROR("expected 1-D int2 array");
+      if (datum == 0) {
+        value = ValueFactory::GetArrayValueFromSizeAndType(0, VALUE_TYPE_ARRAY);
+        std::vector<Value> vecValue;
+        value.SetArrayElements(vecValue);
+      } else {
+        ArrayType *arr = DatumGetArrayTypeP(datum);
+        int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+        int i;
+        if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+            ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_SMALLINT)
+          LOG_ERROR("expected 1-D int2 array");
 
-      int16_t *pdata = (int16_t *)ARR_DATA_PTR(arr);
-      value =
+        int16_t *pdata = (int16_t *)ARR_DATA_PTR(arr);
+        value =
           ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-      std::vector<Value> vecValue;
+        std::vector<Value> vecValue;
 
-      for (i = 0; i < nelems; ++i) {
-        int16_t smallint = pdata[i];
-        LOG_TRACE("%d", smallint);
-        Value val = ValueFactory::GetSmallIntValue(smallint);
-        vecValue.push_back(val);
+        for (i = 0; i < nelems; ++i) {
+          int16_t smallint = pdata[i];
+          LOG_TRACE("%d", smallint);
+          Value val = ValueFactory::GetSmallIntValue(smallint);
+          vecValue.push_back(val);
+        }
+
+        value.SetArrayElements(vecValue);
+
       }
-
-      value.SetArrayElements(vecValue);
-
     } break;
 
     case POSTGRES_VALUE_TYPE_INT4_ARRAY: {
@@ -225,29 +237,29 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
         std::vector<Value> vecValue;
         value.SetArrayElements(vecValue);
       } else {
-      ArrayType *arr = DatumGetArrayTypeP(datum);
-      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      // Datum *elems;
-      int i;
-      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
-          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_INTEGER)
-        LOG_ERROR("expected 1-D int4 array");
+        ArrayType *arr = DatumGetArrayTypeP(datum);
+        int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+        // Datum *elems;
+        int i;
+        if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+            ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_INTEGER)
+          LOG_ERROR("expected 1-D int4 array");
 
-      int32_t *pdata = (int32_t *)ARR_DATA_PTR(arr);
-      value =
+        int32_t *pdata = (int32_t *)ARR_DATA_PTR(arr);
+        value =
           ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-      std::vector<Value> vecValue;
+        std::vector<Value> vecValue;
 
-      for (i = 0; i < nelems; ++i) {
-        // int32_t integer = DatumGetInt32(elems[i]);
-        int32_t integer = pdata[i];
-        LOG_TRACE("%d", integer);
-        Value val = ValueFactory::GetIntegerValue(integer);
-        vecValue.push_back(val);
-      }
+        for (i = 0; i < nelems; ++i) {
+          // int32_t integer = DatumGetInt32(elems[i]);
+          int32_t integer = pdata[i];
+          LOG_TRACE("%d", integer);
+          Value val = ValueFactory::GetIntegerValue(integer);
+          vecValue.push_back(val);
+        }
 
-      value.SetArrayElements(vecValue);
+        value.SetArrayElements(vecValue);
 
       }
 
@@ -255,31 +267,37 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     // FLOADT4 is same with double (8 bytes) ?
     case POSTGRES_VALUE_TYPE_FLOADT4_ARRAY: {
-      ArrayType *arr = DatumGetArrayTypeP(datum);
-      int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
-      int i;
-      if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
-          ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_DOUBLE)
-        LOG_ERROR("expected 1-D floadt4 array");
+      if (datum == 0) {
+        value = ValueFactory::GetArrayValueFromSizeAndType(0, VALUE_TYPE_ARRAY);
+        std::vector<Value> vecValue;
+        value.SetArrayElements(vecValue);
+      } else {
+        ArrayType *arr = DatumGetArrayTypeP(datum);
+        int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+        int i;
+        if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) ||
+            ARR_ELEMTYPE(arr) != POSTGRES_VALUE_TYPE_DOUBLE)
+          LOG_ERROR("expected 1-D floadt4 array");
 
-      value =
+        value =
           ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-      double *pdata = (double *)ARR_DATA_PTR(arr);
-      value =
+        double *pdata = (double *)ARR_DATA_PTR(arr);
+        value =
           ValueFactory::GetArrayValueFromSizeAndType(nelems, VALUE_TYPE_ARRAY);
 
-      std::vector<Value> vecValue;
+        std::vector<Value> vecValue;
 
-      for (i = 0; i < nelems; ++i) {
-        double fpnum = pdata[i];
-        LOG_TRACE("%f", fpnum);
-        Value val = ValueFactory::GetDoubleValue(fpnum);
-        vecValue.push_back(val);
+        for (i = 0; i < nelems; ++i) {
+          double fpnum = pdata[i];
+          LOG_TRACE("%f", fpnum);
+          Value val = ValueFactory::GetDoubleValue(fpnum);
+          vecValue.push_back(val);
+        }
+
+        value.SetArrayElements(vecValue);
+
       }
-
-      value.SetArrayElements(vecValue);
-
     } break;
 
     // In Postgres, dates are 4-byte values representing the number of days
