@@ -85,6 +85,10 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::pair<cid_t, cid_t> ExtractMaxLogIdAndMaxDelimFromLogFileRecords(FILE *);
 
+  void SetLoggerID(int);
+
+  void UpdateMaxDelimiterForRecovery();
+
  private:
   std::string GetLogFileName(void);
 
@@ -137,11 +141,13 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   CopySerializeOutput output_buffer;
 
-  std::set<cid_t> pending_commits;
+  int logger_id;
 
   cid_t max_delimiter_file = 0;
 
   bool test_mode_ = false;
+
+  bool should_create_new_file = false;
 };
 
 }  // namespace logging

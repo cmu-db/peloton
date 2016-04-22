@@ -1,7 +1,4 @@
 -- create the test tables
-DROP TABLE IF EXISTS E;
-DROP TABLE IF EXISTS F;
-
 SET ENABLE_MERGEJOIN TO FALSE;
 SET ENABLE_HASHJOIN TO FALSE;
 SET ENABLE_NESTLOOP TO TRUE;
@@ -10,11 +7,6 @@ CREATE TABLE E(id INT, value INT);
 CREATE TABLE F(id INT, value INT);
 
 -- join with empty tables
-SELECT * FROM E INNER JOIN F ON E.value = F.value;
-SELECT * FROM E LEFT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E RIGHT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E FULL OUTER JOIN F ON E.value = F.value;
-
 -- load in the data
 
 INSERT INTO E VALUES(200, 200);
@@ -35,19 +27,9 @@ INSERT INTO F VALUES(223, 223);
 INSERT INTO F VALUES(224, 224);
 
 -- join with non empty tables
-SELECT * FROM E INNER JOIN F ON E.value = F.value;
-SELECT * FROM E LEFT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E RIGHT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E FULL OUTER JOIN F ON E.value = F.value;
-
 -- load in some more data
 
 INSERT INTO F VALUES(225, 225);
 INSERT INTO F VALUES(226, 226);
 INSERT INTO E VALUES(204, 204);
 
--- join with non empty tables
-SELECT * FROM E INNER JOIN F ON E.value = F.value;
-SELECT * FROM E LEFT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E RIGHT OUTER JOIN F ON E.value = F.value;
-SELECT * FROM E FULL OUTER JOIN F ON E.value = F.value;

@@ -21,6 +21,9 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "executor/executor_tests_util.h"
+#include <climits>
+
+#define INVALID_LOGGER_IDX UINT_MAX
 
 namespace peloton {
 namespace test {
@@ -55,7 +58,8 @@ class LoggingTestsUtil {
 struct LoggingOperation {
   logging_op_type op;
   cid_t cid;
-  LoggingOperation(logging_op_type op_, cid_t cid_) : op(op_), cid(cid_){};
+  LoggingOperation(logging_op_type op_, cid_t cid_ = INVALID_CID)
+      : op(op_), cid(cid_){};
 };
 
 // The schedule for logging execution
@@ -64,279 +68,201 @@ struct LoggingSchedule {
   LoggingSchedule() {}
 };
 
-// A thread wrapper that runs a backend/frontend logger
-class LoggingThread {
+class LoggerId {
  public:
-  LoggingThread(LoggingSchedule *sched, logging::LogManager *log_manager_,
-                unsigned int thread_id_, storage::DataTable *table_)
-      : thread_id(thread_id_),
+  unsigned int front;
+  unsigned int back;
+  LoggerId(unsigned int front_, unsigned int back_ = INVALID_LOGGER_IDX)
+      : front(front_), back(back_) {}
+
+  LoggerId() : front(INVALID_LOGGER_IDX), back(INVALID_LOGGER_IDX) {}
+};
+
+// A thread wrapper that runs a backend/frontend logger
+class AbstractLoggingThread {
+ public:
+  AbstractLoggingThread(LoggingSchedule *sched,
+                        logging::LogManager *log_manager_,
+                        unsigned int frontend_id_, storage::DataTable *table_)
+      : frontend_id(frontend_id_),
         schedule(sched),
         log_manager(log_manager_),
         cur_seq(0),
         go(false),
         table(table_) {}
 
-  void RunLoop() {
-    if (thread_id != 0) {
-      backend_logger = reinterpret_cast<logging::WriteAheadBackendLogger *>(
-          log_manager->GetBackendLogger());
-    }
-    LOG_INFO("Thread %u has %d ops", thread_id,
-             (int)schedule->operations.size());
-    while (true) {
-      while (!go) {
-        std::chrono::milliseconds sleep_time(1);
-        std::this_thread::sleep_for(sleep_time);
-      };
-      ExecuteNext();
-      if (cur_seq == (int)schedule->operations.size()) {
-        go = false;
-        return;
-      }
-      go = false;
-    }
+  virtual void RunLoop() = 0;
+
+  void MainLoop();
+
+  std::thread Run() {
+    return std::thread(&AbstractLoggingThread::RunLoop, this);
   }
 
-  void RunNoWait() {
-    if (thread_id != 0) {
-      backend_logger = reinterpret_cast<logging::WriteAheadBackendLogger *>(
-          log_manager->GetBackendLogger());
-    }
-    LOG_INFO("Thread %u has %d ops", thread_id,
-             (int)schedule->operations.size());
-    while (true) {
-      ExecuteNext();
-      if (cur_seq == (int)schedule->operations.size()) {
-        break;
-      }
-    }
-  }
+  virtual void ExecuteNext() = 0;
 
-  std::thread Run(bool no_wait = false) {
-    if (!no_wait)
-      return std::thread(&LoggingThread::RunLoop, this);
-    else
-      return std::thread(&LoggingThread::RunNoWait, this);
-  }
+  virtual ~AbstractLoggingThread() {}
 
-  void ExecuteNext() {
-    // Prepare data for operation
-    logging_op_type op = schedule->operations[cur_seq].op;
-    cid_t cid = schedule->operations[cur_seq].cid;
-
-    cur_seq++;
-
-    // Execute the operation
-    switch (op) {
-      case LOGGING_OP_PREPARE: {
-        LOG_INFO("Execute Prepare");
-        log_manager->PrepareLogging();
-        break;
-      }
-      case LOGGING_OP_BEGIN: {
-        LOG_INFO("Execute Begin %d", (int)cid);
-        log_manager->LogBeginTransaction(cid);
-        break;
-      }
-      case LOGGING_OP_INSERT: {
-        LOG_INFO("Execute Insert %d", (int)cid);
-        auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
-        std::unique_ptr<logging::LogRecord> tuple_record(
-            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT, cid, 1,
-                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
-                                           INVALID_ITEMPOINTER, tuple.get()));
-        backend_logger->Log(tuple_record.get());
-        tuple.reset();
-
-        break;
-      }
-      case LOGGING_OP_UPDATE: {
-        LOG_INFO("Execute Update %d", (int)cid);
-        auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
-        std::unique_ptr<logging::LogRecord> tuple_record(
-            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, cid, 1,
-                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
-                                           INVALID_ITEMPOINTER, tuple.get()));
-        backend_logger->Log(tuple_record.get());
-        tuple.reset();
-        break;
-      }
-      case LOGGING_OP_DELETE: {
-        LOG_INFO("Execute Delete %d", (int)cid);
-        auto tuple = LoggingTestsUtil::BuildTuples(table, 1, false, false)[0];
-        std::unique_ptr<logging::LogRecord> tuple_record(
-            backend_logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_DELETE, cid, 1,
-                                           DEFAULT_DB_ID, INVALID_ITEMPOINTER,
-                                           INVALID_ITEMPOINTER, tuple.get()));
-        backend_logger->Log(tuple_record.get());
-        tuple.reset();
-        break;
-      }
-      case LOGGING_OP_DONE: {
-        LOG_INFO("Execute Done %d", (int)cid);
-        log_manager->DoneLogging();
-        break;
-      }
-      case LOGGING_OP_COMMIT: {
-        LOG_INFO("Execute Commit %d", (int)cid);
-        std::unique_ptr<logging::LogRecord> record(
-            new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_COMMIT,
-                                           cid));
-        assert(backend_logger);
-        backend_logger->Log(record.get());
-        break;
-      }
-      case LOGGING_OP_ABORT: {
-        LOG_INFO("Execute Abort %d", (int)cid);
-        std::unique_ptr<logging::LogRecord> record(
-            new logging::TransactionRecord(LOGRECORD_TYPE_TRANSACTION_ABORT,
-                                           cid));
-        assert(backend_logger);
-        backend_logger->Log(record.get());
-        break;
-      }
-      case LOGGING_OP_COLLECT: {
-        LOG_INFO("Execute Collect");
-        assert(frontend_logger);
-        frontend_logger->CollectLogRecordsFromBackendLoggers();
-        break;
-      }
-      case LOGGING_OP_FLUSH: {
-        LOG_INFO("Execute Flush");
-        assert(frontend_logger);
-        frontend_logger->FlushLogRecords();
-        results.push_back(frontend_logger->GetMaxFlushedCommitId());
-        break;
-      }
-    }
-  }
-
-  unsigned int thread_id;
+  unsigned int frontend_id = INVALID_LOGGER_IDX;
   LoggingSchedule *schedule;
   logging::LogManager *log_manager;
   int cur_seq;
   bool go;
-  logging::WriteAheadBackendLogger *backend_logger = nullptr;
+  storage::DataTable *table;
+};
+
+class FrontendLoggingThread : public AbstractLoggingThread {
+ public:
+  FrontendLoggingThread(LoggingSchedule *sched,
+                        logging::LogManager *log_manager_,
+                        unsigned int frontend_id_, storage::DataTable *table_)
+      : AbstractLoggingThread(sched, log_manager_, frontend_id_, table_) {}
+
+  void RunLoop();
+
+  void ExecuteNext();
+
+  ~FrontendLoggingThread() {}
+
   logging::WriteAheadFrontendLogger *frontend_logger = nullptr;
 
   // result of committed cid. used by front end logger only
   std::vector<cid_t> results;
-  storage::DataTable *table;
+};
+
+class BackendLoggingThread : public AbstractLoggingThread {
+ public:
+  BackendLoggingThread(LoggingSchedule *sched,
+                       logging::LogManager *log_manager_,
+                       unsigned int frontend_id_, storage::DataTable *table_,
+                       unsigned int backend_id_)
+      : AbstractLoggingThread(sched, log_manager_, frontend_id_, table_),
+        backend_id(backend_id_) {}
+
+  void RunLoop();
+
+  void ExecuteNext();
+
+  ~BackendLoggingThread() {}
+
+  logging::WriteAheadBackendLogger *backend_logger = nullptr;
+
+  unsigned int backend_id = INVALID_LOGGER_IDX;
 };
 
 // Logging scheduler, to make life easier writing logging test
 class LoggingScheduler {
  public:
-  LoggingScheduler(size_t num__backend_logger,
+  LoggingScheduler(size_t num_backend_logger_per_frontend,
+                   unsigned int num_frontend_logger,
                    logging::LogManager *log_manager_,
                    storage::DataTable *table_)
       : log_manager(log_manager_),
-        schedules(num__backend_logger + 1),
+        num_frontend_logger(num_frontend_logger),
+        num_backend_logger_per_frontend(num_backend_logger_per_frontend),
+        frontend_schedules(num_frontend_logger),
+        backend_schedules(num_backend_logger_per_frontend *
+                          num_frontend_logger),
         table(table_) {}
 
   void Prepare() {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_PREPARE, INVALID_CID);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_PREPARE);
     sequence[time++] = cur_id;
   }
   void Begin(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_BEGIN, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_BEGIN,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Insert(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_INSERT, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_INSERT,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Delete(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_DELETE, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_DELETE,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Update(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_UPDATE, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_UPDATE,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Abort(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_ABORT, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_ABORT,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Commit(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_COMMIT, cid);
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_COMMIT,
+                                                           cid);
+    sequence[time++] = cur_id;
+  }
+  void Done(cid_t cid) {
+    backend_schedules[cur_id.back].operations.emplace_back(LOGGING_OP_DONE,
+                                                           cid);
     sequence[time++] = cur_id;
   }
   void Collect() {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_COLLECT, INVALID_CID);
+    frontend_schedules[cur_id.front].operations.emplace_back(
+        LOGGING_OP_COLLECT);
     sequence[time++] = cur_id;
   }
   void Flush() {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_FLUSH, INVALID_CID);
+    frontend_schedules[cur_id.front].operations.emplace_back(LOGGING_OP_FLUSH);
     sequence[time++] = cur_id;
   }
 
-  // Done is always called after successful flush
-  void Done(cid_t cid) {
-    schedules[cur_id].operations.emplace_back(LOGGING_OP_DONE, cid);
-    sequence[time++] = cur_id;
-  }
+  void Init();
 
-  void Init() {
-    logging::LogManager::Configure(LOGGING_TYPE_DRAM_NVM, true);
-    log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+  void Run();
 
-    auto frontend_logger =
-        reinterpret_cast<logging::WriteAheadFrontendLogger *>(
-            log_manager->GetFrontendLogger());
-    // Assume txns up to cid = 1 is committed
-    frontend_logger->SetMaxFlushedCommitId(1);
-    for (int i = 0; i < (int)schedules.size(); i++) {
-      log_threads.emplace_back(&schedules[i], log_manager, i, table);
-    }
-    log_threads[0].frontend_logger = frontend_logger;
-  }
-
-  void Run() {
-    // Run the txns according to the schedule
-    if (!concurrent) {
-      for (int i = 0; i < (int)schedules.size(); i++) {
-        std::thread t = log_threads[i].Run();
-        t.detach();
-      }
-      for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-        LOG_INFO("Execute Thread %d", (int)itr->second);
-        log_threads[itr->second].go = true;
-        while (log_threads[itr->second].go) {
-          std::chrono::milliseconds sleep_time(1);
-          std::this_thread::sleep_for(sleep_time);
-        }
-        LOG_INFO("Done Thread %d", (int)itr->second);
-      }
-    }
-    //    else {
-    //      // Run the txns concurrently
-    //      std::vector<std::thread> threads(schedules.size());
-    //      for (int i = 0; i < (int)schedules.size(); i++) {
-    //        threads[i] = log_threads[i].Run(true);
-    //      }
-    //      for (auto &thread : threads) {
-    //        thread.join();
-    //      }
-    //      LOG_INFO("Done concurrent transaction schedule");
-    //    }
-  }
-
-  LoggingScheduler &Logger(unsigned int id) {
-    assert(id < schedules.size());
-    cur_id = id;
+  LoggingScheduler &BackendLogger(unsigned int frontend_idx,
+                                  unsigned int backend_idx) {
+    assert(frontend_idx < frontend_schedules.size());
+    assert(backend_idx < num_backend_logger_per_frontend);
+    cur_id.front = frontend_idx;
+    cur_id.back = GetBackendLoggerId(frontend_idx, backend_idx);
     return *this;
   }
 
-  // FIXME use smart pointers
+  LoggingScheduler &FrontendLogger(unsigned int frontend_idx) {
+    assert(frontend_idx < frontend_schedules.size());
+    cur_id.front = frontend_idx;
+    cur_id.back = INVALID_LOGGER_IDX;
+    return *this;
+  }
+
   int time = 0;
   logging::LogManager *log_manager;
-  std::vector<LoggingSchedule> schedules;
-  std::vector<LoggingThread> log_threads;
-  std::map<int, int> sequence;
-  unsigned int cur_id = 0;
+
+  unsigned int num_frontend_logger = 1;
+  unsigned int num_backend_logger_per_frontend = 2;
+
+  // the logging schedules for frontend and backend loggers
+  std::vector<LoggingSchedule> frontend_schedules;
+  std::vector<LoggingSchedule> backend_schedules;
+
+  // the logging threads for frontend and backend loggers
+  std::vector<FrontendLoggingThread> frontend_threads;
+  std::vector<BackendLoggingThread> backend_threads;
+
+  // the sequence of operation
+  std::map<int, LoggerId> sequence;
+
+  // current id of frontend & backend loggers
+  LoggerId cur_id = LoggerId(INVALID_LOGGER_IDX, INVALID_LOGGER_IDX);
+
   bool concurrent = false;
+
   storage::DataTable *table;
+
+ private:
+  inline unsigned int GetBackendLoggerId(unsigned int frontend_idx,
+                                         unsigned int backend_idx) {
+    return frontend_idx * num_backend_logger_per_frontend + backend_idx;
+  }
 };
 
 }  // End test namespace

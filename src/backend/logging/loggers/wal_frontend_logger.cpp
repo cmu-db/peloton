@@ -42,6 +42,10 @@
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
+extern CheckpointType peloton_checkpoint_mode;
+
+int logger_id_counter = 0;
+
 #define LOG_FILE_SWITCH_LIMIT (1024)
 
 namespace peloton {
@@ -85,9 +89,17 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
   if (test_mode_) {
     this->log_file = nullptr;
   } else {
+    // this->checkpoint.Init();
+
+    LOG_INFO("Log dir before getting ID is %s",
+             this->peloton_log_directory.c_str());
+    this->SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
     LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
     InitLogDirectory();
     InitLogFilesList();
+    UpdateMaxDelimiterForRecovery();
+    LOG_INFO("Updated Max Delimiter for Recovery as %d",
+             (int)max_delimiter_for_recovery);
     log_file_fd = -1;     // this is a restart or a new start
     max_log_id_file = 0;  // 0 is unused
   }
@@ -133,8 +145,16 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t global_queue_size = global_queue.size();
 
   // First, write all the record in the queue
-  if (global_queue_size != 0 && this->log_file_fd == -1) {
+  // TODO refactor this! extremely messy
+  if ((((max_collected_commit_id != max_flushed_commit_id) ||
+        global_queue_size) &&
+       this->log_file_fd == -1)) {
     this->CreateNewLogFile(false);
+  } else if (((max_collected_commit_id != max_flushed_commit_id) ||
+              global_queue_size) &&
+             should_create_new_file) {
+    this->CreateNewLogFile(true);
+    should_create_new_file = false;
   }
 
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
@@ -149,13 +169,12 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     LOG_INFO("Log buffer get max log id returned %d",
              (int)log_buffer->GetMaxLogId());
 
-    // TODO this is not correct and must be fixed, should be max seen cid
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetMaxLogId();
 
       // TODO @mperron I think we both implemented this :P let's confirm
       // tomorrow
-      /* if (max_collected_commit_id > this->max_log_id_file) {
+      /* if (max_collected_commit_id > this->max_log_id_file)
         this->max_log_id_file = max_collected_commit_id; */
 
       LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
@@ -191,7 +210,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
           LOG_INFO("Max_delimiter_file is now %d", (int)max_delimiter_file);
         }
 
-        if (this->FileSwitchCondIsTrue()) this->CreateNewLogFile(true);
+        if (this->FileSwitchCondIsTrue()) should_create_new_file = true;
       }
     }
   }
@@ -219,12 +238,19 @@ void WriteAheadFrontendLogger::DoRecovery() {
   // FIXME GetNextCommitId() increments next_cid!!!
   cid_t start_commit_id =
       concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
-
+  auto &log_manager = logging::LogManager::GetInstance();
+  int num_inserts = 0;
+  cid_t global_max_flushed_id_for_recovery;
   log_file_cursor_ = 0;
+
+  global_max_flushed_id_for_recovery =
+      log_manager.GetGlobalMaxFlushedIdForRecovery();
+  LOG_INFO("Got start_commit_id as %d, global max flushed as %d",
+           (int)start_commit_id, (int)global_max_flushed_id_for_recovery);
 
   // Set log file size
   // log_file_size = GetLogFileSize(log_file_fd);
-  this->OpenNextLogFile();
+  OpenNextLogFile();
 
   // Go over the log size if needed
   if (log_file_size > 0) {
@@ -251,13 +277,16 @@ void WriteAheadFrontendLogger::DoRecovery() {
             return;
           }
           commit_id = txn_rec.GetTransactionId();
-          if (commit_id <= start_commit_id) {
+          if (commit_id <= start_commit_id ||
+              commit_id > global_max_flushed_id_for_recovery) {
+            LOG_INFO("SKIP");
             continue;
           }
           break;
         }
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
         case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+          num_inserts++;
           tuple_record = new TupleRecord(record_type);
           // Check for torn log write
           if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
@@ -269,9 +298,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           auto cid = tuple_record->GetTransactionId();
           auto table = LoggingUtil::GetTable(*tuple_record);
-          if (!table || cid <= start_commit_id) {
+
+          if (!table || cid <= start_commit_id ||
+              commit_id > global_max_flushed_id_for_recovery) {
             SkipTupleRecordBody(log_file, log_file_size);
             delete tuple_record;
+            LOG_INFO("SKIP");
             continue;
           }
 
@@ -297,7 +329,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
           }
 
           auto cid = tuple_record->GetTransactionId();
-          if (cid <= start_commit_id) {
+          if (cid <= start_commit_id ||
+              commit_id > global_max_flushed_id_for_recovery) {
             delete tuple_record;
             continue;
           }
@@ -322,7 +355,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
             assert(commit_id != INVALID_CID);
-            pending_commits.insert(commit_id);
+
+	    // Now directly commit this transaction. This is safe because we reject commit ids that appear
+	    // after the persistent commit id before coming here (in the switch case above).
+	    CommitTransactionRecovery(commit_id);
             break;
 
           case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -332,17 +368,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
                 tuple_record);
             break;
           case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-            auto it = pending_commits.begin();
-            for (; it != pending_commits.end(); it++) {
-              cid_t curr = *it;
-              if (curr > commit_id) {
-                break;
-              }
-              CommitTransactionRecovery(curr);
-            }
-            if (it != pending_commits.begin()) {
-              pending_commits.erase(pending_commits.begin(), it);
-            }
+	    // Do nothing if we hit the delimiter, because the delimiters help only to find
+	    // the max persistent commit id, and should be ignored during actual recovery
             break;
           }
 
@@ -356,21 +383,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
-    pending_commits.clear();
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
-    auto &manager = catalog::Manager::GetInstance();
-    if (max_oid > manager.GetNextOid()) {
-      manager.SetNextOid(max_oid);
-    }
+    log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
 
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid) {
-      txn_manager.SetNextCid(max_cid + 1);
-    }
-
-    RecoverIndex();
+    LOG_INFO("This thread did %d inserts", (int)num_inserts);
   }
   this->log_file_fd = -1;
 }
@@ -485,6 +503,7 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
 void WriteAheadFrontendLogger::AbortActiveTransactions() {
   for (auto it = recovery_txn_table.begin(); it != recovery_txn_table.end();
        it++) {
+    LOG_INFO("Aborting some active transactions!");
     for (auto it2 = it->second.begin(); it2 != it->second.end(); it2++) {
       delete *it2;
     }
@@ -533,7 +552,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        storage::Tuple *tuple,
                        bool should_increase_tuple_count = true) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(insert_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -543,6 +561,11 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  // TODO this is not thread safe, lock table here or manager
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(insert_loc.block);
+
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(insert_loc.block);
     tile_group = manager.GetTileGroup(insert_loc.block);
@@ -550,10 +573,15 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = insert_loc.block;
     }
   }
+  table->GetTileGroupLock().Unlock();
+  // unlock table here
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
+    // TODO this is not thread safe!
+    table->GetTileGroupLock().Lock();
     table->IncreaseNumberOfTuplesBy(1);
+    table->GetTileGroupLock().Unlock();
   }
   delete tuple;
 }
@@ -561,7 +589,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(delete_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -570,6 +597,10 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(delete_loc.block);
+  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
     tile_group = manager.GetTileGroup(delete_loc.block);
@@ -577,7 +608,10 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = delete_loc.block;
     }
   }
+  // TODO this is not thread safe!
   table->DecreaseNumberOfTuplesBy(1);
+  table->GetTileGroupLock().Unlock();
+
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
 }
 
@@ -585,7 +619,6 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &remove_loc,
                        const ItemPointer &insert_loc, storage::Tuple *tuple) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(remove_loc.block);
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
   assert(db);
 
@@ -595,6 +628,10 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     return;
   }
   assert(table);
+
+  table->GetTileGroupLock().Lock();
+  auto tile_group = manager.GetTileGroup(remove_loc.block);
+  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
     tile_group = manager.GetTileGroup(remove_loc.block);
@@ -602,6 +639,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = remove_loc.block;
     }
   }
+  table->GetTileGroupLock().Unlock();
   InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple,
                     false);
 
@@ -1347,6 +1385,39 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
     }
   }
   return std::pair<cid_t, cid_t>(max_log_id_so_far, max_delim_so_far);
+}
+
+void WriteAheadFrontendLogger::SetLoggerID(int id) {
+  this->logger_id = id;
+  this->peloton_log_directory += std::to_string(id);
+}
+
+void WriteAheadFrontendLogger::UpdateMaxDelimiterForRecovery() {
+  // this method must update the max delimiter id to be used for recovery
+  int num_log_files = log_files_.size();
+  cid_t max_delimiter_last_file;
+
+  if (num_log_files == 0) {
+    return;  // no delimiter, default is 0
+  }
+
+  max_delimiter_last_file = log_files_[num_log_files - 1]->GetMaxDelimiter();
+
+  if (max_delimiter_last_file != 0) {
+    // found a delimiter in the last file! use it to update max delimiter for
+    // recovery
+    max_delimiter_for_recovery = max_delimiter_last_file;
+    return;
+  }
+
+  // we didn't find a delimiter in the last file
+
+  if (num_log_files == 1) {
+    return;  // no other file to pick up delimiter from, return
+  }
+
+  // take delimiter from the last-but-one file!
+  max_delimiter_for_recovery = log_files_[num_log_files - 2]->GetMaxDelimiter();
 }
 
 }  // namespace logging
