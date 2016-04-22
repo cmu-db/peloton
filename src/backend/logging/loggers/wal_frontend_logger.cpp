@@ -359,7 +359,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
   LOG_INFO("This thread did %d inserts", (int)num_inserts);
   cur_file_handle.fd = -1;
-  cur_file_handle.file = NULL:
+  cur_file_handle.file = NULL;
   cur_file_handle.size = 0;
 }
 
