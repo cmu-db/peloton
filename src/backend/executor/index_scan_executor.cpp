@@ -137,7 +137,7 @@ bool IndexScanExecutor::DExecute() {
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
 
-  std::vector<ItemPointerHeader*> tuple_location_headers;
+  std::vector<ItemPointerContainer*> tuple_location_headers;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
@@ -166,13 +166,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group_id = tuple_location.block;
     auto tuple_id = tuple_location.offset;
 
-    tuple_location_header->rw_lock.AcquireReadLock();
-
     while (true) {
 
       // if the tuple is visible.
       if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
-        tuple_location_header->rw_lock.ReleaseReadLock();
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tile_group_id].push_back(tuple_id);
@@ -202,7 +199,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
         // if there is no next tuple.
         if (next_item.IsNull() == true) {
-          tuple_location_header->rw_lock.ReleaseReadLock();
           break;
         }
         tile_group_id = next_item.block;
