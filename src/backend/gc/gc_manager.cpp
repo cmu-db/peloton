@@ -58,34 +58,6 @@ void GCManager::Unlink() {
 
         DeleteTupleFromIndexes(tuple_metadata);
 
-          // auto tile_group_header =
-          //     manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
-
-          // tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id,
-          //                                     INVALID_TXN_ID);
-          // tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id,
-          //                                     MAX_CID);
-          // tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id,
-          //                                   MAX_CID);
-          // tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id,
-          //                                       INVALID_ITEMPOINTER);
-          // tile_group_header->SetPrevItemPointer(tuple_metadata.tuple_slot_id,
-          //                                       INVALID_ITEMPOINTER);
-
-          // std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
-
-          // // if the entry for table_id exists.
-          // if (free_map_.find(tuple_metadata.table_id, free_list) == true) {
-          //   // if the entry for tuple_metadata.table_id exists.
-          //   free_list->Push(tuple_metadata);
-          // } else {
-          //   // if the entry for tuple_metadata.table_id does not exist.
-          //   free_list.reset(
-          //       new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
-          //   free_list->Push(tuple_metadata);
-          //   free_map_[tuple_metadata.table_id] = free_list;
-          // }
-
       } else {
           // if a tuple cannot be reclaimed, then add it back to the list.
         possibly_free_list_.Push(tuple_metadata);
@@ -119,20 +91,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id __attribute__((unused))) {
-  //if (this->gc_type_ == GC_TYPE_OFF) {
     return ItemPointer();
-  //}
-
-  // std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
-  // // if there exists free_list
-  // if (free_map_.find(table_id, free_list) == true) {
-  //   TupleMetadata tuple_metadata;
-  //   if (free_list->Pop(tuple_metadata) == true) {
-  //     return ItemPointer(tuple_metadata.tile_group_id,
-  //                        tuple_metadata.tuple_slot_id);
-  //   }
-  // }
-  // return ItemPointer();
 }
 
 // delete a tuple from all its indexes it belongs to.
