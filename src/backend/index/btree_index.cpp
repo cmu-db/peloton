@@ -265,10 +265,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
 }
 
 
-
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
@@ -413,7 +410,7 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 std::string BTreeIndex<KeyType, ValueType, KeyComparator,
                        KeyEqualityChecker>::GetTypeName() const {
-  return "BtreePrimary";
+  return "Btree";
 }
 
 // Explicit template instantiation
