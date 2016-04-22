@@ -395,18 +395,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
     log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
 
     LOG_INFO("This thread did %d inserts", (int)num_inserts);
-
-    /* auto &manager = catalog::Manager::GetInstance();
-    if (max_oid > manager.GetNextOid()) {
-      manager.SetNextOid(max_oid);
-    }
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    if (txn_manager.GetNextCommitId() < max_cid) {
-      txn_manager.SetNextCid(max_cid + 1);
-    } */
-
-    RecoverIndex();
   }
   this->log_file_fd = -1;
 }
