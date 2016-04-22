@@ -303,7 +303,6 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
   if (!retval) {
-    assert(list_length(fn_es->args) > 0);
 
     // Check if the function is a UDF function.
     if(CheckUserDefinedFunction(pg_func_id)) {
@@ -330,6 +329,7 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
       return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
     } else {
       // FIXME It will generate incorrect results.
+      assert(list_length(fn_es->args) > 0);
       LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
       ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
       return TransformExpr(first_child);
