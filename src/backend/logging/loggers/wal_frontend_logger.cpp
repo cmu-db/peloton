@@ -90,7 +90,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
 
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
     : test_mode_(for_testing) {
-  logging_type = LOGGING_TYPE_DRAM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
@@ -178,13 +178,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetMaxLogId();
-
-      // TODO @mperron I think we both implemented this :P let's confirm
-      // tomorrow
-      /* if (max_collected_commit_id > this->max_log_id_file)
-        this->max_log_id_file = max_collected_commit_id; */
-
-      LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
+      LOG_INFO("Max log id file so far is %d", (int)this->max_log_id_file);
     }
 
     // return empty buffer
@@ -208,8 +202,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
                  this->max_collected_commit_id);
 
         // by moving the fflush and sync here, we ensure that this file will
-        // have
-        // at least 1 delimiter
+        // have at least 1 delimiter
         fflush_and_sync(log_file, log_file_fd, fsync_count);
 
         if (this->max_collected_commit_id > max_delimiter_file) {

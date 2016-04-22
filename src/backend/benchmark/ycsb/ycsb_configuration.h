@@ -55,6 +55,9 @@ class configuration {
 
   // synchronous commit
   int sync_commit;
+
+  // frequency with which the logger flushes
+  int64_t wait_timeout;
 };
 
 extern configuration state;

@@ -122,7 +122,7 @@ TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
   unsigned int txn_count = 1000000;
 
   auto &log_manager = logging::LogManager::GetInstance();
-  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_DRAM_NVM, true);
+  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true);
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager.InitFrontendLoggers();
 
