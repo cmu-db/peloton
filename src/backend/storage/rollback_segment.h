@@ -99,8 +99,9 @@ public:
   RollbackSegmentManager() {}
   ~RollbackSegmentManager() {}
 
-  RollbackSegment *GetRollbackSegment(const catalog::Schema *schema,
+  static RollbackSegment *GetEmptyRollbackSegment(const catalog::Schema *schema,
                                       const peloton::planner::ProjectInfo::TargetList &target_list);
+
 };
 
 }  // End storage namespace

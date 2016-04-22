@@ -22,6 +22,7 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
 namespace executor {
@@ -92,7 +93,7 @@ bool UpdateExecutor::DExecute() {
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
         true) {
-      // if the thread is the owner of the tuple, then directly update in place.
+      // Create a temp copy
       std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
@@ -100,10 +101,22 @@ bool UpdateExecutor::DExecute() {
       // Execute the projections
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
-      tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
 
-      transaction_manager.PerformUpdate(old_location);
+      // Check if we need to create a new rollback
+      if (transaction_manager.NeedNewRbSegment(tile_group_header,
+                                               physical_tuple_id,
+                                               project_info_->GetTargetList())) {
+        // TODO: Create a new rollback segment based on the old one and the old tuple
 
+        // TODO: Ask the txn manager to replace the old rollback segment with the new one
+
+        // TODO: Overwrite the master copy
+
+      } else {
+        // Current rb segment is OK, just overwrite the tuple in place
+        tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
+        transaction_manager.PerformUpdate(old_location);
+      }
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
                                              physical_tuple_id) == true) {
@@ -127,19 +140,32 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
-      // finally insert updated tuple into the table
-      ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
+      // TODO: Maybe we can use compile time option instead of runtime branch
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        // For rollback segment implementation
 
-      // FIXME: PerformUpdate() will not be executed if the insertion failed,
-      // There is a write lock, acquired, but since it is not in the write set,
-      // the acquired lock can't be released when the txn is aborted.
-      if (new_location.IsNull() == true) {
-        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-        return false;
+        // TODO: Create a rollback segment based on the old tuple
+
+        // TODO: Ask the txn manager to append the rollback segment
+
+        // TODO: Overwrite the master copy
+
+      } else {
+        // finally insert updated tuple into the table
+        ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
+
+        // FIXME: PerformUpdate() will not be executed if the insertion failed,
+        // There is a write lock, acquired, but since it is not in the write set,
+        // the acquired lock can't be released when the txn is aborted.
+        if (new_location.IsNull() == true) {
+          LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+          return false;
+        }
+        transaction_manager.PerformUpdate(old_location, new_location);
       }
-      transaction_manager.PerformUpdate(old_location, new_location);
 
+      // TODO: Why don't we also do this in the if branch above?
       executor_context_->num_processed += 1;  // updated one
 
     } else {
