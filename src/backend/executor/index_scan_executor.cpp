@@ -152,8 +152,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_containers.size());
 
   if (tuple_location_containers.size() == 0) return false;
-  // as this is primary key, we should obtain exactly one tuple.
-  assert(tuple_location_containers.size() == 1);
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
