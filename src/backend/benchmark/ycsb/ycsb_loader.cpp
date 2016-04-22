@@ -41,9 +41,9 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-storage::Database* ycsb_database;
+storage::Database* ycsb_database = nullptr;
 
-storage::DataTable* user_table;
+storage::DataTable* user_table = nullptr;
 
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;

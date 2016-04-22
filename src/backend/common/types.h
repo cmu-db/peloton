@@ -18,8 +18,6 @@
 #include <limits>
 #include <cassert>
 
-#include "backend/common/MyRWLock.h"
-
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -748,7 +746,6 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 //===--------------------------------------------------------------------===//
 struct TupleMetadata {
   oid_t table_id = 0;
-  oid_t tile_id = 0;
   oid_t tile_group_id = 0;
   oid_t tuple_slot_id = 0;
   cid_t tuple_end_cid = 0;
@@ -776,16 +773,17 @@ struct ItemPointer {
 extern ItemPointer INVALID_ITEMPOINTER;
 
 //===--------------------------------------------------------------------===//
-// ItemPointerHeader
+// ItemPointerContainer
 //===--------------------------------------------------------------------===//
 
-struct ItemPointerHeader {
+struct ItemPointerContainer {
 
-  ItemPointerHeader(const ItemPointer &item_pointer) {
+  ItemPointerContainer(const ItemPointer &item_pointer) {
     header = item_pointer;
   }
+
   ItemPointer header;
-  MyRWLock rw_lock;
+
 };
 
 //===--------------------------------------------------------------------===//
