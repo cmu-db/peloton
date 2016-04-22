@@ -104,18 +104,22 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
 void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t global_queue_size = global_queue.size();
 
-  // First, write all the record in the queue
-  if ((((max_collected_commit_id != max_flushed_commit_id) ||
-        global_queue_size) &&
-       cur_file_handle.fd == -1)) {
-    this->CreateNewLogFile(false);
-  } else if (((max_collected_commit_id != max_flushed_commit_id) ||
-              global_queue_size) &&
-             should_create_new_file) {
-    this->CreateNewLogFile(true);
-    should_create_new_file = false;
+  bool will_write_to_file;
+
+  // check if we will end up writing something to disk
+  will_write_to_file =
+      ((max_collected_commit_id != max_flushed_commit_id) || global_queue_size);
+
+  if (will_write_to_file) {
+    if (cur_file_handle.fd == -1) {
+      this->CreateNewLogFile(false);
+    } else if (should_create_new_file) {
+      this->CreateNewLogFile(true);
+      should_create_new_file = false;
+    }
   }
 
+  // First, write all the record in the queue
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
     auto &log_buffer = global_queue[global_queue_itr];
@@ -205,150 +209,158 @@ void WriteAheadFrontendLogger::DoRecovery() {
   OpenNextLogFile();
 
   // Go over the log file if needed
-  if (cur_file_handle.size > 0) {
-    bool reached_end_of_file = false;
+  bool reached_end_of_log = false;
 
-    // Go over each log record in the log file
-    while (reached_end_of_file == false) {
-      // Read the first byte to identify log record type
-      // If that is not possible, then wrap up recovery
-      auto record_type = GetNextLogRecordTypeForRecovery();
-      LOG_INFO("Record_type is %d", (int)record_type);
-      cid_t commit_id = INVALID_CID;
-      TupleRecord *tuple_record;
+  // Go over each log record in the log file
+  while (reached_end_of_log == false) {
+    // Read the first byte to identify log record type
+    // If that is not possible, then wrap up recovery
+    auto record_type = GetNextLogRecordTypeForRecovery();
+    LOG_INFO("Record_type is %d", (int)record_type);
+    cid_t commit_id = INVALID_CID;
+    TupleRecord *tuple_record;
 
+    switch (record_type) {
+      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+        // Check for torn log write
+        TransactionRecord txn_rec(record_type);
+        if (LoggingUtil::ReadTransactionRecordHeader(
+                txn_rec, cur_file_handle) == false) {
+          cur_file_handle.fd = -1;
+          cur_file_handle.file = nullptr;
+          cur_file_handle.size = 0;
+          return;
+        }
+        commit_id = txn_rec.GetTransactionId();
+        if (commit_id <= start_commit_id ||
+            commit_id > global_max_flushed_id_for_recovery) {
+          LOG_INFO("SKIP");
+          continue;
+        }
+        break;
+      }
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+        num_inserts++;
+        tuple_record = new TupleRecord(record_type);
+        // Check for torn log write
+        if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
+                                               cur_file_handle) == false) {
+          LOG_ERROR("Could not read tuple record header.");
+          cur_file_handle.fd = -1;
+          cur_file_handle.file = nullptr;
+          cur_file_handle.size = 0;
+          return;
+        }
+
+        auto cid = tuple_record->GetTransactionId();
+        auto table = LoggingUtil::GetTable(*tuple_record);
+
+        if (!table || cid <= start_commit_id ||
+            commit_id > global_max_flushed_id_for_recovery) {
+          LoggingUtil::SkipTupleRecordBody(cur_file_handle);
+          delete tuple_record;
+          LOG_INFO("SKIP");
+          continue;
+        }
+
+        if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+          LOG_ERROR("Insert txd id %d not found in recovery txn table",
+                    (int)cid);
+          cur_file_handle.fd = -1;
+          cur_file_handle.file = nullptr;
+          cur_file_handle.size = 0;
+          return;
+        }
+
+        // Read off the tuple record body from the log
+        tuple_record->SetTuple(LoggingUtil::ReadTupleRecordBody(
+            table->GetSchema(), recovery_pool, cur_file_handle));
+        break;
+      }
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
+        tuple_record = new TupleRecord(record_type);
+        // Check for torn log write
+        if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
+                                               cur_file_handle) == false) {
+          cur_file_handle.fd = -1;
+          cur_file_handle.file = nullptr;
+          cur_file_handle.size = 0;
+          return;
+        }
+
+        auto cid = tuple_record->GetTransactionId();
+        if (cid <= start_commit_id ||
+            commit_id > global_max_flushed_id_for_recovery) {
+          delete tuple_record;
+          continue;
+        }
+        if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+          LOG_TRACE("Delete txd id %d not found in recovery txn table",
+                    (int)cid);
+          cur_file_handle.fd = -1;
+          cur_file_handle.file = nullptr;
+          cur_file_handle.size = 0;
+          return;
+        }
+        break;
+      }
+      default:
+        reached_end_of_log = true;
+        break;
+    }
+    if (!reached_end_of_log) {
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+          assert(commit_id != INVALID_CID);
+          StartTransactionRecovery(commit_id);
+          break;
+
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-        case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-          // Check for torn log write
-          TransactionRecord txn_rec(record_type);
-          if (LoggingUtil::ReadTransactionRecordHeader(
-                  txn_rec, cur_file_handle) == false) {
-            // TODO should we also set cur_file_handle.size and
-            // cur_file_handle.file here?
-            cur_file_handle.fd = -1;
-            return;
-          }
-          commit_id = txn_rec.GetTransactionId();
-          if (commit_id <= start_commit_id ||
-              commit_id > global_max_flushed_id_for_recovery) {
-            LOG_INFO("SKIP");
-            continue;
-          }
+          assert(commit_id != INVALID_CID);
+
+          // Now directly commit this transaction. This is safe because we
+          // reject commit ids that appear
+          // after the persistent commit id before coming here (in the switch
+          // case above).
+          CommitTransactionRecovery(commit_id);
           break;
-        }
+
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
-          num_inserts++;
-          tuple_record = new TupleRecord(record_type);
-          // Check for torn log write
-          if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
-                                                 cur_file_handle) == false) {
-            LOG_ERROR("Could not read tuple record header.");
-            cur_file_handle.fd = -1;
-            return;
-          }
-
-          auto cid = tuple_record->GetTransactionId();
-          auto table = LoggingUtil::GetTable(*tuple_record);
-
-          if (!table || cid <= start_commit_id ||
-              commit_id > global_max_flushed_id_for_recovery) {
-            LoggingUtil::SkipTupleRecordBody(cur_file_handle);
-            delete tuple_record;
-            LOG_INFO("SKIP");
-            continue;
-          }
-
-          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
-            LOG_ERROR("Insert txd id %d not found in recovery txn table",
-                      (int)cid);
-            cur_file_handle.fd = -1;
-            return;
-          }
-
-          // Read off the tuple record body from the log
-          tuple_record->SetTuple(LoggingUtil::ReadTupleRecordBody(
-              table->GetSchema(), recovery_pool, cur_file_handle));
+        case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+        case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+          recovery_txn_table[tuple_record->GetTransactionId()].push_back(
+              tuple_record);
+          break;
+        case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+          // Do nothing if we hit the delimiter, because the delimiters help
+          // us only to find
+          // the max persistent commit id, and should be ignored during actual
+          // recovery
           break;
         }
-        case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
-          tuple_record = new TupleRecord(record_type);
-          // Check for torn log write
-          if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
-                                                 cur_file_handle) == false) {
-            cur_file_handle.fd = -1;
-            return;
-          }
 
-          auto cid = tuple_record->GetTransactionId();
-          if (cid <= start_commit_id ||
-              commit_id > global_max_flushed_id_for_recovery) {
-            delete tuple_record;
-            continue;
-          }
-          if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
-            LOG_TRACE("Delete txd id %d not found in recovery txn table",
-                      (int)cid);
-            cur_file_handle.fd = -1;
-            return;
-          }
-          break;
-        }
         default:
-          reached_end_of_file = true;
+          LOG_INFO("Got Type as TXN_INVALID");
+          reached_end_of_log = true;
           break;
-      }
-      if (!reached_end_of_file) {
-        switch (record_type) {
-          case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-            assert(commit_id != INVALID_CID);
-            StartTransactionRecovery(commit_id);
-            break;
-
-          case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-            assert(commit_id != INVALID_CID);
-
-            // Now directly commit this transaction. This is safe because we
-            // reject commit ids that appear
-            // after the persistent commit id before coming here (in the switch
-            // case above).
-            CommitTransactionRecovery(commit_id);
-            break;
-
-          case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-          case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-          case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-            recovery_txn_table[tuple_record->GetTransactionId()].push_back(
-                tuple_record);
-            break;
-          case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-            // Do nothing if we hit the delimiter, because the delimiters help
-            // us only to find
-            // the max persistent commit id, and should be ignored during actual
-            // recovery
-            break;
-          }
-
-          default:
-            LOG_INFO("Got Type as TXN_INVALID");
-            reached_end_of_file = true;
-            break;
-        }
       }
     }
-
-    // Finally, abort ACTIVE transactions in recovery_txn_table
-    AbortActiveTransactions();
-
-    // After finishing recovery, set the next oid with maximum oid
-    // observed during the recovery
-    log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
-
-    LOG_INFO("This thread did %d inserts", (int)num_inserts);
   }
+
+  // Finally, abort ACTIVE transactions in recovery_txn_table
+  AbortActiveTransactions();
+
+  // After finishing recovery, set the next oid with maximum oid
+  // observed during the recovery
+  log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
+
+  LOG_INFO("This thread did %d inserts", (int)num_inserts);
   cur_file_handle.fd = -1;
+  cur_file_handle.file = NULL:
+  cur_file_handle.size = 0;
 }
 
 void WriteAheadFrontendLogger::RecoverIndex() {
@@ -639,6 +651,9 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   char buffer;
   bool is_truncated = false;
   int ret;
+
+  if (cur_file_handle.file == nullptr || cur_file_handle.fd == -1)
+    return LOGRECORD_TYPE_INVALID;
 
   LOG_INFO("Inside GetNextLogRecordForRecovery");
 
