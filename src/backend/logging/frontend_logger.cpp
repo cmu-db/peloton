@@ -34,9 +34,11 @@ FrontendLogger::FrontendLogger() {
 }
 
 FrontendLogger::~FrontendLogger() {
+  backend_loggers_lock.Lock();
   for (auto backend_logger : backend_loggers) {
     delete backend_logger;
   }
+  backend_loggers_lock.Unlock();
 }
 
 /** * @brief Return the frontend logger based on logging type
@@ -46,6 +48,7 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
                                                   bool test_mode) {
   FrontendLogger *frontend_logger = nullptr;
 
+  LOG_INFO("Logging_type is %d", (int)logging_type);
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
     frontend_logger = new WriteAheadFrontendLogger(test_mode);
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
@@ -55,6 +58,27 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
   }
 
   return frontend_logger;
+}
+
+// only the distinguished logger does this
+void FrontendLogger::UpdateGlobalMaxFlushId() {
+  if (is_distinguished_logger) {
+    cid_t global_max_flushed_commit_id = INVALID_CID;
+
+    auto &log_manager = LogManager::GetInstance();
+    std::vector<std::unique_ptr<FrontendLogger>> &frontend_loggers =
+        log_manager.GetFrontendLoggersList();
+    int num_loggers = frontend_loggers.size();
+
+    for (int i = 0; i < num_loggers; i++) {
+      cid_t logger_max_commit_id;
+      logger_max_commit_id = frontend_loggers[i].get()->GetMaxFlushedCommitId();
+      global_max_flushed_commit_id =
+          std::max(global_max_flushed_commit_id, logger_max_commit_id);
+    }
+
+    log_manager.SetGlobalMaxFlushedCommitId(global_max_flushed_commit_id);
+  }
 }
 
 /**
@@ -87,7 +111,12 @@ void FrontendLogger::MainLoop(void) {
       LOG_INFO("Log manager: DoRecovery done");
 
       // Now, enter LOGGING mode
-      log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+      // log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
+      // Notify log manager that this frontend logger has completed recovery
+      log_manager.NotifyRecoveryDone();
+
+      // Now wait until the other frontend loggers also complete their recovery
+      log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 
       break;
     }
@@ -113,6 +142,9 @@ void FrontendLogger::MainLoop(void) {
     // Flush the data to the file
     // LOG_INFO("Log manager: Invoking FlushLogRecords");
     FlushLogRecords();
+
+    // update the global max flushed ID (only distinguished logger does this)
+    UpdateGlobalMaxFlushId();
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -139,6 +171,9 @@ void FrontendLogger::MainLoop(void) {
 void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
   auto sleep_period = std::chrono::milliseconds(wait_timeout);
   std::this_thread::sleep_for(sleep_period);
+  int debug_flag = 0;
+
+  auto &log_manager = LogManager::GetInstance();
 
   {
     cid_t max_committed_cid = 0;
@@ -146,8 +181,8 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
 
     // Look at the local queues of the backend loggers
     backend_loggers_lock.Lock();
-    LOG_TRACE("Collect log buffers from %lu backend loggers",
-              backend_loggers.size());
+    // LOG_TRACE("Collect log buffers from %lu backend loggers",
+    //           backend_loggers.size());
     int i = 0;
     for (auto backend_logger : backend_loggers) {
       auto cid_pair = backend_logger->PrepareLogBuffers();
@@ -184,19 +219,40 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
     cid_t max_possible_commit_id;
     if (max_committed_cid == 0 && lower_bound == MAX_CID) {
       // nothing collected
+      cid_t global_max = log_manager.GetGlobalMaxFlushedCommitId();
+
+      if (global_max > max_collected_commit_id)
+        max_collected_commit_id = global_max;
+
       max_possible_commit_id = max_collected_commit_id;
+      max_seen_commit_id = max_collected_commit_id;
+      debug_flag = 1;
     } else if (max_committed_cid == 0) {
       max_possible_commit_id = lower_bound;
+      debug_flag = 2;
     } else if (lower_bound == MAX_CID) {
+      debug_flag = 3;
       max_possible_commit_id = max_committed_cid;
     } else {
       max_possible_commit_id = lower_bound;
+      debug_flag = 4;
     }
     // max_collected_commit_id should never decrease
     // LOG_INFO("Before assert");
+    if (max_possible_commit_id < max_collected_commit_id) {
+      LOG_INFO(
+          "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
+          (int)max_possible_commit_id, (int)max_collected_commit_id);
+      LOG_INFO("Had entered Case %d", (int)debug_flag);
+      (void)debug_flag;
+    }
     assert(max_possible_commit_id >= max_collected_commit_id);
+    if (max_committed_cid > max_seen_commit_id) {
+      max_seen_commit_id = max_committed_cid;
+    }
     max_collected_commit_id = max_possible_commit_id;
-    LOG_TRACE("max_collected_commit_id: %d", (int)max_collected_commit_id);
+    // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d",
+    // (int)max_collected_commit_id, (int)max_possible_commit_id);
     backend_loggers_lock.Unlock();
   }
 }
@@ -209,7 +265,7 @@ void FrontendLogger::SetMaxFlushedCommitId(cid_t cid) {
 
 void FrontendLogger::SetBackendLoggerLoggedCid(BackendLogger &bel) {
   backend_loggers_lock.Lock();
-  bel.SetLoggingCidLowerBound(max_collected_commit_id);
+  bel.SetLoggingCidLowerBound(max_seen_commit_id);
   backend_loggers_lock.Unlock();
 }
 

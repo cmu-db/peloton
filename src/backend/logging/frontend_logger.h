@@ -58,6 +58,10 @@ class FrontendLogger : public Logger {
   // Restore database
   virtual void DoRecovery(void) = 0;
 
+  virtual void SetLoggerID(int) = 0;
+
+  virtual void RecoverIndex(void) = 0;
+
   size_t GetFsyncCount() const { return fsync_count; }
 
   void ReplayLog(const char *, size_t len);
@@ -67,6 +71,24 @@ class FrontendLogger : public Logger {
   void SetMaxFlushedCommitId(cid_t cid);
 
   void SetBackendLoggerLoggedCid(BackendLogger &bel);
+
+  cid_t GetMaxDelimiterForRecovery() { return max_delimiter_for_recovery; }
+
+  void SetIsDistinguishedLogger(bool flag) { is_distinguished_logger = flag; }
+
+  void UpdateGlobalMaxFlushId();
+
+  // reset the frontend logger to its original state (for testing
+  void Reset() {
+    backend_loggers_lock.Lock();
+    fsync_count = 0;
+    max_flushed_commit_id = 0;
+    max_collected_commit_id = 0;
+    max_seen_commit_id = 0;
+    global_queue.clear();
+    backend_loggers.clear();
+    backend_loggers_lock.Unlock();
+  }
 
  protected:
   // Associated backend loggers
@@ -88,6 +110,12 @@ class FrontendLogger : public Logger {
   cid_t max_flushed_commit_id = 0;
 
   cid_t max_collected_commit_id = 0;
+
+  cid_t max_delimiter_for_recovery = 0;
+
+  cid_t max_seen_commit_id = 0;
+
+  bool is_distinguished_logger = false;
 };
 
 }  // namespace logging

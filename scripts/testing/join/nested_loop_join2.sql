@@ -1,7 +1,4 @@
 -- create the test tables
-DROP TABLE IF EXISTS C;
-DROP TABLE IF EXISTS D;
-
 SET ENABLE_MERGEJOIN TO FALSE;
 SET ENABLE_HASHJOIN TO FALSE;
 SET ENABLE_NESTLOOP TO TRUE;
@@ -10,11 +7,6 @@ CREATE TABLE C(id INT, value INT);
 CREATE TABLE D(id INT, value INT);
 
 -- join with empty tables
-SELECT * FROM C INNER JOIN D ON C.value = D.value;
-SELECT * FROM C LEFT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C RIGHT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C FULL OUTER JOIN D ON C.value = D.value;
-
 -- load in the data
 
 INSERT INTO C VALUES(100, 100);
@@ -35,10 +27,6 @@ INSERT INTO D VALUES(123, 123);
 INSERT INTO D VALUES(124, 124);
 
 -- join with non empty tables
-SELECT * FROM C INNER JOIN D ON C.value = D.value;
-SELECT * FROM C LEFT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C RIGHT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C FULL OUTER JOIN D ON C.value = D.value;
 
 -- load in some more data
 
@@ -47,7 +35,3 @@ INSERT INTO D VALUES(126, 126);
 INSERT INTO C VALUES(104, 104);
 
 -- join with non empty tables
-SELECT * FROM C INNER JOIN D ON C.value = D.value;
-SELECT * FROM C LEFT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C RIGHT OUTER JOIN D ON C.value = D.value;
-SELECT * FROM C FULL OUTER JOIN D ON C.value = D.value;

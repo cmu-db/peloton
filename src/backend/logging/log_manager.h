@@ -20,11 +20,13 @@
 #include "backend_logger.h"
 #include "frontend_logger.h"
 #include "backend/concurrency/transaction.h"
+#include "loggers/wal_frontend_logger.h"
+
+#define DEFAULT_NUM_FRONTEND_LOGGERS 1
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
-
 extern LoggingType peloton_logging_mode;
 
 namespace peloton {
@@ -52,9 +54,21 @@ class LogManager {
   static LogManager &GetInstance(void);
 
   // configuration
-  static void Configure(LoggingType logging_type, bool test_mode = false) {
+  void Configure(LoggingType logging_type, bool test_mode = false,
+                 unsigned int num_frontend_loggers = 1,
+                 LoggerMappingStrategyType logger_mapping_strategy =
+                     LOGGER_MAPPING_ROUND_ROBIN) {
     logging_type_ = logging_type;
     test_mode_ = test_mode;
+    num_frontend_loggers_ = num_frontend_loggers;
+    logger_mapping_strategy_ = logger_mapping_strategy;
+  }
+
+  // reset all frontend loggers, for testing
+  void ResetFrontendLoggers() {
+    for (auto &frontend_logger : frontend_loggers) {
+      frontend_logger->Reset();
+    }
   }
 
   // Wait for the system to begin
@@ -82,7 +96,9 @@ class LogManager {
 
   void WaitForFlush(cid_t cid);
 
-  cid_t GetMaxFlushedCommitId();
+  cid_t GetPersistentFlushedCommitId();
+
+  void NotifyRecoveryDone();
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -100,7 +116,7 @@ class LogManager {
 
   bool ContainsFrontendLogger(void);
 
-  BackendLogger *GetBackendLogger();
+  BackendLogger *GetBackendLogger(unsigned int hint = 0);
 
   void SetLogFileName(std::string log_file);
 
@@ -120,7 +136,11 @@ class LogManager {
   // Utility Functions
   //===--------------------------------------------------------------------===//
 
-  FrontendLogger *GetFrontendLogger();
+  // initialize a list of frontend loggers
+  void InitFrontendLoggers();
+
+  // get a frontend logger at given index
+  FrontendLogger *GetFrontendLogger(unsigned int logger_idx);
 
   void ResetFrontendLogger();
 
@@ -138,7 +158,23 @@ class LogManager {
 
   void LogCommitTransaction(oid_t commit_id);
 
+  void TruncateLogs(txn_id_t commit_id);
+
   void DoneLogging();
+
+  cid_t GetGlobalMaxFlushedIdForRecovery() {
+    return global_max_flushed_id_for_recovery;
+  }
+
+  void UpdateCatalogAndTxnManagers(oid_t, cid_t);
+
+  void SetGlobalMaxFlushedCommitId(cid_t);
+
+  cid_t GetGlobalMaxFlushedCommitId();
+
+  std::vector<std::unique_ptr<FrontendLogger>> &GetFrontendLoggersList() {
+    return frontend_loggers;
+  }
 
  private:
   LogManager();
@@ -147,12 +183,19 @@ class LogManager {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-  static LoggingType logging_type_;
-  static bool test_mode_;
+
+  // static configurations for logging
+  LoggingType logging_type_ = LOGGING_TYPE_INVALID;
+
+  bool test_mode_ = false;
+
+  unsigned int num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
+
+  LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
-  std::unique_ptr<FrontendLogger> frontend_logger;
+  std::vector<std::unique_ptr<FrontendLogger>> frontend_loggers;
 
   LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
@@ -166,11 +209,28 @@ class LogManager {
   std::mutex flush_notify_mutex;
   std::condition_variable flush_notify_cv;
 
+  // To update catalog and txn managers
+  std::mutex update_managers_mutex;
+
+  unsigned int recovery_to_logging_counter = 0;
+
   cid_t max_flushed_cid = 0;
 
   bool syncronization_commit = false;
 
   std::string log_file_name;
+
+  int frontend_logger_assign_counter;
+
+  cid_t global_max_flushed_id_for_recovery = UINT64_MAX;
+
+  cid_t global_max_flushed_commit_id = 0;
+
+  int update_managers_count = 0;
+
+  oid_t max_oid = 0;
+
+  cid_t max_cid = 0;
 };
 
 }  // namespace logging

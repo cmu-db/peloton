@@ -567,5 +567,9 @@ std::string WriteBehindFrontendLogger::GetLogFileName(void) {
   return log_manager.GetLogFileName();
 }
 
+void WriteBehindFrontendLogger::SetLoggerID(__attribute__((unused)) int id) {
+  // do nothing
+}
+
 }  // namespace logging
 }  // namespace peloton

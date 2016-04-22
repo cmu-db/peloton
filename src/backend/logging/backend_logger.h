@@ -21,6 +21,7 @@
 #include "backend/logging/log_record.h"
 #include "backend/logging/log_buffer.h"
 #include "backend/common/platform.h"
+#include "backend/logging/circular_buffer_pool.h"
 
 namespace peloton {
 namespace logging {
@@ -44,7 +45,7 @@ class BackendLogger : public Logger {
   //===--------------------------------------------------------------------===//
 
   // Log the given record
-  virtual void Log(LogRecord *record) = 0;
+  void Log(LogRecord *record);
 
   // Construct a log record with tuple information
   virtual LogRecord *GetTupleRecord(LogRecordType log_record_type,
@@ -53,13 +54,14 @@ class BackendLogger : public Logger {
                                     ItemPointer delete_location,
                                     const void *data = nullptr) = 0;
 
-  // cid_t GetHighestLoggedCommitId() { return highest_logged_commit_id; };
-
   void SetLoggingCidLowerBound(cid_t cid) {
     // XXX bad synchronization practice
     log_buffer_lock.Lock();
+
     logging_cid_lower_bound = cid;
+
     highest_logged_commit_message = INVALID_CID;
+
     log_buffer_lock.Unlock();
   }
 
@@ -69,22 +71,42 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  virtual std::pair<cid_t, cid_t> PrepareLogBuffers() = 0;
+  std::pair<cid_t, cid_t> PrepareLogBuffers();
 
   // Grant an empty buffer to use
-  virtual void GrantEmptyBuffer(std::unique_ptr<LogBuffer>) = 0;
+  void GrantEmptyBuffer(std::unique_ptr<LogBuffer>);
+
+  // Set FrontendLoggerID
+  void SetFrontendLoggerID(int id) { frontend_logger_id = id; }
+
+  // Get FrontendLoggerID
+  int GetFrontendLoggerID() { return frontend_logger_id; }
 
  protected:
-  // XXX the lock for the buffer being used currently
+  // the lock for the buffer being used currently
   Spinlock log_buffer_lock;
 
   std::vector<std::unique_ptr<LogBuffer>> local_queue;
 
   cid_t highest_logged_commit_message = INVALID_CID;
 
+  int frontend_logger_id;
+
   cid_t logging_cid_lower_bound = INVALID_CID;
 
   cid_t max_log_id_buffer = 0;
+
+  // temporary serialization buffer
+  CopySerializeOutput output_buffer;
+
+  // the current buffer
+  std::unique_ptr<LogBuffer> log_buffer_;
+
+  // the pool of available buffers
+  std::unique_ptr<BufferPool> available_buffer_pool_;
+
+  // the pool of buffers to persist
+  std::unique_ptr<BufferPool> persist_buffer_pool_;
 };
 
 }  // namespace logging

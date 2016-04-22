@@ -34,7 +34,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // size of the table
   int scale_factor;
 
@@ -50,6 +49,12 @@ class configuration {
   // number of backends
   int backend_count;
 
+  // whether logging is enabled
+  // TODO change to number of loggers later
+  int logging_enabled;
+
+  // synchronous commit
+  int sync_commit;
 };
 
 extern configuration state;
@@ -65,6 +70,8 @@ void ValidateUpdateRatio(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateTransactionCount(const configuration &state);
+
+void ValidateLogging(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

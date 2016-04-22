@@ -70,7 +70,8 @@ static void WriteOutput(double value) {
 
   auto &storage_manager = storage::StorageManager::GetInstance();
   auto& log_manager = logging::LogManager::GetInstance();
-  auto frontend_logger = log_manager.GetFrontendLogger();
+  // FIXME accumulate fsync count across all frontend loggers
+  auto frontend_logger = log_manager.GetFrontendLogger(0);
   auto fsync_count = 0;
   if(frontend_logger != nullptr){
     fsync_count = frontend_logger->GetFsyncCount();

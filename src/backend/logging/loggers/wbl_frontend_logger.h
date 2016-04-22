@@ -69,6 +69,10 @@ class WriteBehindFrontendLogger : public FrontendLogger {
   void SyncTileGroupHeaders(
       std::set<storage::TileGroupHeader *> tile_group_header_set);
 
+  void SetLoggerID(int);
+
+  void RecoverIndex() {};
+
  private:
   std::string GetLogFileName(void);
 
