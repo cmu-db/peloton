@@ -781,6 +781,7 @@ struct ItemPointerContainer {
 
   ItemPointerContainer(const ItemPointer &ip) {
     this->item_pointer = ip;
+    begin_cid = 0;
   }
 
   void GetItemPointer(ItemPointer &ip) {
@@ -789,16 +790,23 @@ struct ItemPointerContainer {
     spinlock.Unlock();
   }
 
-  void SetItemPointer(const ItemPointer &ip) {
+  // this function is called when swapping the versions during GC.
+  void SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
     spinlock.Lock();
-    this->item_pointer = ip;
+    if (cid > begin_cid) {
+      this->item_pointer = ip;
+      this->begin_cid = cid;
+    }
     spinlock.Unlock();
   }
 
 private:
+  // copy of item pointer pointing to the header of the version chain.
   ItemPointer item_pointer;
-  Spinlock spinlock;
+  // begin_cid of the item pointer header.
+  cid_t begin_cid;
 
+  Spinlock spinlock;
 };
 
 //===--------------------------------------------------------------------===//
