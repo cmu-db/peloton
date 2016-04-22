@@ -17,6 +17,7 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -778,11 +779,25 @@ extern ItemPointer INVALID_ITEMPOINTER;
 
 struct ItemPointerContainer {
 
-  ItemPointerContainer(const ItemPointer &item_pointer) {
-    header = item_pointer;
+  ItemPointerContainer(const ItemPointer &ip) {
+    this->item_pointer = ip;
   }
 
-  ItemPointer header;
+  void GetItemPointer(ItemPointer &ip) {
+    spinlock.Lock();
+    ip = this->item_pointer;
+    spinlock.Unlock();
+  }
+
+  void SetItemPointer(const ItemPointer &ip) {
+    spinlock.Lock();
+    this->item_pointer = ip;
+    spinlock.Unlock();
+  }
+
+private:
+  ItemPointer item_pointer;
+  Spinlock spinlock;
 
 };
 

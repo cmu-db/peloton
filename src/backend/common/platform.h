@@ -126,7 +126,6 @@ class Spinlock {
   }
 
  private:
-  // typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/

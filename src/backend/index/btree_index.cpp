@@ -81,7 +81,8 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
       auto entries = container.equal_range(index_key);
       for (auto iterator = entries.first; iterator != entries.second;
            iterator++) {
-        ItemPointer &value = iterator->second->header;
+        ItemPointer value;
+        iterator->second->GetItemPointer(value);
 
         if ((value.block == location.block) &&
             (value.offset == location.offset)) {
@@ -117,7 +118,9 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      if (predicate(entry->second->header)) {
+      ItemPointer item_pointer;
+      entry->second->GetItemPointer(item_pointer);
+      if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
         return false;
       }
@@ -197,7 +200,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
             ItemPointerContainer *location_header = scan_itr->second;
-            result.push_back(location_header->header);
+            ItemPointer item_pointer;
+            location_header->GetItemPointer(item_pointer);
+            result.push_back(item_pointer);
           } else {
             // We can stop scanning if we know that all constraints are equal
             if (all_constraints_are_equal == true) {
@@ -231,7 +236,9 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     // scan all entries
     while (itr != container.end()) {
       ItemPointerContainer *location = itr->second;
-      result.push_back(location->header);
+      ItemPointer item_pointer;
+      location->GetItemPointer(item_pointer);
+      result.push_back(std::move(item_pointer));
       itr++;
     }
 
@@ -252,7 +259,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      result.push_back(entry->second->header);
+      ItemPointer item_pointer;
+      entry->second->GetItemPointer(item_pointer);
+      result.push_back(item_pointer);
     }
 
     index_lock.Unlock();
