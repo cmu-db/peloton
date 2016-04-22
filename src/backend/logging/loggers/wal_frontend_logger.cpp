@@ -250,7 +250,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
   // Set log file size
   // log_file_size = GetLogFileSize(log_file_fd);
-  this->OpenNextLogFile();
+  OpenNextLogFile();
 
   // Go over the log size if needed
   if (log_file_size > 0) {
@@ -354,7 +354,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
             assert(commit_id != INVALID_CID);
-            pending_commits.insert(commit_id);
+
+	    // Now directly commit this transaction. This is safe because we reject commit ids that appear
+	    // after the persistent commit id before coming here (in the switch case above).
+	    CommitTransactionRecovery(commit_id);
             break;
 
           case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -364,17 +367,8 @@ void WriteAheadFrontendLogger::DoRecovery() {
                 tuple_record);
             break;
           case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-            auto it = pending_commits.begin();
-            for (; it != pending_commits.end(); it++) {
-              cid_t curr = *it;
-              if (curr > commit_id) {
-                break;
-              }
-              CommitTransactionRecovery(curr);
-            }
-            if (it != pending_commits.begin()) {
-              pending_commits.erase(pending_commits.begin(), it);
-            }
+	    // Do nothing if we hit the delimiter, because the delimiters help only to find
+	    // the max persistent commit id, and should be ignored during actual recovery
             break;
           }
 
@@ -388,7 +382,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     // Finally, abort ACTIVE transactions in recovery_txn_table
     AbortActiveTransactions();
-    pending_commits.clear();
 
     // After finishing recovery, set the next oid with maximum oid
     // observed during the recovery
