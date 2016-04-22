@@ -14,6 +14,7 @@
 
 #include <thread>
 #include <unordered_map>
+#include <map>
 
 #include "backend/common/types.h"
 #include "backend/common/lockfree_queue.h"
@@ -62,6 +63,7 @@ class GCManager {
   void Unlink();
   void DeleteTupleFromIndexes(const TupleMetadata &);
 
+  void ResetTuple(const TupleMetadata &);
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -69,10 +71,16 @@ class GCManager {
   volatile bool is_running_;
   GCType gc_type_;
   LockfreeQueue<TupleMetadata> possibly_free_list_;
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-      free_map_;
   std::unique_ptr<std::thread> gc_thread_;
 
+  // TODO: use shared pointer to reduce memory copy
+  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
+    recycled_map_;
+
+  // Map of actual grabage.
+  // The key is the timestamp when the garbage is identified, value is the metadata of the garbage.
+  // TODO: use shared pointer to reduce memory copy
+  std::multimap<cid_t, TupleMetadata> garbage_map_;
 };
 
 }  // namespace gc
