@@ -116,10 +116,15 @@ bool PrepareLogFile(std::string file_name) {
 		return false;
 	}
 
+        // Get an instance of the storage manager to force posix_fallocate
+        auto &storage_manager = storage::StorageManager::GetInstance();
+        auto msync_count = storage_manager.GetMsyncCount();
+        printf("msync count : %lu\n", msync_count);
+        
+
   Timer<> timer;
   std::thread thread;
 
-  timer.Start();
 
   // Start frontend logger if in a valid logging mode
 	if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
@@ -142,8 +147,10 @@ bool PrepareLogFile(std::string file_name) {
 	  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
 	}
 
-	// Build the log
-	BuildLog();
+  timer.Start();
+
+  // Build the log
+  BuildLog();
 
   // Stop frontend logger if in a valid logging mode
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
