@@ -56,8 +56,8 @@ void GCManager::Unlink() {
       }
 
       if (tuple_metadata.tuple_end_cid < max_cid) {
-          // Now that we know we need to recycle tuple, we need to delete all
-          // tuples from the indexes to which it belongs as well.
+        // Now that we know we need to recycle tuple, we need to delete all
+        // tuples from the indexes to which it belongs as well.
 
         DeleteTupleFromIndexes(tuple_metadata);
 
@@ -136,7 +136,8 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
         // as this is primary key, there should be exactly one entry.
         assert(item_pointer_containers.size() == 1);
 
-        item_pointer_containers[0]->SetItemPointer(next_version);
+        // the end_cid of last version is equal to the begin_cid of current version.
+        item_pointer_containers[0]->SwapItemPointer(next_version, tuple_metadata.tuple_end_cid);
 
       } break;
       default: {
