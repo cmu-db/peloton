@@ -30,7 +30,7 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
+  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,

@@ -90,7 +90,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
 
 WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
     : test_mode_(for_testing) {
-  logging_type = LOGGING_TYPE_DRAM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);

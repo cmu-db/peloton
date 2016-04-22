@@ -21,7 +21,7 @@ namespace peloton {
 namespace logging {
 
 WriteAheadBackendLogger::WriteAheadBackendLogger() : BackendLogger() {
-  logging_type = LOGGING_TYPE_DRAM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WAL;
   frontend_logger_id = -1;  // invalid
   LOG_INFO("INSIDE CONSTRUCTOR");
 }
