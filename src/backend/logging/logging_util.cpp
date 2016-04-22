@@ -33,7 +33,8 @@ void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   }
 }
 
-bool LoggingUtil::InitFileHandle(const char *name, FileHandle &file_handle, const char *mode) {
+bool LoggingUtil::InitFileHandle(const char *name, FileHandle &file_handle,
+                                 const char *mode) {
   auto file = fopen(name, mode);
   if (file == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
@@ -248,6 +249,16 @@ storage::DataTable *LoggingUtil::GetTable(TupleRecord &tuple_record) {
   assert(table);
 
   return table;
+}
+
+int LoggingUtil::GetFileSizeFromFileName(const char *file_name) {
+  struct stat st;
+  int ret_val;
+
+  ret_val = stat(file_name, &st);
+  if (ret_val == 0) return st.st_size;
+
+  return -1;
 }
 
 }  // namespace logging

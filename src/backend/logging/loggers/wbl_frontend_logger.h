@@ -71,7 +71,7 @@ class WriteBehindFrontendLogger : public FrontendLogger {
 
   void SetLoggerID(int);
 
-  void RecoverIndex() {};
+  void RecoverIndex(){};
 
  private:
   std::string GetLogFileName(void);

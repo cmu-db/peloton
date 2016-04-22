@@ -27,10 +27,10 @@ namespace logging {
 
 class LoggingUtil {
  public:
-
   static void FFlushFsync(FileHandle &file_handle);
 
-  static bool InitFileHandle(const char *name, FileHandle &file_handle, const char *mode);
+  static bool InitFileHandle(const char *name, FileHandle &file_handle,
+                             const char *mode);
 
   static size_t GetLogFileSize(FileHandle &file_handle);
 
@@ -54,7 +54,7 @@ class LoggingUtil {
 
   static void SkipTupleRecordBody(FileHandle &file_handle);
 
-
+  static int GetFileSizeFromFileName(const char *);
 
   // Wrappers
   /**
