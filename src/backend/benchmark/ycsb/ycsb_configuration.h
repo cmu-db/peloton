@@ -58,6 +58,9 @@ class configuration {
 
   // frequency with which the logger flushes
   int64_t wait_timeout;
+
+  // log file size
+  int file_size;
 };
 
 extern configuration state;
