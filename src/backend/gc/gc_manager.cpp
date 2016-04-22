@@ -167,11 +167,11 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
         // do we need to reset the prev_item_pointer for next_version??
         assert(next_version.IsNull() == false);
 
-        std::vector<ItemPointerContainer *> item_pointer_headers;
-        index->ScanKey(key.get(), item_pointer_headers);
-        assert(item_pointer_headers.size() == 1);
+        std::vector<ItemPointerContainer *> item_pointer_containers;
+        index->ScanKey(key.get(), item_pointer_containers);
+        assert(item_pointer_containers.size() == 1);
 
-        item_pointer_headers[0]->header = next_version;
+        item_pointer_containers[0]->SetItemPointer(next_version);
 
       } break;
       default: {
