@@ -138,6 +138,9 @@ bool UpdateExecutor::DExecute() {
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
+        
+      LOG_INFO("perform update old location: %lu, %lu", old_location.block, old_location.offset);
+      LOG_INFO("perform update new location: %lu, %lu", new_location.block, new_location.offset);
       transaction_manager.PerformUpdate(old_location, new_location);
 
       executor_context_->num_processed += 1;  // updated one

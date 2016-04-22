@@ -95,8 +95,13 @@ class OptimisticTxnManager : public TransactionManager {
         }
       }
     }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
-    return min_running_cid - 1;
+    assert(min_running_cid > 0);
+    if (min_running_cid != MAX_CID) {
+      return min_running_cid - 1;
+    } else {
+      // in this case, there's no running transaction.
+      return GetNextCommitId() - 1;
+    }
   }
 
  private:

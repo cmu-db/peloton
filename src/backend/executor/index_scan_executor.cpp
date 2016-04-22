@@ -152,6 +152,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_containers.size());
 
   if (tuple_location_containers.size() == 0) return false;
+  // as this is primary key, we should obtain exactly one tuple.
+  assert(tuple_location_containers.size() == 1);
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -164,16 +166,23 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
-    auto tile_group_id = tuple_location.block;
-    auto tuple_id = tuple_location.offset;
 
+    size_t chain_length = 0;
     while (true) {
+      
+      ++chain_length;
 
       // if the tuple is visible.
-      if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+      if (transaction_manager.IsVisible(tile_group_header, tuple_location.offset)) {
+        
+        LOG_INFO("traverse chain length : %lu", chain_length);
+        LOG_INFO("perform read: %lu, %lu", tuple_location.block, tuple_location.offset);
+
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
-          visible_tuples[tile_group_id].push_back(tuple_id);
+          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+
+
           auto res = transaction_manager.PerformRead(tuple_location);
           if(!res){
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
@@ -181,11 +190,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           }
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                               tuple_id);
+                                                               tuple_location.offset);
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples[tile_group_id].push_back(tuple_id);
+            visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+
             auto res = transaction_manager.PerformRead(tuple_location);
             if(!res){
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
@@ -197,14 +207,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       } 
       // if the tuple is not visible.
       else {
-        ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
+        ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_location.offset);
         // if there is no next tuple.
         if (next_item.IsNull() == true) {
+          LOG_INFO("next version not found");
           break;
         }
-        tile_group_id = next_item.block;
-        tuple_id = next_item.offset;
-        tile_group = manager.GetTileGroup(tile_group_id);
+        tuple_location = next_item;
+        tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
       }
     }
