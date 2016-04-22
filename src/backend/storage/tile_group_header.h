@@ -229,6 +229,10 @@ class TileGroupHeader : public Printable {
     return rb_seg_headers[tuple_slot_id];
   }
 
+  inline void SetRollbackSegmentHeader(const oid_t &tuple_slot_id, RollbackSegment *rb_seg) const {
+    rb_seg_headers[tuple_slot_id] = rb_seg;
+  }
+
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Sync the contents

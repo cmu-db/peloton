@@ -18,7 +18,7 @@
 namespace peloton {
 namespace storage {
 
-RollbackSegment *RollbackSegmentManager::GetRollbackSegment(
+RollbackSegment *RollbackSegmentManager::GetEmptyRollbackSegment(
   const catalog::Schema *schema,
   const peloton::planner::ProjectInfo::TargetList &target_list) {
 
@@ -42,6 +42,14 @@ RollbackSegment *RollbackSegmentManager::GetRollbackSegment(
 
   return rb_seg;
 }
+
+//RollbackSegment *RollbackSegmentManager::GetRollbackSegment(const catalog::Schema *schema,
+//                                                            const peloton::planner::ProjectInfo::TargetList &target_list,
+//                                                            const AbstractTuple *tuple) {
+//  RollbackSegment *rb_seg = GetEmptyRollbackSegment(schema, target_list);
+//  // Copy the data from the old tuple
+//
+//}
 
 void RollbackSegment::SetSegmentValue(const catalog::Schema *schema, const oid_t col_id,
                                              const Value &value, VarlenPool *data_pool) {

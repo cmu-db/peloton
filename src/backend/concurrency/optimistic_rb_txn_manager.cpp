@@ -83,6 +83,24 @@ bool OptimisticRbTxnManager::IsVisible(
   }
 }
 
+bool OptimisticRbTxnManager::NeedNewRbSegment(const storage::TileGroupHeader *const tile_group_header,
+                                              const oid_t &tuple_id,
+                                              const planner::ProjectInfo::TargetList &target_list) {
+  // Current txn must be the owner
+  assert(IsOwner(tile_group_header, tuple_id));
+
+  auto col_bitmap = GetBitMap(tile_group_header, tuple_id);
+  auto end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
+  // There are 2 cases where we don't need to generate a new roll back segment
+  // Case 1: The tuple is inserted by current txn
+  const bool is_inserted = (end_cid == MAX_CID && col_bitmap->left_half == 0 && col_bitmap->right_half == 0);
+  // Case 2: The tuple is updated by current txn and it updates the same column again
+  const bool is_overlapped = (end_cid == MAX_CID && IsTargetOverlapped(target_list, col_bitmap));
+
+  return !(is_inserted || is_overlapped);
+}
+
 // check whether the current transaction owns the tuple.
 // this function is called by update/delete executors.
 bool OptimisticRbTxnManager::IsOwner(

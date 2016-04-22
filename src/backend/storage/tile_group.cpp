@@ -22,6 +22,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
+#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
 namespace storage {
@@ -89,6 +90,34 @@ oid_t TileGroup::GetActiveTupleCount() const {
 //===--------------------------------------------------------------------===//
 
 /**
+ * Generate a rollback segment from the data of the old tuple
+ */
+RollbackSegment *TileGroup::GetPreparedRollbackSegment(const planner::ProjectInfo::TargetList &target_list,
+                                                       const oid_t &tuple_id, bool already_has_rbseg) {
+  auto schema = table->GetSchema();
+  assert(schema);
+  // Get an empty rb segment
+  auto rb_seg = RollbackSegmentManager::GetEmptyRollbackSegment(schema, target_list);
+
+  if (already_has_rbseg) {
+    // Already has a rollback segment
+    auto old_rb_seg = tile_group_header->GetRollbackSegmentHeader(tuple_id);
+
+    // Copy old value from the rollback segment
+    for (auto col_id : old_rb_seg)
+
+  } else {
+    // Have no rollback segment, copy from original tuple
+    for (auto target : target_list) {
+      auto col_id = target.first;
+      auto tile_id = GetTileIdFromColumnId(col_id);
+      rb_seg->SetSegmentValue(schema, col_id, GetValue(tuple_id, col_id), GetTilePool(tile_id));
+    }
+  }
+  return rb_seg;
+}
+
+/**
  * Grab next slot (thread-safe) and fill in the tuple
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
@@ -118,6 +147,18 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
                           tile->GetPool());
       column_itr++;
     }
+  }
+}
+
+void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+            tile_group_id, tuple_slot_id, num_tuple_slots);
+  auto schema = table->GetSchema();
+
+  assert(tuple->GetColumnCount() == schema->GetColumnCount());
+
+  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
+    tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
   }
 }
 
