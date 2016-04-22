@@ -61,6 +61,9 @@ class configuration {
 
   // log file size
   int file_size;
+
+  // log buffer size
+  int log_buffer_size;
 };
 
 extern configuration state;

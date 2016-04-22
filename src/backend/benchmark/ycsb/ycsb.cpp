@@ -65,6 +65,7 @@ inline void YCSBBootstrapLogger() {
         log_manager.SetSyncCommit(true);
       }
       log_manager.SetLogFileSizeLimit((unsigned int) state.file_size);
+      log_manager.SetLogBufferCapacity((unsigned int) state.log_buffer_size);
 
       // Wait for standby mode
       std::thread(&peloton::logging::LogManager::StartStandbyMode, &log_manager)
