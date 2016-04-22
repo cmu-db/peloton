@@ -60,6 +60,8 @@ class FrontendLogger : public Logger {
 
   virtual void SetLoggerID(int) = 0;
 
+  virtual void RecoverIndex(void) = 0;
+
   size_t GetFsyncCount() const { return fsync_count; }
 
   void ReplayLog(const char *, size_t len);
