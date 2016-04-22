@@ -38,8 +38,7 @@ void Usage(FILE* out) {
           "   -t --transactions      :  # of transactions \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write-ratio       :  Fraction of updates \n"
-          "   -b --backend-count     :  Backend count \n"
-  );
+          "   -b --backend-count     :  Backend count \n");
 }
 
 static struct option opts[] = {
@@ -53,9 +52,9 @@ static struct option opts[] = {
     {"backend_count", optional_argument, NULL, 'b'},
     {NULL, 0, NULL, 0}};
 
-
 static void ValidateLoggingType(const configuration& state) {
-  LOG_INFO("Invalid logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
+  LOG_INFO("Invalid logging_type :: %s",
+           LoggingTypeToString(state.logging_type).c_str());
 }
 
 static void ValidateDataFileSize(const configuration& state) {
@@ -91,9 +90,9 @@ static void ValidateLogFileDir(configuration& state) {
   // Assign log file dir based on logging type
   switch (state.logging_type) {
     // Log file on NVM
-    case LOGGING_TYPE_DRAM_NVM:
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_HDD_NVM: {
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_NVM_WBL:
+    {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = NVM_DIR;
@@ -101,9 +100,9 @@ static void ValidateLogFileDir(configuration& state) {
     } break;
 
     // Log file on HDD
-    case LOGGING_TYPE_DRAM_HDD:
-    case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_HDD_HDD: {
+    case LOGGING_TYPE_HDD_WAL:
+    case LOGGING_TYPE_HDD_WBL:
+    {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
@@ -127,7 +126,7 @@ static void ValidateLogFileDir(configuration& state) {
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
-  state.logging_type = LOGGING_TYPE_DRAM_NVM;
+  state.logging_type = LOGGING_TYPE_NVM_WAL;
 
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
@@ -163,7 +162,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.wait_timeout = atoi(optarg);
         break;
 
-        // YCSB
+      // YCSB
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
         break;
@@ -203,7 +202,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
   ycsb::ValidateTransactionCount(ycsb::state);
-
 }
 
 }  // namespace logger

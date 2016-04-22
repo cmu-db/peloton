@@ -71,6 +71,11 @@ class LogManager {
     }
   }
 
+  void ResetLogStatus() {
+    this->recovery_to_logging_counter = 0;
+    SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  }
+
   // Wait for the system to begin
   void StartStandbyMode();
 
@@ -123,7 +128,7 @@ class LogManager {
   std::string GetLogFileName(void);
 
   bool HasPelotonFrontendLogger() const {
-    return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
+    return (peloton_logging_mode == LOGGING_TYPE_NVM_WAL);
   }
 
   // Drop all default tiles for tables before recovery
