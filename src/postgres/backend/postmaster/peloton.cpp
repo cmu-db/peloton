@@ -125,10 +125,6 @@ peloton_bootstrap() {
         }
 
       }
-
-      // Start GC vacuuming thread
-      peloton::gc::GCManagerFactory::GetInstance().StartGC();      
-
     }
   }
   catch(const std::exception &exception) {

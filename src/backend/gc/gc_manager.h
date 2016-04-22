@@ -40,7 +40,9 @@ class GCManager {
   GCManager(const GCType type)
       : is_running_(true),
         gc_type_(type),
-        possibly_free_list_(MAX_FREE_LIST_LENGTH) {}
+        possibly_free_list_(MAX_FREE_LIST_LENGTH) {
+          StartGC();
+        }
 
   ~GCManager() { StopGC(); }
 
@@ -57,7 +59,7 @@ class GCManager {
   ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
  private:
-  void Poll();
+  void Unlink();
   void DeleteTupleFromIndexes(const TupleMetadata &);
 
  private:
