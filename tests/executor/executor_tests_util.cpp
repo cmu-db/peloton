@@ -154,9 +154,7 @@ std::shared_ptr<storage::TileGroup> ExecutorTestsUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(__attribute__((unused))
-                                      concurrency::Transaction *transaction,
-                                      storage::DataTable *table, int num_rows,
+void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
                                       bool mutate, bool random, bool group_by) {
   // Random values
   if (random) std::srand(std::time(nullptr));
@@ -169,7 +167,6 @@ void ExecutorTestsUtil::PopulateTable(__attribute__((unused))
   // Insert tuples into tile_group.
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
     if (mutate) populate_value *= 3;
@@ -232,8 +229,6 @@ void ExecutorTestsUtil::PopulateTiles(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   txn_manager.BeginTransaction();
-  // const txn_id_t txn_id = txn->GetTransactionId();
-  // const cid_t commit_id = txn->GetBeginCommitId();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
@@ -353,9 +348,9 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   ExecutorTestsUtil::PopulateTable(
-      txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false);
+      table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false);
   txn_manager.CommitTransaction();
 
   return table;

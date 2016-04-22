@@ -31,10 +31,10 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
 
   // Create a table and wrap it in logical tiles
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuple_count, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false,
                                    false, true);
   txn_manager.CommitTransaction();
 
