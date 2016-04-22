@@ -92,7 +92,6 @@ void GCManager::Unlink() {
     // Next, we check if any possible garbage is actually garbage
     // every time we garbage collect at most 1000 tuples.
     for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
-
         TupleMetadata tuple_metadata;
           // if there's no more tuples in the queue, then break.
         if (possibly_free_list_.Pop(tuple_metadata) == false) {
@@ -199,7 +198,8 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
         // as this is primary key, there should be exactly one entry.
         assert(item_pointer_containers.size() == 1);
 
-        item_pointer_containers[0]->SetItemPointer(next_version);
+        // the end_cid of last version is equal to the begin_cid of current version.
+        item_pointer_containers[0]->SwapItemPointer(next_version, tuple_metadata.tuple_end_cid);
 
       } break;
       default: {

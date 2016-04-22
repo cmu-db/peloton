@@ -31,6 +31,11 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 BTreeIndex<KeyType, ValueType, KeyComparator,
            KeyEqualityChecker>::~BTreeIndex() {
+  // we should not rely on shared_ptr to reclaim memory.
+  // this is because the underlying index can split or merge leaf nodes,
+  // which invokes data data copy and deletes.
+  // as the underlying index is unaware of shared_ptr, 
+  // memory allocated should be managed carefully by programmers.
   for (auto entry = container.begin(); entry != container.end(); ++entry) {
     delete entry->second;
     entry->second = nullptr;
