@@ -47,30 +47,29 @@ class BTreeIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
-  bool CondInsertEntry(const storage::Tuple *key,
-      const ItemPointer &location,
-      std::function<bool(const ItemPointer &)> predicate);
+  bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                       std::function<bool(const ItemPointer &)> predicate);
 
   void Scan(const std::vector<Value> &values,
-      const std::vector<oid_t> &key_column_ids,
-      const std::vector<ExpressionType> &expr_types,
-      const ScanDirectionType &scan_direction,
-      std::vector<ItemPointer> &);
+            const std::vector<oid_t> &key_column_ids,
+            const std::vector<ExpressionType> &expr_types,
+            const ScanDirectionType &scan_direction,
+            std::vector<ItemPointer> &);
 
   void ScanAllKeys(std::vector<ItemPointer> &);
 
   void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &);
 
-  void Scan(
-      const std::vector<Value> &values,
-      const std::vector<oid_t> &key_column_ids,
-      const std::vector<ExpressionType> &exprs,
-      const ScanDirectionType &scan_direction,
-      std::vector<ItemPointerContainer*> &result);
+  void Scan(const std::vector<Value> &values,
+            const std::vector<oid_t> &key_column_ids,
+            const std::vector<ExpressionType> &exprs,
+            const ScanDirectionType &scan_direction,
+            std::vector<ItemPointerContainer *> &result);
 
-  void ScanAllKeys(std::vector<ItemPointerContainer*> &result);
+  void ScanAllKeys(std::vector<ItemPointerContainer *> &result);
 
-  void ScanKey(const storage::Tuple *key, std::vector<ItemPointerContainer*> &result);
+  void ScanKey(const storage::Tuple *key,
+               std::vector<ItemPointerContainer *> &result);
 
   std::string GetTypeName() const;
 

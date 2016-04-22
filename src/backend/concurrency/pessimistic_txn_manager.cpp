@@ -222,7 +222,6 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
   return true;
 }
 
-
 bool PessimisticTxnManager::PerformInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -237,7 +236,6 @@ bool PessimisticTxnManager::PerformInsert(const ItemPointer &location) {
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-
 
   LOG_TRACE("Perform insert");
   //SetOwnership(tile_group_id, tuple_id);
@@ -254,20 +252,21 @@ void PessimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
-  
+
   tile_group_header->SetTransactionId(old_location.offset, transaction_id);
 
   // The write lock must have been acquired
@@ -309,12 +308,13 @@ void PessimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   LOG_TRACE("Performing Delete");
   auto transaction_id = current_txn->GetTransactionId();
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -323,8 +323,7 @@ void PessimisticTxnManager::PerformDelete(const ItemPointer &old_location,
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
-  new_tile_group_header->SetPrevItemPointer(
-      new_location.offset, old_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);

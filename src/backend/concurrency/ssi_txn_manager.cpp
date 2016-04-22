@@ -307,13 +307,14 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
                                   const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   // Set double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
@@ -353,8 +354,8 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void SsiTxnManager::PerformDelete(const ItemPointer &old_location,
                                   const ItemPointer &new_location) {
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   auto new_tile_group_header = catalog::Manager::GetInstance()
@@ -391,13 +392,11 @@ void SsiTxnManager::PerformDelete(const ItemPointer &location) {
   if (old_location.IsNull() == false) {
     // delete an inserted version
     current_txn->RecordDelete(old_location);
-  } 
-  else {
+  } else {
     // if this version is newly inserted.
     current_txn->RecordDelete(location);
   }
 }
-
 
 Result SsiTxnManager::CommitTransaction() {
   LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
@@ -622,7 +621,8 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
       auto tuple_slot = tuple_entry.first;
 
       // we don't have reader lock on insert
-      if (tuple_entry.second == RW_TYPE_INSERT || tuple_entry.second == RW_TYPE_INS_DEL) {
+      if (tuple_entry.second == RW_TYPE_INSERT ||
+          tuple_entry.second == RW_TYPE_INS_DEL) {
         continue;
       }
       RemoveSIReader(tile_group_header, tuple_slot, txn->GetTransactionId());

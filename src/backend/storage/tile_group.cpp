@@ -79,7 +79,8 @@ oid_t TileGroup::GetNextTupleSlot() const {
   return tile_group_header->GetCurrentNextTupleSlot();
 }
 
-// this function is called only when building tile groups for aggregation operations.
+// this function is called only when building tile groups for aggregation
+// operations.
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
@@ -125,9 +126,9 @@ void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
   LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
   auto schema = table->GetSchema();
-  
+
   assert(tuple->GetColumnCount() == schema->GetColumnCount());
-  
+
   for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
     tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
   }
@@ -174,10 +175,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   }
 
   //  // Set MVCC info
-   assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
-   INVALID_TXN_ID);
-   assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-   assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
   return tuple_slot_id;
 }

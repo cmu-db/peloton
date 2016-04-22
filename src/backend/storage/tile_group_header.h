@@ -243,9 +243,9 @@ class TileGroupHeader : public Printable {
 
  private:
   // header entry size is the size of the layout described above
-  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) + 24 +
-                                          2 * sizeof(bool);
+  static const size_t header_entry_size =
+      sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(ItemPointer) + 24 +
+      2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
