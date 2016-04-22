@@ -14,6 +14,7 @@
 #include <mutex>
 
 #include "backend/common/types.h"
+#include "backend/common/platform.h"
 
 namespace peloton {
 namespace storage {
@@ -50,16 +51,16 @@ class StorageManager {
   }
 
  private:
-  // pmem file address
+  // data file address
   void *data_file_address;
 
-  // pmem file synch mutex
-  std::mutex pmem_mutex;
+  // data file lock
+  Spinlock data_file_spinlock;
 
-  // pmem file len
+  // data file len
   size_t data_file_len;
 
-  // pmem offset
+  // data offset
   size_t data_file_offset;
 
   // stats

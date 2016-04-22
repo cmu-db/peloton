@@ -191,19 +191,30 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       {
-        std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
+        size_t cache_data_file_offset = 0;
 
-        if (data_file_offset >= data_file_len) {
-          throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
-                          " length : " + std::to_string(data_file_len));
-          return nullptr;
+        // Lock the file
+        data_file_spinlock.Lock();
+
+        // Check if within bounds
+        if (data_file_offset < data_file_len) {
+          cache_data_file_offset = data_file_offset;
+
+          // Offset by the requested size
+          data_file_offset += size;
+
+          // Unlock the file
+          data_file_spinlock.Unlock();
+
+          void *address = reinterpret_cast<char*>(data_file_address) + cache_data_file_offset;
+          return address;
         }
 
-        void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
+        data_file_spinlock.Unlock();
+        throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
+                        " length : " + std::to_string(data_file_len));
 
-        // offset by requested size
-        data_file_offset += size;
-        return address;
+        return nullptr;
       }
     } break;
 
