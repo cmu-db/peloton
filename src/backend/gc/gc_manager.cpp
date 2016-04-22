@@ -34,16 +34,21 @@ void GCManager::StopGC() {
 
 void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header =  manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
+  auto tile_group_header =
+      manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
 
   // Reset the header
-  tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id, INVALID_TXN_ID);
+  tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id,
+                                      INVALID_TXN_ID);
   tile_group_header->SetBeginCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_metadata.tuple_slot_id, MAX_CID);
-  tile_group_header->SetPrevItemPointer(tuple_metadata.tuple_slot_id, INVALID_ITEMPOINTER);
-  tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id, INVALID_ITEMPOINTER);
-  std::memset(tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-              storage::TileGroupHeader::GetReserverdSize());
+  tile_group_header->SetPrevItemPointer(tuple_metadata.tuple_slot_id,
+                                        INVALID_ITEMPOINTER);
+  tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id,
+                                        INVALID_ITEMPOINTER);
+  std::memset(
+      tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
+      storage::TileGroupHeader::GetReserverdSize());
   // TODO: set the unused 2 boolean value
 }
 
@@ -51,7 +56,6 @@ void GCManager::Unlink() {
   // Check if we can move anything from the possibly free list to the free list.
 
   while (true) {
-    
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     LOG_INFO("Unlink tuple thread...");
@@ -65,7 +69,8 @@ void GCManager::Unlink() {
     for (auto garbage : garbage_map_) {
       const cid_t garbage_ts = garbage.first;
       const auto &tuple_metadata = garbage.second;
-      // if the timestamp of the garbage is older than the current max_cid, recycle it
+      // if the timestamp of the garbage is older than the current max_cid,
+      // recycle it
       if (garbage_ts < max_cid) {
         ResetTuple(tuple_metadata);
 
@@ -78,8 +83,7 @@ void GCManager::Unlink() {
           free_list->Push(tuple_metadata);
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
-          free_list.reset(
-            new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
+          free_list.reset(new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
           free_list->Push(tuple_metadata);
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
@@ -92,29 +96,29 @@ void GCManager::Unlink() {
     // Next, we check if any possible garbage is actually garbage
     // every time we garbage collect at most 1000 tuples.
     for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
-        TupleMetadata tuple_metadata;
-          // if there's no more tuples in the queue, then break.
-        if (possibly_free_list_.Pop(tuple_metadata) == false) {
-          break;
-        }
-
-        if (tuple_metadata.tuple_end_cid < max_cid) {
-          // Now that we know we need to recycle tuple, we need to delete all
-          // tuples from the indexes to which it belongs as well.
-          DeleteTupleFromIndexes(tuple_metadata);
-
-          // Add to the garbage map
-          garbage_map_.insert(garbage_map_.find(max_cid),
-                              std::make_pair(max_cid, tuple_metadata));
-        } else {
-            // if a tuple cannot be reclaimed, then add it back to the list.
-          possibly_free_list_.Push(tuple_metadata);
-        }
-      }  // end for
-
-      if (is_running_ == false) {
-        return;
+      TupleMetadata tuple_metadata;
+      // if there's no more tuples in the queue, then break.
+      if (possibly_free_list_.Pop(tuple_metadata) == false) {
+        break;
       }
+
+      if (tuple_metadata.tuple_end_cid < max_cid) {
+        // Now that we know we need to recycle tuple, we need to delete all
+        // tuples from the indexes to which it belongs as well.
+        DeleteTupleFromIndexes(tuple_metadata);
+
+        // Add to the garbage map
+        garbage_map_.insert(garbage_map_.find(max_cid),
+                            std::make_pair(max_cid, tuple_metadata));
+      } else {
+        // if a tuple cannot be reclaimed, then add it back to the list.
+        possibly_free_list_.Push(tuple_metadata);
+      }
+    }  // end for
+
+    if (is_running_ == false) {
+      return;
+    }
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
   }
@@ -146,16 +150,16 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
     return INVALID_ITEMPOINTER;
   }
 
-   std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
-   // if there exists free_list
-   if (recycled_map_.find(table_id, free_list) == true) {
-     TupleMetadata tuple_metadata;
-     if (free_list->Pop(tuple_metadata) == true) {
-       return ItemPointer(tuple_metadata.tile_group_id,
-                          tuple_metadata.tuple_slot_id);
-     }
-   }
-   return ItemPointer();
+  std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
+  // if there exists free_list
+  if (recycled_map_.find(table_id, free_list) == true) {
+    TupleMetadata tuple_metadata;
+    if (free_list->Pop(tuple_metadata) == true) {
+      return ItemPointer(tuple_metadata.tile_group_id,
+                         tuple_metadata.tuple_slot_id);
+    }
+  }
+  return ItemPointer();
 }
 
 // delete a tuple from all its indexes it belongs to.
@@ -177,7 +181,7 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
     auto index = table->GetIndex(idx);
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
-    
+
     // build key.
     std::unique_ptr<storage::Tuple> key(
         new storage::Tuple(table->GetSchema(), true));
@@ -198,8 +202,10 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
         // as this is primary key, there should be exactly one entry.
         assert(item_pointer_containers.size() == 1);
 
-        // the end_cid of last version is equal to the begin_cid of current version.
-        item_pointer_containers[0]->SwapItemPointer(next_version, tuple_metadata.tuple_end_cid);
+        // the end_cid of last version is equal to the begin_cid of current
+        // version.
+        item_pointer_containers[0]->SwapItemPointer(
+            next_version, tuple_metadata.tuple_end_cid);
 
       } break;
       default: {
@@ -208,7 +214,6 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
                                        tuple_metadata.tuple_slot_id));
       }
     }
-
   }
 }
 
