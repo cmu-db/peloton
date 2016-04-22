@@ -71,7 +71,7 @@ bool logging_module_check = false;
 
 bool syncronization_commit = false;
 
-static void peloton_process_status(const peloton_status& status, PlanState *planstate);
+static void peloton_process_status(const peloton_status& status, const PlanState *planstate);
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
@@ -168,7 +168,7 @@ peloton_ddl(Node *parsetree) {
  * ----------
  */
 void
-peloton_dml(PlanState *planstate,
+peloton_dml(const PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
             TupleDesc tuple_desc,
@@ -236,7 +236,7 @@ peloton_dml(PlanState *planstate,
  * ----------
  */
 static void
-peloton_process_status(const peloton_status& status, PlanState *planstate) {
+peloton_process_status(const peloton_status& status, const PlanState *planstate) {
   int code;
 
   // Process the status code

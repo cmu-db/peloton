@@ -35,62 +35,65 @@ class DMLUtils {
   DMLUtils &operator=(DMLUtils &&) = delete;
 
   static AbstractPlanState *PreparePlanState(AbstractPlanState *root,
-                                             PlanState *planstate,
+                                             const PlanState *planstate,
                                              bool left_child);
 
-  static AbstractPlanState *peloton_prepare_data(PlanState *planstate);
+  static AbstractPlanState *peloton_prepare_data(const PlanState *planstate);
 
  private:
   static ModifyTablePlanState *PrepareModifyTableState(
-      ModifyTableState *mt_planstate);
+      const ModifyTableState *mt_planstate);
 
   static void PrepareInsertState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_state);
+                                 const ModifyTableState *mt_state);
 
   static void PrepareUpdateState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_state);
+                                 const ModifyTableState *mt_state);
 
   static void PrepareDeleteState(ModifyTablePlanState *info,
-                                 ModifyTableState *mt_state);
+                                 const ModifyTableState *mt_state);
 
-  static ResultPlanState *PrepareResultState(ResultState *result_state);
+  static ResultPlanState *PrepareResultState(const ResultState *result_state);
 
-  static UniquePlanState *PrepareUniqueState(UniqueState *result_state);
+  static UniquePlanState *PrepareUniqueState(const UniqueState *result_state);
 
   static void PrepareAbstractScanState(AbstractScanPlanState *ss_plan_state,
                                        const ScanState &ss_state);
 
-  static SeqScanPlanState *PrepareSeqScanState(SeqScanState *ss_state);
+  static SeqScanPlanState *PrepareSeqScanState(const SeqScanState *ss_state);
 
-  static IndexScanPlanState *PrepareIndexScanState(IndexScanState *iss_state);
+  static IndexScanPlanState *PrepareIndexScanState(
+      const IndexScanState *iss_state);
 
   static IndexOnlyScanPlanState *PrepareIndexOnlyScanState(
-      IndexOnlyScanState *ioss_state);
+      const IndexOnlyScanState *ioss_state);
 
   static BitmapHeapScanPlanState *PrepareBitmapHeapScanState(
-      BitmapHeapScanState *bhss_state);
+      const BitmapHeapScanState *bhss_state);
 
   static BitmapIndexScanPlanState *PrepareBitmapIndexScanState(
-      BitmapIndexScanState *biss_state);
+      const BitmapIndexScanState *biss_state);
 
-  static LockRowsPlanState *PrepareLockRowsState(LockRowsState *lr_state);
+  static LockRowsPlanState *PrepareLockRowsState(const LockRowsState *lr_state);
 
-  static LimitPlanState *PrepareLimitState(LimitState *limit_state);
+  static LimitPlanState *PrepareLimitState(const LimitState *limit_state);
 
-  static MaterialPlanState *PrepareMaterialState(MaterialState *material_state);
+  static MaterialPlanState *PrepareMaterialState(
+      const MaterialState *material_state);
 
   static void PrepareAbstractJoinPlanState(AbstractJoinPlanState *j_plan_state,
                                            const JoinState &j_state);
 
-  static NestLoopPlanState *PrepareNestLoopState(NestLoopState *nl_state);
+  static NestLoopPlanState *PrepareNestLoopState(const NestLoopState *nl_state);
 
-  static MergeJoinPlanState *PrepareMergeJoinState(MergeJoinState *mj_state);
+  static MergeJoinPlanState *PrepareMergeJoinState(
+      const MergeJoinState *mj_state);
 
-  static HashJoinPlanState *PrepareHashJoinState(HashJoinState *hj_state);
+  static HashJoinPlanState *PrepareHashJoinState(const HashJoinState *hj_state);
 
-  static AggPlanState *PrepareAggState(AggState *agg_state);
+  static AggPlanState *PrepareAggState(const AggState *agg_state);
 
-  static SortPlanState *PrepareSortState(SortState *sort_plan_state) {
+  static SortPlanState *PrepareSortState(const SortState *sort_plan_state) {
     SortPlanState *info = (SortPlanState *)(palloc(sizeof(SortPlanState)));
     info->type = sort_plan_state->ss.ps.type;
     info->sort = (const Sort *)(copyObject(sort_plan_state->ss.ps.plan));
@@ -115,7 +118,7 @@ class DMLUtils {
     return info;
   }
 
-  static HashPlanState *PrepareHashState(HashState *hash_state);
+  static HashPlanState *PrepareHashState(const HashState *hash_state);
 
   static PelotonProjectionInfo *BuildProjectInfo(ProjectionInfo *proj_info,
                                                  int column_count);
