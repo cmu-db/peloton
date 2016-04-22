@@ -155,6 +155,9 @@ StorageManager::StorageManager()
 }
 
 StorageManager::~StorageManager() {
+
+  std::cout << "Allocation count : " << allocation_count << "\n";
+
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
 
@@ -176,6 +179,9 @@ StorageManager::~StorageManager() {
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
+  // Update allocation count
+  allocation_count++;
+
   switch (type) {
     case BACKEND_TYPE_MM: {
       return ::operator new(size);

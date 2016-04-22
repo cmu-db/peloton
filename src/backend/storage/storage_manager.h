@@ -45,6 +45,10 @@ class StorageManager {
     return clflush_count;
   }
 
+  size_t GetAllocationCount() const {
+    return allocation_count;
+  }
+
  private:
   // pmem file address
   void *data_file_address;
@@ -62,6 +66,8 @@ class StorageManager {
   size_t msync_count = 0;
 
   size_t clflush_count = 0;
+
+  size_t allocation_count = 0;
 };
 
 }  // End storage namespace
