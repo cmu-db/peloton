@@ -772,6 +772,26 @@ struct ItemPointer {
 extern ItemPointer INVALID_ITEMPOINTER;
 
 //===--------------------------------------------------------------------===//
+// File Handle
+//===--------------------------------------------------------------------===//
+struct FileHandle {
+  // FILE pointer
+  FILE *file = nullptr;
+
+  // File descriptor
+  int fd;
+
+  // Size of the file
+  size_t size;
+
+  FileHandle() : file(nullptr), fd(INVALID_FILE_DESCRIPTOR), size(0) {}
+
+  FileHandle(FILE *file, int fd, size_t size)
+      : file(file), fd(fd), size(size) {}
+};
+extern FileHandle INVALID_FILE_HANDLE;
+
+//===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
 
@@ -788,11 +808,11 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
 
-bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
-BackendType GetBackendType(const LoggingType& logging_type);
+BackendType GetBackendType(const LoggingType &logging_type);
 
 //===--------------------------------------------------------------------===//
 // Transformers
