@@ -71,6 +71,11 @@ class LogManager {
     }
   }
 
+  void ResetLogStatus() {
+    this->recovery_to_logging_counter = 0;
+    SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  }
+
   // Wait for the system to begin
   void StartStandbyMode();
 

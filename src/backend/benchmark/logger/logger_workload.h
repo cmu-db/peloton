@@ -37,7 +37,7 @@ extern configuration state;
 // PREPARE LOG FILE
 //===--------------------------------------------------------------------===//
 
-bool PrepareLogFile(std::string file_name);
+bool PrepareLogFile();
 
 //===--------------------------------------------------------------------===//
 // CHECK RECOVERY
