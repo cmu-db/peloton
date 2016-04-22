@@ -32,7 +32,7 @@ void Usage(FILE *out) {
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
-		  "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
+          "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
   exit(EXIT_FAILURE);
 }
 
@@ -91,7 +91,7 @@ void ValidateTransactionCount(const configuration &state) {
 }
 
 void ValidateLogging(const configuration &state) {
-  //TODO validate that sync_commit is enabled only when logging is enabled
+  // TODO validate that sync_commit is enabled only when logging is enabled
   LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
   LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
 }
@@ -129,10 +129,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
-      case 'l':
+      case 's':
         state.sync_commit = atoi(optarg);
         break;
-      case 's':
+      case 'l':
         state.logging_enabled = atoi(optarg);
         break;
       case 'h':
