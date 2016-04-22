@@ -87,8 +87,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-
-
   virtual bool PerformInsert(const ItemPointer &location);
 
   virtual bool PerformRead(const ItemPointer &location);
@@ -102,7 +100,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual void PerformUpdate(const ItemPointer &location);
 
   virtual void PerformDelete(const ItemPointer &location);
-
 
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();

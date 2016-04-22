@@ -45,17 +45,15 @@ class TransactionManager {
 
   virtual ~TransactionManager() {}
 
-
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
   cid_t GetNextCommitId() { return next_cid_++; }
-  
+
   bool IsOccupied(const ItemPointer &position);
 
   virtual bool IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
-
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
@@ -67,7 +65,6 @@ class TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
-  
 
   virtual bool PerformInsert(const ItemPointer &location) = 0;
 
@@ -88,9 +85,12 @@ class TransactionManager {
    * concurrency control) tuples into possibly free from all underlying
    * concurrency implementations of transactions.
    */
-  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id, const cid_t &tuple_end_cid) {
-    auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-    gc::GCManagerFactory::GetInstance().RecycleTupleSlot(tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
+  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
+                        const cid_t &tuple_end_cid) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
   }
 
   // Txn manager may store related information in TileGroupHeader, so when
@@ -128,7 +128,6 @@ class TransactionManager {
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
-
 
 };
 }  // End storage namespace

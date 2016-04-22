@@ -31,11 +31,11 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 BTreeIndex<KeyType, ValueType, KeyComparator,
            KeyEqualityChecker>::~BTreeIndex() {
-            for (auto entry = container.begin(); entry != container.end(); ++entry) {
-              delete entry->second;
-              entry->second = nullptr;
-            }
-           }
+  for (auto entry = container.begin(); entry != container.end(); ++entry) {
+    delete entry->second;
+    entry->second = nullptr;
+  }
+}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
@@ -45,7 +45,8 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key, new ItemPointerContainer(location));
+  std::pair<KeyType, ValueType> entry(index_key,
+                                      new ItemPointerContainer(location));
 
   {
     index_lock.WriteLock();
@@ -100,12 +101,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   return true;
 }
 
-
 template <typename KeyType, typename ValueType, class KeyComparator,
-    class KeyEqualityChecker>
-bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
-::CondInsertEntry(const storage::Tuple *key,
-    const ItemPointer &location,
+          class KeyEqualityChecker>
+bool BTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::CondInsertEntry(
+    const storage::Tuple *key, const ItemPointer &location,
     std::function<bool(const ItemPointer &)> predicate) {
 
   KeyType index_key;
@@ -124,7 +124,8 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
     }
 
     // Insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(index_key, new ItemPointerContainer(location)));
+    container.insert(std::pair<KeyType, ValueType>(
+        index_key, new ItemPointerContainer(location)));
 
     index_lock.Unlock();
   }
@@ -134,19 +135,17 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
-    const ScanDirectionType &scan_direction,
-    std::vector<ItemPointer> &result) {
+    const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
   KeyType index_key;
 
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   oid_t leading_column_id = 0;
-  auto key_column_ids_itr = std::find(
-      key_column_ids.begin(), key_column_ids.end(), leading_column_id);
+  auto key_column_ids_itr = std::find(key_column_ids.begin(),
+                                      key_column_ids.end(), leading_column_id);
 
   // SPECIAL CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
@@ -197,7 +196,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            ItemPointerContainer* location_header = scan_itr->second;
+            ItemPointerContainer *location_header = scan_itr->second;
             result.push_back(location_header->header);
           } else {
             // We can stop scanning if we know that all constraints are equal
@@ -221,8 +220,9 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void BTreeIndex<KeyType, ValueType, KeyComparator,
-                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &result) {  
+void
+BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
+    std::vector<ItemPointer> &result) {
   {
     index_lock.ReadLock();
 
@@ -241,8 +241,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator,
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     const storage::Tuple *key, std::vector<ItemPointer> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
@@ -261,23 +260,22 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
 
 }
 
-
 ///////////////////////////////////////////////////////////////////////
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
-    const ScanDirectionType &scan_direction, std::vector<ItemPointerContainer*> &result) {
+    const ScanDirectionType &scan_direction,
+    std::vector<ItemPointerContainer *> &result) {
   KeyType index_key;
 
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   oid_t leading_column_id = 0;
-  auto key_column_ids_itr = std::find(
-      key_column_ids.begin(), key_column_ids.end(), leading_column_id);
+  auto key_column_ids_itr = std::find(key_column_ids.begin(),
+                                      key_column_ids.end(), leading_column_id);
 
   // SPECIAL CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
@@ -352,8 +350,9 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void BTreeIndex<KeyType, ValueType, KeyComparator,
-                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointerContainer*> &result) {
+void
+BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
+    std::vector<ItemPointerContainer *> &result) {
   {
     index_lock.ReadLock();
 
@@ -376,9 +375,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator,
  */
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
-    const storage::Tuple *key, std::vector<ItemPointerContainer*> &result) {
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
+    const storage::Tuple *key, std::vector<ItemPointerContainer *> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -395,13 +393,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
@@ -411,41 +403,41 @@ std::string BTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 // Explicit template instantiation
-template class BTreeIndex<IntsKey<1>, ItemPointerContainer*, IntsComparator<1>,
+template class BTreeIndex<IntsKey<1>, ItemPointerContainer *, IntsComparator<1>,
                           IntsEqualityChecker<1>>;
-template class BTreeIndex<IntsKey<2>, ItemPointerContainer*, IntsComparator<2>,
+template class BTreeIndex<IntsKey<2>, ItemPointerContainer *, IntsComparator<2>,
                           IntsEqualityChecker<2>>;
-template class BTreeIndex<IntsKey<3>, ItemPointerContainer*, IntsComparator<3>,
+template class BTreeIndex<IntsKey<3>, ItemPointerContainer *, IntsComparator<3>,
                           IntsEqualityChecker<3>>;
-template class BTreeIndex<IntsKey<4>, ItemPointerContainer*, IntsComparator<4>,
+template class BTreeIndex<IntsKey<4>, ItemPointerContainer *, IntsComparator<4>,
                           IntsEqualityChecker<4>>;
 
-template class BTreeIndex<GenericKey<4>, ItemPointerContainer*, GenericComparator<4>,
-                          GenericEqualityChecker<4>>;
-template class BTreeIndex<GenericKey<8>, ItemPointerContainer*, GenericComparator<8>,
-                          GenericEqualityChecker<8>>;
-template class BTreeIndex<GenericKey<12>, ItemPointerContainer*, GenericComparator<12>,
-                          GenericEqualityChecker<12>>;
-template class BTreeIndex<GenericKey<16>, ItemPointerContainer*, GenericComparator<16>,
-                          GenericEqualityChecker<16>>;
-template class BTreeIndex<GenericKey<24>, ItemPointerContainer*, GenericComparator<24>,
-                          GenericEqualityChecker<24>>;
-template class BTreeIndex<GenericKey<32>, ItemPointerContainer*, GenericComparator<32>,
-                          GenericEqualityChecker<32>>;
-template class BTreeIndex<GenericKey<48>, ItemPointerContainer*, GenericComparator<48>,
-                          GenericEqualityChecker<48>>;
-template class BTreeIndex<GenericKey<64>, ItemPointerContainer*, GenericComparator<64>,
-                          GenericEqualityChecker<64>>;
-template class BTreeIndex<GenericKey<96>, ItemPointerContainer*, GenericComparator<96>,
-                          GenericEqualityChecker<96>>;
-template class BTreeIndex<GenericKey<128>, ItemPointerContainer*, GenericComparator<128>,
-                          GenericEqualityChecker<128>>;
-template class BTreeIndex<GenericKey<256>, ItemPointerContainer*, GenericComparator<256>,
-                          GenericEqualityChecker<256>>;
-template class BTreeIndex<GenericKey<512>, ItemPointerContainer*, GenericComparator<512>,
-                          GenericEqualityChecker<512>>;
+template class BTreeIndex<GenericKey<4>, ItemPointerContainer *,
+                          GenericComparator<4>, GenericEqualityChecker<4>>;
+template class BTreeIndex<GenericKey<8>, ItemPointerContainer *,
+                          GenericComparator<8>, GenericEqualityChecker<8>>;
+template class BTreeIndex<GenericKey<12>, ItemPointerContainer *,
+                          GenericComparator<12>, GenericEqualityChecker<12>>;
+template class BTreeIndex<GenericKey<16>, ItemPointerContainer *,
+                          GenericComparator<16>, GenericEqualityChecker<16>>;
+template class BTreeIndex<GenericKey<24>, ItemPointerContainer *,
+                          GenericComparator<24>, GenericEqualityChecker<24>>;
+template class BTreeIndex<GenericKey<32>, ItemPointerContainer *,
+                          GenericComparator<32>, GenericEqualityChecker<32>>;
+template class BTreeIndex<GenericKey<48>, ItemPointerContainer *,
+                          GenericComparator<48>, GenericEqualityChecker<48>>;
+template class BTreeIndex<GenericKey<64>, ItemPointerContainer *,
+                          GenericComparator<64>, GenericEqualityChecker<64>>;
+template class BTreeIndex<GenericKey<96>, ItemPointerContainer *,
+                          GenericComparator<96>, GenericEqualityChecker<96>>;
+template class BTreeIndex<GenericKey<128>, ItemPointerContainer *,
+                          GenericComparator<128>, GenericEqualityChecker<128>>;
+template class BTreeIndex<GenericKey<256>, ItemPointerContainer *,
+                          GenericComparator<256>, GenericEqualityChecker<256>>;
+template class BTreeIndex<GenericKey<512>, ItemPointerContainer *,
+                          GenericComparator<512>, GenericEqualityChecker<512>>;
 
-template class BTreeIndex<TupleKey, ItemPointerContainer*, TupleKeyComparator,
+template class BTreeIndex<TupleKey, ItemPointerContainer *, TupleKeyComparator,
                           TupleKeyEqualityChecker>;
 
 }  // End index namespace

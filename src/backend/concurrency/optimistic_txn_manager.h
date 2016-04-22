@@ -45,7 +45,6 @@ class OptimisticTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-
   virtual bool PerformInsert(const ItemPointer &location);
 
   virtual bool PerformRead(const ItemPointer &location);
@@ -59,7 +58,6 @@ class OptimisticTxnManager : public TransactionManager {
   virtual void PerformUpdate(const ItemPointer &location);
 
   virtual void PerformDelete(const ItemPointer &location);
-
 
   virtual Result CommitTransaction();
 
