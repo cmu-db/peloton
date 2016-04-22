@@ -49,7 +49,7 @@ static void WriteOutput(double stat) {
 
 inline void YCSBBootstrapLogger() {
   if (state.logging_enabled <= 0) return;
-  peloton_logging_mode = LOGGING_TYPE_DRAM_NVM;
+  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
   auto& log_manager = peloton::logging::LogManager::GetInstance();
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging

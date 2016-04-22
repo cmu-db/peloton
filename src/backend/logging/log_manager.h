@@ -128,7 +128,7 @@ class LogManager {
   std::string GetLogFileName(void);
 
   bool HasPelotonFrontendLogger() const {
-    return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
+    return (peloton_logging_mode == LOGGING_TYPE_NVM_WAL);
   }
 
   // Drop all default tiles for tables before recovery
