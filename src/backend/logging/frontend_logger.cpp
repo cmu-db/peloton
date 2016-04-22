@@ -20,6 +20,7 @@
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 
+// TODO peloton_wait_timeout is always 0
 // configuration for testing
 extern int64_t peloton_wait_timeout;
 
@@ -31,6 +32,7 @@ FrontendLogger::FrontendLogger() {
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;
+  LOG_INFO("Init frontend logger with wait_time: %d ", (int)wait_timeout);
 }
 
 FrontendLogger::~FrontendLogger() {
@@ -99,7 +101,7 @@ void FrontendLogger::MainLoop(void) {
   // Do recovery if we can, otherwise terminate
   switch (log_manager.GetLoggingStatus()) {
     case LOGGING_STATUS_TYPE_RECOVERY: {
-      LOG_TRACE("Frontendlogger] Recovery Mode");
+      LOG_TRACE("Frontendlogger Recovery Mode");
 
       /////////////////////////////////////////////////////////////////////
       // RECOVERY MODE
@@ -122,7 +124,7 @@ void FrontendLogger::MainLoop(void) {
     }
 
     case LOGGING_STATUS_TYPE_LOGGING: {
-      LOG_TRACE("Frontendlogger] Logging Mode");
+      LOG_TRACE("Frontendlogger Logging Mode");
     } break;
 
     default:
