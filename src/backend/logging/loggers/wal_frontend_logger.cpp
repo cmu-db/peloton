@@ -55,25 +55,6 @@ namespace logging {
 // Utility functions
 //===--------------------------------------------------------------------===//
 
-size_t GetLogFileSize(int log_file_fd);
-
-bool IsFileTruncated(FILE *log_file, size_t size_to_read, size_t log_file_size);
-
-size_t GetNextFrameSize(FILE *log_file, size_t log_file_size);
-
-bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
-                                 size_t log_file_size);
-
-bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
-                           size_t log_file_size);
-
-storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
-                                    FILE *log_file, size_t log_file_size);
-
-void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
-
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
-
 WriteAheadFrontendLogger::WriteAheadFrontendLogger()
     : WriteAheadFrontendLogger(false) {}
 
@@ -87,21 +68,18 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
   if (test_mode_) {
-    this->log_file = nullptr;
+    cur_file_handle.file = nullptr;
   } else {
-    // this->checkpoint.Init();
-
-    LOG_INFO("Log dir before getting ID is %s",
-             this->peloton_log_directory.c_str());
-    this->SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
-    LOG_INFO("Log dir is %s", this->peloton_log_directory.c_str());
+    LOG_INFO("Log dir before getting ID is %s", peloton_log_directory.c_str());
+    SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
+    LOG_INFO("Log dir after setting ID is %s", peloton_log_directory.c_str());
     InitLogDirectory();
     InitLogFilesList();
     UpdateMaxDelimiterForRecovery();
     LOG_INFO("Updated Max Delimiter for Recovery as %d",
              (int)max_delimiter_for_recovery);
-    log_file_fd = -1;     // this is a restart or a new start
-    max_log_id_file = 0;  // 0 is unused
+    cur_file_handle.fd = -1;  // this is a restart or a new start
+    max_log_id_file = 0;      // 0 is unused
   }
 }
 
@@ -110,8 +88,8 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
  */
 WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   // close the log file
-  if (log_file != nullptr) {
-    int ret = fclose(log_file);
+  if (cur_file_handle.file != nullptr) {
+    int ret = fclose(cur_file_handle.file);
     if (ret != 0) {
       LOG_ERROR("Error occured while closing LogFile");
     }
@@ -120,24 +98,6 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
   delete recovery_pool;
 }
 
-//TODO remove me
-void fflush_and_sync(FILE *log_file, int log_file_fd, size_t &fsync_count) {
-  // First, flush
-  assert(log_file_fd != -1);
-  if (log_file_fd == -1) return;
-
-  int ret = fflush(log_file);
-  if (ret != 0) {
-    LOG_ERROR("Error occured in fflush(%d)", ret);
-  }
-
-  // Finally, sync
-  ret = fsync(log_file_fd);
-  fsync_count++;
-  if (ret != 0) {
-    LOG_ERROR("Error occured in fsync(%d)", ret);
-  }
-}
 /**
  * @brief flush all the log records to the file
  */
@@ -145,10 +105,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t global_queue_size = global_queue.size();
 
   // First, write all the record in the queue
-  // TODO refactor this! extremely messy
   if ((((max_collected_commit_id != max_flushed_commit_id) ||
         global_queue_size) &&
-       this->log_file_fd == -1)) {
+       cur_file_handle.fd == -1)) {
     this->CreateNewLogFile(false);
   } else if (((max_collected_commit_id != max_flushed_commit_id) ||
               global_queue_size) &&
@@ -163,7 +122,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     if (!test_mode_) {
       fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
-             log_file);
+             cur_file_handle.file);
     }
 
     LOG_INFO("Log buffer get max log id returned %d",
@@ -171,11 +130,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetMaxLogId();
-
-      // TODO @mperron I think we both implemented this :P let's confirm
-      // tomorrow
-      /* if (max_collected_commit_id > this->max_log_id_file)
-        this->max_log_id_file = max_collected_commit_id; */
 
       LOG_INFO("MaxSoFar is %d", (int)this->max_log_id_file);
     }
@@ -192,25 +146,25 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     delimiter_rec.Serialize(output_buffer);
 
     if (!test_mode_) {
-      assert(log_file_fd != -1);
-      if (log_file_fd != -1) {
+      assert(cur_file_handle.fd != -1);
+      if (cur_file_handle.fd != -1) {
         fwrite(delimiter_rec.GetMessage(), sizeof(char),
-               delimiter_rec.GetMessageLength(), log_file);
+               delimiter_rec.GetMessageLength(), cur_file_handle.file);
 
         LOG_INFO("Wrote delimiter to log file with commit_id %ld",
                  this->max_collected_commit_id);
 
         // by moving the fflush and sync here, we ensure that this file will
-        // have
-        // at least 1 delimiter
-        fflush_and_sync(log_file, log_file_fd, fsync_count);
+        // have at least 1 delimiter
+        LoggingUtil::FFlushFsync(cur_file_handle);
+        fsync_count++;
 
         if (this->max_collected_commit_id > max_delimiter_file) {
           max_delimiter_file = this->max_collected_commit_id;
           LOG_INFO("Max_delimiter_file is now %d", (int)max_delimiter_file);
         }
 
-        if (this->FileSwitchCondIsTrue()) should_create_new_file = true;
+        if (FileSwitchCondIsTrue()) should_create_new_file = true;
       }
     }
   }
@@ -248,32 +202,33 @@ void WriteAheadFrontendLogger::DoRecovery() {
   LOG_INFO("Got start_commit_id as %d, global max flushed as %d",
            (int)start_commit_id, (int)global_max_flushed_id_for_recovery);
 
-  // Set log file size
-  // log_file_size = GetLogFileSize(log_file_fd);
+  // open first file
   OpenNextLogFile();
 
-  // Go over the log size if needed
-  if (log_file_size > 0) {
+  // Go over the log file if needed
+  if (cur_file_handle.size > 0) {
     bool reached_end_of_file = false;
-    __attribute__((unused)) oid_t recovery_log_record_count = 0;
 
     // Go over each log record in the log file
     while (reached_end_of_file == false) {
       // Read the first byte to identify log record type
       // If that is not possible, then wrap up recovery
-      auto record_type = this->GetNextLogRecordTypeForRecovery();
+      auto record_type = GetNextLogRecordTypeForRecovery();
       LOG_INFO("Record_type is %d", (int)record_type);
       cid_t commit_id = INVALID_CID;
       TupleRecord *tuple_record;
+
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
         case LOGRECORD_TYPE_ITERATION_DELIMITER: {
           // Check for torn log write
           TransactionRecord txn_rec(record_type);
-          if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
-              false) {
-            this->log_file_fd = -1;
+          if (LoggingUtil::ReadTransactionRecordHeader(
+                  txn_rec, cur_file_handle) == false) {
+            // TODO should we also set cur_file_handle.size and
+            // cur_file_handle.file here?
+            cur_file_handle.fd = -1;
             return;
           }
           commit_id = txn_rec.GetTransactionId();
@@ -289,10 +244,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
           num_inserts++;
           tuple_record = new TupleRecord(record_type);
           // Check for torn log write
-          if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
-              false) {
+          if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
+                                                 cur_file_handle) == false) {
             LOG_ERROR("Could not read tuple record header.");
-            this->log_file_fd = -1;
+            cur_file_handle.fd = -1;
             return;
           }
 
@@ -301,7 +256,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
           if (!table || cid <= start_commit_id ||
               commit_id > global_max_flushed_id_for_recovery) {
-            SkipTupleRecordBody(log_file, log_file_size);
+            LoggingUtil::SkipTupleRecordBody(cur_file_handle);
             delete tuple_record;
             LOG_INFO("SKIP");
             continue;
@@ -310,21 +265,21 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
             LOG_ERROR("Insert txd id %d not found in recovery txn table",
                       (int)cid);
-            this->log_file_fd = -1;
+            cur_file_handle.fd = -1;
             return;
           }
 
           // Read off the tuple record body from the log
-          tuple_record->SetTuple(ReadTupleRecordBody(
-              table->GetSchema(), recovery_pool, log_file, log_file_size));
+          tuple_record->SetTuple(LoggingUtil::ReadTupleRecordBody(
+              table->GetSchema(), recovery_pool, cur_file_handle));
           break;
         }
         case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
           tuple_record = new TupleRecord(record_type);
           // Check for torn log write
-          if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
-              false) {
-            this->log_file_fd = -1;
+          if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
+                                                 cur_file_handle) == false) {
+            cur_file_handle.fd = -1;
             return;
           }
 
@@ -337,7 +292,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
           if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
             LOG_TRACE("Delete txd id %d not found in recovery txn table",
                       (int)cid);
-            this->log_file_fd = -1;
+            cur_file_handle.fd = -1;
             return;
           }
           break;
@@ -356,9 +311,11 @@ void WriteAheadFrontendLogger::DoRecovery() {
           case LOGRECORD_TYPE_TRANSACTION_COMMIT:
             assert(commit_id != INVALID_CID);
 
-	    // Now directly commit this transaction. This is safe because we reject commit ids that appear
-	    // after the persistent commit id before coming here (in the switch case above).
-	    CommitTransactionRecovery(commit_id);
+            // Now directly commit this transaction. This is safe because we
+            // reject commit ids that appear
+            // after the persistent commit id before coming here (in the switch
+            // case above).
+            CommitTransactionRecovery(commit_id);
             break;
 
           case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -368,8 +325,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
                 tuple_record);
             break;
           case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-	    // Do nothing if we hit the delimiter, because the delimiters help only to find
-	    // the max persistent commit id, and should be ignored during actual recovery
+            // Do nothing if we hit the delimiter, because the delimiters help
+            // us only to find
+            // the max persistent commit id, and should be ignored during actual
+            // recovery
             break;
           }
 
@@ -390,7 +349,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
     LOG_INFO("This thread did %d inserts", (int)num_inserts);
   }
-  this->log_file_fd = -1;
+  cur_file_handle.fd = -1;
 }
 
 void WriteAheadFrontendLogger::RecoverIndex() {
@@ -562,7 +521,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  // TODO this is not thread safe, lock table here or manager
   table->GetTileGroupLock().Lock();
   auto tile_group = manager.GetTileGroup(insert_loc.block);
 
@@ -578,7 +536,6 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
-    // TODO this is not thread safe!
     table->GetTileGroupLock().Lock();
     table->IncreaseNumberOfTuplesBy(1);
     table->GetTileGroupLock().Unlock();
@@ -600,7 +557,6 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   table->GetTileGroupLock().Lock();
   auto tile_group = manager.GetTileGroup(delete_loc.block);
-  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
     tile_group = manager.GetTileGroup(delete_loc.block);
@@ -608,7 +564,6 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = delete_loc.block;
     }
   }
-  // TODO this is not thread safe!
   table->DecreaseNumberOfTuplesBy(1);
   table->GetTileGroupLock().Unlock();
 
@@ -631,7 +586,6 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   table->GetTileGroupLock().Lock();
   auto tile_group = manager.GetTileGroup(remove_loc.block);
-  // TODO this is not thread safe
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
     tile_group = manager.GetTileGroup(remove_loc.block);
@@ -682,103 +636,6 @@ void WriteAheadFrontendLogger::UpdateTuple(TupleRecord *record) {
 // Utility functions
 //===--------------------------------------------------------------------===//
 
-/**
- * @brief Measure the size of log file
- * @return the size if the log file exists otherwise 0
- */
-// TODO remove me
-size_t GetLogFileSize(int log_file_fd) {
-  struct stat log_stats;
-
-  fstat(log_file_fd, &log_stats);
-  return log_stats.st_size;
-}
-
-// TODO remove me
-bool IsFileTruncated(FILE *log_file, size_t size_to_read,
-                     size_t log_file_size) {
-  // Cache current position
-  size_t current_position = ftell(log_file);
-
-  // Check if the actual file size is less than the expected file size
-  // Current position + frame length
-  if (current_position + size_to_read <= log_file_size) {
-    return false;
-  } else {
-    fseek(log_file, 0, SEEK_END);
-    return true;
-  }
-}
-
-/**
- * @brief get the next frame size
- *  TupleRecord consiss of two frame ( header and Body)
- *  Transaction Record has a single frame
- * @return the next frame size
- */
-// TODO remove me
-size_t GetNextFrameSize(FILE *log_file, size_t log_file_size) {
-  size_t frame_size;
-  char buffer[sizeof(int32_t)];
-
-  // Check if the frame size is broken
-  if (IsFileTruncated(log_file, sizeof(buffer), log_file_size)) {
-    return 0;
-  }
-
-  // Otherwise, read the frame size
-  size_t ret = fread(buffer, 1, sizeof(buffer), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  // Read next 4 bytes as an integer
-  CopySerializeInputBE frameCheck(buffer, sizeof(buffer));
-  frame_size = (frameCheck.ReadInt()) + sizeof(buffer);
-
-  // Move back by 4 bytes
-  // So that tuple deserializer works later as expected
-  int res = fseek(log_file, -sizeof(buffer), SEEK_CUR);
-  if (res == -1) {
-    LOG_ERROR("Error occured in fseek ");
-  }
-
-  // Check if the frame is broken
-  if (IsFileTruncated(log_file, frame_size, log_file_size)) {
-    return 0;
-  }
-
-  return frame_size;
-}
-
-/**
- * @brief Read single byte so that we can distinguish the log record type
- * @return log record type otherwise return invalid log record type,
- * which menas there is no more log in the log file
- */
-// TODO remove me
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
-  char buffer;
-
-  // Check if the log record type is broken
-  if (IsFileTruncated(log_file, 1, log_file_size)) {
-    LOG_INFO("Log file is truncated");
-    return LOGRECORD_TYPE_INVALID;
-  }
-
-  // Otherwise, read the log record type
-  int ret = fread((void *)&buffer, 1, sizeof(char), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Could not read from log file");
-    return LOGRECORD_TYPE_INVALID;
-  }
-
-  CopySerializeInputBE input(&buffer, sizeof(char));
-  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
-
-  return log_record_type;
-}
-
 LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   char buffer;
   bool is_truncated = false;
@@ -786,34 +643,35 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
 
   LOG_INFO("Inside GetNextLogRecordForRecovery");
 
-  LOG_INFO("File is at position %d", (int)ftell(this->log_file));
+  LOG_INFO("File is at position %d", (int)ftell(cur_file_handle.file));
+
   // Check if the log record type is broken
-  if (IsFileTruncated(this->log_file, 1, this->log_file_size)) {
+  if (LoggingUtil::IsFileTruncated(cur_file_handle, 1)) {
     LOG_INFO("Log file is truncated, should open next log file");
-    // return LOGRECORD_TYPE_INVALID;
     is_truncated = true;
   }
 
   // Otherwise, read the log record type
   if (!is_truncated) {
-    ret = fread((void *)&buffer, 1, sizeof(char), this->log_file);
+    ret = fread((void *)&buffer, 1, sizeof(char), cur_file_handle.file);
     if (ret <= 0) {
       LOG_INFO("Failed an fread");
     }
   }
   if (is_truncated || ret <= 0) {
     LOG_INFO("Call OpenNextLogFile");
-    this->OpenNextLogFile();
-    if (this->log_file_fd == -1) return LOGRECORD_TYPE_INVALID;
+    OpenNextLogFile();
+    if (cur_file_handle.fd == -1) return LOGRECORD_TYPE_INVALID;
 
-    LOG_INFO("Open succeeded. log_file_fd is %d", (int)this->log_file_fd);
+    LOG_INFO("Open succeeded. log_file_fd is %d", (int)cur_file_handle.fd);
 
-    if (IsFileTruncated(this->log_file, 1, this->log_file_size)) {
+    if (LoggingUtil::IsFileTruncated(cur_file_handle, 1)) {
       LOG_ERROR("Log file is truncated");
       return LOGRECORD_TYPE_INVALID;
     }
+
     LOG_INFO("File is not truncated.");
-    ret = fread((void *)&buffer, 1, sizeof(char), this->log_file);
+    ret = fread((void *)&buffer, 1, sizeof(char), cur_file_handle.file);
     if (ret <= 0) {
       LOG_ERROR("Could not read from log file");
       return LOGRECORD_TYPE_INVALID;
@@ -827,111 +685,6 @@ LogRecordType WriteAheadFrontendLogger::GetNextLogRecordTypeForRecovery() {
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
 
   return log_record_type;
-}
-
-/**
- * @brief Read TransactionRecord
- * @param txn_record
- */
-bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
-                                 size_t log_file_size) {
-  // Check if frame is broken
-  auto header_size = GetNextFrameSize(log_file, log_file_size);
-  if (header_size == 0) {
-    return false;
-  }
-
-  // Read header
-  char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInputBE txn_header(header, header_size);
-  txn_record.Deserialize(txn_header);
-
-  return true;
-}
-
-/**
- * @brief Read TupleRecordHeader
- * @param tuple_record
- */
-bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
-                           size_t log_file_size) {
-  // Check if frame is broken
-  auto header_size = GetNextFrameSize(log_file, log_file_size);
-  if (header_size == 0) {
-    LOG_ERROR("Header size is zero ");
-    return false;
-  }
-
-  // Read header
-  char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Error occured in fread");
-  }
-
-  CopySerializeInputBE tuple_header(header, header_size);
-  tuple_record.DeserializeHeader(tuple_header);
-
-  return true;
-}
-
-/**
- * @brief Read TupleRecordBody
- * @param schema
- * @param pool
- * @return tuple
- */
-storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
-                                    FILE *log_file, size_t log_file_size) {
-  // Check if the frame is broken
-  size_t body_size = GetNextFrameSize(log_file, log_file_size);
-  if (body_size == 0) {
-    LOG_ERROR("Body size is zero ");
-    return nullptr;
-  }
-
-  // Read Body
-  char body[body_size];
-  int ret = fread(body, 1, sizeof(body), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInputBE tuple_body(body, body_size);
-
-  // We create a tuple based on the message
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
-  tuple->DeserializeFrom(tuple_body, pool);
-
-  return tuple;
-}
-
-/**
- * @brief Read TupleRecordBody
- * @param schema
- * @param pool
- * @return tuple
- */
-void SkipTupleRecordBody(FILE *log_file, size_t log_file_size) {
-  // Check if the frame is broken
-  size_t body_size = GetNextFrameSize(log_file, log_file_size);
-  if (body_size == 0) {
-    LOG_ERROR("Body size is zero ");
-  }
-
-  // Read Body
-  char body[body_size];
-  int ret = fread(body, 1, sizeof(body), log_file);
-  if (ret <= 0) {
-    LOG_ERROR("Error occured in fread ");
-  }
-
-  CopySerializeInputBE tuple_body(body, body_size);
 }
 
 std::string WriteAheadFrontendLogger::GetLogFileName(void) {
@@ -950,6 +703,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   int version_number, ret_val;
   FILE *fp;
   std::pair<cid_t, cid_t> extracted_values;
+  FileHandle temp_file_handle;
 
   // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
@@ -976,7 +730,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
                                sizeof(temp_max_log_id_file), 1, fp);
       if (read_size != 1) {
         LOG_ERROR("Read from file %s failed",
-                  this->GetFileNameFromVersion(version_number).c_str());
+                  GetFileNameFromVersion(version_number).c_str());
         fclose(fp);
         continue;
       }
@@ -986,7 +740,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
                         sizeof(temp_max_delimiter_file), 1, fp);
       if (read_size != 1) {
         LOG_ERROR("Read from file %s failed",
-                  this->GetFileNameFromVersion(version_number).c_str());
+                  GetFileNameFromVersion(version_number).c_str());
         fclose(fp);
         continue;
       }
@@ -1036,9 +790,15 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       fclose(fp);
 
       // TODO update max_delimiter here in this constructor
+      temp_file_handle.fd = -1;
+      temp_file_handle.file = NULL;
+      temp_file_handle.size = LoggingUtil::GetFileSizeFromFileName(
+          GetFileNameFromVersion(version_number).c_str());
+
       LogFile *new_log_file =
-          new LogFile(NULL, file->d_name, -1, version_number,
+          new LogFile(temp_file_handle, file->d_name, version_number,
                       temp_max_log_id_file, temp_max_delimiter_file);
+
       this->log_files_.push_back(new_log_file);
     }
   }
@@ -1069,53 +829,50 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
 
   int new_file_num;
   std::string new_file_name;
-  cid_t default_commit_id = 0, default_delimiter = 0;
+  cid_t default_commit_id = INVALID_CID, default_delimiter = INVALID_CID;
   struct stat log_stats;
-  int fd;
 
   new_file_num = log_file_counter_;
 
   if (close_old_file) {  // must close last opened file
-    int file_list_size = this->log_files_.size();
+    int file_list_size = log_files_.size();
+    LogFile *cur_log_file_object = log_files_[file_list_size - 1];
 
     if (file_list_size != 0) {
       // TODO check return values of all these operations!
-      fseek(this->log_files_[file_list_size - 1]->GetFilePtr(), 0, SEEK_SET);
+      fseek(cur_file_handle.file, 0, SEEK_SET);
 
-      fwrite((void *)&(this->max_log_id_file), sizeof(this->max_log_id_file), 1,
-             this->log_files_[file_list_size - 1]->GetFilePtr());
+      fwrite((void *)&(max_log_id_file), sizeof(max_log_id_file), 1,
+             cur_file_handle.file);
 
-      this->log_files_[file_list_size - 1]->SetMaxLogId(this->max_log_id_file);
-      LOG_INFO("MaxLogID of the last closed file is %d",
-               (int)this->max_log_id_file);
+      cur_log_file_object->SetMaxLogId(max_log_id_file);
 
-      fwrite((void *)&(this->max_delimiter_file),
-             sizeof(this->max_delimiter_file), 1,
-             this->log_files_[file_list_size - 1]->GetFilePtr());
+      LOG_INFO("MaxLogID of the last closed file is %d", (int)max_log_id_file);
 
-      this->log_files_[file_list_size - 1]->SetMaxDelimiter(
-          this->max_delimiter_file);
+      fwrite((void *)&(max_delimiter_file), sizeof(max_delimiter_file), 1,
+             cur_file_handle.file);
+
+      cur_log_file_object->SetMaxDelimiter(max_delimiter_file);
+
       LOG_INFO("MaxDelimiter of the last closed file is %d",
-               (int)this->max_delimiter_file);
+               (int)max_delimiter_file);
 
-      this->max_log_id_file = 0;     // reset
-      this->max_delimiter_file = 0;  // reset
+      max_log_id_file = 0;     // reset
+      max_delimiter_file = 0;  // reset
 
-      fd = fileno(this->log_files_[file_list_size - 1]->GetFilePtr());
+      fstat(cur_file_handle.fd, &log_stats);
 
-      fstat(fd, &log_stats);
-      this->log_file_size = log_stats.st_size;
+      cur_file_handle.size = log_stats.st_size;
 
       LOG_INFO("The log file to be closed has size %d",
-               (int)this->log_file_size);
+               (int)cur_file_handle.size);
 
-      this->log_files_[file_list_size - 1]->SetLogFileSize(this->log_file_size);
+      cur_log_file_object->SetLogFileSize(cur_file_handle.size);
 
-      fclose(this->log_files_[file_list_size - 1]->GetFilePtr());
+      fclose(cur_file_handle.file);
 
-      this->log_files_[file_list_size - 1]->SetFilePtr(nullptr);
-
-      this->log_files_[file_list_size - 1]->SetLogFileFD(-1);  // invalidate
+      cur_log_file_object->SetFilePtr(nullptr);  // invalidate
+      cur_log_file_object->SetLogFileFD(-1);     // invalidate
     }
   }
 
@@ -1123,104 +880,102 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
 
   new_file_name = this->GetFileNameFromVersion(new_file_num);
 
-  FILE *log_file = fopen(new_file_name.c_str(), "wb");
-  if (log_file == NULL) {
-    LOG_ERROR("log_file is NULL");
+  FILE *new_log_file = fopen(new_file_name.c_str(), "wb");
+  if (new_log_file == NULL) {
+    LOG_ERROR("new_log_file is NULL");
     return;
   }
 
-  // TODO what if we fail here? The next file may have garbage in the header
   // now set the first 8 bytes to 0 - this is for the max_log id in this file
-  fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1, log_file);
+  fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1,
+         new_log_file);
 
   // now set the next 8 bytes to 0 - this is for the max delimiter in this file
-  fwrite((void *)&default_delimiter, sizeof(default_delimiter), 1, log_file);
+  fwrite((void *)&default_delimiter, sizeof(default_delimiter), 1,
+         new_log_file);
 
-  this->log_file = log_file;
+  cur_file_handle.file = new_log_file;
+  cur_file_handle.fd = fileno(cur_file_handle.file);
+  cur_file_handle.size = 0;
 
-  int log_file_fd = fileno(log_file);
-
-  if (log_file_fd == -1) {
-    LOG_ERROR("log_file_fd is -1");
+  if (cur_file_handle.fd == -1) {
+    LOG_ERROR("cur_file_handle.fd is -1");
   }
 
-  this->log_file_fd = log_file_fd;
-  LOG_INFO("log_file_fd of newly created file is %d", this->log_file_fd);
+  LOG_INFO("FD of newly created file is %d", cur_file_handle.fd);
 
-  LogFile *new_log_file_object =
-      new LogFile(log_file, new_file_name, log_file_fd, new_file_num, 0, 0);
+  LogFile *new_log_file_object = new LogFile(
+      cur_file_handle, new_file_name, new_file_num, INVALID_CID, INVALID_CID);
 
-  this->log_files_.push_back(new_log_file_object);
-
-  this->log_file_size = 0;
+  log_files_.push_back(new_log_file_object);
 
   log_file_counter_++;  // finally, increment log_file_counter_
+
   LOG_INFO("log_file_counter is %d", log_file_counter_);
 }
 
 bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
   struct stat stat_buf;
-  if (this->log_file_fd == -1) return false;
+  if (cur_file_handle.fd == -1) return false;
 
-  fstat(this->log_file_fd, &stat_buf);
-  this->log_file_size = stat_buf.st_size;
-  return stat_buf.st_size > LOG_FILE_SWITCH_LIMIT;
+  fstat(cur_file_handle.fd, &stat_buf);
+  cur_file_handle.size = stat_buf.st_size;
+  return cur_file_handle.size > LOG_FILE_SWITCH_LIMIT;
 }
 
 void WriteAheadFrontendLogger::OpenNextLogFile() {
   cid_t temp_max_log_id_file, temp_max_delimiter_file;
 
-  if (this->log_files_.size() == 0) {  // no log files, fresh start
+  if (log_files_.size() == 0) {  // no log files, fresh start
     LOG_INFO("Size of log files list is 0.");
-    this->log_file_fd = -1;
-    this->log_file = NULL;
-    this->log_file_size = 0;
+    cur_file_handle.fd = -1;
+    cur_file_handle.file = NULL;
+    cur_file_handle.size = 0;
     return;
   }
 
   if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
     LOG_INFO("Cursor has reached the end. No more log files to read from.");
-    this->log_file_fd = -1;
-    this->log_file = NULL;
-    this->log_file_size = 0;
+    cur_file_handle.fd = -1;
+    cur_file_handle.file = NULL;
+    cur_file_handle.size = 0;
     return;
   }
 
-  if (this->log_file_cursor_ != 0)  // close old file
+  if (log_file_cursor_ != 0)  // close old file
   {
     LOG_INFO("Closing last opened file");
-    fclose(log_file);
+    fclose(cur_file_handle.file);
   }
 
   // open the next file
-  this->log_file =
-      fopen(this->GetFileNameFromVersion(
-                      this->log_files_[this->log_file_cursor_]->GetLogNumber())
+  cur_file_handle.file =
+      fopen(GetFileNameFromVersion(log_files_[log_file_cursor_]->GetLogNumber())
                 .c_str(),
             "rb");
 
-  if (this->log_file == NULL) {
+  if (cur_file_handle.file == NULL) {
     LOG_ERROR("Couldn't open next log file");
-    this->log_file_fd = -1;
-    this->log_file = NULL;
-    this->log_file_size = 0;
+    cur_file_handle.fd = -1;
+    cur_file_handle.file = NULL;
+    cur_file_handle.size = 0;
     return;
   } else {
     LOG_INFO("Opened new log file for recovery");
   }
 
-  this->log_file_fd = fileno(this->log_file);
-  LOG_INFO("FD of opened file is %d", (int)this->log_file_fd);
+  cur_file_handle.fd = fileno(cur_file_handle.file);
+
+  LOG_INFO("FD of opened file is %d", (int)cur_file_handle.fd);
 
   // Skip first 8 bytes of max commit id
-  size_t read_size = fread((void *)&temp_max_log_id_file,
-                           sizeof(temp_max_log_id_file), 1, this->log_file);
+  size_t read_size =
+      fread((void *)&temp_max_log_id_file, sizeof(temp_max_log_id_file), 1,
+            cur_file_handle.file);
   if (read_size != 1) {
-    LOG_ERROR(
-        "Read failed after opening file %s",
-        this->GetFileNameFromVersion(
-                  this->log_files_[this->log_file_cursor_]->GetLogNumber())
-            .c_str());
+    LOG_ERROR("Read failed after opening file %s",
+              GetFileNameFromVersion(
+                  log_files_[log_file_cursor_]->GetLogNumber()).c_str());
   }
 
   LOG_INFO("On startup: MaxLogId of this file is %d",
@@ -1228,13 +983,12 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   // Skip next 8 bytes of max delimiter
   read_size = fread((void *)&temp_max_delimiter_file,
-                    sizeof(temp_max_delimiter_file), 1, this->log_file);
+                    sizeof(temp_max_delimiter_file), 1, cur_file_handle.file);
+
   if (read_size != 1) {
-    LOG_ERROR(
-        "Read failed after opening file %s",
-        this->GetFileNameFromVersion(
-                  this->log_files_[this->log_file_cursor_]->GetLogNumber())
-            .c_str());
+    LOG_ERROR("Read failed after opening file %s",
+              GetFileNameFromVersion(
+                  log_files_[log_file_cursor_]->GetLogNumber()).c_str());
   }
 
   LOG_INFO("On startup: MaxDelimiter of this file is %d",
@@ -1242,28 +996,27 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   struct stat stat_buf;
 
-  fstat(this->log_file_fd, &stat_buf);
-  this->log_file_size = stat_buf.st_size;
+  fstat(cur_file_handle.fd, &stat_buf);
+  cur_file_handle.size = stat_buf.st_size;
 
-  this->log_file_cursor_++;
-  LOG_INFO("Cursor is now %d", (int)this->log_file_cursor_);
+  log_file_cursor_++;
+  LOG_INFO("Cursor is now %d", (int)log_file_cursor_);
 }
 
 void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
   int return_val;
 
   // delete stale log files except the one currently being used
-  for (int i = 0; i < (int)this->log_files_.size() - 1; i++) {
-    if (truncate_log_id >= this->log_files_[i]->GetMaxLogId()) {
-      return_val = remove(this->log_files_[i]->GetLogFileName().c_str());
+  for (int i = 0; i < (int)log_files_.size() - 1; i++) {
+    if (truncate_log_id >= log_files_[i]->GetMaxLogId()) {
+      return_val = remove(log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s error: %s",
-                  this->log_files_[i]->GetLogFileName().c_str(),
-                  strerror(errno));
+                  log_files_[i]->GetLogFileName().c_str(), strerror(errno));
       }
       // remove entry from list anyway
-      delete this->log_files_[i];
-      this->log_files_.erase(this->log_files_.begin() + i);
+      delete log_files_[i];
+      log_files_.erase(log_files_.begin() + i);
       i--;  // update cursor
     }
   }
@@ -1272,7 +1025,7 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
 void WriteAheadFrontendLogger::InitLogDirectory() {
   int return_val;
 
-  return_val = mkdir(this->peloton_log_directory.c_str(), 0700);
+  return_val = mkdir(peloton_log_directory.c_str(), 0700);
   LOG_INFO("Log directory is: %s", peloton_log_directory.c_str());
 
   if (return_val == 0) {
@@ -1284,34 +1037,35 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
   }
 }
 
+// TODO should we probably implement this
 void WriteAheadFrontendLogger::SetLogDirectory(char *arg
                                                __attribute__((unused))) {
   LOG_INFO("%s", arg);
 }
 
 std::string WriteAheadFrontendLogger::GetFileNameFromVersion(int version) {
-  return std::string(this->peloton_log_directory.c_str()) + "/" +
-         LOG_FILE_PREFIX + std::to_string(version) + LOG_FILE_SUFFIX;
+  return std::string(peloton_log_directory.c_str()) + "/" + LOG_FILE_PREFIX +
+         std::to_string(version) + LOG_FILE_SUFFIX;
 }
 
 std::pair<cid_t, cid_t>
 WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
     FILE *log_file) {
   bool reached_end_of_file = false;
-  int fd;
   struct stat log_stats;
   cid_t max_log_id_so_far = 0, max_delim_so_far = 0;
-  int log_file_size;
+  FileHandle file_handle;
 
-  fd = fileno(log_file);
+  file_handle.file = log_file;
+  file_handle.fd = fileno(log_file);
 
-  fstat(fd, &log_stats);
-  log_file_size = log_stats.st_size;
+  fstat(file_handle.fd, &log_stats);
+  file_handle.size = log_stats.st_size;
 
   while (reached_end_of_file == false) {
     // Read the first byte to identify log record type
     // If that is not possible, then wrap up recovery
-    auto record_type = GetNextLogRecordType(log_file, log_file_size);
+    auto record_type = LoggingUtil::GetNextLogRecordType(file_handle);
 
     cid_t commit_id = INVALID_CID;
 
@@ -1323,7 +1077,7 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
       case LOGRECORD_TYPE_ITERATION_DELIMITER: {
         // Check for torn log write
         TransactionRecord txn_rec(record_type);
-        if (ReadTransactionRecordHeader(txn_rec, log_file, log_file_size) ==
+        if (LoggingUtil::ReadTransactionRecordHeader(txn_rec, file_handle) ==
             false) {
           return std::pair<cid_t, cid_t>(UINT64_MAX, UINT64_MAX);
         }
@@ -1339,7 +1093,7 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
       case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
         tuple_record = new TupleRecord(record_type);
 
-        if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
+        if (LoggingUtil::ReadTupleRecordHeader(*tuple_record, file_handle) ==
             false) {
           LOG_ERROR("Could not read tuple record header.");
           delete tuple_record;
@@ -1352,14 +1106,14 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
 
         auto table = LoggingUtil::GetTable(*tuple_record);
         if (!table) {
-          SkipTupleRecordBody(log_file, log_file_size);
+          LoggingUtil::SkipTupleRecordBody(file_handle);
           delete tuple_record;
           continue;
         }
 
         // Read off the tuple record body from the log
-        ReadTupleRecordBody(table->GetSchema(), recovery_pool, log_file,
-                            log_file_size);
+        LoggingUtil::ReadTupleRecordBody(table->GetSchema(), recovery_pool,
+                                         file_handle);
         delete tuple_record;
 
         break;
@@ -1367,7 +1121,7 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
         tuple_record = new TupleRecord(record_type);
 
-        if (ReadTupleRecordHeader(*tuple_record, log_file, log_file_size) ==
+        if (LoggingUtil::ReadTupleRecordHeader(*tuple_record, file_handle) ==
             false) {
           delete tuple_record;
           return std::pair<cid_t, cid_t>(UINT64_MAX, UINT64_MAX);
@@ -1388,8 +1142,8 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
 }
 
 void WriteAheadFrontendLogger::SetLoggerID(int id) {
-  this->logger_id = id;
-  this->peloton_log_directory += std::to_string(id);
+  logger_id = id;
+  peloton_log_directory += std::to_string(id);
 }
 
 void WriteAheadFrontendLogger::UpdateMaxDelimiterForRecovery() {
