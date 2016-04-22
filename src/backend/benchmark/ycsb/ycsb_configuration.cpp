@@ -33,6 +33,7 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
           "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
+  // TODO add wait_time
   exit(EXIT_FAILURE);
 }
 
@@ -43,6 +44,7 @@ static struct option opts[] = {{"scale-factor", optional_argument, NULL, 'k'},
                                {"backend_count", optional_argument, NULL, 'b'},
                                {"enable_logging", optional_argument, NULL, 'l'},
                                {"sync_commit", optional_argument, NULL, 's'},
+                               {"wait_time", optional_argument, NULL, 'w'},
                                {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -94,6 +96,7 @@ void ValidateLogging(const configuration &state) {
   // TODO validate that sync_commit is enabled only when logging is enabled
   LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
   LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
+  LOG_INFO("%s : %d", "wait_time", (int)state.wait_timeout);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -105,11 +108,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.backend_count = 2;
   state.logging_enabled = 0;
   state.sync_commit = 0;
+  state.wait_timeout = 40;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:w:", opts, &idx);
 
     if (c == -1) break;
 
@@ -134,6 +138,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'l':
         state.logging_enabled = atoi(optarg);
+        break;
+      case 'w':
+        state.wait_timeout = atol(optarg);
         break;
       case 'h':
         Usage(stderr);
