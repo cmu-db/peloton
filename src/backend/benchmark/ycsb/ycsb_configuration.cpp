@@ -33,7 +33,7 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
           "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
-  // TODO add wait_time
+  // TODO add wait_time, file_size
   exit(EXIT_FAILURE);
 }
 
@@ -45,6 +45,7 @@ static struct option opts[] = {{"scale-factor", optional_argument, NULL, 'k'},
                                {"enable_logging", optional_argument, NULL, 'l'},
                                {"sync_commit", optional_argument, NULL, 's'},
                                {"wait_time", optional_argument, NULL, 'w'},
+                               {"file_size", optional_argument, NULL, 'f'},
                                {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -109,11 +110,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.logging_enabled = 0;
   state.sync_commit = 0;
   state.wait_timeout = 40;
+  state.file_size = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:w:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:w:f:", opts, &idx);
 
     if (c == -1) break;
 
@@ -141,6 +143,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'w':
         state.wait_timeout = atol(optarg);
+        break;
+      case 'f':
+        state.file_size = atoi(optarg);
         break;
       case 'h':
         Usage(stderr);

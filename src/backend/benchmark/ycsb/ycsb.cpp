@@ -37,14 +37,17 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d %d %d :: %lf tps", state.update_ratio, state.scale_factor,
-           state.column_count, state.logging_enabled, state.sync_commit, stat);
+  LOG_INFO("%lf %d %d %d %d %d :: %lf tps", state.update_ratio,
+           state.scale_factor, state.column_count, state.logging_enabled,
+           state.sync_commit, state.file_size, stat);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
   out << state.column_count << " ";
   out << state.logging_enabled << " ";
   out << state.sync_commit << " ";
+  out << state.wait_timeout << " ";
+  out << state.file_size << " ";
   out << stat << "\n";
   out.flush();
 }
@@ -61,6 +64,7 @@ inline void YCSBBootstrapLogger() {
       if (state.sync_commit == 1) {
         log_manager.SetSyncCommit(true);
       }
+      log_manager.SetLogFileSizeLimit((unsigned int) state.file_size);
 
       // Wait for standby mode
       std::thread(&peloton::logging::LogManager::StartStandbyMode, &log_manager)
