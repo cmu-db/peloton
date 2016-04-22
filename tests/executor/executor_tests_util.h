@@ -68,8 +68,7 @@ class ExecutorTestsUtil {
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
 
-  static void PopulateTable(concurrency::Transaction *transaction,
-                            storage::DataTable *table, int num_rows,
+  static void PopulateTable(storage::DataTable *table, int num_rows,
                             bool mutate, bool random, bool group_by);
 
   static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,

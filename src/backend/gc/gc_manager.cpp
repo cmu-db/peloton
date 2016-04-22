@@ -51,6 +51,9 @@ void GCManager::Unlink() {
   // Check if we can move anything from the possibly free list to the free list.
 
   while (true) {
+    
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
     LOG_INFO("Unlink tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -109,7 +112,6 @@ void GCManager::Unlink() {
           possibly_free_list_.Push(tuple_metadata);
         }
       }  // end for
-
 
       if (is_running_ == false) {
         return;

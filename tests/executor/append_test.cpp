@@ -80,10 +80,10 @@ TEST_F(AppendTests, AppendTwoTest) {
 
   size_t tile_size = 10;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size * 5, false,
                                    false, false);
   txn_manager.CommitTransaction();
 
