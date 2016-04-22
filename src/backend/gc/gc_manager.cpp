@@ -61,17 +61,22 @@ void GCManager::Unlink() {
 
     assert(max_cid != MAX_CID);
 
+    int tuple_counter = 0;
+
     // First we actually delete garbage in the free list
-    for (auto garbage : garbage_map_) {
-      const cid_t garbage_ts = garbage.first;
-      const auto &tuple_metadata = garbage.second;
+    auto garbage = garbage_map_.begin();
+    while (garbage != garbage_map_.end()) {
+      const cid_t garbage_ts = garbage->first;
+      const auto &tuple_metadata = garbage->second;
       // if the timestamp of the garbage is older than the current max_cid, recycle it
       if (garbage_ts < max_cid) {
         ResetTuple(tuple_metadata);
 
+        // Remove from the original map
+        garbage_map_.erase(garbage++);
+
         // Add to the recycle map
         std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
-
         // if the entry for table_id exists.
         if (recycled_map_.find(tuple_metadata.table_id, free_list) == true) {
           // if the entry for tuple_metadata.table_id exists.
@@ -83,11 +88,15 @@ void GCManager::Unlink() {
           free_list->Push(tuple_metadata);
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
+
+        tuple_counter ++;
       } else {
         // Early break since we use an ordered map
         break;
       }
     }
+    LOG_INFO("Marked %d tuples as recycled", tuple_counter);
+    tuple_counter = 0;
 
     // Next, we check if any possible garbage is actually garbage
     // every time we garbage collect at most 1000 tuples.
@@ -106,11 +115,14 @@ void GCManager::Unlink() {
           // Add to the garbage map
           garbage_map_.insert(garbage_map_.find(max_cid),
                               std::make_pair(max_cid, tuple_metadata));
+          tuple_counter ++;
         } else {
             // if a tuple cannot be reclaimed, then add it back to the list.
           possibly_free_list_.Push(tuple_metadata);
         }
       }  // end for
+
+      LOG_INFO("Marked %d tuples as garbage", tuple_counter);
 
       if (is_running_ == false) {
         return;
@@ -128,6 +140,8 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
+
+  LOG_INFO("Reuse tuple(%lu, %lu) in table %lu", tile_group_id, tuple_end_cid, table_id);
 
   TupleMetadata tuple_metadata;
   tuple_metadata.table_id = table_id;

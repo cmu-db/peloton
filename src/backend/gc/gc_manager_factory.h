@@ -19,7 +19,7 @@ namespace gc {
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
-    static GCManager gc_manager(GC_TYPE_OFF);
+    static GCManager gc_manager(GC_TYPE_VACUUM);
     return gc_manager;
   }
 
