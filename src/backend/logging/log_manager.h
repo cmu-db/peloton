@@ -181,6 +181,12 @@ class LogManager {
     return frontend_loggers;
   }
 
+  inline unsigned int GetLogFileSizeLimit() { return log_file_size_limit_; }
+
+  inline void SetLogFileSizeLimit(unsigned int file_size_limit) {
+    log_file_size_limit_ = file_size_limit;
+  }
+
  private:
   LogManager();
   ~LogManager();
@@ -197,6 +203,9 @@ class LogManager {
   unsigned int num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
 
   LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
+
+  // default log file size: 32 MB
+  unsigned int log_file_size_limit_ = 32;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging

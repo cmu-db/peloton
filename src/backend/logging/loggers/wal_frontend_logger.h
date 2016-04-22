@@ -104,9 +104,6 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   // File pointer and descriptor
   FileHandle cur_file_handle;
-  // FILE *log_file;
-  // int log_file_fd = INVALID_FILE_DESCRIPTOR;
-  // size_t log_file_size;
 
   // Txn table during recovery
   std::map<txn_id_t, std::vector<TupleRecord *>> recovery_txn_table;

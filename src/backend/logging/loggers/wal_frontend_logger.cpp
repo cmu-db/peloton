@@ -46,7 +46,7 @@ extern CheckpointType peloton_checkpoint_mode;
 
 int logger_id_counter = 0;
 
-#define LOG_FILE_SWITCH_LIMIT (1024)
+//#define LOG_FILE_SWITCH_LIMIT (1024)
 
 namespace peloton {
 namespace logging {
@@ -934,7 +934,9 @@ bool WriteAheadFrontendLogger::FileSwitchCondIsTrue() {
 
   fstat(cur_file_handle.fd, &stat_buf);
   cur_file_handle.size = stat_buf.st_size;
-  return cur_file_handle.size > LOG_FILE_SWITCH_LIMIT;
+
+  return cur_file_handle.size >
+         LogManager::GetInstance().GetLogFileSizeLimit() * 1024;
 }
 
 void WriteAheadFrontendLogger::OpenNextLogFile() {
