@@ -183,11 +183,11 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
   allocation_count++;
 
   switch (type) {
-    case BACKEND_TYPE_MM: {
+    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_NVM: {
       return ::operator new(size);
     } break;
 
-    case BACKEND_TYPE_NVM:
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       {
@@ -228,11 +228,11 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 
 void StorageManager::Release(BackendType type, void *address) {
   switch (type) {
-    case BACKEND_TYPE_MM: {
+    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_NVM: {
       ::operator delete(address);
     } break;
 
-    case BACKEND_TYPE_NVM:
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       // Nothing to do here
