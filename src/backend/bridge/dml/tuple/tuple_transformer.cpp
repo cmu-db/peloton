@@ -220,6 +220,11 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     } break;
 
     case POSTGRES_VALUE_TYPE_INT4_ARRAY: {
+      if (datum == 0) {
+        value = ValueFactory::GetArrayValueFromSizeAndType(0, VALUE_TYPE_ARRAY);
+        std::vector<Value> vecValue;
+        value.SetArrayElements(vecValue);
+      } else {
       ArrayType *arr = DatumGetArrayTypeP(datum);
       int nelems = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
       // Datum *elems;
@@ -243,6 +248,8 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       }
 
       value.SetArrayElements(vecValue);
+
+      }
 
     } break;
 
