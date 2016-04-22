@@ -417,7 +417,7 @@ typedef enum LoggingType
 {
   LOGGING_TYPE_INVALID, /* No logging */
 
-  LOGGING_TYPE_DRAM_NVM = 10,   /* Aries */
+  LOGGING_TYPE_DRAM_NVM = 1,   /* Aries */
   LOGGING_TYPE_NVM_NVM /* Peloton */
 } LoggingType;
 
