@@ -108,9 +108,9 @@ void FrontendLogger::MainLoop(void) {
       /////////////////////////////////////////////////////////////////////
 
       // First, do recovery if needed
-      LOG_INFO("Log manager: Invoking DoRecovery");
+      LOG_INFO("Invoking DoRecovery");
       DoRecovery();
-      LOG_INFO("Log manager: DoRecovery done");
+      LOG_INFO("DoRecovery done");
 
       // Now, enter LOGGING mode
       // log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
