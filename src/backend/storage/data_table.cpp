@@ -290,12 +290,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
           return false;
         }
 
-        // auto locations = index->ScanKey(key.get());
-        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
-        // if (exist_visible) {
-        //   LOG_WARN("A visible index entry exists.");
-        //   return false;
-        // }
       } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
@@ -337,12 +331,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
         if (index->CondInsertEntry(key.get(), location, fn) == false) {
           return false;
         }
-        // auto locations = index->ScanKey(key.get());
-        // auto exist_visible = ContainsVisibleEntry(locations, transaction);
-        // if (exist_visible) {
-        //   LOG_WARN("A visible index entry exists.");
-        //   return false;
-        // }
       } break;
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
@@ -392,7 +380,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple __attribu
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
         LOG_INFO("check key: %s", key->GetInfo().c_str());
-        
+
         std::vector<ItemPointer> locations;
         index->ScanKey(key.get(), locations);
 

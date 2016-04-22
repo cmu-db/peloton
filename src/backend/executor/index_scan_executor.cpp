@@ -305,8 +305,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
 
-    // Print tile group visibility
-    // tile_group_header->PrintVisibility(txn_id, commit_id);
     result_.push_back(logical_tile.release());
   }
 
