@@ -491,7 +491,7 @@ void LogManager::UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid) {
 
     max_cid = std::max(max_cid, new_cid);
 
-    if (update_managers_count == DEFAULT_NUM_FRONTEND_LOGGERS) {
+    if (update_managers_count == (int)num_frontend_loggers_) {
       auto &manager = catalog::Manager::GetInstance();
       manager.SetNextOid(max_oid);
 
