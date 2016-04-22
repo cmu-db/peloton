@@ -187,6 +187,12 @@ class LogManager {
     log_file_size_limit_ = file_size_limit;
   }
 
+  inline unsigned int GetLogBufferCapacity() { return log_buffer_capacity_; }
+
+  inline void SetLogBufferCapacity(unsigned int log_buffer_capacity) {
+    log_buffer_capacity_ = log_buffer_capacity;
+  }
+
  private:
   LogManager();
   ~LogManager();
@@ -206,6 +212,9 @@ class LogManager {
 
   // default log file size: 32 MB
   unsigned int log_file_size_limit_ = 32;
+
+  // default capacity for log buffer
+  unsigned int log_buffer_capacity_ = 32768;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
