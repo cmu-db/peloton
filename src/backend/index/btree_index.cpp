@@ -239,9 +239,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator,
   }
 }
 
-/**
- * @brief Return all locations related to this key.
- */
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
