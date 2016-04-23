@@ -121,8 +121,6 @@ void RunBackend(oid_t thread_id) {
   }
 }
 
-std::ofstream out("outputfile.summary", std::ofstream::out);
-
 void RunWorkload() {
 
   // Execute the workload to build the log
@@ -135,11 +133,7 @@ void RunWorkload() {
   commit_counts = new oid_t[num_threads];
   memset(commit_counts, 0, sizeof(oid_t) * num_threads);
 
-  size_t snapshot_duration = 100;  // milliseconds
-
-  size_t snapshot_round = (size_t)(state.duration * 1000 / snapshot_duration);
-
-  out << "snapshot round = " << snapshot_round << "\n";
+  size_t snapshot_round = (size_t)(state.duration / state.snapshot_duration);
 
   oid_t **abort_counts_snapshots = new oid_t *[snapshot_round];
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
@@ -157,7 +151,8 @@ void RunWorkload() {
   }
 
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(snapshot_duration));
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(int(state.snapshot_duration * 1000)));
     memcpy(abort_counts_snapshots[round_id], abort_counts,
            sizeof(oid_t) * num_threads);
     memcpy(commit_counts_snapshots[round_id], commit_counts,
@@ -171,6 +166,7 @@ void RunWorkload() {
     thread_group[thread_itr].join();
   }
 
+  // calculate the throughput and abort rate for the first round.
   oid_t total_commit_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
     total_commit_count += commit_counts_snapshots[0][i];
@@ -181,13 +177,12 @@ void RunWorkload() {
     total_abort_count += abort_counts_snapshots[0][i];
   }
 
-  double snapshot_throughput =
-      total_commit_count * 1.0 / snapshot_duration * 1000;
-  double snapshot_abort_rate = total_abort_count * 1.0 / total_commit_count;
+  state.snapshot_throughput
+      .push_back(total_commit_count * 1.0 / state.snapshot_duration);
+  state.snapshot_abort_rate
+      .push_back(total_abort_count * 1.0 / total_commit_count);
 
-  out << "[0 - " << snapshot_duration << "]: " << snapshot_throughput << " "
-      << snapshot_abort_rate << "\n";
-
+  // calculate the throughput and abort rate for the remaining rounds.
   for (size_t round_id = 0; round_id < snapshot_round - 1; ++round_id) {
     total_commit_count = 0;
     for (size_t i = 0; i < num_threads; ++i) {
@@ -201,14 +196,13 @@ void RunWorkload() {
                            abort_counts_snapshots[round_id][i];
     }
 
-    snapshot_throughput = total_commit_count * 1.0 / snapshot_duration * 1000;
-    snapshot_abort_rate = total_abort_count * 1.0 / total_commit_count;
-
-    out << "[" << snapshot_duration *(round_id + 1) << " - "
-        << snapshot_duration * (round_id + 2) << "]: " << snapshot_throughput
-        << " " << snapshot_abort_rate << "\n";
+    state.snapshot_throughput
+        .push_back(total_commit_count * 1.0 / state.snapshot_duration);
+    state.snapshot_abort_rate
+        .push_back(total_abort_count * 1.0 / total_commit_count);
   }
 
+  // calculate the aggregated throughput and abort rate.
   total_commit_count = 0;
   for (size_t i = 0; i < num_threads; ++i) {
     total_commit_count += commit_counts_snapshots[snapshot_round - 1][i];
@@ -222,9 +216,7 @@ void RunWorkload() {
   state.throughput = total_commit_count * 1.0 / state.duration;
   state.abort_rate = total_abort_count * 1.0 / total_commit_count;
 
-  out << "aggregate: " << snapshot_throughput << " " << snapshot_abort_rate
-      << "\n";
-
+  // cleanup everything.
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
     delete[] abort_counts_snapshots[round_id];
     abort_counts_snapshots[round_id] = nullptr;
