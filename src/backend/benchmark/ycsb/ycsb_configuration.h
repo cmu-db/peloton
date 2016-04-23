@@ -64,6 +64,9 @@ class configuration {
 
   // log buffer size
   int log_buffer_size;
+
+  // whether do checkpoint
+  int checkpointer;
 };
 
 extern configuration state;
