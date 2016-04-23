@@ -80,6 +80,9 @@ class FrontendLogger : public Logger {
 
   // reset the frontend logger to its original state (for testing
   void Reset() {
+    for (auto backend_logger : backend_loggers) {
+      delete backend_logger;
+    }
     backend_loggers_lock.Lock();
     fsync_count = 0;
     max_flushed_commit_id = 0;

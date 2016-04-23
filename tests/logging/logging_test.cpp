@@ -60,6 +60,7 @@ TEST_F(LoggingTests, BasicLoggingTest) {
 
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
+  scheduler.Cleanup();
 }
 
 TEST_F(LoggingTests, AllCommittedTest) {
@@ -88,6 +89,7 @@ TEST_F(LoggingTests, AllCommittedTest) {
 
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
+  scheduler.Cleanup();
 }
 
 TEST_F(LoggingTests, LaggardTest) {
@@ -126,6 +128,7 @@ TEST_F(LoggingTests, LaggardTest) {
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
   EXPECT_EQ(3, results[1]);
+  scheduler.Cleanup();
 }
 
 TEST_F(LoggingTests, FastLoggerTest) {
@@ -169,6 +172,7 @@ TEST_F(LoggingTests, FastLoggerTest) {
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
   EXPECT_EQ(3, results[1]);
+  scheduler.Cleanup();
 }
 
 TEST_F(LoggingTests, BothPreparingTest) {
@@ -221,6 +225,7 @@ TEST_F(LoggingTests, BothPreparingTest) {
   EXPECT_EQ(3, results[0]);
   EXPECT_EQ(3, results[1]);
   EXPECT_EQ(4, results[2]);
+  scheduler.Cleanup();
 }
 
 TEST_F(LoggingTests, TwoRoundTest) {
@@ -261,6 +266,7 @@ TEST_F(LoggingTests, TwoRoundTest) {
 
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(5, results[1]);
+  scheduler.Cleanup();
 }
 
 }  // End test namespace
