@@ -328,7 +328,7 @@ bool EagerWriteTxnManager::PerformInsert(const oid_t &tile_group_id,
 bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                          const oid_t &tuple_id,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Write %u %u", tile_group_id, tuple_id);
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -367,7 +367,7 @@ bool EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
 void EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
-  LOG_INFO("Performing Inplace Write %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Inplace Write %u %u", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -388,7 +388,7 @@ void EagerWriteTxnManager::PerformUpdate(const oid_t &tile_group_id,
 bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Delete %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Delete %u %u", tile_group_id, tuple_id);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header =
@@ -421,7 +421,7 @@ bool EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
 
 void EagerWriteTxnManager::PerformDelete(const oid_t &tile_group_id,
                                          const oid_t &tuple_id) {
-  LOG_INFO("Performing Inplace Delete %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Inplace Delete %u %u", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 

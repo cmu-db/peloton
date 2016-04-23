@@ -248,7 +248,7 @@ bool PessimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
 bool PessimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                           const oid_t &tuple_id,
                                           const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Write %u %u", tile_group_id, tuple_id);
 
   auto transaction_id = current_txn->GetTransactionId();
 

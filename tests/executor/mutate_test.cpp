@@ -92,7 +92,7 @@ void UpdateTuple(storage::DataTable *table) {
   planner::ProjectInfo::DirectMapList direct_map_list;
   target_list.emplace_back(
       2, expression::ExpressionUtil::ConstantValueFactory(update_val));
-  LOG_INFO("%lu", target_list.at(0).first);
+  LOG_INFO("%u", target_list.at(0).first);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
