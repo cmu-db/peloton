@@ -78,73 +78,87 @@ namespace ycsb {
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-void RunRead();
+bool RunRead();
 
-void RunUpdate();
+bool RunUpdate();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-std::vector<double> durations;
+volatile bool is_running = true;
+
+std::vector<oid_t> execution_counts;
+std::vector<oid_t> transaction_counts;
 
 void RunBackend(oid_t thread_id) {
-  auto txn_count = state.transaction_count;
   auto update_ratio = state.update_ratio;
 
   UniformGenerator generator;
-  Timer<> timer;
 
-  // Start timer
-  timer.Reset();
-  timer.Start();
-
+  oid_t execution_count = 0;
+  oid_t transaction_count = 0;
   // Run these many transactions
-  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+  while (true) {
+    if (is_running == false) {
+      break;
+    }
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
-      RunUpdate();
+      while (RunUpdate() == false) {
+        execution_count++;
+      }
     }
     else {
-      RunRead();
+      while (RunRead() == false) {
+        execution_count++;
+      }
     }
+    
+    transaction_count++;
 
   }
 
-  // Stop timer
-  timer.Stop();
-
-  // Set duration
-  durations[thread_id] = timer.GetDuration();
+  execution_counts[thread_id] = execution_count;
+  transaction_counts[thread_id] = transaction_count;
 }
 
-double RunWorkload() {
+void RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
-  double max_duration = std::numeric_limits<double>::min();
-  durations.reserve(num_threads);
+
+  execution_counts.resize(num_threads, 0);
+  transaction_counts.resize(num_threads, 0);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group.push_back(std::thread(RunBackend, thread_itr));
   }
 
+  std::this_thread::sleep_for(std::chrono::seconds(state.duration));
+
+  is_running = false;
+
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 
-  // Compute max duration
-  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    max_duration = std::max(max_duration, durations[thread_itr]);
+  oid_t total_execution_count = 0;
+  for (auto &entry : execution_counts) {
+    total_execution_count += entry;
   }
 
-  double throughput = (state.transaction_count * num_threads)/max_duration;
+  oid_t total_transaction_count = 0;
+  for (auto &entry : transaction_counts) {
+    total_transaction_count += entry;
+  }
 
-  return throughput;
+  state.throughput = total_transaction_count * 1.0 / state.duration;
+  state.abort_rate = total_execution_count * 1.0 / total_transaction_count;
 }
 
 /////////////////////////////////////////////////////////
@@ -178,7 +192,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
-void RunRead() {
+bool RunRead() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -259,10 +273,16 @@ void RunRead() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction();
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED);
+    return false;
+  }
 }
 
-void RunUpdate() {
+bool RunUpdate() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -350,7 +370,14 @@ void RunUpdate() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction();
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED);
+    return false;
+  }
+
 }
 
 }  // namespace ycsb

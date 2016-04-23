@@ -27,7 +27,7 @@ void Usage(FILE *out) {
           "Command line options : ycsb <options> \n"
           "   -h --help              :  Print help message \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transactions      :  # of transactions \n"
+          "   -d --duration          :  execution duration \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
@@ -37,7 +37,7 @@ void Usage(FILE *out) {
 
 static struct option opts[] = {
     {"scale-factor", optional_argument, NULL, 'k'},
-    {"transactions", optional_argument, NULL, 't'},
+    {"duration", optional_argument, NULL, 'd'},
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
@@ -79,20 +79,20 @@ void ValidateBackendCount(const configuration &state) {
   LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
-void ValidateTransactionCount(const configuration &state) {
-  if (state.transaction_count <= 0) {
-    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
+void ValidateDuration(const configuration &state) {
+  if (state.duration <= 0) {
+    LOG_ERROR("Invalid duration :: %lu", state.duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
+  LOG_INFO("%s : %lu", "execution duration", state.duration);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
   state.scale_factor = 1;
-  state.transaction_count = 100000;
+  state.duration = 10;
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -100,7 +100,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
@@ -108,8 +108,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
-      case 't':
-        state.transaction_count = atoi(optarg);
+      case 'd':
+        state.duration = atoi(optarg);
         break;
       case 'c':
         state.column_count = atoi(optarg);
@@ -137,7 +137,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
-  ValidateTransactionCount(state);
+  ValidateDuration(state);
 
 }
 
