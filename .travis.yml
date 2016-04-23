@@ -9,7 +9,7 @@ addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
-	    - boost-latest
+            - boost-latest
         packages:
             - gcc-4.8
             - g++-4.8
