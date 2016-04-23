@@ -16,9 +16,7 @@
 
 namespace peloton {
 
-namespace storage{
-class DataTable;
-}
+namespace storage { class DataTable; }
 
 namespace benchmark {
 namespace ycsb {
