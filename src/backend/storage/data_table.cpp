@@ -160,7 +160,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     AddDefaultTileGroup();
   }
 
-  LOG_TRACE("tile group count: %lu, tile group id: %lu, address: %p",
+  LOG_TRACE("tile group count: %u, tile group id: %u, address: %p",
             tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
@@ -192,7 +192,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -218,7 +218,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -232,7 +232,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
@@ -549,7 +549,7 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     tile_group_count_++;
 
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+    LOG_TRACE("Recording tile group : %u ", tile_group_id);
   }
 
   return tile_group_id;
@@ -584,7 +584,7 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
 
   tile_group_count_++;
 
-  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 
   return tile_group_id;
 }
@@ -602,7 +602,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
   tile_group_count_++;
 
-  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
 size_t DataTable::GetTileGroupCount() const {
