@@ -17,8 +17,6 @@
 
 #include "backend/expression/abstract_expression.h"
 
-#include "boost/shared_array.hpp"
-
 namespace peloton {
 namespace expression {
 
@@ -33,11 +31,6 @@ class ExpressionUtil {
       PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
       AbstractExpression *lc, AbstractExpression *rc,
       const std::vector<AbstractExpression *> &arguments);
-
-  static AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
-                                               ExpressionType et, ValueType vt,
-                                               int vs, AbstractExpression *lc,
-                                               AbstractExpression *rc);
 
   //===--------------------------------------------------------------------===//
   // Factories
@@ -106,19 +99,8 @@ class ExpressionUtil {
                                                    ExpressionType et,
                                                    AbstractExpression *lc,
                                                    AbstractExpression *rc);
-  static AbstractExpression *ParameterValueFactory(json_spirit::Object &obj,
-                                                   ExpressionType et,
-                                                   AbstractExpression *lc,
-                                                   AbstractExpression *rc);
   static AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
   static AbstractExpression *TupleValueFactory(PlannerDomValue obj,
-                                               ExpressionType et,
-                                               AbstractExpression *lc,
-                                               AbstractExpression *rc);
-
-  // convert the enumerated value type into a concrete c type for
-  // tuple value expression templated ctors
-  static AbstractExpression *TupleValueFactory(json_spirit::Object &obj,
                                                ExpressionType et,
                                                AbstractExpression *lc,
                                                AbstractExpression *rc);
@@ -137,13 +119,6 @@ class ExpressionUtil {
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
-  // convert the enumerated value type into a concrete c type for
-  // constant value expressions templated ctors
-  static AbstractExpression *ConstantValueFactory(json_spirit::Object &obj,
-                                                  ValueType vt,
-                                                  ExpressionType et,
-                                                  AbstractExpression *lc,
-                                                  AbstractExpression *rc);
 };
 
 }  // End expression namespace
