@@ -80,6 +80,9 @@ class FrontendLogger : public Logger {
 
   // reset the frontend logger to its original state (for testing
   void Reset() {
+    for (auto backend_logger : backend_loggers) {
+      delete backend_logger;
+    }
     backend_loggers_lock.Lock();
     fsync_count = 0;
     max_flushed_commit_id = 0;
@@ -87,6 +90,15 @@ class FrontendLogger : public Logger {
     max_seen_commit_id = 0;
     global_queue.clear();
     backend_loggers.clear();
+    backend_loggers_lock.Unlock();
+  }
+
+  void RemoveBackendLogger(BackendLogger *bel) {
+    backend_loggers_lock.Lock();
+
+    auto iter = std::find(backend_loggers.begin(), backend_loggers.end(), bel);
+    if (iter != backend_loggers.end()) backend_loggers.erase(iter);
+
     backend_loggers_lock.Unlock();
   }
 

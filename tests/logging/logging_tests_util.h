@@ -216,6 +216,8 @@ class LoggingScheduler {
 
   void Init();
 
+  void Cleanup();
+
   void Run();
 
   LoggingScheduler &BackendLogger(unsigned int frontend_idx,
