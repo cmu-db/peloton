@@ -153,7 +153,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
 
   // FIXME: what if the list is full?
   possibly_free_list_.Push(tuple_metadata);
-  LOG_INFO("Marked tuple(%lu, %lu) in table %lu as possible garbage",
+  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
             tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, tuple_metadata.table_id);
 }
 
@@ -169,7 +169,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
    if (recycled_map_.find(table_id, free_list) == true) {
      TupleMetadata tuple_metadata;
      if (free_list->Pop(tuple_metadata) == true) {
-       LOG_INFO("Reuse tuple(%lu, %lu) in table %lu",
+       LOG_INFO("Reuse tuple(%u, %u) in table %u",
                  tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, table_id);
        return ItemPointer(tuple_metadata.tile_group_id,
                           tuple_metadata.tuple_slot_id);
@@ -182,7 +182,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
 void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
-  LOG_INFO("Deleting index for tuple(%lu, %lu)", tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id);
+  LOG_INFO("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id);
 
   assert(tile_group != nullptr);
   storage::DataTable *table =

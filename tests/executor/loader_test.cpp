@@ -130,7 +130,7 @@ TEST_F(LoaderTests, LoadingTest) {
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-  LOG_INFO("Dataset size : %lu MB \n",
+  LOG_INFO("Dataset size : %u MB \n",
            (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
            bytes_to_megabytes_converter);
 }

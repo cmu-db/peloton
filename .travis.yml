@@ -9,9 +9,12 @@ addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
+            - boost-latest
         packages:
             - gcc-4.8
             - g++-4.8
+            - libboost1.55-dev
+            - libboost1.55-all-dev
 
 before_script:
     # setup environment
