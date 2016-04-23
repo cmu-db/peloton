@@ -61,12 +61,12 @@ void SimpleCheckpoint::DoCheckpoint() {
   }
 
   // FIXME make sure everything up to start_cid is not garbage collected
-  start_commit_id = log_manager.GetPersistentFlushedCommitId();
-  LOG_INFO("DoCheckpoint cid = %lu", start_commit_id);
+  start_commit_id_ = log_manager.GetPersistentFlushedCommitId();
+  LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
   std::shared_ptr<LogRecord> begin_record(
-      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id));
+      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id_));
   CopySerializeOutput begin_output_buffer;
   begin_record->Serialize(begin_output_buffer);
   records_.push_back(begin_record);
@@ -94,7 +94,7 @@ void SimpleCheckpoint::DoCheckpoint() {
   // if anything other than begin record is added
   if (records_.size() > 1) {
     std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id));
+        LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id_));
     CopySerializeOutput commit_output_buffer;
     commit_record->Serialize(commit_output_buffer);
     records_.push_back(commit_record);
@@ -219,7 +219,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
 
     // Retrieve a logical tile
     std::unique_ptr<executor::LogicalTile> logical_tile(
-        scanner.Scan(tile_group, column_ids, start_commit_id));
+        scanner.Scan(tile_group, column_ids, start_commit_id_));
 
     // Empty result
     if (!logical_tile) {
@@ -313,11 +313,7 @@ void SimpleCheckpoint::Cleanup() {
   }
 
   // Truncate logs
-  // auto frontend_logger = LogManager::GetInstance().GetFrontendLogger();
-  // assert(frontend_logger);
-  // reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
-  //  ->TruncateLog(start_commit_id);
-  LogManager::GetInstance().TruncateLogs(start_commit_id);
+  LogManager::GetInstance().TruncateLogs(start_commit_id_);
 }
 
 void SimpleCheckpoint::InitVersionNumber() {

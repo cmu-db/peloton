@@ -49,6 +49,10 @@ class SimpleCheckpoint : public Checkpoint {
 
   std::vector<std::shared_ptr<LogRecord>> GetRecords();
 
+  inline void SetStartCommitId(cid_t start_commit_id) {
+	  start_commit_id_ = start_commit_id;
+  }
+
  private:
   void CreateFile();
 
@@ -69,7 +73,7 @@ class SimpleCheckpoint : public Checkpoint {
   oid_t max_oid_ = 0;
 
   // commit id of current checkpoint
-  cid_t start_commit_id = 0;
+  cid_t start_commit_id_ = 0;
 };
 
 }  // namespace logging

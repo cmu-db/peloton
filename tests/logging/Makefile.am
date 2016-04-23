@@ -7,9 +7,10 @@
 check_PROGRAMS += logging_test \
 				buffer_pool_test \
 				recovery_test \
-				device_test
+				checkpoint_test \
+				device_test 
 
-logging_tests_common= 	executor/executor_tests_util.cpp \
+logging_tests_common = executor/executor_tests_util.cpp \
 						harness.cpp \
 						logging/logging_tests_util.cpp
 
@@ -25,5 +26,9 @@ recovery_test_SOURCES = \
 							$(logging_tests_common) \
 							logging/recovery_test.cpp 
 
+checkpoint_test_SOURCES = \
+							$(logging_tests_common) \
+							logging/checkpoint_test.cpp 
+
 device_test_SOURCES = $(executor_tests_common) \
-					  logging/device_test.cpp
+					  	logging/device_test.cpp
