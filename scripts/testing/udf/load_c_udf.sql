@@ -15,3 +15,6 @@ CREATE FUNCTION copy_text_c(text) RETURNS text AS '/usr/local/lib/sample_udf.so'
 
 DROP FUNCTION IF EXISTS concat_text_c(text, text);
 CREATE FUNCTION concat_text_c(text, text) RETURNS text AS '/usr/local/lib/sample_udf.so', 'concat_text' LANGUAGE C STRICT;
+
+DROP FUNCTION IF EXISTS calc_tax_c(float8);
+CREATE FUNCTION calc_tax_c(float8) RETURNS float8 AS '/usr/local/lib/sample_udf.so', 'calc_tax_c' LANGUAGE C STRICT;

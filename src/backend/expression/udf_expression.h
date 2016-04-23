@@ -39,7 +39,7 @@ public:
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
 
-    Datum result;
+    Datum result = 0;
 
     // Evaluate the argument expression into Value, and convert it into Datum
     // for invoking OidFunctionCall

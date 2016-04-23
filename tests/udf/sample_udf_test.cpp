@@ -157,6 +157,22 @@ sum_columns(PG_FUNCTION_ARGS)
 
 }
 
+PG_FUNCTION_INFO_V1(calc_tax_c);
+
+Datum
+calc_tax_c(PG_FUNCTION_ARGS) {
+    float8 price = PG_GETARG_FLOAT8(0);
+    float8 tax = 0.0;
+    if (price < 10.0) {
+        tax = 0.0;
+    } else if (price < 50.0) {
+        tax = 0.06 * (price - 10.0);
+    } else {
+        tax = 0.06 * (50.0 - 10.0) + 0.09 * (price - 50.0);
+    }
+    PG_RETURN_FLOAT8(tax);
+}
+
 #ifdef __cplusplus
 };
 #endif
