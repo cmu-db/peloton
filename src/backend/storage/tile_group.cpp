@@ -97,7 +97,7 @@ RollbackSegment *TileGroup::GetPreparedRollbackSegment(const planner::ProjectInf
   auto schema = table->GetSchema();
   assert(schema);
   // Get an empty rb segment
-  auto rb_seg = RollbackSegmentManager::GetEmptyRollbackSegment(schema, target_list);
+  auto rb_seg = RollbackSegmentPool::GetEmptyRollbackSegment(schema, target_list);
 
   if (already_has_rbseg) {
     // Already has a rollback segment
@@ -111,7 +111,7 @@ RollbackSegment *TileGroup::GetPreparedRollbackSegment(const planner::ProjectInf
     for (auto target : target_list) {
       auto col_id = target.first;
       auto tile_id = GetTileIdFromColumnId(col_id);
-      rb_seg->SetSegmentValue(schema, col_id, GetValue(tuple_id, col_id), GetTilePool(tile_id));
+      rb_seg->SetSegmentValueFromTuple(schema, col_id, GetValue(tuple_id, col_id), GetTilePool(tile_id));
     }
   }
   return rb_seg;

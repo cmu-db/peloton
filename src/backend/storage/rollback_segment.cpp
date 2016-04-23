@@ -18,89 +18,77 @@
 namespace peloton {
 namespace storage {
 
-RollbackSegment *RollbackSegmentManager::GetEmptyRollbackSegment(
-  const catalog::Schema *schema,
-  const peloton::planner::ProjectInfo::TargetList &target_list) {
+char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
+                                                const planner::ProjectInfo::TargetList &target_list,
+                                                const AbstractTuple *tuple,
+                                                const ColBitmap *bitmap) {
+  assert(schema);
 
-  RollbackSegment *rb_seg = new RollbackSegment();
-  assert(rb_seg);
-
-  // Figure out the size of the data field
+  size_t col_count = target_list.size();
   size_t data_size = 0;
+  char *rb_seg = nullptr;
+
+  // First figure out the total size of the rollback segment
   for (auto target : target_list) {
     auto col_id = target.first;
 
-    // set the col map
-    rb_seg->col_offset_map_[col_id] = data_size;
-
+    if (bitmap != nullptr && bitmap->test(col_id)) {
+      // By pass already updated column
+      col_count -= 1;
+      continue;
+    }
     data_size += schema->GetLength(col_id);
   }
 
-  // Allocate space for the data
-  rb_seg->data_ = reinterpret_cast<char*>(::operator new(data_size));
-  std::memset(rb_seg->data_, 0, data_size);
+  // Check if there is no need to generate a new segment
+  if (col_count == 0) {
+    return nullptr;
+  }
+
+  // Allocate the data
+  assert(col_count > 0);
+  size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
+  rb_seg = (char*) pool_.AllocateZeroes(header_size + data_size);
+  assert(rb_seg);
+
+  // Fill in the header
+  SetNextPtr(rb_seg, nullptr);
+  SetTimeStamp(rb_seg, INVALID_CID);
+  SetColCount(rb_seg, col_count);
+
+  char *data_location = GetDataPtr(rb_seg);
+
+  // Fill in the col_id & offset pair and set the data field
+  size_t offset = 0;
+  for (size_t idx = 0; idx < target_list.size(); ++idx) {
+    auto &target = target_list[idx];
+    auto col_id = target.first;
+
+    if (bitmap != nullptr && bitmap->test(col_id)) {
+      // By pass already updated column
+      continue;
+    }
+
+    const bool is_inlined = schema->IsInlined(col_id);
+    const bool is_inbytes = false;
+
+    char *value_location = data_location + offset;
+    size_t col_length = schema->GetLength(col_id);
+    size_t allocate_col_length = (is_inlined) ? col_length : schema->GetVariableLength(col_id);
+
+    SetColIdOffsetPair(rb_seg, target.first, offset, idx);
+
+    // Set the value
+    Value value = tuple->GetValue(col_id);
+    assert(schema->GetType(col_id) == value.GetValueType());
+    value.SerializeToTupleStorageAllocateForObjects(
+                value_location, is_inlined, allocate_col_length, is_inbytes, &pool_);
+
+    // Update the offset
+    offset += col_length;
+  }
 
   return rb_seg;
-}
-
-//RollbackSegment *RollbackSegmentManager::GetRollbackSegment(const catalog::Schema *schema,
-//                                                            const peloton::planner::ProjectInfo::TargetList &target_list,
-//                                                            const AbstractTuple *tuple) {
-//  RollbackSegment *rb_seg = GetEmptyRollbackSegment(schema, target_list);
-//  // Copy the data from the old tuple
-//
-//}
-
-void RollbackSegment::SetSegmentValue(const catalog::Schema *schema, const oid_t col_id,
-                                             const Value &value, VarlenPool *data_pool) {
-  assert(HasColumn(col_id));
-
-  const ValueType type  = schema->GetType(col_id);
-  const bool is_inlined = schema->IsInlined(col_id);
-
-  char *value_location = data_ + col_offset_map_[col_id];
-  int32_t column_length = schema->GetLength(col_id);
-
-  if (is_inlined == false)
-    column_length = schema->GetVariableLength(col_id);
-
-  const bool is_in_bytes = false;
-
-  // Allocate in heap or given data pool depending on whether a pool is provided
-  if (data_pool == nullptr) {
-    // Skip casting if type is same
-    if (type == value.GetValueType()) {
-      value.SerializeToTupleStorage(value_location, is_inlined, column_length,
-                                    is_in_bytes);
-    } else {
-      Value casted_value = value.CastAs(type);
-      casted_value.SerializeToTupleStorage(value_location, is_inlined,
-                                           column_length, is_in_bytes);
-      // Do not clean up immediately
-      casted_value.SetCleanUp(false);
-    }
-  } else {
-    // Skip casting if type is same
-    if (type == value.GetValueType()) {
-      value.SerializeToTupleStorageAllocateForObjects(
-        value_location, is_inlined, column_length, is_in_bytes, data_pool);
-    } else {
-      value.CastAs(type).SerializeToTupleStorageAllocateForObjects(
-        value_location, is_inlined, column_length, is_in_bytes, data_pool);
-    }
-  }
-}
-
-Value RollbackSegment::GetSegmentValue(const catalog::Schema *schema,
-                                       const oid_t col_id) const {
-  assert(HasColumn(col_id));
-
-  const ValueType type = schema->GetType(col_id);
-
-  const char *data_ptr = data_ + col_offset_map_[col_id];
-  const bool is_inlined = schema->IsInlined(col_id);
-
-  return Value::InitFromTupleStorage(data_ptr, type, is_inlined);
 }
 
 }  // End storage namespace

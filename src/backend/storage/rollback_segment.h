@@ -27,6 +27,8 @@
 
 namespace peloton {
 
+class VarlenPool;
+
 namespace catalog {
   class Schema;
 }
@@ -36,72 +38,95 @@ namespace storage {
 class AbstractTable;
 class Tuple;
 
-class RollbackSegment {
-  friend class RollbackSegmentManager;
-
-  RollbackSegment &operator=(const RollbackSegment &) = delete;
-  RollbackSegment(const RollbackSegment &) = delete;
-
-private:
-  RollbackSegment()
-    :begin_cid_(INVALID_CID), end_cid_(INVALID_CID), col_offset_map_(),
-    next_segment_(), data_(nullptr) {}
-
-public:
-  ~RollbackSegment(){
-    if (data_ != nullptr) delete data_;
-  }
-
-  inline bool HasColumn(oid_t col_id) const {
-    return col_offset_map_.find(col_id) != col_offset_map_.end();
-  }
-
-  inline void SetBeginCommitId(const oid_t &begin_cid) {
-    begin_cid_ = begin_cid;
-  }
-
-  inline void SetEndCommitId(const oid_t &end_cid) {
-    end_cid_ = end_cid;
-  }
-
-  inline cid_t GetBeginCommitId() const {
-    return begin_cid_;
-  }
-
-  inline cid_t GetEndCommitId() const {
-    return end_cid_;
-  }
-
-  void SetSegmentValue(const catalog::Schema *schema, const oid_t col_id, const Value &value, VarlenPool *data_pool);
-
-  Value GetSegmentValue(const catalog::Schema *schema, const oid_t col_id) const;
-
-private:
-  // begin and end timestamps
-  cid_t begin_cid_;
-  cid_t end_cid_;
-
-  // column offset map
-  // col_id -> col offset count from the header
-  std::unordered_map<oid_t, size_t> col_offset_map_;
-
-  // Next rollback segment
-  std::shared_ptr<RollbackSegment> next_segment_;
-
-  // Data
-  char *data_;
+struct ColIdOffsetPair {
+  oid_t col_id;
+  size_t offset;
 };
+/**
+ *  Data layout:
+ *  | next_seg_ptr (8 bytes) | timestamp (8 bytes) | column_count (8 bytes)
+ *  | id_offset_pairs (column_count * 16 bytes) | segment data
+ */
 
-class RollbackSegmentManager {
-  RollbackSegmentManager(const RollbackSegmentManager&) = delete;
-  RollbackSegmentManager &operator=(const RollbackSegmentManager&) = delete;
+
+class RollbackSegmentPool {
+  RollbackSegmentPool(const RollbackSegmentPool&) = delete;
+  RollbackSegmentPool &operator=(const RollbackSegmentPool&) = delete;
 public:
-  RollbackSegmentManager() {}
-  ~RollbackSegmentManager() {}
+  RollbackSegmentPool(BackendType backend_type): pool_(backend_type){}
+  RollbackSegmentPool(BackendType backend_type,
+                      uint64_t allocation_size,
+                      uint64_t max_chunk_count)
+                      : pool_(backend_type, allocation_size, max_chunk_count){}
+  ~RollbackSegmentPool() {}
 
-  static RollbackSegment *GetEmptyRollbackSegment(const catalog::Schema *schema,
-                                      const peloton::planner::ProjectInfo::TargetList &target_list);
+  /**
+   * Public Getters
+   */
 
+  inline char *GetNextPtr(char *rb_seg_ptr) const {
+    return *(reinterpret_cast<char**>(rb_seg_ptr + next_ptr_offset_));
+  }
+
+  inline cid_t GetTimeStamp(char *rb_seg_ptr) const {
+    return *(reinterpret_cast<cid_t*>(rb_seg_ptr + timestamp_offset_));
+  }
+
+  inline size_t GetColCount(char *rb_seg_ptr) const {
+    return *(reinterpret_cast<size_t*>(rb_seg_ptr + col_count_offset_));
+  }
+
+  /**
+   * Public setters
+   */
+
+  inline void SetNextPtr(char *rb_seg_ptr, char *next_seg) {
+    *(reinterpret_cast<char**>(rb_seg_ptr + next_ptr_offset_)) = next_seg;
+  }
+
+  inline void SetTimeStamp(char *rb_seg_ptr, cid_t ts) {
+    *(reinterpret_cast<cid_t*>(rb_seg_ptr + timestamp_offset_)) = ts;
+  }
+
+private:
+  /**
+   * Private utilities
+   */
+  inline ColIdOffsetPair *GetIdOffsetPair(char *rb_seg_ptr, int idx) {
+    return (reinterpret_cast<ColIdOffsetPair*>(rb_seg_ptr + pairs_start_offset
+                                               + sizeof(ColIdOffsetPair) * idx));
+  }
+
+  inline void SetColIdOffsetPair(char *rb_seg_ptr,
+                                 size_t idx, oid_t col_id, size_t off) {
+    auto pair = GetIdOffsetPair(rb_seg_ptr, idx);
+    pair->col_id = col_id;
+    pair->offset = off;
+  }
+
+  inline void SetColCount(char *rb_seg_ptr, size_t col_count) {
+    *(reinterpret_cast<size_t*>(rb_seg_ptr + col_count_offset_)) = col_count;
+  }
+
+  inline char * GetDataPtr(char *rb_seg_ptr) {
+    size_t col_count = GetColCount(rb_seg_ptr);
+    return rb_seg_ptr + pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
+  }
+
+  static const size_t next_ptr_offset_ = 0;
+  static const size_t timestamp_offset_ = next_ptr_offset_ + sizeof(void*);
+  static const size_t col_count_offset_ = timestamp_offset_ + sizeof(cid_t);
+  static const size_t pairs_start_offset = col_count_offset_ + sizeof(size_t);
+
+  // Get a prepared rollback segment from a tuple
+  // Return nullptr if there is no need to generate a new segment
+  char *GetSegmentFromTuple(const catalog::Schema *schema,
+                            const planner::ProjectInfo::TargetList &target_list,
+                            const AbstractTuple *tuple,
+                            const ColBitmap *bitmap = nullptr);
+
+private:
+  VarlenPool pool_;
 };
 
 }  // End storage namespace
