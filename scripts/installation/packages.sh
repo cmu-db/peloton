@@ -9,7 +9,10 @@ apt-get -y install git g++ autoconf pkg-config libtool libjson-spirit-dev librea
 # Pip
 pip install unittest-xml-reporting
 
-# Install boost 1.55
-add-apt-repository ppa:boost-latest/ppa
+# Install latest boost (1.55)
+add-apt-repository -y ppa:boost-latest/ppa
+apt-get -y --purge remove libboost-all-dev libboost-dev libboost-doc
+apt-get -y install -f
+dpkg --configure -a
 apt-get -y update
-apt-get install -y libboost1.55-all-dev
+apt-get install -y libboost1.55-tools-dev libboost1.55-dev libboost1.55-all-dev
