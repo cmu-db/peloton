@@ -103,11 +103,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   //===--------------------------------------------------------------------===//
 
   // File pointer and descriptor
-  FILE *log_file;
-  int log_file_fd = INVALID_FILE_DESCRIPTOR;
-
-  // Size of the log file
-  size_t log_file_size;
+  FileHandle cur_file_handle;
 
   // Txn table during recovery
   std::map<txn_id_t, std::vector<TupleRecord *>> recovery_txn_table;
@@ -140,8 +136,6 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   cid_t max_log_id_file = INVALID_CID;
 
   CopySerializeOutput output_buffer;
-
-  std::set<cid_t> pending_commits;
 
   int logger_id;
 

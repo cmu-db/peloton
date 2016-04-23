@@ -29,22 +29,12 @@ namespace logging {
 
 #define LOG_FILE_NAME "wal.log"
 
-#define DEFAULT_NUM_FRONTEND_LOGGERS 1
-
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
 
-// static configurations for logging
-LoggingType LogManager::logging_type_ = LOGGING_TYPE_INVALID;
-bool LogManager::test_mode_ = false;
-unsigned int LogManager::num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
-LoggerMappingStrategyType LogManager::logger_mapping_strategy_ =
-    LOGGER_MAPPING_INVALID;
-
 LogManager::LogManager() {
-  LogManager::Configure(peloton_logging_mode, false,
-                        DEFAULT_NUM_FRONTEND_LOGGERS,
-                        LOGGER_MAPPING_ROUND_ROBIN);
+  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
+            LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -264,7 +254,9 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     auto logger = this->GetBackendLogger();
     TransactionRecord record(LOGRECORD_TYPE_TRANSACTION_COMMIT, commit_id);
     logger->Log(&record);
-    //    WaitForFlush(commit_id);
+    if (syncronization_commit) {
+      WaitForFlush(commit_id);
+    }
   }
 }
 
@@ -483,7 +475,8 @@ void LogManager::NotifyRecoveryDone() {
   LOG_INFO("%d loggers have done recovery so far.",
            (int)recovery_to_logging_counter);
   if (i == num_frontend_loggers_) {
-    LOG_INFO("This was the last one! Change to LOGGING mode.");
+    LOG_INFO("This was the last one! Recover Index and change to LOGGING mode.");
+    frontend_loggers[0].get()->RecoverIndex();
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   }
 }
@@ -498,7 +491,7 @@ void LogManager::UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid) {
 
     max_cid = std::max(max_cid, new_cid);
 
-    if (update_managers_count == DEFAULT_NUM_FRONTEND_LOGGERS) {
+    if (update_managers_count == (int)num_frontend_loggers_) {
       auto &manager = catalog::Manager::GetInstance();
       manager.SetNextOid(max_oid);
 

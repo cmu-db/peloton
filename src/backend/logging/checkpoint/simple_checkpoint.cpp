@@ -22,6 +22,7 @@
 #include "backend/logging/records/transaction_record.h"
 #include "backend/logging/log_record.h"
 #include "backend/logging/checkpoint_tile_scanner.h"
+#include "backend/logging/logging_util.h"
 
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction_manager.h"
@@ -36,34 +37,6 @@
 
 namespace peloton {
 namespace logging {
-//===--------------------------------------------------------------------===//
-// Utility functions
-//===--------------------------------------------------------------------===//
-
-size_t GetLogFileSize(int log_file_fd);
-
-bool IsFileTruncated(FILE *log_file, size_t size_to_read, size_t log_file_size);
-
-size_t GetNextFrameSize(FILE *log_file, size_t log_file_size);
-
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
-
-int ExtractNumberFromFileName(const char *name);
-
-bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
-                                 size_t log_file_size);
-
-bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
-                           size_t log_file_size);
-
-storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
-                                    FILE *log_file, size_t log_file_size);
-
-void SkipTupleRecordBody(FILE *log_file, size_t log_file_size);
-
-// Wrappers
-storage::DataTable *GetTable(TupleRecord &tupleRecord);
-
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
@@ -139,27 +112,20 @@ cid_t SimpleCheckpoint::DoRecovery() {
     return 0;
   }
   std::string file_name = ConcatFileName(checkpoint_dir, checkpoint_version);
-  checkpoint_file_ = fopen(file_name.c_str(), "rb");
-
-  if (checkpoint_file_ == NULL) {
-    LOG_ERROR("Checkpoint File is NULL");
+  bool success = LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "rb");
+  if (!success) {
+    assert(false);
     return 0;
   }
 
-  // also, get the descriptor
-  checkpoint_file_fd_ = fileno(checkpoint_file_);
-  if (checkpoint_file_fd_ == INVALID_FILE_DESCRIPTOR) {
-    LOG_ERROR("checkpoint_file_fd_ is -1");
-    return 0;
-  }
+  auto size = LoggingUtil::GetLogFileSize(file_handle_);
+  assert(size > 0);
+  file_handle_.size = size;
 
-  checkpoint_file_size_ = GetLogFileSize(checkpoint_file_fd_);
-  assert(checkpoint_file_size_ > 0);
   bool should_stop = false;
   cid_t commit_id = 0;
   while (!should_stop) {
-    auto record_type =
-        GetNextLogRecordType(checkpoint_file_, checkpoint_file_size_);
+    auto record_type = LoggingUtil::GetNextLogRecordType(file_handle_);
     switch (record_type) {
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
         LOG_TRACE("Read checkpoint insert entry");
@@ -173,8 +139,8 @@ cid_t SimpleCheckpoint::DoRecovery() {
       case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
         LOG_TRACE("Read checkpoint begin entry");
         TransactionRecord txn_rec(record_type);
-        if (ReadTransactionRecordHeader(txn_rec, checkpoint_file_,
-                                        checkpoint_file_size_) == false) {
+        if (LoggingUtil::ReadTransactionRecordHeader(txn_rec, file_handle_) ==
+            false) {
           LOG_ERROR("Failed to read checkpoint begin entry");
           return false;
         }
@@ -205,22 +171,21 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   TupleRecord tuple_record(LOGRECORD_TYPE_WAL_TUPLE_INSERT);
 
   // Check for torn log write
-  if (ReadTupleRecordHeader(tuple_record, checkpoint_file_,
-                            checkpoint_file_size_) == false) {
+  if (LoggingUtil::ReadTupleRecordHeader(tuple_record, file_handle_) == false) {
     LOG_ERROR("Could not read tuple record header.");
     return;
   }
 
-  auto table = GetTable(tuple_record);
+  auto table = LoggingUtil::GetTable(tuple_record);
   if (!table) {
     // the table was deleted
-    SkipTupleRecordBody(checkpoint_file_, checkpoint_file_size_);
+    LoggingUtil::SkipTupleRecordBody(file_handle_);
     return;
   }
 
   // Read off the tuple record body from the log
-  std::unique_ptr<storage::Tuple> tuple(ReadTupleRecordBody(
-      table->GetSchema(), pool.get(), checkpoint_file_, checkpoint_file_size_));
+  std::unique_ptr<storage::Tuple> tuple(LoggingUtil::ReadTupleRecordBody(
+      table->GetSchema(), pool.get(), file_handle_));
   // Check for torn log write
   if (tuple == nullptr) {
     LOG_ERROR("Torn checkpoint write.");
@@ -303,28 +268,21 @@ std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
 }
 
 // Private Functions
-
 void SimpleCheckpoint::CreateFile() {
   // open checkpoint file and file descriptor
   std::string file_name = ConcatFileName(checkpoint_dir, ++checkpoint_version);
-  checkpoint_file_ = fopen(file_name.c_str(), "ab+");
-  if (checkpoint_file_ == NULL) {
-    LOG_ERROR("Checkpoint File is NULL");
+  bool success = LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "ab");
+  if (!success) {
+    assert(false);
     return;
-  }
-  assert(checkpoint_file_);
-  // also, get the descriptor
-  checkpoint_file_fd_ = fileno(checkpoint_file_);
-  if (checkpoint_file_fd_ == INVALID_FILE_DESCRIPTOR) {
-    LOG_ERROR("log_file_fd is -1");
   }
 }
 
 // Only called when checkpoint has actual contents
 void SimpleCheckpoint::Persist() {
-  assert(checkpoint_file_);
+  assert(file_handle_.file);
   assert(records_.size() > 2);
-  assert(checkpoint_file_fd_ != INVALID_FILE_DESCRIPTOR);
+  assert(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
 
   LOG_INFO("Persisting %lu checkpoint entries", records_.size());
   // First, write all the record in the queue
@@ -332,20 +290,10 @@ void SimpleCheckpoint::Persist() {
     assert(record);
     assert(record->GetMessageLength() > 0);
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
-           checkpoint_file_);
+           file_handle_.file);
   }
 
-  // Then, flush
-  int ret = fflush(checkpoint_file_);
-  if (ret != 0) {
-    LOG_ERROR("Error occured in fflush(%d)", ret);
-  }
-
-  // Finally, sync
-  ret = fsync(checkpoint_file_fd_);
-  if (ret != 0) {
-    LOG_ERROR("Error occured in fsync(%d)", ret);
-  }
+  LoggingUtil::FFlushFsync(file_handle_);
 }
 
 void SimpleCheckpoint::Cleanup() {
@@ -386,7 +334,7 @@ void SimpleCheckpoint::InitVersionNumber() {
     if (strncmp(file->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) == 0) {
       // found a checkpoint file!
       LOG_INFO("Found a checkpoint file with name %s", file->d_name);
-      int version = ExtractNumberFromFileName(file->d_name);
+      int version = LoggingUtil::ExtractNumberFromFileName(file->d_name);
       if (version > checkpoint_version) {
         checkpoint_version = version;
       }

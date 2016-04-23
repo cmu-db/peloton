@@ -49,7 +49,24 @@ class configuration {
   // number of backends
   int backend_count;
 
-  bool logging_enabled;
+  // whether logging is enabled
+  // TODO change to number of loggers later
+  int logging_enabled;
+
+  // synchronous commit
+  int sync_commit;
+
+  // frequency with which the logger flushes
+  int64_t wait_timeout;
+
+  // log file size
+  int file_size;
+
+  // log buffer size
+  int log_buffer_size;
+
+  // whether do checkpoint
+  int checkpointer;
 };
 
 extern configuration state;
@@ -65,6 +82,8 @@ void ValidateUpdateRatio(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateTransactionCount(const configuration &state);
+
+void ValidateLogging(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

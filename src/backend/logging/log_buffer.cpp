@@ -12,6 +12,7 @@
 
 #include "backend/logging/log_buffer.h"
 #include "backend/common/logger.h"
+#include "backend/logging/log_manager.h"
 
 #include <cstring>
 #include <cassert>
@@ -24,33 +25,38 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 LogBuffer::LogBuffer(BackendLogger *backend_logger)
     : backend_logger_(backend_logger) {
-  memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
+  capacity_ = LogManager::GetInstance().GetLogBufferCapacity();
+  elastic_data_.reset(new char[capacity_]());
+  memset(elastic_data_.get(), 0, capacity_ * sizeof(char));
 }
 
 bool LogBuffer::WriteRecord(LogRecord *record) {
   bool success = WriteData(record->GetMessage(), record->GetMessageLength());
-  if (!success) {
-    return success;
-  }
-  return true;
+  return success;
 }
 
-char *LogBuffer::GetData() { return data_; }
+char *LogBuffer::GetData() { return elastic_data_.get(); }
 
 void LogBuffer::ResetData() {
   size_ = 0;
-  memset(data_, 0, LOG_BUFFER_CAPACITY * sizeof(char));
+  memset(elastic_data_.get(), 0, capacity_ * sizeof(char));
 }
 
 // Internal Methods
 bool LogBuffer::WriteData(char *data, size_t len) {
   // Not enough space
-  if (len + size_ > capacity_) {
-    return false;
+  while (len + size_ > capacity_) {
+    if (size_ == 0) {
+      // double log buffer capacity for empty buffer
+      capacity_ *= 2;
+      elastic_data_.reset(new char[capacity_]);
+    } else {
+      return false;
+    }
   }
   assert(data);
   assert(len);
-  std::memcpy(data_ + size_, data, len);
+  std::memcpy(elastic_data_.get() + size_, data, len);
   size_ += len;
   return true;
 }
