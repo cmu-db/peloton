@@ -220,7 +220,7 @@ void RunWorkload() {
   state.throughput = total_commit_count * 1.0 / state.duration;
   state.abort_rate = total_abort_count * 1.0 / total_commit_count;
 
-  printf("aggregate: %lf, %lf\n", snapshot_throughput, snapshot_abort_rate);
+  printf("aggregate: %lf, %lf\n", state.throughput, state.abort_rate);
 
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
     delete[] abort_counts_snapshots[round_id];
