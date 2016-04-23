@@ -42,8 +42,8 @@ class GCManager {
       : is_running_(true),
         gc_type_(type),
         possibly_free_list_(MAX_FREE_LIST_LENGTH) {
-          StartGC();
-        }
+    StartGC();
+  }
 
   ~GCManager() { StopGC(); }
 
@@ -64,6 +64,7 @@ class GCManager {
   void DeleteTupleFromIndexes(const TupleMetadata &);
 
   void ResetTuple(const TupleMetadata &);
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -75,10 +76,11 @@ class GCManager {
 
   // TODO: use shared pointer to reduce memory copy
   cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-    recycled_map_;
+      recycled_map_;
 
   // Map of actual grabage.
-  // The key is the timestamp when the garbage is identified, value is the metadata of the garbage.
+  // The key is the timestamp when the garbage is identified, value is the
+  // metadata of the garbage.
   // TODO: use shared pointer to reduce memory copy
   std::multimap<cid_t, TupleMetadata> garbage_map_;
 };
