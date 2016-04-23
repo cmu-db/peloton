@@ -67,13 +67,11 @@ void GCManager::Unlink() {
     auto garbage = garbage_map_.begin();
     while (garbage != garbage_map_.end()) {
       const cid_t garbage_ts = garbage->first;
-      const auto &tuple_metadata = garbage->second;
+      const TupleMetadata &tuple_metadata = garbage->second;
+
       // if the timestamp of the garbage is older than the current max_cid, recycle it
       if (garbage_ts < max_cid) {
         ResetTuple(tuple_metadata);
-
-        // Remove from the original map
-        garbage_map_.erase(garbage++);
 
         // Add to the recycle map
         std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
@@ -89,6 +87,8 @@ void GCManager::Unlink() {
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
 
+        // Remove from the original map
+        garbage = garbage_map_.erase(garbage);
         tuple_counter ++;
       } else {
         // Early break since we use an ordered map
@@ -117,7 +117,7 @@ void GCManager::Unlink() {
                               std::make_pair(max_cid, tuple_metadata));
           tuple_counter ++;
         } else {
-            // if a tuple cannot be reclaimed, then add it back to the list.
+          // if a tuple cannot be reclaimed, then add it back to the list.
           possibly_free_list_.Push(tuple_metadata);
         }
       }  // end for
@@ -141,8 +141,6 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
     return;
   }
 
-  LOG_INFO("Reuse tuple(%lu, %lu) in table %lu", tile_group_id, tuple_end_cid, table_id);
-
   TupleMetadata tuple_metadata;
   tuple_metadata.table_id = table_id;
   tuple_metadata.tile_group_id = tile_group_id;
@@ -151,6 +149,8 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
 
   // FIXME: what if the list is full?
   possibly_free_list_.Push(tuple_metadata);
+  LOG_INFO("Marked tuple(%lu, %lu) in table %lu as possible garbage",
+            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, tuple_metadata.table_id);
 }
 
 // this function returns a free tuple slot, if one exists
@@ -165,18 +165,22 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
    if (recycled_map_.find(table_id, free_list) == true) {
      TupleMetadata tuple_metadata;
      if (free_list->Pop(tuple_metadata) == true) {
+       LOG_INFO("Reuse tuple(%lu, %lu) in table %lu",
+                 tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, table_id);
        return ItemPointer(tuple_metadata.tile_group_id,
                           tuple_metadata.tuple_slot_id);
      }
    }
-   return ItemPointer();
+    return ItemPointer();
 }
 
 // delete a tuple from all its indexes it belongs to.
 void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
+  LOG_INFO("Deleting index for tuple(%lu, %lu)", tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id);
 
+  assert(tile_group != nullptr);
   storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
   assert(table != nullptr);
@@ -199,6 +203,7 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+        LOG_INFO("Deleting primary index");
         // find next version the index bucket should point to.
         auto tile_group_header = tile_group->GetHeader();
         ItemPointer next_version =
@@ -217,6 +222,7 @@ void GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
 
       } break;
       default: {
+        LOG_INFO("Deleting other index");
         index->DeleteEntry(key.get(),
                            ItemPointer(tuple_metadata.tile_group_id,
                                        tuple_metadata.tuple_slot_id));
