@@ -41,7 +41,7 @@ namespace storage {
  *
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) | ReservedField
+ *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | ReservedField
  *(24 bytes)
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  *  -----------------------------------------------------------------------------
@@ -236,7 +236,7 @@ class TileGroupHeader : public Printable {
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
-  // *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) |
+  // *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
   // ReservedField (24 bytes)
   // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
   // *
