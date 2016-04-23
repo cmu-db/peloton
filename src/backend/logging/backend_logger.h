@@ -82,6 +82,8 @@ class BackendLogger : public Logger {
   // Get FrontendLoggerID
   int GetFrontendLoggerID() { return frontend_logger_id; }
 
+  void SetShutdown(bool);
+
  protected:
   // the lock for the buffer being used currently
   Spinlock log_buffer_lock;
@@ -90,7 +92,7 @@ class BackendLogger : public Logger {
 
   cid_t highest_logged_commit_message = INVALID_CID;
 
-  int frontend_logger_id;
+  int frontend_logger_id = -1;  // default
 
   cid_t logging_cid_lower_bound = INVALID_CID;
 
@@ -107,6 +109,8 @@ class BackendLogger : public Logger {
 
   // the pool of buffers to persist
   std::unique_ptr<BufferPool> persist_buffer_pool_;
+
+  bool shutdown = false;
 };
 
 }  // namespace logging

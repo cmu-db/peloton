@@ -38,6 +38,7 @@ FrontendLogger::FrontendLogger() {
 FrontendLogger::~FrontendLogger() {
   backend_loggers_lock.Lock();
   for (auto backend_logger : backend_loggers) {
+    backend_logger->SetShutdown(true);
     delete backend_logger;
   }
   backend_loggers_lock.Unlock();

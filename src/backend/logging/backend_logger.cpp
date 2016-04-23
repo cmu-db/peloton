@@ -15,6 +15,7 @@
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
 #include "backend/logging/log_record.h"
+#include "backend/logging/log_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -29,7 +30,14 @@ BackendLogger::BackendLogger()
   frontend_logger_id = -1;
 }
 
-BackendLogger::~BackendLogger() {}
+BackendLogger::~BackendLogger() {
+  auto &log_manager = LogManager::GetInstance();
+  if (!shutdown && frontend_logger_id != -1) {
+    log_manager.GetFrontendLoggersList()[frontend_logger_id]
+        .get()
+        ->RemoveBackendLogger(this);
+  }
+}
 
 /**
  * @brief Return the backend logger based on logging type
@@ -140,5 +148,6 @@ void BackendLogger::GrantEmptyBuffer(std::unique_ptr<LogBuffer> empty_buffer) {
   available_buffer_pool_->Put(std::move(empty_buffer));
 }
 
+void BackendLogger::SetShutdown(bool val) { shutdown = val; }
 }  // namespace logging
 }

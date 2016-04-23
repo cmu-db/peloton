@@ -90,6 +90,15 @@ class FrontendLogger : public Logger {
     backend_loggers_lock.Unlock();
   }
 
+  void RemoveBackendLogger(BackendLogger *bel) {
+    backend_loggers_lock.Lock();
+
+    auto iter = std::find(backend_loggers.begin(), backend_loggers.end(), bel);
+    if (iter != backend_loggers.end()) backend_loggers.erase(iter);
+
+    backend_loggers_lock.Unlock();
+  }
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
