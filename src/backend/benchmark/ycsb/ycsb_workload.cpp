@@ -277,7 +277,7 @@ bool RunRead() {
   if (result == Result::RESULT_SUCCESS) {
     return true;
   } else {
-    assert(result == Result::RESULT_ABORTED);
+    assert(result == Result::RESULT_ABORTED || result == Result::RESULT_FAILURE);
     return false;
   }
 }
@@ -374,7 +374,7 @@ bool RunUpdate() {
   if (result == Result::RESULT_SUCCESS) {
     return true;
   } else {
-    assert(result == Result::RESULT_ABORTED);
+    assert(result == Result::RESULT_ABORTED || result == Result::RESULT_FAILURE);
     return false;
   }
 
