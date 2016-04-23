@@ -23,7 +23,6 @@
 #include "executor/mock_executor.h"
 #include "logging/logging_tests_util.h"
 
-
 #define DEFAULT_RECOVERY_CID 15
 
 using ::testing::NotNull;
@@ -73,8 +72,8 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
                                    false, false, false);
   txn_manager.CommitTransaction();
 
+  auto cid = txn_manager.GetNextCommitId() - 1;
   auto schema = target_table->GetSchema();
-  assert(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
@@ -84,6 +83,7 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   std::unique_ptr<logging::WriteAheadBackendLogger> logger(
       new logging::WriteAheadBackendLogger());
   simple_checkpoint.SetLogger(logger.get());
+  simple_checkpoint.SetStartCommitId(cid);
   simple_checkpoint.Scan(target_table.get(), DEFAULT_DB_ID);
 
   // verify results
@@ -107,9 +107,11 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   auto random = false;
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-      LoggingTestsUtil::BuildTuples(recovery_table.get(), num_rows, mutate, random);
+      LoggingTestsUtil::BuildTuples(recovery_table.get(), num_rows, mutate,
+                                    random);
   std::vector<logging::TupleRecord> records =
-      LoggingTestsUtil::BuildTupleRecords(tuples, tile_group_size, table_tile_group_count);
+      LoggingTestsUtil::BuildTupleRecords(tuples, tile_group_size,
+                                          table_tile_group_count);
 
   // recovery tuples from checkpoint
   logging::SimpleCheckpoint simple_checkpoint;
@@ -125,6 +127,9 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   auto total_tuple_count =
       GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID);
   EXPECT_EQ(total_tuple_count, tile_group_size * table_tile_group_count);
+
+  // TODO create test mode for checkpoint to avoid file write
+  // TODO clean up file directory at startup
 
   // Clean up
   for (auto &tuple : tuples) {
