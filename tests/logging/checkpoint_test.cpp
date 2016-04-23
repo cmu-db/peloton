@@ -73,33 +73,18 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
                                    false, false, false);
   txn_manager.CommitTransaction();
 
-  auto checkpoint_txn = txn_manager.BeginTransaction();
-  // create scan executor
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(
-          checkpoint_txn, bridge::PlanTransformer::BuildParams(nullptr)));
   auto schema = target_table->GetSchema();
   assert(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
 
-  /* Construct the Peloton plan node */
-  LOG_TRACE("Initializing the executor tree");
-  std::unique_ptr<planner::SeqScanPlan> scan_plan_node(
-      new planner::SeqScanPlan(target_table.get(), nullptr, column_ids));
-  std::unique_ptr<executor::SeqScanExecutor> scan_executor(
-      new executor::SeqScanExecutor(scan_plan_node.get(),
-                                    executor_context.get()));
-
   // create checkpoint
   logging::SimpleCheckpoint simple_checkpoint;
   std::unique_ptr<logging::WriteAheadBackendLogger> logger(
       new logging::WriteAheadBackendLogger());
   simple_checkpoint.SetLogger(logger.get());
-  simple_checkpoint.Execute(scan_executor.get(), checkpoint_txn,
-                            target_table.get(), DEFAULT_DB_ID);
-  txn_manager.CommitTransaction();
+  simple_checkpoint.Scan(target_table.get(), DEFAULT_DB_ID);
 
   // verify results
   auto records = simple_checkpoint.GetRecords();
@@ -135,12 +120,6 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
     simple_checkpoint.RecoverTuple(tuple, recovery_table.get(), target_location,
                                    DEFAULT_RECOVERY_CID);
   }
-
-  // TODO: fix this bug in the future.
-  // recovered tuples are not visible until DEFAULT_RECOVERY_CID - 1
-  // auto total_tuple_count =
-  //     GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID - 1);
-  // EXPECT_EQ(total_tuple_count, 0);
 
   // recovered tuples are visible from DEFAULT_RECOVERY_CID
   auto total_tuple_count =

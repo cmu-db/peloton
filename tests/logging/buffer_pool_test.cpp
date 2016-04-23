@@ -118,11 +118,48 @@ TEST_F(BufferPoolTests, LogBufferBasicTest) {
   EXPECT_EQ(log_buffer.GetSize(), total_length);
 }
 
+TEST_F(BufferPoolTests, LargeTupleRecordTest) {
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024 * 1024 * 20, "B", true);
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+
+  std::unique_ptr<catalog::Schema> key_schema(new catalog::Schema(columns));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(key_schema.get(), true));
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(1), testing_pool);
+  tuple->SetValue(
+      1, ValueFactory::GetStringValue(std::string(1024 * 1024 * 20, 'e').c_str()),
+      testing_pool);
+
+  logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID,
+                              INVALID_OID, INVALID_ITEMPOINTER,
+                              INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+  record.SetTuple(tuple.get());
+
+  logging::LogBuffer log_buffer(0);
+  size_t total_length = 0;
+  assert(record.GetTuple()->GetSchema());
+  CopySerializeOutput output_buffer;
+  record.Serialize(output_buffer);
+  size_t len = record.GetMessageLength();
+  total_length += len;
+  auto success = log_buffer.WriteRecord(&record);
+  EXPECT_EQ(log_buffer.GetSize(), total_length);
+  EXPECT_EQ(success, true);
+}
+
 TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
   unsigned int txn_count = 1000000;
 
   auto &log_manager = logging::LogManager::GetInstance();
-  logging::LogManager::Configure(LOGGING_TYPE_NVM_WAL, true);
+  logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true);
   log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   log_manager.InitFrontendLoggers();
 

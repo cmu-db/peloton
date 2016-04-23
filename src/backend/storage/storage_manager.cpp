@@ -66,12 +66,13 @@ StorageManager::StorageManager()
 : data_file_address(nullptr),
   data_file_len(0),
   data_file_offset(0) {
-  // Check if we need a data pool
+  // Check if we are doing write ahead logging or not ?
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
   }
 
+  // Rest of this stuff is needed only for Write Behind Logging
   int data_fd;
   std::string data_file_name;
   struct stat data_stat;

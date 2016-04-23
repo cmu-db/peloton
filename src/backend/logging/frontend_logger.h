@@ -60,6 +60,8 @@ class FrontendLogger : public Logger {
 
   virtual void SetLoggerID(int) = 0;
 
+  virtual void RecoverIndex(void) = 0;
+
   size_t GetFsyncCount() const { return fsync_count; }
 
   void ReplayLog(const char *, size_t len);
@@ -85,6 +87,15 @@ class FrontendLogger : public Logger {
     max_seen_commit_id = 0;
     global_queue.clear();
     backend_loggers.clear();
+    backend_loggers_lock.Unlock();
+  }
+
+  void RemoveBackendLogger(BackendLogger *bel) {
+    backend_loggers_lock.Lock();
+
+    auto iter = std::find(backend_loggers.begin(), backend_loggers.end(), bel);
+    if (iter != backend_loggers.end()) backend_loggers.erase(iter);
+
     backend_loggers_lock.Unlock();
   }
 

@@ -16,8 +16,6 @@
 #include <memory>
 #include "backend/logging/log_record.h"
 
-#define LOG_BUFFER_CAPACITY 32768
-
 namespace peloton {
 namespace logging {
 
@@ -58,9 +56,10 @@ class LogBuffer {
   size_t size_ = 0;
 
   // the total capacity of the buffer
-  size_t capacity_ = LOG_BUFFER_CAPACITY;
+  size_t capacity_;
 
-  char data_[LOG_BUFFER_CAPACITY];
+  // Dynamically adjusted data array
+  std::unique_ptr<char[]> elastic_data_;
 
   BackendLogger *backend_logger_;
 

@@ -23,19 +23,98 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
+#include "backend/logging/logging_util.h"
 
 namespace peloton {
 namespace logging {
 
-size_t GetLogFileSize(int log_file_fd);
+// TODO for now, these helper routines are defined here, and also use
+// some routines from the LoggingUtil class. Make sure that all places where
+// these helper routines are called in this file use the LoggingUtil class
+size_t GetLogFileSize(int fd) {
+  struct stat log_stats;
+  fstat(fd, &log_stats);
+  return log_stats.st_size;
+}
 
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
+  char buffer;
+
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  // Check if the log record type is broken
+  if (LoggingUtil::IsFileTruncated(file_handle, 1)) {
+    LOG_INFO("Log file is truncated");
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  // Otherwise, read the log record type
+  int ret = fread((void *)&buffer, 1, sizeof(char), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Could not read from log file");
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  CopySerializeInputBE input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+
+  return log_record_type;
+}
 
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
-                                 size_t log_file_size);
+                                 size_t log_file_size) {
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  auto header_size = LoggingUtil::GetNextFrameSize(file_handle);
+  if (header_size == 0) {
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInputBE txn_header(header, header_size);
+  txn_record.Deserialize(txn_header);
+
+  return true;
+}
 
 bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
-                           size_t log_file_size);
+                           size_t log_file_size) {
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  // Check if frame is broken
+  auto header_size = LoggingUtil::GetNextFrameSize(file_handle);
+  if (header_size == 0) {
+    LOG_ERROR("Header size is zero ");
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Error occured in fread");
+  }
+
+  CopySerializeInputBE tuple_header(header, header_size);
+  tuple_record.DeserializeHeader(tuple_header);
+
+  return true;
+};
 
 /**
  * @brief create NVM backed log pool
