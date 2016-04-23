@@ -137,7 +137,7 @@ void RunWorkload() {
 
   size_t snapshot_round = (size_t)(state.duration * 1000 / snapshot_duration);
 
-  printf("snapshot round=%lu\n", snapshot_round);
+  //printf("snapshot round=%lu\n", snapshot_round);
 
   oid_t **abort_counts_snapshots = new oid_t *[snapshot_round];
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
@@ -183,7 +183,7 @@ void RunWorkload() {
       total_commit_count * 1.0 / snapshot_duration * 1000;
   double snapshot_abort_rate = total_abort_count * 1.0 / total_commit_count;
 
-  printf("[0 - %lu ms]: %lf, %lf\n", snapshot_duration, snapshot_throughput,
+  //printf("[0 - %lu ms]: %lf, %lf\n", snapshot_duration, snapshot_throughput,
          snapshot_abort_rate);
 
   for (size_t round_id = 0; round_id < snapshot_round - 1; ++round_id) {
@@ -202,7 +202,7 @@ void RunWorkload() {
     snapshot_throughput = total_commit_count * 1.0 / snapshot_duration * 1000;
     snapshot_abort_rate = total_abort_count * 1.0 / total_commit_count;
 
-    printf("[%lu - %lu ms]: %lf, %lf\n", snapshot_duration * (round_id + 1),
+    //printf("[%lu - %lu ms]: %lf, %lf\n", snapshot_duration * (round_id + 1),
            snapshot_duration * (round_id + 2), snapshot_throughput,
            snapshot_abort_rate);
   }
@@ -220,7 +220,7 @@ void RunWorkload() {
   state.throughput = total_commit_count * 1.0 / state.duration;
   state.abort_rate = total_abort_count * 1.0 / total_commit_count;
 
-  printf("aggregate: %lf, %lf\n", state.throughput, state.abort_rate);
+  //printf("aggregate: %lf, %lf\n", state.throughput, state.abort_rate);
 
   for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
     delete[] abort_counts_snapshots[round_id];
