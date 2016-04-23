@@ -93,7 +93,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
       LOG_TRACE(
-          "%lu th attribute in the tuple was NULL. It is non-nullable "
+          "%u th attribute in the tuple was NULL. It is non-nullable "
               "attribute.",
           column_itr);
       return false;
@@ -810,7 +810,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
     const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups_.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
+    LOG_ERROR("Tile group offset not found in table : %u ", tile_group_offset);
     return nullptr;
   }
 

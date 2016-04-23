@@ -180,7 +180,7 @@ TEST_F(JoinTests, JoinPredicateTest) {
   // Go over all join test types
   for (oid_t join_test_type = 0; join_test_type < join_test_types;
        join_test_type++) {
-    LOG_INFO("JOIN TEST_F ------------------------ :: %lu", join_test_type);
+    LOG_INFO("JOIN TEST_F ------------------------ :: %u", join_test_type);
 
     // Go over all join algorithms
     for (auto join_algorithm : join_algorithms) {

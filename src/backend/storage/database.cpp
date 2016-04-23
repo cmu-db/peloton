@@ -84,7 +84,7 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 //===--------------------------------------------------------------------===//
 
 void Database::UpdateStats() const {
-  LOG_INFO("Update All Stats in Database(%lu)", database_oid);
+  LOG_INFO("Update All Stats in Database(%u)", database_oid);
   for (oid_t table_offset = 0; table_offset < GetTableCount(); table_offset++) {
     auto table = GetTable(table_offset);
     bridge::Bridge::SetNumberOfTuples(table->GetOid(),
@@ -100,7 +100,7 @@ void Database::UpdateStats() const {
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid) const {
-  LOG_INFO("Update table(%lu)'s stats in Database(%lu)", table_oid,
+  LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid,
            database_oid);
 
   auto table = GetTableWithOid(table_oid);

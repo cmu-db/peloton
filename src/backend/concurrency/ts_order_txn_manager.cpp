@@ -178,7 +178,7 @@ bool TsOrderTxnManager::PerformInsert(const oid_t &tile_group_id,
 bool TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
                                       const oid_t &tuple_id,
                                       const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Performing Write %u %u", tile_group_id, tuple_id);
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
