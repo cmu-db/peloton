@@ -87,7 +87,7 @@ bool UpdateExecutor::DExecute() {
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
 
-    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
@@ -139,8 +139,8 @@ bool UpdateExecutor::DExecute() {
         return false;
       }
         
-      LOG_INFO("perform update old location: %lu, %lu", old_location.block, old_location.offset);
-      LOG_INFO("perform update new location: %lu, %lu", new_location.block, new_location.offset);
+      LOG_INFO("perform update old location: %u, %u", old_location.block, old_location.offset);
+      LOG_INFO("perform update new location: %u, %u", new_location.block, new_location.offset);
       transaction_manager.PerformUpdate(old_location, new_location);
 
       executor_context_->num_processed += 1;  // updated one

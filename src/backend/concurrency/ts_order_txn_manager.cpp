@@ -177,7 +177,7 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location) {
 
 void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", old_location.block, old_location.offset);
+  LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
 
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();

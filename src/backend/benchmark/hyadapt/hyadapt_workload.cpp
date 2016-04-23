@@ -1830,7 +1830,7 @@ void RunVersionExperiment() {
   for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    LOG_INFO("Offset : %lu", starting_tuple_offset);
+    LOG_INFO("Offset : %u", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while (prev_item_pointer.block != INVALID_OID) {
@@ -2142,8 +2142,8 @@ void RunConcurrencyExperiment() {
 
         LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        LOG_INFO("Scan count  : %lu", scan_ctr);
-        LOG_INFO("Insert count  : %lu", insert_ctr);
+        LOG_INFO("Scan count  : %u", scan_ctr);
+        LOG_INFO("Insert count  : %u", insert_ctr);
       }
     }
   }
