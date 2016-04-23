@@ -23,25 +23,23 @@ namespace benchmark {
 namespace ycsb {
 
 void Usage(FILE *out) {
-  fprintf(out,
-          "Command line options : ycsb <options> \n"
-          "   -h --help              :  Print help message \n"
-          "   -k --scale-factor      :  # of tuples \n"
-          "   -d --duration          :  execution duration \n"
-          "   -c --column_count      :  # of columns \n"
-          "   -u --write_ratio       :  Fraction of updates \n"
-          "   -b --backend_count     :  # of backends \n"
-          );
+  fprintf(out, "Command line options : ycsb <options> \n"
+               "   -h --help              :  Print help message \n"
+               "   -k --scale-factor      :  # of tuples \n"
+               "   -d --duration          :  execution duration \n"
+               "   -c --column_count      :  # of columns \n"
+               "   -u --write_ratio       :  Fraction of updates \n"
+               "   -b --backend_count     :  # of backends \n");
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"duration", optional_argument, NULL, 'd'},
-    {"column_count", optional_argument, NULL, 'c'},
-    {"update_ratio", optional_argument, NULL, 'u'},
-    {"backend_count", optional_argument, NULL, 'b'},
-    {NULL, 0, NULL, 0}};
+  { "scale-factor", optional_argument, NULL, 'k' },
+  { "duration", optional_argument, NULL, 'd' },
+  { "column_count", optional_argument, NULL, 'c' },
+  { "update_ratio", optional_argument, NULL, 'u' },
+  { "backend_count", optional_argument, NULL, 'b' }, { NULL, 0, NULL, 0 }
+};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -81,11 +79,11 @@ void ValidateBackendCount(const configuration &state) {
 
 void ValidateDuration(const configuration &state) {
   if (state.duration <= 0) {
-    LOG_ERROR("Invalid duration :: %lu", state.duration);
+    LOG_ERROR("Invalid duration :: %lf", state.duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lu", "execution duration", state.duration);
+  LOG_INFO("%s : %lf", "execution duration", state.duration);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {

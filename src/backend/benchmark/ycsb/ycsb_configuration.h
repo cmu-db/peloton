@@ -45,7 +45,7 @@ class configuration {
   double update_ratio;
 
   // execution duration
-  unsigned long duration;
+  double duration;
 
   unsigned long transaction_count;
 

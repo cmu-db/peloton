@@ -29,12 +29,8 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d :: %lf tps, %lf",
-           state.update_ratio,
-           state.scale_factor,
-           state.column_count,
-           state.throughput,
-           state.abort_rate);
+  LOG_INFO("%lf %d %d :: %lf tps, %lf", state.update_ratio, state.scale_factor,
+           state.column_count, state.throughput, state.abort_rate);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
@@ -43,12 +39,6 @@ static void WriteOutput() {
   out << state.abort_rate << "\n";
   out.flush();
   out.close();
-
-  std::cout << state.update_ratio << " ";
-  std::cout << state.scale_factor << " ";
-  std::cout << state.column_count << " ";
-  std::cout << state.throughput << " ";
-  std::cout << state.abort_rate << "\n";
 }
 
 // Main Entry Point
@@ -70,8 +60,8 @@ void RunBenchmark() {
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-  peloton::benchmark::ycsb::ParseArguments(
-      argc, argv, peloton::benchmark::ycsb::state);
+  peloton::benchmark::ycsb::ParseArguments(argc, argv,
+                                           peloton::benchmark::ycsb::state);
 
   peloton::benchmark::ycsb::RunBenchmark();
 
