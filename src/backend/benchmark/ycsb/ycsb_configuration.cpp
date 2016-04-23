@@ -25,8 +25,9 @@ namespace ycsb {
 void Usage(FILE *out) {
   fprintf(out, "Command line options : ycsb <options> \n"
                "   -h --help              :  Print help message \n"
-               "   -k --scale-factor      :  # of tuples \n"
+               "   -k --scale_factor      :  # of tuples \n"
                "   -d --duration          :  execution duration \n"
+               "   -s --snapshot_duration :  snapshot duration \n"
                "   -c --column_count      :  # of columns \n"
                "   -u --write_ratio       :  Fraction of updates \n"
                "   -b --backend_count     :  # of backends \n");
@@ -34,8 +35,9 @@ void Usage(FILE *out) {
 }
 
 static struct option opts[] = {
-  { "scale-factor", optional_argument, NULL, 'k' },
+  { "scale_factor", optional_argument, NULL, 'k' },
   { "duration", optional_argument, NULL, 'd' },
+  { "snapshot_duration", optional_argument, NULL, 's' },
   { "column_count", optional_argument, NULL, 'c' },
   { "update_ratio", optional_argument, NULL, 'u' },
   { "backend_count", optional_argument, NULL, 'b' }, { NULL, 0, NULL, 0 }
@@ -86,11 +88,21 @@ void ValidateDuration(const configuration &state) {
   LOG_INFO("%s : %lf", "execution duration", state.duration);
 }
 
+void ValidateSnapshotDuration(const configuration &state) {
+  if (state.snapshot_duration <= 0) {
+    LOG_ERROR("Invalid snapshot_duration :: %lf", state.snapshot_duration);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
   state.scale_factor = 1;
   state.duration = 10;
+  state.snapshot_duration = 0.1;
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -98,7 +110,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:d:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
@@ -107,7 +119,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.scale_factor = atoi(optarg);
         break;
       case 'd':
-        state.duration = atoi(optarg);
+        state.duration = atof(optarg);
+        break;
+      case 's':
+        state.snapshot_duration = atof(optarg);
         break;
       case 'c':
         state.column_count = atoi(optarg);
@@ -136,6 +151,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
   ValidateDuration(state);
+  ValidateSnapshotDuration(state);
 
 }
 
