@@ -49,8 +49,6 @@ namespace storage {
  *
  */
 
-class RollbackSegment;
-
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
 
 class TileGroupHeader : public Printable {
@@ -71,8 +69,6 @@ class TileGroupHeader : public Printable {
     num_tuple_slots = other.num_tuple_slots;
     unsigned long long val = other.next_tuple_slot;
     next_tuple_slot = val;
-
-    rb_seg_headers = other.rb_seg_headers;
 
     return *this;
   }
@@ -166,6 +162,11 @@ class TileGroupHeader : public Printable {
     return *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset));
   }
 
+  // used only by occ_rb_txn_manager
+  inline char* GetPrevItempointerField(const oid_t &tuple_slot_id) const {
+    return (char *)(TUPLE_HEADER_LOCATION + prev_pointer_offset);
+  }
+
   // Setters
 
   inline void SetTileGroup(TileGroup *tile_group) {
@@ -225,14 +226,6 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
-  inline std::shared_ptr<RollbackSegment> GetRollbackSegmentHeader(const oid_t &tuple_slot_id) const {
-    return rb_seg_headers[tuple_slot_id];
-  }
-
-  inline void SetRollbackSegmentHeader(const oid_t &tuple_slot_id, RollbackSegment *rb_seg) const {
-    rb_seg_headers[tuple_slot_id] = rb_seg;
-  }
-
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Sync the contents
@@ -254,11 +247,11 @@ class TileGroupHeader : public Printable {
   // *
   // -----------------------------------------------------------------------------
 
- private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) + 24 +
+                                          2 * sizeof(ItemPointer) + reserverd_size +
                                           2 * sizeof(bool);
+  static const size_t reserverd_size = 24;
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
@@ -267,10 +260,11 @@ class TileGroupHeader : public Printable {
       next_pointer_offset + sizeof(ItemPointer);
   static const size_t reserved_field_offset =
       prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset = reserved_field_offset + 24;
+  static const size_t insert_commit_offset = reserved_field_offset + reserverd_size;
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 
+private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -295,9 +289,6 @@ class TileGroupHeader : public Printable {
   std::atomic<oid_t> next_tuple_slot;
 
   Spinlock tile_header_lock;
-
-  // FIXME: only used in occ-rb protocol
-  std::vector<std::shared_ptr<RollbackSegment>> rb_seg_headers;
 };
 
 }  // End storage namespace

@@ -87,7 +87,7 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
 //    auto expr = target.second;
 //    auto value = expr->Evaluate(tuple, nullptr, econtext);
 //
-//    dest->SetSegmentValue(schema, col_id, value, pool);
+//    dest->SetSegmentValueFromTuple(schema, col_id, value, pool);
 //  }
 //
 //  return true;

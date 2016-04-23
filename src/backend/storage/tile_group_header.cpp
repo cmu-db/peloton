@@ -27,8 +27,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
       data(nullptr),
       num_tuple_slots(tuple_count),
       next_tuple_slot(0),
-      tile_header_lock(),
-      rb_seg_headers(tuple_count) {
+      tile_header_lock() {
   header_size = num_tuple_slots * header_entry_size;
 
   // allocate storage space for header

@@ -81,6 +81,8 @@ bool UpdateExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
+  auto concurrency_protocol = concurrency::TransactionManagerFactory::GetProtocol();
+
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
@@ -102,11 +104,10 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
-      // Check if we need to create a new rollback
-      if (transaction_manager.NeedNewRbSegment(tile_group_header,
-                                               physical_tuple_id,
-                                               project_info_->GetTargetList())) {
+      // Check if we are using rollback segment
+      if(concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         // TODO: Create a new rollback segment based on the old one and the old tuple
+        auto rb_seg =
 
         // TODO: Ask the txn manager to replace the old rollback segment with the new one
 
@@ -141,7 +142,7 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
 
       // TODO: Maybe we can use compile time option instead of runtime branch
-      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+      if ( concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         // For rollback segment implementation
 
         // TODO: Create a rollback segment based on the old tuple

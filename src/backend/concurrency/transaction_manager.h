@@ -118,13 +118,6 @@ class TransactionManager {
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-  // Use only by rollback segment
-  virtual bool NeedNewRbSegment(const storage::TileGroupHeader *const tile_group_header __attribute__((unused)),
-                                const oid_t &tuple_id  __attribute__((unused)),
-                                const planner::ProjectInfo::TargetList &target_list  __attribute__((unused))) {
-    assert(IsOwner(tile_group_header, tuple_id));
-    return true;
-  }
 
   virtual bool IsOwnable(
       const storage::TileGroupHeader *const tile_group_header,

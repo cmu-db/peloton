@@ -17,6 +17,7 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include <bitset>
 
 #include "backend/common/MyRWLock.h"
 
@@ -754,6 +755,12 @@ struct TupleMetadata {
   oid_t tuple_slot_id = 0;
   cid_t tuple_end_cid = 0;
 };
+
+//===--------------------------------------------------------------------===//
+// Column Bitmap
+//===--------------------------------------------------------------------===//
+static const size_t max_col_count = 128;
+typedef std::bitset<max_col_count> ColBitmap;
 
 //===--------------------------------------------------------------------===//
 // ItemPointer
