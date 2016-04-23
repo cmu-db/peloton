@@ -42,6 +42,13 @@ static void WriteOutput() {
   out << state.throughput << " ";
   out << state.abort_rate << "\n";
   out.flush();
+  out.close();
+
+  std::cout << state.update_ratio << " ";
+  std::cout << state.scale_factor << " ";
+  std::cout << state.column_count << " ";
+  std::cout << state.throughput << " ";
+  std::cout << state.abort_rate << "\n";
 }
 
 // Main Entry Point
