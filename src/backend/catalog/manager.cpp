@@ -38,7 +38,6 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
-  std::shared_ptr<storage::TileGroup> old_location;
 
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
