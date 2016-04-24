@@ -53,8 +53,7 @@ enum CheckpointType {
 
 enum GCType {
   GC_TYPE_OFF = 0,
-  GC_TYPE_VACUUM = 1,
-  GC_TYPE_COOPERATIVE = 2,
+  GC_TYPE_ON = 1
 };
 
 //===--------------------------------------------------------------------===//
