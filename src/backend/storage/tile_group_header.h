@@ -41,7 +41,7 @@ namespace storage {
  *
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) | ReservedField
+ *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | ReservedField
  *(24 bytes)
  *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
  *  -----------------------------------------------------------------------------
@@ -236,10 +236,11 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  static inline size_t GetReserverdSize() {return  reserverd_size;}
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
-  // *  | NextItemPointer (16 bytes) | PrevItemPointer (16 bytes) |
+  // *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
   // ReservedField (24 bytes)
   // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
   // *
@@ -247,8 +248,9 @@ class TileGroupHeader : public Printable {
 
  private:
   // header entry size is the size of the layout described above
+  static const size_t reserverd_size = 24;
   static const size_t header_entry_size =
-      sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(ItemPointer) + 24 +
+      sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(ItemPointer) + reserverd_size +
       2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
@@ -258,7 +260,7 @@ class TileGroupHeader : public Printable {
       next_pointer_offset + sizeof(ItemPointer);
   static const size_t reserved_field_offset =
       prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset = reserved_field_offset + 24;
+  static const size_t insert_commit_offset = reserved_field_offset + reserverd_size;
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 

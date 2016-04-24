@@ -12,7 +12,7 @@
 
 #include <iostream>
 #include <fstream>
-#include <thread>
+#include <iomanip>
 
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
@@ -33,13 +33,14 @@ namespace ycsb {
 
 configuration state;
 
-std::ofstream out("outputfile.summary");
+std::ofstream out("outputfile.summary", std::ofstream::out);
 
-static void WriteOutput(double stat) {
+static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d %d %d %d %d :: %lf tps", state.update_ratio,
+  LOG_INFO("%lf %d %d %d %d %d %d :: %lf tps, %lf", state.update_ratio,
            state.scale_factor, state.column_count, state.logging_enabled,
-           state.sync_commit, state.file_size, state.checkpointer, stat);
+           state.sync_commit, state.file_size, state.checkpointer,
+           state.throughput, state.abort_rate);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
@@ -49,9 +50,21 @@ static void WriteOutput(double stat) {
   out << state.sync_commit << " ";
   out << state.wait_timeout << " ";
   out << state.file_size << " ";
-  out << state.checkpointer << " ";
-  out << stat << "\n";
+  out << state.checkpointer << "\n";
+
+  for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
+       ++round_id) {
+    out << "[" << std::setw(3) << std::left
+        << state.snapshot_duration * round_id << " - " << std::setw(3)
+        << std::left << state.snapshot_duration * (round_id + 1)
+        << " s]: " << state.snapshot_throughput[round_id] << " "
+        << state.snapshot_abort_rate[round_id] << "\n";
+  }
+
+  out << state.throughput << " ";
+  out << state.abort_rate << "\n";
   out.flush();
+  out.close();
 }
 
 inline void YCSBBootstrapLogger() {
@@ -128,7 +141,6 @@ inline void YCSBBootstrapLogger() {
 
 // Main Entry Point
 void RunBenchmark() {
-
   YCSBBootstrapLogger();
 
   // Create and load the user table
@@ -137,9 +149,9 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Run the workload
-  auto stat = RunWorkload();
+  RunWorkload();
 
-  WriteOutput(stat);
+  WriteOutput();
 }
 
 }  // namespace ycsb

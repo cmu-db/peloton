@@ -92,9 +92,10 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_TRACE("%lu th attribute in the tuple was NULL. It is non-nullable "
-                "attribute.",
-                column_itr);
+      LOG_TRACE(
+          "%u th attribute in the tuple was NULL. It is non-nullable "
+          "attribute.",
+          column_itr);
       return false;
     }
   }
@@ -159,8 +160,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     AddDefaultTileGroup();
   }
 
-  /* LOG_TRACE("tile group count: %lu, tile group id: %lu, address: %p",
-            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get()); */
+  LOG_TRACE("tile group count: %u, tile group id: %u, address: %p",
+            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -191,7 +192,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -217,7 +218,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -231,7 +232,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %lu, %lu", location.block, location.offset);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
@@ -248,8 +249,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // Increase the table's number of tuples by 1
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes_)
-    index->IncreaseNumberOfTuplesBy(1);
+  for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
 
   return location;
 }
@@ -365,7 +365,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
                                            __attribute__((unused))) {
-
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -387,7 +386,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
             catalog::Schema::CopySchema(schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
-        //FIXME: what is the 3rd arg should be?
+        // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
         LOG_INFO("check key: %s", key->GetInfo().c_str());
@@ -502,14 +501,14 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
-      // pure column layout map
-      else if (layout_type == LAYOUT_COLUMN) {
+  // pure column layout map
+  else if (layout_type == LAYOUT_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
-      // hybrid layout map
-      else if (layout_type == LAYOUT_HYBRID) {
+  // hybrid layout map
+  else if (layout_type == LAYOUT_HYBRID) {
     // TODO: Fallback option for regular tables
     if (col_count < 10) {
       for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -531,7 +530,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType) peloton_layout_mode);
+  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
@@ -552,7 +551,7 @@ oid_t DataTable::AddDefaultTileGroup() {
 
     tile_group_count_++;
 
-    LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+    LOG_TRACE("Recording tile group : %u ", tile_group_id);
   }
 
   return tile_group_id;
@@ -587,7 +586,7 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
 
   tile_group_count_++;
 
-  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 
   return tile_group_id;
 }
@@ -605,7 +604,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 
   tile_group_count_++;
 
-  LOG_TRACE("Recording tile group : %lu ", tile_group_id);
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
 size_t DataTable::GetTileGroupCount() const {
@@ -640,11 +639,11 @@ void DataTable::DropTileGroups() {
 const std::string DataTable::GetInfo() const {
   std::ostringstream os;
 
-  //os << "=====================================================\n";
-  //os << "TABLE :\n";
+  // os << "=====================================================\n";
+  // os << "TABLE :\n";
 
   oid_t tile_group_count = GetTileGroupCount();
-  //os << "Tile Group Count : " << tile_group_count << "\n";
+  // os << "Tile Group Count : " << tile_group_count << "\n";
 
   oid_t tuple_count = 0;
   oid_t table_id = 0;
@@ -654,16 +653,16 @@ const std::string DataTable::GetInfo() const {
     table_id = tile_group->GetTableId();
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    //os << "Tile Group Id  : " << tile_group_itr
+    // os << "Tile Group Id  : " << tile_group_itr
     //    << " Tuple Count : " << tile_tuple_count << "\n";
-    //os << (*tile_group);
+    // os << (*tile_group);
 
     tuple_count += tile_tuple_count;
   }
 
   os << "Table " << table_id << " Tuple Count :: " << tuple_count << "\n";
 
-  //os << "=====================================================\n";
+  // os << "=====================================================\n";
 
   return os.str();
 }
@@ -833,7 +832,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
     const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
   if (tile_group_offset >= tile_groups_.size()) {
-    LOG_ERROR("Tile group offset not found in table : %lu ", tile_group_offset);
+    LOG_ERROR("Tile group offset not found in table : %u ", tile_group_offset);
     return nullptr;
   }
 
@@ -963,8 +962,8 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
         column_map[hyadapt_column_id] = std::make_pair(1, column_id);
       }
     }
-        // MULTIPLE GROUPS
-        else {
+    // MULTIPLE GROUPS
+    else {
       column_map[0] = std::make_pair(0, 0);
       oid_t tile_column_count = column_count / peloton_num_groups;
 
@@ -984,16 +983,16 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
     }
 
   }
-      // YCSB
-      else if (table_name == "USERTABLE") {
+  // YCSB
+  else if (table_name == "USERTABLE") {
     column_map[0] = std::make_pair(0, 0);
 
     for (oid_t column_id = 1; column_id < column_count; column_id++) {
       column_map[column_id] = std::make_pair(1, column_id - 1);
     }
   }
-      // FALLBACK
-      else {
+  // FALLBACK
+  else {
     for (oid_t column_id = 0; column_id < column_count; column_id++) {
       column_map[column_id] = std::make_pair(0, column_id);
     }

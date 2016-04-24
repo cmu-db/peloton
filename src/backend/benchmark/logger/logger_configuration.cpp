@@ -91,8 +91,7 @@ static void ValidateLogFileDir(configuration& state) {
   switch (state.logging_type) {
     // Log file on NVM
     case LOGGING_TYPE_NVM_WAL:
-    case LOGGING_TYPE_NVM_WBL:
-    {
+    case LOGGING_TYPE_NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = NVM_DIR;
@@ -101,8 +100,7 @@ static void ValidateLogFileDir(configuration& state) {
 
     // Log file on HDD
     case LOGGING_TYPE_HDD_WAL:
-    case LOGGING_TYPE_HDD_WBL:
-    {
+    case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
@@ -201,7 +199,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateTransactionCount(ycsb::state);
+  // ycsb::ValidateTransactionCount(ycsb::state);
 }
 
 }  // namespace logger
