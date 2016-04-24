@@ -56,7 +56,7 @@ void GCManager::Unlink() {
   // Check if we can move anything from the possibly free list to the free list.
 
   while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
     LOG_INFO("Unlink tuple thread...");
 
@@ -130,8 +130,6 @@ void GCManager::Unlink() {
     if (is_running_ == false) {
       return;
     }
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
   }
 }
 
