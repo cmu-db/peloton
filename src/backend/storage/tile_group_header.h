@@ -66,7 +66,7 @@ class TileGroupHeader : public Printable {
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
-    unsigned long long val = other.next_tuple_slot;
+    oid_t val = other.next_tuple_slot;
     next_tuple_slot = val;
 
     return *this;
