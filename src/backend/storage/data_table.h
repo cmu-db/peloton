@@ -259,14 +259,15 @@ class DataTable : public AbstractTable {
 
   // TILE GROUPS
   // set of tile groups
-  std::vector<oid_t> tile_groups_;
-  std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
-  // current tile group
-  //size_t tile_group_offset_ = 0;
+  RWLock tile_group_lock_;
 
+  std::vector<oid_t> tile_groups_;
+
+  std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
+  
   // tile group mutex
+  // TODO: don't know why need this mutex --Yingjun
   std::mutex tile_group_mutex_;
-  Spinlock tile_group_lock_;
 
   // INDEXES
   std::vector<index::Index *> indexes_;

@@ -65,7 +65,11 @@ DataTable::~DataTable() {
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
-    auto tile_group_id = tile_groups_[tile_group_itr];
+    
+    tile_group_lock_.ReadLock();
+    auto tile_group_id = tile_groups_.at(tile_group_itr);
+    tile_group_lock_.Unlock();
+
     catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }
 
@@ -535,12 +539,16 @@ oid_t DataTable::AddDefaultTileGroup() {
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
   assert(tile_group.get());
-  tile_group_id = tile_group.get()->GetTileGroupId();
+  tile_group_id = tile_group->GetTileGroupId();
 
   LOG_TRACE("Trying to add a tile group ");
   {
     LOG_TRACE("Added a tile group ");
-    tile_groups_.push_back(tile_group->GetTileGroupId());
+
+    tile_group_lock_.WriteLock();
+    tile_groups_.push_back(tile_group_id);
+    tile_group_lock_.Unlock();
+
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -575,7 +583,10 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
       tuples_per_tilegroup_));
 
   LOG_TRACE("Added a tile group ");
+
+  tile_group_lock_.WriteLock();
   tile_groups_.push_back(tile_group->GetTileGroupId());
+  tile_group_lock_.Unlock();
 
   // add tile group metadata in locator
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -592,8 +603,11 @@ oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
 }
 
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
-  tile_groups_.push_back(tile_group->GetTileGroupId());
   oid_t tile_group_id = tile_group->GetTileGroupId();
+
+  tile_group_lock_.WriteLock();
+  tile_groups_.push_back(tile_group_id);
+  tile_group_lock_.Unlock();
 
   // add tile group in catalog
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -608,14 +622,17 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 }
 
 size_t DataTable::GetTileGroupCount() const {
-  size_t size = tile_groups_.size();
-  return size;
+  return tile_group_count_;
 }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const oid_t &tile_group_offset) const {
   assert(tile_group_offset < GetTileGroupCount());
-  auto tile_group_id = tile_groups_[tile_group_offset];
+
+  tile_group_lock_.ReadLock();
+  auto tile_group_id = tile_groups_.at(tile_group_offset);
+  tile_group_lock_.Unlock();
+
   return GetTileGroupById(tile_group_id);
 }
 
