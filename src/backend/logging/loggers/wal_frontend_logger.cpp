@@ -369,7 +369,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
       assert(target_table);
-      LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
+      LOG_INFO("SeqScan: database oid %u table oid %u: %s", database_idx,
                table_idx, target_table->GetName().c_str());
 
       if (!RecoverTableIndexHelper(target_table, cid)) {

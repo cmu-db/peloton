@@ -171,7 +171,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Perform Read %u %u", tile_group_id, tuple_id);
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
@@ -193,7 +193,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
 
       if (txn_table_.count(writer) != 0) {
         // The writer have not been removed from the txn table
-        LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
+        LOG_INFO("Writer %lu has no entry in txn table when read %u", writer,
                  tuple_id);
         SetInConflict(txn_table_.at(writer));
         SetOutConflict(current_ssi_txn_ctx);
@@ -221,7 +221,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
           catalog::Manager::GetInstance().GetTileGroup(next_item.block);
       auto creator = GetCreatorTxnId(tile_group.get(), next_item.offset);
 
-      LOG_INFO("%ld %ld creator is %ld", next_item.block, next_item.offset,
+      LOG_INFO("%u %u creator is %lu", next_item.block, next_item.offset,
                creator);
 
       // Check creator status, skip if creator has commited before I start
@@ -283,7 +283,7 @@ bool SsiTxnManager::PerformInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform insert %lu %lu", tile_group_id, tuple_id);
+  LOG_INFO("Perform insert %u %u", tile_group_id, tuple_id);
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -549,7 +549,7 @@ Result SsiTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        LOG_INFO("Txn %lu free %lu", current_txn->GetTransactionId(),
+        LOG_INFO("Txn %lu free %u", current_txn->GetTransactionId(),
                  tuple_slot);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 

@@ -14,7 +14,7 @@ do
              for checkpoint in 0
              do
         #       ./rebuild.sh $pool
-                sh ./ycsb -k $SCALE -u $write -b $backend -l 1 -s 1 -f $size -w $wait -p $chechpoint;
+                sh ./ycsb -k $SCALE -u $write -b $backend -l 1 -x 1 -f $size -w $wait -p $chechpoint;
                 sleep 1
                 cat outputfile.summary >> baseline.log
                 rm -rf pl_log0/*.log

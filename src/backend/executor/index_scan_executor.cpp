@@ -174,7 +174,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       if (transaction_manager.IsVisible(tile_group_header, tuple_location.offset)) {
         
         LOG_INFO("traverse chain length : %lu", chain_length);
-        LOG_INFO("perform read: %lu, %lu", tuple_location.block, tuple_location.offset);
+        LOG_INFO("perform read: %u, %u", tuple_location.block, tuple_location.offset);
 
         // perform predicate evaluation.
         if (predicate_ == nullptr) {

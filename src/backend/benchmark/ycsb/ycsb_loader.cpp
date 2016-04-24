@@ -41,9 +41,9 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-storage::Database* ycsb_database = nullptr;
+storage::Database *ycsb_database = nullptr;
 
-storage::DataTable* user_table = nullptr;
+storage::DataTable *user_table = nullptr;
 
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
@@ -104,11 +104,8 @@ void CreateYCSBDatabase() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index",
-      user_table_pkey_index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-      tuple_schema, key_schema, unique);
+      "primary_index", user_table_pkey_index_oid, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   user_table->AddIndex(pkey_index);

@@ -726,7 +726,7 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-typedef uint64_t oid_t;
+typedef uint32_t oid_t;
 
 static const oid_t START_OID = 0;
 
