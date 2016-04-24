@@ -110,8 +110,7 @@ bool IndexScanExecutor::DExecute() {
     if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
       auto status = ExecPrimaryIndexLookup();
       if (status == false) return false;
-    }
-    else {
+    } else {
       auto status = ExecSecondaryIndexLookup();
       if (status == false) return false;
     }
@@ -134,11 +133,10 @@ bool IndexScanExecutor::DExecute() {
   return false;
 }
 
-
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
 
-  std::vector<ItemPointerContainer*> tuple_location_containers;
+  std::vector<ItemPointerContainer *> tuple_location_containers;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
@@ -146,9 +144,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     index_->ScanAllKeys(tuple_location_containers);
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
-     SCAN_DIRECTION_TYPE_FORWARD, tuple_location_containers);
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_containers);
   }
-
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_containers.size());
 
@@ -168,69 +165,72 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
     size_t chain_length = 0;
     while (true) {
-      
+
       ++chain_length;
 
       // if the tuple is visible.
-      if (transaction_manager.IsVisible(tile_group_header, tuple_location.offset)) {
-        
+      if (transaction_manager.IsVisible(tile_group_header,
+                                        tuple_location.offset)) {
+
         LOG_INFO("traverse chain length : %lu", chain_length);
-        LOG_INFO("perform read: %u, %u", tuple_location.block, tuple_location.offset);
+        LOG_INFO("perform read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
 
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-
           auto res = transaction_manager.PerformRead(tuple_location);
-          if(!res){
+          if (!res) {
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
             return res;
           }
         } else {
-          expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                               tuple_location.offset);
+          expression::ContainerTuple<storage::TileGroup> tuple(
+              tile_group.get(), tuple_location.offset);
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+            visible_tuples[tuple_location.block]
+                .push_back(tuple_location.offset);
 
             auto res = transaction_manager.PerformRead(tuple_location);
-            if(!res){
+            if (!res) {
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
               return res;
             }
           }
         }
         break;
-      } 
-      // if the tuple is not visible.
-      else {
+      }
+          // if the tuple is not visible.
+          else {
         ItemPointer old_item = tuple_location;
-        cid_t old_end_cid = tile_group_header.GetEndCommitId();
+        cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // if there must exist a visible version.
-        assert (tuple_location.IsNull() == false);
-        
+        assert(tuple_location.IsNull() == false);
+
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
 
-        
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
-        
+
         // check whether older version is still visible.
         if (old_end_cid < max_committed_cid) {
-          tuple_location_container->SwapItemPointer(tuple_location, old_end_cid);
+          tuple_location_container->SwapItemPointer(tuple_location,
+                                                    old_end_cid);
 
           // currently, let's assume only primary index exists.
-          gc::GCManagerFactory::GetInstance().RecycleTupleSlot(old_item);
+          gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+              table_->GetOid(), old_item.block, old_item.offset,
+              max_committed_cid);
         }
-        
+
       }
     }
   }
-
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -255,7 +255,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   return true;
 }
 
-
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   assert(!done_);
 
@@ -267,9 +266,8 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     index_->ScanAllKeys(tuple_locations);
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
-     SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
   }
-
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
@@ -287,26 +285,25 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     auto tile_group_id = tuple_location.block;
     auto tuple_id = tuple_location.offset;
 
-
-      // if the tuple is visible.
+    // if the tuple is visible.
     if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
-        // perform predicate evaluation.
+      // perform predicate evaluation.
       if (predicate_ == nullptr) {
         visible_tuples[tile_group_id].push_back(tuple_id);
         auto res = transaction_manager.PerformRead(tuple_location);
-        if(!res){
+        if (!res) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
           return res;
         }
       } else {
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-         tuple_id);
+                                                             tuple_id);
         auto eval =
-        predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           visible_tuples[tile_group_id].push_back(tuple_id);
           auto res = transaction_manager.PerformRead(tuple_location);
-          if(!res){
+          if (!res) {
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
             return res;
           }
