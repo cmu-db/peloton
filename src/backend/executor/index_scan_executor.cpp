@@ -29,6 +29,7 @@
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
+#include "backend/gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -206,14 +207,26 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // if the tuple is not visible.
       else {
         ItemPointer old_item = tuple_location;
+        cid_t old_end_cid = tile_group_header.GetEndCommitId();
+
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
-        // if there is no next tuple.
-        if (tuple_location.IsNull() == true) {
-          LOG_INFO("next version not found");
-          break;
-        }
+        // if there must exist a visible version.
+        assert (tuple_location.IsNull() == false);
+        
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
+
+        
+        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+        
+        // check whether older version is still visible.
+        if (old_end_cid < max_committed_cid) {
+          tuple_location_container->SwapItemPointer(tuple_location, old_end_cid);
+
+          // currently, let's assume only primary index exists.
+          gc::GCManagerFactory::GetInstance().RecycleTupleSlot(old_item);
+        }
+        
       }
     }
   }
