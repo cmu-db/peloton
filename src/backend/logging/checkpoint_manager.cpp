@@ -35,7 +35,7 @@ void CheckpointManager::WaitForModeTransition(
 }
 
 void CheckpointManager::StartStandbyMode() {
-  auto checkpointer = Checkpoint::GetCheckpoint(peloton_checkpoint_mode);
+  auto checkpointer = Checkpoint::GetCheckpoint(peloton_checkpoint_mode, test_mode_);
 
   // If checkpointer still doesn't exist, then we have disabled logging
   if (!checkpointer) {

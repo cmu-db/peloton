@@ -92,9 +92,9 @@ void Checkpoint::InitDirectory() {
 }
 
 std::unique_ptr<Checkpoint> Checkpoint::GetCheckpoint(
-    CheckpointType checkpoint_type) {
+    CheckpointType checkpoint_type, bool test_mode) {
   if (checkpoint_type == CHECKPOINT_TYPE_NORMAL) {
-    std::unique_ptr<Checkpoint> checkpoint(new SimpleCheckpoint());
+    std::unique_ptr<Checkpoint> checkpoint(new SimpleCheckpoint(test_mode));
     return std::move(checkpoint);
   }
   return std::move(std::unique_ptr<Checkpoint>(nullptr));
