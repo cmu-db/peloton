@@ -32,7 +32,9 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 class Checkpoint {
  public:
-  Checkpoint() { pool.reset(new VarlenPool(BACKEND_TYPE_MM)); }
+  Checkpoint(bool test_mode) : test_mode(test_mode) {
+    pool.reset(new VarlenPool(BACKEND_TYPE_MM));
+  }
 
   virtual ~Checkpoint(void) { pool.reset(); }
 
@@ -45,7 +47,8 @@ class Checkpoint {
   virtual cid_t DoRecovery() = 0;
 
   // Get a checkpointer
-  static std::unique_ptr<Checkpoint> GetCheckpoint(CheckpointType checkpoint_type);
+  static std::unique_ptr<Checkpoint> GetCheckpoint(
+      CheckpointType checkpoint_type, bool test_mode);
 
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);
@@ -54,6 +57,8 @@ class Checkpoint {
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
+
+  bool test_mode = false;
 
   // Default checkpoint interval (seconds)
   int64_t checkpoint_interval_ = 5;
@@ -74,7 +79,6 @@ class Checkpoint {
 
   // current status
   CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
-
 };
 
 }  // namespace logging

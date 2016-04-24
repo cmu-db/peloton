@@ -44,6 +44,7 @@ static void WriteOutput(double stat) {
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
   out << state.column_count << " ";
+  out << state.backend_count << " ";
   out << state.logging_enabled << " ";
   out << state.sync_commit << " ";
   out << state.wait_timeout << " ";

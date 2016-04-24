@@ -54,6 +54,9 @@ class CheckpointManager {
   CheckpointManager() {}
   ~CheckpointManager() {}
 
+  // whether run checkpoint in test mode
+  bool test_mode_ = false;
+
   // the status of checkpoint manager
   CheckpointStatus checkpoint_status_ = CHECKPOINT_STATUS_INVALID;
 

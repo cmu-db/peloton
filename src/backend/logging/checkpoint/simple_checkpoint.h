@@ -31,7 +31,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint();
+  SimpleCheckpoint(bool test_mode);
   ~SimpleCheckpoint();
 
   // Inherited functions
@@ -50,7 +50,7 @@ class SimpleCheckpoint : public Checkpoint {
   std::vector<std::shared_ptr<LogRecord>> GetRecords();
 
   inline void SetStartCommitId(cid_t start_commit_id) {
-	  start_commit_id_ = start_commit_id;
+    start_commit_id_ = start_commit_id;
   }
 
  private:

@@ -41,7 +41,7 @@ namespace logging {
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
 
-SimpleCheckpoint::SimpleCheckpoint() : Checkpoint() {
+SimpleCheckpoint::SimpleCheckpoint(bool test_mode) : Checkpoint(test_mode) {
   InitDirectory();
   InitVersionNumber();
 }
@@ -65,8 +65,8 @@ void SimpleCheckpoint::DoCheckpoint() {
   LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
-  std::shared_ptr<LogRecord> begin_record(
-      new TransactionRecord(LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id_));
+  std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
+      LOGRECORD_TYPE_TRANSACTION_BEGIN, start_commit_id_));
   CopySerializeOutput begin_output_buffer;
   begin_record->Serialize(begin_output_buffer);
   records_.push_back(begin_record);
@@ -112,7 +112,8 @@ cid_t SimpleCheckpoint::DoRecovery() {
     return 0;
   }
   std::string file_name = ConcatFileName(checkpoint_dir, checkpoint_version);
-  bool success = LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "rb");
+  bool success =
+      LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "rb");
   if (!success) {
     assert(false);
     return 0;
@@ -271,7 +272,8 @@ std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
 void SimpleCheckpoint::CreateFile() {
   // open checkpoint file and file descriptor
   std::string file_name = ConcatFileName(checkpoint_dir, ++checkpoint_version);
-  bool success = LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "ab");
+  bool success =
+      LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "ab");
   if (!success) {
     assert(false);
     return;

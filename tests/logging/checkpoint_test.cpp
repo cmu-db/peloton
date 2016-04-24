@@ -79,7 +79,7 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   std::iota(column_ids.begin(), column_ids.end(), 0);
 
   // create checkpoint
-  logging::SimpleCheckpoint simple_checkpoint;
+  logging::SimpleCheckpoint simple_checkpoint(true);
   std::unique_ptr<logging::WriteAheadBackendLogger> logger(
       new logging::WriteAheadBackendLogger());
   simple_checkpoint.SetLogger(logger.get());
@@ -114,7 +114,7 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
                                           table_tile_group_count);
 
   // recovery tuples from checkpoint
-  logging::SimpleCheckpoint simple_checkpoint;
+  logging::SimpleCheckpoint simple_checkpoint(true);
   for (auto record : records) {
     auto tuple = record.GetTuple();
     auto target_location = record.GetInsertLocation();
