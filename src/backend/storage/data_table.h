@@ -211,7 +211,7 @@ class DataTable : public AbstractTable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  Spinlock &GetTileGroupLock() { return tile_group_lock_; }
+  RWLock &GetTileGroupLock() { return tile_group_lock_; }
 
  protected:
   //===--------------------------------------------------------------------===//
