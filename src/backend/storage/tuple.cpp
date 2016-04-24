@@ -159,8 +159,9 @@ size_t Tuple::ExportSerializationSize() const {
         // 32 bit length preceding value and
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
-                                          GetValue(column_itr)));
+          bytes +=
+              (sizeof(int32_t) +
+               ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
         }
         break;
 
@@ -168,7 +169,7 @@ size_t Tuple::ExportSerializationSize() const {
         throw UnknownTypeException(
             GetType(column_itr),
             "Unknown ValueType found during Export serialization.");
-        return (size_t)0;
+        return (size_t) 0;
     }
   }
   return bytes;
@@ -187,8 +188,9 @@ size_t Tuple::GetUninlinedMemorySize() const {
            (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t) + ValuePeeker::PeekObjectLengthWithoutNull(
-                                          GetValue(column_itr)));
+          bytes +=
+              (sizeof(int32_t) +
+               ValuePeeker::PeekObjectLengthWithoutNull(GetValue(column_itr)));
         }
       }
     }

@@ -106,7 +106,7 @@ void ValidateLogging(const configuration &state) {
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
-  state.transaction_count = 10000;
+  state.transaction_count = 100000;
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
