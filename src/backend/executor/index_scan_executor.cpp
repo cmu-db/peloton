@@ -212,7 +212,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           LOG_INFO("next version not found");
           break;
         }
-        tuple_location = next_item;
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
       }
