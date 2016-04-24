@@ -520,7 +520,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  table->GetTileGroupLock().Lock();
+  table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(insert_loc.block);
 
   if (tile_group == nullptr) {
@@ -535,7 +535,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
-    table->GetTileGroupLock().Lock();
+    table->GetTileGroupLock().WriteLock();
     table->IncreaseNumberOfTuplesBy(1);
     table->GetTileGroupLock().Unlock();
   }
@@ -554,7 +554,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  table->GetTileGroupLock().Lock();
+  table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(delete_loc.block);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
@@ -583,7 +583,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  table->GetTileGroupLock().Lock();
+  table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(remove_loc.block);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
