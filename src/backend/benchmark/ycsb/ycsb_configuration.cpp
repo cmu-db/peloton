@@ -192,14 +192,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
-<<<<<<< HEAD
-  ValidateTransactionCount(state);
   ValidateLogging(state);
-=======
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
-
->>>>>>> yingjun/mvcc-new-to-old
 }
 
 }  // namespace ycsb
