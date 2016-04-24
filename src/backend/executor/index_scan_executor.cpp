@@ -159,7 +159,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_container : tuple_location_containers) {
-    ItemPointer tuple_location; 
+    ItemPointer tuple_location;
     tuple_location_container->GetItemPointer(tuple_location);
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
@@ -205,9 +205,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       } 
       // if the tuple is not visible.
       else {
-        ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_location.offset);
+        ItemPointer old_item = tuple_location;
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // if there is no next tuple.
-        if (next_item.IsNull() == true) {
+        if (tuple_location.IsNull() == true) {
           LOG_INFO("next version not found");
           break;
         }
