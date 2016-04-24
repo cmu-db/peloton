@@ -28,8 +28,10 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-#define MAX_TUPLES_PER_GC 10000
-#define MAX_FREE_LIST_LENGTH 10000
+#define MAX_TUPLES_PER_GC 100000
+#define MAX_FREE_LIST_LENGTH 100000
+
+#define GC_PERIOD_MILLISECONDS 100
 
 class GCManager {
  public:
