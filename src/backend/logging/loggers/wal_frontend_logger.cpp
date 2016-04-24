@@ -228,9 +228,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         TransactionRecord txn_rec(record_type);
         if (LoggingUtil::ReadTransactionRecordHeader(
                 txn_rec, cur_file_handle) == false) {
-          cur_file_handle.fd = -1;
-          cur_file_handle.file = nullptr;
-          cur_file_handle.size = 0;
+          cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
         commit_id = txn_rec.GetTransactionId();
@@ -249,9 +247,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
                                                cur_file_handle) == false) {
           LOG_ERROR("Could not read tuple record header.");
-          cur_file_handle.fd = -1;
-          cur_file_handle.file = nullptr;
-          cur_file_handle.size = 0;
+          cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
 
@@ -269,9 +265,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
           LOG_ERROR("Insert txd id %d not found in recovery txn table",
                     (int)cid);
-          cur_file_handle.fd = -1;
-          cur_file_handle.file = nullptr;
-          cur_file_handle.size = 0;
+          cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
 
@@ -285,9 +279,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         // Check for torn log write
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
                                                cur_file_handle) == false) {
-          cur_file_handle.fd = -1;
-          cur_file_handle.file = nullptr;
-          cur_file_handle.size = 0;
+          cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
 
@@ -300,9 +292,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
           LOG_TRACE("Delete txd id %d not found in recovery txn table",
                     (int)cid);
-          cur_file_handle.fd = -1;
-          cur_file_handle.file = nullptr;
-          cur_file_handle.size = 0;
+          cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
         break;
@@ -358,9 +348,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
   log_manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
 
   LOG_INFO("This thread did %d inserts", (int)num_inserts);
-  cur_file_handle.fd = -1;
-  cur_file_handle.file = NULL;
-  cur_file_handle.size = 0;
+  cur_file_handle = INVALID_FILE_HANDLE;
 }
 
 void WriteAheadFrontendLogger::RecoverIndex() {
@@ -944,17 +932,13 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   if (log_files_.size() == 0) {  // no log files, fresh start
     LOG_INFO("Size of log files list is 0.");
-    cur_file_handle.fd = -1;
-    cur_file_handle.file = NULL;
-    cur_file_handle.size = 0;
+    cur_file_handle = INVALID_FILE_HANDLE;
     return;
   }
 
   if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
     LOG_INFO("Cursor has reached the end. No more log files to read from.");
-    cur_file_handle.fd = -1;
-    cur_file_handle.file = NULL;
-    cur_file_handle.size = 0;
+    cur_file_handle = INVALID_FILE_HANDLE;
     return;
   }
 
@@ -972,9 +956,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   if (cur_file_handle.file == NULL) {
     LOG_ERROR("Couldn't open next log file");
-    cur_file_handle.fd = -1;
-    cur_file_handle.file = NULL;
-    cur_file_handle.size = 0;
+    cur_file_handle = INVALID_FILE_HANDLE;
     return;
   } else {
     LOG_INFO("Opened new log file for recovery");
