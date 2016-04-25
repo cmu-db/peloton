@@ -119,11 +119,11 @@ void GCManager::Reclaim() {
         // if the entry for table_id exists.
         if (recycled_map_.find(tuple_metadata.table_id, free_list) == true) {
           // if the entry for tuple_metadata.table_id exists.
-          free_list->Push(tuple_metadata);
+          while (free_list->Push(tuple_metadata) == false);
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
           free_list.reset(new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
-          free_list->Push(tuple_metadata);
+          while (free_list->Push(tuple_metadata) == false);
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
         // Now that we know we need to recycle tuple, we need to delete all
@@ -136,7 +136,7 @@ void GCManager::Reclaim() {
         tuple_counter++;
       } else {
         // if a tuple cannot be reclaimed, then add it back to the list.
-        garbage_list_.Push(tuple_metadata);
+        while(garbage_list_.Push(tuple_metadata) == false);
       }
     }  // end for
 
@@ -167,7 +167,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   // FIXME: what if the list is full?
   //possibly_free_list_.Push(tuple_metadata);
   //garbage_map_lock_.Lock();
-  garbage_list_.Push(tuple_metadata);
+  while(garbage_list_.Push(tuple_metadata) == false);
   //garbage_map_lock_.Unlock();
 
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
