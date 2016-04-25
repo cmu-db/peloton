@@ -90,32 +90,37 @@ oid_t TileGroup::GetActiveTupleCount() const {
 //===--------------------------------------------------------------------===//
 
 /**
- * Generate a rollback segment from the data of the old tuple
+ * Apply the column delta on the rollback segment to the given tuple
  */
-RollbackSegment *TileGroup::GetPreparedRollbackSegment(const planner::ProjectInfo::TargetList &target_list,
-                                                       const oid_t &tuple_id, bool already_has_rbseg) {
-  auto schema = table->GetSchema();
-  assert(schema);
-  // Get an empty rb segment
-  auto rb_seg = RollbackSegmentPool::GetEmptyRollbackSegment(schema, target_list);
+void TileGroup::ApplyRollbackSegment(const char *rb_seg, const oid_t &tuple_slot_id) {
 
-  if (already_has_rbseg) {
-    // Already has a rollback segment
-    auto old_rb_seg = tile_group_header->GetRollbackSegmentHeader(tuple_id);
+  auto seg_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
+  auto table_schema = GetAbstractTable()->GetSchema();
 
-    // Copy old value from the rollback segment
-    for (auto col_id : old_rb_seg)
+  for (int idx = 0; idx < seg_col_count; ++idx) {
+    auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
+    Value col_value = storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
 
-  } else {
-    // Have no rollback segment, copy from original tuple
-    for (auto target : target_list) {
-      auto col_id = target.first;
-      auto tile_id = GetTileIdFromColumnId(col_id);
-      rb_seg->SetSegmentValueFromTuple(schema, col_id, GetValue(tuple_id, col_id), GetTilePool(tile_id));
-    }
+    // Get target tile
+    auto tile_id = GetTileIdFromColumnId(col_id);
+    assert(tile_id < GetTileCount());
+    storage::Tile *tile = GetTile(tile_id);
+    assert(tile);
+
+    // Get tile schema
+    auto &tile_schema = tile_schemas[tile_id];
+
+    // Get a tuple wrapper
+    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
+    assert(tile_tuple_location);
+    storage::Tuple tile_tuple(&tile_schema, tile_tuple_location);
+
+    // Write the value to tuple
+    auto tile_col_idx = GetTileColumnId(col_id);
+    tile_tuple.SetValue(tile_col_idx, col_value, tile->GetPool());
   }
-  return rb_seg;
 }
+
 
 /**
  * Grab next slot (thread-safe) and fill in the tuple
@@ -150,17 +155,17 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   }
 }
 
-void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
-  auto schema = table->GetSchema();
-
-  assert(tuple->GetColumnCount() == schema->GetColumnCount());
-
-  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
-    tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
-  }
-}
+//void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
+//  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+//            tile_group_id, tuple_slot_id, num_tuple_slots);
+//  auto schema = table->GetSchema();
+//
+//  assert(tuple->GetColumnCount() == schema->GetColumnCount());
+//
+//  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
+//    tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
+//  }
+//}
 
 /**
  * Grab next slot (thread-safe) and fill in the tuple

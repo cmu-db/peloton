@@ -79,9 +79,7 @@ class TileGroup : public Printable {
   // Operations
   //===--------------------------------------------------------------------===//
 
-  // generate a rollback segment from an old tuple
-  RollbackSegment *GetPreparedRollbackSegment(const planner::ProjectInfo::TargetList &target_list,
-                                              const oid_t &tuple_id, bool already_has_rbseg);
+  void ApplyRollbackSegment(const char *rb_seg, const oid_t &tuple_slot_id);
 
   // copy tuple in place.
   void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);

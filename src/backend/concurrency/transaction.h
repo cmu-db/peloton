@@ -83,7 +83,8 @@ class Transaction : public Printable {
 
   void RecordInsert(const ItemPointer &);
 
-  void RecordDelete(const ItemPointer &);
+  // Return true if we detect INS_DEL
+  bool RecordDelete(const ItemPointer &);
 
   const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
 
