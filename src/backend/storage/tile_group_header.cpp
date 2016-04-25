@@ -70,7 +70,7 @@ const std::string TileGroupHeader::GetInfo() const {
   os << "\t-----------------------------------------------------------\n";
   os << "\tTILE GROUP HEADER \n";
 
-  oid_t active_tuple_slots = GetNextTupleSlot();
+  oid_t active_tuple_slots = GetCurrentNextTupleSlot();
   peloton::ItemPointer item;
 
   for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
@@ -131,7 +131,7 @@ void TileGroupHeader::Sync() {
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
-  oid_t active_tuple_slots = GetNextTupleSlot();
+  oid_t active_tuple_slots = GetCurrentNextTupleSlot();
   std::stringstream os;
 
   os << "\t-----------------------------------------------------------\n";
@@ -202,7 +202,8 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   LOG_TRACE("%s", os.str().c_str());
 }
 
-// this function is called only when building tile groups for aggregation operations.
+// this function is called only when building tile groups for aggregation
+// operations.
 oid_t TileGroupHeader::GetActiveTupleCount() {
   oid_t active_tuple_slots = 0;
 
