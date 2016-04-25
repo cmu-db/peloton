@@ -87,8 +87,13 @@ void GCManager::Running() {
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
           recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-          recycle_queue->BlockingPush(tuple_metadata);
-          recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
+          bool ret = recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+          if (ret == true) {
+            recycle_queue->BlockingPush(tuple_metadata);
+          } else {
+            recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+            recycle_queue->BlockingPush(tuple_metadata);
+          }
         }
 
         tuple_counter++;
