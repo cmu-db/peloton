@@ -82,11 +82,11 @@ void GCManager::Unlink() {
         // if the entry for table_id exists.
         if (recycled_map_.find(tuple_metadata.table_id, free_list) == true) {
           // if the entry for tuple_metadata.table_id exists.
-          free_list->Push(tuple_metadata);
+          free_list->BlockingPush(tuple_metadata);
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
           free_list.reset(new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
-          free_list->Push(tuple_metadata);
+          free_list->BlockingPush(tuple_metadata);
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
 
@@ -106,7 +106,7 @@ void GCManager::Unlink() {
     for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
       TupleMetadata tuple_metadata;
       // if there's no more tuples in the queue, then break.
-      if (possibly_free_list_.Pop(tuple_metadata) == false) {
+      if (possibly_free_list_.TryPop(tuple_metadata) == false) {
         break;
       }
 
@@ -121,7 +121,7 @@ void GCManager::Unlink() {
         tuple_counter++;
       } else {
         // if a tuple cannot be reclaimed, then add it back to the list.
-        possibly_free_list_.Push(tuple_metadata);
+        possibly_free_list_.BlockingPush(tuple_metadata);
       }
     }  // end for
 
@@ -150,7 +150,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
-  possibly_free_list_.Push(tuple_metadata);
+  possibly_free_list_.BlockingPush(tuple_metadata);
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
             tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, tuple_metadata.table_id);
 }
@@ -166,7 +166,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
    // if there exists free_list
    if (recycled_map_.find(table_id, free_list) == true) {
      TupleMetadata tuple_metadata;
-     if (free_list->Pop(tuple_metadata) == true) {
+     if (free_list->TryPop(tuple_metadata) == true) {
        LOG_INFO("Reuse tuple(%u, %u) in table %u",
                  tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, table_id);
        return ItemPointer(tuple_metadata.tile_group_id,
