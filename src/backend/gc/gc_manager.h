@@ -42,7 +42,8 @@ class GCManager {
 
   GCManager(const GCType type)
       : is_running_(true),
-        gc_type_(type) {
+        gc_type_(type),
+        garbage_list_(MAX_FREE_LIST_LENGTH) {
     StartGC();
   }
 
@@ -72,7 +73,6 @@ class GCManager {
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
   GCType gc_type_;
-  //LockfreeQueue<TupleMetadata> possibly_free_list_;
   std::unique_ptr<std::thread> gc_thread_;
 
   // TODO: use shared pointer to reduce memory copy
@@ -83,8 +83,9 @@ class GCManager {
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
   // TODO: use shared pointer to reduce memory copy
-  Spinlock garbage_map_lock_;
-  std::multimap<cid_t, TupleMetadata> garbage_map_;
+  LockfreeQueue<TupleMetadata> garbage_list_;
+  //Spinlock garbage_map_lock_;
+  //std::multimap<cid_t, TupleMetadata> garbage_map_;
 };
 
 }  // namespace gc
