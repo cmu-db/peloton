@@ -28,8 +28,8 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-#define MAX_TUPLES_PER_GC 100000
-#define MAX_FREE_LIST_LENGTH 100000
+#define MAX_ATTEMPT_COUNT 100000
+#define MAX_QUEUE_LENGTH 100000
 
 #define GC_PERIOD_MILLISECONDS 100
 
@@ -43,7 +43,7 @@ class GCManager {
   GCManager(const GCType type)
       : is_running_(true),
         gc_type_(type),
-        garbage_list_(MAX_FREE_LIST_LENGTH) {
+        reclaim_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
@@ -62,7 +62,7 @@ class GCManager {
   ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
  private:
-  void Reclaim();
+  void Running();
   //void DeleteTupleFromIndexes(const TupleMetadata &);
 
   void ResetTuple(const TupleMetadata &);
@@ -73,19 +73,15 @@ class GCManager {
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
   GCType gc_type_;
+
   std::unique_ptr<std::thread> gc_thread_;
 
   // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-      recycled_map_;
+  LockfreeQueue<TupleMetadata> reclaim_queue_;
 
-  // Map of actual grabage.
-  // The key is the timestamp when the garbage is identified, value is the
-  // metadata of the garbage.
   // TODO: use shared pointer to reduce memory copy
-  LockfreeQueue<TupleMetadata> garbage_list_;
-  //Spinlock garbage_map_lock_;
-  //std::multimap<cid_t, TupleMetadata> garbage_map_;
+  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
+      recycle_queue_map_;
 };
 
 }  // namespace gc
