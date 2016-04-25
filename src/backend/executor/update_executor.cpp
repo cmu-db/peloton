@@ -82,6 +82,7 @@ bool UpdateExecutor::DExecute() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   auto concurrency_protocol = concurrency::TransactionManagerFactory::GetProtocol();
+  auto schema = target_table_->GetSchema();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -93,25 +94,38 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
-        true) {
-      // Create a temp copy
-      std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
+
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
           tile_group, physical_tuple_id);
+      // Create a temp copy
+      std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
       // Execute the projections
+      // FIXME: reduce memory copy by doing inplace update
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
       // Check if we are using rollback segment
       if(concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
-        // TODO: Create a new rollback segment based on the old one and the old tuple
-        auto rb_seg =
+        auto rb_txn_manager = (concurrency::OptimisticRbTxnManager*)&transaction_manager;
 
-        // TODO: Ask the txn manager to replace the old rollback segment with the new one
+        if (rb_txn_manager->IsInserted(tile_group_header, physical_tuple_id) == false) {
+          // If it's not an inserted tuple,
+          // create a new rollback segment based on the old one and the old tuple
+          auto rb_seg = rb_txn_manager->GetSegmentPool()->GetSegmentFromTuple(
+            schema, project_info_->GetTargetList(), &old_tuple);
 
-        // TODO: Overwrite the master copy
+          // TODO: rb_seg == nullptr may be resulted from an optimization to be done
+          // when creating rollback segment
+          if (rb_seg != nullptr) {
+            // Ask the txn manager to add the a new rollback segment
+            rb_txn_manager->PerformUpdateWithRb(old_location, rb_seg);
+          }
+        }
+
+        // Overwrite the master copy
+        tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
 
       } else {
         // Current rb segment is OK, just overwrite the tuple in place
@@ -141,16 +155,19 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
-      // TODO: Maybe we can use compile time option instead of runtime branch
       if ( concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         // For rollback segment implementation
+        auto rb_txn_manager = (concurrency::OptimisticRbTxnManager*)&transaction_manager;
 
-        // TODO: Create a rollback segment based on the old tuple
+        // Create a rollback segment based on the old tuple
+        auto rb_seg = rb_txn_manager->GetSegmentPool()->GetSegmentFromTuple(
+          schema, project_info_->GetTargetList(), &old_tuple);
 
-        // TODO: Ask the txn manager to append the rollback segment
+        // Ask the txn manager to append the rollback segment
+        rb_txn_manager->PerformUpdateWithRb(old_location, rb_seg);
 
-        // TODO: Overwrite the master copy
-
+        // Overwrite the master copy
+        tile_group->CopyTuple(new_tuple.get(), old_location.offset);
       } else {
         // finally insert updated tuple into the table
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());

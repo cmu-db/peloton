@@ -11,17 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/storage/rollback_segment.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/abstract_table.h"
-#include "backend/catalog/schema.h"
 
 namespace peloton {
 namespace storage {
 
+/**
+ * TODO: Optimization can be done. We can save copying those columns that are already
+ * in the rollback segment created by the same transaction. What we need to do is to add
+ * a bitmap or set in the rollback segment indicating columns it contains. After that we
+ * can bypass these columns when making a new rollback segment.
+ */
 char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
                                                 const planner::ProjectInfo::TargetList &target_list,
-                                                const AbstractTuple *tuple,
-                                                const ColBitmap *bitmap) {
+                                                const AbstractTuple *tuple) {
   assert(schema);
 
   size_t col_count = target_list.size();
@@ -31,12 +33,7 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
   // First figure out the total size of the rollback segment
   for (auto target : target_list) {
     auto col_id = target.first;
-
-    if (bitmap != nullptr && bitmap->test(col_id)) {
-      // By pass already updated column
-      col_count -= 1;
-      continue;
-    }
+    // Set the column bitmap and update the length of the data field
     data_size += schema->GetLength(col_id);
   }
 
@@ -53,7 +50,7 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
 
   // Fill in the header
   SetNextPtr(rb_seg, nullptr);
-  SetTimeStamp(rb_seg, INVALID_CID);
+  SetTimeStamp(rb_seg, MAX_CID);
   SetColCount(rb_seg, col_count);
 
   char *data_location = GetDataPtr(rb_seg);
@@ -64,21 +61,16 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
     auto &target = target_list[idx];
     auto col_id = target.first;
 
-    if (bitmap != nullptr && bitmap->test(col_id)) {
-      // By pass already updated column
-      continue;
-    }
-
     const bool is_inlined = schema->IsInlined(col_id);
     const bool is_inbytes = false;
 
-    char *value_location = data_location + offset;
     size_t col_length = schema->GetLength(col_id);
     size_t allocate_col_length = (is_inlined) ? col_length : schema->GetVariableLength(col_id);
 
     SetColIdOffsetPair(rb_seg, target.first, offset, idx);
 
     // Set the value
+    char *value_location = GetColDataLocation(rb_seg, idx);
     Value value = tuple->GetValue(col_id);
     assert(schema->GetType(col_id) == value.GetValueType());
     value.SerializeToTupleStorageAllocateForObjects(
@@ -89,6 +81,16 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
   }
 
   return rb_seg;
+}
+
+Value RollbackSegmentPool::GetValue(const char *rb_seg_ptr, const catalog::Schema *schema, int idx) {
+  auto col_id = GetIdOffsetPair(rb_seg_ptr, idx)->col_id;
+
+  const ValueType column_type = schema->GetType(col_id);
+  const char *data_ptr = GetColDataLocation(rb_seg_ptr, idx);
+  const bool is_inlined = schema->IsInlined(col_id);
+
+  return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
 }
 
 }  // End storage namespace
