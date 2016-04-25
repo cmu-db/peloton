@@ -203,8 +203,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         break;
       }
-          // if the tuple is not visible.
-          else {
+      // if the tuple is not visible.
+      else {
         ItemPointer old_item = tuple_location;
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
