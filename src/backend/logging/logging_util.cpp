@@ -11,6 +11,8 @@
  */
 
 #include "backend/logging/logging_util.h"
+#include <sys/stat.h>
+#include <dirent.h>
 
 namespace peloton {
 namespace logging {
@@ -259,6 +261,49 @@ int LoggingUtil::GetFileSizeFromFileName(const char *file_name) {
   if (ret_val == 0) return st.st_size;
 
   return -1;
+}
+
+bool LoggingUtil::CreateDirectory(const char *dir_name, int mode) {
+  int return_val = mkdir(dir_name, mode);
+  if (return_val == 0) {
+    LOG_INFO("Created directory %s successfully", dir_name);
+  } else if (errno == EEXIST) {
+    LOG_INFO("Directory %s already exists", dir_name);
+  } else {
+    LOG_WARN("Creating directory failed: %s", strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+/**
+ * @return false if fail to remove directory
+ */
+bool LoggingUtil::RemoveDirectory(const char *dir_name) {
+  struct dirent *file;
+  DIR *dir;
+
+  dir = opendir(dir_name);
+  if (dir == nullptr) {
+    return true;
+  }
+
+  // XXX readdir is not thread safe???
+  while ((file = readdir(dir)) != nullptr) {
+    auto ret_val = remove(file->d_name);
+    if (ret_val != 0) {
+      LOG_ERROR("Failed to delete file: %s, error: %s", file->d_name,
+                strerror(errno));
+    }
+  }
+  closedir(dir);
+  auto ret_val = remove(dir_name);
+  if (ret_val != 0) {
+    LOG_ERROR("Failed to delete dir: %s, error: %s", file->d_name,
+              strerror(errno));
+  }
+
+  return true;
 }
 
 }  // namespace logging

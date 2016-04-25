@@ -520,8 +520,8 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  //FIXME Handle the case when tile_group is not created yet.
-  //table->GetTileGroupLock().WriteLock();
+  // FIXME Handle the case when tile_group is not created yet.
+  // table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(insert_loc.block);
 
   if (tile_group == nullptr) {
@@ -531,7 +531,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = insert_loc.block;
     }
   }
-  //table->GetTileGroupLock().Unlock();
+  // table->GetTileGroupLock().Unlock();
   // unlock table here
 
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
@@ -555,9 +555,9 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  //FIXME Handle the case when tile_group is not created yet.
-  //acquiring the write lock will lead to deadlock
-  //table->GetTileGroupLock().WriteLock();
+  // FIXME Handle the case when tile_group is not created yet.
+  // acquiring the write lock will lead to deadlock
+  // table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(delete_loc.block);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(delete_loc.block);
@@ -566,9 +566,9 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = delete_loc.block;
     }
   }
-  //FIXME we always decrease the number of tuples by one
+  // FIXME we always decrease the number of tuples by one
   table->DecreaseNumberOfTuplesBy(1);
-  //table->GetTileGroupLock().Unlock();
+  // table->GetTileGroupLock().Unlock();
 
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
 }
@@ -587,8 +587,8 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   }
   assert(table);
 
-  //FIXME Handle the case when tile_group is not created yet.
-  //table->GetTileGroupLock().WriteLock();
+  // FIXME Handle the case when tile_group is not created yet.
+  // table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(remove_loc.block);
   if (tile_group == nullptr) {
     table->AddTileGroupWithOid(remove_loc.block);
@@ -597,7 +597,7 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
       max_tg = remove_loc.block;
     }
   }
-  //table->GetTileGroupLock().Unlock();
+  // table->GetTileGroupLock().Unlock();
   InsertTupleHelper(max_tg, commit_id, db_id, table_id, insert_loc, tuple,
                     false);
 
@@ -722,6 +722,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
     LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
   }
 
+  // XXX readdir is not thread safe???
   while ((file = readdir(dirp)) != NULL) {
     if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
       // found a log file!
@@ -1026,17 +1027,12 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
 }
 
 void WriteAheadFrontendLogger::InitLogDirectory() {
-  int return_val;
-
-  return_val = mkdir(peloton_log_directory.c_str(), 0700);
-  LOG_INFO("Log directory is: %s", peloton_log_directory.c_str());
-
-  if (return_val == 0) {
-    LOG_INFO("Created Log directory successfully");
-  } else if (errno == EEXIST) {
-    LOG_INFO("Log Directory already exists");
+  auto success =
+      LoggingUtil::CreateDirectory(peloton_log_directory.c_str(), 0700);
+  if (success) {
+    LOG_INFO("Logging directory is: %s", peloton_log_directory.c_str());
   } else {
-    LOG_ERROR("Creating log directory failed: %s", strerror(errno));
+    LOG_ERROR("Failed to create logging directory");
   }
 }
 

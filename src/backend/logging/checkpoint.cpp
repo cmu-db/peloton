@@ -11,6 +11,7 @@
  */
 
 #include "backend/logging/checkpoint.h"
+#include "backend/logging/logging_util.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 
 namespace peloton {
@@ -77,17 +78,11 @@ std::string Checkpoint::ConcatFileName(std::string checkpoint_dir,
 }
 
 void Checkpoint::InitDirectory() {
-  int return_val;
-
-  return_val = mkdir(checkpoint_dir.c_str(), 0700);
-  LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
-
-  if (return_val == 0) {
-    LOG_INFO("Created checkpoint directory successfully");
-  } else if (errno == EEXIST) {
-    LOG_INFO("Checkpoint Directory already exists");
+  auto success = LoggingUtil::CreateDirectory(checkpoint_dir.c_str(), 0700);
+  if (success) {
+    LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
   } else {
-    LOG_ERROR("Creating checkpoint directory failed: %s", strerror(errno));
+    LOG_ERROR("Failed to create checkpoint directory");
   }
 }
 
