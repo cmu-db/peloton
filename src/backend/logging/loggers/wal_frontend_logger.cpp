@@ -556,6 +556,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   assert(table);
 
   //FIXME Handle the case when tile_group is not created yet.
+  //acquiring the write lock will lead to deadlock
   //table->GetTileGroupLock().WriteLock();
   auto tile_group = manager.GetTileGroup(delete_loc.block);
   if (tile_group == nullptr) {
@@ -566,7 +567,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     }
   }
   //FIXME we always decrease the number of tuples by one
-  //table->DecreaseNumberOfTuplesBy(1);
+  table->DecreaseNumberOfTuplesBy(1);
   //table->GetTileGroupLock().Unlock();
 
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);
