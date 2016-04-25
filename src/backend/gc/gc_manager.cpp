@@ -68,13 +68,50 @@ void GCManager::Reclaim() {
     int tuple_counter = 0;
 
     // we delete garbage in the free list
-    auto garbage = garbage_map_.begin();
-    while (garbage != garbage_map_.end()) {
-      const cid_t garbage_ts = garbage->first;
-      const TupleMetadata &tuple_metadata = garbage->second;
+    // auto garbage = garbage_map_.begin();
+    // while (garbage != garbage_map_.end()) {
+    //   const cid_t garbage_ts = garbage->first;
+    //   const TupleMetadata &tuple_metadata = garbage->second;
 
-      // if the timestamp of the garbage is older than the current max_cid, recycle it
-      if (garbage_ts < max_cid) {
+    //   // if the timestamp of the garbage is older than the current max_cid, recycle it
+    //   if (garbage_ts < max_cid) {
+    //     ResetTuple(tuple_metadata);
+
+    //     // Add to the recycle map
+    //     std::shared_ptr<LockfreeQueue<TupleMetadata>> free_list;
+    //     // if the entry for table_id exists.
+    //     if (recycled_map_.find(tuple_metadata.table_id, free_list) == true) {
+    //       // if the entry for tuple_metadata.table_id exists.
+    //       free_list->Push(tuple_metadata);
+    //     } else {
+    //       // if the entry for tuple_metadata.table_id does not exist.
+    //       free_list.reset(new LockfreeQueue<TupleMetadata>(MAX_TUPLES_PER_GC));
+    //       free_list->Push(tuple_metadata);
+    //       recycled_map_[tuple_metadata.table_id] = free_list;
+    //     }
+
+    //     // Remove from the original map
+
+    //     garbage = garbage_map_.erase(garbage);
+    //     tuple_counter++;
+    //   } else {
+    //     // Early break since we use an ordered map
+    //     break;
+    //   }
+    // }
+    // LOG_INFO("Marked %d tuples as recycled", tuple_counter);
+    //tuple_counter = 0;
+
+    // Next, we check if any possible garbage is actually garbage
+    // every time we garbage collect at most MAX_TUPLES_PER_GC tuples.
+    for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
+      TupleMetadata tuple_metadata;
+      // if there's no more tuples in the queue, then break.
+      if (garbage_list_.Pop(tuple_metadata) == false) {
+        break;
+      }
+
+      if (tuple_metadata.tuple_end_cid < max_cid) {
         ResetTuple(tuple_metadata);
 
         // Add to the recycle map
@@ -89,48 +126,25 @@ void GCManager::Reclaim() {
           free_list->Push(tuple_metadata);
           recycled_map_[tuple_metadata.table_id] = free_list;
         }
-
-        // Remove from the original map
-
-        garbage = garbage_map_.erase(garbage);
-        tuple_counter++;
-      } else {
-        // Early break since we use an ordered map
-        break;
-      }
-    }
-    LOG_INFO("Marked %d tuples as recycled", tuple_counter);
-    //tuple_counter = 0;
-
-    // Next, we check if any possible garbage is actually garbage
-    // every time we garbage collect at most 1000 tuples.
-    // for (size_t i = 0; i < MAX_TUPLES_PER_GC; ++i) {
-    //   TupleMetadata tuple_metadata;
-    //   // if there's no more tuples in the queue, then break.
-    //   if (possibly_free_list_.Pop(tuple_metadata) == false) {
-    //     break;
-    //   }
-
-    //   if (tuple_metadata.tuple_end_cid < max_cid) {
-    //     // Now that we know we need to recycle tuple, we need to delete all
-    //     // tuples from the indexes to which it belongs as well.
-    //     DeleteTupleFromIndexes(tuple_metadata);
+        // Now that we know we need to recycle tuple, we need to delete all
+        // tuples from the indexes to which it belongs as well.
+        //DeleteTupleFromIndexes(tuple_metadata);
 
         // Add to the garbage map
-        //garbage_map_.insert(garbage_map_.find(max_cid),
+        // garbage_map_.insert(garbage_map_.find(max_cid),
         //                    std::make_pair(max_cid, tuple_metadata));
-        //tuple_counter++;
-    //   } else {
-    //     // if a tuple cannot be reclaimed, then add it back to the list.
-    //     possibly_free_list_.Push(tuple_metadata);
-    //   }
-    // }  // end for
+        tuple_counter++;
+      } else {
+        // if a tuple cannot be reclaimed, then add it back to the list.
+        garbage_list_.Push(tuple_metadata);
+      }
+    }  // end for
 
-    // LOG_INFO("Marked %d tuples as garbage", tuple_counter);
+    LOG_INFO("Marked %d tuples as garbage", tuple_counter);
 
-    // if (is_running_ == false) {
-    //   return;
-    // }
+    if (is_running_ == false) {
+      return;
+    }
   }
 }
 
@@ -139,7 +153,7 @@ void GCManager::Reclaim() {
 void GCManager::RecycleTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
-                                 const cid_t &max_cid) {
+                                 const cid_t &tuple_end_cid) {
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
@@ -148,13 +162,13 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   tuple_metadata.table_id = table_id;
   tuple_metadata.tile_group_id = tile_group_id;
   tuple_metadata.tuple_slot_id = tuple_id;
-  //tuple_metadata.tuple_end_cid = tuple_end_cid;
+  tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
   //possibly_free_list_.Push(tuple_metadata);
-  garbage_map_lock_.Lock();
-  garbage_map_.insert(std::make_pair(max_cid, tuple_metadata));
-  garbage_map_lock_.Unlock();
+  //garbage_map_lock_.Lock();
+  garbage_list_.Push(tuple_metadata);
+  //garbage_map_lock_.Unlock();
 
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
             tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id, tuple_metadata.table_id);
