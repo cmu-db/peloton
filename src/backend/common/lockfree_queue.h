@@ -14,6 +14,8 @@
 
 #include <boost/lockfree/queue.hpp>
 
+#include <xmmintrin.h>
+
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
@@ -32,13 +34,26 @@ class LockfreeQueue {
 
   // return true if pop is successful.
   // if queue is empty, then return false.
-  bool Pop(T& item) {
+  bool TryPop(T& item) {
     return queue_.pop(item);
   }
 
   // return true if push is successful.
-  bool Push(const T& item) {
+  bool TryPush(const T& item) {
     return queue_.push(item);
+  }
+
+
+  void BlockingPop(T& item) {
+    while (queue_.pop(item) == false) {
+      _mm_pause();
+    }
+  }
+
+  void BlockingPush(const T& item) {
+    while (queue_.push(item) == false) {
+      _mm_pause();
+    }
   }
 
  private:
