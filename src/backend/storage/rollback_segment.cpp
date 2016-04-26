@@ -1,10 +1,10 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
-// tile_group_header.cpp
+// rollback_segment.cpp
 //
-// Identification: src/backend/storage/tile_group_header.cpp
+// Identification: src/backend/storage/rollback_segment.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,36 +16,35 @@ namespace peloton {
 namespace storage {
 
 /**
+ * @brief create a rollback segment by selecting columns from a tuple
+ * @param target_list The columns to be selected
+ * @param tuple The tuple to construct the RB
+ *
  * TODO: Optimization can be done. We can save copying those columns that are already
  * in the rollback segment created by the same transaction. What we need to do is to add
- * a bitmap or set in the rollback segment indicating columns it contains. After that we
+ * a bitmap in the rollback segment indicating columns it contains. After that we
  * can bypass these columns when making a new rollback segment.
  */
-char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
+RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
                                                 const planner::ProjectInfo::TargetList &target_list,
                                                 const AbstractTuple *tuple) {
+  LOG_INFO("Create RB Seg from tuple with %d columns", (int)target_list.size());
   assert(schema);
+  assert(target_list.size() != 0); 
 
   size_t col_count = target_list.size();
+  size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
   size_t data_size = 0;
-  char *rb_seg = nullptr;
+  RBSegType rb_seg = nullptr;
 
-  // First figure out the total size of the rollback segment
-  for (auto target : target_list) {
+  // First figure out the total size of the rollback segment data area
+  for (auto &target : target_list) {
     auto col_id = target.first;
-    // Set the column bitmap and update the length of the data field
     data_size += schema->GetLength(col_id);
   }
 
-  // Check if there is no need to generate a new segment
-  if (col_count == 0) {
-    return nullptr;
-  }
-
-  // Allocate the data
-  assert(col_count > 0);
-  size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
-  rb_seg = (char*) pool_.AllocateZeroes(header_size + data_size);
+  // Allocate the RBSeg
+  rb_seg = (RBSegType)pool_.AllocateZeroes(header_size + data_size);
   assert(rb_seg);
 
   // Fill in the header
@@ -62,8 +61,8 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
     const bool is_inlined = schema->IsInlined(col_id);
     const bool is_inbytes = false;
 
-    size_t col_length = schema->GetLength(col_id);
-    size_t allocate_col_length = (is_inlined) ? col_length : schema->GetVariableLength(col_id);
+    size_t inline_col_size = schema->GetLength(col_id);
+    size_t allocate_col_size = (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
 
     SetColIdOffsetPair(rb_seg, target.first, offset, idx);
 
@@ -72,20 +71,25 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
     Value value = tuple->GetValue(col_id);
     assert(schema->GetType(col_id) == value.GetValueType());
     value.SerializeToTupleStorageAllocateForObjects(
-                value_location, is_inlined, allocate_col_length, is_inbytes, &pool_);
+                value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
 
     // Update the offset
-    offset += col_length;
+    offset += inline_col_size;
   }
 
   return rb_seg;
 }
 
-Value RollbackSegmentPool::GetValue(char *rb_seg_ptr, const catalog::Schema *schema, int idx) {
-  auto col_id = GetIdOffsetPair(rb_seg_ptr, idx)->col_id;
+/**
+ * @brief Get a value of a column from the rollback segment
+ *
+ * @param idx The index of the recored column in the rollback segment
+ */
+Value RollbackSegmentPool::GetValue(RBSegType rb_seg, const catalog::Schema *schema, int idx) {
+  auto col_id = GetIdOffsetPair(rb_seg, idx)->col_id;
 
   const ValueType column_type = schema->GetType(col_id);
-  const char *data_ptr = GetColDataLocation(rb_seg_ptr, idx);
+  const char *data_ptr = GetColDataLocation(rb_seg, idx);
   const bool is_inlined = schema->IsInlined(col_id);
 
   return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
