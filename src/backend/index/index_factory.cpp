@@ -17,8 +17,6 @@
 #include "backend/common/logger.h"
 #include "backend/index/index_factory.h"
 #include "backend/index/index_key.h"
-
-#include "backend/index/btree_index.h"
 #include "backend/index/bwtree_index.h"
 #include "backend/index/hash_index.h"
 #include "backend/index/btree_primary_index.h"

@@ -240,7 +240,7 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==

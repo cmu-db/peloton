@@ -243,7 +243,6 @@ void OptimisticRbTxnManager::InstallRollbackSegements(storage::TileGroupHeader *
 
 bool OptimisticRbTxnManager::ReadIsValid(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id,
                                          const cid_t begin_cid, const cid_t end_cid) {
-  auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
   if (IsOwner(tile_group_header, tuple_id) == true) {

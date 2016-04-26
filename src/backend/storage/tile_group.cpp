@@ -92,12 +92,12 @@ oid_t TileGroup::GetActiveTupleCount() const {
 /**
  * Apply the column delta on the rollback segment to the given tuple
  */
-void TileGroup::ApplyRollbackSegment(const char *rb_seg, const oid_t &tuple_slot_id) {
+void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
 
   auto seg_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
   auto table_schema = GetAbstractTable()->GetSchema();
 
-  for (int idx = 0; idx < seg_col_count; ++idx) {
+  for (size_t idx = 0; idx < seg_col_count; ++idx) {
     auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
     Value col_value = storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
 

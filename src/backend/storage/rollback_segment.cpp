@@ -53,8 +53,6 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
   SetTimeStamp(rb_seg, MAX_CID);
   SetColCount(rb_seg, col_count);
 
-  char *data_location = GetDataPtr(rb_seg);
-
   // Fill in the col_id & offset pair and set the data field
   size_t offset = 0;
   for (size_t idx = 0; idx < target_list.size(); ++idx) {
@@ -83,7 +81,7 @@ char * RollbackSegmentPool::GetSegmentFromTuple(const catalog::Schema *schema,
   return rb_seg;
 }
 
-Value RollbackSegmentPool::GetValue(const char *rb_seg_ptr, const catalog::Schema *schema, int idx) {
+Value RollbackSegmentPool::GetValue(char *rb_seg_ptr, const catalog::Schema *schema, int idx) {
   auto col_id = GetIdOffsetPair(rb_seg_ptr, idx)->col_id;
 
   const ValueType column_type = schema->GetType(col_id);

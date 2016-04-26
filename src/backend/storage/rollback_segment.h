@@ -68,22 +68,22 @@ public:
    * Public Getters
    */
 
-  inline static char *GetNextPtr(const char *rb_seg_ptr) const {
+  inline static char *GetNextPtr(char *rb_seg_ptr) {
     return *(reinterpret_cast<char**>(rb_seg_ptr + next_ptr_offset_));
   }
 
   // The semantics of timestamp on rollback segment:
   //    The timestamp of a rollback segment stands for its "end timestamp".
   //    The "start timestamp" of a rollback segment should be discovered from the next rollback segment
-  inline static cid_t GetTimeStamp(const char *rb_seg_ptr) const {
+  inline static cid_t GetTimeStamp(char *rb_seg_ptr) {
     return *(reinterpret_cast<cid_t*>(rb_seg_ptr + timestamp_offset_));
   }
 
-  inline static size_t GetColCount(const char *rb_seg_ptr) const {
-    return *(reinterpret_cast<size_t*>(rb_seg_ptr + col_count_offset_));
+  inline static size_t GetColCount(const char *rb_seg_ptr) {
+    return *(reinterpret_cast<const size_t*>(rb_seg_ptr + col_count_offset_));
   }
 
-  inline static ColIdOffsetPair *GetIdOffsetPair(const char *rb_seg_ptr, int idx) {
+  inline static ColIdOffsetPair *GetIdOffsetPair(char *rb_seg_ptr, int idx) {
     assert(idx >= 0);
     return (reinterpret_cast<ColIdOffsetPair*>(rb_seg_ptr + pairs_start_offset
                                                + sizeof(ColIdOffsetPair) * idx));
@@ -97,20 +97,9 @@ public:
     return tombstone_;
   }
 
-  inline static const char * GetDataPtr(const char *rb_seg_ptr) {
-    size_t col_count = GetColCount(rb_seg_ptr);
-    return rb_seg_ptr + pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
-  }
-
-
   inline static char * GetDataPtr(char *rb_seg_ptr) {
     size_t col_count = GetColCount(rb_seg_ptr);
     return rb_seg_ptr + pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
-  }
-
-  inline static const char *GetColDataLocation(const char *rb_seg_ptr, int idx) {
-    auto offset = GetIdOffsetPair(rb_seg_ptr, idx)->offset;
-    return GetDataPtr(rb_seg_ptr) + offset;
   }
 
   inline static char *GetColDataLocation(char *rb_seg_ptr, int idx) {
@@ -119,7 +108,7 @@ public:
   }
 
   // Get the value on the rollback segment by the table's schema and the idx within this rollback segment
-  static Value GetValue(const char *rb_seg_ptr, const catalog::Schema *schema, int idx);
+  static Value GetValue(char *rb_seg_ptr, const catalog::Schema *schema, int idx);
   /**
    * Public setters
    */

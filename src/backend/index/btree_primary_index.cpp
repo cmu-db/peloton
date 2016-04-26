@@ -244,7 +244,7 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void BTreePrimaryIndex<KeyType, ValueType, KeyComparator,
-                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &result) {  
+                                    KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &result) {
   {
     index_lock.ReadLock();
 
@@ -425,11 +425,6 @@ BTreePrimaryIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKe
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
