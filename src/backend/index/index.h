@@ -150,12 +150,12 @@ class Index : public Printable {
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &exprs,
                     const ScanDirectionType &scan_direction,
-                    std::vector<ItemPointerContainer *> &result) = 0;
+                    std::vector<ItemPointer *> &result) = 0;
 
-  virtual void ScanAllKeys(std::vector<ItemPointerContainer *> &result) = 0;
+  virtual void ScanAllKeys(std::vector<ItemPointer *> &result) = 0;
 
   virtual void ScanKey(const storage::Tuple *key,
-                       std::vector<ItemPointerContainer *> &result) = 0;
+                       std::vector<ItemPointer *> &result) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
