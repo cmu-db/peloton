@@ -137,7 +137,7 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
   assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);\
+  tile_group_header->SetTransactionId(tuple_id, transaction_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
