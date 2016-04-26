@@ -767,50 +767,13 @@ struct ItemPointer {
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
-  bool IsNull() { return (block == INVALID_OID && offset == INVALID_OID); }
-};
+  bool IsNull() const { 
+    return (block == INVALID_OID && offset == INVALID_OID); 
+  }
+
+} __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
-
-//===--------------------------------------------------------------------===//
-// ItemPointerContainer
-//===--------------------------------------------------------------------===//
-
-struct ItemPointerContainer {
-
-  ItemPointerContainer(const ItemPointer &ip) {
-    this->item_pointer = ip;
-    begin_cid = 0;
-  }
-
-  void GetItemPointer(ItemPointer &ip) {
-    spinlock.Lock();
-    ip = this->item_pointer;
-    spinlock.Unlock();
-  }
-
-  // this function is called when swapping the versions during GC.
-  bool SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
-    spinlock.Lock();
-    if (cid > begin_cid) {
-      this->item_pointer = ip;
-      this->begin_cid = cid;
-      spinlock.Unlock();
-      return true;
-    } else {
-      spinlock.Unlock();
-      return false;
-    }
-  }
-
-private:
-  // copy of item pointer pointing to the header of the version chain.
-  ItemPointer item_pointer;
-  // begin_cid of the item pointer header.
-  cid_t begin_cid;
-
-  Spinlock spinlock;
-};
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -834,6 +797,8 @@ bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
 bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
 
 BackendType GetBackendType(const LoggingType& logging_type);
+
+void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

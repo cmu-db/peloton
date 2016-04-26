@@ -136,29 +136,30 @@ bool IndexScanExecutor::DExecute() {
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
 
-  std::vector<ItemPointerContainer *> tuple_location_containers;
+  std::vector<ItemPointer *> tuple_location_ptrs;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
-    index_->ScanAllKeys(tuple_location_containers);
+    index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     index_->Scan(values_, key_column_ids_, expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_containers);
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_containers.size());
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
-  if (tuple_location_containers.size() == 0) return false;
+  if (tuple_location_ptrs.size() == 0) return false;
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
-  for (auto tuple_location_container : tuple_location_containers) {
-    ItemPointer tuple_location;
-    tuple_location_container->GetItemPointer(tuple_location);
+  for (auto tuple_location_ptr : tuple_location_ptrs) {
+    
+    ItemPointer tuple_location = *tuple_location_ptr;
+    
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
@@ -212,9 +213,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // there must exist a visible version.
         assert(tuple_location.IsNull() == false);
 
-        //tile_group = manager.GetTileGroup(tuple_location.block);
-        //tile_group_header = tile_group.get()->GetHeader();
-
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
         // check whether older version is garbage.
@@ -223,10 +221,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
-          bool is_success = tuple_location_container->SwapItemPointer(
-              tuple_location, old_end_cid);
-          assert(is_success == true);
-          //if (is_success == true) {
+
+            // atomically swap item pointer held in the index bucket.
+            AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
+
             // currently, let's assume only primary index exists.
             gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
                 table_->GetOid(), old_item.block, old_item.offset,
