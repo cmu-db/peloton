@@ -209,26 +209,33 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
-        // if there must exist a visible version.
+        // there must exist a visible version.
         assert(tuple_location.IsNull() == false);
 
-        tile_group = manager.GetTileGroup(tuple_location.block);
-        tile_group_header = tile_group.get()->GetHeader();
+        //tile_group = manager.GetTileGroup(tuple_location.block);
+        //tile_group_header = tile_group.get()->GetHeader();
 
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
-        // check whether older version is still visible.
+        // check whether older version is garbage.
         if (old_end_cid < max_committed_cid) {
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+
+          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+
           bool is_success = tuple_location_container->SwapItemPointer(
               tuple_location, old_end_cid);
-
-          if (is_success == true) {
+          assert(is_success == true);
+          //if (is_success == true) {
             // currently, let's assume only primary index exists.
             gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
                 table_->GetOid(), old_item.block, old_item.offset,
                 max_committed_cid);
           }
         }
+
+        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group_header = tile_group.get()->GetHeader();
 
       }
     }
