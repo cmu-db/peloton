@@ -1013,6 +1013,7 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
   // delete stale log files except the one currently being used
   for (int i = 0; i < (int)log_files_.size() - 1; i++) {
     if (truncate_log_id >= log_files_[i]->GetMaxLogId()) {
+      //XXX Do we need directory prefix before log file name?
       return_val = remove(log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s error: %s",

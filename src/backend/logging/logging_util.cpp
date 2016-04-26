@@ -13,6 +13,7 @@
 #include "backend/logging/logging_util.h"
 #include <sys/stat.h>
 #include <dirent.h>
+#include <cstring>
 
 namespace peloton {
 namespace logging {
@@ -290,9 +291,16 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name) {
 
   // XXX readdir is not thread safe???
   while ((file = readdir(dir)) != nullptr) {
-    auto ret_val = remove(file->d_name);
+    if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
+      continue;
+    }
+    char absolute_path[32];
+    strcpy(absolute_path, dir_name);
+    strcat(absolute_path, "/");
+    strcat(absolute_path, file->d_name);
+    auto ret_val = remove(absolute_path);
     if (ret_val != 0) {
-      LOG_ERROR("Failed to delete file: %s, error: %s", file->d_name,
+      LOG_ERROR("Failed to delete file: %s, error: %s", absolute_path,
                 strerror(errno));
     }
   }
