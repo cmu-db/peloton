@@ -790,13 +790,17 @@ struct ItemPointerContainer {
   }
 
   // this function is called when swapping the versions during GC.
-  void SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
+  bool SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
     spinlock.Lock();
     if (cid > begin_cid) {
       this->item_pointer = ip;
       this->begin_cid = cid;
+      spinlock.Unlock();
+      return true;
+    } else {
+      spinlock.Unlock();
+      return false;
     }
-    spinlock.Unlock();
   }
 
 private:

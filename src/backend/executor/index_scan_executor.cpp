@@ -219,13 +219,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         // check whether older version is still visible.
         if (old_end_cid < max_committed_cid) {
-          tuple_location_container->SwapItemPointer(tuple_location,
-                                                    old_end_cid);
+          bool is_success = tuple_location_container->SwapItemPointer(
+              tuple_location, old_end_cid);
 
-          // currently, let's assume only primary index exists.
-          gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-              table_->GetOid(), old_item.block, old_item.offset,
-              max_committed_cid);
+          if (is_success == true) {
+            // currently, let's assume only primary index exists.
+            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+                table_->GetOid(), old_item.block, old_item.offset,
+                max_committed_cid);
+          }
         }
 
       }
