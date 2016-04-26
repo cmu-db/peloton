@@ -88,7 +88,7 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   void InstallRollbackSegements(storage::TileGroupHeader *tile_group_header, const oid_t tuple_id, const cid_t end_cid);
 
-  inline bool StopRollback(const char *next_rb_seg, cid_t txn_ts) {
+  inline bool StopRollback(char *next_rb_seg, cid_t txn_ts) {
     // Check if we actually have a rollback segment
     if (next_rb_seg == nullptr) {
       return true;
@@ -100,7 +100,7 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   // Return nullptr if the tuple is not activated to current txn.
   // Otherwise return the evident that current tuple is activated
-  inline const char* GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_slot_id) {
+  inline char* GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_slot_id) {
     cid_t txn_begin_cid = current_txn->GetBeginCommitId();
     cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
 
@@ -108,7 +108,7 @@ class OptimisticRbTxnManager : public TransactionManager {
     // Owner can not call this function
     assert(IsOwner(tile_group_header, tuple_slot_id) == false);
 
-    const char *rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
+    char *rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
 
     if (txn_begin_cid >= tuple_begin_cid && rb_seg == nullptr) {
       // Master copy is activated
@@ -168,7 +168,7 @@ class OptimisticRbTxnManager : public TransactionManager {
       if (end_cid != INVALID_CID) {
         // It's not read only txn
         current_segment_pool->SetPoolTimestamp(end_cid);
-        living_pools_buckets_[end_cid] = current_segment_pool;
+        living_pools_buckets_[end_cid] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
       } else {
         // read only txn, just delete the segment pool because it's empty
         delete current_segment_pool;
@@ -177,7 +177,7 @@ class OptimisticRbTxnManager : public TransactionManager {
       // Aborted
       // TODO: Add coperative GC
       current_segment_pool->MarkedAsGarbage();
-      garbage_pools[current_txn->GetBeginCommitId()] = current_segment_pool;
+      garbage_pools[current_txn->GetBeginCommitId()] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
     }
 
     delete current_txn;
