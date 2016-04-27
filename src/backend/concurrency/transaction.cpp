@@ -85,7 +85,7 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   }
 }
 
-void Transaction::RecordDelete(const ItemPointer &location) {
+bool Transaction::RecordDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
