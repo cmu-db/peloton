@@ -125,7 +125,6 @@ bool TsOrderTxnManager::AcquireOwnership(
   return true;
 }
 
-
 bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -178,10 +177,10 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location) {
 
 void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", old_location.block, old_location.offset);
+  LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
@@ -189,7 +188,8 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   // if we can perform update, then we must have already locked the older
   // version.
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -233,14 +233,15 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
   LOG_TRACE("Performing Delete");
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==

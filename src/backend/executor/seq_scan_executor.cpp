@@ -128,7 +128,7 @@ bool SeqScanExecutor::DExecute() {
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
 
-        ItemPointer location(current_tile_group_offset_, tuple_id);
+        ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
         // check transaction visibility
         if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {

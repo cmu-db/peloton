@@ -65,7 +65,7 @@ extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);
 
-extern void peloton_dml(PlanState *planstate,
+extern void peloton_dml(const PlanState *planstate,
                         bool sendTuples,
                         DestReceiver *dest,
                         TupleDesc tuple_desc,

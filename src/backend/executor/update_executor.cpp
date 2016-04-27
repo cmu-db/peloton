@@ -91,7 +91,7 @@ bool UpdateExecutor::DExecute() {
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
 
-    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
@@ -173,19 +173,22 @@ bool UpdateExecutor::DExecute() {
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
 
         // FIXME: PerformUpdate() will not be executed if the insertion failed,
-        // There is a write lock, acquired, but since it is not in the write set,
+        // There is a write lock acquired, but since it is not in the write set,
+        // because we haven't yet put them into the write set.
         // the acquired lock can't be released when the txn is aborted.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
           return false;
         }
+
+        LOG_INFO("perform update old location: %u, %u", old_location.block, old_location.offset);
+        LOG_INFO("perform update new location: %u, %u", new_location.block, new_location.offset);
         transaction_manager.PerformUpdate(old_location, new_location);
       }
 
       // TODO: Why don't we also do this in the if branch above?
       executor_context_->num_processed += 1;  // updated one
-
     } else {
       // transaction should be aborted as we cannot update the latest version.
       LOG_TRACE("Fail to update tuple. Set txn failure.");

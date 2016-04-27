@@ -211,9 +211,7 @@ local.properties
 
 # Code Recommenders
 .recommenders/
-<<<<<<< HEAD
 
 CMakeLists.txt
-=======
+
 io_file
->>>>>>> wbl

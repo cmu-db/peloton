@@ -23,9 +23,7 @@ class GCManagerFactory {
     return gc_manager;
   }
 
-  static void Configure(GCType gc_type) {
-    gc_type_ = gc_type;
-  }
+  static void Configure(GCType gc_type) { gc_type_ = gc_type; }
 
   static GCType GetGCType() { return gc_type_; }
 

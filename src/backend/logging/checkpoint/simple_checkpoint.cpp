@@ -140,7 +140,7 @@ void SimpleCheckpoint::DoCheckpoint() {
         /* Get the target table */
         storage::DataTable *target_table = database->GetTable(table_idx);
         assert(target_table);
-        LOG_INFO("SeqScan: database oid %lu table oid %lu: %s", database_idx,
+        LOG_INFO("SeqScan: database oid %u table oid %u: %s", database_idx,
                  table_idx, target_table->GetName().c_str());
 
         auto schema = target_table->GetSchema();
@@ -338,7 +338,7 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
-        LOG_TRACE("Insert a new record for checkpoint (%lu, %lu)",
+        LOG_TRACE("Insert a new record for checkpoint (%u, %u)",
                   tile_group_id, tuple_id);
         records_.push_back(record);
       }
