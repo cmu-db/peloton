@@ -107,7 +107,7 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
 
       // Check if we are using rollback segment
-      if(concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
+      if (concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         auto rb_txn_manager = (concurrency::OptimisticRbTxnManager*)&transaction_manager;
 
         if (rb_txn_manager->IsInserted(tile_group_header, physical_tuple_id) == false) {
