@@ -161,6 +161,7 @@ void PessimisticTxnManager::ReleaseReadLock(
     if (real_txn_id != old_txn_id) {
       // Assert there's no other writer
       assert(EXTRACT_TXNID(real_txn_id) == INITIAL_TXN_ID);
+      old_txn_id = real_txn_id;
     } else {
       break;
     }
@@ -196,7 +197,7 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
     LOG_TRACE("No one holding the lock");
     while (true) {
       LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
-      if (old_txn_id == 0xFF) {
+      if (EXTRACT_READ_COUNT(old_txn_id) == 0xFF) {
         LOG_TRACE("Reader limit reached, read failed");
         return false;
       }
@@ -209,6 +210,7 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
       if (real_txn_id != old_txn_id) {
         // See if there's writer
         if (EXTRACT_TXNID(real_txn_id) != INITIAL_TXN_ID) return false;
+        old_txn_id = real_txn_id;
       } else {
         break;
       }
