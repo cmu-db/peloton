@@ -58,11 +58,10 @@ class OptimisticRbTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  bool ReadIsValid( 
+  bool ValidateRead( 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id,
-    const cid_t begin_cid,
-    const cid_t end_cid);
+    const cid_t &end_cid);
 
 
   virtual bool PerformInsert(const ItemPointer &location);
@@ -101,7 +100,7 @@ class OptimisticRbTxnManager : public TransactionManager {
    * @brief Test if a reader with read timestamp @read_ts should follow on the
    * rb chain started from rb_set
    */
-  inline bool ShouldReadRB(char *rb_seg, cid_t read_ts) {
+  inline bool IsRBVisible(char *rb_seg, cid_t read_ts) {
     // Check if we actually have a rollback segment
     if (rb_seg == nullptr) {
       return false;
@@ -122,33 +121,21 @@ class OptimisticRbTxnManager : public TransactionManager {
     // Owner can not call this function
     assert(IsOwner(tile_group_header, tuple_slot_id) == false);
 
-    char *rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
+    RBSegType rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
+    char *prev_visible;
+    bool master_activated = (txn_begin_cid >= tuple_begin_cid);
 
-    if (txn_begin_cid >= tuple_begin_cid && rb_seg == nullptr) {
-      // Master copy is activated
-      // Return the address of the reserved field to serve as an id
-      return tile_group_header->GetReservedFieldRef(tuple_slot_id);
-    } else if (rb_seg == nullptr) {
-      // The master copy is not activated, and no more rollback segment is found
-      return nullptr;
-    }
+    if (master_activated)
+      prev_visible = tile_group_header->GetReservedFieldRef(tuple_slot_id);
+    else
+      prev_visible = nullptr;
 
-    // Even if the master copy is valid, we still need to go down the
-    // segment list to seek for evidence
-    rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
-
-    // Start checking rollback segment
-    while(true) {
-      if (rb_seg == nullptr) {
-        // No more rollback segment
-        return rb_seg;
-      } else if (txn_begin_cid >= storage::RollbackSegmentPool::GetTimeStamp(rb_seg)) {
-        // The previous rollback segment is visible
-        return rb_seg;
-      }
-
+    while (IsRBVisible(rb_seg, txn_begin_cid)) {
+      prev_visible = rb_seg;
       rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
     }
+
+    return prev_visible;
   }
 
   virtual void PerformDelete(const ItemPointer &location);
