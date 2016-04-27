@@ -13,7 +13,5 @@
 #include "gc_manager_factory.h"
 
 namespace peloton {
-namespace gc {
-GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF;
-}
+namespace gc { GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF; }
 }

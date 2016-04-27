@@ -23,7 +23,7 @@ namespace peloton {
 namespace concurrency {
 
 void Transaction::RecordRead(const ItemPointer &location) {
-  
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -39,7 +39,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
 }
 
 void Transaction::RecordUpdate(const ItemPointer &location) {
-  
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -70,7 +70,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
-  
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -85,11 +85,10 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   }
 }
 
-bool Transaction::RecordDelete(const ItemPointer &location) {
-  
+void Transaction::RecordDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  
+
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
@@ -119,7 +118,6 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   }
   return false;
 }
-
 
 const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
   return rw_set_;

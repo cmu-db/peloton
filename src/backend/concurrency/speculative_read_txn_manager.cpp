@@ -110,7 +110,6 @@ bool SpeculativeReadTxnManager::AcquireOwnership(
   return true;
 }
 
-
 bool SpeculativeReadTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -164,12 +163,13 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
@@ -204,7 +204,8 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
@@ -226,12 +227,13 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
-  auto tile_group_header =
-      catalog::Manager::GetInstance().GetTileGroup(old_location.block)->GetHeader();
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) == transaction_id);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
   assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==

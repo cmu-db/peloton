@@ -203,7 +203,8 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   LOG_TRACE("%s", os.str().c_str());
 }
 
-// this function is called only when building tile groups for aggregation operations.
+// this function is called only when building tile groups for aggregation
+// operations.
 oid_t TileGroupHeader::GetActiveTupleCount() {
   oid_t active_tuple_slots = 0;
 
