@@ -25,10 +25,9 @@ namespace concurrency {
 
 thread_local storage::RollbackSegmentPool *current_segment_pool;
 
-
 OptimisticRbTxnManager &OptimisticRbTxnManager::GetInstance() {
-static OptimisticRbTxnManager txn_manager;
-return txn_manager;
+  static OptimisticRbTxnManager txn_manager;
+  return txn_manager;
 }
 
 // Visibility check
@@ -62,26 +61,21 @@ bool OptimisticRbTxnManager::IsVisible(
     }
   } else {
     bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+    if (invalidated)
+      return false;
+
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
-        // The tuple is inserted by somebody else
+        // The tuple is inserted
         return false;
-      } else {
-        // the older version may be visible.
-        if (!invalidated && GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
-          return true;
-        } else {
-          return false;
-        }
       }
+    }
+
+    if (GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
+      return true;
     } else {
-      // if the tuple is not owned by any transaction.
-      if (!invalidated && GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
-        return true;
-      } else {
-        return false;
-      }
+      return false;
     }
   }
 }
@@ -216,7 +210,7 @@ void OptimisticRbTxnManager::RollbackTuple(std::shared_ptr<storage::TileGroup> t
 
   auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
   // Follow the RB chain, rollback if needed, stop when first unreadable RB
-  while (ShouldReadRB(rb_seg, txn_begin_cid) == true) {
+  while (IsRBVisible(rb_seg, txn_begin_cid) == true) {
 
     // Copy the content of the rollback segment onto the tuple
     tile_group->ApplyRollbackSegment(rb_seg, tuple_id);
@@ -236,14 +230,13 @@ void OptimisticRbTxnManager::InstallRollbackSegments(storage::TileGroupHeader *t
   auto txn_begin_cid = current_txn->GetBeginCommitId();
   auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
 
-  while (ShouldReadRB(rb_seg, txn_begin_cid)) {
+  while (IsRBVisible(rb_seg, txn_begin_cid)) {
     storage::RollbackSegmentPool::SetTimeStamp(rb_seg, end_cid);
     rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
   }
 }
 
-bool OptimisticRbTxnManager::ReadIsValid(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id,
-                                         const cid_t begin_cid, const cid_t end_cid) {
+bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id, const cid_t &end_cid) {
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
   if (IsOwner(tile_group_header, tuple_id) == true) {
@@ -251,21 +244,24 @@ bool OptimisticRbTxnManager::ReadIsValid(const storage::TileGroupHeader *const t
     return true;
   }
 
+  // The following is essentially to test that begin_cid and end_cid will look at the same
+  // version
+
   if (end_cid >= tuple_end_cid) {
     // Read tuple is invalidated by others
     return false;
   }
 
-  auto evidence = GetActivatedEvidence(tile_group_header, begin_cid);
+  auto evidence = GetActivatedEvidence(tile_group_header, tuple_id);
 
   if (evidence == tile_group_header->GetReservedFieldRef(tuple_id)) {
     // begin cid is activated on the master version
     // we already know that the end cid is less than the master version's end cid
-    // since end cid > begin cid >= master version's begin cid, we are ok
+    // since master end cid > end cid > begin cid >= master version's begin cid, we are ok
     return true;
   }
 
-  // Now the begin cid is activated because of a rollback segment
+  // Now the evidence is a rollback segment
   // If the read is valid, the end cid should also be activated by that rollback segment
   return end_cid >= storage::RollbackSegmentPool::GetTimeStamp(evidence);
 }
@@ -327,8 +323,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
       if (tuple_entry.second != RW_TYPE_INSERT &&
           tuple_entry.second != RW_TYPE_INS_DEL) {
 
-          if (ReadIsValid(tile_group_header, tuple_slot,
-               current_txn->GetBeginCommitId(), end_commit_id)) {
+          if (ValidateRead(tile_group_header, tuple_slot, end_commit_id)) {
             continue;
           }
         LOG_TRACE("transaction id=%lu",
