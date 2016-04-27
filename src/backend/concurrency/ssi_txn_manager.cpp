@@ -420,6 +420,11 @@ Result SsiTxnManager::CommitTransaction() {
     if (should_abort == false && ret == Result::RESULT_SUCCESS) {
       current_txn->SetEndCommitId(end_commit_id);
     }
+
+    if (ret != Result::RESULT_SUCCESS) {
+      LOG_INFO("Wierd, result is not success but go into commit state");
+      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    }
     current_ssi_txn_ctx->lock_.Unlock();
   }
 
@@ -523,6 +528,8 @@ Result SsiTxnManager::AbortTransaction() {
     current_ssi_txn_ctx->is_abort_ = true;
     current_ssi_txn_ctx->lock_.Unlock();
   }
+
+  current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -692,7 +699,6 @@ void SsiTxnManager::CleanUp() {
     delete ctx->transaction_;
     delete ctx;
   }
-
 }
 
 void SsiTxnManager::CleanUpBg() {
