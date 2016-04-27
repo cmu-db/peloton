@@ -69,6 +69,8 @@ class PessimisticTxnManager : public TransactionManager {
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
 
+    LOG_INFO("Begin txn %lu", txn_id);
+
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
 
     return txn;
@@ -81,6 +83,8 @@ class PessimisticTxnManager : public TransactionManager {
 
     delete current_txn;
     current_txn = nullptr;
+
+    pessimistic_released_rdlock.clear();
   }
 
   virtual cid_t GetMaxCommittedCid() {
