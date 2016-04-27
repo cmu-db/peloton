@@ -48,7 +48,7 @@ extern thread_local EagerWriteTxnContext *current_txn_ctx;
 //===--------------------------------------------------------------------===//
 class EagerWriteTxnManager : public TransactionManager {
  public:
-  EagerWriteTxnManager() {}
+  EagerWriteTxnManager() : last_epoch_(0) {}
   virtual ~EagerWriteTxnManager() {}
 
   static EagerWriteTxnManager &GetInstance();
@@ -131,18 +131,33 @@ class EagerWriteTxnManager : public TransactionManager {
   }
 
   virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    {
-      std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
-      for (auto &it : running_txn_map_) {
-        if (it.second->begin_cid_ < min_running_cid) {
-          min_running_cid = it.second->begin_cid_;
+    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
+
+    if (last_epoch_ != curr_epoch) {
+      last_epoch_ = curr_epoch;
+
+      cid_t min_running_cid = MAX_CID;
+
+      {
+        std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+        for (auto it : running_txn_map_) {
+          if (it.second->begin_cid_ < min_running_cid) {
+            min_running_cid = it.second->begin_cid_;
+          }
         }
       }
+
+      assert(min_running_cid > 0);
+      if (min_running_cid != MAX_CID) {
+        last_max_commit_cid_ = min_running_cid - 1;
+      } else {
+        // in this case, there's no running transaction.
+        last_max_commit_cid_ = GetNextCommitId() - 1;
+      }
+
     }
 
-    assert(min_running_cid > 0);
-    return min_running_cid - 1;
+    return last_max_commit_cid_;
   }
 
  private:
@@ -239,6 +254,8 @@ class EagerWriteTxnManager : public TransactionManager {
   std::unordered_map<txn_id_t, EagerWriteTxnContext *> running_txn_map_;
   static const int LOCK_OFFSET = 0;
   static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
+  cid_t last_epoch_;
+  cid_t last_max_commit_cid_;
 };
 }
 }
