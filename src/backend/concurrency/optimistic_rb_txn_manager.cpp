@@ -150,11 +150,10 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
 void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  auto transation_id = current_txn->GetTransactionId();
   auto tile_group_header =
     catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == transation_id);
+  assert(tile_group_header->GetTransactionId(tuple_id) == current_txn->GetTransactionId());
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // new_rb_seg is a new segment
