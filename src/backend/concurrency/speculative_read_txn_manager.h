@@ -66,7 +66,7 @@ extern thread_local SpecTxnContext spec_txn_context;
 
 class SpeculativeReadTxnManager : public TransactionManager {
  public:
-  SpeculativeReadTxnManager() {}
+  SpeculativeReadTxnManager() : last_epoch_(0) {}
 
   virtual ~SpeculativeReadTxnManager() {}
 
@@ -129,19 +129,33 @@ class SpeculativeReadTxnManager : public TransactionManager {
   }
 
   virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-      {
-        auto iter = running_txn_buckets_[i].lock_table();
-        for (auto &it : iter) {
-          if (it.second->begin_cid_ < min_running_cid) {
-            min_running_cid = it.second->begin_cid_;
+    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
+
+    if (last_epoch_ != curr_epoch) {
+      last_epoch_ = curr_epoch;
+
+      cid_t min_running_cid = MAX_CID;
+      for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
+        {
+          auto iter = running_txn_buckets_[i].lock_table();
+          for (auto &it : iter) {
+            if (it.second->begin_cid_ < min_running_cid) {
+              min_running_cid = it.second->begin_cid_;
+            }
           }
         }
       }
+      assert(min_running_cid > 0);
+      if (min_running_cid != MAX_CID) {
+        last_max_commit_cid_ = min_running_cid - 1;
+      } else {
+        // in this case, there's no running transaction.
+        last_max_commit_cid_ = GetNextCommitId() - 1;
+      }
+
     }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
-    return min_running_cid - 1;
+
+    return last_max_commit_cid_;
   }
 
   // is it because this dependency has been registered before?
@@ -227,6 +241,8 @@ class SpeculativeReadTxnManager : public TransactionManager {
   // records all running transactions.
   cuckoohash_map<txn_id_t, SpecTxnContext *>
       running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
+  cid_t last_epoch_;
+  cid_t last_max_commit_cid_;
 };
 }
 }
