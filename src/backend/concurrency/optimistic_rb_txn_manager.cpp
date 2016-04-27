@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
 // optimistic_rb_txn_manager.cpp
 //
@@ -214,30 +214,31 @@ void OptimisticRbTxnManager::RollbackTuple(std::shared_ptr<storage::TileGroup> t
   auto tile_group_header = tile_group->GetHeader();
   auto txn_begin_cid = current_txn->GetBeginCommitId();
 
-  auto next_rb_seg = GetRbSeg(tile_group_header, tuple_id);
-  while(StopRollback(next_rb_seg, txn_begin_cid) == false) {
+  auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
+  // Follow the RB chain, rollback if needed, stop when first unreadable RB
+  while (ShouldReadRB(rb_seg, txn_begin_cid) == true) {
 
     // Copy the content of the rollback segment onto the tuple
-    tile_group->ApplyRollbackSegment(next_rb_seg, tuple_id);
+    tile_group->ApplyRollbackSegment(rb_seg, tuple_id);
 
     // Move to next rollback segment
-    next_rb_seg = storage::RollbackSegmentPool::GetNextPtr(next_rb_seg);
+    rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
   }
 
   COMPILER_MEMORY_FENCE;
 
   // Set the tile group header's rollback segment header to next rollback segment
-  SetRbSeg(tile_group_header, tuple_id, next_rb_seg);
+  SetRbSeg(tile_group_header, tuple_id, rb_seg);
 }
 
-void OptimisticRbTxnManager::InstallRollbackSegements(storage::TileGroupHeader *tile_group_header,
+void OptimisticRbTxnManager::InstallRollbackSegments(storage::TileGroupHeader *tile_group_header,
                                                       const oid_t tuple_id, const cid_t end_cid) {
   auto txn_begin_cid = current_txn->GetBeginCommitId();
-  auto next_rb_seg = GetRbSeg(tile_group_header, tuple_id);
+  auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
 
-  while (StopRollback(next_rb_seg, txn_begin_cid)) {
-    storage::RollbackSegmentPool::SetTimeStamp(next_rb_seg, end_cid);
-    next_rb_seg = storage::RollbackSegmentPool::GetNextPtr(next_rb_seg);
+  while (ShouldReadRB(rb_seg, txn_begin_cid)) {
+    storage::RollbackSegmentPool::SetTimeStamp(rb_seg, end_cid);
+    rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
   }
 }
 
@@ -375,7 +376,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         COMPILER_MEMORY_FENCE;
 
         // Then we mark all rollback segment's timestamp as our end timestamp
-        InstallRollbackSegements(tile_group_header, tuple_slot, end_commit_id);
+        InstallRollbackSegments(tile_group_header, tuple_slot, end_commit_id);
 
         COMPILER_MEMORY_FENCE;
 
@@ -401,7 +402,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         RollbackTuple(tile_group, tuple_slot);
 
         // Reset the deleted bit for safety
-        ResetDeleteFlag(tile_group_header, tuple_slot);
+        ClearDeleteFlag(tile_group_header, tuple_slot);
 
         COMPILER_MEMORY_FENCE;
 
@@ -484,7 +485,7 @@ Result OptimisticRbTxnManager::AbortTransaction() {
         RollbackTuple(tile_group, tuple_slot);
 
         // Reset the deleted bit before release the write lock
-        ResetDeleteFlag(tile_group_header, tuple_slot);
+        ClearDeleteFlag(tile_group_header, tuple_slot);
 
         COMPILER_MEMORY_FENCE;
 
