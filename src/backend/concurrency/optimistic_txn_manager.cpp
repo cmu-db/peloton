@@ -472,8 +472,8 @@ Result OptimisticTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // reset the item pointers.
-        tile_group_header->SetNextItemPointer(INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(INVALID_ITEMPOINTER);
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -496,8 +496,8 @@ Result OptimisticTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // reset the item pointers.
-        tile_group_header->SetNextItemPointer(INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(INVALID_ITEMPOINTER);
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
 
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
