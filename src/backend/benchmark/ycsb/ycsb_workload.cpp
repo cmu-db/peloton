@@ -457,14 +457,31 @@ bool RunUpdate() {
 
   ExecuteTest(executors);
 
-  Result result = txn_manager.CommitTransaction();
+  auto result = txn->GetResult();
+
+  // transaction passed execution.
   if (result == Result::RESULT_SUCCESS) {
-    return true;
-  } else {
+
+    result = txn_manager.CommitTransaction();
+
+    if (result == Result::RESULT_SUCCESS) {
+      // transaction passed commitment.
+      return true;
+    } else {
+      // transaction failed commitment.
+      assert(result == Result::RESULT_ABORTED ||
+             result == Result::RESULT_FAILURE);
+      return false;
+    }
+  }
+  // transaction aborted during execution.
+  else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
+    result = txn_manager.AbortTransaction();
     return false;
   }
+
 
 }
 
