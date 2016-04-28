@@ -18,6 +18,7 @@ namespace peloton {
 namespace gc {
 
 void GCManager::StartGC() {
+  LOG_INFO("Starting GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
@@ -25,6 +26,7 @@ void GCManager::StartGC() {
 }
 
 void GCManager::StopGC() {
+  LOG_INFO("Stopping GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }

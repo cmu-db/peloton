@@ -61,9 +61,10 @@ static void WriteOutput() {
   out.close();
 }
 
-// Validate that MVCC storage is correct
+// Validate that MVCC storage is correct, it assumes an old-to-new chain
 // Invariants
 // 1. Transaction id should either be INVALID_TXNID or INITIAL_TXNID
+// 2. Begin commit id should <= end commit id
 static void ValidateMVCC() {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
@@ -96,7 +97,7 @@ static void ValidateMVCC() {
       ItemPointer prev_location = tile_group_header->GetPrevItemPointer(tuple_slot);
 
       // 2. Begin commit id should <= end commit id
-      CHECK_M(begin_cid <= end_cid, "Tuple begin commit id is bigger than end commit id");
+      CHECK_M(begin_cid <= end_cid, "Tuple begin commit id is less than or equal to end commit id");
 
       // This test assumes a oldest-to-newest version chain
       if (txn_id != INVALID_TXN_ID) {
@@ -116,8 +117,9 @@ static void ValidateMVCC() {
               txn_id_t next_txn_id = next_tile_group_header->GetTransactionId(next_location.offset);
 
               if (next_txn_id == INVALID_TXN_ID) {
-                // It must be for a delete operation, so that next txn id is invalid,
-                // However it is only possible that this is the tail of the version chain
+                // If a version in the version chain has a INVALID_TXN_ID, it must be at the tail
+                // of the chain. It is either because we have deleted a tuple (so append a invalid tuple),
+                // or because this new version is aborted.
                 CHECK_M(next_tile_group_header->GetNextItemPointer(next_location.offset).IsNull(), 
                   "Invalid version in a version chain and is not delete");
               }
@@ -126,14 +128,19 @@ static void ValidateMVCC() {
               cid_t next_end_cid = next_tile_group_header->GetEndCommitId(next_location.offset);
 
               // 3. Timestamp consistence
-              CHECK_M(prev_end_cid == next_begin_cid, "Prev end commit id should equal net begin commit id");
+              if (next_begin_cid == MAX_CID) {
+                // It must be an aborted version, it should be at the end of the chain
+                CHECK_M(next_tile_group_header->GetNextItemPointer(next_location.offset).IsNull(),
+                  "Version with MAX_CID begin cid is not version tail");
+              } else {
+                CHECK_M(prev_end_cid == next_begin_cid, "Prev end commit id should equal net begin commit id");  
+                ItemPointer next_prev_location = next_tile_group_header->GetPrevItemPointer(next_location.offset);
 
-              ItemPointer next_prev_location = next_tile_group_header->GetPrevItemPointer(next_location.offset);
-
-              // 4. Version doubly linked list consistency
-              CHECK_M(next_prev_location.offset == prev_location.offset &&
-                      next_prev_location.block == prev_location.block, "Next version's prev version does not match");
-
+                // 4. Version doubly linked list consistency
+                CHECK_M(next_prev_location.offset == prev_location.offset &&
+                        next_prev_location.block == prev_location.block, "Next version's prev version does not match");
+              }
+              
               prev_location = next_location;
               prev_end_cid = next_end_cid;
               next_location = next_tile_group_header->GetNextItemPointer(next_location.offset);
@@ -157,6 +164,8 @@ static void ValidateMVCC() {
     }
     LOG_INFO("[OK] oldest-to-newest version chain validated");
   }
+
+  gc_manager.StartGC();
 }
 
 // Main Entry Point
