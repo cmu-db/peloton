@@ -213,6 +213,35 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
   }
 }
 
+TEST_F(MVCCTest, AbortVersionChainTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.Txn(0).Update(0, 100);
+    scheduler.Txn(0).Abort();
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(1).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.Txn(0).Insert(100, 0);
+    scheduler.Txn(0).Abort();
+    scheduler.Txn(1).Read(100);
+    scheduler.Txn(1).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+}
+
 TEST_F(MVCCTest, VersionChainTest) {
   const int num_txn = 5;
   const int scale = 20;
