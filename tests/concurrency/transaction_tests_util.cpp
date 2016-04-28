@@ -11,10 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "concurrency/transaction_tests_util.h"
+#include "backend/planner/index_scan_plan.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/delete_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/executor/seq_scan_executor.h"
+#include "backend/executor/index_scan_executor.h"
 #include "backend/executor/update_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/expression_util.h"
@@ -237,11 +239,28 @@ TransactionTestsUtil::MakePredicate(int id) {
   return predicate;
 }
 
+
+planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table, int id, std::vector<expression::AbstractExpression *> &runtime_keys) {
+  auto index = table->GetIndex(0);
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+
+  std::vector<oid_t> key_column_ids = {0};
+
+  expr_types.push_back(
+    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+
+  values.push_back(ValueFactory::GetIntegerValue(id));
+
+  return planner::IndexScanPlan::IndexScanDesc(
+    index, key_column_ids, expr_types, values, runtime_keys);
+}
+
 bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
                                        storage::DataTable *table, int id,
                                        int &result) {
   std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(transaction));
+    new executor::ExecutorContext(transaction));
 
   // Predicate, WHERE `id`=id
   auto predicate = MakePredicate(id);
@@ -258,7 +277,7 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
   }
 
   std::unique_ptr<executor::LogicalTile> result_tile(
-      seq_scan_executor.GetOutput());
+    seq_scan_executor.GetOutput());
 
   // Read nothing
   if (result_tile->GetTupleCount() == 0)
