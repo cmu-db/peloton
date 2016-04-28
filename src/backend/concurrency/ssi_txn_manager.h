@@ -48,7 +48,6 @@ struct ReadList {
 
 struct SIReadLock {
   SIReadLock() : list(nullptr) {}
-  ;
   ReadList *list;
   std::mutex mutex;
   void Lock() { mutex.lock(); }
