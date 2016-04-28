@@ -42,3 +42,4 @@ END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
 
+DROP FUNCTION IF EXISTS countdown(start integer);
