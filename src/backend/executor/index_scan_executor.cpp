@@ -228,7 +228,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             // currently, let's assume only primary index exists.
             gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
                 table_->GetOid(), old_item.block, old_item.offset,
-                max_committed_cid);
+                transaction_manager.GetNextCommitId());
           }
         }
 
