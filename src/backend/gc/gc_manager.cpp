@@ -32,6 +32,7 @@ void GCManager::StopGC() {
   }
   this->is_running_ = false;
   this->gc_thread_->join();
+  ClearGarbage();
 }
 
 void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
@@ -158,6 +159,38 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
     }
   }
   return ItemPointer();
+}
+
+// this function can only be called after:
+//    1) All txns have exited
+//    2) The background gc thread has exited
+void GCManager::ClearGarbage() {
+  // iterate reclaim queue and reclaim every thing because it's the end of the world now.
+  TupleMetadata tuple_metadata;
+  while (reclaim_queue_.TryPop(tuple_metadata) == true) {
+    ResetTuple(tuple_metadata);
+
+    // Add to the recycle map
+    std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+    // if the entry for table_id exists.
+    if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
+        true) {
+      // if the entry for tuple_metadata.table_id exists.
+      recycle_queue->BlockingPush(tuple_metadata);
+    } else {
+      // if the entry for tuple_metadata.table_id does not exist.
+      recycle_queue.reset(
+        new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      bool ret =
+        recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+      if (ret == true) {
+        recycle_queue->BlockingPush(tuple_metadata);
+      } else {
+        recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+        recycle_queue->BlockingPush(tuple_metadata);
+      }
+    }
+  }
 }
 
 }  // namespace gc
