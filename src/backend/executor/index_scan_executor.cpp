@@ -155,6 +155,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  std::vector<ItemPointer> garbage_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     
@@ -226,9 +227,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
             // currently, let's assume only primary index exists.
-            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-                table_->GetOid(), old_item.block, old_item.offset,
-                transaction_manager.GetNextCommitId());
+            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+            //     table_->GetOid(), old_item.block, old_item.offset,
+            //     transaction_manager.GetNextCommitId());
+            garbage_tuples.push_back(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
@@ -249,6 +251,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
       }
     }
+  }
+
+  // Add all garbage tuples to GC manager
+  cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+  for (auto garbage : garbage_tuples) {
+    gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        table_->GetOid(),garbage.block, garbage.offset, garbage_timestamp);
   }
 
   // Construct a logical tile for each block
