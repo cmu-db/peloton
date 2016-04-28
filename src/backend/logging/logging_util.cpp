@@ -294,13 +294,13 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name) {
     if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
       continue;
     }
-    char absolute_path[32];
-    strcpy(absolute_path, dir_name);
-    strcat(absolute_path, "/");
-    strcat(absolute_path, file->d_name);
-    auto ret_val = remove(absolute_path);
+    char complete_path[32];
+    strcpy(complete_path, dir_name);
+    strcat(complete_path, "/");
+    strcat(complete_path, file->d_name);
+    auto ret_val = remove(complete_path);
     if (ret_val != 0) {
-      LOG_ERROR("Failed to delete file: %s, error: %s", absolute_path,
+      LOG_ERROR("Failed to delete file: %s, error: %s", complete_path,
                 strerror(errno));
     }
   }
