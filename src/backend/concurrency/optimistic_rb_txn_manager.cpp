@@ -24,6 +24,7 @@ namespace peloton {
 namespace concurrency {
 
 thread_local storage::RollbackSegmentPool *current_segment_pool;
+thread_local cid_t latest_read_timestamp = INVALID_CID;
 
 OptimisticRbTxnManager &OptimisticRbTxnManager::GetInstance() {
   static OptimisticRbTxnManager txn_manager;

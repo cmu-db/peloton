@@ -22,6 +22,7 @@ namespace concurrency {
 
 // Each transaction has a RollbackSegmentPool
 extern thread_local storage::RollbackSegmentPool *current_segment_pool;
+extern thread_local cid_t latest_read_timestamp;
 //===--------------------------------------------------------------------===//
 // optimistic concurrency control with rollback segment
 //===--------------------------------------------------------------------===//
@@ -65,6 +66,13 @@ class OptimisticRbTxnManager : public TransactionManager {
 
 
   virtual bool PerformInsert(const ItemPointer &location);
+
+  // Get the read timestamp of the latest transaction on this thread, it is 
+  // either the begin commit time of current transaction of the just committed
+  // transaction.
+  cid_t GetLatestReadTimestamp() {
+    return latest_read_timestamp;
+  }
 
   /**
    * Deprecated interfaces
@@ -150,6 +158,7 @@ class OptimisticRbTxnManager : public TransactionManager {
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
+    latest_read_timestamp = begin_cid;
     // Add to running transaction table
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
     // Create current transaction poll
@@ -220,6 +229,11 @@ class OptimisticRbTxnManager : public TransactionManager {
   // Get current segment pool of the transaction manager
   inline storage::RollbackSegmentPool *GetSegmentPool() {return current_segment_pool;}
 
+  inline RBSegType GetRbSeg(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
+    char **rb_seg_ptr = (char **)(tile_group_header->GetReservedFieldRef(tuple_id) + rb_seg_offset);
+    return *rb_seg_ptr;
+  }
+
  private:
   static const size_t lock_offset = 0;
   static const size_t rb_seg_offset  = lock_offset + sizeof(oid_t);
@@ -235,11 +249,6 @@ class OptimisticRbTxnManager : public TransactionManager {
                        const RBSegType seg_ptr) {
     const char **rb_seg_ptr = (const char **)(tile_group_header->GetReservedFieldRef(tuple_id) + rb_seg_offset);
     *rb_seg_ptr = seg_ptr;
-  }
-
-  inline RBSegType GetRbSeg(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    char **rb_seg_ptr = (char **)(tile_group_header->GetReservedFieldRef(tuple_id) + rb_seg_offset);
-    return *rb_seg_ptr;
   }
 
   inline bool GetDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
