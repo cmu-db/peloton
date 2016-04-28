@@ -43,3 +43,22 @@ $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
 
 DROP FUNCTION IF EXISTS countdown(start integer);
+
+CREATE OR REPLACE FUNCTION countdown(start integer) RETURNS SETOF text AS
+$$ DECLARE
+    result text := '';
+    sql text := '';
+    tmp text := '';
+BEGIN
+    sql := 'SELECT n || '' down'' AS countdown
+            FROM generate_series(' || CAST(start AS text) || ', 1, -1) AS n ';
+    FOR tmp IN EXECUTE(sql) LOOP
+        IF result > '' THEN
+            result := result || E'\r\n' || tmp;
+        ELSE
+            result := tmp;
+        END IF;
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
