@@ -228,12 +228,24 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             // currently, let's assume only primary index exists.
             gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
                 table_->GetOid(), old_item.block, old_item.offset,
-                max_committed_cid);
-          }
-        }
+                transaction_manager.GetNextCommitId());
 
+            tile_group = manager.GetTileGroup(tuple_location.block);
+            tile_group_header = tile_group.get()->GetHeader();
+            tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
+
+          } else {
+
+            tile_group = manager.GetTileGroup(tuple_location.block);
+            tile_group_header = tile_group.get()->GetHeader();
+          }
+
+        } else {
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
+
+        }
+
 
       }
     }
