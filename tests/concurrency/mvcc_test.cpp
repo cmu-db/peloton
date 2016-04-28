@@ -129,6 +129,90 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
   gc_manager.StartGC();
 }
 
+TEST_F(MVCCTest, SingleThreadVersionChainTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  std::unique_ptr<storage::DataTable> table(
+      TransactionTestsUtil::CreateTable());
+  // read, read, read, read, update, read, read not exist
+  // another txn read
+  {
+    TransactionScheduler scheduler(2, table.get(), &txn_manager);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Read(100);
+    scheduler.Txn(0).Commit();
+    scheduler.Txn(1).Read(0);
+    scheduler.Txn(1).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+
+  // update, update, update, update, read
+  {
+    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(0).Update(0, 2);
+    scheduler.Txn(0).Update(0, 3);
+    scheduler.Txn(0).Update(0, 4);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+
+  // delete not exist, delete exist, read deleted, update deleted,
+  // read deleted, insert back, update inserted, read newly updated,
+  // delete inserted, read deleted
+  {
+    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+    scheduler.Txn(0).Delete(100);
+    scheduler.Txn(0).Delete(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Update(0, 1);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Insert(0, 2);
+    scheduler.Txn(0).Update(0, 3);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Delete(0);
+    scheduler.Txn(0).Read(0);
+    scheduler.Txn(0).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+
+  // insert, delete inserted, read deleted, insert again, delete again
+  // read deleted, insert again, read inserted, update inserted, read updated
+  {
+    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+
+    scheduler.Txn(0).Insert(1000, 0);
+    scheduler.Txn(0).Delete(1000);
+    scheduler.Txn(0).Read(1000);
+    scheduler.Txn(0).Insert(1000, 1);
+    scheduler.Txn(0).Delete(1000);
+    scheduler.Txn(0).Read(1000);
+    scheduler.Txn(0).Insert(1000, 2);
+    scheduler.Txn(0).Read(1000);
+    scheduler.Txn(0).Update(1000, 3);
+    scheduler.Txn(0).Read(1000);
+    scheduler.Txn(0).Commit();
+
+    scheduler.Run();
+
+    ValidateMVCC_OldToNew(table.get());
+  }
+}
+
 TEST_F(MVCCTest, VersionChainTest) {
   const int num_txn = 5;
   const int scale = 20;
