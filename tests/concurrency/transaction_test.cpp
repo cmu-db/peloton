@@ -68,6 +68,16 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
         TransactionTestsUtil::CreateTable());
+    // Just scan the table
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Scan(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(10, scheduler.schedules[0].results.size());
+    }
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
@@ -202,7 +212,6 @@ TEST_F(TransactionTests, AbortTest) {
 
       EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
       EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
-      //printf("==========result=%d\n", int(scheduler.schedules[1].results[0]));
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
 
