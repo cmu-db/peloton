@@ -132,7 +132,7 @@ TEST_F(GCTest, SimpleTest) {
 
   // sleep a while for gc to finish its job
   std::this_thread::sleep_for(
-    3 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
+    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
   // there should be 1 tuple recycled
   EXPECT_EQ(1, RecycledNum(table.get()));
@@ -161,7 +161,7 @@ TEST_F(GCTest, StressTest) {
 
   // sleep a while to wait gc to finish its work
   std::this_thread::sleep_for(
-    3 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
+    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
   // garbage number should be scale * succ update time * how many tuples updated each time
   EXPECT_EQ(scale * succ_num * 2, RecycledNum(table.get()));
