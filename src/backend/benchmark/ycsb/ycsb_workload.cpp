@@ -366,7 +366,6 @@ bool RunRead() {
   else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-	printf("abort transaction!!!\n");
     result = txn_manager.AbortTransaction();
     return false;
   }
@@ -479,7 +478,6 @@ bool RunUpdate() {
   else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-	printf("abort transaction!!!\n");
     result = txn_manager.AbortTransaction();
     return false;
   }
