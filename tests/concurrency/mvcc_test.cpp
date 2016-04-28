@@ -73,7 +73,7 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
             EXPECT_EQ(end_cid, MAX_CID) << "Single version has a non MAX_CID end commit time";
           } else {
             cid_t prev_end_cid = end_cid;
-            ItemPointer prev_location(tile_group_offset, tuple_slot);
+            ItemPointer prev_location(tile_group->GetTileGroupId(), tuple_slot);
             while (!next_location.IsNull()) {
               auto next_tile_group = catalog_manager.GetTileGroup(next_location.block);
               auto next_tile_group_header = next_tile_group->GetHeader();
