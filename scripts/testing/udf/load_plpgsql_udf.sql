@@ -24,3 +24,21 @@ BEGIN
     RETURN tax;
 END;
 $$ LANGUAGE 'plpgsql';
+
+
+DROP FUNCTION IF EXISTS multiply_string(times integer, msg text);
+
+CREATE OR REPLACE FUNCTION multiply_string(times integer, msg text) RETURNS TEXT AS
+$$ DECLARE result text;
+BEGIN
+    result := '';
+    IF times > 0 THEN
+        FOR i IN 1 .. times LOOP
+            result := result || msg || E'\r\n';
+        END LOOP;
+    END IF;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
+
+
