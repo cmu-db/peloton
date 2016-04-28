@@ -229,11 +229,23 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
                 table_->GetOid(), old_item.block, old_item.offset,
                 transaction_manager.GetNextCommitId());
-          }
-        }
 
+            tile_group = manager.GetTileGroup(tuple_location.block);
+            tile_group_header = tile_group.get()->GetHeader();
+            tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
+
+          } else {
+
+            tile_group = manager.GetTileGroup(tuple_location.block);
+            tile_group_header = tile_group.get()->GetHeader();
+          }
+
+        } else {
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
+
+        }
+
 
       }
     }
