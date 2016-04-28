@@ -283,15 +283,12 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   for (txn_id_t txn_id : not_committed_txn_list) {
     global_peloton_log_record_pool.RemoveTxnLogRecordList(txn_id);
   }
+  if (max_collected_commit_id > max_flushed_commit_id) {
+    max_flushed_commit_id = max_collected_commit_id;
+  }
 
-  // Notify the backend loggers
-  //  {
-  //    for (auto backend_logger : backend_loggers) {
-  //      // FIXME
-  //      assert(backend_logger);
-  //      // backend_logger->FinishedFlushing();
-  //    }
-  //  }
+  // Notify waiting worker threads
+  LogManager::GetInstance().FrontendLoggerFlushed();
 }
 
 size_t WriteBehindFrontendLogger::WriteLogRecords(

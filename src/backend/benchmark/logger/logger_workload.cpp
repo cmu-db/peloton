@@ -76,8 +76,10 @@ static void WriteOutput(double value) {
   }
 
   LOG_INFO("LOG  :: FSYNC count         : %d", fsync_count);
-  LOG_INFO("DATA :: CLFLUSH count (NVM) : %lu", storage_manager.GetClflushCount());
-  LOG_INFO("DATA :: MSYNC count   (HDD) : %lu", storage_manager.GetMsyncCount());
+  LOG_INFO("DATA :: CLFLUSH count (NVM) : %lu",
+           storage_manager.GetClflushCount());
+  LOG_INFO("DATA :: MSYNC count   (HDD) : %lu",
+           storage_manager.GetMsyncCount());
 
   out << state.logging_type << " ";
   out << ycsb::state.update_ratio << " ";
@@ -108,6 +110,7 @@ bool PrepareLogFile() {
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
+  log_manager.SetLogFileName("wbl.log");
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
     return false;
