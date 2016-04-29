@@ -50,12 +50,28 @@ class CheckpointManager {
 
   CheckpointStatus GetCheckpointStatus();
 
+  std::unique_ptr<Checkpoint> GetCheckpointer();
+
+  // configuration
+  void Configure(CheckpointType checkpoint_type, bool test_mode = false,
+                 int num_checkpointers = 1) {
+    checkpoint_type_ = checkpoint_type;
+    test_mode_ = test_mode;
+    num_checkpointers_ = num_checkpointers;
+  }
+
  private:
-  CheckpointManager() {}
+  CheckpointManager();
   ~CheckpointManager() {}
+
+  // static configurations for logging
+  CheckpointType checkpoint_type_ = CHECKPOINT_TYPE_INVALID;
 
   // whether run checkpoint in test mode
   bool test_mode_ = false;
+
+  // to be used in the future
+  unsigned int num_checkpointers_ = 1;
 
   // the status of checkpoint manager
   CheckpointStatus checkpoint_status_ = CHECKPOINT_STATUS_INVALID;

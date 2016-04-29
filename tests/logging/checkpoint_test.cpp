@@ -79,11 +79,15 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   catalog_manager.AddDatabase(db.get());
 
   // create checkpoint
-  logging::SimpleCheckpoint simple_checkpoint(true);
-  simple_checkpoint.DoCheckpoint();
+  auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
+  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+
+  auto checkpointer = checkpoint_manager.GetCheckpointer();
+  checkpointer->DoCheckpoint();
 
   // verify results
-  auto records = simple_checkpoint.GetRecords();
+  auto records = reinterpret_cast<logging::SimpleCheckpoint *>(
+                     checkpointer.get())->GetRecords();
   EXPECT_EQ(records.size(),
             TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count + 2);
   for (unsigned int i = 0; i < records.size(); i++) {
