@@ -18,3 +18,7 @@ CREATE FUNCTION concat_text_c(text, text) RETURNS text AS '/usr/local/lib/sample
 
 DROP FUNCTION IF EXISTS calc_tax_c(float8);
 CREATE FUNCTION calc_tax_c(float8) RETURNS float8 AS '/usr/local/lib/sample_udf.so', 'calc_tax_c' LANGUAGE C STRICT;
+
+DROP FUNCTION IF EXISTS item_sales_sum_c(int);
+CREATE FUNCTION item_sales_sum_c(int) RETURNS float8 AS '/usr/local/lib/spi_udf.so', 'item_sales_sum_c' LANGUAGE C STRICT;
+
