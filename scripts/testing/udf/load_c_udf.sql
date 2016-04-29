@@ -24,3 +24,6 @@ CREATE FUNCTION replace_vowel_c(text) RETURNS text AS '/usr/local/lib/sample_udf
 
 DROP FUNCTION IF EXISTS integer_manipulate_c(integer);
 CREATE FUNCTION integer_manipulate_c(integer) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'integer_manipulate' LANGUAGE C STRICT;
+
+DROP FUNCTION IF EXISTS item_sales_sum_c(int);
+CREATE FUNCTION item_sales_sum_c(int) RETURNS float8 AS '/usr/local/lib/spi_udf.so', 'item_sales_sum_c' LANGUAGE C STRICT;
