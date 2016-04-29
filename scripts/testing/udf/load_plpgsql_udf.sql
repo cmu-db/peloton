@@ -55,3 +55,16 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP FUNCTION IF EXISTS item_sales_sum_plpgsql(int);
+CREATE OR REPLACE FUNCTION item_sales_sum_plpgsql(item_id int)
+RETURNS numeric AS $$
+     DECLARE tmp RECORD; result numeric;
+     BEGIN
+          result := 0.00;
+          FOR tmp IN select item.i_price from order_line,item where order_line.ol_i_id = item_id and order_line.ol_i_id = item.i_id LOOP
+              result := result + tmp.i_price;
+          END LOOP;
+     RETURN result;
+END;
+$$ LANGUAGE plpgsql;
