@@ -9,6 +9,7 @@
 #include "harness.h"
 #include "concurrency/transaction_tests_util.h"
 #include "backend/gc/gc_manager.h"
+#include "backend/concurrency/epoch_manager.h"
 namespace peloton {
 
 namespace test {
@@ -125,12 +126,13 @@ TEST_F(GCTest, SimpleTest) {
   // genereated by the last update
   EXPECT_EQ(old_num, 1);
 
-  // sleep a while to wait gc to finish its work
+  // sleep for a while to increase epoch
   std::this_thread::sleep_for(
-    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
 
   // index scan and gc
   ScanAndGC(table.get(), num_key);
+
 
   // there should be garbage
   old_num = GarbageNum(table.get());
@@ -157,9 +159,10 @@ TEST_F(GCTest, StressTest) {
   // count garbage number
   auto old_num = GarbageNum(table.get());
 
-  // sleep a while to wait gc to finish its work
+  // sleep for a while to increase epoch
+
   std::this_thread::sleep_for(
-    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
 
   // EXPECT_EQ(scale * succ_num * 2, old_num);
   EXPECT_TRUE(old_num > 0);
