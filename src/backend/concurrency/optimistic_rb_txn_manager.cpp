@@ -317,6 +317,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
       }
     }
     
+    EndTransaction();
     return Result::RESULT_SUCCESS;
   }
   //*****************************************************
