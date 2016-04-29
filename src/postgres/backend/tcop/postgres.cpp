@@ -3930,7 +3930,6 @@ bool MemcachedSocket::read_line(std::string &new_line) {
         // failure, propagate
         return false;
       }
-
       // printf("\n New Buffer: %s", buffer.c_str());
     }
 
@@ -3938,7 +3937,7 @@ bool MemcachedSocket::read_line(std::string &new_line) {
     // search the buffer for \r\n
     auto pos = buffer.find(rn, buf_ptr);
     if ( pos == std::string::npos ) {
-      // no \r\n found, concat buf to new_line and continue
+      // no /r/n found, concat buf to new_line and continue
       // start from current location, go till end
       size_t substr_size = buf_size-buf_ptr;
       // edge case, last char \r? ignore it temporarily
@@ -3986,14 +3985,13 @@ bool MemcachedSocket::write_response(const std::string &response) {
       return false;
     }
 
-
     // we are ok
     return true;
   }
 }
 
 void MemcachedMain(int argc, char *argv[], Port *port) {
-  // don't terminate yet
+  //similar to postgresMain function
   bool terminate = false;
   auto mc_sock = MemcachedSocket(port);
   std::string query_line, query_result;
@@ -4050,8 +4048,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
   if (am_walsender)
     WalSndSignals();
   else {
-    pqsignal(SIGHUP, SigHupHandler); /* set flag to read config
-* file */
+    pqsignal(SIGHUP, SigHupHandler); /* set flag to read config file */
     /* Peloton Changes
      * This two handlers are in conflict with the postmaster handlers
      * For the time being, we disable it */
@@ -4346,37 +4343,28 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
     query_result.clear();
 
     if(mc_sock.read_line(query_line)) {
-//      printf("\n\nRead line (%d): %s (NEWLINE)\n", ++i, query_line.c_str());
 
       // TODO parse the Memcached request into calls to the prepared statement
-      peloton::memcached::QueryParser qp = peloton::memcached::QueryParser(query_line);//, &mc_sock);
+      peloton::memcached::QueryParser qp = peloton::memcached::QueryParser(query_line);
 
       query_line = qp.parseQuery();
       int op_type = qp.getOpType();
 
-//      printf("op_type:%d\n",op_type);
-//      printf("query_line:%s\n",query_line.c_str());
-      // get a flag of the operation
       MC_OP op;
       std::string value;
 
-      if(op_type>0){
+      if(op_type>0){ //not get type, implies yet to read values
         if(!mc_sock.read_line(value)){
           op_type=-1;
         }
         else{
-          auto temp_loc = query_line.find("$$$$");
-
-//          printf("%s\n",&value[0]);
-
-          char *escaped_value = (char*)malloc( sizeof(char) * (2*value.length() + 1) );
-
-          auto val_size = PQescapeString(escaped_value, &value[0], value.length());
-
-//          printf("%s\n",escaped_value);
-
-          query_line.replace(temp_loc, 4, std::string(escaped_value));
-          PQfreemem(escaped_value);
+          auto temp_loc = query_line.find("$$$$"); // place holder for the value
+          //Allocate 2*length+1 , since we might end up escaping the whole string
+          char *escaped_value = (char*) palloc(sizeof(char) * (2*value.length() + 1));
+          //char *escaped_value = (char*)malloc( sizeof(char) * (2*value.length() + 1) );
+          auto val_size = PQescapeString(escaped_value, &value[0], value.length()); //escape string to input it into postgres
+          query_line.replace(temp_loc, 4, std::string(escaped_value)); //Use the escaped value
+          pfree(escaped_value); //free memory allocated
           escaped_value = NULL;
         }
       }
@@ -4400,35 +4388,28 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
         case -100:{
           if (!mc_sock.write_response(query_line + "\r\n")) {
-//            printf("\nVersion queried, returning dummy \n");
+            // terminate the thread
+            terminate = true;
           }
           continue;
         }
         case -101:{
           mc_sock.close_socket();
-//          printf("\nQuit/ close socket failed, terminating thread\n");
           terminate = true;
-
           continue;
         }
         default:{
-//          printf("\nRead line failed, terminating thread\n");
-//          terminate=true;
           continue;
         }
       }
 
       auto mc_state = new MemcachedState();
-//      printf("Before query run\n");
       exec_simple_query(&query_line[0], mc_state);
-//      printf("After query run\n");
       // proceed to frontend write only if response is not empty
-      // echo response
-      // TODO parse the sql result into Memcached format back to user
       parse_select_result_cols(&mc_state->result, query_result, op, mc_state->result.len);
-//      printf("\nMC_RESULT:%s\n",query_result.c_str());
+
       if (!mc_sock.write_response(query_result + "\r\n")) {
-//        printf("\nWrite line failed, terminating thread\n");
+        // terminate the thread
         terminate = true;
       }
       // clear the result data
@@ -4436,7 +4417,6 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         pfree(mc_state->result.data);
       delete mc_state;
     } else {
-//      printf("\nRead line failed, terminating thread\n");
       // terminate the thread
       terminate = true;
     }
