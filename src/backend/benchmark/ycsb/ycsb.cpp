@@ -152,6 +152,11 @@ void RunBenchmark() {
   RunWorkload();
 
   WriteOutput();
+
+  auto& log_manager = peloton::logging::LogManager::GetInstance();
+  if (log_manager.IsInLoggingMode()) {
+    log_manager.TerminateLoggingMode();
+  }
 }
 
 }  // namespace ycsb
