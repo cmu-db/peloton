@@ -156,6 +156,10 @@ class OptimisticRbTxnManager : public TransactionManager {
     // Set current transaction
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
+
+    LOG_INFO("Beginning transaction %lu", txn_id);
+
+
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
     latest_read_timestamp = begin_cid;

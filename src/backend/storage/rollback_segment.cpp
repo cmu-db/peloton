@@ -28,7 +28,6 @@ namespace storage {
 RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
                                                 const planner::ProjectInfo::TargetList &target_list,
                                                 const AbstractTuple *tuple) {
-  LOG_INFO("Create RB Seg from tuple with %d columns", (int)target_list.size());
   assert(schema);
   assert(target_list.size() != 0); 
 
@@ -64,7 +63,7 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
     size_t inline_col_size = schema->GetLength(col_id);
     size_t allocate_col_size = (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
 
-    SetColIdOffsetPair(rb_seg, target.first, offset, idx);
+    SetColIdOffsetPair(rb_seg, idx, target.first, offset);
 
     // Set the value
     char *value_location = GetColDataLocation(rb_seg, idx);
