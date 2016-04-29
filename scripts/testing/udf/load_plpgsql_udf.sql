@@ -44,7 +44,7 @@ $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
 DROP FUNCTION IF EXISTS countdown(start integer);
 
-CREATE OR REPLACE FUNCTION countdown(start integer) RETURNS SETOF text AS
+CREATE OR REPLACE FUNCTION countdown(start integer) RETURNS text AS
 $$ DECLARE
     result text := '';
     sql text := '';
@@ -59,6 +59,33 @@ BEGIN
             result := tmp;
         END IF;
     END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
+
+
+DROP FUNCTION IF EXISTS fib(num integer);
+
+CREATE OR REPLACE FUNCTION fib(num integer) RETURNS text AS
+$$
+DECLARE
+    result text := '';
+    a int := 1;
+    b int := 1;
+    c int := 0;
+BEGIN
+    IF num < 1 THEN
+        result := -1
+    ELSE IF num = 1 OR num = 2 THEN
+        result := 1
+    ELSE
+        FOR i IN 3 .. num LOOP
+            c := a + b
+            a := b
+            b := c
+        END LOOP;
+        result := c
+    END IF;
     RETURN result;
 END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
