@@ -218,6 +218,7 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
       } else {
         break;
       }
+      
     }
   } else {
     return false;

@@ -12,6 +12,7 @@
 
 #include "backend/planner/project_info.h"
 #include "backend/executor/executor_context.h"
+#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
 namespace planner {
@@ -73,6 +74,24 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
 
   return true;
 }
+//
+//bool ProjectInfo::DeltaEvaluate(storage::RollbackSegment *dest, const AbstractTuple *tuple,
+//                   executor::ExecutorContext *econtext, const catalog::Schema *schema) const {
+//  // Get varlen pool
+//  VarlenPool *pool = nullptr;
+//  if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
+//
+//  // Execute target list
+//  for (auto target : target_list_) {
+//    auto col_id = target.first;
+//    auto expr = target.second;
+//    auto value = expr->Evaluate(tuple, nullptr, econtext);
+//
+//    dest->SetSegmentValueFromTuple(schema, col_id, value, pool);
+//  }
+//
+//  return true;
+//}
 
 std::string ProjectInfo::Debug() const {
   std::ostringstream buffer;
