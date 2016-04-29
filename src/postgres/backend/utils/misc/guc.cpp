@@ -428,6 +428,21 @@ static const struct config_enum_entry peloton_logging_mode_options[] = {
   {NULL, 0, false}
 };
 
+/* Possible values for peloton_gc_mode GUC */
+typedef enum GCType
+{
+  GC_TYPE_OFF, /* No GC */
+  GC_TYPE_VACUUM, /* Periodic vacuuming thread */
+  GC_TYPE_COOPERATIVE /* No separate thread for GC */
+} GCType;
+
+static const struct config_enum_entry peloton_gc_mode_options[] = {
+  {"off", GC_TYPE_OFF, false},
+  {"vacuum", GC_TYPE_VACUUM, false},
+  {"cooperative", GC_TYPE_COOPERATIVE, false},
+  {NULL, 0, false}
+};
+
 /* Possible values for peloton_checkpoint_mode GUC */
 typedef enum CheckpointType {
   CHECKPOINT_TYPE_INVALID,
@@ -510,6 +525,9 @@ int     peloton_layout_mode;
 
 // Logging mode
 LoggingType     peloton_logging_mode;
+
+// GC mode
+GCType      peloton_gc_mode;
 
 // Checkpoint mode
 CheckpointType     peloton_checkpoint_mode;
@@ -3798,6 +3816,16 @@ struct config_enum ConfigureNamesEnum[] =
   },
 
   {
+    {"peloton_gc_mode", PGC_USERSET, PELOTON_GC_OPTIONS,
+      gettext_noop("Change peloton gc mode"),
+      gettext_noop("This determines the gc mode.")
+    },
+    reinterpret_cast<int *>(&peloton_gc_mode),
+    GC_TYPE_OFF, peloton_gc_mode_options,
+    NULL, NULL, NULL
+  },
+
+  {
     {"peloton_logging_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
       gettext_noop("Change peloton logging mode"),
       gettext_noop("This determines the logging mode.")
@@ -3806,15 +3834,16 @@ struct config_enum ConfigureNamesEnum[] =
     LOGGING_TYPE_INVALID, peloton_logging_mode_options,
     NULL, NULL, NULL
   },
+  
   {
-      {"peloton_checkpoint_mode", PGC_USERSET, PELOTON_CHECKPOINT_OPTIONS,
-        gettext_noop("Change peloton checkpoint mode"),
-        gettext_noop("This determines the checkpoint mode.")
-      },
-      reinterpret_cast<int *>(&peloton_checkpoint_mode),
-      CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
-      NULL, NULL, NULL
+    {"peloton_checkpoint_mode", PGC_USERSET, PELOTON_CHECKPOINT_OPTIONS,
+      gettext_noop("Change peloton checkpoint mode"),
+      gettext_noop("This determines the checkpoint mode.")
     },
+    reinterpret_cast<int *>(&peloton_checkpoint_mode),
+    CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
+    NULL, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{

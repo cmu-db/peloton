@@ -1,12 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# PLANNER
+# GC
 ######################################################################
 
-planner_FILES = \
-				backend/planner/abstract_plan.cpp \
-				backend/planner/project_info.cpp
+gc_FILES = \
+           backend/gc/gc_manager.cpp \
+           backend/gc/gc_manager_factory.cpp
 
-planner_INCLUDES = \
-				   -I$(srcdir)/backend/planner
+gc_INCLUDES = \
+							-I$(srcdir)/gc

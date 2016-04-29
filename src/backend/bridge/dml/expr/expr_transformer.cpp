@@ -76,6 +76,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
       peloton_expr = TransformScalarArrayOp(expr_state);
       break;
 
+    case T_ArrayExpr:
+      peloton_expr = TransformArray(expr_state);
+      break;
+
     case T_Var:
       peloton_expr = TransformVar(expr_state);
       break;
@@ -140,6 +144,10 @@ expression::AbstractExpression *ExprTransformer::TransformExpr(
 
     case T_RelabelType:
       peloton_expr = TransformRelabelType(expr);
+      break;
+
+    case T_Param:
+      peloton_expr = TransformParam(expr);
       break;
 
     default:
@@ -298,6 +306,29 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
       EXPRESSION_TYPE_COMPARE_IN, lc, rc);
   // return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQUAL, lc,
   // rc);
+}
+
+expression::AbstractExpression *ExprTransformer::TransformArray(
+    const ExprState *es) {
+  LOG_TRACE("Transform ScalarArrayOp ");
+
+  auto array_expr = reinterpret_cast<const ArrayExpr *>(es->expr);
+
+  // Can only handle one dimension array now
+  if (array_expr->multidims)
+    LOG_ERROR("Do not support multi-dimension array");
+
+  std::vector<expression::AbstractExpression *> vals;
+  ListCell *arg;
+  foreach (arg, array_expr->elements) {
+    Expr *arg_expr = (Expr *)lfirst(arg);
+    vals.push_back(TransformExpr(arg_expr));
+  }
+  PostgresValueType pt =
+    static_cast<PostgresValueType>(array_expr->element_typeid);
+  ValueType vt = PostgresValueTypeToPelotonValueType(pt);
+
+  return expression::ExpressionUtil::VectorFactory(vt, vals);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformFunc(
@@ -515,9 +546,15 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
   return nullptr;
 }
 
+// Backward compatible for expr state
 expression::AbstractExpression *ExprTransformer::TransformParam(
     const ExprState *es) {
-  auto param_expr = reinterpret_cast<const Param *>(es->expr);
+  return TransformParam(es->expr);
+}
+
+expression::AbstractExpression *ExprTransformer::TransformParam(
+    const Expr *expr) {
+  auto param_expr = reinterpret_cast<const Param *>(expr);
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN: {
