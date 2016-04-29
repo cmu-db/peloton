@@ -16,6 +16,10 @@
 namespace peloton {
 namespace logging {
 
+CheckpointManager::CheckpointManager() {
+  Configure(peloton_checkpoint_mode, false, 1);
+}
+
 CheckpointManager &CheckpointManager::GetInstance(void) {
   static CheckpointManager checkpoint_manager;
   return checkpoint_manager;
@@ -35,7 +39,7 @@ void CheckpointManager::WaitForModeTransition(
 }
 
 void CheckpointManager::StartStandbyMode() {
-  auto checkpointer = Checkpoint::GetCheckpoint(peloton_checkpoint_mode, test_mode_);
+  auto checkpointer = GetCheckpointer();
 
   // If checkpointer still doesn't exist, then we have disabled logging
   if (!checkpointer) {
@@ -53,6 +57,10 @@ void CheckpointManager::StartStandbyMode() {
 void CheckpointManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
   SetCheckpointStatus(CHECKPOINT_STATUS_RECOVERY);
+}
+
+std::unique_ptr<Checkpoint> CheckpointManager::GetCheckpointer() {
+  return std::move(Checkpoint::GetCheckpoint(checkpoint_type_, test_mode_));
 }
 
 CheckpointStatus CheckpointManager::GetCheckpointStatus() {
