@@ -44,8 +44,19 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
-DROP FUNCTION IF EXISTS item_sales_sum_plpgsql(int);
+DROP FUNCTION IF EXISTS insert_table_plpgsql(integer);
+CREATE FUNCTION insert_table_plpgsql(num integer) RETURNS void AS
+$$ DECLARE i numeric;
+BEGIN
+    i = 0;
+    WHILE i < num LOOP
+        INSERT INTO A VALUES(1);
+        i := i + 1;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
+DROP FUNCTION IF EXISTS item_sales_sum_plpgsql(int);
 CREATE OR REPLACE FUNCTION item_sales_sum_plpgsql(item_id int)
 RETURNS numeric AS $$
      DECLARE tmp RECORD; result numeric;
