@@ -211,6 +211,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // there must exist a visible version.
+        // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
         assert(tuple_location.IsNull() == false);
 
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
