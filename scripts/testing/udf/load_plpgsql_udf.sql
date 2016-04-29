@@ -43,3 +43,15 @@ BEGIN
     RETURN result;
 END;
 $$ LANGUAGE 'plpgsql';
+
+DROP FUNCTION IF EXISTS insert_table_plpgsql(integer);
+CREATE FUNCTION insert_table_plpgsql(num integer) RETURNS void AS
+$$ DECLARE i numeric;
+BEGIN
+    i = 0;
+    WHILE i < num LOOP
+        INSERT INTO A VALUES(1);
+        i := i + 1;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
