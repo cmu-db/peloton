@@ -24,3 +24,22 @@ BEGIN
     RETURN tax;
 END;
 $$ LANGUAGE 'plpgsql';
+
+DROP FUNCTION IF EXISTS replace_vowel_plpgsql(text);
+CREATE OR REPLACE FUNCTION replace_vowel_plpgsql(x text) RETURNS text AS
+$$ DECLARE result text;
+BEGIN
+    result := regexp_replace(x, '[aeiou]', '*', 'g');
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql';
+
+
+DROP FUNCTION IF EXISTS integer_manipulate_plpgsql(integer);
+CREATE OR REPLACE FUNCTION integer_manipulate_plpgsql(x integer) RETURNS integer AS
+$$ DECLARE result integer;
+BEGIN
+    result := (x * 9 + 999) / 5 - 100;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql';
