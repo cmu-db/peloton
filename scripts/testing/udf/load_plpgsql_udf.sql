@@ -25,6 +25,25 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+DROP FUNCTION IF EXISTS replace_vowel_plpgsql(text);
+CREATE OR REPLACE FUNCTION replace_vowel_plpgsql(x text) RETURNS text AS
+$$ DECLARE result text;
+BEGIN
+    result := regexp_replace(x, '[aeiou]', '*', 'g');
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql';
+
+
+DROP FUNCTION IF EXISTS integer_manipulate_plpgsql(integer);
+CREATE OR REPLACE FUNCTION integer_manipulate_plpgsql(x integer) RETURNS integer AS
+$$ DECLARE result integer;
+BEGIN
+    result := (x * 9 + 999) / 5 - 100;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql';
+
 DROP FUNCTION IF EXISTS item_sales_sum_plpgsql(int);
 
 CREATE OR REPLACE FUNCTION item_sales_sum_plpgsql(item_id int)
@@ -38,5 +57,3 @@ RETURNS numeric AS $$
      RETURN result;
 END;
 $$ LANGUAGE plpgsql;
-
-select i_id, item_sales_sum_plpgsql(i_id) from item where i_id in (100, 14232, 22352, 53421, 99322, 82312, 2214);
