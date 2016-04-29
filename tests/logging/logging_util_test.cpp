@@ -26,9 +26,8 @@ TEST_F(LoggingUtilTests, BasicLoggingUtilTest) {
   auto status = logging::LoggingUtil::CreateDirectory("test_dir", 0700);
   EXPECT_EQ(status, true);
 
-  status = logging::LoggingUtil::RemoveDirectory("test_dir");
+  status = logging::LoggingUtil::RemoveDirectory("test_dir", true);
   EXPECT_EQ(status, true);
-
 }
 
 }  // End test namespace

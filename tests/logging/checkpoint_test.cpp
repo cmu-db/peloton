@@ -65,33 +65,35 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   size_t table_tile_group_count = 3;
 
   // table has 3 tile groups
-  std::unique_ptr<storage::DataTable> target_table(
-      ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(target_table.get(),
+  storage::DataTable *target_table =
+      ExecutorTestsUtil::CreateTable(tile_group_size);
+  ExecutorTestsUtil::PopulateTable(target_table,
                                    tile_group_size * table_tile_group_count,
                                    false, false, false);
   txn_manager.CommitTransaction();
 
-  auto cid = txn_manager.GetNextCommitId() - 1;
-  auto schema = target_table->GetSchema();
-  std::vector<oid_t> column_ids;
-  column_ids.resize(schema->GetColumnCount());
-  std::iota(column_ids.begin(), column_ids.end(), 0);
+  // add table to catalog
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  std::unique_ptr<storage::Database> db(new storage::Database(DEFAULT_DB_ID));
+  db->AddTable(target_table);
+  catalog_manager.AddDatabase(db.get());
 
   // create checkpoint
   logging::SimpleCheckpoint simple_checkpoint(true);
-  std::unique_ptr<logging::WriteAheadBackendLogger> logger(
-      new logging::WriteAheadBackendLogger());
-  simple_checkpoint.SetLogger(logger.get());
-  simple_checkpoint.SetStartCommitId(cid);
-  simple_checkpoint.Scan(target_table.get(), DEFAULT_DB_ID);
+  simple_checkpoint.DoCheckpoint();
 
   // verify results
   auto records = simple_checkpoint.GetRecords();
   EXPECT_EQ(records.size(),
-            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
+            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count + 2);
   for (unsigned int i = 0; i < records.size(); i++) {
-    EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+    if (i == 0) {
+      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_TRANSACTION_BEGIN);
+    } else if (i == records.size() - 1) {
+      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_TRANSACTION_COMMIT);
+    } else {
+      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+    }
   }
 }
 
