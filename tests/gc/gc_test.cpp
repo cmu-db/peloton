@@ -101,6 +101,8 @@ int RecycledNum(storage::DataTable *table) {
   return count;
 }
 
+
+//
 TEST_F(GCTest, SimpleTest) {
 
   // create a table with only one key
@@ -122,6 +124,10 @@ TEST_F(GCTest, SimpleTest) {
   // there should be only one garbage
   // genereated by the last update
   EXPECT_EQ(old_num, 1);
+
+  // sleep a while to wait gc to finish its work
+  std::this_thread::sleep_for(
+    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
   // index scan and gc
   ScanAndGC(table.get(), num_key);
@@ -150,6 +156,10 @@ TEST_F(GCTest, StressTest) {
 
   // count garbage number
   auto old_num = GarbageNum(table.get());
+
+  // sleep a while to wait gc to finish its work
+  std::this_thread::sleep_for(
+    10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
   // EXPECT_EQ(scale * succ_num * 2, old_num);
   EXPECT_TRUE(old_num > 0);
