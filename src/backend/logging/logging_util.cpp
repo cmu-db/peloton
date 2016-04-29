@@ -280,7 +280,7 @@ bool LoggingUtil::CreateDirectory(const char *dir_name, int mode) {
 /**
  * @return false if fail to remove directory
  */
-bool LoggingUtil::RemoveDirectory(const char *dir_name) {
+bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
   struct dirent *file;
   DIR *dir;
 
@@ -305,12 +305,13 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name) {
     }
   }
   closedir(dir);
-  auto ret_val = remove(dir_name);
-  if (ret_val != 0) {
-    LOG_ERROR("Failed to delete dir: %s, error: %s", file->d_name,
-              strerror(errno));
+  if (!only_remove_file) {
+    auto ret_val = remove(dir_name);
+    if (ret_val != 0) {
+      LOG_ERROR("Failed to delete dir: %s, error: %s", file->d_name,
+                strerror(errno));
+    }
   }
-
   return true;
 }
 

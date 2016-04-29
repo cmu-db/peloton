@@ -15,6 +15,7 @@
 #include "backend/logging/checkpoint.h"
 #include "backend/logging/log_record.h"
 #include "backend/executor/seq_scan_executor.h"
+#include <memory>
 
 #include <thread>
 
@@ -66,7 +67,7 @@ class SimpleCheckpoint : public Checkpoint {
 
   FileHandle file_handle_ = INVALID_FILE_HANDLE;
 
-  BackendLogger *logger_ = nullptr;
+  std::unique_ptr<BackendLogger> logger_;
 
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery

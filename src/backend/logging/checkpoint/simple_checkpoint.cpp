@@ -41,7 +41,8 @@ namespace logging {
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
 
-SimpleCheckpoint::SimpleCheckpoint(bool test_mode) : Checkpoint(test_mode) {
+SimpleCheckpoint::SimpleCheckpoint(bool test_mode)
+    : Checkpoint(test_mode), logger_(nullptr) {
   InitDirectory();
   InitVersionNumber();
 }
@@ -54,14 +55,14 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 }
 
 void SimpleCheckpoint::DoCheckpoint() {
-  auto &log_manager = LogManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // XXX get default backend logger
   if (logger_ == nullptr) {
-    logger_ = BackendLogger::GetBackendLogger(LOGGING_TYPE_NVM_WAL);
+    logger_.reset(BackendLogger::GetBackendLogger(LOGGING_TYPE_NVM_WAL));
   }
 
   // FIXME make sure everything up to start_cid is not garbage collected
-  start_commit_id_ = log_manager.GetPersistentFlushedCommitId();
+  start_commit_id_ = txn_manager.GetMaxCommittedCid();
   LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
@@ -99,9 +100,11 @@ void SimpleCheckpoint::DoCheckpoint() {
     commit_record->Serialize(commit_output_buffer);
     records_.push_back(commit_record);
 
-    CreateFile();
-    Persist();
-    Cleanup();
+    if (!test_mode) {
+      CreateFile();
+      Persist();
+      Cleanup();
+    }
   }
 }
 
@@ -246,7 +249,6 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
                           this->pool.get());
         }
         ItemPointer location(tile_group_id, tuple_id);
-        assert(logger_);
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
             database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
@@ -262,7 +264,9 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
   }
 }
 
-void SimpleCheckpoint::SetLogger(BackendLogger *logger) { logger_ = logger; }
+void SimpleCheckpoint::SetLogger(BackendLogger *logger) {
+  logger_.reset(logger);
+}
 
 std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
   return records_;
