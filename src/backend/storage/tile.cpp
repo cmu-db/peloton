@@ -115,13 +115,16 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
 
   // ROLLBACK SEGMENT
   if (concurrency::TransactionManagerFactory::GetProtocol() == peloton::CONCURRENCY_TYPE_OCC_RB) {
-    LOG_INFO("Dealing with rb segment txns");
     auto txn_manager = static_cast<concurrency::OptimisticRbTxnManager *>(&concurrency::TransactionManagerFactory::GetInstance());
     cid_t read_ts = txn_manager->GetLatestReadTimestamp();
     auto tile_group_header = tile_group->GetHeader();
 
     // The ininitial value of this column is in the master copy
     Value value = Value::InitFromTupleStorage(field_location, column_type, is_inlined);
+
+    // If self is owner, just return the master version
+    if (txn_manager->IsOwner(tile_group_header, tuple_offset))
+      return value;
 
     RBSegType rb_seg = txn_manager->GetRbSeg(tile_group_header, tuple_offset);
 
