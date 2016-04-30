@@ -3994,6 +3994,7 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
   //similar to postgresMain function
   bool terminate = false;
   auto mc_sock = MemcachedSocket(port);
+
   std::string query_line, query_result;
 
   sigjmp_buf local_sigjmp_buf;
@@ -4403,7 +4404,8 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
       }
 
-      auto mc_state = new MemcachedState();
+      mc_state->result.len = 0;
+
       exec_simple_query(&query_line[0], mc_state);
       // proceed to frontend write only if response is not empty
       parse_select_result_cols(&mc_state->result, query_result, op, mc_state->result.len);
@@ -4415,7 +4417,6 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
       // clear the result data
       if(mc_state->result.len > 0)
         pfree(mc_state->result.data);
-      delete mc_state;
     } else {
       // terminate the thread
       terminate = true;

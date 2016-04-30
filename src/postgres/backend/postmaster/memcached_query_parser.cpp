@@ -79,7 +79,7 @@ namespace memcached {
           case 'a':{
             op_type=2;
             command = "ADD";
-            return_string = "INSERT INTO test (key, value, flag, size) VALUES ('"+key+"', '"+value+"', "+std::to_string(flags)+", "+std::to_string(bytes)+") ON CONFLICT (key) DO UPDATE SET value = excluded.value, flag = excluded.flag, size = excluded.size";
+            return_string = "INSERT INTO test (key, value, flag, size) VALUES ('"+key+"', '"+value+"', "+std::to_string(flags)+", "+std::to_string(bytes)+")";
             break;
           }
           case 'r':{
