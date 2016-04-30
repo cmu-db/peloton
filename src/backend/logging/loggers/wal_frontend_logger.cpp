@@ -83,6 +83,24 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
   }
 }
 
+WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
+    : peloton_log_directory(log_dir) {
+  LOG_INFO("Instantiating wal_fel with log directory: %s", log_dir.c_str());
+  logging_type = LOGGING_TYPE_NVM_WAL;
+
+  // allocate pool
+  recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+
+  SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
+  InitLogDirectory();
+  InitLogFilesList();
+  UpdateMaxDelimiterForRecovery();
+  LOG_INFO("Updated Max Delimiter for Recovery as %d",
+           (int)max_delimiter_for_recovery);
+  cur_file_handle.fd = -1;  // this is a restart or a new start
+  max_log_id_file = 0;      // 0 is unused
+}
+
 /**
  * @brief close logfile
  */
@@ -94,6 +112,8 @@ WriteAheadFrontendLogger::~WriteAheadFrontendLogger() {
       LOG_ERROR("Error occured while closing LogFile");
     }
   }
+
+  for (auto log_file : log_files_) delete log_file;
   // clean up pool
   delete recovery_pool;
 }
@@ -216,7 +236,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
     // Read the first byte to identify log record type
     // If that is not possible, then wrap up recovery
     auto record_type = GetNextLogRecordTypeForRecovery();
-    LOG_INFO("Record_type is %d", (int)record_type);
     cid_t commit_id = INVALID_CID;
     TupleRecord *tuple_record;
 
@@ -258,7 +277,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
             commit_id > global_max_flushed_id_for_recovery) {
           LoggingUtil::SkipTupleRecordBody(cur_file_handle);
           delete tuple_record;
-          LOG_INFO("SKIP");
           continue;
         }
 
@@ -1013,7 +1031,7 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
   // delete stale log files except the one currently being used
   for (int i = 0; i < (int)log_files_.size() - 1; i++) {
     if (truncate_log_id >= log_files_[i]->GetMaxLogId()) {
-      //XXX Do we need directory prefix before log file name?
+      // XXX Do we need directory prefix before log file name?
       return_val = remove(log_files_[i]->GetLogFileName().c_str());
       if (return_val != 0) {
         LOG_ERROR("Couldn't delete log file: %s error: %s",
@@ -1112,9 +1130,10 @@ WriteAheadFrontendLogger::ExtractMaxLogIdAndMaxDelimFromLogFileRecords(
         }
 
         // Read off the tuple record body from the log
-        LoggingUtil::ReadTupleRecordBody(table->GetSchema(), recovery_pool,
-                                         file_handle);
+        auto record_body = LoggingUtil::ReadTupleRecordBody(
+            table->GetSchema(), recovery_pool, file_handle);
         delete tuple_record;
+        delete record_body;
 
         break;
       }

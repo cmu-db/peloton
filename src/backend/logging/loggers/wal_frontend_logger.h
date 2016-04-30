@@ -41,6 +41,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   WriteAheadFrontendLogger(bool for_testing);
 
+  WriteAheadFrontendLogger(std::string log_dir);
+
   ~WriteAheadFrontendLogger(void);
 
   void FlushLogRecords(void);
