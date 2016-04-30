@@ -23,18 +23,18 @@ public:
     : index_(index), table_(table) {}
 
 
-  index::Index *GetDataIndex() {
+  index::Index *GetDataIndex() const {
     return this->index_;
   }
 
-  storage::DataTable *GetDataTable() {
+  storage::DataTable *GetDataTable() const {
     return this->table_;
   }
 
 private:
-  index::Index *index_ = nullptr;
+  const index::Index *index_ = nullptr;
 
-  storage::DataTable *table_ = nullptr;
+  const storage::DataTable *table_ = nullptr;
 
 };
 
