@@ -110,16 +110,14 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
-
     return txn;
   }
 
   virtual void EndTransaction() {
     txn_id_t txn_id = current_txn->GetTransactionId();
 
-
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
     spec_txn_context.Clear();
 
     delete current_txn;
@@ -206,7 +204,10 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
-
+ private:
+  // records all running transactions.
+  cuckoohash_map<txn_id_t, SpecTxnContext *>
+      running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };
 }
 }
