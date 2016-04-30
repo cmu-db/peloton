@@ -108,13 +108,17 @@ class SpeculativeReadTxnManager : public TransactionManager {
     current_txn = txn;
     spec_txn_context.SetBeginCid(begin_cid);
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
     txn->SetEpochId(eid);
     return txn;
   }
 
   virtual void EndTransaction() {
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+    if (current_txn->GetEndCommitId() == MAX_CID) {
+      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
 
     spec_txn_context.Clear();
 

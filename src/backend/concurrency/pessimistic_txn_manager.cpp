@@ -404,6 +404,7 @@ Result PessimisticTxnManager::CommitTransaction() {
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);

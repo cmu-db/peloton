@@ -395,10 +395,16 @@ Result EagerWriteTxnManager::CommitTransaction() {
     LOG_INFO("Read Only txn: %lu ", current_txn->GetTransactionId());
     // is it always true???
     Result ret = current_txn->GetResult();
+
+    current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
     EndTransaction();
     return ret;
   }
   //*****************************************************
+
+  // generate transaction id.
+  cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   // Check if we cause dead lock
   if (CauseDeadLock()) {
@@ -416,8 +422,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   }
   LOG_INFO("End waiting");
 
-  // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
+
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
