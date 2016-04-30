@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#pragma once
 
 #include <thread>
 
@@ -17,6 +18,8 @@
 
 namespace peloton {
 namespace concurrency {
+
+#define EPOCH_LENGTH 40
 
   class EpochManager {
   public:
@@ -42,7 +45,7 @@ namespace concurrency {
     void Start() {
       while (true) {
         // the epoch advances every 40 milliseconds.
-        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
         ++curr_epoch_;
       }
     }
