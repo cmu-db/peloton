@@ -91,16 +91,16 @@ volatile bool is_running = true;
 oid_t *abort_counts;
 oid_t *commit_counts;
 
-// static void PinToCore(size_t core) {
-//     cpu_set_t cpuset;
-//     CPU_ZERO(&cpuset);
-//     CPU_SET(core, &cpuset);
-//     int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-//     assert(ret == 0);
-// }
+static void PinToCore(size_t core) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core, &cpuset);
+    int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+    assert(ret == 0);
+}
 
 void RunBackend(oid_t thread_id) {
-  // PinToCore(thread_id);
+  PinToCore(thread_id);
 
   auto update_ratio = state.update_ratio;
 
