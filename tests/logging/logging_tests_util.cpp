@@ -41,6 +41,27 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
   return records;
 }
 
+std::vector<logging::TupleRecord>
+LoggingTestsUtil::BuildTupleRecordsForRestartTest(
+    std::vector<std::shared_ptr<storage::Tuple>> &tuples,
+    size_t tile_group_size, size_t table_tile_group_count) {
+  std::vector<logging::TupleRecord> records;
+  for (size_t block = 1; block <= table_tile_group_count; ++block) {
+    for (size_t offset = 0; offset < tile_group_size; ++offset) {
+      ItemPointer location(block, offset);
+      auto &tuple = tuples[(block - 1) * tile_group_size + offset];
+      assert(tuple->GetSchema());
+      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block,
+                                  INVALID_OID, location, INVALID_ITEMPOINTER,
+                                  tuple.get(), DEFAULT_DB_ID);
+      record.SetTuple(tuple.get());
+      records.push_back(record);
+    }
+  }
+  LOG_INFO("Built a vector of %lu tuple WAL insert records", records.size());
+  return records;
+}
+
 std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
     storage::DataTable *table, int num_rows, bool mutate, bool random) {
   std::vector<std::shared_ptr<storage::Tuple>> tuples;

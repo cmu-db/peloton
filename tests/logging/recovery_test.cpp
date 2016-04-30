@@ -10,6 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <dirent.h>
+
 #include "harness.h"
 
 #include "backend/concurrency/transaction_manager_factory.h"
@@ -17,6 +22,11 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/storage/table_factory.h"
+
+#include "backend/logging/logging_util.h"
+
+#include "logging/logging_tests_util.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -83,6 +93,102 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
     tuples.push_back(tuple);
   }
   return tuples;
+}
+
+TEST_F(RecoveryTests, RestartTest) {
+  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto &manager = catalog::Manager::GetInstance();
+
+  size_t tile_group_size = 5;
+  size_t table_tile_group_count = 3;
+  int num_files = 3;
+
+  auto mutate = true;
+  auto random = false;
+  cid_t default_commit_id = INVALID_CID;
+  cid_t default_delimiter = INVALID_CID;
+
+  std::string dir_name = "pl_log0";
+  storage::Database db(DEFAULT_DB_ID);
+  manager.AddDatabase(&db);
+  db.AddTable(recovery_table);
+
+  int num_rows = tile_group_size * table_tile_group_count;
+  std::vector<std::shared_ptr<storage::Tuple>> tuples =
+      LoggingTestsUtil::BuildTuples(recovery_table, num_rows, mutate, random);
+  std::vector<logging::TupleRecord> records =
+      LoggingTestsUtil::BuildTupleRecordsForRestartTest(tuples, tile_group_size,
+                                                        table_tile_group_count);
+
+  auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
+  EXPECT_EQ(status, true);
+
+  for (int i = 0; i < num_files; i++) {
+    std::string file_name = dir_name + "/" + std::string("peloton_log_") +
+                            std::to_string(i) + std::string(".log");
+    FILE *fp = fopen(file_name.c_str(), "wb");
+
+    // now set the first 8 bytes to 0 - this is for the max_log id in this file
+    fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1, fp);
+
+    // now set the next 8 bytes to 0 - this is for the max delimiter in this
+    // file
+    fwrite((void *)&default_delimiter, sizeof(default_delimiter), 1, fp);
+
+    // First write a begin record
+    CopySerializeOutput output_buffer_begin;
+    logging::TransactionRecord record_begin(LOGRECORD_TYPE_TRANSACTION_BEGIN,
+                                            i + 1);
+    record_begin.Serialize(output_buffer_begin);
+
+    fwrite(record_begin.GetMessage(), sizeof(char),
+           record_begin.GetMessageLength(), fp);
+
+    // Now write 5 insert tuple records into this file
+    for (int j = 0; j < (int)tile_group_size; j++) {
+      int num_record = i * tile_group_size + j;
+      CopySerializeOutput output_buffer;
+      records[num_record].Serialize(output_buffer);
+
+      fwrite(records[num_record].GetMessage(), sizeof(char),
+             records[num_record].GetMessageLength(), fp);
+    }
+
+    // Now write commit
+    logging::TransactionRecord record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+                                             i + 1);
+
+    CopySerializeOutput output_buffer_commit;
+    record_commit.Serialize(output_buffer_commit);
+
+    fwrite(record_commit.GetMessage(), sizeof(char),
+           record_commit.GetMessageLength(), fp);
+
+    // Now write delimiter
+    CopySerializeOutput output_buffer_delim;
+    logging::TransactionRecord record_delim(LOGRECORD_TYPE_ITERATION_DELIMITER,
+                                            i + 1);
+
+    record_delim.Serialize(output_buffer_delim);
+
+    fwrite(record_delim.GetMessage(), sizeof(char),
+           record_delim.GetMessageLength(), fp);
+
+    fclose(fp);
+  }
+
+  logging::WriteAheadFrontendLogger wal_fel(std::string("pl_log"));
+
+  EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files);
+  // TODO call DoRecovery here
+
+  for (int i = 0; i < num_files; i++) {
+    int return_val = remove((dir_name + "/" + std::string("peloton_log_") +
+                             std::to_string(i) + (".log")).c_str());
+    EXPECT_EQ(return_val, 0);
+  }
+  status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
+  EXPECT_EQ(status, true);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
