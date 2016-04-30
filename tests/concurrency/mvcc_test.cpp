@@ -23,6 +23,17 @@ namespace test {
 
 class MVCCTest : public PelotonTest {};
 
+static std::vector<ConcurrencyType> TEST_TYPES = {
+  CONCURRENCY_TYPE_OPTIMISTIC,
+  CONCURRENCY_TYPE_PESSIMISTIC,
+  CONCURRENCY_TYPE_SSI,
+  // CONCURRENCY_TYPE_SPECULATIVE_READ,
+  CONCURRENCY_TYPE_EAGER_WRITE,
+  CONCURRENCY_TYPE_TO,
+  CONCURRENCY_TYPE_OCC_RB
+};
+
+
 // Validate that MVCC storage is correct, it assumes an old-to-new chain
 // Invariants
 // 1. Transaction id should either be INVALID_TXNID or INITIAL_TXNID
@@ -130,158 +141,173 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
 }
 
 TEST_F(MVCCTest, SingleThreadVersionChainTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-  // read, read, read, read, update, read, read not exist
-  // another txn read
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Update(0, 1);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Read(100);
-    scheduler.Txn(0).Commit();
-    scheduler.Txn(1).Read(0);
-    scheduler.Txn(1).Commit();
+  for (auto protocol : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol, ISOLATION_LEVEL_TYPE_FULL);
 
-    scheduler.Run();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    // read, read, read, read, update, read, read not exist
+    // another txn read
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Read(100);
+      scheduler.Txn(0).Commit();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
-  }
+      scheduler.Run();
 
-  // update, update, update, update, read
-  {
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
-    scheduler.Txn(0).Update(0, 1);
-    scheduler.Txn(0).Update(0, 2);
-    scheduler.Txn(0).Update(0, 3);
-    scheduler.Txn(0).Update(0, 4);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Commit();
+      ValidateMVCC_OldToNew(table.get());
+    }
 
-    scheduler.Run();
+    // update, update, update, update, read
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Update(0, 1);
+      scheduler.Txn(0).Update(0, 2);
+      scheduler.Txn(0).Update(0, 3);
+      scheduler.Txn(0).Update(0, 4);
+      scheduler.Txn(0).Read(0);
+      scheduler.Txn(0).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
-  }
+      scheduler.Run();
 
-  // delete not exist, delete exist, read deleted, update deleted,
-  // read deleted, insert back, update inserted, read newly updated,
-  // delete inserted, read deleted
-  {
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
-    scheduler.Txn(0).Delete(100);
-    scheduler.Txn(0).Delete(0);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Update(0, 1);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Insert(0, 2);
-    scheduler.Txn(0).Update(0, 3);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Delete(0);
-    scheduler.Txn(0).Read(0);
-    scheduler.Txn(0).Commit();
+      ValidateMVCC_OldToNew(table.get());
+    }
 
-    scheduler.Run();
+    // delete not exist, delete exist, read deleted, update deleted,
+    // read deleted, insert back, update inserted, read newly updated,
+    // delete inserted, read deleted
+    {
+      if (concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_OCC_RB) {
+        // Bypass RB
+        TransactionScheduler scheduler(1, table.get(), &txn_manager);
+        scheduler.Txn(0).Delete(100);
+        scheduler.Txn(0).Delete(0);
+        scheduler.Txn(0).Read(0);
+        scheduler.Txn(0).Update(0, 1);
+        scheduler.Txn(0).Read(0);
+        scheduler.Txn(0).Insert(0, 2);
+        scheduler.Txn(0).Update(0, 3);
+        scheduler.Txn(0).Read(0);
+        scheduler.Txn(0).Delete(0);
+        scheduler.Txn(0).Read(0);
+        scheduler.Txn(0).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
-  }
+        scheduler.Run();  
 
-  // insert, delete inserted, read deleted, insert again, delete again
-  // read deleted, insert again, read inserted, update inserted, read updated
-  {
-    TransactionScheduler scheduler(1, table.get(), &txn_manager);
+        ValidateMVCC_OldToNew(table.get());
+      }
+    }
 
-    scheduler.Txn(0).Insert(1000, 0);
-    scheduler.Txn(0).Delete(1000);
-    scheduler.Txn(0).Read(1000);
-    scheduler.Txn(0).Insert(1000, 1);
-    scheduler.Txn(0).Delete(1000);
-    scheduler.Txn(0).Read(1000);
-    scheduler.Txn(0).Insert(1000, 2);
-    scheduler.Txn(0).Read(1000);
-    scheduler.Txn(0).Update(1000, 3);
-    scheduler.Txn(0).Read(1000);
-    scheduler.Txn(0).Commit();
+    // insert, delete inserted, read deleted, insert again, delete again
+    // read deleted, insert again, read inserted, update inserted, read updated
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
 
-    scheduler.Run();
+      scheduler.Txn(0).Insert(1000, 0);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 1);
+      scheduler.Txn(0).Delete(1000);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Insert(1000, 2);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Update(1000, 3);
+      scheduler.Txn(0).Read(1000);
+      scheduler.Txn(0).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
+      scheduler.Run();
+
+      ValidateMVCC_OldToNew(table.get());
+    }
   }
 }
 
 TEST_F(MVCCTest, AbortVersionChainTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Update(0, 100);
-    scheduler.Txn(0).Abort();
-    scheduler.Txn(1).Read(0);
-    scheduler.Txn(1).Commit();
+  for (auto protocol : TEST_TYPES) {
+    concurrency::TransactionManagerFactory::Configure(protocol, ISOLATION_LEVEL_TYPE_FULL);
 
-    scheduler.Run();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable());
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Update(0, 100);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(0);
+      scheduler.Txn(1).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
-  }
+      scheduler.Run();
 
-  {
-    TransactionScheduler scheduler(2, table.get(), &txn_manager);
-    scheduler.Txn(0).Insert(100, 0);
-    scheduler.Txn(0).Abort();
-    scheduler.Txn(1).Read(100);
-    scheduler.Txn(1).Commit();
+      ValidateMVCC_OldToNew(table.get());
+    }
 
-    scheduler.Run();
+    {
+      TransactionScheduler scheduler(2, table.get(), &txn_manager);
+      scheduler.Txn(0).Insert(100, 0);
+      scheduler.Txn(0).Abort();
+      scheduler.Txn(1).Read(100);
+      scheduler.Txn(1).Commit();
 
-    ValidateMVCC_OldToNew(table.get());
+      scheduler.Run();
+
+      ValidateMVCC_OldToNew(table.get());
+    }
   }
 }
 
 TEST_F(MVCCTest, VersionChainTest) {
-  const int num_txn = 5;
-  const int scale = 20;
-  const int num_key = 256;
-  srand(15721);
+  for (auto protocol : TEST_TYPES) {
+    LOG_INFO("Validating %d", protocol);
+    concurrency::TransactionManagerFactory::Configure(protocol, ISOLATION_LEVEL_TYPE_FULL);
 
-  std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable(num_key));
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    const int num_txn = 5;
+    const int scale = 20;
+    const int num_key = 256;
+    srand(15721);
 
-  TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-  scheduler.SetConcurrent(true);
-  for (int i = 0; i < num_txn; i++) {
-    for (int j = 0; j < scale; j++) {
-      // randomly select two uniq keys
-      int key1 = rand() % num_key;
-      int key2 = rand() % num_key;
-      int delta = rand() % 1000;
-      // Store substracted value
-      scheduler.Txn(i).ReadStore(key1, -delta);
-      scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-      // Store increased value
-      scheduler.Txn(i).ReadStore(key2, delta);
-      scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+    std::unique_ptr<storage::DataTable> table(
+        TransactionTestsUtil::CreateTable(num_key));
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+    scheduler.SetConcurrent(true);
+    for (int i = 0; i < num_txn; i++) {
+      for (int j = 0; j < scale; j++) {
+        // randomly select two uniq keys
+        int key1 = rand() % num_key;
+        int key2 = rand() % num_key;
+        int delta = rand() % 1000;
+        // Store substracted value
+        scheduler.Txn(i).ReadStore(key1, -delta);
+        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+        // Store increased value
+        scheduler.Txn(i).ReadStore(key2, delta);
+        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+      }
+      scheduler.Txn(i).Commit();
     }
-    scheduler.Txn(i).Commit();
-  }
-  scheduler.Run();
+    scheduler.Run();
 
-  // Read all values
-  TransactionScheduler scheduler2(1, table.get(), &txn_manager);
-  for (int i = 0; i < num_key; i++) {
-    scheduler2.Txn(0).Read(i);
-  }
-  scheduler2.Txn(0).Commit();
-  scheduler2.Run();
+    // Read all values
+    TransactionScheduler scheduler2(1, table.get(), &txn_manager);
+    for (int i = 0; i < num_key; i++) {
+      scheduler2.Txn(0).Read(i);
+    }
+    scheduler2.Txn(0).Commit();
+    scheduler2.Run();
 
-  ValidateMVCC_OldToNew(table.get());
+    ValidateMVCC_OldToNew(table.get());
+  }
+
 }
-
-
 }  // End test namespace
 }  // End peloton namespace
