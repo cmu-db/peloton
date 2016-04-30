@@ -102,7 +102,7 @@ class EagerWriteTxnManager : public TransactionManager {
     }
 
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 
     return txn;
@@ -129,7 +129,7 @@ class EagerWriteTxnManager : public TransactionManager {
       running_txn_map_.erase(txn_id);
     }
 
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     delete current_txn_ctx;

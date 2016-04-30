@@ -163,7 +163,7 @@ class OptimisticRbTxnManager : public TransactionManager {
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 
     latest_read_timestamp = begin_cid;
@@ -176,9 +176,7 @@ class OptimisticRbTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-    if (current_txn->GetEndCommitId() == MAX_CID) {
-      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
-    }
+
 
     txn_id_t txn_id = current_txn->GetTransactionId();
 
@@ -204,7 +202,7 @@ class OptimisticRbTxnManager : public TransactionManager {
       garbage_pools_[current_txn->GetBeginCommitId()] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
     }
 
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;

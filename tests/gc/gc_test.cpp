@@ -127,12 +127,15 @@ TEST_F(GCTest, SimpleTest) {
   // genereated by the last update
   EXPECT_EQ(old_num, 1);
 
-  // sleep for a while to increase epoch
+
+  ScanAndGC(table.get(), num_key);
+
   std::this_thread::sleep_for(
     3 * std::chrono::milliseconds(EPOCH_LENGTH));
-
-  // index scan and gc
   ScanAndGC(table.get(), num_key);
+
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
   ScanAndGC(table.get(), num_key);
 
 
@@ -165,12 +168,18 @@ TEST_F(GCTest, StressTest) {
 
   // sleep for a while to increase epoch
 
-  std::this_thread::sleep_for(
-    3 * std::chrono::milliseconds(EPOCH_LENGTH));
+
 
   // EXPECT_EQ(scale * succ_num * 2, old_num);
   EXPECT_TRUE(old_num > 0);
   ScanAndGC(table.get(), num_key);
+
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
+  ScanAndGC(table.get(), num_key);
+
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
   ScanAndGC(table.get(), num_key);
 
   old_num = GarbageNum(table.get());

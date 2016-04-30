@@ -607,7 +607,7 @@ Result SsiTxnManager::AbortTransaction() {
   if (current_txn->GetEndCommitId() == MAX_CID) {
     current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
   }
-  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
   delete current_ssi_txn_ctx;
   delete current_txn;
@@ -702,7 +702,7 @@ void SsiTxnManager::CleanUp() {
   for (auto ctx : garbage_ctx) {
     RemoveReader(ctx->transaction_);
 
-    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId(), ctx->transaction_->GetEndCommitId());
+    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId());
     delete ctx->transaction_;
     delete ctx;
   }

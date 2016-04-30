@@ -74,25 +74,26 @@ namespace concurrency {
 //    }
 
 
-    size_t EnterEpoch() {
+    size_t EnterEpoch(cid_t begin_cid) {
       auto epoch = current_epoch_.load();
 
-      // May be dangerous...
       size_t epoch_idx = epoch % epoch_queue_size_;
       epoch_queue_[epoch_idx].txn_ref_count_++;
+
+      // Set the max cid in the tuple
+      auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_cid_);
+      AtomicMax(max_cid_ptr, begin_cid);
 
       return epoch;
     }
 
-    void ExitEpoch(size_t epoch, cid_t end_cid) {
+    void ExitEpoch(size_t epoch) {
       assert(epoch >= queue_tail_);
       assert(epoch <= current_epoch_);
 
       auto epoch_idx = epoch % epoch_queue_size_;
 
-      // Set the max cid in the tuple
-      auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_cid_);
-      AtomicMax(max_cid_ptr, end_cid);
+
 
       epoch_queue_[epoch_idx].txn_ref_count_--;
     }
