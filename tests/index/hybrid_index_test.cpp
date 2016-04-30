@@ -114,9 +114,9 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  //auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
-  auto txn = txn_manager.BeginTransaction();
+  //auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
 
   int rowid;
@@ -133,10 +133,10 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
     ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
-    txn->RecordInsert(tuple_slot_id);
+    //txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction();
+  //txn_manager.CommitTransaction();
 }
 
 expression::AbstractExpression *CreatePredicate(const int lower_bound) {
