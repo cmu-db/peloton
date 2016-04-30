@@ -32,9 +32,9 @@ public:
   }
 
 private:
-  const index::Index *index_ = nullptr;
+  index::Index *index_ = nullptr;
 
-  const storage::DataTable *table_ = nullptr;
+  storage::DataTable *table_ = nullptr;
 
 };
 
