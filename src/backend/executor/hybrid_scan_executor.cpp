@@ -3,7 +3,23 @@
 //
 
 #include "hybrid_scan_executor.h"
+
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include "backend/common/types.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/executor/logical_tile_factory.h"
+#include "backend/executor/executor_context.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/container_tuple.h"
 #include "backend/planner/hybrid_scan_plan.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/tile.h"
+#include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace executor {
