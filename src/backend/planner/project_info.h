@@ -19,6 +19,7 @@
 #include "backend/storage/tuple.h"
 
 namespace peloton {
+
 namespace planner {
 
 /**
