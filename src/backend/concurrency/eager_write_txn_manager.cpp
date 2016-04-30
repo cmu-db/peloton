@@ -396,7 +396,6 @@ Result EagerWriteTxnManager::CommitTransaction() {
     // is it always true???
     Result ret = current_txn->GetResult();
 
-    current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
     EndTransaction();
     return ret;
   }

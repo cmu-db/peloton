@@ -110,7 +110,7 @@ class SsiTxnManager : public TransactionManager {
     current_ssi_txn_ctx = new SsiTxnContext(txn);
     current_txn = txn;
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 
 
