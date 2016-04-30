@@ -529,7 +529,7 @@ Result SsiTxnManager::AbortTransaction() {
     current_ssi_txn_ctx->lock_.Unlock();
   }
 
-  current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -604,7 +604,10 @@ Result SsiTxnManager::AbortTransaction() {
     txn_manager_mutex_.Unlock();
   }
 
-  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+  if (current_txn->GetEndCommitId() == MAX_CID) {
+    current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+  }
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
 
   delete current_ssi_txn_ctx;
   delete current_txn;
@@ -699,7 +702,7 @@ void SsiTxnManager::CleanUp() {
   for (auto ctx : garbage_ctx) {
     RemoveReader(ctx->transaction_);
 
-    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId());
+    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId(), ctx->transaction_->GetEndCommitId());
     delete ctx->transaction_;
     delete ctx;
   }

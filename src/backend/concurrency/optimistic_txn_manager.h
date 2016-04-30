@@ -68,7 +68,7 @@ class OptimisticTxnManager : public TransactionManager {
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
     txn->SetEpochId(eid);
 
     current_txn = txn;
@@ -77,7 +77,11 @@ class OptimisticTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+    if (current_txn->GetEndCommitId() == MAX_CID) {
+      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
 
     delete current_txn;
     current_txn = nullptr;

@@ -147,7 +147,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
   if (tuple_location_ptrs.size() == 0) return false;
 
@@ -223,7 +222,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
-
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
@@ -255,10 +253,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   // Add all garbage tuples to GC manager
-  cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-  for (auto garbage : garbage_tuples) {
-    gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-        table_->GetOid(),garbage.block, garbage.offset, garbage_timestamp);
+  if(garbage_tuples.size() != 0) {
+    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+    for (auto garbage : garbage_tuples) {
+      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
+    }
   }
 
   // Construct a logical tile for each block

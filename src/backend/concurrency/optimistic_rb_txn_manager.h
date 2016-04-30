@@ -162,6 +162,10 @@ class OptimisticRbTxnManager : public TransactionManager {
 
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch();
+    txn->SetEpochId(eid);
+
     latest_read_timestamp = begin_cid;
     // Add to running transaction table
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
@@ -172,6 +176,10 @@ class OptimisticRbTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
+    if (current_txn->GetEndCommitId() == MAX_CID) {
+      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    }
+
     txn_id_t txn_id = current_txn->GetTransactionId();
 
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
@@ -196,27 +204,11 @@ class OptimisticRbTxnManager : public TransactionManager {
       garbage_pools_[current_txn->GetBeginCommitId()] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
     }
 
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId(), current_txn->GetEndCommitId());
+
     delete current_txn;
     current_txn = nullptr;
     current_segment_pool = nullptr;
-  }
-
-  // Get the commit id of the latest commited txn
-  virtual cid_t GetMaxCommittedCid() {
-  // TODO: rewrite this function since we call it after every txn
-    cid_t min_running_cid = MAX_CID;
-    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-      {
-        auto iter = running_txn_buckets_[i].lock_table();
-        for (auto &it : iter) {
-          if (it.second < min_running_cid) {
-            min_running_cid = it.second;
-          }
-        }
-      }
-    }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
-    return min_running_cid - 1;
   }
 
   // Init reserved area of a tuple

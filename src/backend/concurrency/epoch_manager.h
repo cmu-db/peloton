@@ -24,25 +24,43 @@ namespace concurrency {
 
   struct Epoch {
     std::atomic<int> txn_ref_count_;
-    cid_t max_begin_cid_;
+    cid_t max_cid_;
 
-    Epoch() :txn_ref_count_(0), max_begin_cid_(0){}
+    Epoch() :txn_ref_count_(0), max_cid_(0){}
 
     void Init() {
       txn_ref_count_ = 0;
-      max_begin_cid_ = 0;
+      max_cid_ = 0;
     }
   };
 
   class EpochManager {
   public:
     EpochManager()
-      : epoch_queue_(epoch_queue_size_), queue_tail_(0), current_epoch_(0), queue_tail_gc(true), max_cid(0) {
-      ts_thread_.reset(new std::thread(&EpochManager::Start, this));
-      ts_thread_->detach();
+      : epoch_queue_(epoch_queue_size_), queue_tail_(0), current_epoch_(0), queue_tail_gc(true), max_cid(0), finish_(false) {
+      //ts_thread_.reset(new std::thread(&EpochManager::Start, this));
+      //ts_thread_->detach();
+      ts_thread_ = std::thread(&EpochManager::Start, this);
     }
 
-    ~EpochManager() {}
+    void Reset() {
+      finish_ = true;
+      ts_thread_.join();
+
+      queue_tail_ = 0;
+      current_epoch_ = 0;
+      epoch_queue_[0].Init();
+      queue_tail_gc = true;
+      max_cid = 0;
+
+      finish_ = false;
+      ts_thread_ = std::thread(&EpochManager::Start, this);
+    }
+
+    ~EpochManager() {
+      finish_ = true;
+      ts_thread_.join();
+    }
 
 //    static uint64_t GetEpoch() {
 //
@@ -56,73 +74,68 @@ namespace concurrency {
 //    }
 
 
-    size_t EnterEpoch(cid_t begin_cid) {
-      auto epoch = current_epoch_.fetch_add(0);
+    size_t EnterEpoch() {
+      auto epoch = current_epoch_.load();
 
       // May be dangerous...
       size_t epoch_idx = epoch % epoch_queue_size_;
       epoch_queue_[epoch_idx].txn_ref_count_++;
 
-      // Set the max cid in the tuple
-      auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_begin_cid_);
-      AtomicMax(max_cid_ptr, begin_cid);
-
       return epoch;
     }
 
-    void ExitEpoch(size_t epoch) {
+    void ExitEpoch(size_t epoch, cid_t end_cid) {
       assert(epoch >= queue_tail_);
       assert(epoch <= current_epoch_);
 
       auto epoch_idx = epoch % epoch_queue_size_;
-      epoch_queue_[epoch_idx].max_begin_cid_--;
+
+      // Set the max cid in the tuple
+      auto max_cid_ptr = &(epoch_queue_[epoch_idx].max_cid_);
+      AtomicMax(max_cid_ptr, end_cid);
+
+      epoch_queue_[epoch_idx].txn_ref_count_--;
     }
       // assume we store epoch_store max_store previously
     cid_t GetMaxDeadTxnCid() {
-      // get tail
-      // get current
-      // auto stop
-      // auto max_local
-      // from tail to current
-      // update stop and max local until get ref != 0
-      // if max_local < max return max
-      // return max_local
+        // TODO:
+        // change to:
+        // increase tail
+        // return max
+      auto tail = queue_tail_.load();
+      auto head = current_epoch_.load();
+      if (head > 0) {
+        head--;
+      }
+      auto res = max_cid;
 
-
-        auto tail = queue_tail_.load();
-        auto head = current_epoch_.load();
-        if (head > 0) {
-          head--;
-        }
-        auto res = max_cid;
-
-        auto dead_num = 0;
-        while (tail < head) {
-          auto idx = tail % epoch_queue_size_;
-          // break when meeting running txn
-          if (epoch_queue_[idx].txn_ref_count_ > 0) {
-            break;
-          }
-
-          if(epoch_queue_[idx].max_begin_cid_ > res) {
-            res = epoch_queue_[idx].max_begin_cid_;
-          }
-          tail++;
-          dead_num++;
-        }
-        if (res > max_cid) {
-          AtomicMax(&max_cid, res);
+      auto dead_num = 0;
+      while (tail < head) {
+        auto idx = tail % epoch_queue_size_;
+        // break when meeting running txn
+        if (epoch_queue_[idx].txn_ref_count_ > 0) {
+          break;
         }
 
-        if (dead_num > 32) {
-          IncreaseTail();
+        if(epoch_queue_[idx].max_cid_ > res) {
+          res = epoch_queue_[idx].max_cid_;
         }
-        return max_cid;
+        tail++;
+        dead_num++;
+      }
+      if (res > max_cid) {
+        AtomicMax(&max_cid, res);
+      }
+
+      if (dead_num > 32) {
+        IncreaseTail();
+      }
+      return max_cid;
     }
 
   private:
     void Start() {
-      while (true) {
+      while (!finish_) {
         // the epoch advances every 40 milliseconds.
         std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
 
@@ -170,6 +183,9 @@ namespace concurrency {
         break;
       }
 
+      // save max cid
+      auto max = epoch_queue_[idx].max_cid_;
+      AtomicMax(&max_cid, max);
       tail++;
     }
 
@@ -204,10 +220,10 @@ namespace concurrency {
     std::atomic<size_t> queue_tail_;
     std::atomic<size_t> current_epoch_;
     std::atomic<bool> queue_tail_gc;
-
     cid_t max_cid;
+    bool finish_;
 
-    std::unique_ptr<std::thread> ts_thread_;
+    std::thread ts_thread_;
   };
 
   

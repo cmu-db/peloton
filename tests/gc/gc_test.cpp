@@ -106,6 +106,7 @@ int RecycledNum(storage::DataTable *table) {
 //
 TEST_F(GCTest, SimpleTest) {
 
+  concurrency::EpochManagerFactory::GetInstance().Reset();
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
@@ -132,6 +133,7 @@ TEST_F(GCTest, SimpleTest) {
 
   // index scan and gc
   ScanAndGC(table.get(), num_key);
+  ScanAndGC(table.get(), num_key);
 
 
   // there should be garbage
@@ -148,6 +150,8 @@ TEST_F(GCTest, SimpleTest) {
 
 
 TEST_F(GCTest, StressTest) {
+  concurrency::EpochManagerFactory::GetInstance().Reset();
+
   const int num_key = 256;
   const int scale = 1;
   std::unique_ptr<storage::DataTable> table(
@@ -166,6 +170,7 @@ TEST_F(GCTest, StressTest) {
 
   // EXPECT_EQ(scale * succ_num * 2, old_num);
   EXPECT_TRUE(old_num > 0);
+  ScanAndGC(table.get(), num_key);
   ScanAndGC(table.get(), num_key);
 
   old_num = GarbageNum(table.get());
