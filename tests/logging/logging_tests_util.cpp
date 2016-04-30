@@ -51,7 +51,7 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
       ItemPointer location(block, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
       assert(tuple->GetSchema());
-      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block,
+      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1,
                                   INVALID_OID, location, INVALID_ITEMPOINTER,
                                   tuple.get(), DEFAULT_DB_ID);
       record.SetTuple(tuple.get());
