@@ -111,7 +111,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
 
   // Create new tile group if table doesn't already have that tile group
   if (tile_group == nullptr) {
-    table->AddTileGroupWithOid(tile_group_id);
+    table->AddTileGroupWithOidForRecovery(tile_group_id);
     tile_group = manager.GetTileGroup(tile_group_id);
   }
 

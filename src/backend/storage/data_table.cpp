@@ -65,7 +65,6 @@ DataTable::~DataTable() {
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
-    
     tile_group_lock_.ReadLock();
     auto tile_group_id = tile_groups_.at(tile_group_itr);
     tile_group_lock_.Unlock();
@@ -549,7 +548,6 @@ oid_t DataTable::AddDefaultTileGroup() {
     tile_groups_.push_back(tile_group_id);
     tile_group_lock_.Unlock();
 
-
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
@@ -565,7 +563,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-oid_t DataTable::AddTileGroupWithOid(const oid_t &tile_group_id) {
+oid_t DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   assert(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
@@ -621,9 +619,7 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   LOG_TRACE("Recording tile group : %u ", tile_group_id);
 }
 
-size_t DataTable::GetTileGroupCount() const {
-  return tile_group_count_;
-}
+size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const oid_t &tile_group_offset) const {
