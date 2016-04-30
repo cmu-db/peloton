@@ -38,10 +38,8 @@ bool HybridScanExecutor::DInit() {
     type_ = SEQ;
 
     current_tile_group_offset_ = START_OID;
-
     if (table_ != nullptr) {
       table_tile_group_count_ = table_->GetTileGroupCount();
-
       if (column_ids_.empty()) {
         column_ids_.resize(table_->GetSchema()->GetColumnCount());
         std::iota(column_ids_.begin(), column_ids_.end(), 0);
@@ -61,7 +59,7 @@ bool HybridScanExecutor::DExecute() {
   if (type_ == SEQ) {
     // assume do not read from a logical tile.
     assert(children_.size() == 0);
-    LOG_INFO("Hybrid executor, Seq Scan :: 0 child, %lu tile groups ", table_tile_group_count_);
+    LOG_INFO("Hybrid executor, Seq Scan :: 0 child, %d tile groups ", table_tile_group_count_);
 
     assert(table_ != nullptr);
     assert(column_ids_.size() > 0);
