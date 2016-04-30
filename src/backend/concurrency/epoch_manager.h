@@ -27,7 +27,8 @@ namespace concurrency {
     cid_t max_begin_cid_;
 
     Epoch() :txn_ref_count_(0), max_begin_cid_(0){}
-    Init() {
+
+    void Init() {
       txn_ref_count_ = 0;
       max_begin_cid_ = 0;
     }
@@ -36,7 +37,7 @@ namespace concurrency {
   class EpochManager {
   public:
     EpochManager()
-      : epoch_queue_(epoch_queue_size_), queue_tail_(0), current_epoch_(0), max_cid(0), queue_tail_gc(true) {
+      : epoch_queue_(epoch_queue_size_), queue_tail_(0), current_epoch_(0), queue_tail_gc(true), max_cid(0) {
       ts_thread_.reset(new std::thread(&EpochManager::Start, this));
       ts_thread_->detach();
     }
@@ -56,7 +57,7 @@ namespace concurrency {
 
 
     size_t EnterEpoch(cid_t begin_cid) {
-      auto epoch = current_epoch_;
+      auto epoch = current_epoch_.fetch_add(0);
 
       // May be dangerous...
       size_t epoch_idx = epoch % epoch_queue_size_;
@@ -146,7 +147,7 @@ namespace concurrency {
 
   void IncreaseTail() {
     bool expect = true, desired = false;
-    if(!gc_switch.compare_exchange_weak(expect, desired)){
+    if(!queue_tail_gc.compare_exchange_weak(expect, desired)){
       // someone now is increasing tail
       return;
     }
@@ -174,8 +175,7 @@ namespace concurrency {
     expect = false;
     desired = true;
 
-    auto res = gc_switch.compare_exchange_weak(expect, desired);
-    assert(res == true);
+    queue_tail_gc.compare_exchange_weak(expect, desired);
     return;
   }
 
@@ -198,11 +198,11 @@ namespace concurrency {
 
     // Epoch vector
     std::vector<Epoch> epoch_queue_;
-    std::atomic<unsigned long> queue_tail_;
-    std::atomic<unsigned long> current_epoch_;
+    std::atomic<size_t> queue_tail_;
+    std::atomic<size_t> current_epoch_;
     std::atomic<bool> queue_tail_gc;
 
-    cid_t  max_cid;
+    cid_t max_cid;
 
     std::unique_ptr<std::thread> ts_thread_;
   };
