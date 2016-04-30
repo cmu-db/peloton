@@ -56,7 +56,7 @@ struct SIReadLock {
 
 class SsiTxnManager : public TransactionManager {
  public:
-  SsiTxnManager() : stopped(false), cleaned(false), last_epoch_(0) {
+  SsiTxnManager() : stopped(false), cleaned(false){
     vacuum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
 

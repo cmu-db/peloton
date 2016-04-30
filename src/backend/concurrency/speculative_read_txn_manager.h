@@ -66,7 +66,7 @@ extern thread_local SpecTxnContext spec_txn_context;
 
 class SpeculativeReadTxnManager : public TransactionManager {
  public:
-  SpeculativeReadTxnManager() : last_epoch_(0) {}
+  SpeculativeReadTxnManager() {}
 
   virtual ~SpeculativeReadTxnManager() {}
 
@@ -114,8 +114,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     spec_txn_context.Clear();

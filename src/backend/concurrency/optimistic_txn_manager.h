@@ -24,7 +24,7 @@ namespace concurrency {
 
 class OptimisticTxnManager : public TransactionManager {
  public:
-  OptimisticTxnManager() : {}
+  OptimisticTxnManager()  {}
 
   virtual ~OptimisticTxnManager() {}
 
@@ -77,8 +77,6 @@ class OptimisticTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
