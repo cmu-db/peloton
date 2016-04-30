@@ -60,11 +60,7 @@ private:
 
   storage::DataTable *table_ = nullptr;
 
-  /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
-
-  /** @brief Columns from tile group to be added to logical tile output. */
-  std::vector<oid_t> column_ids_;
 
 
   const std::vector<oid_t> column_ids_;
@@ -76,8 +72,6 @@ private:
   const std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
-};
-
 };
 
 }  // namespace planner
