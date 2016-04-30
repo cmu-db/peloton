@@ -171,6 +171,9 @@ class LogManager {
     return global_max_flushed_id_for_recovery;
   }
 
+  void SetGlobalMaxFlushedIdForRecovery(cid_t new_max) {
+    global_max_flushed_id_for_recovery = new_max;
+  }
   void UpdateCatalogAndTxnManagers(oid_t, cid_t);
 
   void SetGlobalMaxFlushedCommitId(cid_t);

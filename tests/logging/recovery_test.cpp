@@ -23,6 +23,7 @@
 #include "backend/storage/tile.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/storage/table_factory.h"
+#include "backend/logging/log_manager.h"
 
 #include "backend/logging/logging_util.h"
 
@@ -138,7 +139,7 @@ TEST_F(RecoveryTests, RestartTest) {
     // First write a begin record
     CopySerializeOutput output_buffer_begin;
     logging::TransactionRecord record_begin(LOGRECORD_TYPE_TRANSACTION_BEGIN,
-                                            i + 1);
+                                            i + 2);
     record_begin.Serialize(output_buffer_begin);
 
     fwrite(record_begin.GetMessage(), sizeof(char),
@@ -156,7 +157,7 @@ TEST_F(RecoveryTests, RestartTest) {
 
     // Now write commit
     logging::TransactionRecord record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
-                                             i + 1);
+                                             i + 2);
 
     CopySerializeOutput output_buffer_commit;
     record_commit.Serialize(output_buffer_commit);
@@ -167,7 +168,7 @@ TEST_F(RecoveryTests, RestartTest) {
     // Now write delimiter
     CopySerializeOutput output_buffer_delim;
     logging::TransactionRecord record_delim(LOGRECORD_TYPE_ITERATION_DELIMITER,
-                                            i + 1);
+                                            i + 2);
 
     record_delim.Serialize(output_buffer_delim);
 
@@ -179,8 +180,18 @@ TEST_F(RecoveryTests, RestartTest) {
 
   logging::WriteAheadFrontendLogger wal_fel(std::string("pl_log"));
 
-  EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files);
-  // TODO call DoRecovery here
+  EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files + 1);
+
+  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
+
+  wal_fel.DoRecovery();
+
+  EXPECT_EQ(recovery_table->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
+  EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
 
   for (int i = 0; i < num_files; i++) {
     int return_val = remove((dir_name + "/" + std::string("peloton_log_") +

@@ -99,6 +99,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void UpdateMaxDelimiterForRecovery();
 
+  int GetLogFileCursor() { return log_file_cursor_; }
+
  private:
   std::string GetLogFileName(void);
 
