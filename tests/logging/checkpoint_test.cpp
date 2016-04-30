@@ -12,6 +12,7 @@
 
 #include "harness.h"
 #include "backend/logging/checkpoint.h"
+#include "backend/logging/logging_util.h"
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -99,7 +100,8 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   }
 }
 
-TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
+TEST_F(CheckpointTests, CheckpointIntegrationTest) {
+  logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
 
@@ -107,9 +109,10 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   size_t table_tile_group_count = 3;
 
+  oid_t default_table_oid = 13;
   // table has 3 tile groups
   storage::DataTable *target_table =
-      ExecutorTestsUtil::CreateTable(tile_group_size);
+      ExecutorTestsUtil::CreateTable(tile_group_size, true, default_table_oid);
   ExecutorTestsUtil::PopulateTable(target_table,
                                    tile_group_size * table_tile_group_count,
                                    false, false, false);
@@ -123,16 +126,30 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
 
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
-  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  auto &log_manager = logging::LogManager::GetInstance();
+  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, false, 1);
 
   auto checkpointer = checkpoint_manager.GetCheckpointer();
+
   checkpointer->DoCheckpoint();
 
   auto most_recent_checkpoint_cid = checkpointer->GetMostRecentCheckpointCid();
   EXPECT_EQ(most_recent_checkpoint_cid != INVALID_CID, true);
+
+  checkpointer.reset();
+
+  // recovery from checkpoint
+  log_manager.PrepareRecovery();
+  auto recovery_checkpointer = checkpoint_manager.GetCheckpointer();
+  recovery_checkpointer->DoRecovery();
+
+  EXPECT_EQ(db->GetTableCount(), 1);
+  EXPECT_EQ(db->GetTable(0)->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count);
+  logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
 }
 
-TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
+TEST_F(CheckpointTests, CheckpointRecoveryTest) {
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   size_t table_tile_group_count = 3;
 
@@ -164,9 +181,6 @@ TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
   auto total_tuple_count =
       GetTotalTupleCount(table_tile_group_count, DEFAULT_RECOVERY_CID);
   EXPECT_EQ(total_tuple_count, tile_group_size * table_tile_group_count);
-
-  // TODO create test mode for checkpoint to avoid file write
-  // TODO clean up file directory at startup
 
   // Clean up
   for (auto &tuple : tuples) {
