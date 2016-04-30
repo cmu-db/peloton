@@ -55,6 +55,10 @@ public:
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
+  const expression::AbstractExpression *GetPredicate() const {
+    return predicate_.get();
+  }
+
   PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_SEQSCAN;
   }
