@@ -23,6 +23,7 @@
 namespace peloton {
 namespace networking {
 class Connection;
+// FIXME: Could you give some description about the function of a listener?
 class Listener {
  public:
   // This is the server port

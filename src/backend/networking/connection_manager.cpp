@@ -37,7 +37,7 @@ ConnectionManager::~ConnectionManager() {
   }
 }
 
-void ConnectionManager::ResterRpcServer(RpcServer* server) {
+void ConnectionManager::RegisterRpcServer(RpcServer* server) {
   // this function is only called once, but in case, we still have lock here
   mutex_.Lock();
   rpc_server_ = server;
