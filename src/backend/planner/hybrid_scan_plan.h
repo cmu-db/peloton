@@ -55,6 +55,10 @@ public:
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
+  PlanNodeType GetPlanNodeType() const {
+    return PLAN_NODE_TYPE_SEQSCAN;
+  }
+
 private:
   index::Index *index_ = nullptr;
 
