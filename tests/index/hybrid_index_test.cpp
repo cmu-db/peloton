@@ -176,7 +176,7 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
 void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
-  int tuple_counts = 0;
+  size_t tuple_counts = 0;
   timer.Start();
   bool status = false;
 
@@ -198,13 +198,13 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
-  EXPECT_TRUE(tuple_counts == tile_group * tuples_per_tile_group);
+  EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group);
 }
 
 TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
-  LoadTable(hyadapt_table);
+  //LoadTable(hyadapt_table);
 
   LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
 
