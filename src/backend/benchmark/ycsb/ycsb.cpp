@@ -27,6 +27,8 @@ extern LoggingType peloton_logging_mode;
 
 extern int64_t peloton_wait_timeout;
 
+extern int peloton_flush_frequency_micros;
+
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
@@ -107,6 +109,7 @@ inline void YCSBBootstrapLogger() {
   }
 
   peloton_wait_timeout = state.wait_timeout;
+  peloton_flush_frequency_micros = state.flush_freq;
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
