@@ -32,7 +32,8 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 class Checkpoint {
  public:
-  Checkpoint(bool test_mode) : test_mode(test_mode) {
+  Checkpoint(bool disable_file_access)
+      : disable_file_access(disable_file_access) {
     pool.reset(new VarlenPool(BACKEND_TYPE_MM));
   }
 
@@ -53,12 +54,16 @@ class Checkpoint {
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);
 
+  inline cid_t GetMostRecentCheckpointCid() {
+    return most_recent_checkpoint_cid;
+  }
+
  protected:
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
 
-  bool test_mode = false;
+  bool disable_file_access = false;
 
   // Default checkpoint interval (seconds)
   int64_t checkpoint_interval_ = 5;
@@ -79,6 +84,8 @@ class Checkpoint {
 
   // current status
   CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
+
+  cid_t most_recent_checkpoint_cid = INVALID_CID;
 };
 
 }  // namespace logging
