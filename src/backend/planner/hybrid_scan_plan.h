@@ -59,6 +59,23 @@ public:
     return PLAN_NODE_TYPE_SEQSCAN;
   }
 
+  index::Index *GetIndex() const { return index_; }
+
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
+
+  const std::vector<oid_t> &GetKeyColumnIds() const { return key_column_ids_; }
+
+  const std::vector<ExpressionType> &GetExprTypes() const {
+    return expr_types_;
+  }
+
+  const std::vector<Value> &GetValues() const { return values_; }
+
+  const std::vector<expression::AbstractExpression *> &GetRunTimeKeys() const {
+    return runtime_keys_;
+  }
+
+
 private:
   index::Index *index_ = nullptr;
 
