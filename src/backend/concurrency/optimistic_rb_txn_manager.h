@@ -203,7 +203,8 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   // Get the commit id of the latest commited txn
   virtual cid_t GetMaxCommittedCid() {
-  // TODO: rewrite this function since we call it after every txn
+    // TODO: rewrite this function since we call it after every txn
+    return 0;
     cid_t min_running_cid = MAX_CID;
     for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
       {

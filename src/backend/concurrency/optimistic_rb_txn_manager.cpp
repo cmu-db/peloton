@@ -44,7 +44,7 @@ bool OptimisticRbTxnManager::IsVisible(
 
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
-    // This is caused by an aborted insertion of another txn
+    // This is caused by an comitted deletion
     return false;
   }
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
@@ -98,8 +98,10 @@ bool OptimisticRbTxnManager::IsOwnable(
   const storage::TileGroupHeader *const tile_group_header,
   const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-  auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
+  char *evidence = GetActivatedEvidence(tile_group_header, tuple_id);
+
+  return tuple_txn_id == INITIAL_TXN_ID && 
+        evidence == tile_group_header->GetReservedFieldRef(tuple_id);
 }
 
 // get write lock on a tuple.
