@@ -35,7 +35,7 @@
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/comparison_expression.h"
 #include "backend/expression/conjunction_expression.h"
-
+#include "backend/planner/index_scan_plan.h"
 #include "backend/index/index_factory.h"
 
 namespace peloton {
@@ -45,8 +45,8 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 100000;
-static size_t tile_group = 1000;
+static size_t tuples_per_tile_group = 10;
+static size_t tile_group = 10;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -173,7 +173,7 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
 }
 
 
-void ExecuteTest(executor::AbstractExecutor *executor, size_t tiple_group_counts) {
+void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
   size_t tuple_counts = 0;
@@ -190,7 +190,6 @@ void ExecuteTest(executor::AbstractExecutor *executor, size_t tiple_group_counts
         executor->GetOutput());
       tuple_counts += result_tile->GetTupleCount();
       result_tiles.emplace_back(result_tile.release());
-      tiple_group_counts--;
   }
 
   // Execute stuff
@@ -199,7 +198,7 @@ void ExecuteTest(executor::AbstractExecutor *executor, size_t tiple_group_counts
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
-  // EXPECT_EQ(tiple_group_counts, 0);
+//  EXPECT_EQ(tiple_group_counts, 0);
   EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group);
 }
 
@@ -211,6 +210,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
 
 
+  const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -224,7 +224,6 @@ TEST_F(HybridIndexTests, SeqScanTest) {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-  
   oid_t column_count = projectivity * columncount;
   std::vector<oid_t> hyadapt_column_ids;
 
@@ -235,15 +234,62 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   }
 
   // Create and set up seq scan executor
-  // const int lower_bound = 400;
-  auto predicate = nullptr; //CreatePredicate(lower_bound);
+  auto predicate = nullptr; // CreatePredicate(lower_bound);
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
 
-  for (size_t i = 0; i < 5; i++) {
-     ExecuteTest(&Hybrid_scan_executor, hyadapt_table->GetTileGroupCount());
+  ExecuteTest(&Hybrid_scan_executor);
+
+  txn_manager.CommitTransaction();
+}
+
+TEST_F(HybridIndexTests, IndexScanTest) {
+  std::unique_ptr<storage::DataTable> hyadapt_table;
+  CreateTable(hyadapt_table, true);
+  LoadTable(hyadapt_table);
+
+  LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
+
+
+  std::vector<oid_t> column_ids;
+  oid_t column_count = projectivity * columncount;
+  std::vector<oid_t> hyadapt_column_ids;
+
+  GenerateSequence(hyadapt_column_ids, column_count);
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
+
+  auto index = hyadapt_table->GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+    index, key_column_ids, expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate, column_ids,
+                                           index_scan_desc);
+
+  //const int lower_bound = 30;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<executor::ExecutorContext> context(
+    new executor::ExecutorContext(txn));
+
+
+  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
+
+  ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
