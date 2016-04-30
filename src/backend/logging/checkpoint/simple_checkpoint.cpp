@@ -86,7 +86,7 @@ void SimpleCheckpoint::DoCheckpoint() {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
       assert(target_table);
-      LOG_INFO("SeqScan: database oid %u table oid %u: %s", database_idx,
+      LOG_INFO("SeqScan: database idx %u table idx %u: %s", database_idx,
                table_idx, target_table->GetName().c_str());
       Scan(target_table, database_oid);
     }
