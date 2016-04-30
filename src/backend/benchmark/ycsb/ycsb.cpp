@@ -70,11 +70,16 @@ static void WriteOutput() {
 }
 
 inline void YCSBBootstrapLogger() {
+  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
+  peloton_wait_timeout = state.wait_timeout;
+  peloton_flush_frequency_micros = state.flush_freq;
+
   auto& log_manager = peloton::logging::LogManager::GetInstance();
 
   if (state.checkpointer != 0) {
     peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
-    auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
+    auto& checkpoint_manager =
+        peloton::logging::CheckpointManager::GetInstance();
 
     // launch checkpoint thread
     if (!checkpoint_manager.IsInCheckpointingMode()) {
@@ -106,40 +111,30 @@ inline void YCSBBootstrapLogger() {
   }
 
   if (state.logging_enabled <= 0) return;
-  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
 
-  peloton_wait_timeout = state.wait_timeout;
-  peloton_flush_frequency_micros = state.flush_freq;
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
-    // Launching a thread for logging
-    if (!log_manager.IsInLoggingMode()) {
-      // Set sync commit mode
-      if (state.sync_commit == 1) {
-        log_manager.SetSyncCommit(true);
-      }
-      log_manager.SetLogFileSizeLimit((unsigned int)state.file_size);
-      log_manager.SetLogBufferCapacity((unsigned int)state.log_buffer_size);
-
-      // Wait for standby mode
-      std::thread(&peloton::logging::LogManager::StartStandbyMode, &log_manager)
-          .detach();
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
-                                        true);
-
-      // Clean up database tile state before recovery from checkpoint
-      log_manager.PrepareRecovery();
-
-      // Do any recovery
-      log_manager.StartRecoveryMode();
-
-      // Wait for logging mode
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
-                                        true);
-
-      // Done recovery
-      log_manager.DoneRecovery();
-    }
+  // Set sync commit mode
+  if (state.sync_commit == 1) {
+    log_manager.SetSyncCommit(true);
   }
+  log_manager.SetLogFileSizeLimit((unsigned int)state.file_size);
+  log_manager.SetLogBufferCapacity((unsigned int)state.log_buffer_size);
+
+  // Wait for standby mode
+  std::thread(&peloton::logging::LogManager::StartStandbyMode, &log_manager)
+      .detach();
+  log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY, true);
+
+  // Clean up database tile state before recovery from checkpoint
+  log_manager.PrepareRecovery();
+
+  // Do any recovery
+  log_manager.StartRecoveryMode();
+
+  // Wait for logging mode
+  log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING, true);
+
+  // Done recovery
+  log_manager.DoneRecovery();
 }
 
 // Main Entry Point
