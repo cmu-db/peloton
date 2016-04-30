@@ -169,6 +169,8 @@ extern thread_local char OutputFileName[];
 extern thread_local PGDLLIMPORT char my_exec_path[];
 extern thread_local char pkglib_path[];
 
+extern thread_local MemcachedState *mc_state;
+
 #ifdef EXEC_BACKEND
 extern char postgres_exec_path[];
 #endif

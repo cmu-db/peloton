@@ -3658,6 +3658,10 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
 
   save_backend_variables(param, port);
 
+  if(is_memcached){
+    mc_state = new MemcachedState();
+  }
+
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(),
        GetBackendThreadId());
   std::thread backend(BackendTask, bn, port, param, is_memcached);
