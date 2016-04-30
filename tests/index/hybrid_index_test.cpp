@@ -135,7 +135,7 @@ TEST_F(HybridIndexTests, BasicTest) {
   std::unique_ptr<storage::DataTable> table;
   CreateTable(table);
 
-  LOG_INFO("%s", table->GetInfo());
+  LOG_INFO("%s", table->GetInfo().c_str());
 }
 
 }  // namespace tet
