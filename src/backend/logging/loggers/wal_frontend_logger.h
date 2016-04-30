@@ -155,9 +155,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   TimePoint last_flush = Clock::now();
 
-  Micros flush_frequency{peloton_flush_frequency_micros == 0
-                             ? 10000
-                             : peloton_flush_frequency_micros};
+  Micros flush_frequency{peloton_flush_frequency_micros};
 };
 
 }  // namespace logging
