@@ -82,6 +82,8 @@ bool RunRead();
 
 bool RunUpdate();
 
+bool RunInsert();
+
 /////////////////////////////////////////////////////////
 // WORKLOAD
 /////////////////////////////////////////////////////////
@@ -107,7 +109,8 @@ void RunBackend(oid_t thread_id) {
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
-      while (RunUpdate() == false) {
+      //XXX temporarily change to insert workload!
+      while (RunInsert() == false) {
         execution_count_ref++;
       }
     } else {
@@ -433,6 +436,55 @@ bool RunUpdate() {
 
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&update_executor);
+
+  ExecuteTest(executors);
+
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    return false;
+  }
+}
+
+bool RunInsert() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  const oid_t col_count = state.column_count + 1;
+  auto table_schema = user_table->GetSchema();
+  const bool allocate = true;
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
+
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+  auto key_value = ValueFactory::GetIntegerValue(0);
+  auto field_value = ValueFactory::GetStringValue(field_raw_value);
+
+  tuple->SetValue(0, key_value, nullptr);
+  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+    tuple->SetValue(col_itr, field_value, pool.get());
+  }
+
+  planner::InsertPlan insert_node(user_table, std::move(tuple));
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&insert_executor);
 
   ExecuteTest(executors);
 

@@ -33,7 +33,8 @@ void Usage(FILE *out) {
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
-          "   -x --sync_commit       :  enable synchronous commit (0 or 1) \n");
+          "   -x --sync_commit       :  enable synchronous commit (0 or 1) \n"
+          "   -q --flush_freq        :  set the frequency of log fsync\n");
   // TODO add description for wait_time, file_size, log_buffer_size,
   // checkpointer
   exit(EXIT_FAILURE);
@@ -46,13 +47,14 @@ static struct option opts[] = {
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
-    {NULL, 0, NULL, 0},
     {"enable_logging", optional_argument, NULL, 'l'},
     {"sync_commit", optional_argument, NULL, 'x'},
     {"wait_time", optional_argument, NULL, 'w'},
     {"file_size", optional_argument, NULL, 'f'},
     {"log_buffer_size", optional_argument, NULL, 'z'},
     {"checkpointer", optional_argument, NULL, 'p'},
+    {"flush_freq", optional_argument, NULL, 'q'},
+    {NULL, 0, NULL, 0},
 };
 
 void ValidateScaleFactor(const configuration &state) {
@@ -116,6 +118,15 @@ void ValidateLogging(const configuration &state) {
   LOG_INFO("%s : %d", "wait_time", (int)state.wait_timeout);
 }
 
+void ValidateFlushFreq(const configuration &state) {
+  if (state.flush_freq <= 0) {
+    LOG_ERROR("Invalid flush_freq :: %d", state.flush_freq);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d microseconds", "flush_freq", state.flush_freq);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
@@ -130,11 +141,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.file_size = 32;
   state.log_buffer_size = 32768;
   state.checkpointer = 0;
+  state.flush_freq = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:l:x:w:f:z:p:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:l:x:w:f:z:p:q:", opts, &idx);
 
     if (c == -1) break;
 
@@ -175,6 +187,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'p':
         state.checkpointer = atoi(optarg);
         break;
+      case 'q':
+        state.flush_freq = atoi(optarg);
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -195,6 +210,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateLogging(state);
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
+  ValidateFlushFreq(state);
 }
 
 }  // namespace ycsb

@@ -20,6 +20,9 @@
 #include <dirent.h>
 #include <vector>
 #include <set>
+#include <chrono>
+
+extern int peloton_flush_frequency_micros;
 
 namespace peloton {
 
@@ -31,6 +34,11 @@ class Transaction;
 
 namespace logging {
 
+typedef std::chrono::high_resolution_clock Clock;
+
+typedef std::chrono::microseconds Micros;
+
+typedef std::chrono::time_point<Clock> TimePoint;
 //===--------------------------------------------------------------------===//
 // Write Ahead Frontend Logger
 //===--------------------------------------------------------------------===//
@@ -146,6 +154,10 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   bool test_mode_ = false;
 
   bool should_create_new_file = false;
+
+  TimePoint last_flush = Clock::now();
+
+  Micros flush_frequency{peloton_flush_frequency_micros};
 };
 
 }  // namespace logging
