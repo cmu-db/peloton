@@ -40,7 +40,7 @@ void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
 
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
+    // std::lock_guard<std::mutex> lock(locator_mutex);
 
     // drop the catalog reference to the old tile group
     locator.erase(oid);
@@ -54,7 +54,7 @@ void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
     LOG_INFO("Dropping tile group %u", oid);
-    std::lock_guard<std::mutex> lock(locator_mutex);
+    // std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group
     locator.erase(oid);
   }
@@ -63,13 +63,7 @@ void Manager::DropTileGroup(const oid_t oid) {
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
-  {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-    // Check if the tile group exists in the lookup directory
-    if (locator.find(oid) != locator.end()) {
-      location = locator.at(oid);
-    }
-  }
+  locator.find(oid, location);
 
   return location;
 }
@@ -77,7 +71,7 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
 // used for logging test
 void Manager::ClearTileGroup() {
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
+    // std::lock_guard<std::mutex> lock(locator_mutex);
     locator.clear();
   }
 }

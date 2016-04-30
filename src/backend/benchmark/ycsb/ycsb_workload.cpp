@@ -91,7 +91,17 @@ volatile bool is_running = true;
 oid_t *abort_counts;
 oid_t *commit_counts;
 
+// static void PinToCore(size_t core) {
+//     cpu_set_t cpuset;
+//     CPU_ZERO(&cpuset);
+//     CPU_SET(core, &cpuset);
+//     int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+//     assert(ret == 0);
+// }
+
 void RunBackend(oid_t thread_id) {
+  // PinToCore(thread_id);
+
   auto update_ratio = state.update_ratio;
 
   UniformGenerator generator;
@@ -320,28 +330,28 @@ bool RunRead() {
   /////////////////////////////////////////////////////////
 
   // Create and set up materialization executor
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    old_to_new_cols[col_itr] = col_itr;
-  }
+  // std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  // for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+  //   old_to_new_cols[col_itr] = col_itr;
+  // }
 
-  std::shared_ptr<const catalog::Schema> output_schema {
-    catalog::Schema::CopySchema(user_table->GetSchema())
-  }
-  ;
-  bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
-                                        physify_flag);
+  // std::shared_ptr<const catalog::Schema> output_schema {
+  //   catalog::Schema::CopySchema(user_table->GetSchema())
+  // }
+  // ;
+  // bool physify_flag = true;  // is going to create a physical tile
+  // planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
+  //                                       physify_flag);
 
-  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&index_scan_executor);
+  // executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  // mat_executor.AddChild(&index_scan_executor);
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor *> executors;
-  executors.push_back(&mat_executor);
+  executors.push_back(&index_scan_executor);
 
   ExecuteTest(executors);
 
@@ -366,7 +376,6 @@ bool RunRead() {
   else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-	printf("abort transaction!!!\n");
     result = txn_manager.AbortTransaction();
     return false;
   }
@@ -479,7 +488,6 @@ bool RunUpdate() {
   else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-	//printf("abort transaction!!!\n");
     result = txn_manager.AbortTransaction();
     return false;
   }
