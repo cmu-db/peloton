@@ -56,6 +56,49 @@ oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
   return total_tuple_count;
 }
 
+TEST_F(CheckpointTests, CheckpointScanTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
+
+  // Create a table and wrap it in logical tile
+  size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
+  size_t table_tile_group_count = 3;
+
+  // table has 3 tile groups
+  std::unique_ptr<storage::DataTable> target_table(
+      ExecutorTestsUtil::CreateTable(tile_group_size));
+  ExecutorTestsUtil::PopulateTable(target_table.get(),
+                                   tile_group_size * table_tile_group_count,
+                                   false, false, false);
+  txn_manager.CommitTransaction();
+
+  auto cid = txn_manager.GetNextCommitId() - 1;
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids;
+  column_ids.resize(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+
+  // create checkpoint
+  auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
+  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+  auto checkpointer = checkpoint_manager.GetCheckpointer();
+
+  auto simple_checkpointer =
+      reinterpret_cast<logging::SimpleCheckpoint *>(checkpointer.get());
+
+  simple_checkpointer->SetLogger(new logging::WriteAheadBackendLogger());
+  simple_checkpointer->SetStartCommitId(cid);
+  simple_checkpointer->Scan(target_table.get(), DEFAULT_DB_ID);
+
+  // verify results
+  auto records = simple_checkpointer->GetRecords();
+  EXPECT_EQ(records.size(),
+            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count);
+  for (unsigned int i = 0; i < records.size(); i++) {
+    EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
+  }
+}
+
 TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
@@ -85,20 +128,8 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   auto checkpointer = checkpoint_manager.GetCheckpointer();
   checkpointer->DoCheckpoint();
 
-  // verify results
-  auto records = reinterpret_cast<logging::SimpleCheckpoint *>(
-                     checkpointer.get())->GetRecords();
-  EXPECT_EQ(records.size(),
-            TESTS_TUPLES_PER_TILEGROUP * table_tile_group_count + 2);
-  for (unsigned int i = 0; i < records.size(); i++) {
-    if (i == 0) {
-      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_TRANSACTION_BEGIN);
-    } else if (i == records.size() - 1) {
-      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_TRANSACTION_COMMIT);
-    } else {
-      EXPECT_EQ(records[i]->GetType(), LOGRECORD_TYPE_WAL_TUPLE_INSERT);
-    }
-  }
+  auto most_recent_checkpoint_cid = checkpointer->GetMostRecentCheckpointCid();
+  EXPECT_EQ(most_recent_checkpoint_cid != INVALID_CID, true);
 }
 
 TEST_F(CheckpointTests, BasicCheckpointRecoveryTest) {
