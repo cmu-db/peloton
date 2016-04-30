@@ -61,8 +61,7 @@ bool HybridScanExecutor::DExecute() {
   if (type_ == SEQ) {
     // assume do not read from a logical tile.
     assert(children_.size() == 0);
-
-    LOG_TRACE("Hybrid executor, Seq Scan  :: 0 child ");
+    LOG_INFO("Hybrid executor, Seq Scan :: 0 child, %lu tile groups ", table_tile_group_count_);
 
     assert(table_ != nullptr);
     assert(column_ids_.size() > 0);
