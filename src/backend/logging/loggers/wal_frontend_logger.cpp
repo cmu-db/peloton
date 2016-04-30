@@ -979,6 +979,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
 
   if (this->log_file_cursor_ >= (int)this->log_files_.size()) {
     LOG_INFO("Cursor has reached the end. No more log files to read from.");
+    fclose(cur_file_handle.file);
     cur_file_handle = INVALID_FILE_HANDLE;
     return;
   }
