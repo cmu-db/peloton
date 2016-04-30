@@ -32,9 +32,9 @@ protected:
   bool DExecute();
 
 private:
-  index::Index *index_ = nullptr;
+  const index::Index *index_ = nullptr;
 
-  storage::DataTable *table_ = nullptr;
+  const storage::DataTable *table_ = nullptr;
 
   oid_t indexed_tile_offset_ = INVALID_OID;
 
