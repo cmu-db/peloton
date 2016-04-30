@@ -94,7 +94,9 @@ static void PinToCore(size_t core) {
     CPU_ZERO(&cpuset);
     CPU_SET(core, &cpuset);
     int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-    assert(ret == 0);
+    if (ret == 0) {
+      assert(false);
+    }
 }
 
 void RunBackend(oid_t thread_id) {
