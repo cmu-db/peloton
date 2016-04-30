@@ -217,7 +217,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         // check whether older version is garbage.
         if (old_end_cid < max_committed_cid) {
-          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
+                   tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
