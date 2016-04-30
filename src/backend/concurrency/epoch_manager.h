@@ -90,7 +90,10 @@ namespace concurrency {
 
 
         auto tail = queue_tail_.load();
-        auto head = current_epoch_.load() - 1;
+        auto head = current_epoch_.load();
+        if (head > 0) {
+          head--;
+        }
         auto res = max_cid;
 
         auto dead_num = 0;
