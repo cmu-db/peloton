@@ -141,7 +141,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.file_size = 32;
   state.log_buffer_size = 32768;
   state.checkpointer = 0;
-  state.flush_freq = 10000;
+  state.flush_freq = 0;
 
   // Parse args
   while (1) {
