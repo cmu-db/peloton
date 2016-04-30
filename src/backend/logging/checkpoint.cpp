@@ -45,6 +45,7 @@ void Checkpoint::MainLoop(void) {
       // First, do recovery if needed
       DoRecovery();
       LOG_INFO("Checkpoint DoRecovery Done");
+      checkpoint_status = CHECKPOINT_STATUS_DONE_RECOVERY;
       break;
     }
 
@@ -66,6 +67,7 @@ void Checkpoint::MainLoop(void) {
   // Periodically, wake up and do checkpointing
   while (checkpoint_manager.GetCheckpointStatus() ==
          CHECKPOINT_STATUS_CHECKPOINTING) {
+    checkpoint_status = CHECKPOINT_STATUS_CHECKPOINTING;
     sleep(checkpoint_interval_);
     DoCheckpoint();
   }
@@ -87,9 +89,10 @@ void Checkpoint::InitDirectory() {
 }
 
 std::unique_ptr<Checkpoint> Checkpoint::GetCheckpoint(
-    CheckpointType checkpoint_type, bool test_mode) {
+    CheckpointType checkpoint_type, bool disable_file_access) {
   if (checkpoint_type == CHECKPOINT_TYPE_NORMAL) {
-    std::unique_ptr<Checkpoint> checkpoint(new SimpleCheckpoint(test_mode));
+    std::unique_ptr<Checkpoint> checkpoint(
+        new SimpleCheckpoint(disable_file_access));
     return std::move(checkpoint);
   }
   return std::move(std::unique_ptr<Checkpoint>(nullptr));

@@ -50,15 +50,19 @@ class CheckpointManager {
 
   CheckpointStatus GetCheckpointStatus();
 
-  std::unique_ptr<Checkpoint> GetCheckpointer();
+  Checkpoint *GetCheckpointer(unsigned int idx);
+
+  void InitCheckpointers();
 
   // configuration
-  void Configure(CheckpointType checkpoint_type, bool test_mode = false,
+  void Configure(CheckpointType checkpoint_type, bool disable_file_access = false,
                  int num_checkpointers = 1) {
     checkpoint_type_ = checkpoint_type;
-    test_mode_ = test_mode;
+    disable_file_access_ = disable_file_access;
     num_checkpointers_ = num_checkpointers;
   }
+
+  void DestroyCheckpointers();
 
  private:
   CheckpointManager();
@@ -68,7 +72,7 @@ class CheckpointManager {
   CheckpointType checkpoint_type_ = CHECKPOINT_TYPE_INVALID;
 
   // whether run checkpoint in test mode
-  bool test_mode_ = false;
+  bool disable_file_access_ = false;
 
   // to be used in the future
   unsigned int num_checkpointers_ = 1;
