@@ -101,6 +101,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   int GetLogFileCursor() { return log_file_cursor_; }
 
+  int GetLogFileCounter() { return log_file_counter_; }
+
  private:
   std::string GetLogFileName(void);
 

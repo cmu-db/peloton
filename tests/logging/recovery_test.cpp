@@ -24,6 +24,7 @@
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/storage/table_factory.h"
 #include "backend/logging/log_manager.h"
+#include "backend/index/index.h"
 
 #include "backend/logging/logging_util.h"
 
@@ -178,9 +179,18 @@ TEST_F(RecoveryTests, RestartTest) {
     fclose(fp);
   }
 
+  int index_count = recovery_table->GetIndexCount();
+  LOG_INFO("Number of indexes on this table: %d", (int)index_count);
+
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = recovery_table->GetIndex(index_itr);
+    EXPECT_EQ(index->GetNumberOfTuples(), 0);
+  }
+
   logging::WriteAheadFrontendLogger wal_fel(std::string("pl_log"));
 
   EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files + 1);
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files);
 
   EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
 
@@ -192,6 +202,13 @@ TEST_F(RecoveryTests, RestartTest) {
   EXPECT_EQ(recovery_table->GetNumberOfTuples(),
             tile_group_size * table_tile_group_count);
   EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
+
+  wal_fel.RecoverIndex();
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = recovery_table->GetIndex(index_itr);
+    EXPECT_EQ(index->GetNumberOfTuples(),
+              tile_group_size * table_tile_group_count);
+  }
 
   for (int i = 0; i < num_files; i++) {
     int return_val = remove((dir_name + "/" + std::string("peloton_log_") +
