@@ -211,7 +211,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
 
 
-  const int lower_bound = 30;
+  // const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -225,7 +225,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
-//  oid_t column_count = state.projectivity * state.column_count;
+  
   oid_t column_count = projectivity * columncount;
   std::vector<oid_t> hyadapt_column_ids;
 
@@ -241,7 +241,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, hyadapt_table->hyGetTileGroupCount());
+  ExecuteTest(&Hybrid_scan_executor, hyadapt_table->GetTileGroupCount());
 
   txn_manager.CommitTransaction();
 }
