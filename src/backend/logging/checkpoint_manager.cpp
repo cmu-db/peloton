@@ -39,13 +39,17 @@ void CheckpointManager::WaitForModeTransition(
 }
 
 void CheckpointManager::StartStandbyMode() {
-  auto checkpointer = GetCheckpointer();
+  if (checkpointers_.size() == 0) {
+    InitCheckpointers();
+  }
 
   // If checkpointer still doesn't exist, then we have disabled logging
-  if (!checkpointer) {
+  if (checkpointers_.size() == 0) {
     LOG_INFO("We have disabled checkpoint");
     return;
   }
+
+  auto checkpointer = GetCheckpointer(0);
 
   // Toggle status in log manager map
   SetCheckpointStatus(CHECKPOINT_STATUS_STANDBY);
@@ -59,9 +63,19 @@ void CheckpointManager::StartRecoveryMode() {
   SetCheckpointStatus(CHECKPOINT_STATUS_RECOVERY);
 }
 
-std::unique_ptr<Checkpoint> CheckpointManager::GetCheckpointer() {
-  return std::move(Checkpoint::GetCheckpoint(checkpoint_type_, test_mode_));
+Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {
+  assert(idx < num_checkpointers_);
+  return checkpointers_[idx].get();
 }
+
+void CheckpointManager::InitCheckpointers() {
+  for (unsigned int i = 0; i < num_checkpointers_; i++) {
+    checkpointers_.push_back(
+        Checkpoint::GetCheckpoint(checkpoint_type_, disable_file_access_));
+  }
+}
+
+void CheckpointManager::DestroyCheckpointers() { checkpointers_.clear(); }
 
 CheckpointStatus CheckpointManager::GetCheckpointStatus() {
   // Get the checkpoint status

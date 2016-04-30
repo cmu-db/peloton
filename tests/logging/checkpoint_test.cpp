@@ -82,10 +82,12 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
-  auto checkpointer = checkpoint_manager.GetCheckpointer();
+  checkpoint_manager.DestroyCheckpointers();
+  checkpoint_manager.InitCheckpointers();
+  auto checkpointer = checkpoint_manager.GetCheckpointer(0);
 
   auto simple_checkpointer =
-      reinterpret_cast<logging::SimpleCheckpoint *>(checkpointer.get());
+      reinterpret_cast<logging::SimpleCheckpoint *>(checkpointer);
 
   simple_checkpointer->SetLogger(new logging::WriteAheadBackendLogger());
   simple_checkpointer->SetStartCommitId(cid);
@@ -120,32 +122,36 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
 
   // add table to catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
-  std::unique_ptr<storage::Database> db(new storage::Database(DEFAULT_DB_ID));
+  storage::Database *db(new storage::Database(DEFAULT_DB_ID));
   db->AddTable(target_table);
-  catalog_manager.AddDatabase(db.get());
+  catalog_manager.AddDatabase(db);
 
   // create checkpoint
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
   auto &log_manager = logging::LogManager::GetInstance();
   checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, false, 1);
-
-  auto checkpointer = checkpoint_manager.GetCheckpointer();
+  checkpoint_manager.DestroyCheckpointers();
+  checkpoint_manager.InitCheckpointers();
+  auto checkpointer = checkpoint_manager.GetCheckpointer(0);
 
   checkpointer->DoCheckpoint();
 
   auto most_recent_checkpoint_cid = checkpointer->GetMostRecentCheckpointCid();
   EXPECT_EQ(most_recent_checkpoint_cid != INVALID_CID, true);
 
-  checkpointer.reset();
+  // destroy and restart
+  checkpoint_manager.DestroyCheckpointers();
+  checkpoint_manager.InitCheckpointers();
 
   // recovery from checkpoint
   log_manager.PrepareRecovery();
-  auto recovery_checkpointer = checkpoint_manager.GetCheckpointer();
+  auto recovery_checkpointer = checkpoint_manager.GetCheckpointer(0);
   recovery_checkpointer->DoRecovery();
 
   EXPECT_EQ(db->GetTableCount(), 1);
   EXPECT_EQ(db->GetTable(0)->GetNumberOfTuples(),
             tile_group_size * table_tile_group_count);
+  catalog_manager.DropDatabaseWithOid(db->GetOid());
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
 }
 
@@ -186,6 +192,41 @@ TEST_F(CheckpointTests, CheckpointRecoveryTest) {
   for (auto &tuple : tuples) {
     tuple.reset();
   }
+}
+
+TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
+  auto &log_manager = logging::LogManager::GetInstance();
+  auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
+
+  checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
+
+  // launch checkpoint thread, wait for standby mode
+  auto thread = std::thread(&logging::CheckpointManager::StartStandbyMode,
+                            &checkpoint_manager);
+
+  checkpoint_manager.WaitForModeTransition(peloton::CHECKPOINT_STATUS_STANDBY,
+                                           true);
+
+  // Clean up table tile state before recovery from checkpoint
+  log_manager.PrepareRecovery();
+
+  // Do any recovery
+  checkpoint_manager.StartRecoveryMode();
+
+  // Wait for standby mode
+  checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_DONE_RECOVERY,
+                                           true);
+
+  // Now, enter CHECKPOINTING mode
+  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_CHECKPOINTING);
+  auto checkpointer = checkpoint_manager.GetCheckpointer(0);
+  while (checkpointer->GetCheckpointStatus() !=
+         CHECKPOINT_STATUS_CHECKPOINTING) {
+    std::chrono::milliseconds sleep_time(10);
+    std::this_thread::sleep_for(sleep_time);
+  }
+  checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
+  thread.join();
 }
 
 }  // End test namespace

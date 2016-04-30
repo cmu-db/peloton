@@ -117,7 +117,6 @@ cid_t SimpleCheckpoint::DoRecovery() {
   bool success =
       LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "rb");
   if (!success) {
-    assert(false);
     return 0;
   }
 
@@ -282,6 +281,7 @@ void SimpleCheckpoint::CreateFile() {
     assert(false);
     return;
   }
+  LOG_INFO("Created a new checkpoint file: %s", file_name.c_str());
 }
 
 // Only called when checkpoint has actual contents
