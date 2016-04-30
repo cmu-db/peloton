@@ -173,7 +173,7 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
 }
 
 
-void ExecuteTest(executor::AbstractExecutor *executor) {
+void ExecuteTest(executor::AbstractExecutor *executor, size_t tiple_group_counts) {
   Timer<> timer;
 
   size_t tuple_counts = 0;
@@ -190,6 +190,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
         executor->GetOutput());
       tuple_counts += result_tile->GetTupleCount();
       result_tiles.emplace_back(result_tile.release());
+      tiple_group_counts--;
   }
 
   // Execute stuff
@@ -198,6 +199,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
+  EXPECT_EQ(tiple_group_counts, 0);
   EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group);
 }
 
@@ -234,12 +236,12 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound);
+  auto predicate = nullptr; // CreatePredicate(lower_bound);
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTest(&Hybrid_scan_executor, hyadapt_table->hyGetTileGroupCount());
 
   txn_manager.CommitTransaction();
 }
