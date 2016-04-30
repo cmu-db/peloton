@@ -59,18 +59,18 @@ bool HybridScanExecutor::DExecute() {
   if (type_ == SEQ) {
     // assume do not read from a logical tile.
     assert(children_.size() == 0);
-    LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
+    // LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
 
     assert(table_ != nullptr);
     assert(column_ids_.size() > 0);
 
-    auto &transaction_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+    // auto &transaction_manager =
+    //  concurrency::TransactionManagerFactory::GetInstance();
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
         table_->GetTileGroup(current_tile_group_offset_++);
-      auto tile_group_header = tile_group->GetHeader();
+     // auto tile_group_header = tile_group->GetHeader();
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
@@ -118,7 +118,7 @@ bool HybridScanExecutor::DExecute() {
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
-      LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
+      // LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
       SetOutput(logical_tile.release());
       return true;
     }
