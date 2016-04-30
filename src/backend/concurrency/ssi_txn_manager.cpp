@@ -604,6 +604,8 @@ Result SsiTxnManager::AbortTransaction() {
     txn_manager_mutex_.Unlock();
   }
 
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
   delete current_ssi_txn_ctx;
   delete current_txn;
   current_txn = nullptr;
@@ -696,6 +698,8 @@ void SsiTxnManager::CleanUp() {
   // remove txn's reader list firstly
   for (auto ctx : garbage_ctx) {
     RemoveReader(ctx->transaction_);
+
+    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId());
     delete ctx->transaction_;
     delete ctx;
   }

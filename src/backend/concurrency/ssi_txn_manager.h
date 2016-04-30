@@ -109,6 +109,11 @@ class SsiTxnManager : public TransactionManager {
     assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
     current_ssi_txn_ctx = new SsiTxnContext(txn);
     current_txn = txn;
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+
     txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
     txn_manager_mutex_.Unlock();
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
@@ -121,35 +126,6 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() { assert(false); }
-
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
-
-    if (last_epoch_ != curr_epoch) {
-      last_epoch_ = curr_epoch;
-
-      cid_t min_running_cid = MAX_CID;
-      {
-        txn_manager_mutex_.ReadLock();
-        for (auto it : txn_table_) {
-          if (it.second->transaction_->GetBeginCommitId() < min_running_cid) {
-            min_running_cid = it.second->transaction_->GetBeginCommitId();
-          }
-        }
-        txn_manager_mutex_.Unlock();
-      }
-      assert(min_running_cid > 0);
-      if (min_running_cid != MAX_CID) {
-        last_max_commit_cid_ = min_running_cid - 1;
-      } else {
-        // in this case, there's no running transaction.
-        last_max_commit_cid_ = GetNextCommitId() - 1;
-      }
-
-    }
-
-    return last_max_commit_cid_;
-  }
 
   virtual Result CommitTransaction();
 
@@ -170,9 +146,6 @@ class SsiTxnManager : public TransactionManager {
   bool cleaned;
   // Vacuum thread, GC over 20 ms
   std::thread vacuum;
-
-  cid_t last_epoch_;
-  cid_t last_max_commit_cid_;
 
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
