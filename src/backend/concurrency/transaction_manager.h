@@ -27,10 +27,12 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/tuple.h"
 #include "backend/gc/gc_manager_factory.h"
+#include "backend/planner/project_info.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
+
 namespace concurrency {
 
 extern thread_local Transaction *current_txn;
@@ -58,6 +60,7 @@ class TransactionManager {
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
+
 
   virtual bool IsOwnable(
       const storage::TileGroupHeader *const tile_group_header,
