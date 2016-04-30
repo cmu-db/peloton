@@ -28,19 +28,19 @@ public:
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids) {}
+      : table_(table), predicate_(predicate), column_ids_(column_ids) {}
 
   HybridScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
-                : AbstractScan(table, predicate, column_ids),
-                index_(index_scan_desc.index),
-                column_ids_(column_ids),
-                key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-                expr_types_(std::move(index_scan_desc.expr_types)),
-                values_(std::move(index_scan_desc.values)),
-                runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
+                : table_(table), predicate_(predicate),
+                 index_(index_scan_desc.index),
+                  column_ids_(column_ids),
+                  key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+                  expr_types_(std::move(index_scan_desc.expr_types)),
+                  values_(std::move(index_scan_desc.values)),
+                  runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
 
 
   index::Index *GetDataIndex() const {
