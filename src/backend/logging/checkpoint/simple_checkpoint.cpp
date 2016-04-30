@@ -41,8 +41,8 @@ namespace logging {
 // Simple Checkpoint
 //===--------------------------------------------------------------------===//
 
-SimpleCheckpoint::SimpleCheckpoint(bool test_mode)
-    : Checkpoint(test_mode), logger_(nullptr) {
+SimpleCheckpoint::SimpleCheckpoint(bool disable_file_access)
+    : Checkpoint(disable_file_access), logger_(nullptr) {
   InitDirectory();
   InitVersionNumber();
 }
@@ -100,11 +100,10 @@ void SimpleCheckpoint::DoCheckpoint() {
     commit_record->Serialize(commit_output_buffer);
     records_.push_back(commit_record);
 
-    if (!test_mode) {
-      CreateFile();
-      Persist();
-      Cleanup();
-    }
+    CreateFile();
+    Persist();
+    Cleanup();
+    most_recent_checkpoint_cid = start_commit_id_;
   }
 }
 
@@ -274,6 +273,7 @@ std::vector<std::shared_ptr<LogRecord>> SimpleCheckpoint::GetRecords() {
 
 // Private Functions
 void SimpleCheckpoint::CreateFile() {
+  if (disable_file_access) return;
   // open checkpoint file and file descriptor
   std::string file_name = ConcatFileName(checkpoint_dir, ++checkpoint_version);
   bool success =
@@ -286,6 +286,7 @@ void SimpleCheckpoint::CreateFile() {
 
 // Only called when checkpoint has actual contents
 void SimpleCheckpoint::Persist() {
+  if (disable_file_access) return;
   assert(file_handle_.file);
   assert(records_.size() > 2);
   assert(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
@@ -310,7 +311,7 @@ void SimpleCheckpoint::Cleanup() {
   records_.clear();
 
   // Remove previous version
-  if (checkpoint_version > 0) {
+  if (checkpoint_version > 0 && !disable_file_access) {
     auto previous_version =
         ConcatFileName(checkpoint_dir, checkpoint_version - 1).c_str();
     if (remove(previous_version) != 0) {

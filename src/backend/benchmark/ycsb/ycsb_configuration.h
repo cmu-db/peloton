@@ -80,6 +80,8 @@ class configuration {
   double throughput;
 
   double abort_rate;
+
+  int flush_freq;
 };
 
 extern configuration state;

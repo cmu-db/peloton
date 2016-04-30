@@ -163,6 +163,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     backend_logger->GrantEmptyBuffer(std::move(log_buffer));
   }
 
+  bool flushed = false;
   if (max_collected_commit_id != max_flushed_commit_id) {
     TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                     this->max_collected_commit_id);
@@ -179,8 +180,17 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
         // by moving the fflush and sync here, we ensure that this file will
         // have at least 1 delimiter
-        LoggingUtil::FFlushFsync(cur_file_handle);
-        fsync_count++;
+        if (Clock::now() > last_flush + flush_frequency) {
+          LoggingUtil::FFlushFsync(cur_file_handle);
+
+          last_flush = Clock::now();
+          if (this->max_collected_commit_id > max_flushed_commit_id) {
+            max_flushed_commit_id = this->max_collected_commit_id;
+          }
+
+          fsync_count++;
+          flushed = true;
+        }
 
         if (this->max_collected_commit_id > max_delimiter_file) {
           max_delimiter_file = this->max_collected_commit_id;
@@ -189,6 +199,15 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
         if (FileSwitchCondIsTrue()) should_create_new_file = true;
       }
+    } else {
+      if (Clock::now() > last_flush + flush_frequency) {
+        last_flush = Clock::now();
+        if (this->max_collected_commit_id > max_flushed_commit_id) {
+          max_flushed_commit_id = this->max_collected_commit_id;
+        }
+
+        flushed = true;
+      }
     }
   }
 
@@ -196,12 +215,10 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   // Clean up the frontend logger's queue
   global_queue.clear();
 
-  // Commit each backend logger
-  if (this->max_collected_commit_id > max_flushed_commit_id) {
-    max_flushed_commit_id = this->max_collected_commit_id;
+  if (flushed) {
+    // signal that we have flushed
+    LogManager::GetInstance().FrontendLoggerFlushed();
   }
-  // signal that we have flushed
-  LogManager::GetInstance().FrontendLoggerFlushed();
 }
 
 //===--------------------------------------------------------------------===//
