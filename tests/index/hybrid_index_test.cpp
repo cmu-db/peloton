@@ -210,7 +210,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
 
 
-  const int lower_bound = 30;
+  // const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();

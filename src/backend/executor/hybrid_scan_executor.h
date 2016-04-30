@@ -71,12 +71,6 @@ private:
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//
-
-  /** @brief index associated with index scan. */
-  index::Index *index_ = nullptr;
-
-  const storage::AbstractTable *table_ = nullptr;
-
   std::vector<oid_t> column_ids_;
 
   std::vector<oid_t> key_column_ids_;
