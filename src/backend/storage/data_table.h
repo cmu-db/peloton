@@ -56,7 +56,9 @@ namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
-namespace index { class Index; }
+namespace index {
+class Index;
+}
 
 namespace logging {
 class LogManager;
@@ -116,7 +118,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // coerce into adding a new tile group with a tile group id
-  oid_t AddTileGroupWithOid(const oid_t &tile_group_id);
+  oid_t AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
 
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
@@ -264,7 +266,7 @@ class DataTable : public AbstractTable {
   std::vector<oid_t> tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
-  
+
   // tile group mutex
   // TODO: don't know why need this mutex --Yingjun
   std::mutex tile_group_mutex_;
