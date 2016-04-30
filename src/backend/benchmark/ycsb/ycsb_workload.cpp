@@ -468,8 +468,7 @@ bool RunInsert() {
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
-  auto rand_num = rand();
-  auto key_value = ValueFactory::GetIntegerValue(1 * rand_num);
+  auto key_value = ValueFactory::GetIntegerValue(0);
   auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
   tuple->SetValue(0, key_value, nullptr);

@@ -101,7 +101,7 @@ void CreateYCSBDatabase() {
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
-  unique = false;
+  unique = true;
 
   index_metadata = new index::IndexMetadata(
       "primary_index", user_table_pkey_index_oid, INDEX_TYPE_BTREE,

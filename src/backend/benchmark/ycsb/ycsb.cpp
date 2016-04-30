@@ -70,14 +70,11 @@ static void WriteOutput() {
 }
 
 inline void YCSBBootstrapLogger() {
-  if (state.logging_enabled <= 0) return;
-  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
-
   auto& log_manager = peloton::logging::LogManager::GetInstance();
-  auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
 
   if (state.checkpointer != 0) {
     peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
+    auto& checkpoint_manager = peloton::logging::CheckpointManager::GetInstance();
 
     // launch checkpoint thread
     if (!checkpoint_manager.IsInCheckpointingMode()) {
@@ -107,6 +104,9 @@ inline void YCSBBootstrapLogger() {
       }
     }
   }
+
+  if (state.logging_enabled <= 0) return;
+  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
 
   peloton_wait_timeout = state.wait_timeout;
   peloton_flush_frequency_micros = state.flush_freq;
