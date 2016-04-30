@@ -13,20 +13,30 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <backend/planner/hybrid_scan_plan.h>
+#include <backend/executor/hybrid_scan_executor.h>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/common/timer.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/insert_executor.h"
-#include "backend/expression/constant_value_expression.h"
 #include "backend/index/index_factory.h"
 #include "backend/planner/insert_plan.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
+#include "backend/expression/expression_util.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+
+#include "backend/index/index_factory.h"
 
 namespace peloton {
 namespace test {
@@ -34,16 +44,15 @@ namespace test {
 class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
-static int columncount = 99;
+static int columncount = 4;
 static size_t tuples_per_tile_group = 10;
 static size_t tile_group = 10;
 
-void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
 
   const oid_t col_count = column_count + 1;
   const bool is_inlined = true;
-  const bool indexes = false;
 
   // Create schema first
   std::vector<catalog::Column> columns;
@@ -130,10 +139,107 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction();
 }
 
+expression::AbstractExpression *CreatePredicate(const int lower_bound) {
+  // ATTR0 >= LOWER_BOUND
 
-TEST_F(HybridIndexTests, BasicTest) {
-  std::unique_ptr<storage::DataTable> table;
-  CreateTable(table);
+  // First, create tuple value expression.
+  expression::AbstractExpression *tuple_value_expr =
+    expression::ExpressionUtil::TupleValueFactory(0, 0);
+
+  // Second, create constant value expression.
+  Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
+
+  expression::AbstractExpression *constant_value_expr =
+    expression::ExpressionUtil::ConstantValueFactory(constant_value);
+
+  // Finally, link them together using an greater than expression.
+  expression::AbstractExpression *predicate =
+    expression::ExpressionUtil::ComparisonFactory(
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
+      constant_value_expr);
+
+  return predicate;
+}
+
+void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count) {
+  // Reset sequence
+  hyadapt_column_ids.clear();
+
+  // Generate sequence
+  for (oid_t column_id = 1; column_id <= column_count; column_id++)
+    hyadapt_column_ids.push_back(column_id);
+
+  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
+}
+
+
+void ExecuteTest(executor::AbstractExecutor *executor,
+                        std::vector<double> columns_accessed, double cost) {
+  Timer<> timer;
+
+  timer.Start();
+  bool status = false;
+
+  status = executor->Init();
+  if (status == false) throw Exception("Init failed");
+
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+  while (executor->Execute() == true) {
+      std::unique_ptr<executor::LogicalTile> result_tile(
+        executor->GetOutput());
+      result_tiles.emplace_back(result_tile.release());
+  }
+
+  // Execute stuff
+  executor->Execute();
+
+  timer.Stop();
+  double time_per_transaction = timer.GetDuration();
+  LOG_INFO("%f", time_per_transaction);
+}
+
+TEST_F(HybridIndexTests, SeqScanTest) {
+  std::unique_ptr<storage::DataTable> hyadapt_table;
+  CreateTable(hyadapt_table, false);
+
+  LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
+
+
+  const int lower_bound = 30;
+  const bool is_inlined = true;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // SEQ SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+  new executor::ExecutorContext(txn));
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids;
+//  oid_t column_count = state.projectivity * state.column_count;
+  oid_t column_count = projectivity * columncount;
+  std::vector<oid_t> hyadapt_column_ids;
+
+  GenerateSequence(hyadapt_column_ids, column_count);
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  // Create and set up seq scan executor
+  auto predicate = CreatePredicate(lower_bound);
+  planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
+
+  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
+
+  ExecuteTest(&Hybrid_scan_executor, columns_accessed, cost);
+
+  txn_manager.CommitTransaction();
 
   LOG_INFO("%s", table->GetInfo().c_str());
 }
