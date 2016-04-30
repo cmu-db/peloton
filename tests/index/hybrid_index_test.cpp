@@ -173,8 +173,7 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
 }
 
 
-void ExecuteTest(executor::AbstractExecutor *executor,
-                        std::vector<double> columns_accessed, double cost) {
+void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
   timer.Start();
@@ -207,7 +206,6 @@ TEST_F(HybridIndexTests, SeqScanTest) {
 
 
   const int lower_bound = 30;
-  const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -237,11 +235,9 @@ TEST_F(HybridIndexTests, SeqScanTest) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, columns_accessed, cost);
+  ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
-
-  LOG_INFO("%s", table->GetInfo().c_str());
 }
 
 }  // namespace tet
