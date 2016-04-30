@@ -204,7 +204,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
-  //LoadTable(hyadapt_table);
+  LoadTable(hyadapt_table);
 
   LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
 

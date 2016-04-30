@@ -154,7 +154,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     // now we have already obtained a new tuple slot.
     if (tuple_slot != INVALID_OID) {
       tile_group_id = tile_group->GetTileGroupId();
-      LOG_INFO("%s", GetInfo().c_str());
+      LOG_TRACE("%s", GetInfo().c_str());
       break;
     }
   }
