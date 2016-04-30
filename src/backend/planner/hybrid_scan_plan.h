@@ -34,8 +34,8 @@ public:
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
-                : table_(table), predicate_(predicate),
-                 index_(index_scan_desc.index),
+                : index_(index_scan_desc.index), table_(table), 
+                  predicate_(predicate),
                   column_ids_(column_ids),
                   key_column_ids_(std::move(index_scan_desc.key_column_ids)),
                   expr_types_(std::move(index_scan_desc.expr_types)),
@@ -60,8 +60,7 @@ private:
 
   storage::DataTable *table_ = nullptr;
 
-  const std::unique_ptr<expression::AbstractExpression> predicate_;
-
+  const std::unique_ptr<expression::AbstractExpression> predicate_ = std::unique_ptr<expression::AbstractExpression>(nullptr);
 
   const std::vector<oid_t> column_ids_;
 
