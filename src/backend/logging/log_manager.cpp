@@ -370,6 +370,7 @@ void LogManager::PrepareRecovery() {
       auto table = database->GetTable(table_idx);
       // drop existing tile groups
       table->DropTileGroups();
+      table->SetNumberOfTuples(0);
     }
   }
   prepared_recovery_ = true;
