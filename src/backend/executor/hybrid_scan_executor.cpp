@@ -59,7 +59,7 @@ bool HybridScanExecutor::DExecute() {
   if (type_ == SEQ) {
     // assume do not read from a logical tile.
     assert(children_.size() == 0);
-    LOG_INFO("Hybrid executor, Seq Scan :: 0 child, %d tile groups ", table_tile_group_count_);
+    LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
 
     assert(table_ != nullptr);
     assert(column_ids_.size() > 0);
@@ -83,15 +83,15 @@ bool HybridScanExecutor::DExecute() {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+        // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(location);
+            /*auto res = transaction_manager.PerformRead(location);
             if (!res) {
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
               return res;
-            }
+            }*/
           } else {
             expression::ContainerTuple<storage::TileGroup> tuple(
               tile_group.get(), tuple_id);
@@ -99,14 +99,14 @@ bool HybridScanExecutor::DExecute() {
               .IsTrue();
             if (eval == true) {
               position_list.push_back(tuple_id);
-              auto res = transaction_manager.PerformRead(location);
+              /*auto res = transaction_manager.PerformRead(location);
               if (!res) {
                 transaction_manager.SetTransactionResult(RESULT_FAILURE);
                 return res;
-              }
+              }*/
             }
           }
-        }
+        // }
       }
 
       // Don't return empty tiles
@@ -118,7 +118,7 @@ bool HybridScanExecutor::DExecute() {
       std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
-
+      LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
       SetOutput(logical_tile.release());
       return true;
     }
