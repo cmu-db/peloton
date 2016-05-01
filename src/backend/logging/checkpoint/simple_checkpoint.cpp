@@ -55,6 +55,8 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 }
 
 void SimpleCheckpoint::DoCheckpoint() {
+  CreateFile();
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // XXX get default backend logger
   if (logger_ == nullptr) {
@@ -92,19 +94,15 @@ void SimpleCheckpoint::DoCheckpoint() {
     }
   }
 
-  // if anything other than begin record is added
-  if (records_.size() > 1) {
-    std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
-        LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id_));
-    CopySerializeOutput commit_output_buffer;
-    commit_record->Serialize(commit_output_buffer);
-    records_.push_back(commit_record);
+  std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
+      LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id_));
+  CopySerializeOutput commit_output_buffer;
+  commit_record->Serialize(commit_output_buffer);
+  records_.push_back(commit_record);
 
-    CreateFile();
-    Persist();
-    Cleanup();
-    most_recent_checkpoint_cid = start_commit_id_;
-  }
+  Persist();
+  Cleanup();
+  most_recent_checkpoint_cid = start_commit_id_;
 }
 
 cid_t SimpleCheckpoint::DoRecovery() {
@@ -258,6 +256,8 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
         records_.push_back(record);
       }
     }
+    // persist to file once per tile
+    Persist();
     current_tile_group_offset++;
   }
 }
@@ -288,7 +288,6 @@ void SimpleCheckpoint::CreateFile() {
 void SimpleCheckpoint::Persist() {
   if (disable_file_access) return;
   assert(file_handle_.file);
-  assert(records_.size() > 2);
   assert(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
 
   LOG_INFO("Persisting %lu checkpoint entries", records_.size());
@@ -298,8 +297,9 @@ void SimpleCheckpoint::Persist() {
     assert(record->GetMessageLength() > 0);
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
            file_handle_.file);
+    record.reset();
   }
-
+  records_.clear();
   LoggingUtil::FFlushFsync(file_handle_);
 }
 
