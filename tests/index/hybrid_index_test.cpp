@@ -203,12 +203,8 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group * scalar);
 }
 
-TEST_F(HybridIndexTests, SeqScanTest) {
-  std::unique_ptr<storage::DataTable> hyadapt_table;
-  CreateTable(hyadapt_table, false);
-  LoadTable(hyadapt_table);
-
-  // const int lower_bound = 30;
+void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+// const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -218,7 +214,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<executor::ExecutorContext> context(
-  new executor::ExecutorContext(txn));
+    new executor::ExecutorContext(txn));
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
@@ -242,11 +238,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   txn_manager.CommitTransaction();
 }
 
-TEST_F(HybridIndexTests, IndexScanTest) {
-  std::unique_ptr<storage::DataTable> hyadapt_table;
-  CreateTable(hyadapt_table, true);
-  LoadTable(hyadapt_table);
-
+void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<oid_t> column_ids;
   oid_t column_count = projectivity * columncount;
   std::vector<oid_t> hyadapt_column_ids;
@@ -266,16 +258,16 @@ TEST_F(HybridIndexTests, IndexScanTest) {
 
   key_column_ids.push_back(0);
   expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
   values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
- 
+
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate, column_ids,
-                                            index_scan_desc);
+                                           index_scan_desc);
 
   //const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -290,6 +282,25 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
+}
+
+TEST_F(HybridIndexTests, SeqScanTest) {
+  std::unique_ptr<storage::DataTable> hyadapt_table;
+  CreateTable(hyadapt_table, false);
+  LoadTable(hyadapt_table);
+
+  for (size_t i = 0; i < 5; i++)
+    LaunchSeqScan(hyadapt_table);
+
+}
+
+TEST_F(HybridIndexTests, IndexScanTest) {
+  std::unique_ptr<storage::DataTable> hyadapt_table;
+  CreateTable(hyadapt_table, true);
+  LoadTable(hyadapt_table);
+
+  for (size_t i = 0; i < 5; i++)
+    LaunchIndexScan(hyadapt_table);
 }
 
 }  // namespace tet
