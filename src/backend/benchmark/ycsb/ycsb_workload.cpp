@@ -250,8 +250,7 @@ void RunBackend(oid_t thread_id) {
 
   fast_random rng(rand());
   
-  auto theta = 0.9;
-  ZipfDistribution zipf(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP, theta);
+  ZipfDistribution zipf(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP, state.zipf_theta);
 
   // Run these many transactions
   while (true) {

@@ -63,6 +63,8 @@ class configuration {
 
   double abort_rate;
 
+  double zipf_theta;
+
 };
 
 extern configuration state;

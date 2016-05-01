@@ -97,6 +97,15 @@ void ValidateSnapshotDuration(const configuration &state) {
   LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
 }
 
+void ValidateZipfTheta(const configuration &state) {
+  if (state.zipf_theta < 0 || state.zipf_theta > 1.0) {
+    LOG_ERROR("Invalid zipf_theta :: %lf", state.zipf_theta);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "zipf_theta", state.zipf_theta);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
@@ -106,11 +115,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
+  state.zipf_theta = 0.0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:z:", opts, &idx);
 
     if (c == -1) break;
 
@@ -133,6 +143,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+      case 'z':
+        state.zipf_theta = atof(optarg);
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -152,6 +165,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateBackendCount(state);
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
+  ValidateZipfTheta(state);
 
 }
 
