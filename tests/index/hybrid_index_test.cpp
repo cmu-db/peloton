@@ -207,9 +207,6 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
 
-  LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
-
-
   // const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -249,9 +246,6 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   CreateTable(hyadapt_table, true);
   LoadTable(hyadapt_table);
 
-  LOG_INFO("%s", hyadapt_table->GetInfo().c_str());
-
-
   std::vector<oid_t> column_ids;
   oid_t column_count = projectivity * columncount;
   std::vector<oid_t> hyadapt_column_ids;
@@ -263,6 +257,8 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   }
 
   auto index = hyadapt_table->GetIndex(0);
+  LOG_INFO("Tuples in index %f", index->GetNumberOfTuples());
+
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<Value> values;
