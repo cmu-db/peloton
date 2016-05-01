@@ -106,6 +106,7 @@ int RecycledNum(storage::DataTable *table) {
 //
 TEST_F(GCTest, SimpleTest) {
 
+  concurrency::EpochManagerFactory::GetInstance().Reset();
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
@@ -126,11 +127,15 @@ TEST_F(GCTest, SimpleTest) {
   // genereated by the last update
   EXPECT_EQ(old_num, 1);
 
-  // sleep for a while to increase epoch
+
+  ScanAndGC(table.get(), num_key);
+
   std::this_thread::sleep_for(
     3 * std::chrono::milliseconds(EPOCH_LENGTH));
+  ScanAndGC(table.get(), num_key);
 
-  // index scan and gc
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
   ScanAndGC(table.get(), num_key);
 
 
@@ -148,6 +153,8 @@ TEST_F(GCTest, SimpleTest) {
 
 
 TEST_F(GCTest, StressTest) {
+  concurrency::EpochManagerFactory::GetInstance().Reset();
+
   const int num_key = 256;
   const int scale = 1;
   std::unique_ptr<storage::DataTable> table(
@@ -161,11 +168,18 @@ TEST_F(GCTest, StressTest) {
 
   // sleep for a while to increase epoch
 
-  std::this_thread::sleep_for(
-    3 * std::chrono::milliseconds(EPOCH_LENGTH));
+
 
   // EXPECT_EQ(scale * succ_num * 2, old_num);
   EXPECT_TRUE(old_num > 0);
+  ScanAndGC(table.get(), num_key);
+
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
+  ScanAndGC(table.get(), num_key);
+
+  std::this_thread::sleep_for(
+    3 * std::chrono::milliseconds(EPOCH_LENGTH));
   ScanAndGC(table.get(), num_key);
 
   old_num = GarbageNum(table.get());

@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -91,20 +89,22 @@ volatile bool is_running = true;
 oid_t *abort_counts;
 oid_t *commit_counts;
 
-// static void PinToCore(size_t core) {
-//     cpu_set_t cpuset;
-//     CPU_ZERO(&cpuset);
-//     CPU_SET(core, &cpuset);
-//     int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-//     assert(ret == 0);
-// }
+static void PinToCore(size_t core) {
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core, &cpuset);
+    int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+    if (ret == 0) {
+      assert(false);
+    }
+}
 
 void RunBackend(oid_t thread_id) {
-  // PinToCore(thread_id);
+  PinToCore(thread_id);
 
   auto update_ratio = state.update_ratio;
 
-  UniformGenerator generator;
+  //UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
@@ -114,8 +114,8 @@ void RunBackend(oid_t thread_id) {
     if (is_running == false) {
       break;
     }
-    auto rng_val = generator.GetSample();
-
+    //auto rng_val = generator.GetSample();
+	int rng_val = 1;
     if (rng_val < update_ratio) {
       while (RunUpdate() == false) {
         execution_count_ref++;
