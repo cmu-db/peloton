@@ -45,8 +45,8 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 100;
-static size_t tile_group = 100;
+static size_t tuples_per_tile_group = 10;
+static size_t tile_group = 10;
 static float scalar = 0.1;
 static size_t iter = 10;
 
@@ -157,7 +157,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
     expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, tuple_value_expr,
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
       constant_value_expr);
 
   return predicate;
@@ -203,7 +203,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 //  EXPECT_EQ(tuple_counts, 11);
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * scalar + 1));
+              (tile_group * tuples_per_tile_group * scalar + 0));
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -290,6 +290,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
 void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<oid_t> column_ids;
+  std::vector<oid_t> column_ids_second;
   oid_t column_count = projectivity * columncount;
   std::vector<oid_t> hyadapt_column_ids;
 
@@ -297,6 +298,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
+    column_ids_second.push_back(hyadapt_column_ids[col_itr]);
   }
 
   auto index = hyadapt_table->GetIndex(0);
@@ -316,7 +318,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   expression::AbstractExpression *predicate = nullptr;
 
-  planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids,
+  planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
                                            index_scan_desc);
 
   //const int lower_bound = 30;
@@ -330,12 +332,13 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
+  LOG_INFO("Finish init");
   ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
 
-TEST_F(HybridIndexTests, SeqScanTest) {
+/*TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -353,6 +356,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
+*/
 
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -378,7 +382,7 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   hyadapt_table->AddIndex(pkey_index);
-
+  
   for (size_t i = 0; i < iter; i++)
     LaunchHybridScan(hyadapt_table);
 }

@@ -34,7 +34,7 @@ public:
                  expression::AbstractExpression *predicate,
                  const std::vector<oid_t> &column_ids,
                  const IndexScanPlan::IndexScanDesc &index_scan_desc)
-    : AbstractScan(table, predicate, column_ids_),
+    : AbstractScan(table, predicate, column_ids),
                 index_(index),
                 column_ids_(column_ids),
                 key_column_ids_(std::move(index_scan_desc.key_column_ids)),
