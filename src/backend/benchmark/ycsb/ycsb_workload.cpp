@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
+// #undef NDEBUG
 
 #include <memory>
 #include <string>
@@ -178,9 +178,11 @@ private:
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-bool RunRead();
+bool RunRead(fast_random &rng);
 
 bool RunUpdate(fast_random &rng);
+
+bool RunMixed(fast_random &rng, int read_count, int write_count);
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -195,8 +197,7 @@ static void PinToCore(size_t core) {
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(core, &cpuset);
-    int ret = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-    assert(ret == 0);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
 
 void RunBackend(oid_t thread_id) {
@@ -216,6 +217,15 @@ void RunBackend(oid_t thread_id) {
     if (is_running == false) {
       break;
     }
+
+    while (RunMixed(rng, 12, 2) == false) {
+      execution_count_ref++;
+    }
+
+    transaction_count_ref++;
+    continue;
+    // Bypass the following
+
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
@@ -223,7 +233,7 @@ void RunBackend(oid_t thread_id) {
         execution_count_ref++;
       }
     } else {
-      while (RunRead() == false) {
+      while (RunRead(rng) == false) {
         execution_count_ref++;
       }
     }
@@ -378,7 +388,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
-bool RunRead() {
+bool RunRead(fast_random &rng) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -408,14 +418,17 @@ bool RunRead() {
 
   auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
-      std::vector<Value> values;
-
-      auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
-    auto lookup_key = rand() % tuple_count;
-
-  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
+  for (int i = 0; i < 10; i++) {
+    // Column ids to be added to logical tile after scan.
     
+    // Create and set up index scan executor
+
+    std::vector<Value> values;
+
+    auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+    auto lookup_key = rng.next_u32() % tuple_count;
+
+    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
     planner::IndexScanPlan::IndexScanDesc index_scan_desc(
         ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -425,26 +438,13 @@ bool RunRead() {
 
     planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(user_table, predicate, column_ids,
                                            index_scan_desc);
-
-
-    // int a = 0;
-  for (int i = 0; i < 100; i++) {
-    // Column ids to be added to logical tile after scan.
-    
-    // Create and set up index scan executor
-    
-    // a += rand() % 10240;
     // Run the executor
     executor::IndexScanExecutor *index_scan_executor = new executor::IndexScanExecutor(index_scan_node,
                                                     context.get());
 
     executors.push_back(index_scan_executor);
-    // plans.push_back(index_scan_node);
+    plans.push_back(index_scan_node);
   }
-
-  // LOG_TRACE("%d", a);
-
-  
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
@@ -466,6 +466,166 @@ bool RunRead() {
 
   // executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   // mat_executor.AddChild(&index_scan_executor);
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+
+  ExecuteTest(executors);
+
+  for (auto executor : executors) {
+    delete executor;
+  }
+
+  for (auto plan : plans) {
+    delete plan;
+  }
+
+  auto result = txn->GetResult();
+
+  // transaction passed execution.
+  if (result == Result::RESULT_SUCCESS) {
+
+    result = txn_manager.CommitTransaction();
+
+    if (result == Result::RESULT_SUCCESS) {
+      // transaction passed commitment.
+      return true;
+    } else {
+      // transaction failed commitment.
+      assert(result == Result::RESULT_ABORTED ||
+             result == Result::RESULT_FAILURE);
+      return false;
+    }
+  }
+  // transaction aborted during execution.
+  else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    result = txn_manager.AbortTransaction();
+    return false;
+  }
+}
+
+bool RunMixed(fast_random &rng, int read_count, int write_count) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  std::vector<executor::AbstractExecutor *> executors;
+  std::vector<planner::AbstractPlan *>plans;
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+
+  std::vector<oid_t> column_ids;
+  oid_t column_count = state.column_count + 1;
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(col_itr);
+  }
+
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+
+  for (int i = 0; i < read_count; i++) {
+    // Column ids to be added to logical tile after scan.
+    
+    // Create and set up index scan executor
+
+    std::vector<Value> values;
+
+    auto lookup_key = rng.next_u32() % tuple_count;
+
+    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+
+    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+        ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+
+    // Create plan node.
+    auto predicate = nullptr;
+
+    planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(user_table, predicate, column_ids,
+                                           index_scan_desc);
+    // Run the executor
+    executor::IndexScanExecutor *index_scan_executor = new executor::IndexScanExecutor(index_scan_node,
+                                                    context.get());
+
+    executors.push_back(index_scan_executor);
+    plans.push_back(index_scan_node);
+  }
+
+
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  for (int i = 0; i < write_count; i++) {
+    // Create and set up index scan executor
+    
+    std::vector<Value> values;
+
+    auto lookup_key = rng.next_u32() % tuple_count;
+
+    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+
+    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+        ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
+
+    // Create plan node.
+    auto predicate = nullptr;
+
+    planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(user_table, predicate, column_ids,
+                                           index_scan_desc);
+    plans.push_back(index_scan_node);
+
+    // Run the executor
+    executor::IndexScanExecutor *index_scan_executor = new executor::IndexScanExecutor(index_scan_node,
+                                                    context.get());
+
+    /////////////////////////////////////////////////////////
+    // UPDATE
+    /////////////////////////////////////////////////////////
+
+    planner::ProjectInfo::TargetList target_list;
+    planner::ProjectInfo::DirectMapList direct_map_list;
+
+    // Update the second attribute
+    for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+      if (col_itr != 1) {
+        direct_map_list.emplace_back(col_itr,
+                                     std::pair<oid_t, oid_t>(0, col_itr));
+      }
+    }
+
+    // std::string update_raw_value(ycsb_field_length - 1, 'u');
+    int update_raw_value = 2;
+    Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
+    target_list.emplace_back(
+        1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+    std::unique_ptr<const planner::ProjectInfo> project_info(
+        new planner::ProjectInfo(std::move(target_list),
+                                 std::move(direct_map_list)));
+    planner::UpdatePlan *update_node = new planner::UpdatePlan(user_table, std::move(project_info));
+    plans.push_back(update_node);
+
+    executor::UpdateExecutor *update_executor = new executor::UpdateExecutor(update_node, context.get());
+    update_executor->AddChild(index_scan_executor);
+    executors.push_back(update_executor);
+  }
 
   /////////////////////////////////////////////////////////
   // EXECUTE
