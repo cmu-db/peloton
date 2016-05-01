@@ -48,7 +48,8 @@ class BTreeIndex : public Index {
   bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
-                       std::function<bool(const ItemPointer &)> predicate);
+                       std::function<bool(const ItemPointer &)> predicate,
+                       ItemPointer **itempointer_ptr);
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,

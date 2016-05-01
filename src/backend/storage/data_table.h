@@ -229,7 +229,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // try to insert into the indices
-  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // the forth argument return the itempointer ptr inserted into the primary index
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **itemptr_ptr);
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
                                 ItemPointer location);

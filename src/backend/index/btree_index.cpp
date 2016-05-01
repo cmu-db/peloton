@@ -111,10 +111,13 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 bool BTreeIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
     const storage::Tuple *key, const ItemPointer &location,
-    std::function<bool(const ItemPointer &)> predicate) {
+    std::function<bool(const ItemPointer &)> predicate,
+    ItemPointer **itempointer_ptr) {
 
   KeyType index_key;
   index_key.SetFromKey(key);
+
+  *itempointer_ptr = nullptr;
 
   {
     index_lock.WriteLock();
@@ -122,7 +125,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
+
       ItemPointer item_pointer = *(entry->second);
 
       if (predicate(item_pointer)) {
@@ -132,8 +135,9 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     }
 
     // Insert the key, val pair
+    *itempointer_ptr = new ItemPointer(location);
     container.insert(std::pair<KeyType, ValueType>(
-        index_key, new ItemPointer(location)));
+        index_key, itempointer_ptr);
 
     index_lock.Unlock();
   }
