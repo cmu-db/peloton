@@ -45,8 +45,8 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 100000;
-static size_t tile_group = 100;
+static size_t tuples_per_tile_group = 10;
+static size_t tile_group = 10;
 static float scalar = 0.1;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
@@ -156,7 +156,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
     expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, tuple_value_expr,
       constant_value_expr);
 
   return predicate;
@@ -199,8 +199,8 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
-//  EXPECT_EQ(tiple_group_counts, 0);
-  EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group * scalar);
+//  EXPECT_EQ(tuple_counts, 11);
+  EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group * scalar + 1);
 }
 
 TEST_F(HybridIndexTests, SeqScanTest) {
@@ -287,6 +287,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
 
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
+  
   ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
