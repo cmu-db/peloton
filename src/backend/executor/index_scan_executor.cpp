@@ -147,7 +147,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
   if (tuple_location_ptrs.size() == 0) return false;
 
@@ -155,6 +154,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  std::vector<ItemPointer> garbage_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     
@@ -211,6 +211,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // there must exist a visible version.
+
+        // FIXME: currently, only speculative read transaction manager **may** see a null version
+        // it's a potential bug
+        if(tuple_location.IsNull()) {
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          return res;
+        }
+
         // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
         assert(tuple_location.IsNull() == false);
 
@@ -222,14 +230,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
-
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
             // currently, let's assume only primary index exists.
-            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-                table_->GetOid(), old_item.block, old_item.offset,
-                transaction_manager.GetNextCommitId());
+            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+            //     table_->GetOid(), old_item.block, old_item.offset,
+            //     transaction_manager.GetNextCommitId());
+            garbage_tuples.push_back(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
@@ -246,6 +254,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           tile_group_header = tile_group.get()->GetHeader();
         }
       }
+    }
+  }
+
+  // Add all garbage tuples to GC manager
+  if(garbage_tuples.size() != 0) {
+    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+    for (auto garbage : garbage_tuples) {
+      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
     }
   }
 
