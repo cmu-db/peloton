@@ -33,7 +33,8 @@ namespace logging {
 thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
-  Configure(peloton_logging_mode, false, 2, LOGGER_MAPPING_ROUND_ROBIN);
+  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
+            LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
