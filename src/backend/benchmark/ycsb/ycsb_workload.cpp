@@ -306,19 +306,12 @@ bool RunRead() {
 
   auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
-  for (int i = 0; i < 100; i++) {
-    // Column ids to be added to logical tile after scan.
-    
-    // Create and set up index scan executor
+      std::vector<Value> values;
 
-    std::vector<Value> values;
-    
-
-    auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+      auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
     auto lookup_key = rand() % tuple_count;
 
-    
-    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+  values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
     
 
@@ -331,13 +324,23 @@ bool RunRead() {
     planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(user_table, predicate, column_ids,
                                            index_scan_desc);
 
+
+    // int a = 0;
+  for (int i = 0; i < 100; i++) {
+    // Column ids to be added to logical tile after scan.
+    
+    // Create and set up index scan executor
+    
+    // a += rand() % 10240;
     // Run the executor
     executor::IndexScanExecutor *index_scan_executor = new executor::IndexScanExecutor(index_scan_node,
                                                     context.get());
 
     executors.push_back(index_scan_executor);
-    plans.push_back(index_scan_node);
+    // plans.push_back(index_scan_node);
   }
+
+  // LOG_TRACE("%d", a);
 
   
 
