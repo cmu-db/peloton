@@ -85,7 +85,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
   InitSelf();
 }
 
-WriteAheadFrontendLogger::InitSelf() {
+void WriteAheadFrontendLogger::InitSelf() {
   SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
   InitLogDirectory();
   InitLogFilesList();
