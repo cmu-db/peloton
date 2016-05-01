@@ -143,7 +143,7 @@ class SsiTxnManager : public TransactionManager {
 
  private:
   // Mutex to protect txn_table_ and sireadlocks
-  RWLock txn_manager_mutex_;
+  // RWLock txn_manager_mutex_;
   // mutex to avoid re-enter clean up
   std::mutex clean_mutex_;
   // Transaction contexts

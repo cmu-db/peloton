@@ -179,7 +179,7 @@ bool SsiTxnManager::AcquireOwnership(
 bool SsiTxnManager::PerformRead(const ItemPointer &location){
   auto tile_group_id = location.block;
   auto tuple_id = location.offset;
-  LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+  // LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
 
   // jump to abort directly
   if(current_ssi_txn_ctx->is_abort()){
@@ -209,8 +209,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
       SsiTxnContext *writer_ptr = nullptr;
       if (txn_table_.find(writer, writer_ptr) && !writer_ptr->is_abort()) {
         // The writer have not been removed from the txn table
-        LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer,
-                 tuple_id);
+        //LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
         SetInConflict(writer_ptr);
         SetOutConflict(current_ssi_txn_ctx);
       }
@@ -277,7 +276,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
           LOG_INFO("abort in read");
           // Unlock the transaction context
           creator_ctx->lock_.Unlock();
-          txn_manager_mutex_.Unlock();
+          // txn_manager_mutex_.Unlock();
           return false;
         }
         // Creator not commited, add an edge
@@ -613,6 +612,9 @@ Result SsiTxnManager::AbortTransaction() {
 
   RemoveReader(current_txn);
 
+  if(current_ssi_txn_ctx->transaction_->GetEndCommitId() == MAX_CID) {
+    current_ssi_txn_ctx->transaction_->SetEndCommitId(GetNextCommitId());
+  }
   end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] = current_ssi_txn_ctx;
 
 
@@ -661,25 +663,33 @@ void SsiTxnManager::CleanUp() {
     vacuum.join();
   }
 
-  auto iter = end_txn_table_.lock_table();
-  std::unordered_set<cid_t> gc_cids;
-  for (auto &it : iter) {
-    auto ctx_ptr = it.second;
-    txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
-    // end_txn_table_.erase(gc_cid);
-    gc_cids.insert(gc_cid);
+  // printf("enter clean up\n");
+  std::unordered_set <cid_t> gc_cids;
+  {
+    auto iter = end_txn_table_.lock_table();
 
-    if(!ctx_ptr->is_abort()) {
-      RemoveReader(ctx_ptr->transaction_);
+    for (auto &it : iter) {
+      auto ctx_ptr = it.second;
+      txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
+      // end_txn_table_.erase(gc_cid);
+      gc_cids.insert(it.first);
+
+      // printf("clean %ld\n", it.first);
+      if (!ctx_ptr->is_abort()) {
+        RemoveReader(ctx_ptr->transaction_);
+      }
+      delete ctx_ptr->transaction_;
+      delete ctx_ptr;
+      gc_cid = std::max(gc_cid, it.first);
     }
-    delete ctx_ptr->transaction_;
-    delete ctx_ptr;
-    gc_cid = std::max(gc_cid, it.first);
   }
 
   for(auto cid : gc_cids) {
     end_txn_table_.erase(cid);
   }
+
+
+  // printf("exit clean up\n");
 }
 
 void SsiTxnManager::CleanUpBg() {
