@@ -11,8 +11,16 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 
+
 namespace peloton {
 namespace planner{
+
+enum HybridType {
+  UNKNOWN,
+  SEQ,
+  INDEX,
+  HYBRID
+};
 
 class HybridScanPlan : public AbstractScan {
 public:
@@ -22,13 +30,14 @@ public:
   HybridScanPlan &operator=(HybridScanPlan &&) = delete;
 
 
-  HybridScanPlan(index::Index *index, storage::DataTable *table)
-    : AbstractScan(table, nullptr, column_ids_), index_(index) {}
+  HybridScanPlan(index::Index *index, storage::DataTable *table,
+                 expression::AbstractExpression *predicate)
+    : AbstractScan(table, predicate, column_ids_), index_(nullptr), type_(HYBRID) {}
 
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids), column_ids_(column_ids) {}
+      : AbstractScan(table, predicate, column_ids), column_ids_(column_ids), type_(SEQ) {}
 
   HybridScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
@@ -40,7 +49,8 @@ public:
                   key_column_ids_(std::move(index_scan_desc.key_column_ids)),
                   expr_types_(std::move(index_scan_desc.expr_types)),
                   values_(std::move(index_scan_desc.values)),
-                  runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
+                  runtime_keys_(std::move(index_scan_desc.runtime_keys)),
+                  type_(INDEX){}
 
 
   index::Index *GetDataIndex() const {
@@ -72,8 +82,13 @@ public:
     return runtime_keys_;
   }
 
+  HybridType GetHybridType() const {
+    return type_;
+  }
 
 private:
+  HybridType type_;
+
   index::Index *index_ = nullptr;
 
   const std::vector<oid_t> column_ids_;
