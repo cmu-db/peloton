@@ -34,7 +34,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // size of the table
   int scale_factor;
 
@@ -65,6 +64,7 @@ class configuration {
 
   double zipf_theta;
 
+  bool run_mix;
 };
 
 extern configuration state;

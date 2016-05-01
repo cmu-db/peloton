@@ -84,8 +84,8 @@ void CreateYCSBDatabase() {
   std::string table_name("USERTABLE");
 
   user_table = storage::TableFactory::GetDataTable(
-      ycsb_database_oid, user_table_oid, table_schema, table_name,
-      1000, own_schema, adapt_table);
+      ycsb_database_oid, user_table_oid, table_schema, table_name, 1000,
+      own_schema, adapt_table);
 
   ycsb_database->AddTable(user_table);
 
@@ -97,7 +97,7 @@ void CreateYCSBDatabase() {
   index::IndexMetadata *index_metadata;
   bool unique;
 
-  key_attrs = { 0 };
+  key_attrs = {0};
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
@@ -109,7 +109,6 @@ void CreateYCSBDatabase() {
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   user_table->AddIndex(pkey_index);
-
 }
 
 void LoadYCSBDatabase() {
@@ -135,7 +134,6 @@ void LoadYCSBDatabase() {
 
   int rowid;
   for (rowid = 0; rowid < tuple_count; rowid++) {
-
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
     auto key_value = ValueFactory::GetIntegerValue(rowid);

@@ -23,25 +23,30 @@ namespace benchmark {
 namespace ycsb {
 
 void Usage(FILE *out) {
-  fprintf(out, "Command line options : ycsb <options> \n"
-               "   -h --help              :  Print help message \n"
-               "   -k --scale_factor      :  # of tuples \n"
-               "   -d --duration          :  execution duration \n"
-               "   -s --snapshot_duration :  snapshot duration \n"
-               "   -c --column_count      :  # of columns \n"
-               "   -u --write_ratio       :  Fraction of updates \n"
-               "   -b --backend_count     :  # of backends \n");
+  fprintf(out,
+          "Command line options : ycsb <options> \n"
+          "   -h --help              :  Print help message \n"
+          "   -k --scale_factor      :  # of tuples \n"
+          "   -d --duration          :  execution duration \n"
+          "   -s --snapshot_duration :  snapshot duration \n"
+          "   -c --column_count      :  # of columns \n"
+          "   -u --write_ratio       :  Fraction of updates \n"
+          "   -b --backend_count     :  # of backends \n"
+          "   -z --zipf_theta        :  theta to control skewness \n"
+          "   -m --mix_txn           :  run read/write mix txn \n");
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-  { "scale_factor", optional_argument, NULL, 'k' },
-  { "duration", optional_argument, NULL, 'd' },
-  { "snapshot_duration", optional_argument, NULL, 's' },
-  { "column_count", optional_argument, NULL, 'c' },
-  { "update_ratio", optional_argument, NULL, 'u' },
-  { "backend_count", optional_argument, NULL, 'b' }, { NULL, 0, NULL, 0 }
-};
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"duration", optional_argument, NULL, 'd'},
+    {"snapshot_duration", optional_argument, NULL, 's'},
+    {"column_count", optional_argument, NULL, 'c'},
+    {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
+    {"zipf_theta", optional_argument, NULL, 'z'},
+    {"mix_txn", no_argument, NULL, 'm'},
+    {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -107,7 +112,6 @@ void ValidateZipfTheta(const configuration &state) {
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
-
   // Default Values
   state.scale_factor = 1;
   state.duration = 10;
@@ -116,11 +120,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.update_ratio = 0.5;
   state.backend_count = 2;
   state.zipf_theta = 0.0;
+  state.run_mix = false;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:z:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:", opts, &idx);
 
     if (c == -1) break;
 
@@ -150,7 +155,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         Usage(stderr);
         exit(EXIT_FAILURE);
         break;
-
+      case 'm':
+        state.run_mix = true;
+        break;
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
@@ -166,7 +173,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
-
 }
 
 }  // namespace ycsb
