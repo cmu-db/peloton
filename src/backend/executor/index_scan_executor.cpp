@@ -216,7 +216,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // it's a potential bug
         if(tuple_location.IsNull()) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          return res;
+          // FIXME: this cause unnecessary abort when we have delete operations
+          return false;
         }
 
         // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
