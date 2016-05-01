@@ -61,8 +61,8 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger()
 /**
  * @brief Open logfile and file descriptor
  */
-WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing)
-    : test_mode_(for_testing) {
+WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
+  test_mode_ = for_testing;
   logging_type = LOGGING_TYPE_NVM_WAL;
 
   // allocate pool
