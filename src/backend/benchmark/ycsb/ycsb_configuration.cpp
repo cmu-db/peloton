@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
+// #undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
