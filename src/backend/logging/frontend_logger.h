@@ -64,6 +64,8 @@ class FrontendLogger : public Logger {
 
   size_t GetFsyncCount() const { return fsync_count; }
 
+  void SetTestMode(bool test_mode) { this->test_mode_ = test_mode; }
+
   void ReplayLog(const char *, size_t len);
 
   cid_t GetMaxFlushedCommitId();
@@ -126,6 +128,8 @@ class FrontendLogger : public Logger {
   cid_t max_delimiter_for_recovery = 0;
 
   cid_t max_seen_commit_id = 0;
+
+  bool test_mode_ = false;
 
   bool is_distinguished_logger = false;
 };

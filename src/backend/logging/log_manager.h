@@ -149,6 +149,8 @@ class LogManager {
 
   void ResetFrontendLogger();
 
+  void DropFrontendLoggers();
+
   void PrepareLogging();
 
   void LogBeginTransaction(cid_t commit_id);
@@ -242,7 +244,8 @@ class LogManager {
 
   cid_t max_flushed_cid = 0;
 
-  bool syncronization_commit = false;
+  bool syncronization_commit =
+      true;  // default should be true because it is safest
 
   std::string log_file_name;
 

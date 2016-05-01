@@ -400,6 +400,11 @@ void LogManager::ResetFrontendLogger() {
       FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
 }
 
+void LogManager::DropFrontendLoggers() {
+  ResetFrontendLoggers();
+  frontend_loggers.clear();
+}
+
 void LogManager::TruncateLogs(txn_id_t commit_id) {
   int num_loggers;
 
