@@ -39,7 +39,7 @@ bool HybridScanExecutor::DInit() {
   index_ = node.GetDataIndex();
   type_ = node.GetHybridType();
 
-  if (table_ != nullptr && index_ == nullptr) {
+  if (type_ == planner::SEQ) {
     current_tile_group_offset_ = START_OID;
     if (table_ != nullptr) {
       table_tile_group_count_ = table_->GetTileGroupCount();
@@ -49,7 +49,7 @@ bool HybridScanExecutor::DInit() {
       }
     }
 
-  } else if (table_ != nullptr && index_ != nullptr) {
+  } else if (type_ == planner::INDEX) {
     result_itr_ = START_OID;
     index_done_ = false;
 
@@ -82,6 +82,7 @@ bool HybridScanExecutor::DInit() {
     }
   } else { // Hybrid type.
     if (indexed_tile_offset_ < table_->GetTileGroupCount()) {
+        LOG_INFO("Insert %d tile group into index", indexed_tile_offset_);
         // insert one tile group to index
         auto tile_group =
           table_->GetTileGroup(indexed_tile_offset_++);
@@ -89,12 +90,13 @@ bool HybridScanExecutor::DInit() {
         oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
         for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-          std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_->GetSchema()));
+          std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_->GetSchema(), true));
           tile_group->CopyTuple(tuple_id, tuple_ptr.get());
           ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
           table_->InsertInIndexes(tuple_ptr.get(), location);
         }
+        LOG_INFO("Finish Insert %d tile group into index", indexed_tile_offset_-1);
     }
 
     index_ = table_->GetIndex(0);
@@ -267,8 +269,10 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
-  if (tuple_location_ptrs.size() == 0) return false;
-
+  if (tuple_location_ptrs.size() == 0) {
+    index_done_ = true;
+    return false;
+  }
 //  auto &transaction_manager =
 //    concurrency::TransactionManagerFactory::GetInstance();
 
