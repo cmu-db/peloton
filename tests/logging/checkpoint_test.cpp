@@ -58,6 +58,8 @@ oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
 }
 
 TEST_F(CheckpointTests, CheckpointScanTest) {
+  logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
 
@@ -156,6 +158,8 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
 }
 
 TEST_F(CheckpointTests, CheckpointRecoveryTest) {
+  logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
+
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   size_t table_tile_group_count = 3;
 
@@ -195,8 +199,11 @@ TEST_F(CheckpointTests, CheckpointRecoveryTest) {
 }
 
 TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
+  logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);
+
   auto &log_manager = logging::LogManager::GetInstance();
   auto &checkpoint_manager = logging::CheckpointManager::GetInstance();
+  checkpoint_manager.DestroyCheckpointers();
 
   checkpoint_manager.Configure(CHECKPOINT_TYPE_NORMAL, true, 1);
 
