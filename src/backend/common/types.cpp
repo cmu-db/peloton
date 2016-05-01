@@ -22,7 +22,7 @@ namespace peloton {
 
 ItemPointer INVALID_ITEMPOINTER;
 
-int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
+int DEFAULT_TUPLES_PER_TILEGROUP = 1000000;
 
 //===--------------------------------------------------------------------===//
 // Type utilities
