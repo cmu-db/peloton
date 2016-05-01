@@ -471,9 +471,11 @@ TEST_F(IsolationLevelTest, StressTest) {
         // Store substracted value
         scheduler.Txn(i).ReadStore(key1, -delta);
         scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+        LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
         // Store increased value
         scheduler.Txn(i).ReadStore(key2, delta);
         scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+        LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
       }
       scheduler.Txn(i).Commit();
     }
@@ -486,9 +488,12 @@ TEST_F(IsolationLevelTest, StressTest) {
     }
     scheduler2.Txn(0).Commit();
     scheduler2.Run();
+
+    EXPECT_EQ(RESULT_SUCCESS, scheduler2.schedules[0].txn_result);
     // The sum should be zero
     int sum = 0;
     for (auto result : scheduler2.schedules[0].results) {
+      LOG_INFO("Table has tuple value: %d", result);
       sum += result;
     }
 

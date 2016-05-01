@@ -209,6 +209,7 @@ class OptimisticRbTxnManager : public TransactionManager {
     current_segment_pool = nullptr;
   }
 
+  // Get the commit id of the latest commited txn
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
   // has deleted the tuple
