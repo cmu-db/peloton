@@ -257,7 +257,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   }
 
   auto index = hyadapt_table->GetIndex(0);
-  LOG_INFO("Tuples in index %f", index->GetNumberOfTuples());
+  LOG_INFO("Tuples in index %f, column count in index %d", index->GetNumberOfTuples(), index->GetColumnCount());
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
