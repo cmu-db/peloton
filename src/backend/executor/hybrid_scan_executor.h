@@ -7,16 +7,10 @@
 #include "backend/storage/data_table.h"
 #include "backend/index/index.h"
 #include "backend/executor/abstract_scan_executor.h"
+#include "backend/planner/hybrid_scan_plan.h"
 
 namespace peloton {
 namespace executor {
-
-enum HybridType {
-  UNKNOWN,
-  SEQ,
-  INDEX,
-  HYBRID
-};
 
 class HybridScanExecutor : public AbstractScanExecutor {
 public:
@@ -38,8 +32,9 @@ private:
 
   oid_t indexed_tile_offset_ = INVALID_OID;
 
-  HybridType type_ = UNKNOWN;
+  planner::HybridType type_;
 
+//  bool build_index_ = true;
 
   // Used for Seq Scan
   /** @brief Keeps track of current tile group id being scanned. */
@@ -49,11 +44,13 @@ private:
   oid_t table_tile_group_count_ = INVALID_OID;
 
 
+  inline bool SeqScanUtil();
+  inline bool IndexScanUtil();
   //===--------------------------------------------------------------------===//
   // Index Scan
   //===--------------------------------------------------------------------===//
   bool ExecPrimaryIndexLookup();
-  bool ExecSecondaryIndexLookup();
+//  bool ExecSecondaryIndexLookup();
 
   //===--------------------------------------------------------------------===//
   // Executor State
