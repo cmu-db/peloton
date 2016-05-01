@@ -269,5 +269,46 @@ TEST_F(LoggingTests, TwoRoundTest) {
   scheduler.Cleanup();
 }
 
+TEST_F(LoggingTests, InsertUpdateDeleteTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+
+  auto &log_manager = logging::LogManager::GetInstance();
+
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
+
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Update(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Delete(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(5);
+  scheduler.BackendLogger(0, 1).Delete(5);
+  scheduler.BackendLogger(0, 1).Commit(5);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
+
+  scheduler.Run();
+
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(5, results[1]);
+  scheduler.Cleanup();
+}
+
 }  // End test namespace
 }  // End peloton namespace

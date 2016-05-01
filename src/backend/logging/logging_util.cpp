@@ -294,7 +294,7 @@ bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
     if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
       continue;
     }
-    char complete_path[32];
+    char complete_path[256];
     strcpy(complete_path, dir_name);
     strcat(complete_path, "/");
     strcat(complete_path, file->d_name);
