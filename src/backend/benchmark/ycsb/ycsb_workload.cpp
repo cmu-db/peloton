@@ -259,7 +259,7 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    while (RunMixed(rng, 12, 2) == false) {
+    while (RunMixed(zipf, 12, 2) == false) {
       execution_count_ref++;
     }
 
@@ -578,8 +578,6 @@ bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-
-  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
   for (int i = 0; i < read_count; i++) {
     // Column ids to be added to logical tile after scan.
