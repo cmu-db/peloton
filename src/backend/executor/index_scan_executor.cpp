@@ -242,12 +242,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           }
 
         } else {
-        tile_group = manager.GetTileGroup(tuple_location.block);
-        tile_group_header = tile_group.get()->GetHeader();
-
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
         }
-
-
       }
     }
   }

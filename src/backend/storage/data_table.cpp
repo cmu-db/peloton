@@ -227,9 +227,17 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   return location;
 }
 
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **itemptr_ptr) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple);
+
+  ItemPointer *temp_ptr = nullptr;
+
+  // Upper layer don't want to know infomation about index
+  if (itemptr_ptr == nullptr) {
+    itemptr_ptr = &temp_ptr;
+  }
+
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -238,7 +246,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   // Index checks and updates
-  if (InsertInIndexes(tuple, location) == false) {
+  if (InsertInIndexes(tuple, location, itemptr_ptr) == false) {
     LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }

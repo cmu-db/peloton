@@ -124,7 +124,7 @@ bool OptimisticN2OTxnManager::PerformRead(const ItemPointer &location) {
   return true;
 }
 
-bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location) {
+bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -145,6 +145,9 @@ bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location) {
 
   // Init the tuple reserved field
   InitTupleReserved(tile_group_header, tuple_id);
+
+  // Write down the head pointer's address in tile group header
+  SetHeadPtr(tile_group_header, tuple_id, itemptr_ptr);
 
   return true;
 }
@@ -172,17 +175,26 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
-  // Set double linked list
-  tile_group_header->SetNextItemPointer(old_location.offset, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
-
+  // Set double linked list in a newest to oldest manner
+  new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
+  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
-  // Add the old tuple into the update set
-  current_txn->RecordUpdate(old_location);
 
   // Init the tuple reserved field
   InitTupleReserved(new_tile_group_header, new_location.offset);
+
+  // Set the index header in an atomic way.
+  // We do it atomically because we don't want any one to see a half-down pointer
+  // In case of contention, no one can update this pointer when we are updating it
+  // because we are holding the write lock. This update should success in its first trial.
+  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+  auto res = AtomicUpdateItemPointer(head_ptr, new_location);
+  assert(res == true);
+  (void) res;
+
+  // Add the old tuple into the update set
+  current_txn->RecordUpdate(old_location);
 }
 
 // this function is invoked when it is NOT the first time to update the tuple.
@@ -227,15 +239,26 @@ void OptimisticN2OTxnManager::PerformDelete(const ItemPointer &old_location,
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
-  // Set up double linked list
-  tile_group_header->SetNextItemPointer(old_location.offset, new_location);
-  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
-
+  // Set the timestamp for delete
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 
+  // Set double linked list in a newest to oldest manner
+  new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
+  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+
   // Init the tuple reserved field
   InitTupleReserved(new_tile_group_header, new_location.offset);
+
+  // Set the index header in an atomic way.
+  // We do it atomically because we don't want any one to see a half-down pointer
+  // In case of contention, no one can update this pointer when we are updating it
+  // because we are holding the write lock. This update should success in its first trial.
+  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+  auto res = AtomicUpdateItemPointer(head_ptr, new_location);
+  assert(res == true);
+  (void) res;
 
   // Add the old tuple into the delete set
   current_txn->RecordDelete(old_location);
@@ -359,7 +382,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
       if (tuple_entry.second == RW_TYPE_UPDATE) {
         // logging.
         ItemPointer new_version =
-            tile_group_header->GetNextItemPointer(tuple_slot);
+            tile_group_header->GetPrevItemPointer(tuple_slot);
         ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
@@ -388,7 +411,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
-            tile_group_header->GetNextItemPointer(tuple_slot);
+            tile_group_header->GetPrevItemPointer(tuple_slot);
         ItemPointer delete_location(tile_group_id, tuple_slot);
 
         // logging.
@@ -463,7 +486,7 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
       if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we do not set begin cid for old tuple.
         ItemPointer new_version =
-            tile_group_header->GetNextItemPointer(tuple_slot);
+            tile_group_header->GetPrevItemPointer(tuple_slot);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -474,14 +497,21 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // We must fisrt adjust the head pointer
+        // before we unlink the aborted version from version list
+        auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
+        auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
+        assert(res == true);
+        (void) res;
+
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
         // reset the item pointers.
-        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
@@ -489,7 +519,7 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
-            tile_group_header->GetNextItemPointer(tuple_slot);
+            tile_group_header->GetPrevItemPointer(tuple_slot);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -501,14 +531,21 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // We must fisrt adjust the head pointer
+        // before we unlink the aborted version from version list
+        auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
+        auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
+        assert(res == true);
+        (void) res;
+
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
         // reset the item pointers.
-        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
