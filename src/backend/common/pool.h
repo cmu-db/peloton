@@ -100,8 +100,6 @@ class VarlenPool {
   std::vector<Chunk> oversize_chunks;
 
   std::mutex pool_mutex;
-
-  Spinlock pool_spinlock;
 };
 
 }  // End peloton namespace
