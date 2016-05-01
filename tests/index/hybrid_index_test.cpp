@@ -13,9 +13,9 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
-#include <backend/planner/hybrid_scan_plan.h>
-#include <backend/executor/hybrid_scan_executor.h>
 
+#include "backend/planner/hybrid_scan_plan.h"
+#include "backend/executor/hybrid_scan_executor.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
@@ -45,8 +45,8 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 10;
-static size_t tile_group = 10;
+static size_t tuples_per_tile_group = 100000;
+static size_t tile_group = 100;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -264,15 +264,18 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  key_column_ids.push_back(0);
-
+  //key_column_ids.push_back(0);
+ // expr_types.push_back(
+ //     ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+  //values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group+1));
+ 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate, column_ids,
-                                           index_scan_desc);
+                                            index_scan_desc);
 
   //const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -284,7 +287,6 @@ TEST_F(HybridIndexTests, IndexScanTest) {
 
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
-
   ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
