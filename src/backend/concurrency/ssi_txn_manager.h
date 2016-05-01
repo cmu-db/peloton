@@ -56,9 +56,9 @@ struct ReadList {
 struct SIReadLock {
   SIReadLock() : list(nullptr) {}
   ReadList *list;
-  std::mutex mutex;
-  void Lock() { mutex.lock(); }
-  void Unlock() { mutex.unlock(); }
+  Spinlock lock;
+  void Lock() { lock.Lock(); }
+  void Unlock() { lock.Unlock(); }
 };
 
 class SsiTxnManager : public TransactionManager {
@@ -72,7 +72,7 @@ class SsiTxnManager : public TransactionManager {
     LOG_INFO("Deconstruct SSI manager");
     if(!stopped) {
       stopped = true;
-      vacuum.join();
+      // vacuum.join();
     }
   }
 
