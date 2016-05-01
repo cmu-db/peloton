@@ -33,8 +33,7 @@ namespace logging {
 thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
-  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
-            LOGGER_MAPPING_ROUND_ROBIN);
+  Configure(peloton_logging_mode, false, 2, LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -476,7 +475,8 @@ void LogManager::NotifyRecoveryDone() {
   LOG_INFO("%d loggers have done recovery so far.",
            (int)recovery_to_logging_counter);
   if (i == num_frontend_loggers_) {
-    LOG_INFO("This was the last one! Recover Index and change to LOGGING mode.");
+    LOG_INFO(
+        "This was the last one! Recover Index and change to LOGGING mode.");
     frontend_loggers[0].get()->RecoverIndex();
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   }
