@@ -50,7 +50,7 @@ bool HybridScanExecutor::DInit() {
       }
     }
 
-  } else if (table_ == nullptr && index_ != nullptr) {
+  } else if (table_ != nullptr && index_ != nullptr) {
     type_ = INDEX;
 
     result_itr_ = START_OID;
@@ -83,7 +83,6 @@ bool HybridScanExecutor::DInit() {
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
-
   } else {
     type_ = HYBRID;
   }
@@ -159,7 +158,7 @@ bool HybridScanExecutor::DExecute() {
       return true;
     }
   } else if (type_ == INDEX) {
-    LOG_INFO("Hybrrd Scan executor, Index Scan :: 0 child");
+  //  LOG_INFO("Hybrrd Scan executor, Index Scan :: 0 child");
     assert(children_.size() == 0);
     if (!index_done_) {
       if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
