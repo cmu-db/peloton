@@ -75,7 +75,11 @@ class Transaction : public Printable {
 
   inline cid_t GetEndCommitId() const { return end_cid_; }
 
+  inline size_t GetEpochId() const { return epoch_id_; }
+
   inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
+
+  inline void SetEpochId(const size_t eid) { epoch_id_ = eid; }
 
   void RecordRead(const ItemPointer &);
 
@@ -114,6 +118,9 @@ class Transaction : public Printable {
 
   // end commit id
   cid_t end_cid_;
+
+  // epoch id
+  size_t epoch_id_;
 
   std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
 
