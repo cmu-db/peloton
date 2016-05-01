@@ -70,16 +70,7 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(bool for_testing) {
   if (test_mode_) {
     cur_file_handle.file = nullptr;
   } else {
-    LOG_INFO("Log dir before getting ID is %s", peloton_log_directory.c_str());
-    SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
-    LOG_INFO("Log dir after setting ID is %s", peloton_log_directory.c_str());
-    InitLogDirectory();
-    InitLogFilesList();
-    UpdateMaxDelimiterForRecovery();
-    LOG_INFO("Updated Max Delimiter for Recovery as %d",
-             (int)max_delimiter_for_recovery);
-    cur_file_handle.fd = -1;  // this is a restart or a new start
-    max_log_id_file = 0;      // 0 is unused
+    InitSelf();
   }
 }
 
@@ -91,6 +82,10 @@ WriteAheadFrontendLogger::WriteAheadFrontendLogger(std::string log_dir)
   // allocate pool
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
 
+  InitSelf();
+}
+
+WriteAheadFrontendLogger::InitSelf() {
   SetLoggerID(__sync_fetch_and_add(&logger_id_counter, 1));
   InitLogDirectory();
   InitLogFilesList();
