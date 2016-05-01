@@ -32,7 +32,7 @@ public:
 
   HybridScanPlan(index::Index *index, storage::DataTable *table,
                  expression::AbstractExpression *predicate)
-    : AbstractScan(table, predicate, column_ids_), index_(nullptr), type_(HYBRID) {}
+    : AbstractScan(table, predicate, column_ids_), index_(index), type_(HYBRID) {}
 
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
@@ -87,8 +87,6 @@ public:
   }
 
 private:
-  HybridType type_;
-
   index::Index *index_ = nullptr;
 
   const std::vector<oid_t> column_ids_;
@@ -100,6 +98,8 @@ private:
   const std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
+  
+  HybridType type_;
 };
 
 }  // namespace planner
