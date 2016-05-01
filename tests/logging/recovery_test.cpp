@@ -210,11 +210,15 @@ TEST_F(RecoveryTests, RestartTest) {
               tile_group_size * table_tile_group_count);
   }
 
-  for (int i = 0; i < num_files; i++) {
-    int return_val = remove((dir_name + "/" + std::string("peloton_log_") +
-                             std::to_string(i) + (".log")).c_str());
-    EXPECT_EQ(return_val, 0);
-  }
+  // TODO check a few more invariants here
+  wal_fel.CreateNewLogFile(false);
+
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 1);
+
+  wal_fel.CreateNewLogFile(true);
+
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
+
   status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
   EXPECT_EQ(status, true);
 }
