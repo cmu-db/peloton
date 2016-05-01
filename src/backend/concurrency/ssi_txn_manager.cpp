@@ -107,6 +107,13 @@ bool SsiTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
   LOG_INFO("AcquireOwnership %lu", txn_id);
 
+  // jump to abort directly
+  if(current_ssi_txn_ctx->is_abort()){
+    assert(current_ssi_txn_ctx->is_abort_ == false);
+    LOG_INFO("detect conflicts");
+    return false;
+  }
+
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_INFO("Fail to insert new tuple. Set txn failure.");
     return false;
@@ -124,8 +131,9 @@ bool SsiTxnManager::AcquireOwnership(
       // Lock the transaction context
       owner_ctx->lock_.Lock();
 
-      // Myself, skip
-      if (owner_ctx == current_ssi_txn_ctx || owner_ctx->is_abort_ == true) {
+      // Myself || owner is (or should be) aborted
+      // skip
+      if (owner_ctx == current_ssi_txn_ctx || owner_ctx->is_abort()) {
         header = header->next;
 
         // Unlock the transaction context
@@ -136,7 +144,7 @@ bool SsiTxnManager::AcquireOwnership(
       auto end_cid = owner_ctx->transaction_->GetEndCommitId();
 
       // Owner is running, then siread lock owner has an out edge to me
-      if (end_cid == INVALID_TXN_ID) {
+      if (end_cid == MAX_CID) {
         SetInConflict(current_ssi_txn_ctx);
         SetOutConflict(owner_ctx);
         LOG_INFO("set %ld in, set %ld out", txn_id,
@@ -144,7 +152,7 @@ bool SsiTxnManager::AcquireOwnership(
       } else {
         // Owner has commited and ownner commit after I start, then I must abort
         if (end_cid > current_txn->GetBeginCommitId() &&
-            GetInConflict(owner_ctx)) {
+            GetInConflict(owner_ctx) && !owner_ctx->is_abort()) {
           should_abort = true;
           LOG_INFO("abort in acquire");
 
@@ -167,11 +175,19 @@ bool SsiTxnManager::AcquireOwnership(
   return true;
 }
 
-bool SsiTxnManager::PerformRead(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform Read %u %u", tile_group_id, tuple_id);
+bool SsiTxnManager::PerformRead(const ItemPointer &location){
+  auto tile_group_id = location.block;
+  auto tuple_id = location.offset;
+  // LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+
+  // jump to abort directly
+  if(current_ssi_txn_ctx->is_abort()){
+    assert(current_ssi_txn_ctx->is_abort_ == false);
+    LOG_INFO("detect conflicts");
+    return false;
+  }
+
   auto tile_group = catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
@@ -189,17 +205,15 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
     // Another transaction is writting this tuple, add an edge
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
-      txn_manager_mutex_.ReadLock();
 
-      if (txn_table_.count(writer) != 0) {
+      SsiTxnContext *writer_ptr = nullptr;
+      if (txn_table_.find(writer, writer_ptr) && !writer_ptr->is_abort()) {
         // The writer have not been removed from the txn table
-        LOG_INFO("Writer %lu has no entry in txn table when read %u", writer,
-                 tuple_id);
-        SetInConflict(txn_table_.at(writer));
+        //LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
+        SetInConflict(writer_ptr);
         SetOutConflict(current_ssi_txn_ctx);
       }
 
-      txn_manager_mutex_.Unlock();
     }
   }
 
@@ -211,7 +225,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
     // read only section
     // read-lock
     // This is a potential big overhead for read operations
-    txn_manager_mutex_.ReadLock();
+    // txn_manager_mutex_.ReadLock();
 
     LOG_INFO("SI read phase 2");
 
@@ -227,13 +241,15 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
       // Check creator status, skip if creator has commited before I start
       // or self is creator
       auto should_skip = false;
-      if (txn_table_.count(creator) == 0)
+      SsiTxnContext *creator_ptr = nullptr;
+
+      if (!txn_table_.find(creator, creator_ptr))
         should_skip = true;
       else {
         if (creator == txn_id)
           should_skip = true;
         else {
-          auto ctx = txn_table_.at(creator);
+          auto ctx = creator_ptr;
           if (ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
               ctx->transaction_->GetEndCommitId() <
                   current_txn->GetBeginCommitId()) {
@@ -248,11 +264,11 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
         continue;
       }
 
-      auto creator_ctx = txn_table_.at(creator);
+      auto creator_ctx = creator_ptr;
       // Lock the transaction context
       creator_ctx->lock_.Lock();
 
-      if (creator_ctx->is_abort_ == false) {
+      if (!creator_ctx->is_abort()) {
         // If creator committed and has out_confict, since creator has commited,
         // I must abort
         if (creator_ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
@@ -260,7 +276,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
           LOG_INFO("abort in read");
           // Unlock the transaction context
           creator_ctx->lock_.Unlock();
-          txn_manager_mutex_.Unlock();
+          // txn_manager_mutex_.Unlock();
           return false;
         }
         // Creator not commited, add an edge
@@ -273,7 +289,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location) {
 
       next_item = tile_group->GetHeader()->GetNextItemPointer(next_item.offset);
     }
-    txn_manager_mutex_.Unlock();
+    // txn_manager_mutex_.Unlock();
   }
 
   return true;
@@ -417,13 +433,11 @@ Result SsiTxnManager::CommitTransaction() {
 
     // generate transaction id.
     ret = current_txn->GetResult();
-    if (should_abort == false && ret == Result::RESULT_SUCCESS) {
-      current_txn->SetEndCommitId(end_commit_id);
-    }
+
+    current_txn->SetEndCommitId(end_commit_id);
 
     if (ret != Result::RESULT_SUCCESS) {
       LOG_INFO("Wierd, result is not success but go into commit state");
-      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
     }
     current_ssi_txn_ctx->lock_.Unlock();
   }
@@ -516,6 +530,9 @@ Result SsiTxnManager::CommitTransaction() {
   current_txn = nullptr;
   current_ssi_txn_ctx->is_finish_ = true;
 
+  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] = current_ssi_txn_ctx;
+  EpochManagerFactory::GetInstance().ExitEpoch(current_ssi_txn_ctx->transaction_->GetEpochId());
+
   return ret;
 }
 
@@ -592,25 +609,19 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
-  auto txn_id = current_txn->GetTransactionId();
 
-  // firstly, let's remove reader
   RemoveReader(current_txn);
 
-  // then, we can erase context safely
-  {
-    txn_manager_mutex_.WriteLock();
-    txn_table_.erase(txn_id);
-    txn_manager_mutex_.Unlock();
+  if(current_ssi_txn_ctx->transaction_->GetEndCommitId() == MAX_CID) {
+    current_ssi_txn_ctx->transaction_->SetEndCommitId(GetNextCommitId());
   }
+  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] = current_ssi_txn_ctx;
 
-  if (current_txn->GetEndCommitId() == MAX_CID) {
-    current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
-  }
+
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
-  delete current_ssi_txn_ctx;
-  delete current_txn;
+  // delete current_ssi_txn_ctx;
+  // delete current_txn;
   current_txn = nullptr;
 
   return Result::RESULT_ABORTED;
@@ -647,76 +658,70 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
 // Current implementation might be very expensive, consider using dependency
 // count
 void SsiTxnManager::CleanUp() {
-  std::lock_guard<std::mutex> lock(clean_mutex_);
+  if(!stopped) {
+    stopped = true;
+    vacuum.join();
+  }
 
-  std::unordered_set<SsiTxnContext *> garbage_ctx;
+  // printf("enter clean up\n");
+  std::unordered_set <cid_t> gc_cids;
   {
-    txn_manager_mutex_.ReadLock();
+    auto iter = end_txn_table_.lock_table();
 
-    // init it as max() for the case that all transactions are committed
-    cid_t min_begin = std::numeric_limits<cid_t>::max();
+    for (auto &it : iter) {
+      auto ctx_ptr = it.second;
+      txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
+      // end_txn_table_.erase(gc_cid);
+      gc_cids.insert(it.first);
 
-    for (auto &item : txn_table_) {
-      // find smallest begin cid of the running transaction
-      auto &ctx = item.second;
-      if (ctx->transaction_->GetEndCommitId() == INVALID_TXN_ID) {
-        // txn_id_a > txn_id_b --> begin_cid_a > begin_cid_b
-        // so the first running transaction's begin_cid must be the smallest
-        // see BeginTransaction()
-        min_begin = ctx->transaction_->GetBeginCommitId();
-        break;
+      // printf("clean %ld\n", it.first);
+      if (!ctx_ptr->is_abort()) {
+        RemoveReader(ctx_ptr->transaction_);
       }
+      delete ctx_ptr->transaction_;
+      delete ctx_ptr;
+      gc_cid = std::max(gc_cid, it.first);
     }
-
-    // remove committed transactions, whose end_cid < min_begin
-    for (auto itr = txn_table_.begin(); itr != txn_table_.end(); itr++) {
-      auto &ctx = itr->second;
-      auto end_cid = ctx->transaction_->GetEndCommitId();
-      if (end_cid == INVALID_TXN_ID) {
-        // running transaction
-        // then we know that the subsequent txn's end_cid > min_begin
-        // so just break
-        break;
-      }
-
-      // record garbage
-      if (end_cid < min_begin && ctx->is_finish_) {
-        // we can safely remove it from table
-        LOG_INFO("remove %ld in table", ctx->transaction_->GetTransactionId());
-        garbage_ctx.insert(ctx);
-      }
-    }
-    txn_manager_mutex_.Unlock();
   }
 
-  // remove garbage from table
-  {
-    txn_manager_mutex_.WriteLock();
-    for (auto ctx : garbage_ctx) {
-      txn_table_.erase(ctx->transaction_->GetTransactionId());
-    }
-    txn_manager_mutex_.Unlock();
+  for(auto cid : gc_cids) {
+    end_txn_table_.erase(cid);
   }
 
-  // remove txn's reader list firstly
-  for (auto ctx : garbage_ctx) {
-    RemoveReader(ctx->transaction_);
 
-    EpochManagerFactory::GetInstance().ExitEpoch(ctx->transaction_->GetEpochId());
-    delete ctx->transaction_;
-    delete ctx;
-  }
+  // printf("exit clean up\n");
 }
 
 void SsiTxnManager::CleanUpBg() {
-  while (!this->stopped || txn_table_.size() != 0) {
-    // GC periodically
-    std::chrono::milliseconds sleep_time(50);
-    std::this_thread::sleep_for(sleep_time);
+  while(!stopped) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
+    auto max_begin = GetMaxCommittedCid();
+    std::unordered_set<cid_t> gc_cids;
+    while (gc_cid < max_begin) {
+      SsiTxnContext *ctx_ptr = nullptr;
+      if (!end_txn_table_.find(gc_cid, ctx_ptr)) {
+        gc_cid++;
+        continue;
+      }
 
-    CleanUp();
-  }  // End of outer while
-  cleaned = true;
+      // find garbage
+      gc_cids.insert(gc_cid);
+      txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
+
+      gc_cids.insert(gc_cid);
+
+      if(!ctx_ptr->is_abort()) {
+        RemoveReader(ctx_ptr->transaction_);
+      }
+      delete ctx_ptr->transaction_;
+      delete ctx_ptr;
+      gc_cid++;
+    }
+
+    for(auto cid : gc_cids) {
+      end_txn_table_.erase(cid);
+    }
+  }
 }
 
 }  // End storage namespace
