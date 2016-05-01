@@ -115,7 +115,9 @@ class TransactionManager {
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a
   // precise value.
-  virtual cid_t GetMaxCommittedCid() = 0;
+  cid_t GetMaxCommittedCid() {
+    return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
+  }
 
  private:
   std::atomic<txn_id_t> next_txn_id_;

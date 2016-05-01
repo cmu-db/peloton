@@ -25,7 +25,7 @@ extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
 //===--------------------------------------------------------------------===//
 class PessimisticTxnManager : public TransactionManager {
  public:
-  PessimisticTxnManager() : last_epoch_(0) {}
+  PessimisticTxnManager(){}
   virtual ~PessimisticTxnManager() {}
 
   static PessimisticTxnManager &GetInstance();
@@ -69,52 +69,23 @@ class PessimisticTxnManager : public TransactionManager {
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
 
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
     LOG_INFO("Begin txn %lu", txn_id);
 
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
 
     return txn;
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
 
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
 
     pessimistic_released_rdlock.clear();
-  }
-
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
-
-    if (last_epoch_ != curr_epoch) {
-      last_epoch_ = curr_epoch;
-
-      cid_t min_running_cid = MAX_CID;
-      for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-        {
-          auto iter = running_txn_buckets_[i].lock_table();
-          for (auto &it : iter) {
-            if (it.second < min_running_cid) {
-              min_running_cid = it.second;
-            }
-          }
-        }
-      }
-      assert(min_running_cid > 0);
-      if (min_running_cid != MAX_CID) {
-        last_max_commit_cid_ = min_running_cid - 1;
-      } else {
-        // in this case, there's no running transaction.
-        last_max_commit_cid_ = GetNextCommitId() - 1;
-      }
-
-    }
-
-    return last_max_commit_cid_;
   }
 
  private:
@@ -131,9 +102,6 @@ class PessimisticTxnManager : public TransactionManager {
   void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
-  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
-  cid_t last_epoch_;
-  cid_t last_max_commit_cid_;
 };
 }
 }

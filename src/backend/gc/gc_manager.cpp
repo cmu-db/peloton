@@ -79,7 +79,7 @@ void GCManager::Running() {
         break;
       }
 
-      if (tuple_metadata.tuple_end_cid < max_cid) {
+      if (tuple_metadata.tuple_end_cid <= max_cid) {
         ResetTuple(tuple_metadata);
 
         // Add to the recycle map

@@ -100,6 +100,11 @@ class EagerWriteTxnManager : public TransactionManager {
       std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
       running_txn_map_[txn_id] = txn_ctx;
     }
+
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
     return txn;
   }
 
@@ -124,41 +129,14 @@ class EagerWriteTxnManager : public TransactionManager {
       running_txn_map_.erase(txn_id);
     }
 
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
     delete current_txn;
     delete current_txn_ctx;
     current_txn = nullptr;
     current_txn_ctx = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
-
-    if (last_epoch_ != curr_epoch) {
-      last_epoch_ = curr_epoch;
-
-      cid_t min_running_cid = MAX_CID;
-
-      {
-        std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
-        for (auto it : running_txn_map_) {
-          if (it.second->begin_cid_ < min_running_cid) {
-            min_running_cid = it.second->begin_cid_;
-          }
-        }
-      }
-
-      assert(min_running_cid > 0);
-      if (min_running_cid != MAX_CID) {
-        last_max_commit_cid_ = min_running_cid - 1;
-      } else {
-        // in this case, there's no running transaction.
-        last_max_commit_cid_ = GetNextCommitId() - 1;
-      }
-
-    }
-
-    return last_max_commit_cid_;
-  }
 
  private:
 
