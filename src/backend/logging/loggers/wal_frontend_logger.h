@@ -155,8 +155,6 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   cid_t max_delimiter_file = 0;
 
-  bool test_mode_ = false;
-
   bool should_create_new_file = false;
 
   TimePoint last_flush = Clock::now();
