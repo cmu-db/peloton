@@ -563,7 +563,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   return tile_group_id;
 }
 
-oid_t DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
+void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
   assert(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
@@ -580,24 +580,25 @@ oid_t DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup_));
 
-  LOG_TRACE("Added a tile group ");
-
   tile_group_lock_.WriteLock();
-  tile_groups_.push_back(tile_group->GetTileGroupId());
+  if (std::find(tile_groups_.begin(), tile_groups_.end(),
+                tile_group->GetTileGroupId()) == tile_groups_.end()) {
+    tile_groups_.push_back(tile_group->GetTileGroupId());
+
+    LOG_TRACE("Added a tile group ");
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+    // we must guarantee that the compiler always add tile group before adding
+    // tile_group_count_.
+    COMPILER_MEMORY_FENCE;
+
+    tile_group_count_++;
+
+    LOG_TRACE("Recording tile group : %u ", tile_group_id);
+  }
   tile_group_lock_.Unlock();
-
-  // add tile group metadata in locator
-  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
-
-  // we must guarantee that the compiler always add tile group before adding
-  // tile_group_count_.
-  COMPILER_MEMORY_FENCE;
-
-  tile_group_count_++;
-
-  LOG_TRACE("Recording tile group : %u ", tile_group_id);
-
-  return tile_group_id;
 }
 
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
