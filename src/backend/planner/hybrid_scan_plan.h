@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan.h"
+#include "backend/planner/abstract_scan_plan.h"
 #include "backend/planner/index_scan_plan.h"
 #include "backend/storage/data_table.h"
 #include "backend/index/index.h"
@@ -14,7 +14,7 @@
 namespace peloton {
 namespace planner{
 
-class HybridScanPlan : public AbstractPlan {
+class HybridScanPlan : public AbstractScan {
 public:
   HybridScanPlan(const HybridScanPlan &) = delete;
   HybridScanPlan &operator=(const HybridScanPlan &) = delete;
@@ -23,19 +23,19 @@ public:
 
 
   HybridScanPlan(index::Index *index, storage::DataTable *table)
-    : index_(index), table_(table) {}
+    : AbstractScan(table, nullptr, column_ids_), index_(index) {}
 
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
-      : table_(table), predicate_(predicate), column_ids_(column_ids) {}
+      : AbstractScan(table, predicate, column_ids), column_ids_(column_ids) {}
 
   HybridScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
-                : index_(index_scan_desc.index), table_(table), 
-                  predicate_(predicate),
+                : AbstractScan(table, predicate, column_ids),
+                  index_(index_scan_desc.index),
                   column_ids_(column_ids),
                   key_column_ids_(std::move(index_scan_desc.key_column_ids)),
                   expr_types_(std::move(index_scan_desc.expr_types)),
@@ -47,17 +47,10 @@ public:
     return this->index_;
   }
 
-  storage::DataTable *GetDataTable() const {
-    return this->table_;
-  }
-
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
-  const expression::AbstractExpression *GetPredicate() const {
-    return predicate_.get();
-  }
 
   PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_SEQSCAN;
@@ -82,10 +75,6 @@ public:
 
 private:
   index::Index *index_ = nullptr;
-
-  storage::DataTable *table_ = nullptr;
-
-  const std::unique_ptr<expression::AbstractExpression> predicate_ = std::unique_ptr<expression::AbstractExpression>(nullptr);
 
   const std::vector<oid_t> column_ids_;
 
