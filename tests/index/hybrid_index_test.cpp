@@ -47,6 +47,7 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 100000;
 static size_t tile_group = 100;
+static float scalar = 0.1;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -199,7 +200,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
 //  EXPECT_EQ(tiple_group_counts, 0);
-  EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group);
+  EXPECT_EQ(tuple_counts, tile_group * tuples_per_tile_group * scalar);
 }
 
 TEST_F(HybridIndexTests, SeqScanTest) {
@@ -231,7 +232,7 @@ TEST_F(HybridIndexTests, SeqScanTest) {
   }
 
   // Create and set up seq scan executor
-  auto predicate = nullptr; // CreatePredicate(lower_bound);
+  auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
@@ -257,17 +258,16 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   }
 
   auto index = hyadapt_table->GetIndex(0);
-  LOG_INFO("Tuples in index %f, column count in index %d", index->GetNumberOfTuples(), index->GetColumnCount());
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  //key_column_ids.push_back(0);
- // expr_types.push_back(
- //     ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  //values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group+1));
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+  values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
  
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
