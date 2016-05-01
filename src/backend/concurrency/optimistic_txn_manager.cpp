@@ -299,6 +299,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   // validate read set.
   for (auto &tile_group_entry : rw_set) {
