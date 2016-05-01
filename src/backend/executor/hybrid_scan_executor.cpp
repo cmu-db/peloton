@@ -29,13 +29,13 @@ HybridScanExecutor::HybridScanExecutor(const planner::AbstractPlan *node,
   : AbstractScanExecutor(node, executor_context), indexed_tile_offset_(START_OID) {}
 
 bool HybridScanExecutor::DInit() {
- //  auto status = AbstractScanExecutor::DInit();
+ auto status = AbstractScanExecutor::DInit();
 
- // if (!status) return false;
+ if (!status) return false;
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
 
-  table_ = node.GetDataTable();
+  table_ = node.GetTable();
   index_ = node.GetDataIndex();
 
   if (table_ != nullptr && index_ == nullptr) {
