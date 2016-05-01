@@ -31,8 +31,16 @@ public:
 
 
   HybridScanPlan(index::Index *index, storage::DataTable *table,
-                 expression::AbstractExpression *predicate)
-    : AbstractScan(table, predicate, column_ids_), index_(index), type_(HYBRID) {}
+                 expression::AbstractExpression *predicate,
+                 const std::vector<oid_t> &column_ids,
+                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
+    : AbstractScan(table, predicate, column_ids_),
+                index_(index),
+                column_ids_(column_ids),
+                key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+                expr_types_(std::move(index_scan_desc.expr_types)),
+                values_(std::move(index_scan_desc.values)),
+                runtime_keys_(std::move(index_scan_desc.runtime_keys)), type_(HYBRID) {}
 
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
