@@ -117,12 +117,14 @@ TEST_F(RecoveryTests, RestartTest) {
 
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-      LoggingTestsUtil::BuildTuples(recovery_table, num_rows + 1, mutate,
+      LoggingTestsUtil::BuildTuples(recovery_table, num_rows + 2, mutate,
                                     random);
 
   std::vector<logging::TupleRecord> records =
       LoggingTestsUtil::BuildTupleRecordsForRestartTest(
-          tuples, tile_group_size, table_tile_group_count, 1);
+          tuples, tile_group_size, table_tile_group_count, 1, 1);
+
+  logging::LoggingUtil::RemoveDirectory("pl_log0", false);
 
   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
   EXPECT_EQ(status, true);
@@ -158,13 +160,25 @@ TEST_F(RecoveryTests, RestartTest) {
              records[num_record].GetMessageLength(), fp);
     }
 
-    // Now write 1 extra out of range tuple, only in file 0
+    // Now write 1 extra out of range tuple, only in file 0, which
+    // is present at the second-but-last position of this list
     if (i == 0) {
       CopySerializeOutput output_buffer_extra;
       records[num_files * tile_group_size].Serialize(output_buffer_extra);
 
       fwrite(records[num_files * tile_group_size].GetMessage(), sizeof(char),
              records[num_files * tile_group_size].GetMessageLength(), fp);
+    }
+
+    // Now write 1 extra delete tuple, only in the last file, which
+    // is present at the end of this list
+    if (i == num_files - 1) {
+      CopySerializeOutput output_buffer_delete;
+      records[num_files * tile_group_size + 1].Serialize(output_buffer_delete);
+
+      fwrite(records[num_files * tile_group_size + 1].GetMessage(),
+             sizeof(char),
+             records[num_files * tile_group_size + 1].GetMessageLength(), fp);
     }
 
     // Now write commit
@@ -214,7 +228,7 @@ TEST_F(RecoveryTests, RestartTest) {
   wal_fel.DoRecovery();
 
   EXPECT_EQ(recovery_table->GetNumberOfTuples(),
-            tile_group_size * table_tile_group_count);
+            tile_group_size * table_tile_group_count - 1);
   EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
 
   txn_manager.SetNextCid(5);
@@ -222,7 +236,7 @@ TEST_F(RecoveryTests, RestartTest) {
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = recovery_table->GetIndex(index_itr);
     EXPECT_EQ(index->GetNumberOfTuples(),
-              tile_group_size * table_tile_group_count);
+              tile_group_size * table_tile_group_count - 1);
   }
 
   // TODO check a few more invariants here
