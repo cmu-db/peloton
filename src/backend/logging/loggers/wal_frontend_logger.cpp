@@ -272,7 +272,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
       }
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
       case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
-        num_inserts++;
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         if (LoggingUtil::ReadTupleRecordHeader(*tuple_record,
@@ -303,6 +302,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
         // Read off the tuple record body from the log
         tuple_record->SetTuple(LoggingUtil::ReadTupleRecordBody(
             table->GetSchema(), recovery_pool, cur_file_handle));
+        num_inserts++;
         break;
       }
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
