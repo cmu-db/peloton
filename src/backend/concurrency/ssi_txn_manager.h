@@ -30,6 +30,13 @@ struct SsiTxnContext {
         is_abort_(false),
         is_finish_(false) {}
   Transaction *transaction_;
+
+  // is_abort() could run without any locks
+  // because if it returns wrong result, it just leads to a false abort
+  inline bool is_abort() {
+    return is_abort_ || (in_conflict_ && out_conflict_);
+  }
+
   bool in_conflict_;
   bool out_conflict_;
   bool is_abort_;
@@ -49,21 +56,24 @@ struct ReadList {
 struct SIReadLock {
   SIReadLock() : list(nullptr) {}
   ReadList *list;
-  std::mutex mutex;
-  void Lock() { mutex.lock(); }
-  void Unlock() { mutex.unlock(); }
+  Spinlock lock;
+  void Lock() { lock.Lock(); }
+  void Unlock() { lock.Unlock(); }
 };
 
 class SsiTxnManager : public TransactionManager {
  public:
   SsiTxnManager() : stopped(false), cleaned(false){
+    gc_cid = 0;
     vacuum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
 
   virtual ~SsiTxnManager() {
     LOG_INFO("Deconstruct SSI manager");
-    stopped = true;
-    vacuum.join();
+    if(!stopped) {
+      stopped = true;
+      // vacuum.join();
+    }
   }
 
   static SsiTxnManager &GetInstance();
@@ -98,7 +108,7 @@ class SsiTxnManager : public TransactionManager {
   virtual void PerformDelete(const ItemPointer &location);
 
   virtual Transaction *BeginTransaction() {
-    txn_manager_mutex_.WriteLock();
+    // txn_manager_mutex_.WriteLock();
 
     // protect beginTransaction with a global lock
     // to ensure that:
@@ -106,7 +116,7 @@ class SsiTxnManager : public TransactionManager {
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
-    assert(txn_table_.find(txn->GetTransactionId()) == txn_table_.end());
+
     current_ssi_txn_ctx = new SsiTxnContext(txn);
     current_txn = txn;
 
@@ -115,7 +125,7 @@ class SsiTxnManager : public TransactionManager {
 
 
     txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
-    txn_manager_mutex_.Unlock();
+    // txn_manager_mutex_.Unlock();
     LOG_INFO("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
@@ -133,11 +143,15 @@ class SsiTxnManager : public TransactionManager {
 
  private:
   // Mutex to protect txn_table_ and sireadlocks
-  RWLock txn_manager_mutex_;
+  // RWLock txn_manager_mutex_;
   // mutex to avoid re-enter clean up
   std::mutex clean_mutex_;
   // Transaction contexts
-  std::map<txn_id_t, SsiTxnContext *> txn_table_;
+  cuckoohash_map<txn_id_t, SsiTxnContext *> txn_table_;
+
+  cuckoohash_map<cid_t, SsiTxnContext *> end_txn_table_;
+
+  cid_t gc_cid;
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
   std::map<std::pair<oid_t, oid_t>, std::unique_ptr<SIReadLock>> sireadlocks;
