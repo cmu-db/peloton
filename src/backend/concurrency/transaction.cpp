@@ -83,7 +83,8 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   }
 }
 
-bool Transaction::RecordDelete(const ItemPointer &location) {
+void Transaction::RecordDelete(const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -95,26 +96,25 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       type = RW_TYPE_DELETE;
       // record write.
       is_written_ = true;
-      return false;
+      return;
     }
     if (type == RW_TYPE_UPDATE) {
       type = RW_TYPE_DELETE;
-      return false;
+      return;
     }
     if (type == RW_TYPE_INSERT) {
       type = RW_TYPE_INS_DEL;
       --insert_count_;
-      return true;
+      return;
     }
     if (type == RW_TYPE_DELETE) {
       assert(false);
-      return false;
+      return;
     }
     assert(false);
   } else {
     assert(false);
   }
-  return false;
 }
 
 const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {

@@ -108,24 +108,41 @@ class SpeculativeReadTxnManager : public TransactionManager {
     current_txn = txn;
     spec_txn_context.SetBeginCid(begin_cid);
 
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
+    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+    assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
+    running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
     return txn;
   }
 
   virtual void EndTransaction() {
-    if (current_txn->GetEndCommitId() == MAX_CID) {
-      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    txn_id_t txn_id = current_txn->GetTransactionId();
+
+    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+    bool ret = running_txn_buckets_[bucket_id].erase(txn_id);
+    if (ret == false) {
+      assert(false);
     }
-
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
     spec_txn_context.Clear();
 
     delete current_txn;
     current_txn = nullptr;
   }
 
+  virtual cid_t GetMaxCommittedCid() {
+    cid_t min_running_cid = MAX_CID;
+    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
+      {
+        auto iter = running_txn_buckets_[i].lock_table();
+        for (auto &it : iter) {
+          if (it.second->begin_cid_ < min_running_cid) {
+            min_running_cid = it.second->begin_cid_;
+          }
+        }
+      }
+    }
+    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
+    return min_running_cid - 1;
+  }
 
   // is it because this dependency has been registered before?
   // or the dst txn does not exist?

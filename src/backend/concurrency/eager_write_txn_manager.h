@@ -48,7 +48,7 @@ extern thread_local EagerWriteTxnContext *current_txn_ctx;
 //===--------------------------------------------------------------------===//
 class EagerWriteTxnManager : public TransactionManager {
  public:
-  EagerWriteTxnManager() : last_epoch_(0) {}
+  EagerWriteTxnManager() {}
   virtual ~EagerWriteTxnManager() {}
 
   static EagerWriteTxnManager &GetInstance();
@@ -100,11 +100,6 @@ class EagerWriteTxnManager : public TransactionManager {
       std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
       running_txn_map_[txn_id] = txn_ctx;
     }
-
-
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
-
     return txn;
   }
 
@@ -129,14 +124,26 @@ class EagerWriteTxnManager : public TransactionManager {
       running_txn_map_.erase(txn_id);
     }
 
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
     delete current_txn;
     delete current_txn_ctx;
     current_txn = nullptr;
     current_txn_ctx = nullptr;
   }
 
+  virtual cid_t GetMaxCommittedCid() {
+    cid_t min_running_cid = MAX_CID;
+    {
+      std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
+      for (auto &it : running_txn_map_) {
+        if (it.second->begin_cid_ < min_running_cid) {
+          min_running_cid = it.second->begin_cid_;
+        }
+      }
+    }
+
+    assert(min_running_cid > 0);
+    return min_running_cid - 1;
+  }
 
  private:
 
@@ -232,8 +239,6 @@ class EagerWriteTxnManager : public TransactionManager {
   std::unordered_map<txn_id_t, EagerWriteTxnContext *> running_txn_map_;
   static const int LOCK_OFFSET = 0;
   static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
-  cid_t last_epoch_;
-  cid_t last_max_commit_cid_;
 };
 }
 }

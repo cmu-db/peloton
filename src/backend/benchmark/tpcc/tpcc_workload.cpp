@@ -78,182 +78,84 @@ namespace tpcc {
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-bool RunStockLevel();
+void RunStockLevel();
 
-bool RunDelivery();
+void RunDelivery();
 
-bool RunOrderStatus();
+void RunOrderStatus();
 
-bool RunPayment();
+void RunPayment();
 
-bool RunNewOrder();
+void RunNewOrder();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-volatile bool is_running = true;
-
-oid_t *abort_counts;
-oid_t *commit_counts;
+std::vector<double> durations;
 
 void RunBackend(oid_t thread_id) {
+  auto txn_count = state.transaction_count;
 
   UniformGenerator generator;
+  Timer<> timer;
 
-  oid_t &execution_count_ref = abort_counts[thread_id];
-  oid_t &transaction_count_ref = commit_counts[thread_id];
+  // Start timer
+  timer.Reset();
+  timer.Start();
 
   // Run these many transactions
-  while (true) {
-    if (is_running == false) {
-      break;
-    }
+  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
     auto rng_val = generator.GetSample();
-    
-    if (rng_val <= 0.04) {
-      while (RunStockLevel() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.08) {
-      while (RunDelivery() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.12) {
-      while (RunOrderStatus() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.55) {
-      while (RunPayment() == false) {
-        execution_count_ref++;
-      }
-    } else {
-      while (RunNewOrder() == false) {
-        execution_count_ref++;
-      }
-    }
 
-    transaction_count_ref++;
+    if (rng_val <= 0.04) {
+      RunStockLevel();
+    } else if (rng_val <= 0.08) {
+      RunDelivery();
+    } else if (rng_val <= 0.12) {
+      RunOrderStatus();
+    } else if (rng_val <= 0.55) {
+      RunPayment();
+    } else {
+      RunNewOrder();
+    }
 
   }
+
+  // Stop timer
+  timer.Stop();
+
+  // Set duration
+  durations[thread_id] = timer.GetDuration();
 }
 
-void RunWorkload() {
+double RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
-  
-  abort_counts = new oid_t[num_threads];
-  memset(abort_counts, 0, sizeof(oid_t) * num_threads);
-
-  commit_counts = new oid_t[num_threads];
-  memset(commit_counts, 0, sizeof(oid_t) * num_threads);
-
-  size_t snapshot_round = (size_t)(state.duration / state.snapshot_duration);
-
-  oid_t **abort_counts_snapshots = new oid_t *[snapshot_round];
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    abort_counts_snapshots[round_id] = new oid_t[num_threads];
-  }
-
-  oid_t **commit_counts_snapshots = new oid_t *[snapshot_round];
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    commit_counts_snapshots[round_id] = new oid_t[num_threads];
-  }
+  double max_duration = std::numeric_limits<double>::min();
+  durations.reserve(num_threads);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
+    thread_group.push_back(std::thread(RunBackend, thread_itr));
   }
-
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(int(state.snapshot_duration * 1000)));
-    memcpy(abort_counts_snapshots[round_id], abort_counts,
-           sizeof(oid_t) * num_threads);
-    memcpy(commit_counts_snapshots[round_id], commit_counts,
-           sizeof(oid_t) * num_threads);
-  }
-
-  is_running = false;
 
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 
-  // calculate the throughput and abort rate for the first round.
-  oid_t total_commit_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_commit_count += commit_counts_snapshots[0][i];
+  // Compute max duration
+  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
+    max_duration = std::max(max_duration, durations[thread_itr]);
   }
 
-  oid_t total_abort_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_abort_count += abort_counts_snapshots[0][i];
-  }
+  double throughput = (state.transaction_count * num_threads)/max_duration;
 
-  state.snapshot_throughput
-      .push_back(total_commit_count * 1.0 / state.snapshot_duration);
-  state.snapshot_abort_rate
-      .push_back(total_abort_count * 1.0 / total_commit_count);
-
-  // calculate the throughput and abort rate for the remaining rounds.
-  for (size_t round_id = 0; round_id < snapshot_round - 1; ++round_id) {
-    total_commit_count = 0;
-    for (size_t i = 0; i < num_threads; ++i) {
-      total_commit_count += commit_counts_snapshots[round_id + 1][i] -
-                            commit_counts_snapshots[round_id][i];
-    }
-
-    total_abort_count = 0;
-    for (size_t i = 0; i < num_threads; ++i) {
-      total_abort_count += abort_counts_snapshots[round_id + 1][i] -
-                           abort_counts_snapshots[round_id][i];
-    }
-
-    state.snapshot_throughput
-        .push_back(total_commit_count * 1.0 / state.snapshot_duration);
-    state.snapshot_abort_rate
-        .push_back(total_abort_count * 1.0 / total_commit_count);
-  }
-
-  // calculate the aggregated throughput and abort rate.
-  total_commit_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_commit_count += commit_counts_snapshots[snapshot_round - 1][i];
-  }
-
-  total_abort_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_abort_count += abort_counts_snapshots[snapshot_round - 1][i];
-  }
-
-  state.throughput = total_commit_count * 1.0 / state.duration;
-  state.abort_rate = total_abort_count * 1.0 / total_commit_count;
-
-  // cleanup everything.
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] abort_counts_snapshots[round_id];
-    abort_counts_snapshots[round_id] = nullptr;
-  }
-
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] commit_counts_snapshots[round_id];
-    commit_counts_snapshots[round_id] = nullptr;
-  }
-  delete[] abort_counts_snapshots;
-  abort_counts_snapshots = nullptr;
-  delete[] commit_counts_snapshots;
-  commit_counts_snapshots = nullptr;
-
-  delete[] abort_counts;
-  abort_counts = nullptr;
-  delete[] commit_counts;
-  commit_counts = nullptr;
+  return throughput;
 }
-
 
 /////////////////////////////////////////////////////////
 // TABLES
@@ -443,6 +345,7 @@ void RunWorkload() {
 
 std::vector<std::vector<Value>>
 ExecuteTest(executor::AbstractExecutor* executor) {
+  time_point_ start, end;
   bool status = false;
 
   // Run all the executors
@@ -480,7 +383,7 @@ ExecuteTest(executor::AbstractExecutor* executor) {
   return std::move(logical_tile_values);
 }
 
-bool RunNewOrder(){
+void RunNewOrder(){
   /*
      "NEW_ORDER": {
      "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -557,7 +460,7 @@ bool RunNewOrder(){
   if(gwtr_lists_values.empty() == true) {
     LOG_ERROR("getWarehouseTaxRate failed");
     txn_manager.AbortTransaction();
-    return false;
+    return;
   }
 
   auto w_tax = gwtr_lists_values[0][0];
@@ -593,37 +496,24 @@ bool RunNewOrder(){
                                                            context.get());
 
   auto gd_lists_values = ExecuteTest(&district_index_scan_executor);
-
   if(gd_lists_values.empty() == true) {
     LOG_ERROR("getDistrict failed");
     txn_manager.AbortTransaction();
-    return false;
+    return;
   }
 
-  auto result = txn->GetResult();
+  auto d_tax = gd_lists_values[0][0];
+  // LOG_TRACE("D_TAX: %d", d_tax);
+  auto d_next_o_id = gd_lists_values[0][1];
+  // LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
 
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
+  // incrementNextOrderId
 
-    result = txn_manager.CommitTransaction();
-    auto d_tax = gd_lists_values[0][0];
-    // LOG_TRACE("D_TAX: %d", d_tax);
-    auto d_next_o_id = gd_lists_values[0][1];
-    // LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
-
-    return true;
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
+  txn_manager.CommitTransaction();
 
 }
 
-bool RunPayment(){
+void RunPayment(){
   /*
      "PAYMENT": {
      "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -638,14 +528,9 @@ bool RunPayment(){
      }
    */
 
-  LOG_INFO("-------------------------------------");
-
-  //int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  //int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  return true;
 }
 
-bool RunOrderStatus(){
+void RunOrderStatus(){
   /*
     "ORDER_STATUS": {
     "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
@@ -654,10 +539,10 @@ bool RunOrderStatus(){
     "getOrderLines": "SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?", # w_id, d_id, o_id
     }
    */
-    return true;
+
 }
 
-bool RunDelivery(){
+void RunDelivery(){
   /*
    "DELIVERY": {
    "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1", #
@@ -669,17 +554,17 @@ bool RunDelivery(){
    "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?", # ol_total, c_id, d_id, w_id
    }
    */
-   return true;
+
 }
 
-bool RunStockLevel() {
+void RunStockLevel() {
   /*
      "STOCK_LEVEL": {
      "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
      "getStockCount": "SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?
      }
    */
-     return true;
+
 }
 
 }  // namespace tpcc

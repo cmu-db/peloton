@@ -11,12 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "concurrency/transaction_tests_util.h"
-#include "backend/planner/index_scan_plan.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/delete_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/executor/seq_scan_executor.h"
-#include "backend/executor/index_scan_executor.h"
 #include "backend/executor/update_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/expression_util.h"
@@ -239,44 +237,28 @@ TransactionTestsUtil::MakePredicate(int id) {
   return predicate;
 }
 
-
-planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table, int id) {
-  auto index = table->GetIndex(0);
-  std::vector<expression::AbstractExpression *> runtime_keys;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-
-  std::vector<oid_t> key_column_ids = {0};
-
-  expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-
-  values.push_back(ValueFactory::GetIntegerValue(id));
-
-  return planner::IndexScanPlan::IndexScanDesc(
-    index, key_column_ids, expr_types, values, runtime_keys);
-}
-
 bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
                                        storage::DataTable *table, int id,
                                        int &result) {
   std::unique_ptr<executor::ExecutorContext> context(
-    new executor::ExecutorContext(transaction));
+      new executor::ExecutorContext(transaction));
 
+  // Predicate, WHERE `id`=id
+  auto predicate = MakePredicate(id);
 
-  // index scan
+  // Seq scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::IndexScanPlan idx_scan_node(table, nullptr, column_ids, MakeIndexDesc(table, id));
-  executor::IndexScanExecutor idx_scan_executor(&idx_scan_node, context.get());
+  planner::SeqScanPlan seq_scan_node(table, predicate, column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
-  EXPECT_TRUE(idx_scan_executor.Init());
-  if (idx_scan_executor.Execute() == false) {
+  EXPECT_TRUE(seq_scan_executor.Init());
+  if (seq_scan_executor.Execute() == false) {
     result = -1;
     return false;
   }
 
   std::unique_ptr<executor::LogicalTile> result_tile(
-    idx_scan_executor.GetOutput());
+      seq_scan_executor.GetOutput());
 
   // Read nothing
   if (result_tile->GetTupleCount() == 0)
@@ -336,15 +318,18 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
-  // Index scan
+  // Predicate
+  auto predicate = MakePredicate(id);
+
+  // Seq scan
   std::vector<oid_t> column_ids = {0};
-  std::unique_ptr<planner::IndexScanPlan> idx_scan_node(
-      new planner::IndexScanPlan(table, nullptr, column_ids, MakeIndexDesc(table, id)));
-  executor::IndexScanExecutor idx_scan_executor(idx_scan_node.get(),
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(table, predicate, column_ids));
+  executor::SeqScanExecutor seq_scan_executor(seq_scan_node.get(),
                                               context.get());
 
-  update_node.AddChild(std::move(idx_scan_node));
-  update_executor.AddChild(&idx_scan_executor);
+  update_node.AddChild(std::move(seq_scan_node));
+  update_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(update_executor.Init());
   return update_executor.Execute();

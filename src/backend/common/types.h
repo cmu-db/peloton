@@ -17,8 +17,6 @@
 #include <climits>
 #include <limits>
 #include <cassert>
-#include <bitset>
-
 #include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
@@ -368,8 +366,7 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
   CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
   CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
-  CONCURRENCY_TYPE_OCC_RB = 6             // optimistic + rollback segment
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
@@ -771,12 +768,6 @@ struct TupleMetadata {
 };
 
 //===--------------------------------------------------------------------===//
-// Column Bitmap
-//===--------------------------------------------------------------------===//
-static const size_t max_col_count = 128;
-typedef std::bitset<max_col_count> ColBitmap;
-
-//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -792,10 +783,8 @@ struct ItemPointer {
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
-  bool IsNull() const { 
-    return (block == INVALID_OID && offset == INVALID_OID);
-  }
-} __attribute__((__aligned__(8))) __attribute__((__packed__));
+  bool IsNull() { return (block == INVALID_OID && offset == INVALID_OID); }
+};
 
 extern ItemPointer INVALID_ITEMPOINTER;
 
@@ -820,6 +809,42 @@ struct FileHandle {
 extern FileHandle INVALID_FILE_HANDLE;
 
 //===--------------------------------------------------------------------===//
+// ItemPointerContainer
+//===--------------------------------------------------------------------===//
+
+struct ItemPointerContainer {
+
+  ItemPointerContainer(const ItemPointer &ip) {
+    this->item_pointer = ip;
+    begin_cid = 0;
+  }
+
+  void GetItemPointer(ItemPointer &ip) {
+    spinlock.Lock();
+    ip = this->item_pointer;
+    spinlock.Unlock();
+  }
+
+  // this function is called when swapping the versions during GC.
+  void SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
+    spinlock.Lock();
+    if (cid > begin_cid) {
+      this->item_pointer = ip;
+      this->begin_cid = cid;
+    }
+    spinlock.Unlock();
+  }
+
+private:
+  // copy of item pointer pointing to the header of the version chain.
+  ItemPointer item_pointer;
+  // begin_cid of the item pointer header.
+  cid_t begin_cid;
+
+  Spinlock spinlock;
+};
+
+//===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
 
@@ -841,8 +866,6 @@ bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
 bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
 BackendType GetBackendType(const LoggingType &logging_type);
-
-void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

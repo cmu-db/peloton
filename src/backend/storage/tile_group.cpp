@@ -22,7 +22,6 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
-#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
 namespace storage {
@@ -91,39 +90,6 @@ oid_t TileGroup::GetActiveTupleCount() const {
 //===--------------------------------------------------------------------===//
 
 /**
- * Apply the column delta on the rollback segment to the given tuple
- */
-void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
-
-  auto seg_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
-  auto table_schema = GetAbstractTable()->GetSchema();
-
-  for (size_t idx = 0; idx < seg_col_count; ++idx) {
-    auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
-    Value col_value = storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
-
-    // Get target tile
-    auto tile_id = GetTileIdFromColumnId(col_id);
-    assert(tile_id < GetTileCount());
-    storage::Tile *tile = GetTile(tile_id);
-    assert(tile);
-
-    // Get tile schema
-    auto &tile_schema = tile_schemas[tile_id];
-
-    // Get a tuple wrapper
-    char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
-    storage::Tuple tile_tuple(&tile_schema, tile_tuple_location);
-
-    // Write the value to tuple
-    auto tile_col_idx = GetTileColumnId(col_id);
-    tile_tuple.SetValue(tile_col_idx, col_value, tile->GetPool());
-  }
-}
-
-
-/**
  * Grab next slot (thread-safe) and fill in the tuple
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
@@ -156,7 +122,6 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   }
 }
 
-// This is commented out before merge
 void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
   LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);

@@ -169,8 +169,7 @@ struct TransactionSchedule {
   std::vector<TransactionOperation> operations;
   std::vector<int> results;
   int stored_value;
-  int schedule_id;
-  TransactionSchedule(int schedule_id_) : txn_result(RESULT_FAILURE), stored_value(0), schedule_id(schedule_id_) {}
+  TransactionSchedule() : txn_result(RESULT_FAILURE), stored_value(0) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -259,9 +258,9 @@ class TransactionThread {
         break;
       }
       case TXN_OP_UPDATE: {
+        LOG_TRACE("Execute Update");
         execute_result =
             TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
-        LOG_INFO("Txn %d Update %d's value to %d, %d", schedule->schedule_id, id, value, execute_result);
         break;
       }
       case TXN_OP_SCAN: {
@@ -278,7 +277,7 @@ class TransactionThread {
         break;
       }
       case TXN_OP_ABORT: {
-        LOG_INFO("Txn %d Abort", schedule->schedule_id);
+        LOG_TRACE("Abort");
         // Assert last operation
         assert(cur_seq == (int)schedule->operations.size());
         schedule->txn_result = txn_manager->AbortTransaction();
@@ -287,7 +286,6 @@ class TransactionThread {
       }
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction();
-        LOG_INFO("Txn %d commits: %s", schedule->schedule_id, schedule->txn_result == RESULT_SUCCESS ? "Success" : "Fail");
         txn = NULL;
         break;
       }
@@ -296,7 +294,7 @@ class TransactionThread {
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
         schedule->results.push_back(result);
-        LOG_INFO("Txn %d READ_STORE, key: %d, read: %d, modify and stored as: %d", schedule->schedule_id, id, result, result+value);
+        LOG_TRACE("READ_STORE, key: %d, read: %d, modify and stored as: %d", id, result, result+value);
         schedule->stored_value = result + value;
         break;
       }
@@ -327,11 +325,8 @@ class TransactionScheduler {
       : txn_manager(txn_manager_),
         table(datatable_),
         time(0),
-        concurrent(false) {
-          for (size_t i = 0; i < num_txn; i++) {
-            schedules.emplace_back(i);
-          } 
-        }
+        schedules(num_txn),
+        concurrent(false) {}
 
   void Run() {
     // Run the txns according to the schedule

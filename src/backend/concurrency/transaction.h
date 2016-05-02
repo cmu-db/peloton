@@ -45,21 +45,21 @@ class Transaction : public Printable {
   Transaction()
       : txn_id_(INVALID_TXN_ID),
         begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
+        end_cid_(INVALID_CID),
         is_written_(false),
         insert_count_(0) {}
 
   Transaction(const txn_id_t &txn_id)
       : txn_id_(txn_id),
         begin_cid_(INVALID_CID),
-        end_cid_(MAX_CID),
+        end_cid_(INVALID_CID),
         is_written_(false),
         insert_count_(0) {}
 
   Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
       : txn_id_(txn_id),
         begin_cid_(begin_cid),
-        end_cid_(MAX_CID),
+        end_cid_(INVALID_CID),
         is_written_(false),
         insert_count_(0) {}
 
@@ -75,11 +75,7 @@ class Transaction : public Printable {
 
   inline cid_t GetEndCommitId() const { return end_cid_; }
 
-  inline size_t GetEpochId() const { return epoch_id_; }
-
   inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
-
-  inline void SetEpochId(const size_t eid) { epoch_id_ = eid; }
 
   void RecordRead(const ItemPointer &);
 
@@ -87,8 +83,7 @@ class Transaction : public Printable {
 
   void RecordInsert(const ItemPointer &);
 
-  // Return true if we detect INS_DEL
-  bool RecordDelete(const ItemPointer &);
+  void RecordDelete(const ItemPointer &);
 
   const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
 
@@ -118,9 +113,6 @@ class Transaction : public Printable {
 
   // end commit id
   cid_t end_cid_;
-
-  // epoch id
-  size_t epoch_id_;
 
   std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
 
