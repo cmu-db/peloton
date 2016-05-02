@@ -226,6 +226,10 @@ class TileGroupHeader : public Printable {
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
+  // Getter for spin lock
+
+  Spinlock &GetHeaderLock() { return tile_header_lock; }
+
   // Sync the contents
   void Sync();
 
