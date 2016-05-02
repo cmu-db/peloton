@@ -280,6 +280,7 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
 }
 
 void Tuple::SerializeTo(SerializeOutput &output) {
+  assert(tuple_schema);
   size_t start = output.ReserveBytes(4);
   const int column_count = tuple_schema->GetColumnCount();
 

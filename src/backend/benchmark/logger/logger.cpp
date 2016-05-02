@@ -31,7 +31,6 @@ namespace benchmark {
 namespace ycsb {
 
 configuration state;
-
 }
 
 namespace logger {
@@ -55,7 +54,7 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
     // Prepare a simple log file
-    PrepareLogFile(wal_log_file_name);
+    PrepareLogFile();
 
     // Reset data
     ResetSystem();
@@ -69,7 +68,7 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
     // Test a simple log process
-    PrepareLogFile(wbl_log_file_name);
+    PrepareLogFile();
 
     // Do recovery
     DoRecovery(wbl_log_file_name);
@@ -80,7 +79,7 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   else if (state.logging_type == LOGGING_TYPE_INVALID) {
     // Test a simple log process
-    PrepareLogFile(wbl_log_file_name);
+    PrepareLogFile();
 
     // No recovery
   }

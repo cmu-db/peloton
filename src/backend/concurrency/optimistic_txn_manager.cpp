@@ -156,7 +156,8 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -189,7 +190,6 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
 
   assert(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
@@ -208,7 +208,8 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -296,7 +297,9 @@ Result OptimisticTxnManager::CommitTransaction() {
     return ret;
   }
   //*****************************************************
-
+  // must tell the log manager we are going to log
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.PrepareLogging();
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
   current_txn->SetEndCommitId(end_commit_id);
@@ -318,8 +321,9 @@ Result OptimisticTxnManager::CommitTransaction() {
           continue;
         } else {
           if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID && tile_group_header->GetBeginCommitId(
-                                        tuple_slot) <= end_commit_id &&
+                  INITIAL_TXN_ID &&
+              tile_group_header->GetBeginCommitId(tuple_slot) <=
+                  end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
             // the version is not owned by other txns and is still visible.
             continue;
@@ -332,13 +336,13 @@ Result OptimisticTxnManager::CommitTransaction() {
         LOG_TRACE("end commit id=%lu",
                   tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
+        log_manager.DoneLogging();
         return AbortTransaction();
       }
     }
   }
   //////////////////////////////////////////////////////////
 
-  auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
   for (auto &tile_group_entry : rw_set) {
@@ -432,7 +436,7 @@ Result OptimisticTxnManager::CommitTransaction() {
     }
   }
   log_manager.LogCommitTransaction(end_commit_id);
-
+  log_manager.DoneLogging();
   EndTransaction();
 
   return Result::RESULT_SUCCESS;
