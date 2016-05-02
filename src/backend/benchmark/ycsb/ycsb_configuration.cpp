@@ -18,6 +18,8 @@
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
 
+#undef NDEBUG
+
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
@@ -124,6 +126,8 @@ void ValidateZipfTheta(const configuration &state) {
 }
 
 void ValidateLogging(const configuration &state) {
+  // I tried setting NDEBUG but I still get an unused error
+  (void) state;
   // TODO validate that sync_commit is enabled only when logging is enabled
   LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
   LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
