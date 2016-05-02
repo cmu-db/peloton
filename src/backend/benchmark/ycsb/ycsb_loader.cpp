@@ -75,7 +75,7 @@ void CreateYCSBDatabase() {
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
     auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, ycsb_field_length,
+        catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
                         "FIELD" + std::to_string(col_itr), is_inlined);
     columns.push_back(column);
   }
@@ -84,8 +84,8 @@ void CreateYCSBDatabase() {
   std::string table_name("USERTABLE");
 
   user_table = storage::TableFactory::GetDataTable(
-      ycsb_database_oid, user_table_oid, table_schema, table_name, 1000,
-      own_schema, adapt_table);
+      ycsb_database_oid, user_table_oid, table_schema, table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 
   ycsb_database->AddTable(user_table);
 
@@ -113,12 +113,11 @@ void CreateYCSBDatabase() {
 
 void LoadYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
-  const int tuple_count = state.scale_factor * 1000;
+  const int tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
 
   // Pick the user table
   auto table_schema = user_table->GetSchema();
-  // std::string field_raw_value(ycsb_field_length - 1, 'o');
-  int field_raw_value = 1;
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -128,7 +127,7 @@ void LoadYCSBDatabase() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  // std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -137,11 +136,11 @@ void LoadYCSBDatabase() {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
     auto key_value = ValueFactory::GetIntegerValue(rowid);
-    auto field_value = ValueFactory::GetIntegerValue(field_raw_value);
+    auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
     tuple->SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple->SetValue(col_itr, field_value, nullptr);
+      tuple->SetValue(col_itr, field_value, pool.get());
     }
 
     planner::InsertPlan node(user_table, std::move(tuple));

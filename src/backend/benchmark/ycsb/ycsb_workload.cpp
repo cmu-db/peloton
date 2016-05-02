@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -72,111 +74,15 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-/////////////////////////////
-///// Random Generator //////
-/////////////////////////////
-
-// Fast random number generator
-class fast_random {
- public:
-  fast_random(unsigned long seed) : seed(0) { set_seed0(seed); }
-
-  inline unsigned long next() {
-    return ((unsigned long)next(32) << 32) + next(32);
-  }
-
-  inline uint32_t next_u32() { return next(32); }
-
-  inline uint16_t next_u16() { return (uint16_t)next(16); }
-
-  /** [0.0, 1.0) */
-  inline double next_uniform() {
-    return (((unsigned long)next(26) << 27) + next(27)) / (double)(1L << 53);
-  }
-
-  inline char next_char() { return next(8) % 256; }
-
-  inline char next_readable_char() {
-    static const char readables[] =
-        "0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
-    return readables[next(6)];
-  }
-
-  inline std::string next_string(size_t len) {
-    std::string s(len, 0);
-    for (size_t i = 0; i < len; i++) s[i] = next_char();
-    return s;
-  }
-
-  inline std::string next_readable_string(size_t len) {
-    std::string s(len, 0);
-    for (size_t i = 0; i < len; i++) s[i] = next_readable_char();
-    return s;
-  }
-
-  inline unsigned long get_seed() { return seed; }
-
-  inline void set_seed(unsigned long seed) { this->seed = seed; }
-
- private:
-  inline void set_seed0(unsigned long seed) {
-    this->seed = (seed ^ 0x5DEECE66DL) & ((1L << 48) - 1);
-  }
-
-  inline unsigned long next(unsigned int bits) {
-    seed = (seed * 0x5DEECE66DL + 0xBL) & ((1L << 48) - 1);
-    return (unsigned long)(seed >> (48 - bits));
-  }
-
-  unsigned long seed;
-};
-
-class ZipfDistribution {
- public:
-  ZipfDistribution(const uint64_t &n, const double &theta)
-      : rand_generator(rand()) {
-    // range: 1-n
-    the_n = n;
-    zipf_theta = theta;
-    zeta_2_theta = zeta(2, zipf_theta);
-    denom = zeta(the_n, zipf_theta);
-  }
-  double zeta(uint64_t n, double theta) {
-    double sum = 0;
-    for (uint64_t i = 1; i <= n; i++) sum += pow(1.0 / i, theta);
-    return sum;
-  }
-  int GenerateInteger(const int &min, const int &max) {
-    return rand_generator.next() % (max - min + 1) + min;
-  }
-  uint64_t GetNextNumber() {
-    double alpha = 1 / (1 - zipf_theta);
-    double zetan = denom;
-    double eta =
-        (1 - pow(2.0 / the_n, 1 - zipf_theta)) / (1 - zeta_2_theta / zetan);
-    double u = (double)(GenerateInteger(1, 10000000) % 10000000) / 10000000;
-    double uz = u * zetan;
-    if (uz < 1) return 1;
-    if (uz < 1 + pow(0.5, zipf_theta)) return 2;
-    return 1 + (uint64_t)(the_n * pow(eta * u - eta + 1, alpha));
-  }
-
-  uint64_t the_n;
-  double zipf_theta;
-  double denom;
-  double zeta_2_theta;
-  fast_random rand_generator;
-};
-
 /////////////////////////////////////////////////////////
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-bool RunRead(ZipfDistribution &zipf);
+bool RunRead();
 
-bool RunUpdate(ZipfDistribution &zipf);
+bool RunUpdate();
 
-bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count);
+bool RunInsert();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -187,47 +93,29 @@ volatile bool is_running = true;
 oid_t *abort_counts;
 oid_t *commit_counts;
 
-// Helper function to pin current thread to a specific core
-static void PinToCore(size_t core) {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
-
 void RunBackend(oid_t thread_id) {
-  PinToCore(thread_id);
-
   auto update_ratio = state.update_ratio;
+
+  UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
-
-  fast_random rng(rand());
-  ZipfDistribution zipf(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP,
-                        state.zipf_theta);
 
   // Run these many transactions
   while (true) {
     if (is_running == false) {
       break;
     }
+    auto rng_val = generator.GetSample();
 
-    if (state.run_mix) {
-      while (RunMixed(zipf, 12, 2) == false) {
+    if (rng_val < update_ratio) {
+      //XXX temporarily change to insert workload!
+      while (RunInsert() == false) {
         execution_count_ref++;
       }
     } else {
-      auto rng_val = rng.next_uniform();
-
-      if (rng_val < update_ratio) {
-        while (RunUpdate(zipf) == false) {
-          execution_count_ref++;
-        }
-      } else {
-        while (RunRead(zipf) == false) {
-          execution_count_ref++;
-        }
+      while (RunRead() == false) {
+        execution_count_ref++;
       }
     }
 
@@ -378,7 +266,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
-bool RunRead(ZipfDistribution &zipf) {
+bool RunRead() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -389,13 +277,6 @@ bool RunRead(ZipfDistribution &zipf) {
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-  std::vector<executor::AbstractExecutor *> executors;
-  std::vector<planner::AbstractPlan *> plans;
-
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
@@ -405,16 +286,21 @@ bool RunRead(ZipfDistribution &zipf) {
     column_ids.push_back(col_itr);
   }
 
+  // Create and set up index scan executor
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto lookup_key = rand() % tuple_count;
 
-  // Create and set up index scan executor
-  std::vector<Value> values;
-
-  auto lookup_key = zipf.GetNextNumber();
-
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -422,232 +308,52 @@ bool RunRead(ZipfDistribution &zipf) {
   // Create plan node.
   auto predicate = nullptr;
 
-  planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(
-      user_table, predicate, column_ids, index_scan_desc);
-  // Run the executor
-  executor::IndexScanExecutor *index_scan_executor =
-      new executor::IndexScanExecutor(index_scan_node, context.get());
+  planner::IndexScanPlan index_scan_node(user_table, predicate, column_ids,
+                                         index_scan_desc);
 
-  executors.push_back(index_scan_executor);
-  plans.push_back(index_scan_node);
+  // Run the executor
+  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+                                                  context.get());
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
   /////////////////////////////////////////////////////////
 
   // Create and set up materialization executor
-  // std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  // for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-  //   old_to_new_cols[col_itr] = col_itr;
-  // }
-
-  // std::shared_ptr<const catalog::Schema> output_schema {
-  //   catalog::Schema::CopySchema(user_table->GetSchema())
-  // }
-  // ;
-  // bool physify_flag = true;  // is going to create a physical tile
-  // planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
-  //                                       physify_flag);
-
-  // executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  // mat_executor.AddChild(&index_scan_executor);
-
-  /////////////////////////////////////////////////////////
-  // EXECUTE
-  /////////////////////////////////////////////////////////
-
-  ExecuteTest(executors);
-
-  for (auto executor : executors) {
-    delete executor;
-  }
-
-  for (auto plan : plans) {
-    delete plan;
-  }
-
-  auto result = txn->GetResult();
-
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
-}
-
-bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  std::vector<executor::AbstractExecutor *> executors;
-  std::vector<planner::AbstractPlan *> plans;
-
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-
-  std::vector<oid_t> column_ids;
-  oid_t column_count = state.column_count + 1;
-
-  // Column ids to be added to logical tile after scan.
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(col_itr);
+    old_to_new_cols[col_itr] = col_itr;
   }
 
-  std::vector<expression::AbstractExpression *> runtime_keys;
+  std::shared_ptr<const catalog::Schema> output_schema{
+      catalog::Schema::CopySchema(user_table->GetSchema())};
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
+                                        physify_flag);
 
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-
-  for (int i = 0; i < read_count; i++) {
-    // Create and set up index scan executor
-
-    std::vector<Value> values;
-
-    auto lookup_key = zipf.GetNextNumber();
-
-    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-        ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-    // Create plan node.
-    auto predicate = nullptr;
-
-    planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(
-        user_table, predicate, column_ids, index_scan_desc);
-    // Run the executor
-    executor::IndexScanExecutor *index_scan_executor =
-        new executor::IndexScanExecutor(index_scan_node, context.get());
-
-    executors.push_back(index_scan_executor);
-    plans.push_back(index_scan_node);
-  }
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  for (int i = 0; i < write_count; i++) {
-    // Create and set up index scan executor
-
-    std::vector<Value> values;
-
-    auto lookup_key = zipf.GetNextNumber();
-
-    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-        ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-    // Create plan node.
-    auto predicate = nullptr;
-
-    planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(
-        user_table, predicate, column_ids, index_scan_desc);
-    plans.push_back(index_scan_node);
-
-    // Run the executor
-    executor::IndexScanExecutor *index_scan_executor =
-        new executor::IndexScanExecutor(index_scan_node, context.get());
-
-    /////////////////////////////////////////////////////////
-    // UPDATE
-    /////////////////////////////////////////////////////////
-
-    planner::ProjectInfo::TargetList target_list;
-    planner::ProjectInfo::DirectMapList direct_map_list;
-
-    // Update the second attribute
-    for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      if (col_itr != 1) {
-        direct_map_list.emplace_back(col_itr,
-                                     std::pair<oid_t, oid_t>(0, col_itr));
-      }
-    }
-
-    // std::string update_raw_value(ycsb_field_length - 1, 'u');
-    int update_raw_value = 2;
-    Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-    target_list.emplace_back(
-        1, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
-    std::unique_ptr<const planner::ProjectInfo> project_info(
-        new planner::ProjectInfo(std::move(target_list),
-                                 std::move(direct_map_list)));
-    planner::UpdatePlan *update_node =
-        new planner::UpdatePlan(user_table, std::move(project_info));
-    plans.push_back(update_node);
-
-    executor::UpdateExecutor *update_executor =
-        new executor::UpdateExecutor(update_node, context.get());
-    update_executor->AddChild(index_scan_executor);
-    executors.push_back(update_executor);
-  }
+  executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
+  mat_executor.AddChild(&index_scan_executor);
 
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&mat_executor);
+
   ExecuteTest(executors);
 
-  for (auto executor : executors) {
-    delete executor;
-  }
-
-  for (auto plan : plans) {
-    delete plan;
-  }
-
-  auto result = txn->GetResult();
-
-  // transaction passed execution.
+  Result result = txn_manager.CommitTransaction();
   if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
+    return true;
+  } else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
     return false;
   }
 }
 
-bool RunUpdate(ZipfDistribution &zipf) {
+bool RunUpdate() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -674,7 +380,8 @@ bool RunUpdate(ZipfDistribution &zipf) {
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  auto lookup_key = zipf.GetNextNumber();
+  auto tuple_count = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto lookup_key = rand() % tuple_count;
 
   key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -710,9 +417,8 @@ bool RunUpdate(ZipfDistribution &zipf) {
     }
   }
 
-  // std::string update_raw_value(ycsb_field_length - 1, 'u');
-  int update_raw_value = 2;
-  Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
+  std::string update_raw_value(ycsb_field_length - 1, 'u');
+  Value update_val = ValueFactory::GetStringValue(update_raw_value);
   target_list.emplace_back(
       1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
@@ -724,36 +430,70 @@ bool RunUpdate(ZipfDistribution &zipf) {
   executor::UpdateExecutor update_executor(&update_node, context.get());
   update_executor.AddChild(&index_scan_executor);
 
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&update_executor);
 
   ExecuteTest(executors);
 
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    return false;
+  }
+}
+
+bool RunInsert() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  const oid_t col_count = state.column_count + 1;
+  auto table_schema = user_table->GetSchema();
+  const bool allocate = true;
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
+
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+  auto key_value = ValueFactory::GetIntegerValue(0);
+  auto field_value = ValueFactory::GetStringValue(field_raw_value);
+
+  tuple->SetValue(0, key_value, nullptr);
+  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+    tuple->SetValue(col_itr, field_value, pool.get());
+  }
+
+  planner::InsertPlan insert_node(user_table, std::move(tuple));
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  auto result = txn->GetResult();
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&insert_executor);
 
-  // transaction passed execution.
+  ExecuteTest(executors);
+
+  Result result = txn_manager.CommitTransaction();
   if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
+    return true;
+  } else {
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
     return false;
   }
 }

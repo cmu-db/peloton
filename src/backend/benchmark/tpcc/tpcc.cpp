@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
@@ -28,25 +27,15 @@ configuration state;
 
 std::ofstream out("outputfile.summary");
 
-static void WriteOutput() {
+static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d :: %lf tps, %lf", state.scale_factor, state.throughput, state.abort_rate);
+  LOG_INFO("%d :: %lf tps",
+           state.scale_factor,
+           stat);
 
-  out << state.scale_factor << "\n";
-
-  for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
-       ++round_id) {
-    out << "[" << std::setw(3) << std::left
-        << state.snapshot_duration * round_id << " - " << std::setw(3)
-        << std::left << state.snapshot_duration * (round_id + 1)
-        << " s]: " << state.snapshot_throughput[round_id] << " "
-        << state.snapshot_abort_rate[round_id] << "\n";
-  }
-
-  out << state.throughput << " ";
-  out << state.abort_rate << "\n";
+  out << state.scale_factor << " ";
+  out << stat << "\n";
   out.flush();
-  out.close();
 }
 
 // Main Entry Point
@@ -59,9 +48,9 @@ void RunBenchmark() {
   LoadTPCCDatabase();
 
   // Run the workload
-  RunWorkload();
+  auto stat = RunWorkload();
 
-  WriteOutput();
+  WriteOutput(stat);
 }
 
 }  // namespace tpcc

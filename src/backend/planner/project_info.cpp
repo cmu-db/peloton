@@ -12,7 +12,6 @@
 
 #include "backend/planner/project_info.h"
 #include "backend/executor/executor_context.h"
-#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
 namespace planner {

@@ -296,7 +296,6 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
-  current_txn->SetEndCommitId(end_commit_id);
 
   // validation must be performed. otherwise, deadlock can occur.
   // validate read set.

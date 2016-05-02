@@ -27,20 +27,18 @@ void Usage(FILE *out) {
           "   -h --help              :  Print help message \n"
           "   -k --scale_factor      :  scale factor \n"
           "   -w --warehouse_count   :  # of warehouses \n"
-          "   -d --duration          :  execution duration \n"
-          "   -s --snapshot_duration :  snapshot duration \n"
-          "   -b --backend_count     :  # of backends \n");
+          "   -b --backend_count     :  # of backends \n"
+          "   -t --transaction_count :  # of transactions \n"
+          );
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-  { "scale_factor", optional_argument, NULL, 'k' },
-  { "warehouse_count", optional_argument, NULL, 'w' },
-  { "duration", optional_argument, NULL, 'd' },
-  { "snapshot_duration", optional_argument, NULL, 's' },
-  { "backend_count", optional_argument, NULL, 'b'},
-  {NULL, 0, NULL, 0}
-};
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"warehouse_count", optional_argument, NULL, 'w'},
+    {"backend_count", optional_argument, NULL, 'b'},
+    {"transaction_count", optional_argument, NULL, 't'},
+    {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -60,6 +58,15 @@ void ValidateBackendCount(const configuration &state) {
   LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
+void ValidateTransactionCount(const configuration &state) {
+  if (state.transaction_count <= 0) {
+    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
+}
+
 void ValidateWarehouseCount(const configuration &state) {
   if (state.warehouse_count <= 0) {
     LOG_ERROR("Invalid warehouse_count :: %d", state.warehouse_count);
@@ -72,16 +79,15 @@ void ValidateWarehouseCount(const configuration &state) {
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
-  state.scale_factor = 1;
-  state.warehouse_count = 1;
-  state.duration = 10;
-  state.snapshot_duration = 0.1;
   state.backend_count = 1;
+  state.warehouse_count = 1;
+  state.transaction_count = 100;
+  state.scale_factor = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ah:k:w:d:s:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ah:k:w:b:t:", opts, &idx);
 
     if (c == -1) break;
 
@@ -89,18 +95,19 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
+
       case 'w':
         state.warehouse_count = atoi(optarg);
         break;
-      case 'd':
-        state.duration = atof(optarg);
-        break;
-      case 's':
-        state.snapshot_duration = atof(optarg);
-        break;
+
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+
+      case 't':
+        state.transaction_count = atoi(optarg);
+        break;
+
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -120,9 +127,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.new_orders_per_district = 9;
 
   // Print configuration
-  ValidateScaleFactor(state);
-  ValidateWarehouseCount(state);
   ValidateBackendCount(state);
+  ValidateWarehouseCount(state);
+  ValidateScaleFactor(state);
+  ValidateTransactionCount(state);
 
 }
 

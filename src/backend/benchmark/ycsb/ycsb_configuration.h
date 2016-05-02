@@ -81,12 +81,7 @@ class configuration {
 
   double abort_rate;
 
-  double zipf_theta;
-
-  bool run_mix;
-
   int flush_freq;
-
 };
 
 extern configuration state;

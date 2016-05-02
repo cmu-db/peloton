@@ -19,7 +19,6 @@
 #include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/concurrency/transaction.h"
-#include "backend/concurrency/epoch_manager.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
@@ -27,12 +26,10 @@
 #include "backend/expression/container_tuple.h"
 #include "backend/storage/tuple.h"
 #include "backend/gc/gc_manager_factory.h"
-#include "backend/planner/project_info.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
-
 namespace concurrency {
 
 extern thread_local Transaction *current_txn;
@@ -61,7 +58,6 @@ class TransactionManager {
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
 
-
   virtual bool IsOwnable(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
@@ -84,6 +80,18 @@ class TransactionManager {
 
   virtual void PerformDelete(const ItemPointer &location) = 0;
 
+  /*
+   * Write a virtual function to push deleted and verified (acc to optimistic
+   * concurrency control) tuples into possibly free from all underlying
+   * concurrency implementations of transactions.
+   */
+  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
+                        const cid_t &tuple_end_cid) {
+    auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+    gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
+  }
 
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified
@@ -115,9 +123,7 @@ class TransactionManager {
   // this function generates the maximum commit id of committed transactions.
   // please note that this function only returns a "safe" value instead of a
   // precise value.
-  cid_t GetMaxCommittedCid() {
-    return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
-  }
+  virtual cid_t GetMaxCommittedCid() = 0;
 
  private:
   std::atomic<txn_id_t> next_txn_id_;

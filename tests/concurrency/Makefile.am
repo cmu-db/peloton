@@ -11,8 +11,7 @@ check_PROGRAMS += \
         optimistic_txn_manager_test \
         speculative_read_txn_manager_test \
         eager_write_txn_manager_test \
-        ts_order_txn_manager_test \
-        mvcc_test
+        ts_order_txn_manager_test
 #        ssi_txn_manager_test
 
 transaction_test_common = \
@@ -47,10 +46,6 @@ ts_order_txn_manager_test_SOURCES = \
                            concurrency/ts_order_txn_manager_test.cpp \
                            $(transaction_test_common)
 
-mvcc_test_SOURCES = \
-                           concurrency/mvcc_test.cpp \
-                           $(transaction_test_common)                           
-
 #ssi_txn_manager_test_SOURCES = \
 #                           concurrency/ssi_txn_manager_test.cpp \
 #                           $(transaction_test_common)
@@ -63,5 +58,4 @@ optimistic_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 speculative_read_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 eager_write_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
 ts_order_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
-mvcc_test_LDADD = $(peloton_tests_common_ld)
 #ssi_txn_manager_test_LDADD =  $(peloton_tests_common_ld)
