@@ -44,10 +44,10 @@ namespace test {
 class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
-static int columncount = 4;
-static size_t tuples_per_tile_group = 10;
-static size_t tile_group = 10;
-static float scalar = 0.5;
+static int columncount = 6;
+static size_t tuples_per_tile_group = 10000;
+static size_t tile_group = 1000;
+static float scalar = 0.9;
 static size_t iter = 15;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
@@ -201,8 +201,6 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
 //  EXPECT_EQ(tuple_counts, 11);
-  LOG_INFO("Expect %f",  tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * scalar + 0)); 
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
               (tile_group * tuples_per_tile_group * scalar + 0));
