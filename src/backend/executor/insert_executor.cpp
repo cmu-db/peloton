@@ -98,7 +98,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
       auto res =
-          transaction_manager.PerformInsert(location.block, location.offset);
+          transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
@@ -154,7 +154,7 @@ bool InsertExecutor::DExecute() {
       }
 
       auto res =
-          transaction_manager.PerformInsert(location.block, location.offset);
+          transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;

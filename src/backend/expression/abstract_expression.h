@@ -26,9 +26,6 @@
 #include "postgres.h"
 #include "common/fe_memutils.h"
 
-#include <json_spirit.h>
-#include "boost/shared_ptr.hpp"
-
 namespace peloton {
 
 namespace executor {
@@ -92,10 +89,6 @@ class AbstractExpression : public Printable {
 
   const AbstractExpression *GetRight() const { return m_right; }
 
-  // create an expression tree. call this once with the input
-  // stream positioned at the root expression node
-  static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
-
   // Debugging methods - some various ways to create a sring
   //     describing the expression tree
   std::string Debug() const;
@@ -153,9 +146,6 @@ class AbstractExpression : public Printable {
 
  private:
   bool InitParamShortCircuits();
-
-  static AbstractExpression *CreateExpressionTreeRecurse(
-      json_spirit::Object &obj);
 };
 
 }  // End expression namespace

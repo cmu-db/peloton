@@ -124,13 +124,15 @@ class Tile : public Printable {
   // Columns
   //===--------------------------------------------------------------------===//
 
-  const catalog::Schema *GetSchema() const { return &schema; };
+  const catalog::Schema *GetSchema() const { return &schema; }
+  ;
 
   const std::string GetColumnName(const oid_t column_index) const {
     return schema.GetColumn(column_index).column_name;
   }
 
-  inline oid_t GetColumnCount() const { return column_count; };
+  inline oid_t GetColumnCount() const { return column_count; }
+  ;
 
   inline TileGroupHeader *GetHeader() const { return tile_group_header; }
 

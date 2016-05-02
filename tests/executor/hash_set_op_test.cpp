@@ -84,17 +84,17 @@ TEST_F(HashSetOptTests, ExceptTest) {
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false);
 
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -154,24 +154,24 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table3(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table3.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table4(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table4.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -237,15 +237,15 @@ TEST_F(HashSetOptTests, IntersectTest) {
   // The tables should be populated with the same data.
   size_t tile_size = 10;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
@@ -305,24 +305,24 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create two tables and wrap them in logical tiles.
   // The tables should be populated with the same data.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table1.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table2(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table2.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table3(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table3.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size * 5, false,
                                    false, false);
   std::unique_ptr<storage::DataTable> data_table4(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table4.get(), tile_size * 5, false,
+  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size * 5, false,
                                    false, false);
 
   txn_manager.CommitTransaction();
