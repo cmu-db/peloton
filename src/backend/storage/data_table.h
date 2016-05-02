@@ -14,12 +14,13 @@
 
 #include <memory>
 #include <queue>
+#include <map>
+#include <mutex>
 
 #include "backend/brain/sample.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/concurrency/transaction.h"
 #include "backend/common/platform.h"
 #include "backend/logging/log_manager.h"
 
@@ -117,7 +118,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // coerce into adding a new tile group with a tile group id
-  oid_t AddTileGroupWithOid(const oid_t &tile_group_id);
+  void AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
 
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
@@ -212,7 +213,7 @@ class DataTable : public AbstractTable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  Spinlock &GetTileGroupLock() { return tile_group_lock_; }
+  RWLock &GetTileGroupLock() { return tile_group_lock_; }
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -225,7 +226,7 @@ class DataTable : public AbstractTable {
 
   // Claim a tuple slot in a tile group
   ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
-                           bool check_constraint = true);
+                                bool check_constraint = true);
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
@@ -243,7 +244,8 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  bool InsertInSecondaryIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
+                                ItemPointer location);
 
   // check the foreign key constraints
   bool CheckForeignKeyConstraints(const storage::Tuple *tuple);
@@ -259,21 +261,21 @@ class DataTable : public AbstractTable {
 
   // TILE GROUPS
   // set of tile groups
+  RWLock tile_group_lock_;
+
   std::vector<oid_t> tile_groups_;
+
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
-  // current tile group
-  //size_t tile_group_offset_ = 0;
 
   // tile group mutex
+  // TODO: don't know why need this mutex --Yingjun
   std::mutex tile_group_mutex_;
-  Spinlock tile_group_lock_;
 
   // INDEXES
   std::vector<index::Index *> indexes_;
 
   // CONSTRAINTS
   std::vector<catalog::ForeignKey *> foreign_keys_;
-
 
   // has a primary key ?
   std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);

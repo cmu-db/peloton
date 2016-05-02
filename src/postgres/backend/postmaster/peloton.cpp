@@ -33,6 +33,7 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/checkpoint_manager.h"
+#include "backend/gc/gc_manager_factory.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -71,7 +72,7 @@ bool logging_module_check = false;
 
 bool syncronization_commit = false;
 
-static void peloton_process_status(const peloton_status& status, PlanState *planstate);
+static void peloton_process_status(const peloton_status& status, const PlanState *planstate);
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
@@ -92,7 +93,6 @@ peloton_bootstrap() {
     // Process the utility statement
     peloton::bridge::Bootstrap::BootstrapPeloton();
 
-    // Start logging
     if(logging_module_check == false){
       elog(DEBUG2, "....................................................................................................");
       elog(DEBUG2, "Logging Mode : %d", peloton_logging_mode);
@@ -166,7 +166,6 @@ peloton_bootstrap() {
     	}
       }
     }
-
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -205,7 +204,7 @@ peloton_ddl(Node *parsetree) {
  * ----------
  */
 void
-peloton_dml(PlanState *planstate,
+peloton_dml(const PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
             TupleDesc tuple_desc,
@@ -273,7 +272,7 @@ peloton_dml(PlanState *planstate,
  * ----------
  */
 static void
-peloton_process_status(const peloton_status& status, PlanState *planstate) {
+peloton_process_status(const peloton_status& status, const PlanState *planstate) {
   int code;
 
   // Process the status code

@@ -56,6 +56,10 @@ class LoggingUtil {
 
   static int GetFileSizeFromFileName(const char *);
 
+  static bool CreateDirectory(const char *dir_name, int mode);
+
+  static bool RemoveDirectory(const char *dir_name, bool only_remove_file);
+
   // Wrappers
   /**
    * @brief Read get table based on tuple record

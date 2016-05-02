@@ -199,7 +199,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateTransactionCount(ycsb::state);
+  // ycsb::ValidateTransactionCount(ycsb::state);
 }
 
 }  // namespace logger

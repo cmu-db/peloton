@@ -78,71 +78,165 @@ namespace ycsb {
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-void RunRead();
+bool RunRead();
 
-void RunInsert();
+
+bool RunUpdate();
+
+bool RunInsert();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-std::vector<double> durations;
+volatile bool is_running = true;
+
+oid_t *abort_counts;
+oid_t *commit_counts;
 
 void RunBackend(oid_t thread_id) {
-  auto txn_count = state.transaction_count;
   auto update_ratio = state.update_ratio;
 
   UniformGenerator generator;
-  Timer<> timer;
 
-  // Start timer
-  timer.Reset();
-  timer.Start();
+  oid_t &execution_count_ref = abort_counts[thread_id];
+  oid_t &transaction_count_ref = commit_counts[thread_id];
 
   // Run these many transactions
-  for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
+  while (true) {
+    if (is_running == false) {
+      break;
+    }
     auto rng_val = generator.GetSample();
 
     if (rng_val < update_ratio) {
-      RunInsert();
+      //XXX temporarily change to insert workload!
+      while (RunInsert() == false) {
+        execution_count_ref++;
+      }
+    } else {
+      while (RunRead() == false) {
+        execution_count_ref++;
+      }
     }
-    else {
-      RunRead();
-    }
+
+    transaction_count_ref++;
   }
-
-  // Stop timer
-  timer.Stop();
-
-  // Set duration
-  durations[thread_id] = timer.GetDuration();
 }
 
-double RunWorkload() {
+void RunWorkload() {
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
-  double max_duration = std::numeric_limits<double>::min();
-  durations.reserve(num_threads);
+
+  abort_counts = new oid_t[num_threads];
+  memset(abort_counts, 0, sizeof(oid_t) * num_threads);
+
+  commit_counts = new oid_t[num_threads];
+  memset(commit_counts, 0, sizeof(oid_t) * num_threads);
+
+  size_t snapshot_round = (size_t)(state.duration / state.snapshot_duration);
+
+  oid_t **abort_counts_snapshots = new oid_t *[snapshot_round];
+  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+    abort_counts_snapshots[round_id] = new oid_t[num_threads];
+  }
+
+  oid_t **commit_counts_snapshots = new oid_t *[snapshot_round];
+  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+    commit_counts_snapshots[round_id] = new oid_t[num_threads];
+  }
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::thread(RunBackend, thread_itr));
+    thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
   }
+
+  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds(int(state.snapshot_duration * 1000)));
+    memcpy(abort_counts_snapshots[round_id], abort_counts,
+           sizeof(oid_t) * num_threads);
+    memcpy(commit_counts_snapshots[round_id], commit_counts,
+           sizeof(oid_t) * num_threads);
+  }
+
+  is_running = false;
 
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 
-  // Compute max duration
-  for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    max_duration = std::max(max_duration, durations[thread_itr]);
+  // calculate the throughput and abort rate for the first round.
+  oid_t total_commit_count = 0;
+  for (size_t i = 0; i < num_threads; ++i) {
+    total_commit_count += commit_counts_snapshots[0][i];
   }
 
-  double throughput = (state.transaction_count * num_threads) / max_duration;
+  oid_t total_abort_count = 0;
+  for (size_t i = 0; i < num_threads; ++i) {
+    total_abort_count += abort_counts_snapshots[0][i];
+  }
 
-  return throughput;
+  state.snapshot_throughput.push_back(total_commit_count * 1.0 /
+                                      state.snapshot_duration);
+  state.snapshot_abort_rate.push_back(total_abort_count * 1.0 /
+                                      total_commit_count);
+
+  // calculate the throughput and abort rate for the remaining rounds.
+  for (size_t round_id = 0; round_id < snapshot_round - 1; ++round_id) {
+    total_commit_count = 0;
+    for (size_t i = 0; i < num_threads; ++i) {
+      total_commit_count += commit_counts_snapshots[round_id + 1][i] -
+                            commit_counts_snapshots[round_id][i];
+    }
+
+    total_abort_count = 0;
+    for (size_t i = 0; i < num_threads; ++i) {
+      total_abort_count += abort_counts_snapshots[round_id + 1][i] -
+                           abort_counts_snapshots[round_id][i];
+    }
+
+    state.snapshot_throughput.push_back(total_commit_count * 1.0 /
+                                        state.snapshot_duration);
+    state.snapshot_abort_rate.push_back(total_abort_count * 1.0 /
+                                        total_commit_count);
+  }
+
+  // calculate the aggregated throughput and abort rate.
+  total_commit_count = 0;
+  for (size_t i = 0; i < num_threads; ++i) {
+    total_commit_count += commit_counts_snapshots[snapshot_round - 1][i];
+  }
+
+  total_abort_count = 0;
+  for (size_t i = 0; i < num_threads; ++i) {
+    total_abort_count += abort_counts_snapshots[snapshot_round - 1][i];
+  }
+
+  state.throughput = total_commit_count * 1.0 / state.duration;
+  state.abort_rate = total_abort_count * 1.0 / total_commit_count;
+
+  // cleanup everything.
+  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+    delete[] abort_counts_snapshots[round_id];
+    abort_counts_snapshots[round_id] = nullptr;
+  }
+
+  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
+    delete[] commit_counts_snapshots[round_id];
+    commit_counts_snapshots[round_id] = nullptr;
+  }
+  delete[] abort_counts_snapshots;
+  abort_counts_snapshots = nullptr;
+  delete[] commit_counts_snapshots;
+  commit_counts_snapshots = nullptr;
+
+  delete[] abort_counts;
+  abort_counts = nullptr;
+  delete[] commit_counts;
+  commit_counts = nullptr;
 }
 
 /////////////////////////////////////////////////////////
@@ -150,7 +244,6 @@ double RunWorkload() {
 /////////////////////////////////////////////////////////
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
-  time_point_ start, end;
   bool status = false;
 
   // Run all the executors
@@ -174,7 +267,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 // TRANSACTIONS
 /////////////////////////////////////////////////////////
 
-void RunRead() {
+bool RunRead() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -251,10 +344,17 @@ void RunRead() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction();
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    return false;
+  }
 }
 
-void RunInsert() {
+bool RunUpdate() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   const oid_t col_count = state.column_count + 1;
@@ -293,7 +393,63 @@ void RunInsert() {
 
   ExecuteTest(executors);
 
-  txn_manager.CommitTransaction();
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    return false;
+  }
+}
+
+bool RunInsert() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  const oid_t col_count = state.column_count + 1;
+  auto table_schema = user_table->GetSchema();
+  const bool allocate = true;
+  std::string field_raw_value(ycsb_field_length - 1, 'o');
+
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+  auto key_value = ValueFactory::GetIntegerValue(0);
+  auto field_value = ValueFactory::GetStringValue(field_raw_value);
+
+  tuple->SetValue(0, key_value, nullptr);
+  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
+    tuple->SetValue(col_itr, field_value, pool.get());
+  }
+
+  planner::InsertPlan insert_node(user_table, std::move(tuple));
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&insert_executor);
+
+  ExecuteTest(executors);
+
+  Result result = txn_manager.CommitTransaction();
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    return false;
+  }
 }
 
 }  // namespace ycsb
