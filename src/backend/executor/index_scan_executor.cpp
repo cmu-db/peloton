@@ -216,6 +216,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // it's a potential bug
         if (tuple_location.IsNull()) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          // FIXME: this cause unnecessary abort when we have delete operations
           return false;
         }
 
