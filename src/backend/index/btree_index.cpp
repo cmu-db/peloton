@@ -297,7 +297,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   bool special_case = false;
   if (key_column_ids_itr != key_column_ids.end()) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL ||
+      expr_types[offset] == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) {
       special_case = true;
     }
   }
