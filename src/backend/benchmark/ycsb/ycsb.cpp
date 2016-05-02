@@ -14,6 +14,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <backend/concurrency/transaction_manager_factory.h>
 
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
@@ -67,6 +68,7 @@ static void WriteOutput() {
 static void ValidateMVCC() {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
+  auto protocol = concurrency::TransactionManagerFactory::GetProtocol();
   gc_manager.StopGC();
   LOG_INFO("Validating MVCC storage");
   int tile_group_count = user_table->GetTileGroupCount();

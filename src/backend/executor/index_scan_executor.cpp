@@ -214,41 +214,46 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         // FIXME: currently, only speculative read transaction manager **may** see a null version
         // it's a potential bug
-        if(tuple_location.IsNull()) {
+        if (tuple_location.IsNull()) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          return res;
+          return false;
         }
 
         // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
         assert(tuple_location.IsNull() == false);
 
-        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+        if (concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_OCC_N2O) {
+          cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
-        // check whether older version is garbage.
-        if (old_end_cid <= max_committed_cid) {
-          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          // check whether older version is garbage.
+          if (old_end_cid <= max_committed_cid) {
+            assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
+                   tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
-          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+            if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
-            // atomically swap item pointer held in the index bucket.
-            AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
+              // atomically swap item pointer held in the index bucket.
+              AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
-            // currently, let's assume only primary index exists.
-            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-            //     table_->GetOid(), old_item.block, old_item.offset,
-            //     transaction_manager.GetNextCommitId());
-            garbage_tuples.push_back(old_item);
+              // currently, let's assume only primary index exists.
+              // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+              //     table_->GetOid(), old_item.block, old_item.offset,
+              //     transaction_manager.GetNextCommitId());
+              garbage_tuples.push_back(old_item);
 
-            tile_group = manager.GetTileGroup(tuple_location.block);
-            tile_group_header = tile_group.get()->GetHeader();
-            tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
+              tile_group = manager.GetTileGroup(tuple_location.block);
+              tile_group_header = tile_group.get()->GetHeader();
+              tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
+
+            } else {
+              tile_group = manager.GetTileGroup(tuple_location.block);
+              tile_group_header = tile_group.get()->GetHeader();
+            }
 
           } else {
-
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
           }
-
         } else {
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();

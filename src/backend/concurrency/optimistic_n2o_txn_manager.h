@@ -88,36 +88,6 @@ public:
     current_txn = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t curr_epoch = EpochManagerFactory::GetInstance().GetEpoch();
-
-    if (last_epoch_ != curr_epoch) {
-      last_epoch_ = curr_epoch;
-
-      cid_t min_running_cid = MAX_CID;
-      for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-        {
-          auto iter = running_txn_buckets_[i].lock_table();
-          for (auto &it : iter) {
-            if (it.second < min_running_cid) {
-              min_running_cid = it.second;
-            }
-          }
-        }
-      }
-      assert(min_running_cid > 0);
-      if (min_running_cid != MAX_CID) {
-        last_max_commit_cid_ = min_running_cid - 1;
-      } else {
-        // in this case, there's no running transaction.
-        last_max_commit_cid_ = GetNextCommitId() - 1;
-      }
-
-    }
-
-    return last_max_commit_cid_;
-  }
-
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
   // has deleted the tuple
