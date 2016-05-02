@@ -45,9 +45,9 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 100000;
+static size_t tuples_per_tile_group = 10;
 static size_t tile_group = 10;
-static float scalar = 0.9;
+static float scalar = 0.5;
 static size_t iter = 15;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
