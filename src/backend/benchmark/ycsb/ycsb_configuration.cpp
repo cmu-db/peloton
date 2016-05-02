@@ -18,6 +18,8 @@
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
 
+#undef NDEBUG
+
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
@@ -26,30 +28,36 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : ycsb <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transactions      :  # of transactions \n"
+          "   -k --scale_factor      :  # of tuples \n"
+          "   -d --duration          :  execution duration \n"
+          "   -s --snapshot_duration :  snapshot duration \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
-          "   -s --sync_commit       :  enable synchronous commit (0 or 1) \n");
-  // TODO add wait_time, file_size, log_buffer_size, checkpointer
+          "   -x --sync_commit       :  enable synchronous commit (0 or 1) \n"
+          "   -q --flush_freq        :  set the frequency of log fsync\n");
+  // TODO add description for wait_time, file_size, log_buffer_size,
+  // checkpointer
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"transactions", optional_argument, NULL, 't'},
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"duration", optional_argument, NULL, 'd'},
+    {"snapshot_duration", optional_argument, NULL, 's'},
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
     {"enable_logging", optional_argument, NULL, 'l'},
-    {"sync_commit", optional_argument, NULL, 's'},
+    {"sync_commit", optional_argument, NULL, 'x'},
     {"wait_time", optional_argument, NULL, 'w'},
     {"file_size", optional_argument, NULL, 'f'},
     {"log_buffer_size", optional_argument, NULL, 'z'},
-    {"checkpointer", optional_argument, NULL, 'z'},
-{NULL, 0, NULL, 0}};
+    {"checkpointer", optional_argument, NULL, 'p'},
+    {"flush_freq", optional_argument, NULL, 'q'},
+    {NULL, 0, NULL, 0},
+};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -87,26 +95,47 @@ void ValidateBackendCount(const configuration &state) {
   LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
-void ValidateTransactionCount(const configuration &state) {
-  if (state.transaction_count <= 0) {
-    LOG_ERROR("Invalid transaction_count :: %lu", state.transaction_count);
+void ValidateDuration(const configuration &state) {
+  if (state.duration <= 0) {
+    LOG_ERROR("Invalid duration :: %lf", state.duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lu", "transaction_count", state.transaction_count);
+  LOG_INFO("%s : %lf", "execution duration", state.duration);
+}
+
+void ValidateSnapshotDuration(const configuration &state) {
+  if (state.snapshot_duration <= 0) {
+    LOG_ERROR("Invalid snapshot_duration :: %lf", state.snapshot_duration);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
 }
 
 void ValidateLogging(const configuration &state) {
+  // I tried setting NDEBUG but I still get an unused error
+  (void) state;
   // TODO validate that sync_commit is enabled only when logging is enabled
   LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
   LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
   LOG_INFO("%s : %d", "wait_time", (int)state.wait_timeout);
 }
 
+void ValidateFlushFreq(const configuration &state) {
+  if (state.flush_freq <= 0) {
+    LOG_ERROR("Invalid flush_freq :: %d", state.flush_freq);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d microseconds", "flush_freq", state.flush_freq);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
-  state.transaction_count = 10000;
+  state.duration = 10;
+  state.snapshot_duration = 0.1;
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -116,11 +145,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.file_size = 32;
   state.log_buffer_size = 32768;
   state.checkpointer = 0;
+  state.flush_freq = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:t:c:u:b:l:s:w:f:z:p:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:l:x:w:f:z:p:q:", opts, &idx);
 
     if (c == -1) break;
 
@@ -128,8 +158,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
-      case 't':
-        state.transaction_count = atoi(optarg);
+      case 'd':
+        state.duration = atof(optarg);
+        break;
+      case 's':
+        state.snapshot_duration = atof(optarg);
         break;
       case 'c':
         state.column_count = atoi(optarg);
@@ -140,7 +173,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
-      case 's':
+      case 'x':
         state.sync_commit = atoi(optarg);
         break;
       case 'l':
@@ -156,8 +189,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.log_buffer_size = atoi(optarg);
         break;
       case 'p':
-    	  state.checkpointer = atoi(optarg);
-    	  break;
+        state.checkpointer = atoi(optarg);
+        break;
+      case 'q':
+        state.flush_freq = atoi(optarg);
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -175,8 +211,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);
-  ValidateTransactionCount(state);
   ValidateLogging(state);
+  ValidateDuration(state);
+  ValidateSnapshotDuration(state);
+  ValidateFlushFreq(state);
 }
 
 }  // namespace ycsb

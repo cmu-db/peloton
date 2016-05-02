@@ -33,8 +33,7 @@ namespace logging {
 thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
-  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
-            LOGGER_MAPPING_ROUND_ROBIN);
+  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS, LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -370,6 +369,7 @@ void LogManager::PrepareRecovery() {
       auto table = database->GetTable(table_idx);
       // drop existing tile groups
       table->DropTileGroups();
+      table->SetNumberOfTuples(0);
     }
   }
   prepared_recovery_ = true;
@@ -397,6 +397,11 @@ void LogManager::ResetFrontendLogger() {
   int i = 0;
   frontend_loggers[i].reset(
       FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
+}
+
+void LogManager::DropFrontendLoggers() {
+  ResetFrontendLoggers();
+  frontend_loggers.clear();
 }
 
 void LogManager::TruncateLogs(txn_id_t commit_id) {
@@ -475,7 +480,8 @@ void LogManager::NotifyRecoveryDone() {
   LOG_INFO("%d loggers have done recovery so far.",
            (int)recovery_to_logging_counter);
   if (i == num_frontend_loggers_) {
-    LOG_INFO("This was the last one! Recover Index and change to LOGGING mode.");
+    LOG_INFO(
+        "This was the last one! Recover Index and change to LOGGING mode.");
     frontend_loggers[0].get()->RecoverIndex();
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
   }

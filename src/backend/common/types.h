@@ -17,6 +17,7 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -49,6 +50,12 @@ enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
   CHECKPOINT_TYPE_NORMAL = 1,
 };
+
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_ON = 1
+};
+
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -719,7 +726,7 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-typedef uint64_t oid_t;
+typedef uint32_t oid_t;
 
 static const oid_t START_OID = 0;
 
@@ -750,6 +757,16 @@ static const cid_t INVALID_CID = 0;
 static const cid_t START_CID = 1;
 
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
+
+//===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t table_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t tuple_end_cid = 0;
+};
 
 //===--------------------------------------------------------------------===//
 // ItemPointer
@@ -791,6 +808,42 @@ struct FileHandle {
       : file(file), fd(fd), size(size) {}
 };
 extern FileHandle INVALID_FILE_HANDLE;
+
+//===--------------------------------------------------------------------===//
+// ItemPointerContainer
+//===--------------------------------------------------------------------===//
+
+struct ItemPointerContainer {
+
+  ItemPointerContainer(const ItemPointer &ip) {
+    this->item_pointer = ip;
+    begin_cid = 0;
+  }
+
+  void GetItemPointer(ItemPointer &ip) {
+    spinlock.Lock();
+    ip = this->item_pointer;
+    spinlock.Unlock();
+  }
+
+  // this function is called when swapping the versions during GC.
+  void SwapItemPointer(const ItemPointer &ip, const cid_t &cid) {
+    spinlock.Lock();
+    if (cid > begin_cid) {
+      this->item_pointer = ip;
+      this->begin_cid = cid;
+    }
+    spinlock.Unlock();
+  }
+
+private:
+  // copy of item pointer pointing to the header of the version chain.
+  ItemPointer item_pointer;
+  // begin_cid of the item pointer header.
+  cid_t begin_cid;
+
+  Spinlock spinlock;
+};
 
 //===--------------------------------------------------------------------===//
 // Utilities
