@@ -236,7 +236,7 @@ peloton_dml(PlanState *planstate,
   request.set_plan(output_plan.Data(), output_plan.Size());
 
   // Finally send the request
-  //pclient->QueryPlan(&request, NULL);
+  pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
