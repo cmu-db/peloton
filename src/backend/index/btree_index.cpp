@@ -322,7 +322,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       printf("All constraints are equal : %d ", all_constraints_are_equal);
       index_key.SetFromKey(start_key.get());
 
-      index_key.SetFromKey(start_key.get());
+      std::cout << "Start :" << *start_key << "\n";
 
       // Set scan begin iterator
       scan_begin_itr = container.equal_range(index_key).first;
