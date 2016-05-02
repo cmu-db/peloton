@@ -106,11 +106,7 @@ class Manager {
 
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
-  Spinlock locator_spinlock;
-
   lookup_dir locator;
-
-  std::mutex locator_mutex;
 
   // DATABASES
 
