@@ -318,12 +318,11 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
 
-  expression::AbstractExpression *predicate = nullptr;
+  expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
 
   planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
                                            index_scan_desc);
 
-  //const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
