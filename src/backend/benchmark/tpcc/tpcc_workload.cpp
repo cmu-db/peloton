@@ -78,15 +78,15 @@ namespace tpcc {
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
-void RunStockLevel();
+bool RunStockLevel();
 
-void RunDelivery();
+bool RunDelivery();
 
-void RunOrderStatus();
+bool RunOrderStatus();
 
-void RunPayment();
+bool RunPayment();
 
-void RunNewOrder();
+bool RunNewOrder();
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -138,7 +138,7 @@ void RunBackend(oid_t thread_id) {
   }
 }
 
-double RunWorkload() {
+void RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
@@ -480,7 +480,7 @@ ExecuteTest(executor::AbstractExecutor* executor) {
   return std::move(logical_tile_values);
 }
 
-void RunNewOrder(){
+bool RunNewOrder(){
   /*
      "NEW_ORDER": {
      "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -557,7 +557,7 @@ void RunNewOrder(){
   if(gwtr_lists_values.empty() == true) {
     LOG_ERROR("getWarehouseTaxRate failed");
     txn_manager.AbortTransaction();
-    return;
+    return false;
   }
 
   auto w_tax = gwtr_lists_values[0][0];
@@ -597,7 +597,7 @@ void RunNewOrder(){
   if(gd_lists_values.empty() == true) {
     LOG_ERROR("getDistrict failed");
     txn_manager.AbortTransaction();
-    return;
+    return false;
   }
 
   auto result = txn->GetResult();
@@ -632,7 +632,7 @@ void RunNewOrder(){
 
 }
 
-void RunPayment(){
+bool RunPayment(){
   /*
      "PAYMENT": {
      "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -646,15 +646,15 @@ void RunPayment(){
      "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
      }
    */
-     
+
   LOG_INFO("-------------------------------------");
 
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-
+  //int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  //int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+  return true;
 }
 
-void RunOrderStatus(){
+bool RunOrderStatus(){
   /*
     "ORDER_STATUS": {
     "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
@@ -663,10 +663,10 @@ void RunOrderStatus(){
     "getOrderLines": "SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?", # w_id, d_id, o_id
     }
    */
-
+    return true;
 }
 
-void RunDelivery(){
+bool RunDelivery(){
   /*
    "DELIVERY": {
    "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1", #
@@ -678,17 +678,17 @@ void RunDelivery(){
    "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?", # ol_total, c_id, d_id, w_id
    }
    */
-
+   return true;
 }
 
-void RunStockLevel() {
+bool RunStockLevel() {
   /*
      "STOCK_LEVEL": {
      "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
      "getStockCount": "SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?
      }
    */
-
+     return true;
 }
 
 }  // namespace tpcc
