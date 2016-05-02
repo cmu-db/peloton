@@ -64,8 +64,6 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     assert(false);
-  } else {
-    assert(false);
   }
 }
 

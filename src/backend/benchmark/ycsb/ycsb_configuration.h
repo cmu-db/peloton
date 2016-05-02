@@ -54,6 +54,25 @@ class configuration {
   // number of backends
   int backend_count;
 
+  // whether logging is enabled
+  // TODO change to number of loggers later
+  int logging_enabled;
+
+  // synchronous commit
+  int sync_commit;
+
+  // frequency with which the logger flushes
+  int64_t wait_timeout;
+
+  // log file size
+  int file_size;
+
+  // log buffer size
+  int log_buffer_size;
+
+  // whether do checkpoint
+  int checkpointer;
+
   std::vector<double> snapshot_throughput;
 
   std::vector<double> snapshot_abort_rate;
@@ -65,6 +84,9 @@ class configuration {
   double zipf_theta;
 
   bool run_mix;
+
+  int flush_freq;
+
 };
 
 extern configuration state;
@@ -82,6 +104,8 @@ void ValidateBackendCount(const configuration &state);
 void ValidateDuration(const configuration &state);
 
 void ValidateSnapshotDuration(const configuration &state);
+
+void ValidateLogging(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

@@ -20,26 +20,16 @@
 namespace peloton {
 namespace logging {
 
-/**
- * @brief log LogRecord
- * @param log record
- */
-void WriteAheadBackendLogger::Log(LogRecord *record) {
-  // Enqueue the serialized log record into the queue
-  record->Serialize(output_buffer);
-
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(std::unique_ptr<LogRecord>(record));
-  }
+WriteAheadBackendLogger::WriteAheadBackendLogger() : BackendLogger() {
+  logging_type = LOGGING_TYPE_NVM_WAL;
+  frontend_logger_id = -1;  // invalid
+  LOG_INFO("INSIDE CONSTRUCTOR");
 }
 
-LogRecord *WriteAheadBackendLogger::GetTupleRecord(LogRecordType log_record_type,
-                                                   txn_id_t txn_id,
-                                                   oid_t table_oid, oid_t db_oid,
-                                                   ItemPointer insert_location,
-                                                   ItemPointer delete_location,
-                                                   const void *data) {
+LogRecord *WriteAheadBackendLogger::GetTupleRecord(
+    LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
+    oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
+    const void *data) {
   // Build the log record
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
