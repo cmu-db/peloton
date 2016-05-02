@@ -743,6 +743,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
   FILE *fp;
   std::pair<cid_t, cid_t> extracted_values;
   FileHandle temp_file_handle;
+  int max_version = 0;
 
   // TODO need a better regular expression to match file name
   std::string base_name = "peloton_log_";
@@ -761,16 +762,18 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       LOG_INFO("Found a log file with name %s", file->d_name);
 
       version_number = LoggingUtil::ExtractNumberFromFileName(file->d_name);
+      if (version_number > max_version) max_version = version_number;
 
-      fp = fopen(GetFileNameFromVersion(version_number).c_str(), "rb+");
+      std::string file_name_with_dir = GetFileNameFromVersion(version_number);
+
+      fp = fopen(file_name_with_dir.c_str(), "rb+");
       temp_max_log_id_file = UINT64_MAX;
       temp_max_delimiter_file = 0;
 
       size_t read_size = fread((void *)&temp_max_log_id_file,
                                sizeof(temp_max_log_id_file), 1, fp);
       if (read_size != 1) {
-        LOG_ERROR("Read from file %s failed",
-                  GetFileNameFromVersion(version_number).c_str());
+        LOG_ERROR("Read from file %s failed", file_name_with_dir.c_str());
         fclose(fp);
         continue;
       }
@@ -779,8 +782,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       read_size = fread((void *)&temp_max_delimiter_file,
                         sizeof(temp_max_delimiter_file), 1, fp);
       if (read_size != 1) {
-        LOG_ERROR("Read from file %s failed",
-                  GetFileNameFromVersion(version_number).c_str());
+        LOG_ERROR("Read from file %s failed", file_name_with_dir.c_str());
         fclose(fp);
         continue;
       }
@@ -832,12 +834,12 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
       // TODO update max_delimiter here in this constructor
       temp_file_handle.fd = -1;
       temp_file_handle.file = NULL;
-      temp_file_handle.size = LoggingUtil::GetFileSizeFromFileName(
-          GetFileNameFromVersion(version_number).c_str());
+      temp_file_handle.size =
+          LoggingUtil::GetFileSizeFromFileName(file_name_with_dir.c_str());
 
-      LogFile *new_log_file =
-          new LogFile(temp_file_handle, file->d_name, version_number,
-                      temp_max_log_id_file, temp_max_delimiter_file);
+      LogFile *new_log_file = new LogFile(
+          temp_file_handle, file_name_with_dir.c_str(), version_number,
+          temp_max_log_id_file, temp_max_delimiter_file);
 
       this->log_files_.push_back(new_log_file);
     }
@@ -853,8 +855,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
             CompareByLogNumber);
 
   if (num_log_files) {
-    int max_num = LoggingUtil::ExtractNumberFromFileName(
-        this->log_files_[num_log_files - 1]->GetLogFileName().c_str());
+    int max_num = max_version;
     LOG_INFO("Got maximum log file version as %d", max_num);
     this->log_file_counter_ = ++max_num;
   } else {
@@ -921,6 +922,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
   new_file_name = this->GetFileNameFromVersion(new_file_num);
 
   FILE *new_log_file = fopen(new_file_name.c_str(), "wb");
+
   if (new_log_file == NULL) {
     LOG_ERROR("new_log_file is NULL");
     return;

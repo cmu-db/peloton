@@ -244,12 +244,22 @@ TEST_F(RecoveryTests, RestartTest) {
 
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 1);
 
+  wal_fel.TruncateLog(4);
+
+  for (int i = 1; i <= 2; i++) {
+    struct stat stat_buf;
+    EXPECT_NE(stat((dir_name + "/" + std::string("peloton_log_") +
+                    std::to_string(i) + std::string(".log")).c_str(),
+                   &stat_buf),
+              0);
+  }
+
   wal_fel.CreateNewLogFile(true);
 
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
 
-  status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
-  EXPECT_EQ(status, true);
+  // status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
+  // EXPECT_EQ(status, true);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
