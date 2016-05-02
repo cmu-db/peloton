@@ -40,12 +40,15 @@ public:
                 key_column_ids_(std::move(index_scan_desc.key_column_ids)),
                 expr_types_(std::move(index_scan_desc.expr_types)),
                 values_(std::move(index_scan_desc.values)),
-                runtime_keys_(std::move(index_scan_desc.runtime_keys)), type_(HYBRID) {}
+                runtime_keys_(std::move(index_scan_desc.runtime_keys)),
+                type_(HYBRID) {}
 
 
   HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids), column_ids_(column_ids), type_(SEQ) {}
+      : AbstractScan(table, predicate, column_ids),
+        column_ids_(column_ids),
+        type_(SEQ) {}
 
   HybridScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
