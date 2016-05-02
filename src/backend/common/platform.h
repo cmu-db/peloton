@@ -100,7 +100,7 @@ struct PelotonWriteLock {
 // Spinlock
 //===--------------------------------------------------------------------===//
 
-enum LockState : bool { Locked, Unlocked };
+enum LockState : bool { Unlocked = 0, Locked };
 
 class Spinlock {
  public:
@@ -126,7 +126,6 @@ class Spinlock {
   }
 
  private:
-  // typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/
