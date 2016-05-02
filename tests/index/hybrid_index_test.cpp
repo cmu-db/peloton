@@ -157,7 +157,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
     expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
+      EXPRESSION_TYPE_COMPARE_EQUAL, tuple_value_expr,
       constant_value_expr);
 
   return predicate;
@@ -261,7 +261,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   key_column_ids.push_back(0);
   expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -310,7 +310,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   key_column_ids.push_back(0);
   expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
