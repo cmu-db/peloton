@@ -211,6 +211,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // there must exist a visible version.
+
+        // FIXME: currently, only speculative read transaction manager **may** see a null version
+        // it's a potential bug
+        if(tuple_location.IsNull()) {
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          // FIXME: this cause unnecessary abort when we have delete operations
+          return false;
+        }
+
         // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
         assert(tuple_location.IsNull() == false);
 
