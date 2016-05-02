@@ -258,8 +258,8 @@ TEST_F(RecoveryTests, RestartTest) {
 
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
 
-  // status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
-  // EXPECT_EQ(status, true);
+  status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
+  EXPECT_EQ(status, true);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {
