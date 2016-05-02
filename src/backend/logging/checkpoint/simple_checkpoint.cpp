@@ -57,14 +57,13 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 void SimpleCheckpoint::DoCheckpoint() {
   CreateFile();
 
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &log_manager = LogManager::GetInstance();
   // XXX get default backend logger
   if (logger_ == nullptr) {
     logger_.reset(BackendLogger::GetBackendLogger(LOGGING_TYPE_NVM_WAL));
   }
 
-  // FIXME make sure everything up to start_cid is not garbage collected
-  start_commit_id_ = txn_manager.GetMaxCommittedCid();
+  start_commit_id_ = log_manager.GetGlobalMaxFlushedCommitId();
   LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
