@@ -45,10 +45,10 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 6;
-static size_t tuples_per_tile_group = 10000;
-static size_t tile_group = 1000;
+static size_t tuples_per_tile_group = 1000;
+static size_t tile_group = 100;
 static float scalar = 0.9;
-static size_t iter = 15;
+static size_t iter = 2;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
