@@ -52,7 +52,7 @@ class LoggingTestsUtil {
 
   static std::vector<logging::TupleRecord> BuildTupleRecordsForRestartTest(
       std::vector<std::shared_ptr<storage::Tuple>> &tuples,
-      size_t tile_group_size, size_t table_tile_group_count);
+      size_t tile_group_size, size_t table_tile_group_count, int out_of_range);
 
   static std::vector<std::shared_ptr<storage::Tuple>> BuildTuples(
       storage::DataTable *table, int num_rows, bool mutate, bool random);
