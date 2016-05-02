@@ -663,7 +663,6 @@ void SsiTxnManager::CleanUp() {
     vacuum.join();
   }
 
-  // printf("enter clean up\n");
   std::unordered_set <cid_t> gc_cids;
   {
     auto iter = end_txn_table_.lock_table();
@@ -671,10 +670,8 @@ void SsiTxnManager::CleanUp() {
     for (auto &it : iter) {
       auto ctx_ptr = it.second;
       txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
-      // end_txn_table_.erase(gc_cid);
       gc_cids.insert(it.first);
 
-      // printf("clean %ld\n", it.first);
       if (!ctx_ptr->is_abort()) {
         RemoveReader(ctx_ptr->transaction_);
       }
@@ -687,9 +684,6 @@ void SsiTxnManager::CleanUp() {
   for(auto cid : gc_cids) {
     end_txn_table_.erase(cid);
   }
-
-
-  // printf("exit clean up\n");
 }
 
 void SsiTxnManager::CleanUpBg() {

@@ -72,7 +72,7 @@ class SsiTxnManager : public TransactionManager {
     LOG_INFO("Deconstruct SSI manager");
     if(!stopped) {
       stopped = true;
-      // vacuum.join();
+      vacuum.join();
     }
   }
 
@@ -258,25 +258,19 @@ class SsiTxnManager : public TransactionManager {
   }
 
   inline bool GetInConflict(SsiTxnContext *txn_ctx) {
-    //assert(txn_table_.count(txn_id) != 0);
     return txn_ctx->in_conflict_;
   }
 
   inline bool GetOutConflict(SsiTxnContext *txn_ctx) {
-    //assert(txn_table_.count(txn_id) != 0);
     return txn_ctx->out_conflict_;
   }
 
   inline void SetInConflict(SsiTxnContext *txn_ctx) {
-    //assert(txn_table_.count(txn_id) != 0);
-
     LOG_INFO("Set in conflict %lu", txn_ctx->transaction_->GetTransactionId());
     txn_ctx->in_conflict_ = true;
   }
 
   inline void SetOutConflict(SsiTxnContext *txn_ctx) {
-    //assert(txn_table_.count(txn_id) != 0);
-
     LOG_INFO("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
     txn_ctx->out_conflict_ = true;
   }
