@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
+// #undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
@@ -32,6 +32,8 @@ void Usage(FILE *out) {
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
+          "   -t --zipf_theta        :  theta to control skewness \n"
+          "   -m --mix_txn           :  run read/write mix txn \n"
           "   -l --enable_logging    :  enable_logging (0 or 1) \n"
           "   -x --sync_commit       :  enable synchronous commit (0 or 1) \n"
           "   -q --flush_freq        :  set the frequency of log fsync\n");
@@ -47,6 +49,8 @@ static struct option opts[] = {
     {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
+    {"zipf_theta", optional_argument, NULL, 't'},
+    {"mix_txn", no_argument, NULL, 'm'},
     {"enable_logging", optional_argument, NULL, 'l'},
     {"sync_commit", optional_argument, NULL, 'x'},
     {"wait_time", optional_argument, NULL, 'w'},
@@ -54,8 +58,7 @@ static struct option opts[] = {
     {"log_buffer_size", optional_argument, NULL, 'z'},
     {"checkpointer", optional_argument, NULL, 'p'},
     {"flush_freq", optional_argument, NULL, 'q'},
-    {NULL, 0, NULL, 0},
-};
+    {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -111,6 +114,15 @@ void ValidateSnapshotDuration(const configuration &state) {
   LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
 }
 
+void ValidateZipfTheta(const configuration &state) {
+  if (state.zipf_theta < 0 || state.zipf_theta > 1.0) {
+    LOG_ERROR("Invalid zipf_theta :: %lf", state.zipf_theta);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "zipf_theta", state.zipf_theta);
+}
+
 void ValidateLogging(const configuration &state) {
   // TODO validate that sync_commit is enabled only when logging is enabled
   LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
@@ -118,14 +130,14 @@ void ValidateLogging(const configuration &state) {
   LOG_INFO("%s : %d", "wait_time", (int)state.wait_timeout);
 }
 
-void ValidateFlushFreq(const configuration &state) {
-  if (state.flush_freq <= 0) {
-    LOG_ERROR("Invalid flush_freq :: %d", state.flush_freq);
-    exit(EXIT_FAILURE);
-  }
+// void ValidateFlushFreq(const configuration &state) {
+//   if (state.flush_freq <= 0) {
+//     LOG_ERROR("Invalid flush_freq :: %d", state.flush_freq);
+//     exit(EXIT_FAILURE);
+//   }
 
-  LOG_INFO("%s : %d microseconds", "flush_freq", state.flush_freq);
-}
+//   LOG_INFO("%s : %d microseconds", "flush_freq", state.flush_freq);
+// }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
@@ -135,6 +147,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
+  state.zipf_theta = 0.0;
+  state.run_mix = false;
+
   state.logging_enabled = 0;
   state.sync_commit = 0;
   state.wait_timeout = 0;
@@ -146,7 +161,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:l:x:w:f:z:p:q:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:l:x:w:f:z:p:q:", opts, &idx);
 
     if (c == -1) break;
 
@@ -169,6 +184,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+      case 't':
+        state.zipf_theta = atof(optarg);
+        break;
       case 'x':
         state.sync_commit = atoi(optarg);
         break;
@@ -190,11 +208,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'q':
         state.flush_freq = atoi(optarg);
         break;
+      case 'm':
+        state.run_mix = true;
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
         break;
-
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
@@ -210,7 +230,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateLogging(state);
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
-  ValidateFlushFreq(state);
+  ValidateZipfTheta(state);
+  //ValidateFlushFreq(state);
 }
 
 }  // namespace ycsb
