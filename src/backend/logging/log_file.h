@@ -24,21 +24,19 @@ namespace logging {
 
 class LogFile {
  public:
-  LogFile(FILE *log_file, std::string log_file_name, int log_file_fd,
-          int log_number, txn_id_t max_commit_id)
-      : log_file_(log_file),
+  LogFile(FileHandle file_handle, std::string log_file_name, int log_number,
+          cid_t max_log_id_file, cid_t max_delimiter_file)
+      : file_handle_(file_handle),
         log_file_name_(log_file_name),
-        log_file_fd_(log_file_fd),
         log_number_(log_number),
-        max_commit_id_(max_commit_id) {
-    log_file_size_ = 0;
-  };
+        max_log_id_file_(max_log_id_file),
+        max_delimiter_file_(max_delimiter_file){};
 
   virtual ~LogFile(void){};
 
-  void SetMaxCommitId(txn_id_t);
+  void SetMaxLogId(cid_t);
 
-  txn_id_t GetMaxCommitId();
+  cid_t GetMaxLogId();
 
   int GetLogNumber();
 
@@ -52,13 +50,19 @@ class LogFile {
 
   void SetFilePtr(FILE *);
 
+  void SetMaxDelimiter(cid_t);
+
+  cid_t GetMaxDelimiter();
+
  private:
-  FILE *log_file_;
+  FileHandle file_handle_;
   std::string log_file_name_;
-  int log_file_fd_;
-  int log_file_size_;
+  // FILE *log_file_;
+  // int log_file_fd_;
+  // int log_file_size_;
   int log_number_;
-  txn_id_t max_commit_id_;
+  cid_t max_log_id_file_;
+  cid_t max_delimiter_file_;
 
  protected:
 };

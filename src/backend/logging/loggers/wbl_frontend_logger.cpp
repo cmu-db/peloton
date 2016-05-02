@@ -23,25 +23,104 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
+#include "backend/logging/logging_util.h"
 
 namespace peloton {
 namespace logging {
 
-size_t GetLogFileSize(int log_file_fd);
+// TODO for now, these helper routines are defined here, and also use
+// some routines from the LoggingUtil class. Make sure that all places where
+// these helper routines are called in this file use the LoggingUtil class
+size_t GetLogFileSize(int fd) {
+  struct stat log_stats;
+  fstat(fd, &log_stats);
+  return log_stats.st_size;
+}
 
-LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size);
+LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
+  char buffer;
+
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  // Check if the log record type is broken
+  if (LoggingUtil::IsFileTruncated(file_handle, 1)) {
+    LOG_INFO("Log file is truncated");
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  // Otherwise, read the log record type
+  int ret = fread((void *)&buffer, 1, sizeof(char), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Could not read from log file");
+    return LOGRECORD_TYPE_INVALID;
+  }
+
+  CopySerializeInputBE input(&buffer, sizeof(char));
+  LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
+
+  return log_record_type;
+}
 
 bool ReadTransactionRecordHeader(TransactionRecord &txn_record, FILE *log_file,
-                                 size_t log_file_size);
+                                 size_t log_file_size) {
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  auto header_size = LoggingUtil::GetNextFrameSize(file_handle);
+  if (header_size == 0) {
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Error occured in fread ");
+  }
+
+  CopySerializeInputBE txn_header(header, header_size);
+  txn_record.Deserialize(txn_header);
+
+  return true;
+}
 
 bool ReadTupleRecordHeader(TupleRecord &tuple_record, FILE *log_file,
-                           size_t log_file_size);
+                           size_t log_file_size) {
+  FileHandle file_handle;
+  file_handle.file = log_file;
+  file_handle.size = log_file_size;
+  file_handle.fd = fileno(file_handle.file);
+
+  // Check if frame is broken
+  auto header_size = LoggingUtil::GetNextFrameSize(file_handle);
+  if (header_size == 0) {
+    LOG_ERROR("Header size is zero ");
+    return false;
+  }
+
+  // Read header
+  char header[header_size];
+  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  if (ret <= 0) {
+    LOG_ERROR("Error occured in fread");
+  }
+
+  CopySerializeInputBE tuple_header(header, header_size);
+  tuple_record.DeserializeHeader(tuple_header);
+
+  return true;
+};
 
 /**
  * @brief create NVM backed log pool
  */
 WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
-  logging_type = LOGGING_TYPE_NVM_NVM;
+  logging_type = LOGGING_TYPE_NVM_WBL;
 
   // open log file and file descriptor
   // we open it in append + binary mode
@@ -55,7 +134,6 @@ WriteBehindFrontendLogger::WriteBehindFrontendLogger() {
   if (log_file_fd == -1) {
     LOG_ERROR("log_file_fd is -1");
   }
-
 }
 
 /**
@@ -86,66 +164,67 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   //===--------------------------------------------------------------------===//
 
   size_t global_queue_size = global_queue.size();
-  for(oid_t global_queue_itr = 0;
-      global_queue_itr < global_queue_size;
-      global_queue_itr++) {
-
-    if(global_queue[global_queue_itr] == nullptr) {
+  for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
+       global_queue_itr++) {
+    if (global_queue[global_queue_itr] == nullptr) {
       continue;
     }
 
-    switch (global_queue[global_queue_itr]->GetType()) {
-      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-        global_peloton_log_record_pool.CreateTxnLogList(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-        committed_txn_list.push_back(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_ABORT:
-        // Nothing to be done for abort
-        break;
-
-      case LOGRECORD_TYPE_TRANSACTION_END:
-      case LOGRECORD_TYPE_TRANSACTION_DONE:
-        // if a txn is not committed (aborted or active), log records will be
-        // removed here
-        // Note that list is not be removed immediately, it is removed only
-        // after flush and commit.
-        not_committed_txn_list.push_back(
-            global_queue[global_queue_itr]->GetTransactionId());
-        break;
-
-      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
-      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
-      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-
-        LogRecord* log_record = global_queue[global_queue_itr].release();
-        TupleRecord* tuple_record = reinterpret_cast<TupleRecord*>(log_record);
-
-        // Check the commit information
-        auto status =
-            CollectTupleRecord(std::unique_ptr<TupleRecord>(tuple_record));
-
-        // Add it to the set of modified tile groups
-        if (status.first == true) {
-          auto location = status.second.block;
-          if (location != INVALID_OID) {
-            modified_tile_group_set.insert(location);
-          }
-        }
-
-      } break;
-
-      case LOGRECORD_TYPE_INVALID:
-      default:
-        throw Exception("Invalid or unrecogized log record found");
-        break;
-    }
-
+    // FIXME change the interface of write behind logging
+    //    switch (global_queue[global_queue_itr]->GetType()) {
+    //      case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+    //        global_peloton_log_record_pool.CreateTxnLogList(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+    //        committed_txn_list.push_back(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_ABORT:
+    //        // Nothing to be done for abort
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_TRANSACTION_END:
+    //      case LOGRECORD_TYPE_TRANSACTION_DONE:
+    //        // if a txn is not committed (aborted or active), log records will
+    //        be
+    //        // removed here
+    //        // Note that list is not be removed immediately, it is removed
+    //        only
+    //        // after flush and commit.
+    //        not_committed_txn_list.push_back(
+    //            global_queue[global_queue_itr]->GetTransactionId());
+    //        break;
+    //
+    //      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    //      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    //      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+    //
+    //        LogRecord* log_record = global_queue[global_queue_itr].release();
+    //        TupleRecord* tuple_record =
+    //        reinterpret_cast<TupleRecord*>(log_record);
+    //
+    //        // Check the commit information
+    //        auto status =
+    //            CollectTupleRecord(std::unique_ptr<TupleRecord>(tuple_record));
+    //
+    //        // Add it to the set of modified tile groups
+    //        if (status.first == true) {
+    //          auto location = status.second.block;
+    //          if (location != INVALID_OID) {
+    //            modified_tile_group_set.insert(location);
+    //          }
+    //        }
+    //
+    //      } break;
+    //
+    //      case LOGRECORD_TYPE_INVALID:
+    //      default:
+    //        throw Exception("Invalid or unrecogized log record found");
+    //        break;
+    //    }
   }
 
   // Clean up the frontend logger's queue
@@ -204,12 +283,13 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
   }
 
   // Notify the backend loggers
-  {
-    for(auto backend_logger : backend_loggers){
-      backend_logger->FinishedFlushing();
-    }
-  }
-
+  //  {
+  //    for (auto backend_logger : backend_loggers) {
+  //      // FIXME
+  //      assert(backend_logger);
+  //      // backend_logger->FinishedFlushing();
+  //    }
+  //  }
 }
 
 size_t WriteBehindFrontendLogger::WriteLogRecords(
@@ -225,15 +305,14 @@ size_t WriteBehindFrontendLogger::WriteLogRecords(
       continue;
     }
 
-    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    auto &txn_log_record_list =
+        global_peloton_log_record_pool.txn_log_table[txn_id];
     size_t txn_log_record_list_size = txn_log_record_list.size();
     total_txn_log_records += txn_log_record_list_size;
 
     // Write out all the records in the list
     for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_record_list_size;
-        txn_log_list_itr++) {
-
+         txn_log_list_itr < txn_log_record_list_size; txn_log_list_itr++) {
       TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
 
       // Write out the log record
@@ -280,13 +359,12 @@ WriteBehindFrontendLogger::ToggleCommitMarks(
       continue;
     }
 
-    auto& txn_log_record_list = global_peloton_log_record_pool.txn_log_table[txn_id];
+    auto &txn_log_record_list =
+        global_peloton_log_record_pool.txn_log_table[txn_id];
     size_t txn_log_record_list_size = txn_log_record_list.size();
 
     for (size_t txn_log_list_itr = 0;
-        txn_log_list_itr < txn_log_record_list_size;
-        txn_log_list_itr++) {
-
+         txn_log_list_itr < txn_log_record_list_size; txn_log_list_itr++) {
       // Get the log record
       TupleRecord *record = txn_log_record_list.at(txn_log_list_itr).get();
       cid_t current_commit_id = INVALID_CID;
@@ -372,7 +450,8 @@ std::pair<bool, ItemPointer> WriteBehindFrontendLogger::CollectTupleRecord(
       record_type == LOGRECORD_TYPE_WBL_TUPLE_UPDATE) {
     // Collect this log record
     auto insert_location = record->GetInsertLocation();
-    auto status = global_peloton_log_record_pool.AddLogRecord(std::move(record));
+    auto status =
+        global_peloton_log_record_pool.AddLogRecord(std::move(record));
 
     if (status != 0) {
       return std::make_pair(false, INVALID_ITEMPOINTER);
@@ -565,6 +644,10 @@ bool WriteBehindFrontendLogger::NeedRecovery(void) {
 std::string WriteBehindFrontendLogger::GetLogFileName(void) {
   auto &log_manager = logging::LogManager::GetInstance();
   return log_manager.GetLogFileName();
+}
+
+void WriteBehindFrontendLogger::SetLoggerID(__attribute__((unused)) int id) {
+  // do nothing
 }
 
 }  // namespace logging

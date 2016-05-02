@@ -561,7 +561,7 @@ bool RunNewOrder(){
   }
 
   auto w_tax = gwtr_lists_values[0][0];
-  LOG_TRACE("W_TAX: %d", w_tax);
+  // LOG_TRACE("W_TAX: %d", w_tax);
 
   // getDistrict
 
@@ -606,21 +606,12 @@ bool RunNewOrder(){
   if (result == Result::RESULT_SUCCESS) {
 
     result = txn_manager.CommitTransaction();
+    auto d_tax = gd_lists_values[0][0];
+    // LOG_TRACE("D_TAX: %d", d_tax);
+    auto d_next_o_id = gd_lists_values[0][1];
+    // LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
 
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      auto d_tax = gd_lists_values[0][0];
-      LOG_TRACE("D_TAX: %d", d_tax);
-      auto d_next_o_id = gd_lists_values[0][1];
-      LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
-
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
+    return true;
   }
   // transaction aborted during execution.
   else {
