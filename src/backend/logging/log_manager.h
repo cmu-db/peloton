@@ -215,7 +215,7 @@ class LogManager {
   LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
   // default log file size: 32 MB
-  unsigned int log_file_size_limit_ = 32;
+  unsigned int log_file_size_limit_ = 32768;
 
   // default capacity for log buffer
   unsigned int log_buffer_capacity_ = 32768;
