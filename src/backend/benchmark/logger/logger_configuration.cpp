@@ -133,11 +133,20 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.wait_timeout = 200;
 
   // Default Values
+  // Default Values
   ycsb::state.scale_factor = 1;
-  ycsb::state.transaction_count = 10000;
+  ycsb::state.duration = 10;
+  ycsb::state.snapshot_duration = 0.1;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
+  ycsb::state.logging_enabled = 0;
+  ycsb::state.sync_commit = 0;
+  ycsb::state.wait_timeout = 0;
+  ycsb::state.file_size = 32;
+  ycsb::state.log_buffer_size = 32768;
+  ycsb::state.checkpointer = 0;
+  ycsb::state.flush_freq = 0;
 
   // Parse args
   while (1) {
