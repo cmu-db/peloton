@@ -117,10 +117,12 @@ TEST_F(RecoveryTests, RestartTest) {
 
   int num_rows = tile_group_size * table_tile_group_count;
   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-      LoggingTestsUtil::BuildTuples(recovery_table, num_rows, mutate, random);
+      LoggingTestsUtil::BuildTuples(recovery_table, num_rows + 1, mutate,
+                                    random);
+
   std::vector<logging::TupleRecord> records =
-      LoggingTestsUtil::BuildTupleRecordsForRestartTest(tuples, tile_group_size,
-                                                        table_tile_group_count);
+      LoggingTestsUtil::BuildTupleRecordsForRestartTest(
+          tuples, tile_group_size, table_tile_group_count, 1);
 
   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
   EXPECT_EQ(status, true);
@@ -156,6 +158,15 @@ TEST_F(RecoveryTests, RestartTest) {
              records[num_record].GetMessageLength(), fp);
     }
 
+    // Now write 1 extra out of range tuple, only in file 0
+    if (i == 0) {
+      CopySerializeOutput output_buffer_extra;
+      records[num_files * tile_group_size].Serialize(output_buffer_extra);
+
+      fwrite(records[num_files * tile_group_size].GetMessage(), sizeof(char),
+             records[num_files * tile_group_size].GetMessageLength(), fp);
+    }
+
     // Now write commit
     logging::TransactionRecord record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
                                              i + 2);
@@ -179,6 +190,7 @@ TEST_F(RecoveryTests, RestartTest) {
     fclose(fp);
   }
 
+  LOG_INFO("All files created and written to.");
   int index_count = recovery_table->GetIndexCount();
   LOG_INFO("Number of indexes on this table: %d", (int)index_count);
 
@@ -197,12 +209,15 @@ TEST_F(RecoveryTests, RestartTest) {
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
   wal_fel.DoRecovery();
 
   EXPECT_EQ(recovery_table->GetNumberOfTuples(),
             tile_group_size * table_tile_group_count);
   EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
 
+  txn_manager.SetNextCid(5);
   wal_fel.RecoverIndex();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = recovery_table->GetIndex(index_itr);

@@ -248,7 +248,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
     // Read the first byte to identify log record type
     // If that is not possible, then wrap up recovery
     auto record_type = GetNextLogRecordTypeForRecovery();
-    cid_t commit_id = INVALID_CID;
+    cid_t log_id = INVALID_CID;
     TupleRecord *tuple_record;
 
     switch (record_type) {
@@ -262,9 +262,9 @@ void WriteAheadFrontendLogger::DoRecovery() {
           cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
-        commit_id = txn_rec.GetTransactionId();
-        if (commit_id <= start_commit_id ||
-            commit_id > global_max_flushed_id_for_recovery) {
+        log_id = txn_rec.GetTransactionId();
+        if (log_id <= start_commit_id ||
+            log_id > global_max_flushed_id_for_recovery) {
           LOG_INFO("SKIP");
           continue;
         }
@@ -282,19 +282,20 @@ void WriteAheadFrontendLogger::DoRecovery() {
           return;
         }
 
-        auto cid = tuple_record->GetTransactionId();
+        log_id = tuple_record->GetTransactionId();
         auto table = LoggingUtil::GetTable(*tuple_record);
 
-        if (!table || cid <= start_commit_id ||
-            commit_id > global_max_flushed_id_for_recovery) {
+        if (!table || log_id <= start_commit_id ||
+            log_id > global_max_flushed_id_for_recovery) {
           LoggingUtil::SkipTupleRecordBody(cur_file_handle);
+          LOG_INFO("Skip a tuple, log id is %d", (int)log_id);
           delete tuple_record;
           continue;
         }
 
-        if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+        if (recovery_txn_table.find(log_id) == recovery_txn_table.end()) {
           LOG_ERROR("Insert txd id %d not found in recovery txn table",
-                    (int)cid);
+                    (int)log_id);
           cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
@@ -313,15 +314,15 @@ void WriteAheadFrontendLogger::DoRecovery() {
           return;
         }
 
-        auto cid = tuple_record->GetTransactionId();
-        if (cid <= start_commit_id ||
-            commit_id > global_max_flushed_id_for_recovery) {
+        log_id = tuple_record->GetTransactionId();
+        if (log_id <= start_commit_id ||
+            log_id > global_max_flushed_id_for_recovery) {
           delete tuple_record;
           continue;
         }
-        if (recovery_txn_table.find(cid) == recovery_txn_table.end()) {
+        if (recovery_txn_table.find(log_id) == recovery_txn_table.end()) {
           LOG_TRACE("Delete txd id %d not found in recovery txn table",
-                    (int)cid);
+                    (int)log_id);
           cur_file_handle = INVALID_FILE_HANDLE;
           return;
         }
@@ -334,18 +335,18 @@ void WriteAheadFrontendLogger::DoRecovery() {
     if (!reached_end_of_log) {
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          assert(commit_id != INVALID_CID);
-          StartTransactionRecovery(commit_id);
+          assert(log_id != INVALID_CID);
+          StartTransactionRecovery(log_id);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          assert(commit_id != INVALID_CID);
+          assert(log_id != INVALID_CID);
 
           // Now directly commit this transaction. This is safe because we
           // reject commit ids that appear
           // after the persistent commit id before coming here (in the switch
           // case above).
-          CommitTransactionRecovery(commit_id);
+          CommitTransactionRecovery(log_id);
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -385,6 +386,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   LOG_INFO("Recovering the indexes");
   cid_t cid = txn_manager.GetNextCommitId();
+  LOG_INFO("Index Recovery got Next commit id as %d", (int)cid);
 
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto database_count = catalog_manager.GetDatabaseCount();
