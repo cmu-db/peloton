@@ -45,10 +45,10 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 10;
+static size_t tuples_per_tile_group = 100000;
 static size_t tile_group = 10;
-static float scalar = 0.1;
-static size_t iter = 10;
+static float scalar = 0.9;
+static size_t iter = 15;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -201,6 +201,8 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
 //  EXPECT_EQ(tuple_counts, 11);
+  LOG_INFO("Expect %f",  tile_group * tuples_per_tile_group -
+              (tile_group * tuples_per_tile_group * scalar + 0)); 
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
               (tile_group * tuples_per_tile_group * scalar + 0));
@@ -332,13 +334,12 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
-  LOG_INFO("Finish init");
   ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
 
-/*TEST_F(HybridIndexTests, SeqScanTest) {
+TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -356,7 +357,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
-*/
+
 
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;

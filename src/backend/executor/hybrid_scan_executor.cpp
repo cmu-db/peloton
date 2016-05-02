@@ -81,8 +81,8 @@ bool HybridScanExecutor::DInit() {
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
   } else { // Hybrid type.
-    if (indexed_tile_offset_ < table_->GetTileGroupCount()) {
-        LOG_INFO("Insert %d tile group into index", indexed_tile_offset_);
+    table_tile_group_count_ = table_->GetTileGroupCount();
+    if (indexed_tile_offset_ < table_tile_group_count_) {
         // insert one tile group to index
         auto tile_group =
           table_->GetTileGroup(indexed_tile_offset_++);
@@ -96,7 +96,6 @@ bool HybridScanExecutor::DInit() {
 
           table_->InsertInIndexes(tuple_ptr.get(), location);
         }
-        LOG_INFO("Finish Insert %d tile group into index", indexed_tile_offset_-1);
     }
 
     index_ = table_->GetIndex(0);
@@ -216,6 +215,7 @@ bool HybridScanExecutor::IndexScanUtil() {
       return true;
     }
   }  // end while
+  LOG_INFO("Index scan finds nothing");
   return false;
 }
 
