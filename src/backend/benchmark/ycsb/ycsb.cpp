@@ -113,8 +113,8 @@ inline void YCSBBootstrapLogger() {
   if (state.logging_enabled <= 0) return;
 
   // Set sync commit mode
-  if (state.sync_commit == 1) {
-    log_manager.SetSyncCommit(true);
+  if (state.sync_commit == 0) {
+    log_manager.SetSyncCommit(false);
   }
   log_manager.SetLogFileSizeLimit((unsigned int)state.file_size);
   log_manager.SetLogBufferCapacity((unsigned int)state.log_buffer_size);
