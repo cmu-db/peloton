@@ -142,7 +142,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.logging_enabled = 0;
   state.sync_commit = 0;
   state.wait_timeout = 0;
-  state.file_size = 32;
+  state.file_size = 32768;
   state.log_buffer_size = 32768;
   state.checkpointer = 0;
   state.flush_freq = 0;
