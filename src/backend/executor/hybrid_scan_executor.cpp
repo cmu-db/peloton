@@ -84,7 +84,6 @@ bool HybridScanExecutor::DInit() {
     table_tile_group_count_ = table_->GetTileGroupCount();
     if (indexed_tile_offset_ < table_tile_group_count_) {
         // insert one tile group to index
-        LOG_INFO("indexed_tile_offset %d", indexed_tile_offset_);
         auto tile_group =
           table_->GetTileGroup(indexed_tile_offset_++);
         current_tile_group_offset_ = indexed_tile_offset_;
