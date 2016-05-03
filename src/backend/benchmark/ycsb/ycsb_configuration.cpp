@@ -175,7 +175,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
 
-  LOG_INFO("%s : %lf", "Run mix query", state.run_mix);
+  LOG_INFO("%s : %d", "Run mix query", state.run_mix);
 }
 
 }  // namespace ycsb
