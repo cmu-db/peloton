@@ -24,13 +24,13 @@ namespace test {
 class MVCCTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC,
+  //CONCURRENCY_TYPE_OPTIMISTIC,
+  //CONCURRENCY_TYPE_PESSIMISTIC,
   CONCURRENCY_TYPE_SSI,
   // CONCURRENCY_TYPE_SPECULATIVE_READ,
-  CONCURRENCY_TYPE_EAGER_WRITE,
-  CONCURRENCY_TYPE_TO,
-  CONCURRENCY_TYPE_OCC_RB
+  //CONCURRENCY_TYPE_EAGER_WRITE,
+  //CONCURRENCY_TYPE_TO,
+  //CONCURRENCY_TYPE_OCC_RB
 };
 
 
@@ -296,9 +296,9 @@ TEST_F(MVCCTest, VersionChainTest) {
         }
         scheduler.Txn(i).Commit();
       }
-      scheduler.Txn(i).Commit();
+      scheduler.Run();
     }
-    scheduler.Run();
+
 
     // Read all values
     TransactionScheduler scheduler2(1, table.get(), &txn_manager);
