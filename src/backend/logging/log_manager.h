@@ -155,11 +155,10 @@ class LogManager {
 
   void LogBeginTransaction(cid_t commit_id);
 
-  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &old_version, ItemPointer &new_version);
+  void LogUpdate(cid_t commit_id, ItemPointer &old_version,
+                 ItemPointer &new_version);
 
-  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &new_location);
+  void LogInsert(cid_t commit_id, ItemPointer &new_location);
 
   void LogDelete(cid_t commit_id, ItemPointer &delete_location);
 

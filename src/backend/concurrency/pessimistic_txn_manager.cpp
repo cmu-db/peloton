@@ -238,7 +238,7 @@ bool PessimisticTxnManager::PerformInsert(const ItemPointer &location) {
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   LOG_TRACE("Perform insert");
-  //SetOwnership(tile_group_id, tuple_id);
+  // SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -253,9 +253,11 @@ void PessimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -309,9 +311,11 @@ void PessimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -425,8 +429,7 @@ Result PessimisticTxnManager::CommitTransaction() {
         ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-                              new_version);
+        log_manager.LogUpdate(end_commit_id, old_version, new_version);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -476,7 +479,7 @@ Result PessimisticTxnManager::CommitTransaction() {
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
-        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        log_manager.LogInsert(end_commit_id, insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);

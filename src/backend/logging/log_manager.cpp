@@ -33,7 +33,8 @@ namespace logging {
 thread_local static BackendLogger *backend_logger = nullptr;
 
 LogManager::LogManager() {
-  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS, LOGGER_MAPPING_ROUND_ROBIN);
+  Configure(peloton_logging_mode, false, DEFAULT_NUM_FRONTEND_LOGGERS,
+            LOGGER_MAPPING_ROUND_ROBIN);
 }
 
 LogManager::~LogManager() {}
@@ -173,11 +174,9 @@ void LogManager::LogBeginTransaction(cid_t commit_id) {
   }
 }
 
-void LogManager::LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
-                           ItemPointer &old_version, ItemPointer &new_version) {
+void LogManager::LogUpdate(cid_t commit_id, ItemPointer &old_version,
+                           ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
-    auto executor_context = new executor::ExecutorContext(curr_txn);
-    auto executor_pool = executor_context->GetExecutorContextPool();
     auto &manager = catalog::Manager::GetInstance();
 
     auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
@@ -191,7 +190,7 @@ void LogManager::LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
       tuple->SetValue(col,
                       new_tuple_tile_group->GetValue(new_version.offset, col),
-                      executor_pool);
+                      logger->GetVarlenPool());
     }
     std::unique_ptr<LogRecord> record(
         logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
@@ -200,19 +199,15 @@ void LogManager::LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
                                new_version, old_version, tuple.get()));
 
     logger->Log(record.get());
-    delete executor_context;
   }
 }
 
-void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
-                           ItemPointer &new_location) {
+void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
 
     auto new_tuple_tile_group = manager.GetTileGroup(new_location.block);
-    auto executor_context = new executor::ExecutorContext(curr_txn);
-    auto executor_pool = executor_context->GetExecutorContextPool();
 
     auto tile_group = manager.GetTileGroup(new_location.block);
     auto schema =
@@ -222,7 +217,7 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
       tuple->SetValue(col,
                       new_tuple_tile_group->GetValue(new_location.offset, col),
-                      executor_pool);
+                      logger->GetVarlenPool());
     }
 
     std::unique_ptr<LogRecord> record(logger->GetTupleRecord(
@@ -230,7 +225,6 @@ void LogManager::LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
         new_tuple_tile_group->GetDatabaseId(), new_location,
         INVALID_ITEMPOINTER, tuple.get()));
     logger->Log(record.get());
-    delete executor_context;
   }
 }
 
@@ -256,6 +250,7 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
     if (syncronization_commit) {
       WaitForFlush(commit_id);
     }
+    logger->GetVarlenPool()->Purge();
   }
 }
 

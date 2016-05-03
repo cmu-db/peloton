@@ -139,7 +139,7 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
-  //SetOwnership(tile_group_id, tuple_id);
+  // SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -156,7 +156,8 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
@@ -204,11 +205,11 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
@@ -359,8 +360,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-                              new_version);
+        log_manager.LogUpdate(end_commit_id, old_version, new_version);
 
         // we must guarantee that, at any time point, AT LEAST ONE version is
         // visible.
@@ -419,7 +419,7 @@ Result OptimisticTxnManager::CommitTransaction() {
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
-        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        log_manager.LogInsert(end_commit_id, insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);

@@ -27,6 +27,7 @@ BackendLogger::BackendLogger()
       persist_buffer_pool_(
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
   logger_type = LOGGER_TYPE_BACKEND;
+  backend_pool.reset(new VarlenPool(BACKEND_TYPE_MM));
   frontend_logger_id = -1;
 }
 
