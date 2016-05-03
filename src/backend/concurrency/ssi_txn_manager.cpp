@@ -119,6 +119,9 @@ bool SsiTxnManager::AcquireOwnership(
     return false;
   }
 
+  // if we reach here, setAtomicTransactionId is finished
+  // can't return false
+
   {
     GetReadLock(tile_group_header, tuple_id);
     ReadList *header = GetReaderList(tile_group_header, tuple_id);
@@ -153,6 +156,7 @@ bool SsiTxnManager::AcquireOwnership(
         // Owner has commited and ownner commit after I start, then I must abort
         if (end_cid > current_txn->GetBeginCommitId() &&
             GetInConflict(owner_ctx) && !owner_ctx->is_abort()) {
+          current_ssi_txn_ctx->is_abort_ = true;
           should_abort = true;
           LOG_INFO("abort in acquire");
 
@@ -169,7 +173,7 @@ bool SsiTxnManager::AcquireOwnership(
     }
     ReleaseReadLock(tile_group_header, tuple_id);
 
-    if (should_abort) return false;
+    if (should_abort) return true;
   }
 
   return true;
@@ -702,14 +706,12 @@ void SsiTxnManager::CleanUp() {
     vacuum.join();
   }
 
-  std::unordered_set <cid_t> gc_cids;
   {
     auto iter = end_txn_table_.lock_table();
 
     for (auto &it : iter) {
       auto ctx_ptr = it.second;
       txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
-      gc_cids.insert(it.first);
 
       if (!ctx_ptr->is_abort()) {
         RemoveReader(ctx_ptr->transaction_);
@@ -720,16 +722,14 @@ void SsiTxnManager::CleanUp() {
     }
   }
 
-  for(auto cid : gc_cids) {
-    end_txn_table_.erase(cid);
-  }
+  end_txn_table_.clear();
+
 }
 
 void SsiTxnManager::CleanUpBg() {
   while(!stopped) {
     std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
     auto max_begin = GetMaxCommittedCid();
-    std::unordered_set<cid_t> gc_cids;
     while (gc_cid < max_begin) {
       SsiTxnContext *ctx_ptr = nullptr;
       if (!end_txn_table_.find(gc_cid, ctx_ptr)) {
@@ -738,10 +738,9 @@ void SsiTxnManager::CleanUpBg() {
       }
 
       // find garbage
-      gc_cids.insert(gc_cid);
+      end_txn_table_.erase(gc_cid);
       txn_table_.erase(ctx_ptr->transaction_->GetTransactionId());
 
-      gc_cids.insert(gc_cid);
 
       if(!ctx_ptr->is_abort()) {
         RemoveReader(ctx_ptr->transaction_);
@@ -751,9 +750,7 @@ void SsiTxnManager::CleanUpBg() {
       gc_cid++;
     }
 
-    for(auto cid : gc_cids) {
-      end_txn_table_.erase(cid);
-    }
+
   }
 }
 
