@@ -460,26 +460,28 @@ TEST_F(IsolationLevelTest, StressTest) {
         TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-    scheduler.SetConcurrent(true);
-    for (int i = 0; i < num_txn; i++) {
-      for (int j = 0; j < scale; j++) {
-        // randomly select two uniq keys
-        int key1 = rand() % num_key;
-        int key2 = rand() % num_key;
-        int delta = rand() % 1000;
-        // Store substracted value
-        scheduler.Txn(i).ReadStore(key1, -delta);
-        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-        LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
-        // Store increased value
-        scheduler.Txn(i).ReadStore(key2, delta);
-        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
-        LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
+    for (int k = 0; k < 32; k++) {
+      TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+      scheduler.SetConcurrent(true);
+      for (int i = 0; i < num_txn; i++) {
+        for (int j = 0; j < scale; j++) {
+          // randomly select two uniq keys
+          int key1 = rand() % num_key;
+          int key2 = rand() % num_key;
+          int delta = rand() % 1000;
+          // Store substracted value
+          scheduler.Txn(i).ReadStore(key1, -delta);
+          scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+          LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
+          // Store increased value
+          scheduler.Txn(i).ReadStore(key2, delta);
+          scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+          LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
+        }
+        scheduler.Txn(i).Commit();
       }
-      scheduler.Txn(i).Commit();
+      scheduler.Run();
     }
-    scheduler.Run();
 
     // Read all values
     TransactionScheduler scheduler2(1, table.get(), &txn_manager);
@@ -498,13 +500,6 @@ TEST_F(IsolationLevelTest, StressTest) {
     }
 
     EXPECT_EQ(0, sum);
-
-    // stats
-    int nabort = 0;
-    for (auto &schedule : scheduler.schedules) {
-      if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
-    }
-    LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }
 }
 

@@ -226,6 +226,10 @@ class TileGroupHeader : public Printable {
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
+  TileGroup *GetTileGroup() const {
+    return tile_group;
+  }
+
   // Sync the contents
   void Sync();
 

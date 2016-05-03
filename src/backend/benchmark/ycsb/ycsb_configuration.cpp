@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// #undef NDEBUG
+#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
@@ -157,6 +157,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'm':
         state.run_mix = true;
+        state.update_ratio = 0.0;
         break;
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
@@ -173,6 +174,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
+
+  LOG_INFO("%s : %lf", "Run mix query", state.run_mix);
 }
 
 }  // namespace ycsb

@@ -278,20 +278,23 @@ TEST_F(MVCCTest, VersionChainTest) {
         TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-    scheduler.SetConcurrent(true);
-    for (int i = 0; i < num_txn; i++) {
-      for (int j = 0; j < scale; j++) {
-        // randomly select two uniq keys
-        int key1 = rand() % num_key;
-        int key2 = rand() % num_key;
-        int delta = rand() % 1000;
-        // Store substracted value
-        scheduler.Txn(i).ReadStore(key1, -delta);
-        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-        // Store increased value
-        scheduler.Txn(i).ReadStore(key2, delta);
-        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+    for (int k = 0; k < 32; k++) {
+      TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+      scheduler.SetConcurrent(true);
+      for (int i = 0; i < num_txn; i++) {
+        for (int j = 0; j < scale; j++) {
+          // randomly select two uniq keys
+          int key1 = rand() % num_key;
+          int key2 = rand() % num_key;
+          int delta = rand() % 1000;
+          // Store substracted value
+          scheduler.Txn(i).ReadStore(key1, -delta);
+          scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+          // Store increased value
+          scheduler.Txn(i).ReadStore(key2, delta);
+          scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+        }
+        scheduler.Txn(i).Commit();
       }
       scheduler.Txn(i).Commit();
     }
