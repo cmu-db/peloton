@@ -249,9 +249,8 @@ void DoRecovery(std::string file_name) {
   timer.Stop();
 
   // Recovery time (in ms)
-  if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
-    WriteOutput(timer.GetDuration());
-  }
+
+  WriteOutput(timer.GetDuration());
 }
 
 //===--------------------------------------------------------------------===//
