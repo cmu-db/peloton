@@ -148,9 +148,9 @@ class SsiTxnManager : public TransactionManager {
   std::mutex clean_mutex_;
   // Transaction contexts
   cuckoohash_map<txn_id_t, SsiTxnContext *> txn_table_;
-
+  // Map end commit id to txn context
   cuckoohash_map<cid_t, SsiTxnContext *> end_txn_table_;
-
+  // Current commit id of txn that has been GC-ed
   cid_t gc_cid;
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
