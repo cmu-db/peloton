@@ -22,6 +22,7 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/common/assert.h"
 #include "backend/gc/gc_manager_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
@@ -199,6 +200,7 @@ static void ValidateMVCC() {
 
 // Main Entry Point
 void RunBenchmark() {
+  concurrency::TransactionManagerFactory::Configure(state.protocol);
   // Create and load the user table
   CreateYCSBDatabase();
 
