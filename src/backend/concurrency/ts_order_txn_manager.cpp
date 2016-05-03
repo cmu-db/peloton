@@ -180,9 +180,11 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -234,9 +236,11 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   LOG_TRACE("Performing Delete");
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   auto transaction_id = current_txn->GetTransactionId();
 

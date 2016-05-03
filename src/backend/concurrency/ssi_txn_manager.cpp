@@ -308,9 +308,11 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
@@ -355,11 +357,13 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &location) {
 void SsiTxnManager::PerformDelete(const ItemPointer &old_location,
                                   const ItemPointer &new_location) {
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -447,8 +451,7 @@ Result SsiTxnManager::CommitTransaction() {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         ItemPointer old_version(tile_group_id, tuple_slot);
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-                              new_version);
+        log_manager.LogUpdate(end_commit_id, old_version, new_version);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -485,7 +488,7 @@ Result SsiTxnManager::CommitTransaction() {
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
-        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        log_manager.LogInsert(end_commit_id, insert_location);
 
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -692,7 +695,6 @@ void SsiTxnManager::CleanUp() {
     delete ctx->transaction_;
     delete ctx;
   }
-
 }
 
 void SsiTxnManager::CleanUpBg() {

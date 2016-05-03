@@ -358,9 +358,9 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   ItemPointer delete_loc(table->GetTileGroup(2)->GetTileGroupId(), 0);
   ItemPointer update_old(table->GetTileGroup(3)->GetTileGroupId(), 0);
   ItemPointer update_new(table->GetTileGroup(4)->GetTileGroupId(), 0);
-  log_manager.LogInsert(&test_txn, commit_id, insert_loc);
-  log_manager.LogUpdate(&test_txn, commit_id, update_old, update_new);
-  log_manager.LogInsert(&test_txn, commit_id, delete_loc);
+  log_manager.LogInsert(commit_id, insert_loc);
+  log_manager.LogUpdate(commit_id, update_old, update_new);
+  log_manager.LogInsert(commit_id, delete_loc);
   log_manager.LogCommitTransaction(commit_id);
   // since we are doing sync commit we should have reached 5 already
   EXPECT_EQ(5, log_manager.GetPersistentFlushedCommitId());

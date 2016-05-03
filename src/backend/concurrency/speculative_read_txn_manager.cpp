@@ -164,9 +164,11 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -228,9 +230,11 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &old_location,
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
