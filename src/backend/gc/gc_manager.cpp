@@ -17,6 +17,18 @@
 namespace peloton {
 namespace gc {
 
+GCBuffer::~GCBuffer(){
+  auto &transaction_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // Add all garbage tuples to GC manager
+  if(garbage_tuples.size() != 0) {
+    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+    for (auto garbage : garbage_tuples) {
+      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+        table_id, garbage.block, garbage.offset, garbage_timestamp);
+    }
+  }
+}
+
 void GCManager::StartGC() {
   LOG_INFO("Starting GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
