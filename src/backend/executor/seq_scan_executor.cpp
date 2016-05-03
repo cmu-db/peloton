@@ -73,6 +73,8 @@ bool SeqScanExecutor::DInit() {
  */
 bool SeqScanExecutor::DExecute() {
   // Scanning over a logical tile.
+  fprintf(stderr, "seqscan\n");
+
   if (children_.size() == 1) {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
@@ -131,7 +133,7 @@ bool SeqScanExecutor::DExecute() {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+        if (transaction_manager.IsVisible(tile_group_header, tuple_id) == VISIBILITY_OK) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);

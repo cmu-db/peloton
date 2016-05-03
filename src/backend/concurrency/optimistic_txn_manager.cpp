@@ -32,52 +32,76 @@ OptimisticTxnManager &OptimisticTxnManager::GetInstance() {
 // check whether a tuple is visible to current transaction.
 // in this protocol, we require that a transaction cannot see other
 // transaction's local copy.
-bool OptimisticTxnManager::IsVisible(
+VisibilityType OptimisticTxnManager::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
+
+  fprintf(stderr, "Check visibility: tuple id %u\n", tuple_id);
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
+  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
-    return false;
+    if (activated && !invalidated) {
+      // deleted tuple
+      fprintf(stderr, "DELETED-INVALID\n");
+      return VISIBILITY_DELETED;
+    } else {
+      // aborted tuple
+      fprintf(stderr, "INVISIBLE-ABORTED\n");
+      return VISIBILITY_INVISIBLE;
+    }
   }
-  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       assert(tuple_end_cid == MAX_CID);
-      // the only version that is visible is the newly inserted one.
-      return true;
+      // the only version that is visible is the newly inserted/updated one.
+      fprintf(stderr, "VISIBLE-OWN\n");
+      return VISIBILITY_OK;
+    } else if (tuple_end_cid == INVALID_CID) {
+      // tuple being deleted by current txn
+      fprintf(stderr, "DELETED-OWN\n");
+      return VISIBILITY_DELETED;
     } else {
-      // the older version is not visible.
-      return false;
+      // old version of the tuple that is being updated by current txn
+      fprintf(stderr, "INVISIBLE-OWN\n");
+      return VISIBILITY_INVISIBLE;
     }
   } else {
-    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
         // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
-        return false;
+        fprintf(stderr, "INVISIBLE-OTHER\n");
+        return VISIBILITY_INVISIBLE;
       } else {
         // the older version may be visible.
         if (activated && !invalidated) {
-          return true;
+          fprintf(stderr, "VISIBLE-OTHER\n");
+          return VISIBILITY_OK;
         } else {
-          return false;
+          fprintf(stderr, "INVISIBLE-OTHER\n");
+          return VISIBILITY_INVISIBLE;
         }
       }
     } else {
       // if the tuple is not owned by any transaction.
       if (activated && !invalidated) {
-        return true;
+        fprintf(stderr, "VISIBLE-NONE\n");
+
+        return VISIBILITY_OK;
       } else {
-        return false;
+        fprintf(stderr, "INVISIBLE-NONE\n");
+        return VISIBILITY_INVISIBLE;
       }
     }
   }
@@ -120,11 +144,14 @@ bool OptimisticTxnManager::AcquireOwnership(
 }
 
 bool OptimisticTxnManager::PerformRead(const ItemPointer &location) {
+  fprintf(stderr, "Read %u, %u\n", location.block, location.offset);
   current_txn->RecordRead(location);
   return true;
 }
 
 bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
+  fprintf(stderr, "Insert %u, %u\n", location.block, location.offset);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -151,6 +178,10 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
 // the tuple passed into this function is the global version.
 void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
+
+  fprintf(stderr, "Update %u, %u -> %u, %u\n", old_location.block, old_location.offset,
+           new_location.block, new_location.offset);
+
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
@@ -184,6 +215,8 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
+  fprintf(stderr, "Inplace update %u, %u\n", location.block, location.offset);
+
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -202,6 +235,8 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
+  fprintf(stderr, "Delete %u, %u -> %u, %u\n", old_location.block, old_location.offset,
+          new_location.block, new_location.offset);
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -234,6 +269,7 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
 void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
+  fprintf(stderr, "Inplace delete %u, %u\n", location.block, location.offset);
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();

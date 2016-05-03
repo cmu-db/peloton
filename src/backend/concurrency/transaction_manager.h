@@ -54,7 +54,7 @@ class TransactionManager {
 
   bool IsOccupied(const ItemPointer &position);
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 

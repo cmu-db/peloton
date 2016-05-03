@@ -135,6 +135,7 @@ bool IndexScanExecutor::DExecute() {
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
+  fprintf(stderr, "ExecPrimary\n");
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
@@ -166,14 +167,18 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
     size_t chain_length = 0;
     while (true) {
-
       ++chain_length;
+      fprintf(stderr, "traverse chain length : %lu\n", chain_length);
 
+      auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
+
+      // if the tuple is deleted
+      if (visibility == VISIBILITY_DELETED) {
+        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
+        break;
+      }
       // if the tuple is visible.
-      if (transaction_manager.IsVisible(tile_group_header,
-                                        tuple_location.offset)) {
-
-        LOG_INFO("traverse chain length : %lu", chain_length);
+      else if (visibility == VISIBILITY_OK) {
         LOG_INFO("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
 
@@ -212,51 +217,44 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // there must exist a visible version.
 
-        // FIXME: currently, only speculative read transaction manager **may** see a null version
-        // it's a potential bug
         if(tuple_location.IsNull()) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          // FIXME: this cause unnecessary abort when we have delete operations
+
+          // FIXME:
+          // For an index scan on a version chain, the result should be one of the following:
+          //    (1) find a visible version
+          //    (2) find a deleted version
+          // If we have traversed through the chain and still can not fulfill one of the above conditions,
+          // something wrong must happen.
+          // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
+          // timestamp update. In such case, we just return false and abort the txn.
           return false;
         }
-
-        // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
-        assert(tuple_location.IsNull() == false);
 
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
-          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
+                 || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
-            // currently, let's assume only primary index exists.
-            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-            //     table_->GetOid(), old_item.block, old_item.offset,
-            //     transaction_manager.GetNextCommitId());
             garbage_tuples.push_back(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
             tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
 
-          } else {
-
-            tile_group = manager.GetTileGroup(tuple_location.block);
-            tile_group_header = tile_group.get()->GetHeader();
+            // Continue the while loop with the new header we get the index head ptr
+            continue;
           }
-
-        } else {
+        }
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
-
-        }
-
-
       }
     }
   }
@@ -295,6 +293,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   assert(!done_);
+
+  fprintf(stderr, "ExecSecondary\n");
 
   std::vector<ItemPointer> tuple_locations;
 

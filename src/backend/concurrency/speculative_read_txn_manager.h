@@ -72,7 +72,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   static SpeculativeReadTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
