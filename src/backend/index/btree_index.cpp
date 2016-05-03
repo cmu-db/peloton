@@ -137,11 +137,10 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // Insert the key, val pair
     *itempointer_ptr = new ItemPointer(location);
     container.insert(std::pair<KeyType, ValueType>(
-        index_key, itempointer_ptr);
+        index_key, *itempointer_ptr));
 
     index_lock.Unlock();
   }
-
   return true;
 }
 

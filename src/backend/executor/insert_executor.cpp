@@ -151,7 +151,8 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
 
       // Carry out insertion
-      ItemPointer location = target_table->InsertTuple(tuple);
+      ItemPointer *itemptr_ptr = nullptr;
+      ItemPointer location = target_table->InsertTuple(tuple, &itemptr_ptr);
       LOG_TRACE("Inserted into location: %lu, %lu", location.block,
                 location.offset);
 
@@ -161,8 +162,15 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res =
-          transaction_manager.PerformInsert(location);
+      bool res;
+
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
+        // If we are using OCC N2O txn manager, use another form of perform insert
+        res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
+      } else {
+        res = transaction_manager.PerformInsert(location);
+      }
+
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;

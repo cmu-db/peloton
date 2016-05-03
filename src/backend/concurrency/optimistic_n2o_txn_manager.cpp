@@ -147,6 +147,7 @@ bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPoi
   InitTupleReserved(tile_group_header, tuple_id);
 
   // Write down the head pointer's address in tile group header
+//  fprintf(stderr, "Insert Set ptr: %p\n", itemptr_ptr);
   SetHeadPtr(tile_group_header, tuple_id, itemptr_ptr);
 
   return true;
@@ -184,11 +185,15 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   // Init the tuple reserved field
   InitTupleReserved(new_tile_group_header, new_location.offset);
 
+  // Set the header information for the new version
+  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+  SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+
   // Set the index header in an atomic way.
   // We do it atomically because we don't want any one to see a half-down pointer
   // In case of contention, no one can update this pointer when we are updating it
   // because we are holding the write lock. This update should success in its first trial.
-  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+//  fprintf(stderr, "update pointer: %p\n", head_ptr);
   auto res = AtomicUpdateItemPointer(head_ptr, new_location);
   assert(res == true);
   (void) res;
@@ -251,11 +256,14 @@ void OptimisticN2OTxnManager::PerformDelete(const ItemPointer &old_location,
   // Init the tuple reserved field
   InitTupleReserved(new_tile_group_header, new_location.offset);
 
+  // Set the header information for the new version
+  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+  SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+
   // Set the index header in an atomic way.
   // We do it atomically because we don't want any one to see a half-down pointer
   // In case of contention, no one can update this pointer when we are updating it
   // because we are holding the write lock. This update should success in its first trial.
-  auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
   auto res = AtomicUpdateItemPointer(head_ptr, new_location);
   assert(res == true);
   (void) res;
@@ -289,7 +297,7 @@ void OptimisticN2OTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result OptimisticN2OTxnManager::CommitTransaction() {
-  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -357,11 +365,11 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
             continue;
           }
         }
-        LOG_TRACE("transaction id=%lu",
+        LOG_INFO("transaction id=%lu",
                   tile_group_header->GetTransactionId(tuple_slot));
-        LOG_TRACE("begin commit id=%lu",
+        LOG_INFO("begin commit id=%lu",
                   tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_TRACE("end commit id=%lu",
+        LOG_INFO("end commit id=%lu",
                   tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -471,7 +479,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
 }
 
 Result OptimisticN2OTxnManager::AbortTransaction() {
-  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
