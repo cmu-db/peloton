@@ -35,7 +35,8 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
-          "   -p --protocol          :  choose protocol, default OCC\n");
+          "   -p --protocol          :  choose protocol, default OCC\n"
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to");
   exit(EXIT_FAILURE);
 }
 
@@ -48,6 +49,7 @@ static struct option opts[] = {
     {"backend_count", optional_argument, NULL, 'b'},
     {"zipf_theta", optional_argument, NULL, 'z'},
     {"mix_txn", no_argument, NULL, 'm'},
+    {"protocol", optional_argument, NULL, 'p'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
