@@ -35,10 +35,24 @@ void GCManager::StopGC() {
   ClearGarbage();
 }
 
-void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
+// Return false if the tuple's table (tile group) is dropped.
+// In such case, this recycled tuple can not be added to the recycled_list.
+// Since no one will use it any more, keeping track of it is useless.
+// Note that, if we drop a single tile group without dropping the whole table,
+// such assumption is problematic.
+bool GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header =
-      manager.GetTileGroup(tuple_metadata.tile_group_id)->GetHeader();
+  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
+
+  // During the resetting, a table may deconstruct because of the DROP TABLE request
+  if (tile_group == nullptr) {
+    return false;
+  }
+
+  // From now on, the tile group shared pointer is held by us
+  // It's safe to set headers from now on.
+
+  auto tile_group_header = tile_group->GetHeader();
 
   // Reset the header
   tile_group_header->SetTransactionId(tuple_metadata.tuple_slot_id,
@@ -53,6 +67,7 @@ void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
       tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
       storage::TileGroupHeader::GetReserverdSize());
   // TODO: set the unused 2 boolean value
+  return true;
 }
 
 void GCManager::Running() {
@@ -80,29 +95,28 @@ void GCManager::Running() {
       }
 
       if (tuple_metadata.tuple_end_cid <= max_cid) {
-        ResetTuple(tuple_metadata);
-
-        // Add to the recycle map
-        std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-        // if the entry for table_id exists.
-        if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
-            true) {
-          // if the entry for tuple_metadata.table_id exists.
-          recycle_queue->BlockingPush(tuple_metadata);
-        } else {
-          // if the entry for tuple_metadata.table_id does not exist.
-          recycle_queue.reset(
-              new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-          bool ret =
-              recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
-          if (ret == true) {
+        if (ResetTuple(tuple_metadata) == true) {
+          // Add to the recycle map
+          std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+          // if the entry for table_id exists.
+          if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
+              true) {
+            // if the entry for tuple_metadata.table_id exists.
             recycle_queue->BlockingPush(tuple_metadata);
           } else {
-            recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-            recycle_queue->BlockingPush(tuple_metadata);
+            // if the entry for tuple_metadata.table_id does not exist.
+            recycle_queue.reset(
+              new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+            bool ret =
+              recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+            if (ret == true) {
+              recycle_queue->BlockingPush(tuple_metadata);
+            } else {
+              recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+              recycle_queue->BlockingPush(tuple_metadata);
+            }
           }
         }
-
         tuple_counter++;
       } else {
         // if a tuple cannot be reclaimed, then add it back to the list.
@@ -168,26 +182,27 @@ void GCManager::ClearGarbage() {
   // iterate reclaim queue and reclaim every thing because it's the end of the world now.
   TupleMetadata tuple_metadata;
   while (reclaim_queue_.TryPop(tuple_metadata) == true) {
-    ResetTuple(tuple_metadata);
+    if (ResetTuple(tuple_metadata) == true) {
+      // Add to the recycle map
 
-    // Add to the recycle map
-    std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-    // if the entry for table_id exists.
-    if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
-        true) {
-      // if the entry for tuple_metadata.table_id exists.
-      recycle_queue->BlockingPush(tuple_metadata);
-    } else {
-      // if the entry for tuple_metadata.table_id does not exist.
-      recycle_queue.reset(
-        new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-      bool ret =
-        recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
-      if (ret == true) {
+      std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+      // if the entry for table_id exists.
+      if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
+          true) {
+        // if the entry for tuple_metadata.table_id exists.
         recycle_queue->BlockingPush(tuple_metadata);
       } else {
-        recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-        recycle_queue->BlockingPush(tuple_metadata);
+        // if the entry for tuple_metadata.table_id does not exist.
+        recycle_queue.reset(
+          new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+        bool ret =
+          recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+        if (ret == true) {
+          recycle_queue->BlockingPush(tuple_metadata);
+        } else {
+          recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+          recycle_queue->BlockingPush(tuple_metadata);
+        }
       }
     }
   }

@@ -65,7 +65,7 @@ class GCManager {
   void Running();
   //void DeleteTupleFromIndexes(const TupleMetadata &);
 
-  void ResetTuple(const TupleMetadata &);
+  bool ResetTuple(const TupleMetadata &);
 
  private:
   //===--------------------------------------------------------------------===//

@@ -135,7 +135,6 @@ bool IndexScanExecutor::DExecute() {
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   assert(!done_);
-  fprintf(stderr, "ExecPrimary\n");
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
@@ -168,7 +167,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     size_t chain_length = 0;
     while (true) {
       ++chain_length;
-      fprintf(stderr, "traverse chain length : %lu\n", chain_length);
 
       auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
 
@@ -218,16 +216,20 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // there must exist a visible version.
 
         if(tuple_location.IsNull()) {
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
-
           // FIXME:
           // For an index scan on a version chain, the result should be one of the following:
           //    (1) find a visible version
           //    (2) find a deleted version
+          //    (3) find an aborted version with chain length equal to one
+          if (chain_length == 1) {
+            break;
+          }
+
           // If we have traversed through the chain and still can not fulfill one of the above conditions,
           // something wrong must happen.
           // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
           // timestamp update. In such case, we just return false and abort the txn.
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
           return false;
         }
 
@@ -293,8 +295,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   assert(!done_);
-
-  fprintf(stderr, "ExecSecondary\n");
 
   std::vector<ItemPointer> tuple_locations;
 

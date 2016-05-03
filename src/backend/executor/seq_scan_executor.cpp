@@ -73,8 +73,6 @@ bool SeqScanExecutor::DInit() {
  */
 bool SeqScanExecutor::DExecute() {
   // Scanning over a logical tile.
-  fprintf(stderr, "seqscan\n");
-
   if (children_.size() == 1) {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
