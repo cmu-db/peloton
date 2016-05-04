@@ -123,7 +123,7 @@ void ValidateLogging(const configuration &state) {
 }
 
 void ValidateFlushFreq(const configuration &state) {
-  if (state.flush_freq <= 0) {
+  if (state.flush_freq < 0) {
     LOG_ERROR("Invalid flush_freq :: %d", state.flush_freq);
     exit(EXIT_FAILURE);
   }
