@@ -157,10 +157,10 @@ sum_columns(PG_FUNCTION_ARGS)
 
 }
 
-PG_FUNCTION_INFO_V1(calc_tax_c);
+PG_FUNCTION_INFO_V1(calc_tax);
 
 Datum
-calc_tax_c(PG_FUNCTION_ARGS) {
+calc_tax(PG_FUNCTION_ARGS) {
     float8 price = PG_GETARG_FLOAT8(0);
     float8 tax = 0.0;
     if (price < 10.0) {
@@ -172,6 +172,34 @@ calc_tax_c(PG_FUNCTION_ARGS) {
     }
     PG_RETURN_FLOAT8(tax);
 }
+
+PG_FUNCTION_INFO_V1(replace_vowel);
+
+Datum
+replace_vowel(PG_FUNCTION_ARGS) {
+    text *arg = PG_GETARG_TEXT_P(0);
+    int len = VARSIZE(arg)-VARHDRSZ;
+    for (int i = 0; i < len; i++) {
+        if (arg->vl_dat[i] == 'a' ||
+                arg->vl_dat[i] == 'e' ||
+                arg->vl_dat[i] == 'i' ||
+                arg->vl_dat[i] == 'o' ||
+                arg->vl_dat[i] == 'u') {
+            arg->vl_dat[i] = '*';
+        }
+    }
+    PG_RETURN_TEXT_P(arg);
+}
+
+
+PG_FUNCTION_INFO_V1(integer_manipulate);
+
+Datum
+integer_manipulate(PG_FUNCTION_ARGS) {
+    int32 arg = PG_GETARG_INT32(0);
+    PG_RETURN_INT32((arg * 9 + 999) / 5 - 100);
+}
+
 
 /*PG_FUNCTION_INFO_V1(multiply_string_c);
 
