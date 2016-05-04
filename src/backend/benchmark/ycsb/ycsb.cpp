@@ -40,7 +40,7 @@ std::ofstream out("outputfile.summary", std::ofstream::out);
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%lf %d %d %d %d %d %d :: %lf tps, %lf", state.update_ratio,
-           state.scale_factor, state.column_count, state.logging_enabled,
+           state.scale_factor, state.column_count, state.num_loggers,
            state.sync_commit, state.file_size, state.checkpointer,
            state.throughput, state.abort_rate);
 
@@ -48,7 +48,7 @@ static void WriteOutput() {
   out << state.scale_factor << " ";
   out << state.column_count << " ";
   out << state.backend_count << " ";
-  out << state.logging_enabled << " ";
+  out << state.num_loggers << " ";
   out << state.sync_commit << " ";
   out << state.wait_timeout << " ";
   out << state.file_size << " ";
@@ -110,7 +110,9 @@ inline void YCSBBootstrapLogger() {
     }
   }
 
-  if (state.logging_enabled <= 0) return;
+  if (state.num_loggers <= 0) return;
+
+  log_manager.Configure(LOGGING_TYPE_NVM_WAL, false, state.num_loggers);
 
   // Set sync commit mode
   if (state.sync_commit == 0) {

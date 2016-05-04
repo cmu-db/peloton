@@ -56,7 +56,7 @@ class configuration {
 
   // whether logging is enabled
   // TODO change to number of loggers later
-  int logging_enabled;
+  int num_loggers;
 
   // synchronous commit
   int sync_commit;

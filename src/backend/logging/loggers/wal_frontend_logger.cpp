@@ -363,7 +363,6 @@ void WriteAheadFrontendLogger::DoRecovery() {
         }
 
         default:
-          LOG_INFO("Got Type as TXN_INVALID");
           reached_end_of_log = true;
           break;
       }

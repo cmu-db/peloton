@@ -124,7 +124,7 @@ TEST_F(RecoveryTests, RestartTest) {
       LoggingTestsUtil::BuildTupleRecordsForRestartTest(
           tuples, tile_group_size, table_tile_group_count, 1, 1);
 
-  logging::LoggingUtil::RemoveDirectory("pl_log0", false);
+  logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
 
   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
   EXPECT_EQ(status, true);
@@ -258,7 +258,7 @@ TEST_F(RecoveryTests, RestartTest) {
 
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
 
-  status = logging::LoggingUtil::RemoveDirectory("pl_log0", false);
+  status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
   EXPECT_EQ(status, true);
 }
 
