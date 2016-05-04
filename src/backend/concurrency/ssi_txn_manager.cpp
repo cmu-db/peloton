@@ -32,55 +32,66 @@ SsiTxnManager &SsiTxnManager::GetInstance() {
 }
 
 // Visibility check
-bool SsiTxnManager::IsVisible(
+VisibilityType SsiTxnManager::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  if (tuple_txn_id == INVALID_TXN_ID) {
-    // the tuple is not available.
-    return false;
-  }
-  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
-  // there are exactly two versions that can be owned by a transaction.
-  // unless it is an insertion.
-  if (own == true) {
-    if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      assert(tuple_end_cid == MAX_CID);
-      // the only version that is visible is the newly inserted one.
-      return true;
-    } else {
-      // the older version is not visible.
-      return false;
-    }
-  } else {
-    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
-    if (tuple_txn_id != INITIAL_TXN_ID) {
-      // if the tuple is owned by other transactions.
-      if (tuple_begin_cid == MAX_CID) {
-        // in this protocol, we do not allow cascading abort. so never read an
-        // uncommitted version.
-        return false;
+  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+
+    if (tuple_txn_id == INVALID_TXN_ID) {
+      // the tuple is not available.
+      if (activated && !invalidated) {
+        // deleted tuple
+        return VISIBILITY_DELETED;
       } else {
-        // the older version may be visible.
-        if (activated && !invalidated) {
-          return true;
+        // aborted tuple
+        return VISIBILITY_INVISIBLE;
+      }
+    }
+
+    // there are exactly two versions that can be owned by a transaction.
+    // unless it is an insertion.
+    if (own == true) {
+      if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+        assert(tuple_end_cid == MAX_CID);
+        // the only version that is visible is the newly inserted/updated one.
+        return VISIBILITY_OK;
+      } else if (tuple_end_cid == INVALID_CID) {
+        // tuple being deleted by current txn
+        return VISIBILITY_DELETED;
+      } else {
+        // old version of the tuple that is being updated by current txn
+        return VISIBILITY_INVISIBLE;
+      }
+    } else {
+      if (tuple_txn_id != INITIAL_TXN_ID) {
+        // if the tuple is owned by other transactions.
+        if (tuple_begin_cid == MAX_CID) {
+          // in this protocol, we do not allow cascading abort. so never read an
+          // uncommitted version.
+          return VISIBILITY_INVISIBLE;
         } else {
-          return false;
+          // the older version may be visible.
+          if (activated && !invalidated) {
+            return VISIBILITY_OK;
+          } else {
+            return VISIBILITY_INVISIBLE;
+          }
+        }
+      } else {
+        // if the tuple is not owned by any transaction.
+        if (activated && !invalidated) {
+          return VISIBILITY_OK;
+        } else {
+          return VISIBILITY_INVISIBLE;
         }
       }
-    } else {
-      // if the tuple is not owned by any transaction.
-      if (activated && !invalidated) {
-        return true;
-      } else {
-        return false;
-      }
     }
-  }
 }
 
 bool SsiTxnManager::IsOwner(

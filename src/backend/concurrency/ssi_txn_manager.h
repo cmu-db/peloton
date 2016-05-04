@@ -78,7 +78,7 @@ class SsiTxnManager : public TransactionManager {
 
   static SsiTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 

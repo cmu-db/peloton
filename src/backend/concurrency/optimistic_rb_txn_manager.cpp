@@ -35,7 +35,7 @@ OptimisticRbTxnManager &OptimisticRbTxnManager::GetInstance() {
 // check whether a tuple is visible to current transaction.
 // in this protocol, we require that a transaction cannot see other
 // transaction's local copy.
-bool OptimisticRbTxnManager::IsVisible(
+VisibilityType OptimisticRbTxnManager::IsVisible(
   const storage::TileGroupHeader *const tile_group_header,
   const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
@@ -45,7 +45,7 @@ bool OptimisticRbTxnManager::IsVisible(
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     // This is caused by an comitted deletion
-    return false;
+    return VISIBILITY_DELETED;
   }
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
@@ -54,29 +54,32 @@ bool OptimisticRbTxnManager::IsVisible(
   if (own == true) {
     if (GetDeleteFlag(tile_group_header, tuple_id) == true) {
       // the tuple is deleted by current transaction
-      return false;
+      return VISIBILITY_DELETED;
     } else {
       assert(tuple_end_cid == MAX_CID);
       // the tuple is updated/inserted by current transaction
-      return true;
+      return VISIBILITY_OK;
     }
   } else {
     bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
-    if (invalidated)
-      return false;
-
+    if (invalidated) {
+      // a commited deleted tuple
+      return VISIBILITY_DELETED;
+    }
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
         // The tuple is inserted
-        return false;
+        return VISIBILITY_DELETED;
       }
     }
 
     if (GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
-      return true;
+      return VISIBILITY_OK;
     } else {
-      return false;
+      // GetActivatedEvidence return nullptr if the master version is invisible,
+      // which indicates a delete
+      return VISIBILITY_DELETED;
     }
   }
 }
@@ -126,6 +129,7 @@ bool OptimisticRbTxnManager::PerformRead(const ItemPointer &location) {
 }
 
 bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -151,6 +155,7 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
 }
 
 void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
   auto tile_group_header =
@@ -178,6 +183,7 @@ void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, ch
 }
 
 void OptimisticRbTxnManager::PerformDelete(const ItemPointer &location) {
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
