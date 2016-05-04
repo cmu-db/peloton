@@ -129,9 +129,12 @@ bool SeqScanExecutor::DExecute() {
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
 
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
+        LOG_INFO("Seq scanning tuple (%u, %u)", location.block, location.offset);
 
         // check transaction visibility
         if (transaction_manager.IsVisible(tile_group_header, tuple_id) == VISIBILITY_OK) {
+          LOG_INFO("Seq scan on visible tuple (%u, %u)", location.block, location.offset);
+
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);

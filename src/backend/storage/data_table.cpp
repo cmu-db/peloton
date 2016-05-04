@@ -56,6 +56,8 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
+  LOG_INFO("Data table %u created", table_oid);
+
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -82,8 +84,9 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
   }
-
   // AbstractTable cleans up the schema
+  LOG_INFO("Data table %u destroyed", table_oid);
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -125,8 +128,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         bool check_constraint) {
+ItemPointer DataTable::FillInEmptyTupleSlot(const storage::Tuple *tuple,
+                                            bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
@@ -136,6 +139,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
+    auto tg = catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
+    tg->CopyTuple(tuple, free_item_pointer.offset);
     return free_item_pointer;
   }
   //====================================================
@@ -177,7 +182,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 //===--------------------------------------------------------------------===//
 ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, false);
+  ItemPointer location = FillInEmptyTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -203,7 +208,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, true);
+  ItemPointer location = FillInEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -229,7 +234,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple);
+  ItemPointer location = FillInEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;

@@ -349,6 +349,7 @@ void PessimisticTxnManager::PerformDelete(const ItemPointer &old_location,
 }
 
 void PessimisticTxnManager::PerformDelete(const ItemPointer &location) {
+  LOG_INFO("Performing delete inplace %u %u", location.block, location.offset);
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 

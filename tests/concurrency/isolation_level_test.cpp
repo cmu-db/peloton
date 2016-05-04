@@ -17,6 +17,8 @@ namespace peloton {
 
 namespace test {
 
+static oid_t next_table_id = 0;
+
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
@@ -26,7 +28,7 @@ class IsolationLevelTest : public PelotonTest {};
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI,
+  // CONCURRENCY_TYPE_SSI,
   // CONCURRENCY_TYPE_SPECULATIVE_READ,
   CONCURRENCY_TYPE_EAGER_WRITE,
   CONCURRENCY_TYPE_TO,
@@ -36,7 +38,7 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 void DirtyWriteTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -138,7 +140,7 @@ void DirtyWriteTest() {
 void DirtyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -199,7 +201,7 @@ void DirtyReadTest() {
 void FuzzyReadTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 
   if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
     // Bypass eager write
@@ -246,10 +248,12 @@ void FuzzyReadTest() {
   }
 }
 
+// This phantom test is a little bit weak, current implementation may
+// still pass the test. Consider adding a new more stress phantom test
 void PhantomTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 
   {
     if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
@@ -259,9 +263,9 @@ void PhantomTest() {
     }
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Scan(0);
-    scheduler.Txn(1).Insert(5, 0);
-    scheduler.Txn(0).Scan(0);
+    scheduler.Txn(1).Insert(15, 0);
     scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Scan(0);
     scheduler.Txn(0).Commit();
 
     scheduler.Run();
@@ -269,6 +273,8 @@ void PhantomTest() {
     if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
         scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
       // Should scan no more tuples
+      LOG_INFO("results: %lu\texpected: %lu\n", scheduler.schedules[0].results.size(),
+               original_tuple_count * 2);
       EXPECT_TRUE(scheduler.schedules[0].results.size() ==
                   original_tuple_count * 2);
     }
@@ -278,8 +284,8 @@ void PhantomTest() {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Delete(4);
-    scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Commit();
+    scheduler.Txn(0).Scan(0);
     scheduler.Txn(0).Commit();
 
     scheduler.Run();
@@ -288,6 +294,8 @@ void PhantomTest() {
     if (scheduler.schedules[0].txn_result == RESULT_SUCCESS &&
         scheduler.schedules[1].txn_result == RESULT_SUCCESS) {
       // Should scan no less tuples
+      LOG_INFO("results: %lu\texpected: %lu\n", scheduler.schedules[0].results.size(),
+                  original_tuple_count * 2);
       EXPECT_TRUE(scheduler.schedules[0].results.size() ==
                   original_tuple_count * 2);
     }
@@ -298,7 +306,7 @@ void PhantomTest() {
 void WriteSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 
   {
     // Prepare
@@ -341,7 +349,7 @@ void WriteSkewTest() {
 void ReadSkewTest() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
   {
     if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE) {
       // Bypass eager write
@@ -373,7 +381,7 @@ void ReadSkewTest() {
 void SIAnomalyTest1() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
   int current_batch_key = 10000;
   {
     TransactionScheduler scheduler(1, table.get(), &txn_manager);
@@ -420,7 +428,7 @@ void SIAnomalyTest1() {
 // void SIAnomalyTest2() {
 //   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 //   std::unique_ptr<storage::DataTable> table(
-//       TransactionTestsUtil::CreateTable());
+//       TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
 //   int X = 0, Y = 1, Z = 2;
 //   {
 
@@ -460,26 +468,29 @@ TEST_F(IsolationLevelTest, StressTest) {
         TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-    scheduler.SetConcurrent(true);
-    for (int i = 0; i < num_txn; i++) {
-      for (int j = 0; j < scale; j++) {
-        // randomly select two uniq keys
-        int key1 = rand() % num_key;
-        int key2 = rand() % num_key;
-        int delta = rand() % 1000;
-        // Store substracted value
-        scheduler.Txn(i).ReadStore(key1, -delta);
-        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-        LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
-        // Store increased value
-        scheduler.Txn(i).ReadStore(key2, delta);
-        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
-        LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
+    // WARNING: change k to a bigger number to a more stress test
+    for (int k = 0; k < 1; k++) {
+      TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+      scheduler.SetConcurrent(true);
+      for (int i = 0; i < num_txn; i++) {
+        for (int j = 0; j < scale; j++) {
+          // randomly select two uniq keys
+          int key1 = rand() % num_key;
+          int key2 = rand() % num_key;
+          int delta = rand() % 1000;
+          // Store substracted value
+          scheduler.Txn(i).ReadStore(key1, -delta);
+          scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+          LOG_INFO("Txn %d deducts %d from %d", i, delta, key1);
+          // Store increased value
+          scheduler.Txn(i).ReadStore(key2, delta);
+          scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+          LOG_INFO("Txn %d adds %d to %d", i, delta, key2);
+        }
+        scheduler.Txn(i).Commit();
       }
-      scheduler.Txn(i).Commit();
+      scheduler.Run();
     }
-    scheduler.Run();
 
     // Read all values
     TransactionScheduler scheduler2(1, table.get(), &txn_manager);
@@ -498,13 +509,6 @@ TEST_F(IsolationLevelTest, StressTest) {
     }
 
     EXPECT_EQ(0, sum);
-
-    // stats
-    int nabort = 0;
-    for (auto &schedule : scheduler.schedules) {
-      if (schedule.txn_result == RESULT_ABORTED) nabort += 1;
-    }
-    LOG_INFO("Abort: %d out of %d", nabort, num_txn);
   }
 }
 

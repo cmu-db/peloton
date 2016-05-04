@@ -234,6 +234,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
           // timestamp update. In such case, we just return false and abort the txn.
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
+
           return false;
         }
 
@@ -264,6 +265,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
     }
   }
+
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {

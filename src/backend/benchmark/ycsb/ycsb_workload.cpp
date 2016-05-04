@@ -354,23 +354,47 @@ void RunWorkload() {
 // HARNESS
 /////////////////////////////////////////////////////////
 
-static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
-  bool status = false;
+/**
+ * Run executors. These executors should be running under @transaction, whenever
+ * the @transaction has a non-successful result this function will abort the
+ * transaction and return false. If all executors successfully executed, meaning
+ * that @transaction has a successful result in the end, the transaction will
+ * be committed. Only when this commit succeeds, this function will return true.
+ * Notice that the transaction needs to be began before the executor is initialized
+ * because it is passed in as part of the executor context.
+ */
+static bool ExecuteTest(concurrency::Transaction *transaction, const std::vector<executor::AbstractExecutor *> &executors) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  // Run all the executors
   for (auto executor : executors) {
-    status = executor->Init();
+    bool status = executor->Init();
     if (status == false) {
       throw Exception("Init failed");
     }
 
     std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-    // Execute stuff
+    // Run the executor
     while (executor->Execute() == true) {
+      // I don't know why we have to get the output from the executor
       std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
       result_tiles.emplace_back(result_tile.release());
     }
+
+    if (transaction->GetResult() != Result::RESULT_SUCCESS) {
+      txn_manager.AbortTransaction();
+      return false;
+    }
+  }
+
+  assert(transaction->GetResult() == Result::RESULT_SUCCESS);
+
+  // Finally we commit it
+  auto result = txn_manager.CommitTransaction();
+
+  if (result == Result::RESULT_SUCCESS) {
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -456,7 +480,7 @@ bool RunRead(ZipfDistribution &zipf) {
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  ExecuteTest(executors);
+  bool result = ExecuteTest(txn, executors);
 
   for (auto executor : executors) {
     delete executor;
@@ -466,29 +490,7 @@ bool RunRead(ZipfDistribution &zipf) {
     delete plan;
   }
 
-  auto result = txn->GetResult();
-
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
+  return result;
 }
 
 bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
@@ -537,7 +539,7 @@ bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
     // Create plan node.
     auto predicate = nullptr;
 
-    planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(
+     planner::IndexScanPlan *index_scan_node = new planner::IndexScanPlan(
         user_table, predicate, column_ids, index_scan_desc);
     // Run the executor
     executor::IndexScanExecutor *index_scan_executor =
@@ -551,7 +553,7 @@ bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
   // INDEX SCAN + PREDICATE
   /////////////////////////////////////////////////////////
 
-  for (int i = 0; i < write_count; i++) {
+   for (int i = 0; i < write_count; i++) {
     // Create and set up index scan executor
 
     std::vector<Value> values;
@@ -608,11 +610,7 @@ bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
     executors.push_back(update_executor);
   }
 
-  /////////////////////////////////////////////////////////
-  // EXECUTE
-  /////////////////////////////////////////////////////////
-
-  ExecuteTest(executors);
+  bool result = ExecuteTest(txn, executors);
 
   for (auto executor : executors) {
     delete executor;
@@ -622,29 +620,7 @@ bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count) {
     delete plan;
   }
 
-  auto result = txn->GetResult();
-
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
+  return result;
 }
 
 bool RunUpdate(ZipfDistribution &zipf) {
@@ -727,35 +703,13 @@ bool RunUpdate(ZipfDistribution &zipf) {
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&update_executor);
 
-  ExecuteTest(executors);
-
   /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
-  auto result = txn->GetResult();
+  bool result = ExecuteTest(txn, executors);
 
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
-    result = txn_manager.CommitTransaction();
-
-    if (result == Result::RESULT_SUCCESS) {
-      // transaction passed commitment.
-      return true;
-    } else {
-      // transaction failed commitment.
-      assert(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
-      return false;
-    }
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
+  return result;
 }
 
 }  // namespace ycsb

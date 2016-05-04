@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-// #undef NDEBUG
+#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
+#include <string.h>
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
@@ -33,7 +34,9 @@ void Usage(FILE *out) {
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
-          "   -m --mix_txn           :  run read/write mix txn \n");
+          "   -m --mix_txn           :  run read/write mix txn \n"
+          "   -p --protocol          :  choose protocol, default OCC\n"
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to");
   exit(EXIT_FAILURE);
 }
 
@@ -46,6 +49,7 @@ static struct option opts[] = {
     {"backend_count", optional_argument, NULL, 'b'},
     {"zipf_theta", optional_argument, NULL, 'z'},
     {"mix_txn", no_argument, NULL, 'm'},
+    {"protocol", optional_argument, NULL, 'p'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -121,11 +125,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.backend_count = 2;
   state.zipf_theta = 0.0;
   state.run_mix = false;
+  state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:p:", opts, &idx);
 
     if (c == -1) break;
 
@@ -157,7 +162,31 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'm':
         state.run_mix = true;
+        state.update_ratio = 0.0;
         break;
+      case 'p':
+      {
+        char *protocol = optarg;
+        if (strcmp(protocol, "occ") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
+        } else if (strcmp(protocol, "pcc") == 0) {
+          state.protocol = CONCURRENCY_TYPE_PESSIMISTIC;
+        } else if (strcmp(protocol, "ssi") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SSI;
+        } else if (strcmp(protocol, "to") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO;
+        } else if (strcmp(protocol, "ewrite") == 0) {
+          state.protocol = CONCURRENCY_TYPE_EAGER_WRITE;
+        } else if (strcmp(protocol, "occrb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OCC_RB;
+        } else if (strcmp(protocol, "sread") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
+        } else {
+          fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
@@ -173,6 +202,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
+
+  LOG_INFO("%s : %d", "Run mix query", state.run_mix);
 }
 
 }  // namespace ycsb

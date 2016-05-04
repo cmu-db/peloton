@@ -56,6 +56,10 @@ class LockfreeQueue {
     }
   }
 
+  bool IsEmpty() {
+    return queue_.empty();
+  }
+
  private:
   boost::lockfree::queue<T> queue_;
 };

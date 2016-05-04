@@ -25,7 +25,7 @@ ItemPointer INVALID_ITEMPOINTER;
 // WARNING: It will limit scalability if tupers per tile group is too small,
 // When a tile group is full, a new tile group needs to be allocated, until
 // then no new insertion of new versions or tuples are available in the table.
-int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
+int DEFAULT_TUPLES_PER_TILEGROUP = 10000;
 
 //===--------------------------------------------------------------------===//
 // Type utilities

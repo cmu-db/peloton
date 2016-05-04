@@ -17,6 +17,8 @@ namespace peloton {
 
 namespace test {
 
+static oid_t next_id = 10000;
+
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
@@ -66,8 +68,10 @@ TEST_F(TransactionTests, SingleTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto id1 = next_id++;
+    auto id2 = next_id++;
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, INVALID_OID, 1234, true));
+        TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, id1, id2, true));
     // Just scan the table
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
@@ -199,8 +203,11 @@ TEST_F(TransactionTests, AbortTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+    auto id1 = next_id++;
+    auto id2 = next_id++;
     std::unique_ptr<storage::DataTable> table(
-      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, INVALID_OID, 1234, true));
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, id1, id2, true));
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);

@@ -173,8 +173,7 @@ bool UpdateExecutor::DExecute() {
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
 
         // FIXME: PerformUpdate() will not be executed if the insertion failed,
-        // There is a write lock acquired, but since it is not in the write set,
-        // because we haven't yet put them into the write set.
+        // There is a write lock acquired, but it is not in the write set.
         // the acquired lock can't be released when the txn is aborted.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");

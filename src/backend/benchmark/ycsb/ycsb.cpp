@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
 
 #include <iostream>
 #include <fstream>
@@ -21,6 +22,7 @@
 #include "backend/storage/tile_group_header.h"
 #include "backend/common/assert.h"
 #include "backend/gc/gc_manager_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
@@ -84,7 +86,7 @@ static void ValidateMVCC() {
     for (oid_t tuple_slot = 0; tuple_slot < tuple_count; tuple_slot++) {
       txn_id_t txn_id = tile_group_header->GetTransactionId(tuple_slot);
       CHECK_M(txn_id == INVALID_TXN_ID || txn_id == INITIAL_TXN_ID,
-              "Transaction id is not INVALID_TXNID or INITIAL_TXNID");
+              "(%u,%u) Transaction id %lu(%lx) is not INVALID_TXNID or INITIAL_TXNID", tile_group->GetTileGroupId(), tuple_slot, txn_id, txn_id);
     }
 
     LOG_TRACE("[OK] All tuples have valid txn id");
@@ -198,6 +200,7 @@ static void ValidateMVCC() {
 
 // Main Entry Point
 void RunBenchmark() {
+  concurrency::TransactionManagerFactory::Configure(state.protocol);
   // Create and load the user table
   CreateYCSBDatabase();
 
