@@ -236,7 +236,11 @@ bool HybridScanExecutor::DExecute() {
   } else {
     // do two part search
     if (index_done_ == false) {
-      ExecPrimaryIndexLookup();
+      if (indexed_tile_offset_ == INVALID_OID) {
+        index_done_ = true;
+      } else {
+        ExecPrimaryIndexLookup();
+      }
     }
 
     if (IndexScanUtil() == true) {

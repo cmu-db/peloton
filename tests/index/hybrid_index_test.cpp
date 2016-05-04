@@ -353,6 +353,8 @@ void BuildIndex(storage::DataTable *table) {
 
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
+
+    index->IncreamentIndexedTileGroupOff();
     start_tile_group_count++;
   }
 }
