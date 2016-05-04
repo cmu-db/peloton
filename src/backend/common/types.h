@@ -771,6 +771,15 @@ struct ItemPointer {
     return (block == INVALID_OID && offset == INVALID_OID); 
   }
 
+  bool operator<(const ItemPointer& rhs) const
+  {
+    if (block != rhs.block) {
+      return block < rhs.block;
+    } else {
+      return offset < rhs.offset;
+    }
+  }
+
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
