@@ -118,7 +118,11 @@ bool HybridScanExecutor::DInit() {
         key_ready_ = true;
       }
     }
-
+    
+    if (table_ != nullptr) {
+      full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
+      std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
+    }
   }
 
   return true;
