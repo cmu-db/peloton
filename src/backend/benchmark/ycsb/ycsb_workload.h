@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 

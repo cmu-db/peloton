@@ -55,7 +55,6 @@ class configuration {
   int backend_count;
 
   // whether logging is enabled
-  // TODO change to number of loggers later
   int num_loggers;
 
   // synchronous commit
@@ -81,7 +80,12 @@ class configuration {
 
   double abort_rate;
 
+  double zipf_theta;
+
+  bool run_mix;
+
   int flush_freq;
+
 };
 
 extern configuration state;
