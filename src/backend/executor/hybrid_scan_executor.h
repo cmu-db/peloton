@@ -81,6 +81,8 @@ private:
   std::vector<oid_t> full_column_ids_;
 
   bool key_ready_ = false;
+
+  std::set<ItemPointer> item_pointers_;
 };
 
 

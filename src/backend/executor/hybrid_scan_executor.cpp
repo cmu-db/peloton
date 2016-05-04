@@ -82,23 +82,16 @@ bool HybridScanExecutor::DInit() {
     }
   } else { // Hybrid type.
     table_tile_group_count_ = table_->GetTileGroupCount();
-    if (indexed_tile_offset_ < table_tile_group_count_) {
-        // insert one tile group to index
-        auto tile_group =
-          table_->GetTileGroup(indexed_tile_offset_++);
-        current_tile_group_offset_ = indexed_tile_offset_;
-        oid_t active_tuple_count = tile_group->GetNextTupleSlot();
+    indexed_tile_offset_ = index_->GetIndexedTileGroupOff();
 
-        for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-          std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_->GetSchema(), true));
-          tile_group->CopyTuple(tuple_id, tuple_ptr.get());
-          ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
+    LOG_INFO("Current indexed_tile_offset %d, table tile group count %d",
+             indexed_tile_offset_, table_tile_group_count_);
 
-          table_->InsertInIndexes(tuple_ptr.get(), location);
-        }
+    if (indexed_tile_offset_ == INVALID_OID) {
+      current_tile_group_offset_ = START_OID;
+    } else {
+      current_tile_group_offset_ = indexed_tile_offset_ + 1;
     }
-
-    index_ = table_->GetIndex(0);
 
     result_itr_ = START_OID;
     index_done_ = false;
@@ -156,7 +149,11 @@ bool HybridScanExecutor::SeqScanUtil() {
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
 
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-
+      if (type_ == planner::HYBRID) {
+        if (item_pointers_.find(location) != item_pointers_.end()) {
+          continue;
+        }
+      }
       // check transaction visibility
       // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
       // if the tuple is visible, then perform predicate evaluation.
@@ -215,7 +212,6 @@ bool HybridScanExecutor::IndexScanUtil() {
       return true;
     }
   }  // end while
-  LOG_INFO("Index scan finds nothing");
   return false;
 }
 
@@ -281,6 +277,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
 
     ItemPointer tuple_location = *tuple_location_ptr;
+    if (type_ == planner::HYBRID) {
+      item_pointers_.insert(tuple_location);
+    }
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);

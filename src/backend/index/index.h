@@ -215,6 +215,11 @@ class Index : public Printable {
   // Get the memory footprint
   virtual size_t GetMemoryFootprint() = 0;
 
+  // Get the indexed tile group offset
+  virtual oid_t GetIndexedTileGroupOff() {
+    return INVALID_OID;
+  }
+
  protected:
   Index(IndexMetadata *schema);
 
