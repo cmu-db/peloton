@@ -16,7 +16,6 @@
 namespace peloton {
 
 Varlen *Varlen::Create(size_t size, VarlenPool *data_pool) {
-  assert(false);
   Varlen *retval;
 
   if (data_pool != NULL) {
