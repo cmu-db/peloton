@@ -398,10 +398,15 @@ Result EagerWriteTxnManager::CommitTransaction() {
     LOG_INFO("Read Only txn: %lu ", current_txn->GetTransactionId());
     // is it always true???
     Result ret = current_txn->GetResult();
+
     EndTransaction();
     return ret;
   }
   //*****************************************************
+
+  // generate transaction id.
+  cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   // Check if we cause dead lock
   if (CauseDeadLock()) {
@@ -419,8 +424,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   }
   LOG_INFO("End waiting");
 
-  // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
+
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
@@ -541,12 +545,17 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         // AtomicSetOnlyTxnId(tile_group_header, tuple_slot, INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -560,6 +569,10 @@ Result EagerWriteTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
