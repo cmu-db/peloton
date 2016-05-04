@@ -224,6 +224,9 @@ class Index : public Printable {
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
 
+  // if set the bounds (either lower or higher bounds) for index iteration.
+  bool IfConstructBound(ExpressionType type);
+
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//

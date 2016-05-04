@@ -130,6 +130,19 @@ bool Index::Compare(const AbstractTuple &index_key,
   return true;
 }
 
+bool Index::IfConstructBound(ExpressionType type) {
+  switch (type) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+      return true;
+    default:
+      return false;
+  }
+}
+
 bool Index::ConstructLowerBoundTuple(
     storage::Tuple *index_key, const std::vector<peloton::Value> &values,
     const std::vector<oid_t> &key_column_ids,
@@ -150,12 +163,10 @@ bool Index::ConstructLowerBoundTuple(
     if (key_column_itr != key_column_ids.end()) {
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
       // Equality constraint
-      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+      if (IfConstructBound(expr_types[offset])) {
         placeholder = true;
         value = values[offset];
-      }
-          // Not all expressions / constraints are equal
-          else {
+      } else { // Not all expressions / constraints are equal
         all_constraints_equal = false;
       }
     }
@@ -166,8 +177,8 @@ bool Index::ConstructLowerBoundTuple(
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
     }
-        // Fill in the min value
-        else {
+      // Fill in the min value
+    else {
       auto value_type = schema->GetType(column_itr);
       index_key->SetValue(column_itr, Value::GetMinValue(value_type),
                           GetPool());
