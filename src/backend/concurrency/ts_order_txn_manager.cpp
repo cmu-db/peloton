@@ -304,6 +304,8 @@ Result TsOrderTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
+  // TODO: Add optimization for read only
+
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -315,7 +317,6 @@ Result TsOrderTxnManager::CommitTransaction() {
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
-        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
 
@@ -327,11 +328,14 @@ Result TsOrderTxnManager::CommitTransaction() {
 
         COMPILER_MEMORY_FENCE;
 
+        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
+
+        COMPILER_MEMORY_FENCE;
+
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
 
@@ -340,6 +344,10 @@ Result TsOrderTxnManager::CommitTransaction() {
         new_tile_group_header->SetBeginCommitId(new_version.offset,
                                                 end_commit_id);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
+        tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
 
         COMPILER_MEMORY_FENCE;
 
@@ -394,7 +402,6 @@ Result TsOrderTxnManager::AbortTransaction() {
       if (tuple_entry.second == RW_TYPE_READ) {
         continue;
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
-        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
         auto new_tile_group_header =
@@ -406,6 +413,17 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
+        COMPILER_MEMORY_FENCE;
+
+        tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        COMPILER_MEMORY_FENCE;
+
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -421,6 +439,12 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
+
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
+        COMPILER_MEMORY_FENCE;
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {

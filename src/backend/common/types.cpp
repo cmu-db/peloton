@@ -348,6 +348,13 @@ BackendType GetBackendType(const LoggingType& logging_type) {
   return backend_type;
 }
 
+void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value) {
+  assert(sizeof(ItemPointer) == sizeof(int64_t));
+  int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
+  int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
+  __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);
+}
+
 //===--------------------------------------------------------------------===//
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//

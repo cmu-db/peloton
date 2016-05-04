@@ -116,7 +116,7 @@ bool PessimisticTxnManager::IsOwnable(
 bool PessimisticTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id, const oid_t &tuple_id) {
-  LOG_TRACE("AcquireOwnership");
+  LOG_INFO("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
   // First release read lock that is acquired before, the executor will always
@@ -144,7 +144,7 @@ void PessimisticTxnManager::ReleaseReadLock(
     const oid_t &tuple_id) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
-  LOG_TRACE("ReleaseReadLock on %lx", old_txn_id);
+  LOG_INFO("ReleaseReadLock on %lx", old_txn_id);
 
   if (EXTRACT_TXNID(old_txn_id) != INITIAL_TXN_ID) {
     assert(false);
@@ -153,14 +153,18 @@ void PessimisticTxnManager::ReleaseReadLock(
   // No writer
   // Decrease read count
   while (true) {
+
     assert(EXTRACT_READ_COUNT(old_txn_id) != 0);
     auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) - 1;
+
     auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
     txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
         tuple_id, old_txn_id, new_txn_id);
+
     if (real_txn_id != old_txn_id) {
       // Assert there's no other writer
       assert(EXTRACT_TXNID(real_txn_id) == INITIAL_TXN_ID);
+      old_txn_id = real_txn_id;
     } else {
       break;
     }
@@ -171,7 +175,7 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_TRACE("Perform read");
+  LOG_INFO("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -193,25 +197,28 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
   auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
   // No one is holding the write lock
   if (EXTRACT_TXNID(old_txn_id) == INITIAL_TXN_ID) {
-    LOG_TRACE("No one holding the lock");
+    LOG_INFO("No one holding the lock");
     while (true) {
-      LOG_TRACE("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
-      if (old_txn_id == 0xFF) {
-        LOG_TRACE("Reader limit reached, read failed");
+      LOG_INFO("Current read count is %lu", EXTRACT_READ_COUNT(old_txn_id));
+      if (EXTRACT_READ_COUNT(old_txn_id) == 0xFF) {
+        LOG_INFO("Reader limit reached, read failed");
         return false;
       }
       auto new_read_count = EXTRACT_READ_COUNT(old_txn_id) + 1;
       // Try add read count
       auto new_txn_id = PACK_TXNID(INITIAL_TXN_ID, new_read_count);
-      LOG_TRACE("New txn id %lx", new_txn_id);
+      LOG_INFO("New txn id %lx", new_txn_id);
       txn_id_t real_txn_id = tile_group_header->SetAtomicTransactionId(
           tuple_id, old_txn_id, new_txn_id);
+
       if (real_txn_id != old_txn_id) {
         // See if there's writer
         if (EXTRACT_TXNID(real_txn_id) != INITIAL_TXN_ID) return false;
+        old_txn_id = real_txn_id;
       } else {
         break;
       }
+      
     }
   } else {
     return false;
@@ -238,7 +245,7 @@ bool PessimisticTxnManager::PerformInsert(const ItemPointer &location) {
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   LOG_TRACE("Perform insert");
-  // SetOwnership(tile_group_id, tuple_id);
+
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -307,7 +314,7 @@ void PessimisticTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void PessimisticTxnManager::PerformDelete(const ItemPointer &old_location,
                                           const ItemPointer &new_location) {
-  LOG_TRACE("Performing Delete");
+  LOG_INFO("Performing Delete");
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
@@ -361,7 +368,7 @@ void PessimisticTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result PessimisticTxnManager::CommitTransaction() {
-  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -401,6 +408,7 @@ Result PessimisticTxnManager::CommitTransaction() {
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
@@ -506,13 +514,11 @@ Result PessimisticTxnManager::CommitTransaction() {
 
   EndTransaction();
 
-  pessimistic_released_rdlock.clear();
-
   return Result::RESULT_SUCCESS;
 }
 
 Result PessimisticTxnManager::AbortTransaction() {
-  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -544,6 +550,10 @@ Result PessimisticTxnManager::AbortTransaction() {
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -563,6 +573,10 @@ Result PessimisticTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
@@ -590,7 +604,6 @@ Result PessimisticTxnManager::AbortTransaction() {
 
   EndTransaction();
 
-  pessimistic_released_rdlock.clear();
   return Result::RESULT_ABORTED;
 }
 }
