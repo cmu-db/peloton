@@ -121,7 +121,7 @@ DECLARE
 BEGIN
     IF num < 1 THEN
         result := -1
-    ELSE IF num = 1 OR num = 2 THEN
+    ELSIF num = 1 OR num = 2 THEN
         result := 1
     ELSE
         FOR i IN 3 .. num LOOP
