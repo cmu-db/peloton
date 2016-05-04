@@ -50,7 +50,6 @@ void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
     LOG_INFO("Dropping tile group %u", oid);
-    // std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group
     locator.erase(oid);
   }
