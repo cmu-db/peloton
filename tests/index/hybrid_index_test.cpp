@@ -44,11 +44,11 @@ namespace test {
 class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
-static int columncount = 6;
-static size_t tuples_per_tile_group = 10000;
-static size_t tile_group = 10;
-static float scalar = 0.9;
-static size_t iter = 15;
+static int columncount = 4;
+static size_t tuples_per_tile_group = 100;
+static size_t tile_group = 100;
+static float scalar = 0.5;
+static size_t iter = 100;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -337,7 +337,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 }
 
 
-void BuildIndex(index::Index *index, storage::DataTable *table) {
+void BuildIndex(storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
@@ -357,7 +357,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
   }
 }
 
-TEST_F(HybridIndexTests, SeqScanTest) {
+/*TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -375,7 +375,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
-
+*/
 
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -402,7 +402,7 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   hyadapt_table->AddIndex(pkey_index);
 
-  std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table);
+  std::thread index_builder = std::thread(BuildIndex, hyadapt_table.get());
 
   for (size_t i = 0; i < iter; i++)
     LaunchHybridScan(hyadapt_table);
