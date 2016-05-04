@@ -95,5 +95,11 @@ void CheckpointManager::SetCheckpointStatus(
   }
 }
 
+void CheckpointManager::SetRecoveredCid(cid_t recovered_cid) {
+  this->recovered_cid_ = recovered_cid;
+}
+
+cid_t CheckpointManager::GetRecoveredCid() { return recovered_cid_; }
+
 }  // logging
 }  // peloton
