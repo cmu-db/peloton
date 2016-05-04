@@ -2403,7 +2403,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
 
-	elog(INFO, (_SPI_current->tuptable)?"not null":"null");
 	if (_SPI_current->tuptable)
 		_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
 	else
