@@ -34,7 +34,7 @@ void Usage(FILE *out) {
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
-          "   -l --enable_logging    :  enable_logging (0 or 1) \n"
+          "   -l --enable_logging    :  number of loggers (>= 0) \n"
           "   -x --sync_commit       :  enable synchronous commit (0 or 1) \n"
           "   -q --flush_freq        :  set the frequency of log fsync\n");
   // TODO add description for wait_time, file_size, log_buffer_size,
@@ -117,7 +117,7 @@ void ValidateLogging(const configuration &state) {
   // I tried setting NDEBUG but I still get an unused error
   (void) state;
   // TODO validate that sync_commit is enabled only when logging is enabled
-  LOG_INFO("%s : %d", "logging_enabled", state.logging_enabled);
+  LOG_INFO("%s : %d", "num_loggers", state.num_loggers);
   LOG_INFO("%s : %d", "synchronous_commit", state.sync_commit);
   LOG_INFO("%s : %d", "wait_time", (int)state.wait_timeout);
 }
@@ -139,7 +139,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
-  state.logging_enabled = 0;
+  state.num_loggers = 0;
   state.sync_commit = 0;
   state.wait_timeout = 0;
   state.file_size = 32;
@@ -177,7 +177,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.sync_commit = atoi(optarg);
         break;
       case 'l':
-        state.logging_enabled = atoi(optarg);
+        state.num_loggers = atoi(optarg);
         break;
       case 'w':
         state.wait_timeout = atol(optarg);

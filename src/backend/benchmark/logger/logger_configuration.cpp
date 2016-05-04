@@ -29,7 +29,7 @@ void Usage(FILE* out) {
   fprintf(out,
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -l --logging-type      :  Logging type \n"
+          "   -l --logging-type      :  Logging type (THIS IS NOW NUM_LOGGERS)\n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
           "   -w --wait-timeout      :  Wait timeout (us) \n"
@@ -147,7 +147,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
-  ycsb::state.logging_enabled = 0;
+  ycsb::state.num_loggers = 0;
   ycsb::state.sync_commit = 0;
   ycsb::state.wait_timeout = 0;
   ycsb::state.file_size = 32;
@@ -185,7 +185,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         ycsb::state.sync_commit = atoi(optarg);
         break;
       case 'l':
-        ycsb::state.logging_enabled = atoi(optarg);
+        ycsb::state.num_loggers = atoi(optarg);
         break;
       case 'w':
         ycsb::state.wait_timeout = atol(optarg);
