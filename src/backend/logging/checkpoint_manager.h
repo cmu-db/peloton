@@ -55,14 +55,18 @@ class CheckpointManager {
   void InitCheckpointers();
 
   // configuration
-  void Configure(CheckpointType checkpoint_type, bool disable_file_access = false,
-                 int num_checkpointers = 1) {
+  void Configure(CheckpointType checkpoint_type,
+                 bool disable_file_access = false, int num_checkpointers = 1) {
     checkpoint_type_ = checkpoint_type;
     disable_file_access_ = disable_file_access;
     num_checkpointers_ = num_checkpointers;
   }
 
   void DestroyCheckpointers();
+
+  void SetRecoveredCid(cid_t recovered_cid);
+
+  cid_t GetRecoveredCid();
 
  private:
   CheckpointManager();
@@ -79,6 +83,8 @@ class CheckpointManager {
 
   // the status of checkpoint manager
   CheckpointStatus checkpoint_status_ = CHECKPOINT_STATUS_INVALID;
+
+  cid_t recovered_cid_ = 0;
 
   // used for multiple checkpointer
   // std::atomic<unsigned int> status_change_count_;

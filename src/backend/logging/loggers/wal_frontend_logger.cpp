@@ -225,8 +225,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
  */
 void WriteAheadFrontendLogger::DoRecovery() {
   // FIXME GetNextCommitId() increments next_cid!!!
-  cid_t start_commit_id =
-      concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
+  cid_t start_commit_id = CheckpointManager::GetInstance().GetRecoveredCid();
   auto &log_manager = logging::LogManager::GetInstance();
   int num_inserts = 0;
   cid_t global_max_flushed_id_for_recovery;

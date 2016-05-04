@@ -163,6 +163,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
 
   // FIXME this is not thread safe for concurrent checkpoint recovery
   concurrency::TransactionManagerFactory::GetInstance().SetNextCid(commit_id);
+  CheckpointManager::GetInstance().SetRecoveredCid(commit_id);
   return commit_id;
 }
 
