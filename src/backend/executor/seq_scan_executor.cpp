@@ -131,7 +131,7 @@ bool SeqScanExecutor::DExecute() {
         ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
         // check transaction visibility
-        if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+        if (transaction_manager.IsVisible(tile_group_header, tuple_id) == VISIBILITY_OK) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
