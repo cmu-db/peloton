@@ -198,9 +198,7 @@ void DoRecovery(std::string file_name) {
   // Reset the log file if exists
   log_file.close();
 
-  user_table->
-
-      ycsb::CreateYCSBDatabase();
+  ycsb::CreateYCSBDatabase();
 
   //===--------------------------------------------------------------------===//
   // RECOVERY
