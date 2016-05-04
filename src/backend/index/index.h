@@ -220,6 +220,10 @@ class Index : public Printable {
     return INVALID_OID;
   }
 
+  virtual void IncreamentIndexedTileGroupOff() {
+    return;
+  }
+
  protected:
   Index(IndexMetadata *schema);
 
