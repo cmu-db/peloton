@@ -191,14 +191,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           auto res = transaction_manager.PerformRead(tuple_location);
           if (!res) {
             transaction_manager.SetTransactionResult(RESULT_FAILURE);
-            // Add all garbage tuples to GC manager
-            if(garbage_tuples.size() != 0) {
-              cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-              for (auto garbage : garbage_tuples) {
-                gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-                  table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
-              }
-            }
             return res;
           }
         } else {
@@ -213,14 +205,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             auto res = transaction_manager.PerformRead(tuple_location);
             if (!res) {
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
-               // Add all garbage tuples to GC manager
-              if(garbage_tuples.size() != 0) {
-                cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-                for (auto garbage : garbage_tuples) {
-                  gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-                    table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
-                }
-              }
               return res;
             }
           }
