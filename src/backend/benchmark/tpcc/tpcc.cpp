@@ -59,7 +59,7 @@ void RunBenchmark() {
   LoadTPCCDatabase();
 
   // Run the workload
-  RunWorkload();
+  //RunWorkload();
 
   WriteOutput();
 }
