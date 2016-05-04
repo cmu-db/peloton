@@ -172,11 +172,11 @@ typedef struct
 } varattrib_1b_e;
 
 /* state struct used by memcached benchamrk */
-struct MemcachedState {
+
+typedef struct {
 	StringInfoData result;
 	/* add memcached return status */
-
-};
+} MemcachedState;
 
 /*
  * Bit layouts for varlena headers on big-endian machines:
