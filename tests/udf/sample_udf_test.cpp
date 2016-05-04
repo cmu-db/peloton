@@ -173,6 +173,50 @@ calc_tax_c(PG_FUNCTION_ARGS) {
     PG_RETURN_FLOAT8(tax);
 }
 
+/*PG_FUNCTION_INFO_V1(multiply_string_c);
+
+Datum
+multiply_string_c(PG_FUNCTION_ARGS) {
+    int32 times = PG_GETARG_INT32(0);
+    text *msg = PG_GETARG_TEXT_P(1);
+    int32 new_text_size = VARSIZE(msg) * times - VARHDRSZ;
+    text *new_text = (text *) palloc(new_text_size);
+
+    SET_VARSIZE(new_text, new_text_size);
+
+}*/
+
+/*PG_FUNCTION_INFO_V1(countdown_c);
+
+Datum
+countdown_c(PG_FUNCTION_ARGS) {
+    int32 start = PG_GETARG_INT32(0);
+
+}*/
+
+PG_FUNCTION_INFO_V1(fib_c);
+
+Datum
+fib_c(PG_FUNCTION_ARGS) {
+    int32 num = PG_GETARG_INT32(0);
+    if (num < 1) {
+        return PG_RETURN_INT32(-1);
+    } else if (num == 1 || num == 2) {
+        return PG_RETURN_INT32(1);
+    } else {
+        int i;
+        int a = 1;
+        int b = 1;
+        int c = 0;
+        for (i = 3; i < num; i++) {
+            c = a + b;
+            a = b;
+            b = c;
+        }
+        return PG_RETURN_INT32(c);
+    }
+}
+
 #ifdef __cplusplus
 };
 #endif
