@@ -184,8 +184,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
       index_key.SetFromKey(start_key.get());
 
-      index_key.SetFromKey(start_key.get());
-
       // Set scan begin iterator
       scan_begin_itr = container.equal_range(index_key).first;
     }
@@ -319,8 +317,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       all_constraints_are_equal = ConstructLowerBoundTuple(
           start_key.get(), values, key_column_ids, expr_types);
       LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
-      index_key.SetFromKey(start_key.get());
-
       index_key.SetFromKey(start_key.get());
 
       // Set scan begin iterator
