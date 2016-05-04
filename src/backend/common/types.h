@@ -17,6 +17,8 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include <bitset>
+
 #include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
@@ -362,7 +364,8 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
   CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
   CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
+  CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
+  CONCURRENCY_TYPE_OCC_RB = 6             // optimistic + rollback segment
 };
 
 enum IsolationLevelType {
@@ -379,6 +382,16 @@ enum BackendType {
   BACKEND_TYPE_SSD = 3,  // on ssd
   BACKEND_TYPE_HDD = 4   // on hdd
 };
+
+//===--------------------------------------------------------------------===//
+// Visibility Types
+//===--------------------------------------------------------------------===//
+enum VisibilityType {
+  VISIBILITY_INVISIBLE = 0,
+  VISIBILITY_DELETED = 1,
+  VISIBILITY_OK = 2
+};
+
 
 //===--------------------------------------------------------------------===//
 // Index Types
@@ -750,6 +763,12 @@ struct TupleMetadata {
   oid_t tuple_slot_id = 0;
   cid_t tuple_end_cid = 0;
 };
+
+//===--------------------------------------------------------------------===//
+// Column Bitmap
+//===--------------------------------------------------------------------===//
+static const size_t max_col_count = 128;
+typedef std::bitset<max_col_count> ColBitmap;
 
 //===--------------------------------------------------------------------===//
 // ItemPointer
