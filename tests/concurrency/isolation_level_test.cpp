@@ -28,7 +28,7 @@ class IsolationLevelTest : public PelotonTest {};
 static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
-//  CONCURRENCY_TYPE_SSI,
+  // CONCURRENCY_TYPE_SSI,
   // CONCURRENCY_TYPE_SPECULATIVE_READ,
   CONCURRENCY_TYPE_EAGER_WRITE,
   CONCURRENCY_TYPE_TO,
@@ -468,7 +468,8 @@ TEST_F(IsolationLevelTest, StressTest) {
         TransactionTestsUtil::CreateTable(num_key));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    for (int k = 0; k < 32; k++) {
+    // WARNING: change k to a bigger number to a more stress test
+    for (int k = 0; k < 1; k++) {
       TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
       scheduler.SetConcurrent(true);
       for (int i = 0; i < num_txn; i++) {

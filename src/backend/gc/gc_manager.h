@@ -94,8 +94,10 @@ class GCManager {
   std::unique_ptr<std::thread> gc_thread_;
 
   // TODO: Boost lockfree queue has a bug that will cause valgrind to report mem error
-  // in lockfree/queue.hpp around line 100
-  // uncomment the initializer in the constructor will fix the bug
+  // in lockfree/queue.hpp around line 100. Apply this patch
+  // (https://svn.boost.org/trac/boost/attachment/ticket/8395/lockfree.patch) 
+  // will fix this problem. In the future consider implementing our own
+  // lock free queue
 
   // TODO: use shared pointer to reduce memory copy
   LockfreeQueue<TupleMetadata> reclaim_queue_;
