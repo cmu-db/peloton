@@ -26,7 +26,7 @@ namespace tpcc {
 
 extern configuration state;
 
-double RunWorkload();
+void RunWorkload();
 
 }  // namespace tpcc
 }  // namespace benchmark
