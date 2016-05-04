@@ -160,7 +160,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   bool special_case = false;
   if (key_column_ids_itr != key_column_ids.end()) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+    if (IfConstructBound(expr_types[offset])) {
       special_case = true;
     }
   }
@@ -182,8 +182,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       all_constraints_are_equal = ConstructLowerBoundTuple(
           start_key.get(), values, key_column_ids, expr_types);
       printf("All constraints are equal : %d ", all_constraints_are_equal);
-      index_key.SetFromKey(start_key.get());
-
       index_key.SetFromKey(start_key.get());
 
       // Set scan begin iterator
