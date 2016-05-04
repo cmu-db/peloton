@@ -165,7 +165,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     }
   }
 
-  printf("Special case : %d ", special_case);
+  LOG_TRACE("Special case : %d ", special_case);
 
   {
     index_lock.ReadLock();
@@ -181,7 +181,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       // Construct the lower bound key tuple
       all_constraints_are_equal = ConstructLowerBoundTuple(
           start_key.get(), values, key_column_ids, expr_types);
-      printf("All constraints are equal : %d ", all_constraints_are_equal);
+      LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
       index_key.SetFromKey(start_key.get());
 
       // Set scan begin iterator
@@ -300,7 +300,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     }
   }
 
-  printf("Special case : %d ", special_case);
+  LOG_TRACE("Special case : %d ", special_case);
 
   {
     index_lock.ReadLock();
@@ -316,7 +316,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       // Construct the lower bound key tuple
       all_constraints_are_equal = ConstructLowerBoundTuple(
           start_key.get(), values, key_column_ids, expr_types);
-      printf("All constraints are equal : %d ", all_constraints_are_equal);
+      LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
       index_key.SetFromKey(start_key.get());
 
       std::cout << "Start :" << *start_key << "\n";
