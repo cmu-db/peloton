@@ -204,7 +204,7 @@ void RunBackend(oid_t thread_id) {
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
   fast_random rng(rand());
-  ZipfDistribution zipf(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP,
+  ZipfDistribution zipf(state.scale_factor * 1000 - 1,
                         state.zipf_theta);
 
   // Run these many transactions
