@@ -969,7 +969,6 @@ std::unique_ptr<storage::Tuple> BuildItemTuple(const int item_id,
   item_tuple->SetValue(4, ValueFactory::GetStringValue(i_data), pool.get());
 
   return item_tuple;
-  item_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildWarehouseTuple(const int warehouse_id,
@@ -1002,7 +1001,6 @@ std::unique_ptr<storage::Tuple> BuildWarehouseTuple(const int warehouse_id,
   warehouse_tuple->SetValue(8, ValueFactory::GetDoubleValue(warehouse_initial_ytd), nullptr);
 
   return warehouse_tuple;
-  warehouse_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
@@ -1041,7 +1039,6 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
   district_tuple->SetValue(10, ValueFactory::GetIntegerValue(next_o_id), nullptr);
 
   return district_tuple;
-  district_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
@@ -1104,7 +1101,6 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   customer_tuple->SetValue(20, ValueFactory::GetStringValue(c_data), pool.get());
 
   return customer_tuple;
-  customer_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildHistoryTuple(const int customer_id,
@@ -1136,7 +1132,6 @@ std::unique_ptr<storage::Tuple> BuildHistoryTuple(const int customer_id,
   history_tuple->SetValue(7, ValueFactory::GetStringValue(h_data), pool.get());
 
   return history_tuple;
-  history_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
@@ -1171,7 +1166,6 @@ std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
   orders_tuple->SetValue(7, ValueFactory::GetIntegerValue(orders_init_all_local), nullptr);
 
   return orders_tuple;
-  orders_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
@@ -1188,7 +1182,6 @@ std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
   new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
 
   return new_order_tuple;
-  new_order_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildOrderLineTuple(const int orders_id,
@@ -1233,7 +1226,6 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(const int orders_id,
   order_line_tuple->SetValue(9, ValueFactory::GetStringValue(ol_dist_info), pool.get());
 
   return order_line_tuple;
-  order_line_tuple = nullptr;
 }
 
 std::unique_ptr<storage::Tuple> BuildStockTuple(const int stock_id,
@@ -1275,7 +1267,6 @@ std::unique_ptr<storage::Tuple> BuildStockTuple(const int stock_id,
   stock_tuple->SetValue(16, ValueFactory::GetStringValue(s_data), pool.get());
 
   return stock_tuple;
-  stock_tuple = nullptr;
 }
 
 void LoadItems() {
