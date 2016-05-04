@@ -17,6 +17,8 @@ namespace peloton {
 
 namespace test {
 
+static oid_t next_table_id = 0;
+
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
@@ -146,7 +148,7 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
@@ -237,7 +239,7 @@ TEST_F(MVCCTest, AbortVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);
@@ -273,9 +275,8 @@ TEST_F(MVCCTest, VersionChainTest) {
     const int scale = 20;
     const int num_key = 256;
     srand(15721);
-
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(num_key));
+      TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);

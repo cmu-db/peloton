@@ -35,7 +35,7 @@ namespace gc {
 #define GC_PERIOD_MILLISECONDS 100
 class GCBuffer {
 public:
-  GCBuffer(oid_t tid):table_id(tid) {}
+  GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
   ~GCBuffer();
   inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
 private:
@@ -83,6 +83,8 @@ class GCManager {
   //===--------------------------------------------------------------------===//
   void ClearGarbage();
 
+  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
+
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -90,6 +92,10 @@ class GCManager {
   GCType gc_type_;
 
   std::unique_ptr<std::thread> gc_thread_;
+
+  // TODO: Boost lockfree queue has a bug that will cause valgrind to report mem error
+  // in lockfree/queue.hpp around line 100
+  // uncomment the initializer in the constructor will fix the bug
 
   // TODO: use shared pointer to reduce memory copy
   LockfreeQueue<TupleMetadata> reclaim_queue_;
