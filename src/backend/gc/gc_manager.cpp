@@ -38,7 +38,7 @@ void GCManager::StartGC() {
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
-  is_running_ = true;
+  this->is_running_ = true;
   gc_thread_.reset(new std::thread(&GCManager::Running, this));
 }
 

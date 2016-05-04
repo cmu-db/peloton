@@ -62,9 +62,14 @@ class configuration {
 
   double abort_rate;
 
+  // Theta in zipf distribution to control skewness
   double zipf_theta;
 
+  // Run mix workload or not
   bool run_mix;
+
+  // protocol type
+  ConcurrencyType protocol;
 };
 
 extern configuration state;

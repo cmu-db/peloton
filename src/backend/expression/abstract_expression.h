@@ -21,6 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
 #include "backend/common/printable.h"
+#include "backend/common/assert.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"
@@ -103,6 +104,24 @@ class AbstractExpression : public Printable {
   inline AbstractExpression *CopyUtil(
       const AbstractExpression *expression) const {
     return (expression == nullptr) ? nullptr : expression->Copy();
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  // Each sub-class will have to implement this function
+  // After the implementation for each sub-class, we should set it to pure virtual
+  //===--------------------------------------------------------------------===//
+  virtual bool SerializeTo(SerializeOutput &output) const {
+      ASSERT(&output != nullptr);
+      return false;
+  }
+  virtual bool DeserializeFrom(SerializeInputBE &input) {
+      ASSERT(&input != nullptr);
+      return false;
+  }
+
+  virtual int SerializeSize() {
+      return 0;
   }
 
  protected:
