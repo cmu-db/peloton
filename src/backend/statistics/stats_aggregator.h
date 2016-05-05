@@ -65,6 +65,8 @@ class StatsAggregator {
       thread_number++;
       printf("hash map size: %ld\n", backend_stats.size());
 
+      printf("register: %d\n", thread_number);
+
       std::cout << id_ << std::endl;
     }
 
