@@ -201,6 +201,72 @@ integer_manipulate(PG_FUNCTION_ARGS) {
 }
 
 
+PG_FUNCTION_INFO_V1(fib_c);
+
+Datum
+fib_c(PG_FUNCTION_ARGS) {
+    int32 num = PG_GETARG_INT32(0);
+    if (num < 1) {
+        PG_RETURN_INT32(-1);
+    } else if (num == 1 || num == 2) {
+        PG_RETURN_INT32(1);
+    } else {
+        int i;
+        int a = 1;
+        int b = 1;
+        int c = 0;
+        for (i = 3; i <= num; i++) {
+            c = a + b;
+            a = b;
+            b = c;
+        }
+        PG_RETURN_INT32(c);
+    }
+}
+
+
+PG_FUNCTION_INFO_V1(countdown_c);
+
+Datum
+countdown_c(PG_FUNCTION_ARGS) {
+    int32 start = PG_GETARG_INT32(0);
+    int n = 1 + (int) log10(start);
+    int sum = 0;
+    int ten_pow = 1;
+    int i;
+    for (i = 1; i < n; i++) {
+        sum += 9 * ten_pow * i;
+        ten_pow *= 10;
+    }
+    sum += n * (start + 1 - ten_pow);
+    char *result = new char[sum + start * 2];
+
+    int len_num1 = 0;
+    int s;
+    s = start;
+    while (s != 0) {
+        s /= 10;
+        len_num1++;
+    }
+    char *num1 = new char[len_num1 + 2];
+    sprintf(num1, "%d\r\n", start);
+    strcpy(result, num1);
+
+    for (i = start - 1; i >= 1; i--) {
+        int len_num = 0;
+        s = i;
+        while (s != 0) {
+            s /= 10;
+            len_num++;
+        }
+        char *num = new char[len_num + 2];
+        sprintf(num, "%d\r\n", i);
+        strcat(result, num);
+    }
+
+    PG_RETURN_INT32(start);
+}
+
 #ifdef __cplusplus
 };
 #endif

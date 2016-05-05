@@ -68,3 +68,69 @@ RETURNS numeric AS $$
      RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+
+
+DROP FUNCTION IF EXISTS multiply_string(integer, text);
+
+CREATE OR REPLACE FUNCTION multiply_string(times integer, msg text) RETURNS TEXT AS
+$$ DECLARE result text;
+BEGIN
+    result := '';
+    IF times > 0 THEN
+        FOR i IN 1 .. times LOOP
+            result := result || msg || E'\r\n';
+        END LOOP;
+    END IF;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
+
+
+DROP FUNCTION IF EXISTS countdown_plpgsql(integer);
+
+CREATE OR REPLACE FUNCTION countdown_plpgsql(start integer) RETURNS text AS
+$$ DECLARE
+    result text := '';
+    sql text := '';
+    tmp text := '';
+BEGIN
+    sql := 'SELECT n AS countdown
+            FROM generate_series(' || CAST(start AS text) || ', 1, -1) AS n ';
+    FOR tmp IN EXECUTE(sql) LOOP
+        IF result > '' THEN
+            result := result || E'\r\n' || tmp;
+        ELSE
+            result := tmp;
+        END IF;
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
+
+
+DROP FUNCTION IF EXISTS fib_plpgsql(integer);
+
+CREATE OR REPLACE FUNCTION fib_plpgsql(num integer) RETURNS integer AS
+$$
+DECLARE
+    result int := 0;
+    a int := 1;
+    b int := 1;
+    c int := 0;
+BEGIN
+    IF num < 1 THEN
+        result := -1;
+    ELSIF num = 1 OR num = 2 THEN
+        result := 1;
+    ELSE
+        FOR i IN 3 .. num LOOP
+            c := a + b;
+            a := b;
+            b := c;
+        END LOOP;
+        result := c;
+    END IF;
+    RETURN result;
+END;
+$$ LANGUAGE 'plpgsql' IMMUTABLE;
