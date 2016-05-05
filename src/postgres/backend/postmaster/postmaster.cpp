@@ -68,6 +68,7 @@
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/rpc_server.h"
 #include "backend/networking/abstract_service.pb.h"
+#include "backend/statistics/stats_aggregator.h"
 
 #include "postgres.h"
 
@@ -3918,6 +3919,15 @@ static void BackendInitialize(Port *port) {
    */
   if (status != STATUS_OK)
     proc_exit(0);
+
+
+  /*
+   * Register to StatsAggregator
+   */
+  int* stats_ = peloton::stats::StatsAggregator::GetInstance().GetBackendStatsContext();
+  *stats_ += 1;
+  printf("have a look? %d\n", *stats_);
+
 
   /*
    * Now that we have the user and database name, we can set the process
