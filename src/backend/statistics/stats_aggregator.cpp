@@ -93,7 +93,6 @@ BackendStatsContext *StatsAggregator::GetBackendStatsContext() {
 
     RegisterContext(backend_stats_context->GetThreadId(), backend_stats_context);
 
-    printf("register: %d\n", thread_number);
   }
 
   return backend_stats_context;
