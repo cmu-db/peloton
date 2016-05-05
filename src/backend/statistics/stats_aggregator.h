@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <iostream>
 #include <condition_variable>
+#include <string>
 
 
 #include "backend/statistics/backend_stats_context.h"

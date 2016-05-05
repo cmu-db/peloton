@@ -16,6 +16,8 @@
 #include <map>
 #include <vector>
 #include <thread>
+#include <iostream>
+#include <sstream>
 
 #include "backend/common/types.h"
 #include "backend/statistics/counter_metric.h"
@@ -43,6 +45,19 @@ class BackendStatsContext {
   }
 
   void Aggregtate(BackendStatsContext &source);
+
+  inline void Reset() {
+    txn_committed.Reset();
+    txn_aborted.Reset();
+  }
+
+  inline std::string ToString() {
+    std::stringstream ss;
+    ss <<  "txn_committed: " << txn_committed.ToString() << std::endl;
+    ss <<  "txn_aborted: " << txn_aborted.ToString() << std::endl;
+    return ss.str();
+  }
+
 
   // Global metrics
   CounterMetric txn_committed{MetricType::COUNTER_METRIC};
