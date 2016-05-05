@@ -13,6 +13,7 @@
 #include <cassert>
 #include <condition_variable>
 #include <memory>
+#include <fstream>
 
 /*
 #include "backend/logging/log_manager.h"
@@ -37,11 +38,14 @@ thread_local BackendStatsContext* backend_stats_context = nullptr;
 StatsAggregator::StatsAggregator() {
   thread_number = 0;
 
+  ofs.open (peloton_stats_directory, std::ofstream::out);
+
   aggregator_thread = std::thread(&StatsAggregator::RunAggregator, this);
 }
 
 StatsAggregator::~StatsAggregator() {
   printf("StatsAggregator destruction\n");
+  ofs.close();
   exec_finished.notify_one();
   aggregator_thread.join();
 }
@@ -60,6 +64,7 @@ void StatsAggregator::RunAggregator() {
        aggregated_stats.Aggregtate((*val.second));
      }
      printf("%s\n", aggregated_stats.ToString().c_str());
+     ofs << aggregated_stats.ToString();
 
    }
    printf("Aggregator done!\n");
