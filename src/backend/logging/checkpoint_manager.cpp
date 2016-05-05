@@ -69,6 +69,7 @@ Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {
 }
 
 void CheckpointManager::InitCheckpointers() {
+  //TODO avoid using push_back
   for (unsigned int i = 0; i < num_checkpointers_; i++) {
     checkpointers_.push_back(
         Checkpoint::GetCheckpoint(checkpoint_type_, disable_file_access_));

@@ -55,10 +55,11 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 }
 
 void SimpleCheckpoint::DoCheckpoint() {
+  // Create a new file for checkpoint
+  // TODO split checkpoint file into multiple files in the future
   CreateFile();
 
   auto &log_manager = LogManager::GetInstance();
-  // XXX get default backend logger
   if (logger_ == nullptr) {
     logger_.reset(BackendLogger::GetBackendLogger(LOGGING_TYPE_NVM_WAL));
   }
@@ -93,23 +94,25 @@ void SimpleCheckpoint::DoCheckpoint() {
     }
   }
 
+  // Add txn commit record
   std::shared_ptr<LogRecord> commit_record(new TransactionRecord(
       LOGRECORD_TYPE_TRANSACTION_COMMIT, start_commit_id_));
   CopySerializeOutput commit_output_buffer;
   commit_record->Serialize(commit_output_buffer);
   records_.push_back(commit_record);
 
+  //TODO Add delimiter record for checkpoint recovery as well
   Persist();
   Cleanup();
   most_recent_checkpoint_cid = start_commit_id_;
 }
 
 cid_t SimpleCheckpoint::DoRecovery() {
-  // open log file and file descriptor
-  // we open it in read + binary mode
+  //No checkpoint to recover from
   if (checkpoint_version < 0) {
     return 0;
   }
+  // we open checkpoint file in read + binary mode
   std::string file_name = ConcatFileName(checkpoint_dir, checkpoint_version);
   bool success =
       LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "rb");
@@ -213,6 +216,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
   auto table_tile_group_count = target_table->GetTileGroupCount();
   CheckpointTileScanner scanner;
 
+  //TODO scan assigned tile in multi-thread checkpoint
   while (current_tile_group_offset < table_tile_group_count) {
     // Retrieve a tile group
     auto tile_group = target_table->GetTileGroup(current_tile_group_offset);
@@ -245,6 +249,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
                           this->pool.get());
         }
         ItemPointer location(tile_group_id, tuple_id);
+        //TODO is it possible to avoid `new` for checkpoint?
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
             database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
@@ -291,7 +296,7 @@ void SimpleCheckpoint::Persist() {
   assert(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
 
   LOG_INFO("Persisting %lu checkpoint entries", records_.size());
-  // First, write all the record in the queue
+  // write all the record in the queue and free them
   for (auto record : records_) {
     assert(record);
     assert(record->GetMessageLength() > 0);
@@ -300,6 +305,7 @@ void SimpleCheckpoint::Persist() {
     record.reset();
   }
   records_.clear();
+  // sync file
   LoggingUtil::FFlushFsync(file_handle_);
 }
 
