@@ -47,7 +47,7 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 10000;
 static size_t tile_group = 100;
-static float scalar = 0.1;
+static float scalar = 0.3;
 static size_t iter = 120;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
@@ -213,6 +213,27 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
 }
 
 
+void CreateIndexScanPredicate(const int lower,
+                              std::vector<ExpressionType>& expr_types,
+                              std::vector<Value>& values) {
+  expr_types.push_back(
+    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+  values.push_back(ValueFactory::GetIntegerValue(lower));
+}
+
+void CreateIndexScanTwoPredicates(const int lower, const int higher,
+                                  std::vector<ExpressionType>& expr_types,
+                                  std::vector<Value>& values) {
+  expr_types.push_back(
+    ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+  values.push_back(ValueFactory::GetIntegerValue(lower));
+  expr_types.push_back(
+    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+  values.push_back(ValueFactory::GetIntegerValue(higher));
+
+}
+
+
 void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
@@ -269,7 +290,10 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+  // auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
+                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
+
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
@@ -298,9 +322,12 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
+  key_column_ids.push_back(0);
+  // CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
+  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
+                               tile_group * tuples_per_tile_group * (scalar + 0.3),
+                               expr_types,
+                               values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
@@ -326,6 +353,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction();
 }
 
+
 void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<oid_t> column_ids;
   std::vector<oid_t> column_ids_second;
@@ -347,14 +375,19 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar));
+  key_column_ids.push_back(0);
+  // CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
+  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
+                               tile_group * tuples_per_tile_group * (scalar + 0.3),
+                               expr_types,
+                                values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       nullptr, key_column_ids, expr_types, values, runtime_keys);
 
-  expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+  // expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+  expression::AbstractExpression *predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
+                                                                 tile_group * tuples_per_tile_group * (scalar + 0.3));
 
   planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
                                            index_scan_desc);
