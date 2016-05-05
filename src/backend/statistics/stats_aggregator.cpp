@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// log_manager.cpp
+// stats_aggregator.cpp
 //
-// Identification: src/backend/logging/log_manager.cpp
+// Identification: src/backend/statistics/stats_aggregator.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,12 +26,13 @@
 */
 
 #include "backend/statistics/stats_aggregator.h"
+#include "backend/statistics/backend_stats_context.h"
 
 namespace peloton {
 namespace stats {
 
 // Each thread gets a backend logger
-thread_local static int* backend_stats_context = nullptr;
+thread_local static BackendStatsContext* backend_stats_context = nullptr;
 
 StatsAggregator::StatsAggregator() {
   thread_number = 0;
@@ -53,19 +54,20 @@ StatsAggregator &StatsAggregator::GetInstance() {
     and store it into the vector
  * @param logging type can be stdout(debug), aries, peloton
  */
- int *StatsAggregator::GetBackendStatsContext() {
+BackendStatsContext *StatsAggregator::GetBackendStatsContext() {
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_stats_context == nullptr) {
-    backend_stats_context = new int;
-    *backend_stats_context = 0;
-    thread_number += 1;
+    backend_stats_context = new BackendStatsContext();
+
+    RegisterContext(backend_stats_context->GetThreadId(), backend_stats_context);
+
     printf("register: %d\n", thread_number);
   }
 
   return backend_stats_context;
 }
 
-}  // namespace logging
+}  // namespace stats
 }  // namespace peloton

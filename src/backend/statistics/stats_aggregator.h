@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// log_manager.h
+// stats_aggregator.h
 //
-// Identification: src/backend/logging/log_manager.h
+// Identification: src/backend/statistics/stats_aggregator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,6 +15,9 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <unordered_map>
+
+#include "backend/statistics/backend_stats_context.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -45,101 +48,41 @@ class StatsAggregator {
   // global singleton
   static StatsAggregator  &GetInstance(void);
 
-  /*
-  // Wait for the system to begin
-  void StartStandbyMode();
+  inline void RegisterContext(std::thread::id id_, BackendStatsContext *context_) {
+    stats_mutex.lock();
 
-  // Start recovery
-  void StartRecoveryMode();
+    backend_stats[id_] = context_;
+    thread_number++;
 
-  // Check whether the frontend logger is in logging mode
-  inline bool IsInLoggingMode() {
-    // Check the logging status
-    return (logging_status == LOGGING_STATUS_TYPE_LOGGING);
+    stats_mutex.unlock();
   }
 
-  // Used to terminate current logging and wait for sleep mode
-  void TerminateLoggingMode();
+  inline void UnregisterContext(std::thread::id id_) {
+    stats_mutex.lock();
 
-  // Used to wait for a certain mode (or not certain mode if is_equal is false)
-  void WaitForModeTransition(LoggingStatus logging_status, bool is_equal);
+    backend_stats.erase(id_);
+    thread_number--;
 
-  // End the actual logging
-  bool EndLogging();
+    printf("unregister: %d\n", thread_number);
 
-  //===--------------------------------------------------------------------===//
-  // Accessors
-  //===--------------------------------------------------------------------===//
-
-  // Logging status associated with the front end logger of given type
-  void SetLoggingStatus(LoggingStatus logging_status);
-
-  LoggingStatus GetLoggingStatus();
-
-  // Whether to enable or disable synchronous commit ?
-  void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit; }
-
-  bool GetSyncCommit(void) const { return syncronization_commit; }
-
-  bool ContainsFrontendLogger(void);
-
-  BackendLogger *GetBackendLogger();
-
-  void SetLogFileName(std::string log_file);
-
-  std::string GetLogFileName(void);
-
-  bool HasPelotonFrontendLogger() const {
-    return (peloton_logging_mode == LOGGING_TYPE_NVM_NVM);
+    stats_mutex.unlock();
   }
 
-  //===--------------------------------------------------------------------===//
-  // Utility Functions
-  //===--------------------------------------------------------------------===//
-
-  FrontendLogger *GetFrontendLogger();
-
-  void ResetFrontendLogger();
-
-  void LogBeginTransaction(oid_t commit_id);
-
-  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &old_version, ItemPointer &new_version);
-
-  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &new_location);
-
-  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
-
-  void LogCommitTransaction(oid_t commit_id);
-   */
-  int *GetBackendStatsContext();
-  int thread_number;
+  BackendStatsContext *GetBackendStatsContext();
 
  private:
   StatsAggregator();
   ~StatsAggregator();
 
-  /*
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
+  BackendStatsContext stats_history;
+  BackendStatsContext aggregated_stats;
 
-  // There is only one frontend_logger of some type
-  // either write ahead or write behind logging
-  std::unique_ptr<FrontendLogger> frontend_logger;
+  std::mutex stats_mutex;
 
-  LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
+  std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
 
-  // To synch the status
-  std::mutex logging_status_mutex;
-  std::condition_variable logging_status_cv;
-
-  bool syncronization_commit = false;
-
-  std::string log_file_name;
-  */
+  int thread_number;
 };
 
-}  // namespace logging
+}  // namespace stats
 }  // namespace peloton
