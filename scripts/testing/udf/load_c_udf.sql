@@ -27,3 +27,9 @@ CREATE FUNCTION integer_manipulate_c(integer) RETURNS integer AS '/usr/local/lib
 
 DROP FUNCTION IF EXISTS item_sales_sum_c(int);
 CREATE FUNCTION item_sales_sum_c(int) RETURNS float8 AS '/usr/local/lib/spi_udf.so', 'item_sales_sum_c' LANGUAGE C STRICT;
+
+DROP FUNCTION IF EXISTS fib_c(int);
+CREATE FUNCTION fib_c(int) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'fib_c' LANGUAGE C STRICT;
+
+DROP FUNCTION IF EXISTS countdown_c(int);
+CREATE FUNCTION countdown_c(int) RETURNS integer AS '/usr/local/lib/sample_udf.so', 'countdown_c' LANGUAGE C STRICT;
