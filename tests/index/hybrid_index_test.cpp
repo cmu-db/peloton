@@ -290,9 +290,9 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   }
 
   // Create and set up seq scan executor
-  // auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
-  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
-                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
+  auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+//  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
+//                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
 
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
@@ -323,11 +323,11 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   key_column_ids.push_back(0);
   key_column_ids.push_back(0);
-  // CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
-  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
-                               tile_group * tuples_per_tile_group * (scalar + 0.3),
-                               expr_types,
-                               values);
+  CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
+//  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
+//                               tile_group * tuples_per_tile_group * (scalar + 0.3),
+//                               expr_types,
+//                               values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
@@ -376,18 +376,18 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   key_column_ids.push_back(0);
   key_column_ids.push_back(0);
-  // CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
-  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
-                               tile_group * tuples_per_tile_group * (scalar + 0.3),
-                               expr_types,
-                                values);
+   CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
+//  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
+//                               tile_group * tuples_per_tile_group * (scalar + 0.3),
+//                               expr_types,
+//                                values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       nullptr, key_column_ids, expr_types, values, runtime_keys);
 
-  // expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
-  expression::AbstractExpression *predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
-                                                                 tile_group * tuples_per_tile_group * (scalar + 0.3));
+   expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+//  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
+//                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
 
   planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
                                            index_scan_desc);
