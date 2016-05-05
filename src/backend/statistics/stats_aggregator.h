@@ -19,7 +19,7 @@
 #include <iostream>
 #include <condition_variable>
 #include <string>
-
+#include <fstream>
 
 #include "backend/statistics/backend_stats_context.h"
 
@@ -110,6 +110,9 @@ class StatsAggregator {
 
   // CV to signal aggregator if finished
   std::condition_variable exec_finished;
+
+  std::string peloton_stats_directory = "./stats_log";
+  std::ofstream ofs;
 };
 
 }  // namespace stats
