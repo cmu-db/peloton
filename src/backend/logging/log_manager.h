@@ -149,19 +149,20 @@ class LogManager {
 
   void ResetFrontendLogger();
 
+  void DropFrontendLoggers();
+
   void PrepareLogging();
 
-  void LogBeginTransaction(oid_t commit_id);
+  void LogBeginTransaction(cid_t commit_id);
 
-  void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &old_version, ItemPointer &new_version);
+  void LogUpdate(cid_t commit_id, ItemPointer &old_version,
+                 ItemPointer &new_version);
 
-  void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
-                 ItemPointer &new_location);
+  void LogInsert(cid_t commit_id, ItemPointer &new_location);
 
-  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
+  void LogDelete(cid_t commit_id, ItemPointer &delete_location);
 
-  void LogCommitTransaction(oid_t commit_id);
+  void LogCommitTransaction(cid_t commit_id);
 
   void TruncateLogs(txn_id_t commit_id);
 
@@ -171,6 +172,9 @@ class LogManager {
     return global_max_flushed_id_for_recovery;
   }
 
+  void SetGlobalMaxFlushedIdForRecovery(cid_t new_max) {
+    global_max_flushed_id_for_recovery = new_max;
+  }
   void UpdateCatalogAndTxnManagers(oid_t, cid_t);
 
   void SetGlobalMaxFlushedCommitId(cid_t);
@@ -211,7 +215,7 @@ class LogManager {
   LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
   // default log file size: 32 MB
-  unsigned int log_file_size_limit_ = 32;
+  unsigned int log_file_size_limit_ = 32768;
 
   // default capacity for log buffer
   unsigned int log_buffer_capacity_ = 32768;
@@ -239,7 +243,8 @@ class LogManager {
 
   cid_t max_flushed_cid = 0;
 
-  bool syncronization_commit = false;
+  bool syncronization_commit =
+      true;  // default should be true because it is safest
 
   std::string log_file_name;
 

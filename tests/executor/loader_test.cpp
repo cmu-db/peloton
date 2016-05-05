@@ -106,6 +106,9 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
 TEST_F(LoaderTests, LoadingTest) {
   // We are going to simply load tile groups concurrently in this test
+  // WARNING: This test may potentially run for a long time if 
+  // DEFAULT_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard
+  // code the number of tuples per tile group in this test
   oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
   bool build_indexes = false;
 
@@ -130,7 +133,7 @@ TEST_F(LoaderTests, LoadingTest) {
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-  LOG_INFO("Dataset size : %lu MB \n",
+  LOG_INFO("Dataset size : %u MB \n",
            (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
            bytes_to_megabytes_converter);
 }

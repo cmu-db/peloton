@@ -33,7 +33,7 @@ class Database : public Printable {
   Database() = delete;
   Database(Database const &) = delete;
 
-  Database(oid_t database_oid) : database_oid(database_oid) {}
+  Database(const oid_t &database_oid);
 
   ~Database();
 
@@ -80,12 +80,14 @@ class Database : public Printable {
   //===--------------------------------------------------------------------===//
 
   // database oid
-  oid_t database_oid;
+  oid_t database_oid = INVALID_OID;
 
   // TABLES
   std::vector<storage::DataTable *> tables;
 
   std::mutex database_mutex;
+
+  // std::shared_ptr<gc::GCManager> gc_manager;
 };
 
 }  // End storage namespace

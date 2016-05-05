@@ -24,7 +24,6 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 // Buffer Pool
 //===--------------------------------------------------------------------===//
-// TODO make BUFFER_POOL_SIZE as class template
 class BufferPool {
  public:
   virtual ~BufferPool() {}

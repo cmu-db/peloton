@@ -49,7 +49,7 @@ static inline void pmem_flush_cache(void *addr, size_t len) {
 
   // loop through 64B-aligned chunks covering the given range
   for (; uptr < end; uptr += ALIGN) {
-    __builtin_ia32_clflush((void *) uptr);
+    __builtin_ia32_clflush((void *)uptr);
   }
 }
 
@@ -63,10 +63,8 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-: data_file_address(nullptr),
-  data_file_len(0),
-  data_file_offset(0) {
-  // Check if we are doing write ahead logging or not ?
+    : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
+  // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
@@ -140,11 +138,8 @@ StorageManager::StorageManager()
   }
 
   // map the data file in memory
-  if ((data_file_address =  mmap(NULL,
-                                 data_file_len,
-                                 PROT_READ | PROT_WRITE,
-                                 MAP_SHARED,
-                                 data_fd, 0)) == MAP_FAILED) {
+  if ((data_file_address = mmap(NULL, data_file_len, PROT_READ | PROT_WRITE,
+                                MAP_SHARED, data_fd, 0)) == MAP_FAILED) {
     perror("mmap");
     exit(EXIT_FAILURE);
   }
@@ -158,10 +153,10 @@ StorageManager::~StorageManager() {
   if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
 
   // sync and unmap the data file
-  if(data_file_address != nullptr) {
+  if (data_file_address != nullptr) {
     // sync the mmap'ed file to SSD or HDD
     int status = msync(data_file_address, data_file_len, MS_SYNC);
-    if(status != 0) {
+    if (status != 0) {
       perror("msync");
       exit(EXIT_FAILURE);
     }
@@ -192,7 +187,8 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
           return nullptr;
         }
 
-        void *address = reinterpret_cast<char*>(data_file_address) + data_file_offset;
+        void *address =
+            reinterpret_cast<char *>(data_file_address) + data_file_offset;
 
         // offset by requested size
         data_file_offset += size;
@@ -228,9 +224,7 @@ void StorageManager::Release(BackendType type, void *address) {
   }
 }
 
-void StorageManager::Sync(BackendType type,
-                          void *address,
-                          size_t length) {
+void StorageManager::Sync(BackendType type, void *address, size_t length) {
   switch (type) {
     case BACKEND_TYPE_MM: {
       // Nothing to do here
@@ -247,7 +241,7 @@ void StorageManager::Sync(BackendType type,
     case BACKEND_TYPE_HDD: {
       // sync the mmap'ed file to SSD or HDD
       int status = msync(data_file_address, data_file_len, MS_SYNC);
-      if(status != 0) {
+      if (status != 0) {
         perror("msync");
         exit(EXIT_FAILURE);
       }

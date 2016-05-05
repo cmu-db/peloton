@@ -11,6 +11,7 @@
  */
 
 #include "backend/logging/checkpoint.h"
+#include "backend/logging/logging_util.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 
 namespace peloton {
@@ -44,6 +45,7 @@ void Checkpoint::MainLoop(void) {
       // First, do recovery if needed
       DoRecovery();
       LOG_INFO("Checkpoint DoRecovery Done");
+      checkpoint_status = CHECKPOINT_STATUS_DONE_RECOVERY;
       break;
     }
 
@@ -65,6 +67,7 @@ void Checkpoint::MainLoop(void) {
   // Periodically, wake up and do checkpointing
   while (checkpoint_manager.GetCheckpointStatus() ==
          CHECKPOINT_STATUS_CHECKPOINTING) {
+    checkpoint_status = CHECKPOINT_STATUS_CHECKPOINTING;
     sleep(checkpoint_interval_);
     DoCheckpoint();
   }
@@ -77,24 +80,19 @@ std::string Checkpoint::ConcatFileName(std::string checkpoint_dir,
 }
 
 void Checkpoint::InitDirectory() {
-  int return_val;
-
-  return_val = mkdir(checkpoint_dir.c_str(), 0700);
-  LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
-
-  if (return_val == 0) {
-    LOG_INFO("Created checkpoint directory successfully");
-  } else if (errno == EEXIST) {
-    LOG_INFO("Checkpoint Directory already exists");
+  auto success = LoggingUtil::CreateDirectory(checkpoint_dir.c_str(), 0700);
+  if (success) {
+    LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
   } else {
-    LOG_ERROR("Creating checkpoint directory failed: %s", strerror(errno));
+    LOG_ERROR("Failed to create checkpoint directory");
   }
 }
 
 std::unique_ptr<Checkpoint> Checkpoint::GetCheckpoint(
-    CheckpointType checkpoint_type) {
+    CheckpointType checkpoint_type, bool disable_file_access) {
   if (checkpoint_type == CHECKPOINT_TYPE_NORMAL) {
-    std::unique_ptr<Checkpoint> checkpoint(new SimpleCheckpoint());
+    std::unique_ptr<Checkpoint> checkpoint(
+        new SimpleCheckpoint(disable_file_access));
     return std::move(checkpoint);
   }
   return std::move(std::unique_ptr<Checkpoint>(nullptr));
@@ -113,7 +111,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
 
   // Create new tile group if table doesn't already have that tile group
   if (tile_group == nullptr) {
-    table->AddTileGroupWithOid(tile_group_id);
+    table->AddTileGroupWithOidForRecovery(tile_group_id);
     tile_group = manager.GetTileGroup(tile_group_id);
   }
 

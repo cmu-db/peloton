@@ -35,8 +35,6 @@ void LogFile::SetLogFileSize(int log_file_size) {
   file_handle_.size = log_file_size;
 }
 
-FILE *LogFile::GetFilePtr() { return file_handle_.file; }
-
 void LogFile::SetLogFileFD(int fd) { file_handle_.fd = fd; }
 
 void LogFile::SetFilePtr(FILE *fp) { file_handle_.file = fp; }

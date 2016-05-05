@@ -31,11 +31,17 @@ namespace logging {
 // Checkpoint
 //===--------------------------------------------------------------------===//
 class Checkpoint {
+  friend class CheckpointManager;
+
  public:
-  Checkpoint() { pool.reset(new VarlenPool(BACKEND_TYPE_MM)); }
+  Checkpoint(bool disable_file_access)
+      : disable_file_access(disable_file_access) {
+    pool.reset(new VarlenPool(BACKEND_TYPE_MM));
+  }
 
   virtual ~Checkpoint(void) { pool.reset(); }
 
+  // Main body of the checkpoint thread
   void MainLoop(void);
 
   // Do checkpoint periodically
@@ -44,23 +50,32 @@ class Checkpoint {
   // Do recovery from most recent version of checkpoint
   virtual cid_t DoRecovery() = 0;
 
-  // Get a checkpointer
-  static std::unique_ptr<Checkpoint> GetCheckpoint(CheckpointType checkpoint_type);
-
   void RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
                     ItemPointer target_location, cid_t commit_id);
+
+  inline cid_t GetMostRecentCheckpointCid() {
+    return most_recent_checkpoint_cid;
+  }
+
+  inline CheckpointStatus GetCheckpointStatus() { return checkpoint_status; }
 
  protected:
   std::string ConcatFileName(std::string checkpoint_dir, int version);
 
   void InitDirectory();
 
+  // whether file access is disabled. mainly used for testing
+  bool disable_file_access = false;
+
   // Default checkpoint interval (seconds)
+  //TODO set interval to configurable variable
   int64_t checkpoint_interval_ = 5;
 
   // variable length memory pool
+  //TODO better periodically clean up varlen pool?
   std::unique_ptr<VarlenPool> pool;
 
+  //TODO set directory to configurable variables
   std::string checkpoint_dir = "pl_checkpoint";
 
   // the version of next checkpoint
@@ -75,6 +90,13 @@ class Checkpoint {
   // current status
   CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
 
+  // the most recent successful checkpoint cid
+  cid_t most_recent_checkpoint_cid = INVALID_CID;
+
+ private:
+  // Get a checkpointer
+  static std::unique_ptr<Checkpoint> GetCheckpoint(
+      CheckpointType checkpoint_type, bool test_mode);
 };
 
 }  // namespace logging

@@ -41,6 +41,50 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
   return records;
 }
 
+std::vector<logging::TupleRecord>
+LoggingTestsUtil::BuildTupleRecordsForRestartTest(
+    std::vector<std::shared_ptr<storage::Tuple>> &tuples,
+    size_t tile_group_size, size_t table_tile_group_count,
+    int out_of_range_tuples, int delete_tuples) {
+  std::vector<logging::TupleRecord> records;
+  for (size_t block = 1; block <= table_tile_group_count; ++block) {
+    for (size_t offset = 0; offset < tile_group_size; ++offset) {
+      ItemPointer location(block, offset);
+      auto &tuple = tuples[(block - 1) * tile_group_size + offset];
+      assert(tuple->GetSchema());
+      logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1,
+                                  INVALID_OID, location, INVALID_ITEMPOINTER,
+                                  tuple.get(), DEFAULT_DB_ID);
+      record.SetTuple(tuple.get());
+      records.push_back(record);
+    }
+  }
+  for (int i = 0; i < out_of_range_tuples; i++) {
+    ItemPointer location(tile_group_size, table_tile_group_count + i);
+    auto &tuple = tuples[tile_group_size * table_tile_group_count + i];
+    assert(tuple->GetSchema());
+    logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, 1000,
+                                INVALID_OID, location, INVALID_ITEMPOINTER,
+                                tuple.get(), DEFAULT_DB_ID);
+    record.SetTuple(tuple.get());
+    records.push_back(record);
+  }
+  for (int i = 0; i < delete_tuples; i++) {
+    ItemPointer location(1, 0);
+    auto &tuple = tuples[tile_group_size * table_tile_group_count +
+                         out_of_range_tuples + i];
+    assert(tuple->GetSchema());
+    logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
+                                INVALID_ITEMPOINTER, location, nullptr,
+                                DEFAULT_DB_ID);
+    record.SetTuple(tuple.get());
+    records.push_back(record);
+  }
+
+  LOG_INFO("Built a vector of %lu tuple WAL insert records", records.size());
+  return records;
+}
+
 std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
     storage::DataTable *table, int num_rows, bool mutate, bool random) {
   std::vector<std::shared_ptr<storage::Tuple>> tuples;
@@ -277,7 +321,6 @@ void LoggingScheduler::Init() {
   logging::LogManager::GetInstance().Configure(
       LOGGING_TYPE_NVM_WAL, true, num_frontend_logger, LOGGER_MAPPING_MANUAL);
   log_manager->SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
-  log_manager->ResetFrontendLoggers();
   log_manager->InitFrontendLoggers();
 
   for (unsigned int i = 0; i < num_frontend_logger; i++) {
@@ -302,6 +345,8 @@ void LoggingScheduler::Init() {
     t.detach();
   }
 }
+
+void LoggingScheduler::Cleanup() { log_manager->ResetFrontendLoggers(); }
 
 }  // End test namespace
 }  // End peloton namespace

@@ -27,6 +27,7 @@ BackendLogger::BackendLogger()
       persist_buffer_pool_(
           std::unique_ptr<BufferPool>(new CircularBufferPool())) {
   logger_type = LOGGER_TYPE_BACKEND;
+  backend_pool.reset(new VarlenPool(BACKEND_TYPE_MM));
   frontend_logger_id = -1;
 }
 
@@ -67,7 +68,7 @@ void BackendLogger::Log(LogRecord *record) {
 
   this->log_buffer_lock.Lock();
   if (!log_buffer_) {
-    LOG_INFO("Acquire the first log buffer in backend logger");
+    LOG_TRACE("Acquire the first log buffer in backend logger");
     this->log_buffer_lock.Unlock();
     std::unique_ptr<LogBuffer> new_buff =
         std::move(available_buffer_pool_->Get());
@@ -91,7 +92,7 @@ void BackendLogger::Log(LogRecord *record) {
   }
 
   if (!log_buffer_->WriteRecord(record)) {
-    LOG_INFO("Log buffer is full - Attempt to acquire a new one");
+    LOG_TRACE("Log buffer is full - Attempt to acquire a new one");
     // put back a buffer
     max_log_id_buffer = 0;  // reset
     persist_buffer_pool_->Put(std::move(log_buffer_));
@@ -118,6 +119,7 @@ void BackendLogger::Log(LogRecord *record) {
 std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
   std::pair<cid_t, cid_t> ret(INVALID_CID, INVALID_CID);
+  // prepare the cid's seen so far
   if (logging_cid_lower_bound != INVALID_CID ||
       (log_buffer_ && log_buffer_->GetSize() > 0)) {
     ret.second = highest_logged_commit_message;
@@ -127,7 +129,7 @@ std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   }
   if (log_buffer_ && log_buffer_->GetSize() > 0) {
     // put back a buffer
-    LOG_INFO(
+    LOG_TRACE(
         "Move the current log buffer to buffer pool, "
         "highest_logged_commit_message: %d, logging_cid_lower_bound: %d",
         (int)highest_logged_commit_message, (int)logging_cid_lower_bound);
@@ -136,7 +138,6 @@ std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Unlock();
 
   auto num_log_buffer = persist_buffer_pool_->GetSize();
-  // LOG_INFO("Collect %u log buffers from backend logger", num_log_buffer);
   while (num_log_buffer > 0) {
     local_queue.push_back(persist_buffer_pool_->Get());
     num_log_buffer--;

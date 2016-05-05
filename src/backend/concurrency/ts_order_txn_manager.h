@@ -45,20 +45,19 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const ItemPointer &location);
 
-  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const ItemPointer &location);
 
-  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformUpdate(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformUpdate(const ItemPointer &location);
 
-  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformDelete(const ItemPointer &location);
 
   virtual Result CommitTransaction();
 
@@ -70,35 +69,21 @@ class TsOrderTxnManager : public TransactionManager {
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
 
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
 
     return txn;
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
 
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-      {
-        auto iter = running_txn_buckets_[i].lock_table();
-        for (auto &it : iter) {
-          if (it.second < min_running_cid) {
-            min_running_cid = it.second;
-          }
-        }
-      }
-    }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
-    return min_running_cid - 1;
-  }
 
  private:
   inline cid_t GetLastReaderCid(
@@ -120,8 +105,6 @@ class TsOrderTxnManager : public TransactionManager {
       memcpy(reserved_field, &last_read_ts, sizeof(cid_t));
     }
   }
-
-  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 
 };
 }

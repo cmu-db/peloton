@@ -31,7 +31,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   raw_database.CollectRawForeignKeys();
 
   // create the database with current database id
-  elog(DEBUG5, "Initializing database %s(%lu) in Peloton",
+  elog(DEBUG5, "Initializing database %s(%u) in Peloton",
        raw_database.GetDbName().c_str(), raw_database.GetDbOid());
 
   bool status = raw_database.CreateDatabase();

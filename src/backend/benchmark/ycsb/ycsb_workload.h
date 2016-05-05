@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 
@@ -27,7 +28,7 @@ extern configuration state;
 
 extern storage::DataTable* user_table;
 
-double RunWorkload();
+void RunWorkload();
 
 }  // namespace ycsb
 }  // namespace benchmark

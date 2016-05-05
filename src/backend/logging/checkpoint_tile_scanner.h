@@ -32,6 +32,7 @@ class CheckpointTileScanner {
 
   ~CheckpointTileScanner() {}
 
+  //Scan a tile group r.w.t start_cid
   std::unique_ptr<executor::LogicalTile> Scan(
       std::shared_ptr<storage::TileGroup>,
       const std::vector<oid_t> &column_ids, cid_t start_cid);

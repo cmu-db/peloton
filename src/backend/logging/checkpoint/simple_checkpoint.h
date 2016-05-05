@@ -15,6 +15,7 @@
 #include "backend/logging/checkpoint.h"
 #include "backend/logging/log_record.h"
 #include "backend/executor/seq_scan_executor.h"
+#include <memory>
 
 #include <thread>
 
@@ -31,7 +32,7 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint();
+  SimpleCheckpoint(bool test_mode);
   ~SimpleCheckpoint();
 
   // Inherited functions
@@ -49,6 +50,10 @@ class SimpleCheckpoint : public Checkpoint {
 
   std::vector<std::shared_ptr<LogRecord>> GetRecords();
 
+  inline void SetStartCommitId(cid_t start_commit_id) {
+    start_commit_id_ = start_commit_id;
+  }
+
  private:
   void CreateFile();
 
@@ -62,14 +67,14 @@ class SimpleCheckpoint : public Checkpoint {
 
   FileHandle file_handle_ = INVALID_FILE_HANDLE;
 
-  BackendLogger *logger_ = nullptr;
+  std::unique_ptr<BackendLogger> logger_;
 
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
   oid_t max_oid_ = 0;
 
   // commit id of current checkpoint
-  cid_t start_commit_id = 0;
+  cid_t start_commit_id_ = 0;
 };
 
 }  // namespace logging

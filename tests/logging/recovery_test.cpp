@@ -10,6 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <dirent.h>
+
 #include "harness.h"
 
 #include "backend/concurrency/transaction_manager_factory.h"
@@ -17,6 +22,13 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/storage/table_factory.h"
+#include "backend/logging/log_manager.h"
+#include "backend/index/index.h"
+
+#include "backend/logging/logging_util.h"
+
+#include "logging/logging_tests_util.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
@@ -83,6 +95,171 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
     tuples.push_back(tuple);
   }
   return tuples;
+}
+
+TEST_F(RecoveryTests, RestartTest) {
+  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
+  auto &manager = catalog::Manager::GetInstance();
+
+  size_t tile_group_size = 5;
+  size_t table_tile_group_count = 3;
+  int num_files = 3;
+
+  auto mutate = true;
+  auto random = false;
+  cid_t default_commit_id = INVALID_CID;
+  cid_t default_delimiter = INVALID_CID;
+
+  std::string dir_name = "pl_log0";
+  storage::Database db(DEFAULT_DB_ID);
+  manager.AddDatabase(&db);
+  db.AddTable(recovery_table);
+
+  int num_rows = tile_group_size * table_tile_group_count;
+  std::vector<std::shared_ptr<storage::Tuple>> tuples =
+      LoggingTestsUtil::BuildTuples(recovery_table, num_rows + 2, mutate,
+                                    random);
+
+  std::vector<logging::TupleRecord> records =
+      LoggingTestsUtil::BuildTupleRecordsForRestartTest(
+          tuples, tile_group_size, table_tile_group_count, 1, 1);
+
+  logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
+
+  auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
+  EXPECT_EQ(status, true);
+
+  for (int i = 0; i < num_files; i++) {
+    std::string file_name = dir_name + "/" + std::string("peloton_log_") +
+                            std::to_string(i) + std::string(".log");
+    FILE *fp = fopen(file_name.c_str(), "wb");
+
+    // now set the first 8 bytes to 0 - this is for the max_log id in this file
+    fwrite((void *)&default_commit_id, sizeof(default_commit_id), 1, fp);
+
+    // now set the next 8 bytes to 0 - this is for the max delimiter in this
+    // file
+    fwrite((void *)&default_delimiter, sizeof(default_delimiter), 1, fp);
+
+    // First write a begin record
+    CopySerializeOutput output_buffer_begin;
+    logging::TransactionRecord record_begin(LOGRECORD_TYPE_TRANSACTION_BEGIN,
+                                            i + 2);
+    record_begin.Serialize(output_buffer_begin);
+
+    fwrite(record_begin.GetMessage(), sizeof(char),
+           record_begin.GetMessageLength(), fp);
+
+    // Now write 5 insert tuple records into this file
+    for (int j = 0; j < (int)tile_group_size; j++) {
+      int num_record = i * tile_group_size + j;
+      CopySerializeOutput output_buffer;
+      records[num_record].Serialize(output_buffer);
+
+      fwrite(records[num_record].GetMessage(), sizeof(char),
+             records[num_record].GetMessageLength(), fp);
+    }
+
+    // Now write 1 extra out of range tuple, only in file 0, which
+    // is present at the second-but-last position of this list
+    if (i == 0) {
+      CopySerializeOutput output_buffer_extra;
+      records[num_files * tile_group_size].Serialize(output_buffer_extra);
+
+      fwrite(records[num_files * tile_group_size].GetMessage(), sizeof(char),
+             records[num_files * tile_group_size].GetMessageLength(), fp);
+    }
+
+    // Now write 1 extra delete tuple, only in the last file, which
+    // is present at the end of this list
+    if (i == num_files - 1) {
+      CopySerializeOutput output_buffer_delete;
+      records[num_files * tile_group_size + 1].Serialize(output_buffer_delete);
+
+      fwrite(records[num_files * tile_group_size + 1].GetMessage(),
+             sizeof(char),
+             records[num_files * tile_group_size + 1].GetMessageLength(), fp);
+    }
+
+    // Now write commit
+    logging::TransactionRecord record_commit(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+                                             i + 2);
+
+    CopySerializeOutput output_buffer_commit;
+    record_commit.Serialize(output_buffer_commit);
+
+    fwrite(record_commit.GetMessage(), sizeof(char),
+           record_commit.GetMessageLength(), fp);
+
+    // Now write delimiter
+    CopySerializeOutput output_buffer_delim;
+    logging::TransactionRecord record_delim(LOGRECORD_TYPE_ITERATION_DELIMITER,
+                                            i + 2);
+
+    record_delim.Serialize(output_buffer_delim);
+
+    fwrite(record_delim.GetMessage(), sizeof(char),
+           record_delim.GetMessageLength(), fp);
+
+    fclose(fp);
+  }
+
+  LOG_INFO("All files created and written to.");
+  int index_count = recovery_table->GetIndexCount();
+  LOG_INFO("Number of indexes on this table: %d", (int)index_count);
+
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = recovery_table->GetIndex(index_itr);
+    EXPECT_EQ(index->GetNumberOfTuples(), 0);
+  }
+
+  logging::WriteAheadFrontendLogger wal_fel(std::string("pl_log"));
+
+  EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files + 1);
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files);
+
+  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  wal_fel.DoRecovery();
+
+  EXPECT_EQ(recovery_table->GetNumberOfTuples(),
+            tile_group_size * table_tile_group_count - 1);
+  EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
+
+  txn_manager.SetNextCid(5);
+  wal_fel.RecoverIndex();
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = recovery_table->GetIndex(index_itr);
+    EXPECT_EQ(index->GetNumberOfTuples(),
+              tile_group_size * table_tile_group_count - 1);
+  }
+
+  // TODO check a few more invariants here
+  wal_fel.CreateNewLogFile(false);
+
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 1);
+
+  wal_fel.TruncateLog(4);
+
+  for (int i = 1; i <= 2; i++) {
+    struct stat stat_buf;
+    EXPECT_NE(stat((dir_name + "/" + std::string("peloton_log_") +
+                    std::to_string(i) + std::string(".log")).c_str(),
+                   &stat_buf),
+              0);
+  }
+
+  wal_fel.CreateNewLogFile(true);
+
+  EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
+
+  status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
+  EXPECT_EQ(status, true);
 }
 
 TEST_F(RecoveryTests, BasicInsertTest) {

@@ -156,7 +156,7 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
 }
 
 TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {
-  unsigned int txn_count = 1000000;
+  unsigned int txn_count = 9999;
 
   auto &log_manager = logging::LogManager::GetInstance();
   logging::LogManager::GetInstance().Configure(LOGGING_TYPE_NVM_WAL, true);

@@ -11,6 +11,9 @@
  */
 
 #include "backend/logging/logging_util.h"
+#include <sys/stat.h>
+#include <dirent.h>
+#include <cstring>
 
 namespace peloton {
 namespace logging {
@@ -259,6 +262,57 @@ int LoggingUtil::GetFileSizeFromFileName(const char *file_name) {
   if (ret_val == 0) return st.st_size;
 
   return -1;
+}
+
+bool LoggingUtil::CreateDirectory(const char *dir_name, int mode) {
+  int return_val = mkdir(dir_name, mode);
+  if (return_val == 0) {
+    LOG_INFO("Created directory %s successfully", dir_name);
+  } else if (errno == EEXIST) {
+    LOG_INFO("Directory %s already exists", dir_name);
+  } else {
+    LOG_WARN("Creating directory failed: %s", strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+/**
+ * @return false if fail to remove directory
+ */
+bool LoggingUtil::RemoveDirectory(const char *dir_name, bool only_remove_file) {
+  struct dirent *file;
+  DIR *dir;
+
+  dir = opendir(dir_name);
+  if (dir == nullptr) {
+    return true;
+  }
+
+  // XXX readdir is not thread safe???
+  while ((file = readdir(dir)) != nullptr) {
+    if (strcmp(file->d_name, ".") == 0 || strcmp(file->d_name, "..") == 0) {
+      continue;
+    }
+    char complete_path[256];
+    strcpy(complete_path, dir_name);
+    strcat(complete_path, "/");
+    strcat(complete_path, file->d_name);
+    auto ret_val = remove(complete_path);
+    if (ret_val != 0) {
+      LOG_ERROR("Failed to delete file: %s, error: %s", complete_path,
+                strerror(errno));
+    }
+  }
+  closedir(dir);
+  if (!only_remove_file) {
+    auto ret_val = remove(dir_name);
+    if (ret_val != 0) {
+      LOG_ERROR("Failed to delete dir: %s, error: %s", file->d_name,
+                strerror(errno));
+    }
+  }
+  return true;
 }
 
 }  // namespace logging

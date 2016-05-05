@@ -29,7 +29,7 @@ void Usage(FILE* out) {
   fprintf(out,
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -l --logging-type      :  Logging type \n"
+          "   -l --logging-type      :  Logging type (THIS IS NOW NUM_LOGGERS)\n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
           "   -w --wait-timeout      :  Wait timeout (us) \n"
@@ -42,19 +42,30 @@ void Usage(FILE* out) {
 }
 
 static struct option opts[] = {
-    {"logging-type", optional_argument, NULL, 'l'},
-    {"data-file-size", optional_argument, NULL, 'f'},
     {"experiment-type", optional_argument, NULL, 'e'},
-    {"wait-timeout", optional_argument, NULL, 'w'},
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"transaction_count", optional_argument, NULL, 't'},
+    {"scale_factor", optional_argument, NULL, 'k'},
+    {"duration", optional_argument, NULL, 'd'},
+    {"snapshot_duration", optional_argument, NULL, 's'},
+    {"column_count", optional_argument, NULL, 'c'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
+    {"enable_logging", optional_argument, NULL, 'l'},
+    {"sync_commit", optional_argument, NULL, 'x'},
+    {"wait_time", optional_argument, NULL, 'w'},
+    {"file_size", optional_argument, NULL, 'f'},
+    {"log_buffer_size", optional_argument, NULL, 'z'},
+    {"checkpointer", optional_argument, NULL, 'p'},
+    {"flush_freq", optional_argument, NULL, 'q'},
+
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
-  LOG_INFO("Invalid logging_type :: %s",
-           LoggingTypeToString(state.logging_type).c_str());
+  if (state.logging_type <= LOGGING_TYPE_INVALID) {
+    LOG_ERROR("Invalid logging_type :: %d", state.logging_type);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("Logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
 }
 
 static void ValidateDataFileSize(const configuration& state) {
@@ -134,38 +145,35 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Values
   ycsb::state.scale_factor = 1;
-  ycsb::state.transaction_count = 10000;
+  ycsb::state.duration = 10;
+  ycsb::state.snapshot_duration = 0.1;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
+  ycsb::state.num_loggers = 0;
+  ycsb::state.sync_commit = 0;
+  ycsb::state.wait_timeout = 0;
+  ycsb::state.file_size = 32;
+  ycsb::state.log_buffer_size = 32768;
+  ycsb::state.checkpointer = 0;
+  ycsb::state.flush_freq = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahk:d:s:c:u:b:l:x:w:f:z:p:q:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
-      case 'l':
-        state.logging_type = (LoggingType)atoi(optarg);
-        break;
-      case 'f':
-        state.data_file_size = atoi(optarg);
-        break;
-      case 'e':
-        state.experiment_type = (ExperimentType)atoi(optarg);
-        break;
-      case 'w':
-        state.wait_timeout = atoi(optarg);
-        break;
-
-      // YCSB
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
         break;
-      case 't':
-        ycsb::state.transaction_count = atoi(optarg);
+      case 'd':
+        ycsb::state.duration = atof(optarg);
+        break;
+      case 's':
+        ycsb::state.snapshot_duration = atof(optarg);
         break;
       case 'c':
         ycsb::state.column_count = atoi(optarg);
@@ -176,18 +184,38 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'b':
         ycsb::state.backend_count = atoi(optarg);
         break;
-
+      case 'x':
+        ycsb::state.sync_commit = atoi(optarg);
+        break;
+      case 'l':
+        ycsb::state.num_loggers = atoi(optarg);
+        break;
+      case 'w':
+        ycsb::state.wait_timeout = atol(optarg);
+        break;
+      case 'f':
+        ycsb::state.file_size = atoi(optarg);
+        break;
+      case 'z':
+        ycsb::state.log_buffer_size = atoi(optarg);
+        break;
+      case 'p':
+        ycsb::state.checkpointer = atoi(optarg);
+        break;
+      case 'q':
+        ycsb::state.flush_freq = atoi(optarg);
+        break;
       case 'h':
         Usage(stderr);
+        exit(EXIT_FAILURE);
         break;
-
       default:
         exit(EXIT_FAILURE);
         break;
     }
   }
 
-  // Print configuration
+  // Print configurations
   ValidateLoggingType(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
@@ -199,7 +227,10 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateTransactionCount(ycsb::state);
+  ycsb::ValidateLogging(ycsb::state);
+  ycsb::ValidateDuration(ycsb::state);
+  ycsb::ValidateSnapshotDuration(ycsb::state);
+  //  ycsb::ValidateFlushFreq(ycsb::state);
 }
 
 }  // namespace logger
