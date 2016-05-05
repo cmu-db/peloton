@@ -13,6 +13,7 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <thread>
 
 #include "backend/planner/hybrid_scan_plan.h"
 #include "backend/executor/hybrid_scan_executor.h"
@@ -47,8 +48,8 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 10000;
 static size_t tile_group = 100;
-static float scalar = 0.1;
-static size_t iter = 120;
+static float scalar = 0.9;
+static size_t iter = 100;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -424,13 +425,13 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
 
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
-
+    printf("finsih index %d\n", start_tile_group_count);
     index->IncreamentIndexedTileGroupOff();
     start_tile_group_count++;
   }
 }
 
-TEST_F(HybridIndexTests, SeqScanTest) {
+/*TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -448,7 +449,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
-
+*/
 
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -477,8 +478,10 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 
   std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table.get());
 
-  for (size_t i = 0; i < iter; i++)
+  for (size_t i = 0; i < iter; i++) {
+    sleep(2);
     LaunchHybridScan(hyadapt_table);
+  }
 
   index_builder.join();
 }
