@@ -32,6 +32,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/statistics/stats_aggregator.h"
 
 #include "postgres.h"
 #include "c.h"
