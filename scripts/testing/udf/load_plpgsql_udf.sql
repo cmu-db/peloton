@@ -95,7 +95,7 @@ $$ DECLARE
     sql text := '';
     tmp text := '';
 BEGIN
-    sql := 'SELECT n || '' down'' AS countdown
+    sql := 'SELECT n AS countdown
             FROM generate_series(' || CAST(start AS text) || ', 1, -1) AS n ';
     FOR tmp IN EXECUTE(sql) LOOP
         IF result > '' THEN
