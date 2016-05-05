@@ -41,6 +41,7 @@ class Checkpoint {
 
   virtual ~Checkpoint(void) { pool.reset(); }
 
+  // Main body of the checkpoint thread
   void MainLoop(void);
 
   // Do checkpoint periodically
@@ -63,14 +64,18 @@ class Checkpoint {
 
   void InitDirectory();
 
+  // whether file access is disabled. mainly used for testing
   bool disable_file_access = false;
 
   // Default checkpoint interval (seconds)
+  //TODO set interval to configurable variable
   int64_t checkpoint_interval_ = 5;
 
   // variable length memory pool
+  //TODO better periodically clean up varlen pool?
   std::unique_ptr<VarlenPool> pool;
 
+  //TODO set directory to configurable variables
   std::string checkpoint_dir = "pl_checkpoint";
 
   // the version of next checkpoint
@@ -85,6 +90,7 @@ class Checkpoint {
   // current status
   CheckpointStatus checkpoint_status = CHECKPOINT_STATUS_INVALID;
 
+  // the most recent successful checkpoint cid
   cid_t most_recent_checkpoint_cid = INVALID_CID;
 
  private:

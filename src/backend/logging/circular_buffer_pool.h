@@ -32,10 +32,13 @@ class CircularBufferPool : public BufferPool {
 
   ~CircularBufferPool();
 
+  // put a buffer to buffer pool. blocks if over capacity
   bool Put(std::unique_ptr<LogBuffer>);
 
+  // get a buffer from buffer pool. blocks if none available
   std::unique_ptr<LogBuffer> Get();
 
+  // get the number of buffers available
   unsigned int GetSize();
 
  private:

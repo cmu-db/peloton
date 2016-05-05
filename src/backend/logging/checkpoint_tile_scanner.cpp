@@ -47,7 +47,8 @@ std::unique_ptr<executor::LogicalTile> CheckpointTileScanner::Scan(
   return std::move(logical_tile);
 }
 
-// Visibility check
+// Same visibility check logic as optimistic concurrency control
+//where dirty read is not allowed
 bool CheckpointTileScanner::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, cid_t start_cid) {

@@ -36,6 +36,7 @@ class CheckpointManager {
 
   void WaitForModeTransition(CheckpointStatus checkpoint_status, bool is_equal);
 
+  // start standby mode for checkpointers
   void StartStandbyMode();
 
   // Check whether the checkpointer is in checkpointing mode
@@ -43,6 +44,7 @@ class CheckpointManager {
     return (checkpoint_status_ == CHECKPOINT_STATUS_CHECKPOINTING);
   }
 
+  // start recovery mode for checkpointers
   void StartRecoveryMode();
 
   // Checkpoint status
@@ -50,8 +52,10 @@ class CheckpointManager {
 
   CheckpointStatus GetCheckpointStatus();
 
+  // get a checkpointer by index
   Checkpoint *GetCheckpointer(unsigned int idx);
 
+  // initialize a list of checkpointers
   void InitCheckpointers();
 
   // configuration
@@ -62,6 +66,7 @@ class CheckpointManager {
     num_checkpointers_ = num_checkpointers;
   }
 
+  // remove all checkpointers
   void DestroyCheckpointers();
 
   void SetRecoveredCid(cid_t recovered_cid);
@@ -75,7 +80,7 @@ class CheckpointManager {
   // static configurations for logging
   CheckpointType checkpoint_type_ = CHECKPOINT_TYPE_INVALID;
 
-  // whether run checkpoint in test mode
+  // mainly used for testing
   bool disable_file_access_ = false;
 
   // to be used in the future
