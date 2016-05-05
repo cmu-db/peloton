@@ -47,7 +47,7 @@ class StorageManager {
   void *data_file_address;
 
   // pmem file synch mutex
-  std::mutex pmem_mutex;
+  Spinlock data_file_spinlock;
 
   // pmem file len
   size_t data_file_len;
