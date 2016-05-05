@@ -284,7 +284,8 @@ private:
       return;
     }
     //LOG_INFO("ENTER: strlen: %zu", strlen(src));
-    for(unsigned int i = 0; i < strlen(src); i++){
+    size_t len = strlen(src);
+    for(unsigned int i = 0; i < len; i++){
       dst.push_back((unsigned char)src[i]);
     }
     //LOG_INFO("EXIT: strlen: %zu", strlen(src));
