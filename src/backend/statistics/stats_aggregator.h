@@ -16,8 +16,13 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
+#include <condition_variable>
+
 
 #include "backend/statistics/backend_stats_context.h"
+
+#define STATS_AGGREGATION_INTERVAL_MS 1000
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -53,8 +58,14 @@ class StatsAggregator {
   inline void RegisterContext(std::thread::id id_, BackendStatsContext *context_) {
     stats_mutex.lock();
 
-    backend_stats[id_] = context_;
-    thread_number++;
+    if (backend_stats.find(id_) == backend_stats.end()) {
+
+      backend_stats[id_] = context_;
+      thread_number++;
+      printf("hash map size: %ld\n", backend_stats.size());
+
+      std::cout << id_ << std::endl;
+    }
 
     stats_mutex.unlock();
   }
@@ -62,15 +73,23 @@ class StatsAggregator {
   inline void UnregisterContext(std::thread::id id_) {
     stats_mutex.lock();
 
-    backend_stats.erase(id_);
-    thread_number--;
+    if (backend_stats.find(id_) != backend_stats.end()) {
+      printf("hash map size: %ld\n", backend_stats.size());
+      backend_stats.erase(id_);
+      printf("unregister: %d\n", thread_number);
+      thread_number--;
 
-    printf("unregister: %d\n", thread_number);
+      //printf("unregister: %d\n", thread_number);
+      printf("hash map size: %ld\n", backend_stats.size());
+      std::cout << id_ << std::endl;
+    }
 
     stats_mutex.unlock();
   }
 
   BackendStatsContext *GetBackendStatsContext();
+
+  void RunAggregator();
 
  private:
   StatsAggregator();
@@ -84,6 +103,12 @@ class StatsAggregator {
   std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
 
   int thread_number;
+
+  // Stats aggregator background thread
+  std::thread aggregator_thread;
+
+  // CV to signal aggregator if finished
+  std::condition_variable exec_finished;
 };
 
 }  // namespace stats

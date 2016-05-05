@@ -34,8 +34,13 @@ BackendStatsContext::BackendStatsContext() {
 }
 
 BackendStatsContext::~BackendStatsContext() {
-  peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
+  //peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
 
+}
+
+void BackendStatsContext::Aggregtate(BackendStatsContext &source_) {
+  txn_committed.Aggregate(source_.txn_committed);
+  txn_aborted.Aggregate(source_.txn_aborted);
 }
 
 

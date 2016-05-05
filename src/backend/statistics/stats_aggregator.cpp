@@ -36,9 +36,27 @@ thread_local BackendStatsContext* backend_stats_context = nullptr;
 
 StatsAggregator::StatsAggregator() {
   thread_number = 0;
+
+  aggregator_thread = std::thread(&StatsAggregator::RunAggregator, this);
 }
 
 StatsAggregator::~StatsAggregator() {
+  printf("StatsAggregator destruction\n");
+  exec_finished.notify_one();
+  aggregator_thread.join();
+}
+
+void StatsAggregator::RunAggregator() {
+  std::mutex mtx;
+   std::unique_lock<std::mutex> lck(mtx);
+   while (exec_finished.wait_for(lck,
+         std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
+       ) {
+     printf("epoch!\n");
+
+   }
+   printf("Aggregator done!\n");
+
 }
 
 /**

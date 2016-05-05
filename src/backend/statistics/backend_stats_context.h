@@ -42,6 +42,8 @@ class BackendStatsContext {
     return thread_id;
   }
 
+  void Aggregtate(BackendStatsContext &source);
+
   // Global metrics
   CounterMetric txn_committed{MetricType::COUNTER_METRIC};
   CounterMetric txn_aborted{MetricType::COUNTER_METRIC};
