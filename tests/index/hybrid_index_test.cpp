@@ -196,7 +196,7 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound, const 
       constant_value_expr_right);
  
   expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR, predicate_left, predicate_right);
+      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND, predicate_left, predicate_right);
  
   return predicate;
 }
@@ -259,7 +259,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
-//  EXPECT_EQ(tuple_counts, 11);
+  EXPECT_EQ(tuple_counts, (tile_group * tuples_per_tile_group * 0.3) + 1);
 //  EXPECT_EQ(tuple_counts,
 //            tile_group * tuples_per_tile_group -
 //              (tile_group * tuples_per_tile_group * scalar + 0));
