@@ -20,6 +20,7 @@
 namespace peloton {
 namespace logging {
 
+// create a backend logger
 BackendLogger::BackendLogger()
     : log_buffer_(std::unique_ptr<LogBuffer>(nullptr)),
       available_buffer_pool_(
@@ -31,6 +32,7 @@ BackendLogger::BackendLogger()
   frontend_logger_id = -1;
 }
 
+// destroy and cleanup
 BackendLogger::~BackendLogger() {
   auto &log_manager = LogManager::GetInstance();
   if (!shutdown && frontend_logger_id != -1) {
@@ -41,7 +43,7 @@ BackendLogger::~BackendLogger() {
 }
 
 /**
- * @brief Return the backend logger based on logging type
+ * @brief create and eturn the backend logger based on logging type
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
@@ -59,7 +61,7 @@ BackendLogger *BackendLogger::GetBackendLogger(LoggingType logging_type) {
 }
 
 /**
- * @brief log LogRecord
+ * @brief log log a log record
  * @param log record
  */
 void BackendLogger::Log(LogRecord *record) {
@@ -86,6 +88,7 @@ void BackendLogger::Log(LogRecord *record) {
   // update the max logged id for the current buffer
   cid_t cur_log_id = record->GetTransactionId();
 
+  // set if this is the max log_id seen so far
   if (cur_log_id > max_log_id_buffer) {
     log_buffer_->SetMaxLogId(cur_log_id);
     max_log_id_buffer = cur_log_id;
@@ -116,6 +119,9 @@ void BackendLogger::Log(LogRecord *record) {
   this->log_buffer_lock.Unlock();
 }
 
+// used by the frontend logger to collect data on the current state of the backend
+// returns a pair of commit ids, the first is the lower bound for values this logger may
+// commit, The second is the maximum id this worker has committed
 std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
   std::pair<cid_t, cid_t> ret(INVALID_CID, INVALID_CID);
@@ -145,10 +151,13 @@ std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   return ret;
 }
 
+// this method is used by the frontend logger to give back flushed buffers to
+// be used by the backend logger
 void BackendLogger::GrantEmptyBuffer(std::unique_ptr<LogBuffer> empty_buffer) {
   available_buffer_pool_->Put(std::move(empty_buffer));
 }
 
+// set when the frontend logger is shutting down, prevents deadlock between frontend and backend
 void BackendLogger::SetShutdown(bool val) { shutdown = val; }
 }  // namespace logging
 }
