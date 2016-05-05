@@ -414,10 +414,11 @@ typedef enum LoggingType {
 } LoggingType;
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
-    {"invalid", LOGGING_TYPE_INVALID, false},
-    {"aries", LOGGING_TYPE_NVM_WAL, false},
-    {"peloton", LOGGING_TYPE_NVM_WBL, false},
-    {NULL, 0, false}};
+  {"invalid", LOGGING_TYPE_INVALID, false},
+  {"aries", LOGGING_TYPE_NVM_WAL, false},
+  {"peloton", LOGGING_TYPE_NVM_WBL, false},
+  {NULL, 0, false}
+};
 
 /* Possible values for peloton_gc_mode GUC */
 typedef enum GCType {

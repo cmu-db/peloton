@@ -83,15 +83,18 @@ class FrontendLogger : public Logger {
   // reset the frontend logger to its original state (for testing
   void Reset() {
     backend_loggers_lock.Lock();
+
     for (auto backend_logger : backend_loggers) {
       backend_logger->SetShutdown(true);
       delete backend_logger;
     }
+
     fsync_count = 0;
     max_flushed_commit_id = 0;
     max_collected_commit_id = 0;
     max_seen_commit_id = 0;
     global_queue.clear();
+
     backend_loggers.clear();
     backend_loggers_lock.Unlock();
   }

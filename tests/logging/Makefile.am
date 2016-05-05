@@ -33,4 +33,3 @@ checkpoint_test_SOURCES = \
 logging_util_test_SOURCES = \
 							$(logging_tests_common) \
 							logging/logging_util_test.cpp 
-

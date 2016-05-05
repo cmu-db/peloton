@@ -32,11 +32,19 @@ class WriteBehindBackendLogger : public BackendLogger {
 
   WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
 
+  void Log(LogRecord *record);
+
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
                             oid_t table_oid, oid_t db_oid,
                             ItemPointer insert_location,
                             ItemPointer delete_location,
                             const void *data = nullptr);
+
+  void CollectRecordsAndClear(
+      std::vector<std::unique_ptr<LogRecord>> &frontend_queue);
+
+ private:
+  std::vector<std::unique_ptr<LogRecord>> wbl_record_queue;
 };
 
 }  // namespace logging
