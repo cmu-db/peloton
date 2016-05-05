@@ -87,9 +87,9 @@ END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
 
-DROP FUNCTION IF EXISTS countdown(integer);
+DROP FUNCTION IF EXISTS countdown_plpgsql(integer);
 
-CREATE OR REPLACE FUNCTION countdown(start integer) RETURNS text AS
+CREATE OR REPLACE FUNCTION countdown_plpgsql(start integer) RETURNS text AS
 $$ DECLARE
     result text := '';
     sql text := '';
@@ -109,9 +109,9 @@ END;
 $$ LANGUAGE 'plpgsql' IMMUTABLE;
 
 
-DROP FUNCTION IF EXISTS fib(integer);
+DROP FUNCTION IF EXISTS fib_plpgsql(integer);
 
-CREATE OR REPLACE FUNCTION fib(num integer) RETURNS integer AS
+CREATE OR REPLACE FUNCTION fib_plpgsql(num integer) RETURNS integer AS
 $$
 DECLARE
     result int := 0;
