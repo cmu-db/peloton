@@ -44,8 +44,6 @@ class LogFile {
 
   void SetLogFileSize(int);
 
-  FILE *GetFilePtr();
-
   void SetLogFileFD(int);
 
   void SetFilePtr(FILE *);
@@ -57,9 +55,6 @@ class LogFile {
  private:
   FileHandle file_handle_;
   std::string log_file_name_;
-  // FILE *log_file_;
-  // int log_file_fd_;
-  // int log_file_size_;
   int log_number_;
   cid_t max_log_id_file_;
   cid_t max_delimiter_file_;

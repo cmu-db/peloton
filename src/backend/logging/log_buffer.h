@@ -24,18 +24,19 @@ class BackendLogger;
 //===--------------------------------------------------------------------===//
 // Log Buffer
 //===--------------------------------------------------------------------===//
-
-// TODO make capacity_ template parameter
 class LogBuffer {
  public:
   LogBuffer(BackendLogger *);
 
   ~LogBuffer(void){};
 
+  // get serialized data field
   char *GetData();
 
+  // serialize and write a log record to buffer
   bool WriteRecord(LogRecord *);
 
+  // clean up and reset content
   void ResetData();
 
   size_t GetSize();
@@ -63,6 +64,7 @@ class LogBuffer {
 
   BackendLogger *backend_logger_;
 
+  //maximum log id seen so far
   cid_t max_log_id = 0;
 };
 

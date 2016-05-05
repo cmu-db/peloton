@@ -48,7 +48,7 @@ extern thread_local EagerWriteTxnContext *current_txn_ctx;
 //===--------------------------------------------------------------------===//
 class EagerWriteTxnManager : public TransactionManager {
  public:
-  EagerWriteTxnManager() {}
+  EagerWriteTxnManager() : last_epoch_(0) {}
   virtual ~EagerWriteTxnManager() {}
 
   static EagerWriteTxnManager &GetInstance();
@@ -68,20 +68,19 @@ class EagerWriteTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const ItemPointer &location);
 
-  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const ItemPointer &location);
 
-  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformUpdate(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformUpdate(const ItemPointer &location);
 
-  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformDelete(const ItemPointer &location);
 
   virtual Result CommitTransaction();
 
@@ -101,6 +100,11 @@ class EagerWriteTxnManager : public TransactionManager {
       std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
       running_txn_map_[txn_id] = txn_ctx;
     }
+
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
     return txn;
   }
 
@@ -119,10 +123,13 @@ class EagerWriteTxnManager : public TransactionManager {
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_--;
+          assert(running_txn_map_[wtid]->wait_for_counter_ >= 0);
         }
       }
       running_txn_map_.erase(txn_id);
     }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     delete current_txn_ctx;
@@ -130,31 +137,8 @@ class EagerWriteTxnManager : public TransactionManager {
     current_txn_ctx = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    {
-      std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
-      for (auto &it : running_txn_map_) {
-        if (it.second->begin_cid_ < min_running_cid) {
-          min_running_cid = it.second->begin_cid_;
-        }
-      }
-    }
-
-    assert(min_running_cid > 0);
-    return min_running_cid - 1;
-  }
 
  private:
-#define READ_COUNT_MASK 0xFF
-#define TXNID_MASK 0x00FFFFFFFFFFFFFF
-  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
-    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
-  }
-  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
-  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
-    return (txn_id >> 56) & READ_COUNT_MASK;
-  }
 
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
@@ -195,19 +179,20 @@ class EagerWriteTxnManager : public TransactionManager {
   }
 
   // Add the current txn into the reader list of a tuple
+  // note: should be protected in EwReaderLock
   void AddReader(storage::TileGroupHeader *tile_group_header,
                  const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
-    LOG_INFO("Add reader %lu, tuple_id = %lu", txn_id, tuple_id);
+    LOG_INFO("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
 
     TxnList *reader = new TxnList(txn_id);
 
-    GetEwReaderLock(tile_group_header, tuple_id);
+    // GetEwReaderLock(tile_group_header, tuple_id);
     TxnList *headp = (TxnList *)(
         tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
     reader->next = headp->next;
     headp->next = reader;
-    ReleaseEwReaderLock(tile_group_header, tuple_id);
+    // ReleaseEwReaderLock(tile_group_header, tuple_id);
   }
 
   // Remove reader from the reader list of a tuple
@@ -243,27 +228,12 @@ class EagerWriteTxnManager : public TransactionManager {
 
   bool CauseDeadLock();
 
-  void DecreaseReaderCount(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
-  inline void AtomicSetOnlyTxnId(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, txn_id_t tid) {
-    auto old_tid = tile_group_header->GetTransactionId(tuple_id);
-    while (true) {
-      auto new_tid = PACK_TXNID(tid, EXTRACT_READ_COUNT(old_tid));
-      auto real_tid =
-          tile_group_header->SetAtomicTransactionId(tuple_id, old_tid, new_tid);
-      if (real_tid == old_tid) return;
-      old_tid = real_tid;
-    }
-  }
-
   std::mutex running_txn_map_mutex_;
   std::unordered_map<txn_id_t, EagerWriteTxnContext *> running_txn_map_;
   static const int LOCK_OFFSET = 0;
   static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
+  cid_t last_epoch_;
+  cid_t last_max_commit_cid_;
 };
 }
 }

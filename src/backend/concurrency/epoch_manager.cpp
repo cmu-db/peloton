@@ -2,22 +2,21 @@
 //
 //                         Peloton
 //
-// plan_util.h
+// epoch_manager.cpp
 //
-// Identification: src/backend/planner/plan_util.h
+// Identification: src/backend/concurrency/epoch_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
 
-#include "backend/planner/abstract_plan.h"
+#include "epoch_manager.h"
 
 namespace peloton {
-namespace planner {
+namespace concurrency {
 
-AbstractPlan *GetEmptyPlanNode(PlanNodeType type);
+//  volatile cid_t EpochManager::curr_epoch_ = 1;
 
-}  // namespace planner
-}  // namespace peloton
+}
+}

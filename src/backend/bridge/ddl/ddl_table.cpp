@@ -243,7 +243,7 @@ bool DDLTable::DropTable(Oid table_oid) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   if (database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %lu table oid : %u",
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u",
              database_oid, table_oid);
     return false;
   }

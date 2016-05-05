@@ -21,6 +21,7 @@
 #include "backend/logging/log_record.h"
 #include "backend/logging/log_buffer.h"
 #include "backend/common/platform.h"
+#include "backend/common/pool.h"
 #include "backend/logging/circular_buffer_pool.h"
 
 namespace peloton {
@@ -84,6 +85,8 @@ class BackendLogger : public Logger {
 
   void SetShutdown(bool);
 
+  VarlenPool *GetVarlenPool() { return backend_pool.get(); }
+
  protected:
   // the lock for the buffer being used currently
   Spinlock log_buffer_lock;
@@ -109,6 +112,8 @@ class BackendLogger : public Logger {
 
   // the pool of buffers to persist
   std::unique_ptr<BufferPool> persist_buffer_pool_;
+
+  std::unique_ptr<VarlenPool> backend_pool;
 
   bool shutdown = false;
 };
