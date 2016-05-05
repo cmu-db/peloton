@@ -47,7 +47,7 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 10000;
 static size_t tile_group = 100;
-static float scalar = 0.3;
+static float scalar = 0.1;
 static size_t iter = 120;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
@@ -157,7 +157,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
   // Finally, link them together using an greater than expression.
   expression::AbstractExpression *predicate =
     expression::ExpressionUtil::ComparisonFactory(
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, tuple_value_expr,
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, tuple_value_expr,
       constant_value_expr);
 
   return predicate;
@@ -217,7 +217,7 @@ void CreateIndexScanPredicate(const int lower,
                               std::vector<ExpressionType>& expr_types,
                               std::vector<Value>& values) {
   expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
+    ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
   values.push_back(ValueFactory::GetIntegerValue(lower));
 }
 
@@ -259,10 +259,10 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   timer.Stop();
   double time_per_transaction = timer.GetDuration();
   LOG_INFO("%f", time_per_transaction);
-  EXPECT_EQ(tuple_counts, (tile_group * tuples_per_tile_group * 0.3) + 1);
-//  EXPECT_EQ(tuple_counts,
-//            tile_group * tuples_per_tile_group -
-//              (tile_group * tuples_per_tile_group * scalar + 0));
+//  EXPECT_EQ(tuple_counts, (tile_group * tuples_per_tile_group * 0.3) + 1);
+  EXPECT_EQ(tuple_counts,
+            tile_group * tuples_per_tile_group -
+              (tile_group * tuples_per_tile_group * scalar + 0));
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -322,7 +322,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  key_column_ids.push_back(0);
+  // key_column_ids.push_back(0);
   CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
 //  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
 //                               tile_group * tuples_per_tile_group * (scalar + 0.3),
@@ -375,7 +375,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  key_column_ids.push_back(0);
+ // key_column_ids.push_back(0);
    CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
 //  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
 //                               tile_group * tuples_per_tile_group * (scalar + 0.3),
