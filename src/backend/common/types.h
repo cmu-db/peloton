@@ -698,6 +698,13 @@ enum TupleSerializationFormat {
 
 enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 
+enum MetricType {
+  TEMPORAL_METRIC = 0,
+  COUNTER_METRIC = 1,
+  ACCESS_METRIC = 2,
+  LIFETIME_METRIC = 3
+};
+
 //===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
