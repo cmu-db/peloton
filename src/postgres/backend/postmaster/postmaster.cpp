@@ -137,6 +137,7 @@
 
 // TODO: Memcached Changes
 #include "postmaster/memcached.h"
+
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
@@ -3598,6 +3599,9 @@ static void restore_backend_variables(BackendParameters *param, Port *port);
 static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
                         bool is_memcached) {
   // free(bn);
+  if(is_memcached){
+    mc_state = new MemcachedState();
+  }
 
   IsBackend = true;
 
@@ -3657,10 +3661,6 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
       (BackendParameters *)malloc(sizeof(BackendParameters));
 
   save_backend_variables(param, port);
-
-  if(is_memcached){
-    mc_state = new MemcachedState();
-  }
 
   elog(DEBUG3, "Launching backend task :: PID: %d, TID: %d", getpid(),
        GetBackendThreadId());

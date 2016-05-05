@@ -173,10 +173,10 @@ typedef struct
 
 /* state struct used by memcached benchamrk */
 
-typedef struct {
+struct MemcachedState{
 	StringInfoData result;
 	/* add memcached return status */
-} MemcachedState;
+};
 
 /*
  * Bit layouts for varlena headers on big-endian machines:
