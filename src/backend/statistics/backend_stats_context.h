@@ -42,11 +42,15 @@ class BackendStatsContext {
     return thread_id;
   }
 
- private:
-  std::thread::id thread_id;
-
+  // Global metrics
   CounterMetric txn_committed{MetricType::COUNTER_METRIC};
   CounterMetric txn_aborted{MetricType::COUNTER_METRIC};
+
+  // Table metrics
+  //std::unordered_map<oid_t, >
+
+ private:
+  std::thread::id thread_id;
 
 };
 

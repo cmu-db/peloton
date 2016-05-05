@@ -27,6 +27,8 @@
 namespace peloton {
 namespace stats {
 
+extern thread_local BackendStatsContext* backend_stats_context;
+
 //===--------------------------------------------------------------------===//
 // Log Manager
 //===--------------------------------------------------------------------===//
