@@ -54,6 +54,13 @@ void StatsAggregator::RunAggregator() {
        ) {
      printf("epoch!\n");
 
+     aggregated_stats.Reset();
+     for(auto& val : backend_stats )
+     {
+       aggregated_stats.Aggregtate((*val.second));
+     }
+     printf("%s\n", aggregated_stats.ToString().c_str());
+
    }
    printf("Aggregator done!\n");
 
