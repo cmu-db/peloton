@@ -80,15 +80,15 @@ class BTreeIndex : public Index {
   oid_t GetIndexedTileGroupOff() {
     oid_t ret = INVALID_OID;
 
-//    index_lock.ReadLock();
+    index_lock.ReadLock();
     ret = indexed_tile_group_offset_;
-//    index_lock.Unlock();
+    index_lock.Unlock();
 
     return ret;
   }
 
   void IncreamentIndexedTileGroupOff() {
-//    index_lock.WriteLock();
+    index_lock.WriteLock();
 
     if (indexed_tile_group_offset_ == INVALID_OID) {
       indexed_tile_group_offset_ = START_OID;
@@ -96,7 +96,7 @@ class BTreeIndex : public Index {
       indexed_tile_group_offset_++;
     }
 
-//    index_lock.Unlock();
+    index_lock.Unlock();
   }
 
  protected:
