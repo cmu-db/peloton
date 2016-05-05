@@ -32,6 +32,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
+#include "backend/statistics/stats_aggregator.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -132,6 +133,8 @@ peloton_bootstrap() {
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
   }
+
+  peloton::stats::StatsAggregator::GetInstance();
 
 }
 
