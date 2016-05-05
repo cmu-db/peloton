@@ -162,7 +162,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile.get();
 
-  LOG_TRACE("Tuple : %lu Column : %lu", base_tuple_id, cp.origin_column_id);
+  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
     return ValueFactory::GetNullValueByType(
         base_tile->GetSchema()->GetType(column_id));
@@ -598,8 +598,8 @@ void LogicalTile::MaterializeRowAtAtATime(
             base_tuple_id, old_column_offsets[col_itr],
             old_column_types[col_itr], old_is_inlineds[col_itr]);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id,
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %lu ", new_tuple_id,
                   new_column_offsets[col_itr]);
 
         dest_tile->SetValueFast(
@@ -671,8 +671,8 @@ void LogicalTile::MaterializeColumnAtATime(
         auto value = old_tile->GetValueFast(base_tuple_id, old_column_offset,
                                             old_column_type, old_is_inlined);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id, new_column_id);
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
 
         dest_tile->SetValueFast(value, new_tuple_id, new_column_offset,
                                 new_is_inlined, new_column_length);
