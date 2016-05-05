@@ -215,6 +215,7 @@ bool HybridScanExecutor::IndexScanUtil() {
       SetOutput(result_[result_itr_]);
       result_itr_++;
       printf("Construct a logical tile in index scan\n");
+
       return true;
     }
   }  // end while

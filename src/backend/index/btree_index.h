@@ -80,18 +80,24 @@ class BTreeIndex : public Index {
   oid_t GetIndexedTileGroupOff() {
     oid_t ret = INVALID_OID;
 
+    tile_group_offset_lock.ReadLock();
     ret = indexed_tile_group_offset_;
+    tile_group_offset_lock.Unlock();
+
+    printf("GetIndexedTileGroupOffset : %d \n", ret);
 
     return ret;
   }
 
   void IncreamentIndexedTileGroupOff() {
 
+    tile_group_offset_lock.WriteLock();
     if (indexed_tile_group_offset_ == INVALID_OID) {
       indexed_tile_group_offset_ = START_OID;
     } else {
       indexed_tile_group_offset_++;
     }
+    tile_group_offset_lock.Unlock();
 
   }
 
@@ -106,6 +112,8 @@ class BTreeIndex : public Index {
   RWLock index_lock;
 
   oid_t indexed_tile_group_offset_ = INVALID_OID;
+  RWLock tile_group_offset_lock;
+
 };
 
 }  // End index namespace
