@@ -42,6 +42,8 @@ class BackendStatsContext {
     return thread_id;
   }
 
+  void Aggregtate(BackendStatsContext &source);
+
  private:
   std::thread::id thread_id;
 
