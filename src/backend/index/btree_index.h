@@ -105,7 +105,7 @@ class BTreeIndex : public Index {
   // synch helper
   RWLock index_lock;
 
-  std::atomic<oid_t> indexed_tile_group_offset_ = INVALID_OID;
+  oid_t indexed_tile_group_offset_ = INVALID_OID;
 };
 
 }  // End index namespace
