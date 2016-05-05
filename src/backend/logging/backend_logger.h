@@ -46,7 +46,7 @@ class BackendLogger : public Logger {
   //===--------------------------------------------------------------------===//
 
   // Log the given record
-  void Log(LogRecord *record);
+  virtual void Log(LogRecord *record);
 
   // Construct a log record with tuple information
   virtual LogRecord *GetTupleRecord(LogRecordType log_record_type,

@@ -76,6 +76,7 @@ static void WriteOutput() {
   out.close();
 }
 
+
 // Validate that MVCC storage is correct, it assumes an old-to-new chain
 // Invariants
 // 1. Transaction id should either be INVALID_TXNID or INITIAL_TXNID

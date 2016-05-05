@@ -91,7 +91,7 @@ namespace storage {
 
 static inline void cpuid(unsigned func, unsigned subfunc, unsigned cpuinfo[4]){
   __cpuid_count(func, subfunc, cpuinfo[EAX_IDX], cpuinfo[EBX_IDX],
-      cpuinfo[ECX_IDX], cpuinfo[EDX_IDX]);
+                cpuinfo[ECX_IDX], cpuinfo[EDX_IDX]);
 }
 
 /*
@@ -114,7 +114,7 @@ int is_cpu_genuine_intel(void) {
   vendor.cpuinfo[2] = cpuinfo[ECX_IDX];
 
   return (strncmp(vendor.name, "GenuineIntel",
-        sizeof (vendor.name))) == 0;
+                  sizeof (vendor.name))) == 0;
 }
 
 //===--------------------------------------------------------------------===//
@@ -126,6 +126,7 @@ int is_cpu_genuine_intel(void) {
  */
 int is_cpu_clflush_present(void){
   unsigned cpuinfo[4] = { 0 };
+
 
   cpuid(0x1, 0x0, cpuinfo);
 
@@ -186,7 +187,6 @@ static inline void flush_clflush(const void *addr, size_t len){
 // flush_clwb -- (internal) flush the CPU cache, using clwb
 static inline void flush_clwb(const void *addr, size_t len) {
   uintptr_t uptr;
-
 
   // Loop through cache-line-size (typically 64B) aligned chunks
   // covering the given range.
@@ -280,7 +280,7 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-    : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
+: data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
@@ -353,8 +353,8 @@ StorageManager::StorageManager()
 
   // Create a data file
   if ((data_fd = open(data_file_name.c_str(), 
-                  O_CREAT | O_TRUNC | O_RDWR, 
-                  S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
+                      O_CREAT | O_TRUNC | O_RDWR,
+                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
     perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
@@ -410,28 +410,28 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
       {
         size_t cache_data_file_offset = 0;
 
-      // Lock the file
-      data_file_spinlock.Lock();
+        // Lock the file
+        data_file_spinlock.Lock();
 
-      // Check if within bounds
-      if (data_file_offset < data_file_len) {
-      cache_data_file_offset = data_file_offset;
+        // Check if within bounds
+        if (data_file_offset < data_file_len) {
+          cache_data_file_offset = data_file_offset;
 
-      // Offset by the requested size
-      data_file_offset += size;
+          // Offset by the requested size
+          data_file_offset += size;
 
-      // Unlock the file
-      data_file_spinlock.Unlock();
+          // Unlock the file
+          data_file_spinlock.Unlock();
 
-      void *address = reinterpret_cast<char*>(data_file_address) + cache_data_file_offset;
-      return address;
-      }
+          void *address = reinterpret_cast<char*>(data_file_address) + cache_data_file_offset;
+          return address;
+        }
 
-      data_file_spinlock.Unlock();
-      throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
-              " length : " + std::to_string(data_file_len));
+        data_file_spinlock.Unlock();
+        throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
+                        " length : " + std::to_string(data_file_len));
 
-      return nullptr;
+        return nullptr;
       }
     } break;
 

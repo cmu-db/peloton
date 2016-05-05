@@ -144,6 +144,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.wait_timeout = 200;
 
   // Default Values
+  // Default Values
   ycsb::state.scale_factor = 1;
   ycsb::state.duration = 10;
   ycsb::state.snapshot_duration = 0.1;
