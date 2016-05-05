@@ -132,6 +132,22 @@ bool OptimisticTxnManager::AcquireOwnership(
   return true;
 }
 
+
+// release write lock on a tuple.
+// one example usage of this method is when a tuple is acquired, but operation
+// (insert,update,delete) can't proceed, the executor needs to yield the 
+// ownership before return false to upper layer.
+// It should not be called if the tuple is in the write set as commit and abort
+// will release the write lock anyway.
+void OptimisticTxnManager::YieldOwnership(const oid_t &tile_group_id,
+  const oid_t &tuple_id) {
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  assert(IsOwner(tile_group_header, tuple_id));
+  tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
+}
+
 bool OptimisticTxnManager::PerformRead(const ItemPointer &location) {
   LOG_INFO("PerformRead (%u, %u)\n", location.block, location.offset);
   current_txn->RecordRead(location);

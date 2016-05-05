@@ -59,6 +59,9 @@ class OptimisticRbTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
+
   bool ValidateRead( 
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id,

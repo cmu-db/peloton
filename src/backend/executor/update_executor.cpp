@@ -155,7 +155,7 @@ bool UpdateExecutor::DExecute() {
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
 
-      if ( concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
+      if (concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         // For rollback segment implementation
         auto rb_txn_manager = (concurrency::OptimisticRbTxnManager*)&transaction_manager;
 
@@ -177,6 +177,8 @@ bool UpdateExecutor::DExecute() {
         // the acquired lock can't be released when the txn is aborted.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          // First yield ownership
+          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
           return false;
         }

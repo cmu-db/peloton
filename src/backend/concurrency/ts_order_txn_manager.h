@@ -45,6 +45,9 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
+
   virtual bool PerformInsert(const ItemPointer &location);
 
   virtual bool PerformRead(const ItemPointer &location);

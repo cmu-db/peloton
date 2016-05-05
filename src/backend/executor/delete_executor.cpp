@@ -136,6 +136,7 @@ bool DeleteExecutor::DExecute() {
 
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
           return false;
         }
