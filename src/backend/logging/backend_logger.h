@@ -72,6 +72,9 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
+  // used by the frontend logger to collect data on the current state of the backend
+  // returns a pair of commit ids, the first is the lower bound for values this logger may
+  // commit, The second is the maximum id this worker has committed
   std::pair<cid_t, cid_t> PrepareLogBuffers();
 
   // Grant an empty buffer to use
@@ -83,22 +86,29 @@ class BackendLogger : public Logger {
   // Get FrontendLoggerID
   int GetFrontendLoggerID() { return frontend_logger_id; }
 
+  // set when the frontend is dying
   void SetShutdown(bool);
 
+  // gets the Varlenpool used for log serialization
   VarlenPool *GetVarlenPool() { return backend_pool.get(); }
 
  protected:
   // the lock for the buffer being used currently
   Spinlock log_buffer_lock;
 
+  // temporary local_queue used by backend
   std::vector<std::unique_ptr<LogBuffer>> local_queue;
 
+  // commit id of the highest value committed so far
   cid_t highest_logged_commit_message = INVALID_CID;
 
+  // id of the corresponding frontend logger
   int frontend_logger_id = -1;  // default
 
+  // lower bound for values this backend may commit
   cid_t logging_cid_lower_bound = INVALID_CID;
 
+  // max cid for the current log buffer
   cid_t max_log_id_buffer = 0;
 
   // temporary serialization buffer
@@ -113,8 +123,10 @@ class BackendLogger : public Logger {
   // the pool of buffers to persist
   std::unique_ptr<BufferPool> persist_buffer_pool_;
 
+  // varlen pool for serialization
   std::unique_ptr<VarlenPool> backend_pool;
 
+  // shutdown flag
   bool shutdown = false;
 };
 
