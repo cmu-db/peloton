@@ -134,8 +134,6 @@ peloton_bootstrap() {
     elog(ERROR, "Peloton exception :: %s", exception.what());
   }
 
-  peloton::stats::StatsAggregator::GetInstance();
-
 }
 
 /* ----------
