@@ -31,8 +31,8 @@ namespace stats {
 BackendStatsContext::BackendStatsContext() {
   std::thread::id this_id = std::this_thread::get_id();
   thread_id = this_id;
-
 }
+
 BackendStatsContext::~BackendStatsContext() {
   peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
 

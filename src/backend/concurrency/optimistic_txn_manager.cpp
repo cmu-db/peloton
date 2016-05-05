@@ -19,6 +19,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace concurrency {
@@ -296,6 +297,10 @@ Result OptimisticTxnManager::CommitTransaction() {
     // is it always true???
     Result ret = current_txn->GetResult();
     EndTransaction();
+
+    // Increment # txns committed metric
+    peloton::stats::backend_stats_context->txn_committed.Increment();
+
     return ret;
   }
   //*****************************************************
@@ -437,6 +442,9 @@ Result OptimisticTxnManager::CommitTransaction() {
 
   EndTransaction();
 
+  // Increment # txns committed metric
+  peloton::stats::backend_stats_context->txn_committed.Increment();
+
   return Result::RESULT_SUCCESS;
 }
 
@@ -510,8 +518,11 @@ Result OptimisticTxnManager::AbortTransaction() {
       }
     }
   }
-
   EndTransaction();
+
+  // Increment # txns aborted metric
+  peloton::stats::backend_stats_context->txn_aborted.Increment();
+
   return Result::RESULT_ABORTED;
 }
 

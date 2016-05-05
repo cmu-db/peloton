@@ -45,7 +45,7 @@ class CounterMetric : public AbstractMetric {
   }
 
   inline void Decrement() {
-    count++;
+    count--;
   }
 
   inline void Reset() {

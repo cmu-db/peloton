@@ -32,7 +32,7 @@ namespace peloton {
 namespace stats {
 
 // Each thread gets a backend logger
-thread_local static BackendStatsContext* backend_stats_context = nullptr;
+thread_local BackendStatsContext* backend_stats_context = nullptr;
 
 StatsAggregator::StatsAggregator() {
   thread_number = 0;
