@@ -196,6 +196,7 @@ bool HybridScanExecutor::SeqScanUtil() {
     logical_tile->AddPositionList(std::move(position_list));
     // LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
     SetOutput(logical_tile.release());
+    printf("Construct a logical tile in seq scan");
     return true;
   }
 
@@ -213,6 +214,7 @@ bool HybridScanExecutor::IndexScanUtil() {
     } else {
       SetOutput(result_[result_itr_]);
       result_itr_++;
+      printf("Construct a logical tile in index scan");
       return true;
     }
   }  // end while

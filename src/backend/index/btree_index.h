@@ -80,15 +80,12 @@ class BTreeIndex : public Index {
   oid_t GetIndexedTileGroupOff() {
     oid_t ret = INVALID_OID;
 
-    index_lock.ReadLock();
     ret = indexed_tile_group_offset_;
-    index_lock.Unlock();
 
     return ret;
   }
 
   void IncreamentIndexedTileGroupOff() {
-    index_lock.WriteLock();
 
     if (indexed_tile_group_offset_ == INVALID_OID) {
       indexed_tile_group_offset_ = START_OID;
@@ -96,7 +93,6 @@ class BTreeIndex : public Index {
       indexed_tile_group_offset_++;
     }
 
-    index_lock.Unlock();
   }
 
  protected:
@@ -109,7 +105,7 @@ class BTreeIndex : public Index {
   // synch helper
   RWLock index_lock;
 
-  oid_t indexed_tile_group_offset_ = INVALID_OID;
+  std::atomic<oid_t> indexed_tile_group_offset_ = INVALID_OID;
 };
 
 }  // End index namespace
