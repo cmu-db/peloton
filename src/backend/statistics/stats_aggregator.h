@@ -99,12 +99,12 @@ class StatsAggregator {
 
   void RunAggregator();
 
+  BackendStatsContext stats_history;
+  BackendStatsContext aggregated_stats;
+
  private:
   StatsAggregator();
   ~StatsAggregator();
-
-  BackendStatsContext stats_history;
-  BackendStatsContext aggregated_stats;
 
   std::mutex stats_mutex;
 
