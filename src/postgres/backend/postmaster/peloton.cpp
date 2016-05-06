@@ -169,9 +169,12 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   assert(planstate != NULL);
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
+  auto subplanstate = cast_reinterpret<SubPlanState *>(
+      planstate->state->es_param_exec_vals->execPlan);
 
   // Create the raw planstate info
   std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
+  std::shared_ptr<const peloton::planner::AbstractPlan> mapped_subplan_ptr;
 
   // Get our plan
   if (prepStmtName) {
@@ -187,6 +190,13 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
     mapped_plan_ptr =
         peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
             plan_state, prepStmtName);
+  }
+  if (subplanstate) {
+    auto subplan_state = peloton::bridge::DMLUtils::peloton_prepare_data(
+        subplanstate->planstate);
+    mapped_subplan_ptr =
+        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
+            subplan_state, prepStmtName);
   }
 
   //===----------------------------------------------------------------------===//
