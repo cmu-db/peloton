@@ -57,16 +57,14 @@ BackendStatsContext::BackendStatsContext() {
 
 BackendStatsContext::~BackendStatsContext() {
   //peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
-  printf("BackendStatsContext destructor");
-
 }
 
-void BackendStatsContext::Aggregtate(BackendStatsContext &source_) {
+void BackendStatsContext::Aggregate(BackendStatsContext &source_) {
   txn_committed.Aggregate(source_.txn_committed);
   txn_aborted.Aggregate(source_.txn_aborted);
 
   for (auto access_item : source_.table_accesses_) {
-    GetTableAccessMetric(access_item.first)->Aggregate(*access_item.second);
+    GetTableAccessMetric((oid_t) 0, access_item.first)->Aggregate(*access_item.second);
   }
 }
 

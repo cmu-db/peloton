@@ -141,7 +141,10 @@ bool OptimisticTxnManager::PerformRead(const oid_t &tile_group_id,
   // Increment table read op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementReads();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementReads();
   return true;
 }
 
@@ -156,7 +159,10 @@ bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
   // Increment table insert op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementInserts();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementInserts();
   return true;
 }
 
@@ -196,7 +202,10 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   // Increment table update op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementUpdates();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementUpdates();
 
   return true;
 }
@@ -223,7 +232,10 @@ void OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
   // Increment table update op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementUpdates();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementUpdates();
 }
 
 bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
@@ -259,7 +271,10 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   // Increment table delete op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementDeletes();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementDeletes();
 
   return true;
 }
@@ -288,7 +303,10 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
   // Increment table delete op stats
   oid_t table_id = catalog::Manager::GetInstance()
       .GetTileGroup(tile_group_id)->GetTableId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementDeletes();
+  oid_t database_id = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetDatabaseId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(
+      database_id, table_id)->IncrementDeletes();
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
@@ -475,6 +493,7 @@ Result OptimisticTxnManager::CommitTransaction() {
   EndTransaction();
 
   // Increment # txns committed metric
+  printf("Incrementing # commits\n");
   peloton::stats::backend_stats_context->txn_committed.Increment();
 
   return Result::RESULT_SUCCESS;

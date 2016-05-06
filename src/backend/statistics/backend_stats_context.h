@@ -23,6 +23,7 @@
 #include "backend/common/types.h"
 #include "backend/statistics/access_metric.h"
 #include "backend/statistics/counter_metric.h"
+#include "backend/storage/database.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -46,7 +47,8 @@ class BackendStatsContext {
     return thread_id;
   }
 
-  inline AccessMetric* GetTableAccessMetric(oid_t table_id) {
+  inline AccessMetric* GetTableAccessMetric(__attribute__((unused)) oid_t database_id,
+      oid_t table_id) {
     auto table_item = table_accesses_.find(table_id);
     if (table_item == table_accesses_.end() ) {
       table_accesses_[table_id] = new AccessMetric{MetricType::ACCESS_METRIC};
@@ -54,7 +56,7 @@ class BackendStatsContext {
     return table_accesses_[table_id];
   }
 
-  void Aggregtate(BackendStatsContext &source);
+  void Aggregate(BackendStatsContext &source);
 
   inline void Reset() {
     txn_committed.Reset();
@@ -66,11 +68,15 @@ class BackendStatsContext {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss <<  "txn_committed: " << txn_committed.ToString();
-    ss <<  "txn_aborted: " << txn_aborted.ToString();
+    ss <<  "txn_committed: " << txn_committed.ToString() << std::endl;
+    ss <<  "txn_aborted: " << txn_aborted.ToString() << std::endl;
 
+    //oid_t database_id = catalog::Manager::GetInstance().GetDatabase(0)->GetOid();
     for (auto table_item : table_accesses_) {
-      ss << "Table " << table_item.first << ": " << table_item.second->ToString() << std::endl;
+      //std::string table_name = catalog::Manager::GetInstance().GetTableWithOid(database_id, table_item.first)->GetName();
+      ss << "Num Databases: " << catalog::Manager::GetInstance().GetDatabaseCount() << std::endl;
+      ss << "Table " << table_item.first << ": " << table_item.second->ToString()
+          << std::endl << std::endl;
     }
     return ss.str();
   }

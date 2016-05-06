@@ -15,17 +15,6 @@
 #include <memory>
 #include <fstream>
 
-/*
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/common/logger.h"
-#include "backend/executor/executor_context.h"
-#include "backend/catalog/manager.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-*/
-
 #include "backend/statistics/stats_aggregator.h"
 #include "backend/statistics/backend_stats_context.h"
 
@@ -63,9 +52,9 @@ void StatsAggregator::RunAggregator() {
      aggregated_stats.Reset();
      for(auto& val : backend_stats )
      {
-       aggregated_stats.Aggregtate((*val.second));
+       aggregated_stats.Aggregate((*val.second));
      }
-     aggregated_stats.Aggregtate(stats_history);
+     aggregated_stats.Aggregate(stats_history);
      printf("%s", aggregated_stats.ToString().c_str());
      double throughput_ = (double)aggregated_stats.txn_committed.GetCounter()
              / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
