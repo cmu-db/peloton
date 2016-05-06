@@ -15,6 +15,9 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 #include "backend/common/types.h"
 
@@ -43,7 +46,7 @@ class AbstractMetric {
   virtual void Reset() = 0;
   virtual std::string ToString() = 0;
 
-  //virtual void Aggregate(AbstractMetric &source) = 0;
+  virtual void Aggregate(AbstractMetric &source) = 0;
 
  private:
   MetricType type;

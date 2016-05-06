@@ -14,12 +14,14 @@
 
 #include <mutex>
 #include <map>
-#include <vector>
 #include <thread>
+#include <unordered_map>
 #include <iostream>
 #include <sstream>
 
+#include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/statistics/access_metric.h"
 #include "backend/statistics/counter_metric.h"
 
 //===--------------------------------------------------------------------===//
@@ -44,6 +46,10 @@ class BackendStatsContext {
     return thread_id;
   }
 
+  inline AccessMetric* GetTableAccessMetric(oid_t table_id) {
+    return table_accesses_.find(table_id)->second;
+  }
+
   void Aggregtate(BackendStatsContext &source);
 
   inline void Reset() {
@@ -55,6 +61,10 @@ class BackendStatsContext {
     std::stringstream ss;
     ss <<  "txn_committed: " << txn_committed.ToString();
     ss <<  "txn_aborted: " << txn_aborted.ToString();
+
+    for (auto table_item : table_accesses_) {
+      ss << "Table " << table_item.first << ": " << table_item.second->ToString() << std::endl;
+    }
     return ss.str();
   }
 
@@ -64,7 +74,10 @@ class BackendStatsContext {
   CounterMetric txn_aborted{MetricType::COUNTER_METRIC};
 
   // Table metrics
-  //std::unordered_map<oid_t, >
+  std::unordered_map<oid_t, AccessMetric*> table_accesses_;
+
+  // Index metrics
+  std::unordered_map<oid_t, AccessMetric*> index_accesses_;
 
  private:
   std::thread::id thread_id;

@@ -137,6 +137,11 @@ void OptimisticTxnManager::SetOwnership(const oid_t &tile_group_id,
 bool OptimisticTxnManager::PerformRead(const oid_t &tile_group_id,
                                        const oid_t &tuple_id) {
   current_txn->RecordRead(tile_group_id, tuple_id);
+
+  // Increment table read op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementReads();
   return true;
 }
 
@@ -147,6 +152,11 @@ bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
 
   // Add the new tuple into the insert set
   current_txn->RecordInsert(tile_group_id, tuple_id);
+
+  // Increment table insert op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementInserts();
   return true;
 }
 
@@ -182,6 +192,12 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
 
   // Add the old tuple into the update set
   current_txn->RecordUpdate(tile_group_id, tuple_id);
+
+  // Increment table update op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementUpdates();
+
   return true;
 }
 
@@ -203,6 +219,11 @@ void OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
     // if this version is not newly inserted.
     current_txn->RecordUpdate(old_location.block, old_location.offset);
   }
+
+  // Increment table update op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementUpdates();
 }
 
 bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
@@ -234,6 +255,12 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
 
   // Add the old tuple into the delete set
   current_txn->RecordDelete(tile_group_id, tuple_id);
+
+  // Increment table delete op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementDeletes();
+
   return true;
 }
 
@@ -257,6 +284,11 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
     // if this version is newly inserted.
     current_txn->RecordDelete(tile_group_id, tuple_id);
   }
+
+  // Increment table delete op stats
+  oid_t table_id = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetTableId();
+  peloton::stats::backend_stats_context->GetTableAccessMetric(table_id)->IncrementDeletes();
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
