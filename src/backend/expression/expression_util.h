@@ -119,10 +119,9 @@ class ExpressionUtil {
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
-  static AbstractExpression *UDFExpressionFactory(Oid function_id,
-                                                  Oid collation,
-                                                  Oid return_type,
-                                                  std::vector<expression::AbstractExpression*> args);
+  static AbstractExpression *UDFExpressionFactory(
+      Oid function_id, Oid collation, Oid return_type,
+      std::vector<expression::AbstractExpression *> args);
 };
 
 }  // End expression namespace
