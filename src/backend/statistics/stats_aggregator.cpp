@@ -65,6 +65,7 @@ void StatsAggregator::RunAggregator() {
      {
        aggregated_stats.Aggregtate((*val.second));
      }
+     aggregated_stats.Aggregtate(stats_history);
      printf("%s", aggregated_stats.ToString().c_str());
      double throughput_ = (double)aggregated_stats.txn_committed.GetCounter()
              / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
@@ -94,19 +95,16 @@ StatsAggregator &StatsAggregator::GetInstance() {
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendStatsContext *StatsAggregator::GetBackendStatsContext() {
-    printf("here1!\n");
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_stats_context == nullptr) {
     backend_stats_context = new BackendStatsContext();
-    printf("here2!\n");
 
     RegisterContext(backend_stats_context->GetThreadId(), backend_stats_context);
-    printf("here3!\n");
 
   } else {
-    printf("had a value!\n");
+    printf("context pointer already had a value!\n");
   }
 
   return backend_stats_context;
