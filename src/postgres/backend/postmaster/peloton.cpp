@@ -193,48 +193,9 @@ peloton_dml(const PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
-  //===----------------------------------------------------------------------===//
-  //   Send a query plan through network
-  //   We can use a more clean wrapper to send the plan in the future
-  //===----------------------------------------------------------------------===//
-  /*
-   * To execute a plan, we need prepare three stuff: TupleDesc, plan and param_list
-   * Plan is a class which can be Serialized
-   * Param_list can be transformed to value using BuildParams() and be Serialized
-   * TupleDesc is a nested structure in Postgres, we can define a nested message in protobuf
-   *
-   * The query plan message of protobuf is:
-   * 1. type      : int       casted from PlanNodeType
-   * 2. num value : int       the size of value_list
-   * 3. value_list: bytes     value Serialize
-   * 4. plan      : bytes     plan Serialize
-   */
-
-  // First set type
-  const peloton::PlanNodeType type = mapped_plan_ptr->GetPlanNodeType();
-  auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
-  peloton::networking::QueryPlanExecRequest request;
-  request.set_plan_type(static_cast<int>(type));
-
-  // Second set size of parameter list
+  // Construct params
   std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
-  int param_count = param_values.size();
-  request.set_param_num(param_count);
 
-  // Third Serialize param_values from param_list
-  peloton::CopySerializeOutput output_params;
-  for (int it = 0; it < param_count; it++) {
-      param_values[it].SerializeTo(output_params);
-  }
-  request.set_param_list(output_params.Data(), output_params.Size());
-
-  // Fourth Serialize plan with plan
-  peloton::CopySerializeOutput output_plan;
-  mapped_plan_ptr->SerializeTo(output_plan);
-  request.set_plan(output_plan.Data(), output_plan.Size());
-
-  // Finally send the request
-  pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
@@ -248,18 +209,11 @@ peloton_dml(const PlanState *planstate,
   std::vector<peloton::oid_t> target_list;
   std::vector<peloton::oid_t> qual;
 
-  // Analyze the plan
-  //if(rand() % 100 < 5)
-  //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
-
   // Execute the plantree mapped_plan_ptr.get()
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
                                                         param_values,
                                                         tuple_desc);
-    // Clean up the plantree
-    // Not clean up now ! This is cached !
-    //peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());

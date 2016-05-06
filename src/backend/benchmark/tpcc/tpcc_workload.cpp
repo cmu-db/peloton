@@ -553,7 +553,8 @@ bool RunNewOrder(){
   }
 
   auto w_tax = gwtr_lists_values[0][0];
-  LOG_TRACE("W_TAX: %d", w_tax);
+  LOG_TRACE("W_TAX: %s", w_tax.GetInfo().c_str());
+
 
   // getDistrict
 

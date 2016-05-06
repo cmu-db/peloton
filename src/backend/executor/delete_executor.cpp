@@ -96,7 +96,6 @@ bool DeleteExecutor::DExecute() {
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
-
     LOG_INFO("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 

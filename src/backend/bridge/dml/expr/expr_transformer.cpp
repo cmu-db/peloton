@@ -468,7 +468,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
@@ -496,7 +496,7 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
-  LOG_TRACE("tuple_idx = %lu , value_idx = %lu ", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);

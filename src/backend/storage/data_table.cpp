@@ -168,8 +168,8 @@ ItemPointer DataTable::FillInEmptyTupleSlot(const storage::Tuple *tuple,
     AddDefaultTileGroup();
   }
 
-  LOG_TRACE("tile group count: %u, tile group id: %u, address: %p",
-            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
+            tile_group_count_.load(), tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
