@@ -193,13 +193,6 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
         peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
             plan_state, prepStmtName);
   }
-  if (subplanstate) {
-    auto subplan_state = peloton::bridge::DMLUtils::peloton_prepare_data(
-        subplanstate->planstate);
-    mapped_subplan_ptr =
-        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
-            subplan_state, nullptr);
-  }
 
   //===----------------------------------------------------------------------===//
   //   Send a query plan through network
@@ -232,7 +225,16 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   // Second set size of parameter list
   std::vector<peloton::Value> param_values =
       peloton::bridge::PlanTransformer::BuildParams(param_list);
-  if (subplanstate) {
+
+  ListCell *lc;
+
+  foreach (lc, planstate->state->es_subplanstates) {
+    auto subplanstate = (PlanState *)lfirst(lc);
+    auto subplan_state =
+        peloton::bridge::DMLUtils::peloton_prepare_data(subplanstate);
+    mapped_subplan_ptr =
+        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
+            subplan_state, nullptr);
     param_values.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
         mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
   }
