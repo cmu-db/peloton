@@ -24,7 +24,8 @@ namespace peloton {
     class BasicStatsTest : public PelotonTest {};
     
     TEST_F(BasicStatsTest, CreateTest) {
-      peloton::stats::StatsAggregator * stats_ = new peloton::stats::StatsAggregator();
+      peloton::stats::BackendStatsContext* stats_ = peloton::stats::StatsAggregator::GetInstance().GetBackendStatsContext();
+      //peloton::stats::StatsAggregator * stats_ = new peloton::stats::StatsAggregator();
       int tuple_count = 10;
 
       // Create a table and wrap it in logical tiles                                                                          
