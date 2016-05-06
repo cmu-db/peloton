@@ -66,6 +66,16 @@ class DatabaseMetric : public AbstractMetric {
     txn_aborted_.Reset();
   }
 
+  inline bool operator==(const DatabaseMetric &other) {
+    return database_id_   == other.database_id_   &&
+           txn_committed_ == other.txn_committed_ &&
+           txn_aborted_   == other.txn_aborted_;
+  }
+
+  inline bool operator!=(const DatabaseMetric &other) {
+    return !(*this == other);
+  }
+
   void Aggregate(AbstractMetric &source);
 
   inline std::string ToString() {

@@ -87,6 +87,19 @@ class AccessMetric : public AbstractMetric {
     return access_counters_[counter_type];
   }
 
+  inline bool operator==(const AccessMetric &other) {
+    for (size_t i = 0; i < access_counters_.size(); ++i) {
+      if (access_counters_[i] != other.access_counters_[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  inline bool operator!=(const AccessMetric &other) {
+    return !(*this == other);
+  }
+
   inline void Reset() {
     for (auto& counter : access_counters_) {
       counter.Reset();

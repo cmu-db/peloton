@@ -74,6 +74,18 @@ class IndexMetric : public AbstractMetric {
     index_access_.Reset();
   }
 
+  inline bool operator==(const IndexMetric &other) {
+    return database_id_  == other.database_id_ &&
+           table_id_     == other.table_id_    &&
+           index_id_     == other.index_id_    &&
+           index_name_   == other.index_name_  &&
+           index_access_ == other.index_access_;
+  }
+
+  inline bool operator!=(const IndexMetric &other) {
+    return !(*this == other);
+  }
+
   void Aggregate(AbstractMetric &source);
 
   inline std::string ToString() {
