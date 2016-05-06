@@ -15,6 +15,10 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <iostream>
+#include <string>
+#include <sstream>
+
 
 #include "backend/common/types.h"
 #include "backend/statistics/abstract_metric.h"
@@ -57,6 +61,12 @@ class CounterMetric : public AbstractMetric {
   }
 
   void Aggregate(AbstractMetric &source);
+
+  inline std::string ToString() {
+    std::stringstream ss;
+    ss << count << std::endl;
+    return ss.str();
+  }
 
  private:
   int64_t count;
