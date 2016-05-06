@@ -53,7 +53,7 @@ cd oltpbench
 ant
 
 # Run the YCSB benchmark on Peloton
-./oltpbenchmark -b ycsb -c config/peloton_ycsb_config.xml --create=true --load=true --execute=true -s 5 -o outputfile
+./oltpbenchmark -b ycsb -c config/jenkins_ycsb_config.xml --create=true --load=true --execute=true -s 5 -o outputfile
 
 # check the outputfile
 min_oltpbench_output=0
