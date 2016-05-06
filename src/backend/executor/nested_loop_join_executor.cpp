@@ -57,6 +57,21 @@ bool NestedLoopJoinExecutor::DInit() {
  * @brief Creates logical tiles from the two input logical tiles after applying
  * join predicate.
  * @return true on success, false otherwise.
+ *
+ * ExecutorContext is set when executing IN+NestLoop. For example:
+ * select * from Foo1 where age IN (select id from Foo2 where name='mike');
+ * Here:
+ * "select id from Foo2 where name='mike'" is transformed as left child.
+ * "select * from Foo1 where age " is the right child.
+ * "IN" is transformed as a execute context, in NestLoop
+ * We put the results of left child in executor_context using NestLoop, and the
+ * right child can execute using this context. Otherwise, the right child can't
+ * execute. And there is no predicate_ for IN+NestLoop
+ *
+ * For now, we only set this context for IN operator. Normally, the right child
+ * has a complete query that can execute without the context, and we use predicate_
+ * to join the left and right result.
+ *
  */
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
@@ -69,9 +84,9 @@ bool NestedLoopJoinExecutor::DExecute() {
       return BuildOuterJoinOutput();
     }
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Pick left and right tiles
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
@@ -141,9 +156,9 @@ bool NestedLoopJoinExecutor::DExecute() {
     right_tile = right_result_tiles_.back().get();
     left_tile = left_result_tiles_[left_result_itr_].get();
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Build Join Tile
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);

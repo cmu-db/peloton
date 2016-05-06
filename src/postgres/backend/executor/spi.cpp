@@ -2401,8 +2401,13 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 
-	_SPI_current->processed = queryDesc->estate->es_processed;
 	_SPI_current->lastoid = queryDesc->estate->es_lastoid;
+
+	if (_SPI_current->tuptable)
+		_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
+	else
+		_SPI_current->processed = queryDesc->estate->es_processed;
+
 
 	if ((res == SPI_OK_SELECT || queryDesc->plannedstmt->hasReturning) &&
 		queryDesc->dest->mydest == DestSPI)
@@ -2488,7 +2493,8 @@ _SPI_cursor_operation(Portal portal, FetchDirection direction, long count,
 	 * may be different than it was beforehand. So we must be sure to re-fetch
 	 * the pointer after the function call completes.
 	 */
-	_SPI_current->processed = nfetched;
+	// _SPI_current->processed = nfetched;
+	_SPI_current->processed = _SPI_current->tuptable->alloced - _SPI_current->tuptable->free;
 
 	if (dest->mydest == DestSPI && _SPI_checktuples())
 		elog(ERROR, "consistency check on SPI tuple count failed");
@@ -2567,8 +2573,9 @@ _SPI_checktuples(void)
 
 	if (tuptable == NULL)		/* spi_dest_startup was not called */
 		failed = true;
-	else if (processed != (tuptable->alloced - tuptable->free))
+	else if (processed != (tuptable->alloced - tuptable->free)) {
 		failed = true;
+	}
 
 	return failed;
 }

@@ -2360,3 +2360,44 @@ bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid) {
 
   return true;
 }
+
+
+/*
+ * Verify that the given function is a UDF function. This function is called when
+ * the Postgres function expression is converted to Peloton function expression
+ * in order to check if the function is UDF or not.
+ */
+bool CheckUserDefinedFunction(Oid functionOid) {
+  HeapTuple procTup;
+  HeapTuple langTup;
+  Form_pg_proc procStruct;
+  Form_pg_language langStruct;
+  bool isUDF;
+
+  /* Get the function's pg_proc entry */
+  procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(functionOid));
+  if (!HeapTupleIsValid(procTup))
+    elog(ERROR, "cache lookup failed for function %u", functionOid);
+  procStruct = (Form_pg_proc) GETSTRUCT(procTup);
+
+  /*
+   * Fetch pg_language entry to know if this is the correct validation
+   * function for that pg_proc entry.
+   */
+  langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(procStruct->prolang));
+  if (!HeapTupleIsValid(langTup))
+    elog(ERROR, "cache lookup failed for language %u", procStruct->prolang);
+  langStruct = (Form_pg_language) GETSTRUCT(langTup);
+
+  /* Check if the language is in c or procedural language */
+  if(langStruct->lanispl || strcmp(NameStr(langStruct->lanname), "c") == 0) {
+    isUDF = true;
+  } else {
+    isUDF = false;
+  }
+
+  ReleaseSysCache(procTup);
+  ReleaseSysCache(langTup);
+
+  return isUDF;
+}

@@ -74,14 +74,13 @@ peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   return nullptr;
 }
 
+// TODO: check when this function is called. --Yingjun
 oid_t TileGroup::GetNextTupleSlot() const {
-  return tile_group_header->GetNextTupleSlot();
+  return tile_group_header->GetCurrentNextTupleSlot();
 }
 
-oid_t TileGroup::GetActiveTupleCount(txn_id_t txn_id) const {
-  return tile_group_header->GetActiveTupleCount(txn_id);
-}
-
+// this function is called only when building tile groups for aggregation
+// operations.
 oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
@@ -96,7 +95,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
@@ -123,6 +122,18 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   }
 }
 
+void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
+            tile_group_id, tuple_slot_id, num_tuple_slots);
+  auto schema = table->GetSchema();
+
+  assert(tuple->GetColumnCount() == schema->GetColumnCount());
+
+  for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
+    tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
+  }
+}
+
 /**
  * Grab next slot (thread-safe) and fill in the tuple
  *
@@ -131,7 +142,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
@@ -164,10 +175,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   }
 
   //  // Set MVCC info
-   assert(tile_group_header->GetTransactionId(tuple_slot_id) ==
-   INVALID_TXN_ID);
-   assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-   assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
   return tuple_slot_id;
 }
@@ -178,18 +188,17 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
-                             const Tuple *tuple) {
+                                         const Tuple *tuple) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
-    // No more slots
+  // No more slots
   if (status == false) return INVALID_OID;
   cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
-  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id){
-      return tuple_slot_id;
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
   }
 
-
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
@@ -226,11 +235,14 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
-oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id){
+oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
-
-      // No more slots
-    if (status == false) return INVALID_OID;
+  cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
+  }
+  // No more slots
+  if (status == false) return INVALID_OID;
   // Set MVCC info
   tile_group_header->SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
   tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
@@ -241,9 +253,14 @@ oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id){
   return tuple_slot_id;
 }
 
-oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, ItemPointer new_location){
+oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
+                                         ItemPointer new_location) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
+  cid_t current_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
+  if (current_begin_cid != MAX_CID && current_begin_cid > commit_id) {
+    return tuple_slot_id;
+  }
   // No more slots
   if (status == false) return INVALID_OID;
   // Set MVCC info
@@ -262,13 +279,14 @@ oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id, I
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
-                             const Tuple *tuple, cid_t commit_id) {
+                                           const Tuple *tuple,
+                                           cid_t commit_id) {
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
   if (status == false) return INVALID_OID;
 
-  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots ",
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;

@@ -39,9 +39,6 @@ class Cache {
   /* Shared pointer of Value type */
   typedef std::shared_ptr<Value> ValuePtr;
 
-  /* A function to delete dynamically allocated Value */
-  typedef void (*ValueDeleter)(Value *);
-
   /* A key value pair */
   typedef std::pair<Key, ValuePtr> Entry;
 
@@ -67,7 +64,6 @@ class Cache {
   Cache &operator=(Cache &&) = delete;
 
   explicit Cache(size_type capacity = DEFAULT_CACHE_SIZE,
-                 ValueDeleter deleter = std::default_delete<Value>(),
                  size_t insert_threshold = DEFAULT_CACHE_INSERT_THRESHOLD);
 
   class iterator : public std::iterator<std::input_iterator_tag, ValuePtr> {
@@ -105,7 +101,6 @@ class Cache {
   KeyList list_;
   CountMap counts_;
   size_type capacity_;
-  ValueDeleter value_deleter_;
   size_t insert_threshold_;
 };
 

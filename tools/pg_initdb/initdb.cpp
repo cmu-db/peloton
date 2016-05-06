@@ -247,7 +247,7 @@ static void setup_dictionary(void) pg_attribute_unused();
 static void setup_privileges(void);
 static void set_info_version(void);
 static void setup_schema(void);
-static void load_plpgsql(void) pg_attribute_unused();
+static void load_plpgsql(void);
 static void vacuum_db(void);
 static void make_template0(void);
 static void make_postgres(void);
@@ -2309,7 +2309,7 @@ load_plpgsql(void)
 
 	PG_CMD_OPEN;
 
-	PG_CMD_PUTS("CREATE EXTENSION plpgsql;\n");
+	PG_CMD_PUTS("create procedural language plpgsql;\n");
 
 	PG_CMD_CLOSE;
 
@@ -3381,8 +3381,7 @@ initialize_data_directory(void)
 
 	setup_schema();
 
-  // TODO: Peloton changes
-	//load_plpgsql();
+	load_plpgsql();
 
 	vacuum_db();
 
