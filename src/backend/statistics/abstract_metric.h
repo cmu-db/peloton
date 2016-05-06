@@ -42,7 +42,7 @@ class AbstractMetric {
 
   virtual void Reset() = 0;
 
-  //virtual void Aggregate(AbstractMetric &source) = 0;
+  virtual void Aggregate(AbstractMetric &source) = 0;
 
  private:
   MetricType type;

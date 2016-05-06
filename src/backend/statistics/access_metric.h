@@ -31,35 +31,57 @@ namespace stats {
 /**
  * Metric as a counter. E.g. # txns committed
  */
-class CounterMetric : public AbstractMetric {
+class AccessMetric : public AbstractMetric {
  public:
 
-  CounterMetric(MetricType type);
+  AccessMetric(MetricType type);
 
-  inline void Increment() {
-    count++;
+  inline void IncrementReads() {
+    read_counts_++;
   }
 
-  inline void Increment(int64_t count_) {
-    count += count_;
+  inline void IncrementUpdates() {
+    update_counts_++;
   }
 
-  inline void Decrement() {
-    count--;
+  inline void IncrementInserts() {
+    insert_counts_++;
+  }
+
+  inline void IncrementDeletes() {
+    delete_counts_++;
+  }
+
+  inline int64_t GetReads() {
+    return read_counts_;
+  }
+
+  inline int64_t GetUpdates() {
+    return update_counts_;
+  }
+
+  inline int64_t GetInserts() {
+    return insert_counts_;
+  }
+
+  inline int64_t GetDeletes() {
+    return delete_counts_;
   }
 
   inline void Reset() {
-    count = 0;
-  }
-
-  inline int64_t GetCounter() {
-    return count;
+    read_counts_ = 0;
+    update_counts_ = 0;
+    insert_counts_ = 0;
+    delete_counts_ = 0;
   }
 
   void Aggregate(AbstractMetric &source);
 
  private:
-  int64_t count;
+  int64_t read_counts_;
+  int64_t update_counts_;
+  int64_t insert_counts_;
+  int64_t delete_counts_;
 
 };
 
