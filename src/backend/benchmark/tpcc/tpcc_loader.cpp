@@ -134,7 +134,9 @@ const bool allocate = true;
 index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
                                          const catalog::Schema *tuple_schema,
                                          std::string index_name,
-                                         oid_t index_oid){
+                                         oid_t index_oid,
+                                         oid_t table_oid,
+                                         oid_t database_oid){
 
   catalog::Schema *key_schema;
   index::IndexMetadata *index_metadata;
@@ -145,6 +147,8 @@ index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
   index_metadata = new index::IndexMetadata(
       index_name,
       index_oid,
+      table_oid,
+      database_oid,
       INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID,
       tuple_schema, key_schema, unique_index);
@@ -210,7 +214,9 @@ void CreateWarehouseTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             warehouse_table->GetSchema(),
                                                             "warehouse_pkey",
-                                                            warehouse_table_pkey_index_oid);
+                                                            warehouse_table_pkey_index_oid,
+                                                            warehouse_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   warehouse_table->AddIndex(pkey_index);
@@ -281,7 +287,9 @@ void CreateDistrictTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             district_table->GetSchema(),
                                                             "district_pkey",
-                                                            district_table_pkey_index_oid);
+                                                            district_table_pkey_index_oid,
+                                                            district_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   district_table->AddIndex(pkey_index);
@@ -334,7 +342,9 @@ void CreateItemTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             item_table->GetSchema(),
                                                             "item_pkey",
-                                                            item_table_pkey_index_oid);
+                                                            item_table_pkey_index_oid,
+                                                            item_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   item_table->AddIndex(pkey_index);
@@ -438,7 +448,9 @@ void CreateCustomerTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             customer_table->GetSchema(),
                                                             "customer_pkey",
-                                                            customer_table_pkey_index_oid);
+                                                            customer_table_pkey_index_oid,
+                                                            customer_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(pkey_index);
@@ -449,7 +461,9 @@ void CreateCustomerTable() {
   index_metadata = BuildIndexMetadata(key_attrs,
                                       customer_table->GetSchema(),
                                       "customer_skey",
-                                      customer_table_skey_index_oid);
+                                      customer_table_skey_index_oid,
+                                      customer_table_oid,
+                                      tpcc_database_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(skey_index);
@@ -589,7 +603,9 @@ void CreateStockTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             stock_table->GetSchema(),
                                                             "stock_pkey",
-                                                            stock_table_pkey_index_oid);
+                                                            stock_table_pkey_index_oid,
+                                                            stock_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   stock_table->AddIndex(pkey_index);
@@ -654,7 +670,9 @@ void CreateOrdersTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             orders_table->GetSchema(),
                                                             "orders_pkey",
-                                                            orders_table_pkey_index_oid);
+                                                            orders_table_pkey_index_oid,
+                                                            orders_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(pkey_index);
@@ -665,7 +683,9 @@ void CreateOrdersTable() {
   index_metadata =  BuildIndexMetadata(key_attrs,
                                        orders_table->GetSchema(),
                                        "orders_skey",
-                                       orders_table_skey_index_oid);
+                                       orders_table_skey_index_oid,
+                                       orders_table_oid,
+                                       tpcc_database_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(skey_index);
@@ -713,7 +733,9 @@ void CreateNewOrderTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             new_order_table->GetSchema(),
                                                             "new_order_pkey",
-                                                            new_order_table_pkey_index_oid);
+                                                            new_order_table_pkey_index_oid,
+                                                            new_order_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   new_order_table->AddIndex(pkey_index);
@@ -784,7 +806,9 @@ void CreateOrderLineTable() {
   index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
                                                             order_line_table->GetSchema(),
                                                             "order_line_pkey",
-                                                            order_line_table_pkey_index_oid);
+                                                            order_line_table_pkey_index_oid,
+                                                            order_line_table_oid,
+                                                            tpcc_database_oid);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(pkey_index);
@@ -795,7 +819,9 @@ void CreateOrderLineTable() {
   index_metadata =  BuildIndexMetadata(key_attrs,
                                        order_line_table->GetSchema(),
                                        "order_line_skey",
-                                       order_line_table_skey_index_oid);
+                                       order_line_table_skey_index_oid,
+                                       order_line_table_oid,
+                                       tpcc_database_oid);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(skey_index);

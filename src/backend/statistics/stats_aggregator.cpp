@@ -56,14 +56,14 @@ void StatsAggregator::RunAggregator() {
      }
      aggregated_stats.Aggregate(stats_history);
      printf("%s", aggregated_stats.ToString().c_str());
-     double throughput_ = (double)aggregated_stats.txn_committed.GetCounter()
-             / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
-     printf("Throughput: %lf txn/s\n\n", throughput_);
-     if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
-       ofs << "At interval: " << interval_cnt_ << std::endl;
-       ofs << aggregated_stats.ToString();
-       ofs << throughput_ << std::endl;
-     }
+//     double throughput_ = (double)aggregated_stats.txn_committed.GetCounter()
+//             / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
+//     printf("Throughput: %lf txn/s\n\n", throughput_);
+//     if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
+//       ofs << "At interval: " << interval_cnt_ << std::endl;
+//       ofs << aggregated_stats.ToString();
+//       ofs << throughput_ << std::endl;
+//     }
 
    }
    printf("Aggregator done!\n");

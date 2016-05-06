@@ -21,8 +21,11 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
-#include "backend/statistics/access_metric.h"
+#include "backend/index/index.h"
 #include "backend/statistics/counter_metric.h"
+#include "backend/statistics/database_metric.h"
+#include "backend/statistics/index_metric.h"
+#include "backend/statistics/table_metric.h"
 #include "backend/storage/database.h"
 
 //===--------------------------------------------------------------------===//
@@ -47,50 +50,112 @@ class BackendStatsContext {
     return thread_id;
   }
 
-  inline AccessMetric* GetTableAccessMetric(__attribute__((unused)) oid_t database_id,
-      oid_t table_id) {
-    auto table_item = table_accesses_.find(table_id);
-    if (table_item == table_accesses_.end() ) {
-      table_accesses_[table_id] = new AccessMetric{MetricType::ACCESS_METRIC};
+  inline TableMetric* GetTableMetric(oid_t database_id, oid_t table_id) {
+    TableMetric::TableKey table_key = TableMetric::GetKey(database_id, table_id);
+    if (table_metrics_.find(table_key) == table_metrics_.end()) {
+      table_metrics_[table_key] = new TableMetric{TABLE_METRIC, database_id, table_id};
     }
-    return table_accesses_[table_id];
+    return table_metrics_[table_key];
+  }
+
+  inline DatabaseMetric* GetDatabaseMetric(oid_t database_id) {
+    if (database_metrics_.find(database_id) == database_metrics_.end()) {
+      database_metrics_[database_id] = new DatabaseMetric(
+          DATABASE_METRIC, database_id);
+    }
+    return database_metrics_[database_id];
+  }
+
+  inline IndexMetric* GetIndexMetric(oid_t database_id, oid_t table_id, oid_t index_id) {
+    IndexMetric::IndexKey index_key = IndexMetric::GetKey(database_id, table_id, index_id);
+    if (index_metrics_.find(index_key) == index_metrics_.end()) {
+      index_metrics_[index_key] = new IndexMetric{INDEX_METRIC, database_id, table_id, index_id};
+    }
+    return index_metrics_[index_key];
   }
 
   void Aggregate(BackendStatsContext &source);
 
   inline void Reset() {
-    txn_committed.Reset();
-    txn_aborted.Reset();
-    for (auto table_item : table_accesses_) {
+    for (auto& database_item : database_metrics_) {
+      database_item.second->Reset();
+    }
+    for (auto table_item : table_metrics_) {
       table_item.second->Reset();
     }
+    for (auto index_item : index_metrics_) {
+      index_item.second->Reset();
+    }
+
+      oid_t num_databases = catalog::Manager::GetInstance().GetDatabaseCount();
+      for (oid_t i = 0; i < num_databases; ++i) {
+        auto database = catalog::Manager::GetInstance().GetDatabase(i);
+        oid_t database_id = database->GetOid();
+
+        if (database_metrics_.find(database_id) == database_metrics_.end()) {
+          database_metrics_[database_id] = new DatabaseMetric(
+              DATABASE_METRIC, database_id);
+        }
+
+        oid_t num_tables = database->GetTableCount();
+        for (oid_t j = 0; j < num_tables; ++j) {
+          // Initialize all per-table stats
+          auto table = database->GetTable(j);
+          oid_t table_id = table->GetOid();
+          TableMetric::TableKey table_key = TableMetric::GetKey(
+              database_id, table_id);
+
+          if (table_metrics_.find(table_key) == table_metrics_.end()) {
+            table_metrics_[table_key] = new TableMetric(TABLE_METRIC,
+                database_id, table_id);
+          }
+
+          oid_t num_indexes = table->GetIndexCount();
+          for (oid_t k = 0; k < num_indexes; ++k) {
+            auto index = table->GetIndex(k);
+            oid_t index_id = index->GetOid();
+            IndexMetric::IndexKey index_key = IndexMetric::GetKey(
+                database_id, table_id, index_id);
+
+            if (index_metrics_.find(index_key) == index_metrics_.end()) {
+              index_metrics_[index_key] = new IndexMetric(INDEX_METRIC,
+                  database_id, table_id, index_id);
+            }
+          }
+        }
+      }
   }
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss <<  "txn_committed: " << txn_committed.ToString() << std::endl;
-    ss <<  "txn_aborted: " << txn_aborted.ToString() << std::endl;
 
-    //oid_t database_id = catalog::Manager::GetInstance().GetDatabase(0)->GetOid();
-    for (auto table_item : table_accesses_) {
-      //std::string table_name = catalog::Manager::GetInstance().GetTableWithOid(database_id, table_item.first)->GetName();
-      ss << "Num Databases: " << catalog::Manager::GetInstance().GetDatabaseCount() << std::endl;
-      ss << "Table " << table_item.first << ": " << table_item.second->ToString()
-          << std::endl << std::endl;
+    for (auto database_item : database_metrics_) {
+      ss << database_item.second->ToString() << std::endl;
+    }
+
+    for (auto table_item : table_metrics_) {
+      ss << "Table " << table_item.second->GetName() << ": " << table_item.second->ToString()
+          << std::endl;
+    }
+
+    for (auto index_item : index_metrics_) {
+      ss << "Index " << index_item.second->GetName() << ": " << index_item.second->ToString()
+                << std::endl << std::endl;
     }
     return ss.str();
   }
 
 
   // Global metrics
-  CounterMetric txn_committed{MetricType::COUNTER_METRIC};
-  CounterMetric txn_aborted{MetricType::COUNTER_METRIC};
+
+  // Database metrics
+  std::unordered_map<oid_t, DatabaseMetric*> database_metrics_;
 
   // Table metrics
-  std::unordered_map<oid_t, AccessMetric*> table_accesses_;
+  std::unordered_map<TableMetric::TableKey, TableMetric*> table_metrics_;
 
   // Index metrics
-  std::unordered_map<oid_t, AccessMetric*> index_accesses_;
+  std::unordered_map<IndexMetric::IndexKey, IndexMetric*> index_metrics_;
 
  private:
   std::thread::id thread_id;

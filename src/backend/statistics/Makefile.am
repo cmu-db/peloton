@@ -9,7 +9,10 @@ statistics_FILES = \
 			   backend/statistics/backend_stats_context.cpp \
 			   backend/statistics/counter_metric.cpp \
 			   backend/statistics/abstract_metric.cpp \
-			   backend/statistics/access_metric.cpp
+			   backend/statistics/access_metric.cpp \
+			   backend/statistics/database_metric.cpp \
+			   backend/statistics/table_metric.cpp \
+			   backend/statistics/index_metric.cpp
 			   
 
 statistics_INCLUDES = \
