@@ -15,6 +15,9 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <iostream>
+#include <string>
+#include <sstream>
 
 #include "backend/common/types.h"
 

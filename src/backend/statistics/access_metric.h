@@ -75,6 +75,14 @@ class AccessMetric : public AbstractMetric {
     delete_counts_ = 0;
   }
 
+
+  inline std::string ToString() {
+    std::stringstream ss;
+    ss << "[ reads=" << read_counts_ << ", updates=" << update_counts_ << ", inserts="
+        << insert_counts_ << "deletes=" << delete_counts_ << " ]"<< std::endl;
+    return ss.str();
+  }
+
   void Aggregate(AbstractMetric &source);
 
  private:

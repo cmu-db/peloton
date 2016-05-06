@@ -15,7 +15,6 @@
 #include <map>
 #include <vector>
 
-#include "backend/catalog/manager.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 #include "backend/statistics/backend_stats_context.h"
