@@ -60,6 +60,14 @@ class CounterMetric : public AbstractMetric {
     return count;
   }
 
+  inline bool operator==(const CounterMetric &other) {
+    return count == other.count;
+  }
+
+  inline bool operator!=(const CounterMetric &other) {
+    return !(*this == other);
+  }
+
   void Aggregate(AbstractMetric &source);
 
   inline std::string ToString() {

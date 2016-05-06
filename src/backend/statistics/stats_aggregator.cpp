@@ -43,40 +43,40 @@ StatsAggregator::~StatsAggregator() {
 
 void StatsAggregator::RunAggregator() {
   std::mutex mtx;
-   std::unique_lock<std::mutex> lck(mtx);
-   int64_t interval_cnt_ = 0;
-   while (exec_finished.wait_for(lck,
-         std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
-       ) {
-     interval_cnt_++;
-     printf("At interval: %ld\n", interval_cnt_);
+  std::unique_lock<std::mutex> lck(mtx);
+  int64_t interval_cnt_ = 0;
 
+  while (exec_finished.wait_for(lck,
+       std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
+     ) {
+   interval_cnt_++;
+   printf("At interval: %ld\n", interval_cnt_);
 
-     aggregated_stats.Reset();
-     for(auto& val : backend_stats )
-     {
-       aggregated_stats.Aggregate((*val.second));
-     }
-     aggregated_stats.Aggregate(stats_history);
-     printf("%s", aggregated_stats.ToString().c_str());
-     int64_t current_txns_committed = 0;
-     for (auto database_item : aggregated_stats.database_metrics_) {
-       current_txns_committed += database_item.second->GetTxnCommitted().GetCounter();
-     }
-     int64_t txns_committed_this_interval =
-         current_txns_committed - total_prev_txn_committed;
-     double throughput_ = (double)txns_committed_this_interval
-             / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
-     total_prev_txn_committed = current_txns_committed;
-     printf("Throughput: %lf txn/s\n\n", throughput_);
-     if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
-       ofs << "At interval: " << interval_cnt_ << std::endl;
-       ofs << aggregated_stats.ToString();
-       ofs << throughput_ << std::endl;
-     }
-
+   aggregated_stats.Reset();
+   for(auto& val : backend_stats )
+   {
+     aggregated_stats.Aggregate((*val.second));
    }
-   printf("Aggregator done!\n");
+   aggregated_stats.Aggregate(stats_history);
+   printf("%s", aggregated_stats.ToString().c_str());
+   int64_t current_txns_committed = 0;
+   for (auto database_item : aggregated_stats.database_metrics_) {
+     current_txns_committed += database_item.second->GetTxnCommitted().GetCounter();
+   }
+   int64_t txns_committed_this_interval =
+       current_txns_committed - total_prev_txn_committed;
+   double throughput_ = (double)txns_committed_this_interval
+           / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
+   total_prev_txn_committed = current_txns_committed;
+   printf("Throughput: %lf txn/s\n\n", throughput_);
+   if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
+     ofs << "At interval: " << interval_cnt_ << std::endl;
+     ofs << aggregated_stats.ToString();
+     ofs << throughput_ << std::endl;
+   }
+
+  }
+  printf("Aggregator done!\n");
 
 }
 

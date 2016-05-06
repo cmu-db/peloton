@@ -76,6 +76,16 @@ class BackendStatsContext {
 
   void Aggregate(BackendStatsContext &source);
 
+  inline bool operator==(const BackendStatsContext &other) {
+    return database_metrics_ == other.database_metrics_ &&
+              table_metrics_ == other.table_metrics_    &&
+              index_metrics_ == other.index_metrics_;
+  }
+
+  inline bool operator!=(const BackendStatsContext &other) {
+    return !(*this == other);
+  }
+
   inline void Reset() {
     for (auto& database_item : database_metrics_) {
       database_item.second->Reset();
@@ -99,7 +109,6 @@ class BackendStatsContext {
 
         oid_t num_tables = database->GetTableCount();
         for (oid_t j = 0; j < num_tables; ++j) {
-          // Initialize all per-table stats
           auto table = database->GetTable(j);
           oid_t table_id = table->GetOid();
           TableMetric::TableKey table_key = TableMetric::GetKey(
@@ -131,24 +140,30 @@ class BackendStatsContext {
 
     for (auto database_item : database_metrics_) {
       oid_t database_id = database_item.second->GetDatabaseId();
-      ss << database_item.second->ToString() << std::endl;
+      ss << database_item.second->ToString();
 
       for (auto table_item : table_metrics_) {
         if (table_item.second->GetDatabaseId() == database_id) {
-          ss << table_item.second->ToString() << std::endl;
+          ss << table_item.second->ToString();
 
           oid_t table_id = table_item.second->GetTableId();
           for (auto index_item : index_metrics_) {
             if (index_item.second->GetDatabaseId() == database_id &&
                 index_item.second->GetTableId() == table_id) {
-              ss << index_item.second->ToString() << std::endl;
+              ss << index_item.second->ToString();
             }
           }
+          if (!index_metrics_.empty()) {
+            ss << std::endl;
+          }
+        }
+        if (!table_metrics_.empty()) {
           ss << std::endl;
         }
+      }
+      if (!database_metrics_.empty()) {
         ss << std::endl;
       }
-      ss << std::endl;
     }
 
     return ss.str();

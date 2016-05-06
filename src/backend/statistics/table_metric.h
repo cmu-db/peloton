@@ -71,6 +71,17 @@ class TableMetric : public AbstractMetric {
     table_access_.Reset();
   }
 
+  inline bool operator==(const TableMetric &other) {
+    return database_id_  == other.database_id_ &&
+           table_id_     == other.table_id_    &&
+           table_name_   == other.table_name_  &&
+           table_access_ == other.table_access_;
+  }
+
+  inline bool operator!=(const TableMetric &other) {
+    return !(*this == other);
+  }
+
   void Aggregate(AbstractMetric &source);
 
   inline std::string ToString() {
