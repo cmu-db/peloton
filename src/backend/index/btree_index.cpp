@@ -13,6 +13,7 @@
 #include "backend/index/btree_index.h"
 #include "backend/index/index_key.h"
 #include "backend/common/logger.h"
+#include "backend/statistics/stats_aggregator.h"
 #include "backend/storage/tuple.h"
 
 namespace peloton {
@@ -49,7 +50,12 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     container.insert(entry);
 
     index_lock.Unlock();
+
   }
+
+  peloton::stats::backend_stats_context->GetIndexMetric(
+      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+          ->GetIndexAccess().IncrementInserts();
 
   return true;
 }
@@ -82,6 +88,10 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
           container.erase(iterator);
           // Set try again
           try_again = true;
+
+          peloton::stats::backend_stats_context->GetIndexMetric(
+              GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+                  ->GetIndexAccess().IncrementDeletes();
           break;
         }
       }
@@ -121,6 +131,10 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
 
     index_lock.Unlock();
   }
+
+  peloton::stats::backend_stats_context->GetIndexMetric(
+      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+          ->GetIndexAccess().IncrementInserts();
 
   return true;
 }
@@ -211,6 +225,10 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     index_lock.Unlock();
   }
 
+  peloton::stats::backend_stats_context->GetIndexMetric(
+      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+          ->GetIndexAccess().IncrementReads(result.size());
+
   return result;
 }
 
@@ -234,6 +252,10 @@ std::vector<ItemPointer> BTreeIndex<KeyType, ValueType, KeyComparator,
 
     index_lock.Unlock();
   }
+
+  peloton::stats::backend_stats_context->GetIndexMetric(
+      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+          ->GetIndexAccess().IncrementReads(result.size());
 
   return result;
 }
@@ -261,6 +283,10 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
 
     index_lock.Unlock();
   }
+
+  peloton::stats::backend_stats_context->GetIndexMetric(
+      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+          ->GetIndexAccess().IncrementReads(result.size());
 
   return result;
 }

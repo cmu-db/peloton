@@ -143,8 +143,8 @@ bool OptimisticTxnManager::PerformRead(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementReads();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementReads();
   return true;
 }
 
@@ -161,8 +161,8 @@ bool OptimisticTxnManager::PerformInsert(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementInserts();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementInserts();
   return true;
 }
 
@@ -204,8 +204,8 @@ bool OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementUpdates();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementUpdates();
 
   return true;
 }
@@ -234,8 +234,8 @@ void OptimisticTxnManager::PerformUpdate(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementUpdates();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementUpdates();
 }
 
 bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
@@ -273,8 +273,8 @@ bool OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementDeletes();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementDeletes();
 
   return true;
 }
@@ -305,8 +305,8 @@ void OptimisticTxnManager::PerformDelete(const oid_t &tile_group_id,
       .GetTileGroup(tile_group_id)->GetTableId();
   oid_t database_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetDatabaseId();
-  peloton::stats::backend_stats_context->GetTableAccessMetric(
-      database_id, table_id)->IncrementDeletes();
+  peloton::stats::backend_stats_context->GetTableMetric(
+      database_id, table_id)->GetTableAccess().IncrementDeletes();
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
@@ -315,6 +315,11 @@ Result OptimisticTxnManager::CommitTransaction() {
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
+
+  oid_t database_id = 0;
+  if (!rw_set.empty()) {
+    database_id = manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
+  }
 
   //*****************************************************
   // we can optimize read-only transaction.
@@ -349,7 +354,8 @@ Result OptimisticTxnManager::CommitTransaction() {
     EndTransaction();
 
     // Increment # txns committed metric
-    peloton::stats::backend_stats_context->txn_committed.Increment();
+    peloton::stats::backend_stats_context->GetDatabaseMetric(database_id)
+        ->IncrementTxnCommitted();
 
     return ret;
   }
@@ -493,8 +499,8 @@ Result OptimisticTxnManager::CommitTransaction() {
   EndTransaction();
 
   // Increment # txns committed metric
-  printf("Incrementing # commits\n");
-  peloton::stats::backend_stats_context->txn_committed.Increment();
+  peloton::stats::backend_stats_context->GetDatabaseMetric(database_id)
+      ->IncrementTxnCommitted();
 
   return Result::RESULT_SUCCESS;
 }
@@ -504,6 +510,11 @@ Result OptimisticTxnManager::AbortTransaction() {
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
+
+  oid_t database_id = 0;
+  if (!rw_set.empty()) {
+    database_id = manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
+  }
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -572,7 +583,8 @@ Result OptimisticTxnManager::AbortTransaction() {
   EndTransaction();
 
   // Increment # txns aborted metric
-  peloton::stats::backend_stats_context->txn_aborted.Increment();
+  peloton::stats::backend_stats_context->GetDatabaseMetric(database_id)
+      ->IncrementTxnAborted();
 
   return Result::RESULT_ABORTED;
 }

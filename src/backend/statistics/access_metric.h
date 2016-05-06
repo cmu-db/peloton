@@ -59,6 +59,22 @@ class AccessMetric : public AbstractMetric {
     access_counters_[DELETE_COUNTER].Increment();
   }
 
+  inline void IncrementReads(int64_t count) {
+    access_counters_[READ_COUNTER].Increment(count);
+  }
+
+  inline void IncrementUpdates(int64_t count) {
+    access_counters_[UPDATE_COUNTER].Increment(count);
+  }
+
+  inline void IncrementInserts(int64_t count) {
+    access_counters_[INSERT_COUNTER].Increment(count);
+  }
+
+  inline void IncrementDeletes(int64_t count) {
+    access_counters_[DELETE_COUNTER].Increment(count);
+  }
+
   inline int64_t GetReads()   { return access_counters_[READ_COUNTER].GetCounter(); }
 
   inline int64_t GetUpdates() { return access_counters_[UPDATE_COUNTER].GetCounter(); }

@@ -60,11 +60,13 @@ BackendStatsContext::~BackendStatsContext() {
 }
 
 void BackendStatsContext::Aggregate(BackendStatsContext &source_) {
-  txn_committed.Aggregate(source_.txn_committed);
-  txn_aborted.Aggregate(source_.txn_aborted);
+  for (auto& database_item : source_.database_metrics_) {
+    GetDatabaseMetric(database_item.first)->Aggregate(*database_item.second);
+  }
 
-  for (auto access_item : source_.table_accesses_) {
-    GetTableAccessMetric((oid_t) 0, access_item.first)->Aggregate(*access_item.second);
+  for (auto access_item : source_.table_metrics_) {
+    GetTableMetric(access_item.second->GetDatabaseId(), access_item.second->GetTableId())
+        ->Aggregate(*access_item.second);
   }
 }
 

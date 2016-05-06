@@ -132,8 +132,8 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
 
   // Create index metadata and physical index
   index::IndexMetadata *metadata = new index::IndexMetadata(
-      index_name, index_oid, our_index_type, index_type, tuple_schema,
-      key_schema, unique_keys);
+      index_name, index_oid, data_table->GetOid(), database_oid, our_index_type,
+      index_type, tuple_schema, key_schema, unique_keys);
   index::Index *index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
