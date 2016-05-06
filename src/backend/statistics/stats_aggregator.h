@@ -60,8 +60,12 @@ class StatsAggregator {
   inline void RegisterContext(std::thread::id id_, BackendStatsContext *context_) {
     stats_mutex.lock();
 
+    // FIXME: This is sort of hacky. Eventually we want to free the StatsContext when the thread exit
     if (backend_stats.find(id_) == backend_stats.end()) {
       thread_number++;
+    } else {
+      stats_history.Aggregtate(*backend_stats[id_]);
+      delete backend_stats[id_];
     }
 
     backend_stats[id_] = context_;
