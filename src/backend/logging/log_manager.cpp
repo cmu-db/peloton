@@ -160,10 +160,10 @@ void LogManager::PrepareLogging() {
 }
 
 void LogManager::DoneLogging() {
-  //  if (this->IsInLoggingMode()) {
-  //    auto logger = this->GetBackendLogger();
-  //    logger->SetLoggingCidLowerBound(INVALID_CID);
-  //  }
+  if (this->IsInLoggingMode()) {
+	auto logger = this->GetBackendLogger();
+	logger->SetLoggingCidLowerBound(INVALID_CID);
+  }
 }
 
 void LogManager::LogBeginTransaction(cid_t commit_id) {
@@ -385,13 +385,6 @@ void LogManager::DoneRecovery() {
       }
     }
   }
-}
-
-void LogManager::ResetFrontendLogger() {
-  // TODO don't know what to do here, so just reset the first one among them
-  int i = 0;
-  frontend_loggers[i].reset(
-      FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
 }
 
 void LogManager::DropFrontendLoggers() {
