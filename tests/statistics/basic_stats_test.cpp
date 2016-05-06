@@ -35,27 +35,32 @@ namespace peloton {
       peloton::stats::BackendStatsContext* stats_ = peloton::stats::StatsAggregator::GetInstance().GetBackendStatsContext();
       printf("have a stats context? %p\n", stats_);
       
-      //int tuple_count = 10;
-
+      int tuple_count = 10;
 
       // Create a table and wrap it in logical tiles
-      /*
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto txn = txn_manager.BeginTransaction();
       std::unique_ptr<storage::DataTable> data_table(
 						     ExecutorTestsUtil::CreateTable(tuple_count, false));
 
-      */
-       peloton::stats::StatsAggregator * stats_agg = new peloton::stats::StatsAggregator();
-       /*
-       ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
+      peloton::stats::StatsAggregator * stats_agg = new peloton::stats::StatsAggregator();
+      
+      ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
 				       false, true);
-       txn_manager.CommitTransaction();
-       */
+      txn_manager.CommitTransaction();
 
-      //printf("%s", stats_->aggregated_stats.ToString().c_str());
+      stats_agg->RunAggregatorOnce();
+      //peloton::stats::BackendStatsContext context_ = stats_agg->GetAggregatedStats();
+      
 
-       delete stats_agg;
+      // Check if transacions commited is correct 
+      int64_t txn_commited = stats_->GetDatabaseMetric(data_table->GetDatabaseOid())->GetTxnCommitted().GetCounter();
+      EXPECT_EQ(txn_commited, 1);
+
+      int inserts = (int)stats_->GetTableMetric(data_table->GetDatabaseOid(), data_table->GetOid())->GetTableAccess().GetInserts();
+      
+      EXPECT_EQ(tuple_count, inserts);
+      delete stats_agg;
     }
   }
 }
