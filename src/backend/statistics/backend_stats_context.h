@@ -47,7 +47,11 @@ class BackendStatsContext {
   }
 
   inline AccessMetric* GetTableAccessMetric(oid_t table_id) {
-    return table_accesses_.find(table_id)->second;
+    auto table_item = table_accesses_.find(table_id);
+    if (table_item == table_accesses_.end() ) {
+      table_accesses_[table_id] = new AccessMetric{MetricType::ACCESS_METRIC};
+    }
+    return table_accesses_[table_id];
   }
 
   void Aggregtate(BackendStatsContext &source);
@@ -55,6 +59,9 @@ class BackendStatsContext {
   inline void Reset() {
     txn_committed.Reset();
     txn_aborted.Reset();
+    for (auto table_item : table_accesses_) {
+      table_item.second->Reset();
+    }
   }
 
   inline std::string ToString() {

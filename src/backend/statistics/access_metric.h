@@ -79,7 +79,7 @@ class AccessMetric : public AbstractMetric {
   inline std::string ToString() {
     std::stringstream ss;
     ss << "[ reads=" << read_counts_ << ", updates=" << update_counts_ << ", inserts="
-        << insert_counts_ << "deletes=" << delete_counts_ << " ]"<< std::endl;
+        << insert_counts_ << ", deletes=" << delete_counts_ << " ]"<< std::endl;
     return ss.str();
   }
 
