@@ -321,7 +321,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INDEX_TYPE_BTREE,
+        "primary_btree_index", 123, INVALID_OID, INVALID_OID, INDEX_TYPE_BTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -335,7 +335,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "secondary_btree_index", 124, INDEX_TYPE_BTREE,
+        "secondary_btree_index", 124, INVALID_OID, INVALID_OID, INDEX_TYPE_BTREE,
         INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique);
     index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
 
