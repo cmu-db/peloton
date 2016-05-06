@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "backend/statistics/counter_metric.h"
+#include "backend/statistics/access_metric.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -22,13 +22,21 @@ namespace peloton {
 namespace stats {
 
 
-CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
-  count = 0;
+AccessMetric::AccessMetric(MetricType type) : AbstractMetric(type) {
+  read_counts_ = 0;
+  update_counts_ = 0;
+  insert_counts_ = 0;
+  delete_counts_ = 0;
 }
 
-void CounterMetric::Aggregate(AbstractMetric &source) {
-  assert(source.GetType() == COUNTER_METRIC);
-  count += static_cast<CounterMetric&>(source).GetCounter();
+void AccessMetric::Aggregate(AbstractMetric &source) {
+  assert(source.GetType() == ACCESS_METRIC);
+
+  auto access_metric = static_cast<AccessMetric&>(source);
+  read_counts_ += access_metric.GetReads();
+  update_counts_ += access_metric.GetUpdates();
+  insert_counts_ += access_metric.GetInserts();
+  delete_counts_ += access_metric.GetDeletes();
 }
 
 }  // namespace stats
