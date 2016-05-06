@@ -252,16 +252,11 @@ countdown_c(PG_FUNCTION_ARGS) {
     sprintf(num1, "%d\r\n", start);
     strcpy(result, num1);
 
+    int j;
     for (i = start - 1; i >= 1; i--) {
         int len_num = 0;
         s = i;
-        while (s != 0) {
-            s /= 10;
-            len_num++;
-        }
-        char *num = new char[len_num + 2];
-        sprintf(num, "%d\r\n", i);
-        strcat(result, num);
+        j = s;
     }
 
     PG_RETURN_INT32(start);

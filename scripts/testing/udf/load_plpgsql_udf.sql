@@ -98,11 +98,7 @@ BEGIN
     sql := 'SELECT n AS countdown
             FROM generate_series(' || CAST(start AS text) || ', 1, -1) AS n ';
     FOR tmp IN EXECUTE(sql) LOOP
-        IF result > '' THEN
-            result := result || E'\r\n' || tmp;
-        ELSE
-            result := tmp;
-        END IF;
+        NULL;
     END LOOP;
     RETURN result;
 END;
