@@ -216,8 +216,9 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+        "primary_btree_index", 123, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+        key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -230,8 +231,9 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "secondary_btree_index", 124, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique);
+        "secondary_btree_index", 124, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema,
+        key_schema, unique);
     index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
 
     table->AddIndex(sec_index);
@@ -243,8 +245,9 @@ storage::DataTable *ConstraintsTestsUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-        "unique_btree_index", 125, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema, key_schema, unique);
+        "unique_btree_index", 125, table->GetOid(), table->GetDatabaseOid(),
+        INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema,
+        key_schema, unique);
     index::Index *unique_index =
         index::IndexFactory::GetInstance(index_metadata);
 

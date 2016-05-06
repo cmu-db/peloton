@@ -53,7 +53,7 @@ void StatsAggregator::RunAggregator() {
      ) {
    interval_cnt_++;
    printf("\n////////////////////////////////////////////////////////////////////////////////////////////////////////////\n");
-   printf("At interval: %ld\n", interval_cnt_);
+   printf("TIME ELAPSED: %ld sec\n", interval_cnt_);
 
    aggregated_stats.Reset();
    for(auto& val : backend_stats )
@@ -81,7 +81,7 @@ void StatsAggregator::RunAggregator() {
    total_prev_txn_committed = current_txns_committed;
    printf("Average throughput:     %lf txn/s\n", avg_throughput_);
    printf("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
-   printf("Current thoughput:      %lf txn/s\n\n", throughput_);
+   printf("Current throughput:     %lf txn/s\n\n", throughput_);
    if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
      ofs << "At interval: " << interval_cnt_ << std::endl;
      ofs << aggregated_stats.ToString();

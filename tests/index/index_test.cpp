@@ -68,8 +68,9 @@ index::Index *BuildIndex(const bool unique_keys) {
 
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "test_index", 125, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, unique_keys);
+      "test_index", 125, INVALID_OID, INVALID_OID, index_type,
+      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema,
+      unique_keys);
 
   // Build index
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
