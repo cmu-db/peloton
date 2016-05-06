@@ -22,21 +22,14 @@ namespace peloton {
 namespace stats {
 
 
-AccessMetric::AccessMetric(MetricType type) : AbstractMetric(type) {
-  read_counts_ = 0;
-  update_counts_ = 0;
-  insert_counts_ = 0;
-  delete_counts_ = 0;
-}
-
 void AccessMetric::Aggregate(AbstractMetric &source) {
   assert(source.GetType() == ACCESS_METRIC);
 
   auto access_metric = static_cast<AccessMetric&>(source);
-  read_counts_ += access_metric.GetReads();
-  update_counts_ += access_metric.GetUpdates();
-  insert_counts_ += access_metric.GetInserts();
-  delete_counts_ += access_metric.GetDeletes();
+  for (size_t i = 0; i < NUM_COUNTERS; ++i) {
+    access_counters_[i].Aggregate(static_cast<CounterMetric&>(
+        access_metric.GetAccessCounter(i)));
+  }
 }
 
 }  // namespace stats

@@ -18,6 +18,7 @@
 
 #include "backend/common/types.h"
 #include "backend/statistics/abstract_metric.h"
+#include "backend/statistics/counter_metric.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -34,62 +35,69 @@ namespace stats {
 class AccessMetric : public AbstractMetric {
  public:
 
-  AccessMetric(MetricType type);
+  static const size_t READ_COUNTER   = 0;
+  static const size_t UPDATE_COUNTER = 1;
+  static const size_t INSERT_COUNTER = 2;
+  static const size_t DELETE_COUNTER = 3;
+  static const size_t NUM_COUNTERS   = 4;
+
+  AccessMetric(MetricType type) : AbstractMetric(type) { }
 
   inline void IncrementReads() {
-    read_counts_++;
+    access_counters_[READ_COUNTER].Increment();
   }
 
   inline void IncrementUpdates() {
-    update_counts_++;
+    access_counters_[UPDATE_COUNTER].Increment();
   }
 
   inline void IncrementInserts() {
-    insert_counts_++;
+    access_counters_[INSERT_COUNTER].Increment();
   }
 
   inline void IncrementDeletes() {
-    delete_counts_++;
+    access_counters_[DELETE_COUNTER].Increment();
   }
 
-  inline int64_t GetReads() {
-    return read_counts_;
-  }
+  inline int64_t GetReads()   { return access_counters_[READ_COUNTER].GetCounter(); }
 
-  inline int64_t GetUpdates() {
-    return update_counts_;
-  }
+  inline int64_t GetUpdates() { return access_counters_[UPDATE_COUNTER].GetCounter(); }
 
-  inline int64_t GetInserts() {
-    return insert_counts_;
-  }
+  inline int64_t GetInserts() { return access_counters_[INSERT_COUNTER].GetCounter(); }
 
-  inline int64_t GetDeletes() {
-    return delete_counts_;
+  inline int64_t GetDeletes() { return access_counters_[DELETE_COUNTER].GetCounter(); }
+
+  inline CounterMetric& GetAccessCounter(size_t counter_type) {
+    return access_counters_[counter_type];
   }
 
   inline void Reset() {
-    read_counts_ = 0;
-    update_counts_ = 0;
-    insert_counts_ = 0;
-    delete_counts_ = 0;
+    for (auto& counter : access_counters_) {
+      counter.Reset();
+    }
   }
 
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss << "[ reads=" << read_counts_ << ", updates=" << update_counts_ << ", inserts="
-        << insert_counts_ << ", deletes=" << delete_counts_ << " ]"<< std::endl;
+    ss << "[ reads=" << access_counters_[READ_COUNTER].ToString()   <<
+        ", updates=" << access_counters_[UPDATE_COUNTER].ToString() <<
+        ", inserts=" << access_counters_[INSERT_COUNTER].ToString() <<
+        ", deletes=" << access_counters_[DELETE_COUNTER].ToString() <<
+        " ]";
     return ss.str();
   }
 
   void Aggregate(AbstractMetric &source);
 
  private:
-  int64_t read_counts_;
-  int64_t update_counts_;
-  int64_t insert_counts_;
-  int64_t delete_counts_;
+
+  std::vector<CounterMetric> access_counters_ {
+    CounterMetric(COUNTER_METRIC),  // READ_COUNTER
+    CounterMetric(COUNTER_METRIC),  // UPDATE_COUNTER
+    CounterMetric(COUNTER_METRIC),  // INSERT_COUNTER
+    CounterMetric(COUNTER_METRIC)   // DELETE_COUNTER
+  };
 
 };
 

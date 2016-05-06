@@ -64,7 +64,7 @@ class CounterMetric : public AbstractMetric {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss << count << std::endl;
+    ss << count;
     return ss.str();
   }
 
