@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_tests_util.h
 //
 // Identification: tests/executor/executor_tests_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ class Column;
 class Manager;
 }
 
-namespace concurrency{
+namespace concurrency {
 class Transaction;
 }
 
@@ -57,7 +57,7 @@ class ExecutorTestsUtil {
    * @brief Creates a basic tile group with allocated but not populated
    *        tuples.
    */
-  static storage::TileGroup *CreateTileGroup(
+  static std::shared_ptr<storage::TileGroup> CreateTileGroup(
       int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
   /** @brief Creates a basic table with allocated but not populated tuples */
@@ -68,8 +68,7 @@ class ExecutorTestsUtil {
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
 
-  static void PopulateTable(concurrency::Transaction *transaction,
-                            storage::DataTable *table, int num_rows,
+  static void PopulateTable(storage::DataTable *table, int num_rows,
                             bool mutate, bool random, bool group_by);
 
   static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
@@ -95,10 +94,10 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id,
-                                  VarlenPool *pool);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table,
-                                      VarlenPool *pool);
+  static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table, oid_t tuple_id,
+                                                  VarlenPool *pool);
+  static std::unique_ptr<storage::Tuple> GetNullTuple(storage::DataTable *table,
+                                                      VarlenPool *pool);
 
   /** Print the tuples from a vector of logical tiles */
   static void PrintTileVector(

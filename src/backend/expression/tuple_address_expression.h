@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tuple_address_expression.h
 //
 // Identification: src/backend/expression/tuple_address_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,6 +39,8 @@ class TupleAddressExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return spacer + "TupleAddressExpression\n";
   }
+
+  AbstractExpression *Copy() const { return new TupleAddressExpression(); }
 };
 
 }  // End expression namespace

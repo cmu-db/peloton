@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index_scan_executor.cpp
 //
 // Identification: src/backend/executor/index_scan_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,7 +25,11 @@
 #include "backend/index/index.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
+#include "backend/catalog/manager.h"
+#include "backend/gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace executor {
@@ -59,7 +63,7 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   assert(index_ != nullptr);
 
-  result_itr = START_OID;
+  result_itr_ = START_OID;
   done_ = false;
 
   column_ids_ = node.GetColumnIds();
@@ -72,7 +76,7 @@ bool IndexScanExecutor::DInit() {
   if (runtime_keys_.size() != 0) {
     assert(runtime_keys_.size() == values_.size());
 
-    if (!key_ready) {
+    if (!key_ready_) {
       values_.clear();
 
       for (auto expr : runtime_keys_) {
@@ -81,7 +85,7 @@ bool IndexScanExecutor::DInit() {
         values_.push_back(value);
       }
 
-      key_ready = true;
+      key_ready_ = true;
     }
   }
 
@@ -103,22 +107,24 @@ bool IndexScanExecutor::DExecute() {
   LOG_INFO("Index Scan executor :: 0 child");
 
   if (!done_) {
-    auto status = ExecIndexLookup();
-    if (status == false) return false;
-    ExecPredication();
-    ExecProjection();
+    if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      auto status = ExecPrimaryIndexLookup();
+      if (status == false) return false;
+    } else {
+      auto status = ExecSecondaryIndexLookup();
+      if (status == false) return false;
+    }
   }
-
   // Already performed the index lookup
   assert(done_);
 
-  while (result_itr < result.size()) {  // Avoid returning empty tiles
-    if (result[result_itr]->GetTupleCount() == 0) {
-      result_itr++;
+  while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
+    if (result_[result_itr_]->GetTupleCount() == 0) {
+      result_itr_++;
       continue;
     } else {
-      SetOutput(result[result_itr]);
-      result_itr++;
+      SetOutput(result_[result_itr_]);
+      result_itr_++;
       return true;
     }
 
@@ -127,72 +133,210 @@ bool IndexScanExecutor::DExecute() {
   return false;
 }
 
-void IndexScanExecutor::ExecPredication() {
-  if (nullptr == predicate_) return;
-  unsigned int removed_count = 0;
-  for (auto tile : result) {
-    for (auto tuple_id : *tile) {
-      expression::ContainerTuple<LogicalTile> tuple(tile, tuple_id);
-      if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
-        removed_count++;
-        tile->RemoveVisibility(tuple_id);
+bool IndexScanExecutor::ExecPrimaryIndexLookup() {
+  assert(!done_);
+
+  std::vector<ItemPointer *> tuple_location_ptrs;
+
+  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+
+  if (0 == key_column_ids_.size()) {
+    index_->ScanAllKeys(tuple_location_ptrs);
+  } else {
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
+  }
+
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
+
+  if (tuple_location_ptrs.size() == 0) return false;
+
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  // for every tuple that is found in the index.
+  for (auto tuple_location_ptr : tuple_location_ptrs) {
+    
+    ItemPointer tuple_location = *tuple_location_ptr;
+    
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto tile_group_header = tile_group.get()->GetHeader();
+
+    size_t chain_length = 0;
+    while (true) {
+
+      ++chain_length;
+
+      // if the tuple is visible.
+      if (transaction_manager.IsVisible(tile_group_header,
+                                        tuple_location.offset)) {
+
+        LOG_INFO("traverse chain length : %lu", chain_length);
+        LOG_INFO("perform read: %u, %u", tuple_location.block,
+                 tuple_location.offset);
+
+        // perform predicate evaluation.
+        if (predicate_ == nullptr) {
+          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+
+          auto res = transaction_manager.PerformRead(tuple_location);
+          if (!res) {
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }
+        } else {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+              tile_group.get(), tuple_location.offset);
+          auto eval =
+              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          if (eval == true) {
+            visible_tuples[tuple_location.block]
+                .push_back(tuple_location.offset);
+
+            auto res = transaction_manager.PerformRead(tuple_location);
+            if (!res) {
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
+          }
+        }
+        break;
+      }
+      // if the tuple is not visible.
+      else {
+        ItemPointer old_item = tuple_location;
+        cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
+
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+        // there must exist a visible version.
+        assert(tuple_location.IsNull() == false);
+
+        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+
+        // check whether older version is garbage.
+        if (old_end_cid < max_committed_cid) {
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+
+          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+
+
+            // atomically swap item pointer held in the index bucket.
+            AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
+
+            // currently, let's assume only primary index exists.
+            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+                table_->GetOid(), old_item.block, old_item.offset,
+                max_committed_cid);
+          }
+        }
+
+        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group_header = tile_group.get()->GetHeader();
+
       }
     }
   }
-  LOG_INFO("predicate removed %d row", removed_count);
-}
 
-void IndexScanExecutor::ExecProjection() {
-  if (column_ids_.size() == 0) return;
+  // Construct a logical tile for each block
+  for (auto tuples : visible_tuples) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuples.first);
 
-  for (auto tile : result) {
-    tile->ProjectColumns(full_column_ids_, column_ids_);
+    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, full_column_ids_);
+    logical_tile->AddPositionList(std::move(tuples.second));
+    if (column_ids_.size() != 0) {
+      logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+    }
+
+    result_.push_back(logical_tile.release());
   }
+
+  done_ = true;
+
+  LOG_TRACE("Result tiles : %lu", result_.size());
+
+  return true;
 }
 
-bool IndexScanExecutor::ExecIndexLookup() {
+bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   assert(!done_);
-
-  /*
-   * If query is IN+Subquery, the values should be set using context params
-   * for now, the flag params_exec_ is set to 1 only in nestloop join
-   * in this case, the params is the results of the outer plan
-   * We can add more cases in future
-   */
-  //TODO: we probably need to add more for other cases in future
-  if (executor_context_->GetParamsExec() == 1) {
-	  values_.clear();
-	  std::vector<Value> vecValue = executor_context_->GetParams();
-
-	  for (auto val : vecValue) {
-	        values_.push_back(val);
-	  }
-  }
 
   std::vector<ItemPointer> tuple_locations;
 
+  assert(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+
   if (0 == key_column_ids_.size()) {
-    tuple_locations = index_->ScanAllKeys();
+    index_->ScanAllKeys(tuple_locations);
   } else {
-    tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_,
-                                   SCAN_DIRECTION_TYPE_FORWARD);
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
   }
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 
-  auto transaction_ = executor_context_->GetTransaction();
-  txn_id_t txn_id = transaction_->GetTransactionId();
-  cid_t commit_id = transaction_->GetLastCommitId();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
 
-  // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTileGroups(tuple_locations, full_column_ids_,
-                                              txn_id, commit_id);
+  std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  // for every tuple that is found in the index.
+  for (auto tuple_location : tuple_locations) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    auto tile_group_header = tile_group.get()->GetHeader();
+    auto tile_group_id = tuple_location.block;
+    auto tuple_id = tuple_location.offset;
+
+    // if the tuple is visible.
+    if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+      // perform predicate evaluation.
+      if (predicate_ == nullptr) {
+        visible_tuples[tile_group_id].push_back(tuple_id);
+        auto res = transaction_manager.PerformRead(tuple_location);
+        if (!res) {
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          return res;
+        }
+      } else {
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                             tuple_id);
+        auto eval =
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+        if (eval == true) {
+          visible_tuples[tile_group_id].push_back(tuple_id);
+          auto res = transaction_manager.PerformRead(tuple_location);
+          if (!res) {
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }
+        }
+      }
+    }
+  }
+  // Construct a logical tile for each block
+  for (auto tuples : visible_tuples) {
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuples.first);
+
+    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+    // Add relevant columns to logical tile
+    logical_tile->AddColumns(tile_group, full_column_ids_);
+    logical_tile->AddPositionList(std::move(tuples.second));
+    if (column_ids_.size() != 0) {
+      logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+    }
+
+    result_.push_back(logical_tile.release());
+  }
 
   done_ = true;
 
-  LOG_TRACE("Result tiles : %lu", result.size());
+  LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
 }

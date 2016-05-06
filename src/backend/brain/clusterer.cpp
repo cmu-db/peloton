@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // clusterer.cpp
 //
 // Identification: src/backend/brain/clusterer.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,8 +29,6 @@ void Clusterer::ProcessSample(const Sample &sample) {
 
   Sample distance = sample.GetDifference(means_[closest_cluster]);
   Sample mean_drift = distance * new_sample_weight_;
-
-  // std::cout << "mean drift : " << mean_drift << "\n";
 
   // Update the cluster's mean
   means_[closest_cluster] = means_[closest_cluster] + mean_drift;
@@ -86,7 +84,7 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   // look for most significant cluster
   for (auto entry = frequencies.rbegin(); entry != frequencies.rend();
        ++entry) {
-    LOG_TRACE(" %lu :: %.3lf", entry->second, entry->first);
+    LOG_TRACE(" %u :: %.3lf", entry->second, entry->first);
 
     // first, check if remaining columns less than tile count
     if (remaining_column_count <= tile_count) {

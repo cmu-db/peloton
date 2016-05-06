@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index_key.h
 //
 // Identification: src/backend/index/index_key.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -93,8 +93,7 @@ inline uint64_t ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
  *  Integer key that will pack all key data into KeySize number of uint64_t.
  *  The minimum number of uint64_ts necessary to pack all the integers is used.
  */
-template <std::size_t KeySize>
-class IntsKey {
+template <std::size_t KeySize> class IntsKey {
  public:
   /*
    * Take a value that is part of the key (already converted to a uint64_t) and
@@ -128,16 +127,16 @@ class IntsKey {
        * byte location available
        * in the key and OR it in.
        */
-      data[key_offset] |= (0xFF & (key_value >> (ii * 8)))
-                          << (intra_key_offset * 8);  //
+      data[key_offset] |=
+          (0xFF & (key_value >> (ii * 8))) << (intra_key_offset * 8);  //
       intra_key_offset--;  // Move the offset inside the uint64 key back one.
-                           /*
-                            * If there are no more bytes available in the uint64_t indexed by
-                            * key_offset then increment key_offset
-                            * to point to the next uint64_t and set intra_key_offset to index to the
-                            * most significant byte
-                            * in this next uint64_t.
-                            */
+      /*
+       * If there are no more bytes available in the uint64_t indexed by
+       * key_offset then increment key_offset
+       * to point to the next uint64_t and set intra_key_offset to index to the
+       * most significant byte
+       * in this next uint64_t.
+       */
       if (intra_key_offset < 0) {
         intra_key_offset = sizeof(uint64_t) - 1;
         key_offset++;
@@ -153,8 +152,8 @@ class IntsKey {
                                   int &intra_key_offset) const {
     uint64_t retval = 0;
     for (int ii = static_cast<int>(sizeof(KeyValueType)) - 1; ii >= 0; ii--) {
-      retval |= (0xFF & (data[key_offset] >> (intra_key_offset * 8)))
-                << (ii * 8);
+      retval |=
+          (0xFF & (data[key_offset] >> (intra_key_offset * 8))) << (ii * 8);
       intra_key_offset--;
       if (intra_key_offset < 0) {
         intra_key_offset = sizeof(uint64_t) - 1;
@@ -164,8 +163,8 @@ class IntsKey {
     return retval;
   }
 
-  const storage::Tuple GetTupleForComparison(
-      __attribute__((unused)) const catalog::Schema *key_schema) {
+  const storage::Tuple GetTupleForComparison(__attribute__((unused)) const
+                                             catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
 
@@ -206,9 +205,8 @@ class IntsKey {
           break;
         }
         default:
-          throw IndexException(
-              "We currently only support a specific set of "
-              "column index sizes...");
+          throw IndexException("We currently only support a specific set of "
+                               "column index sizes...");
           break;
       }
     }
@@ -257,9 +255,8 @@ class IntsKey {
           break;
         }
         default:
-          throw IndexException(
-              "We currently only support a specific set of "
-              "column index sizes...");
+          throw IndexException("We currently only support a specific set of "
+                               "column index sizes...");
           break;
       }
     }
@@ -310,9 +307,8 @@ class IntsKey {
           break;
         }
         default:
-          throw IndexException(
-              "We currently only support a specific set of "
-              "column index sizes...");
+          throw IndexException("We currently only support a specific set of "
+                               "column index sizes...");
           break;
       }
     }
@@ -325,8 +321,7 @@ class IntsKey {
 };
 
 /** comparator for Int specialized indexes. */
-template <std::size_t KeySize>
-class IntsComparator {
+template <std::size_t KeySize> class IntsComparator {
  public:
   IntsComparator(index::IndexMetadata *metadata)
       : key_schema(metadata->GetKeySchema()) {}
@@ -355,8 +350,7 @@ class IntsComparator {
 /**
  *
  */
-template <std::size_t KeySize>
-class IntsEqualityChecker {
+template <std::size_t KeySize> class IntsEqualityChecker {
  public:
   IntsEqualityChecker(index::IndexMetadata *metadata)
       : key_schema(metadata->GetKeySchema()) {}
@@ -382,23 +376,25 @@ class IntsEqualityChecker {
  */
 template <std::size_t KeySize>
 struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
-  IntsHasher(catalog::Schema *key_schema) {}
+  IntsHasher(index::IndexMetadata *metadata)
+      : schema(metadata->GetKeySchema()) {}
 
   inline size_t operator()(IntsKey<KeySize> const &p) const {
     size_t seed = 0;
-    for (int ii = 0; ii < KeySize; ii++) {
+    for (size_t ii = 0; ii < KeySize; ii++) {
       boost::hash_combine(seed, p.data[ii]);
     }
     return seed;
   }
+
+  const catalog::Schema *schema;
 };
 
 /**
  * Key object for indexes of mixed types.
  * Using storage::Tuple to store columns.
  */
-template <std::size_t KeySize>
-class GenericKey {
+template <std::size_t KeySize> class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
@@ -428,8 +424,7 @@ class GenericKey {
 /**
  * Function object returns true if lhs < rhs, used for trees
  */
-template <std::size_t KeySize>
-class GenericComparator {
+template <std::size_t KeySize> class GenericComparator {
  public:
   /** Type information passed to the constuctor as it's not in the key itself */
   GenericComparator(index::IndexMetadata *metadata)
@@ -469,8 +464,7 @@ class GenericComparator {
 /**
  * Equality-checking function object
  */
-template <std::size_t KeySize>
-class GenericEqualityChecker {
+template <std::size_t KeySize> class GenericEqualityChecker {
  public:
   /** Type information passed to the constuctor as it's not in the key itself */
   GenericEqualityChecker(index::IndexMetadata *metadata)
@@ -547,8 +541,8 @@ class TupleKey {
 
   // Set a key from a table-schema tuple.
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
-                           __attribute__((unused))
-                           const catalog::Schema *key_schema) {
+                           __attribute__((unused)) const
+                           catalog::Schema *key_schema) {
     assert(tuple);
     assert(indices);
     column_indices = indices;
@@ -579,6 +573,20 @@ class TupleKey {
   // Pointer a persistent tuple in non-ephemeral case.
   char *key_tuple;
   const catalog::Schema *key_tuple_schema;
+};
+
+struct TupleKeyHasher {
+  /** Type information passed to the constuctor as it's not in the key itself */
+  TupleKeyHasher(index::IndexMetadata *metadata)
+      : schema(metadata->GetKeySchema()) {}
+
+  /** Generate a 64-bit number for the key value */
+  inline size_t operator()(const TupleKey &p) const {
+    storage::Tuple pTuple = p.GetTupleForComparison(p.key_tuple_schema);
+    return pTuple.HashCode();
+  }
+
+  const catalog::Schema *schema;
 };
 
 class TupleKeyComparator {

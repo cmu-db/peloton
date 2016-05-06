@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_limit.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_limit.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -26,15 +26,15 @@ namespace bridge {
  *        does not support cases where there is only OFFSET
  * @return Pointer to the constructed AbstractPlan
  */
-const planner::AbstractPlan *PlanTransformer::TransformLimit(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
     const LimitPlanState *limit_state) {
   // TODO: does not do pass down bound to child node
   // TODO: handle no limit and no offset cases
   LOG_INFO("Flags :: Limit: %d, Offset: %d", limit_state->noLimit,
            limit_state->noOffset);
   LOG_INFO("Limit: %ld, Offset: %ld", limit_state->limit, limit_state->offset);
-  auto plan_node =
-      new planner::LimitPlan(limit_state->limit, limit_state->offset);
+  std::unique_ptr<planner::AbstractPlan> plan_node(
+      new planner::LimitPlan(limit_state->limit, limit_state->offset));
 
   // Resolve child plan
   AbstractPlanState *subplan_state = outerAbstractPlanState(limit_state);

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// aggregate_node.h
+// aggregate_plan.h
 //
-// Identification: src/backend/planner/aggregateV2_node.h
+// Identification: src/backend/planner/aggregate_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,16 +40,21 @@ class AggregatePlan : public AbstractPlan {
     AggTerm(ExpressionType et, expression::AbstractExpression *expr,
             bool distinct = false)
         : aggtype(et), expression(expr), distinct(distinct) {}
+
+    AggTerm Copy() const {
+      return AggTerm(aggtype, expression->Copy(), distinct);
+    }
   };
 
-  AggregatePlan(const planner::ProjectInfo *project_info,
-                const expression::AbstractExpression *predicate,
-                const std::vector<AggTerm> &&unique_agg_terms,
-                const std::vector<oid_t> &&groupby_col_ids,
-                const catalog::Schema *output_schema,
-                PelotonAggType aggregate_strategy)
-      : project_info_(project_info),
-        predicate_(predicate),
+  AggregatePlan(
+      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+      std::unique_ptr<const expression::AbstractExpression> &&predicate,
+      const std::vector<AggTerm> &&unique_agg_terms,
+      const std::vector<oid_t> &&groupby_col_ids,
+      std::shared_ptr<const catalog::Schema> &output_schema,
+      PelotonAggType aggregate_strategy)
+      : project_info_(std::move(project_info)),
+        predicate_(std::move(predicate)),
         unique_agg_terms_(unique_agg_terms),
         groupby_col_ids_(groupby_col_ids),
         output_schema_(output_schema),
@@ -93,6 +98,24 @@ class AggregatePlan : public AbstractPlan {
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
+  std::unique_ptr<AbstractPlan> Copy() const {
+    std::vector<AggTerm> copied_agg_terms;
+    for (const AggTerm &term : unique_agg_terms_) {
+      copied_agg_terms.push_back(term.Copy());
+    }
+    std::vector<oid_t> copied_groupby_col_ids(groupby_col_ids_);
+
+    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
+        predicate_->Copy());
+    std::shared_ptr<const catalog::Schema> output_schema_copy(
+        catalog::Schema::CopySchema(GetOutputSchema()));
+    AggregatePlan *new_plan = new AggregatePlan(
+        std::move(project_info_->Copy()), std::move(predicate_copy),
+        std::move(copied_agg_terms), std::move(copied_groupby_col_ids),
+        output_schema_copy, agg_strategy_);
+    return std::unique_ptr<AbstractPlan>(new_plan);
+  }
+
  private:
   /* For projection */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
@@ -107,7 +130,7 @@ class AggregatePlan : public AbstractPlan {
   const std::vector<oid_t> groupby_col_ids_;
 
   /* Output schema */
-  std::unique_ptr<const catalog::Schema> output_schema_;
+  std::shared_ptr<const catalog::Schema> output_schema_;
 
   /* Aggregate Strategy */
   const PelotonAggType agg_strategy_;

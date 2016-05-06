@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_materialization.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_materialization.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,17 +24,17 @@ namespace bridge {
  * @brief Convert a Postgres Material into a Peloton Materialization node
  * @return Pointer to the constructed AbstractPlan.
  */
-const planner::AbstractPlan *PlanTransformer::TransformMaterialization(
-    const MaterialPlanState *plan_state) {
+std::unique_ptr<planner::AbstractPlan>
+PlanTransformer::TransformMaterialization(const MaterialPlanState *plan_state) {
   // Currently, we just pass the underlying plan node for this case
   AbstractPlanState *outer_plan_state = plan_state->left_tree;
-  const planner::AbstractPlan *child = TransformPlan(outer_plan_state);
+  auto child = TransformPlan(outer_plan_state);
 
   bool physify_flag = false;
-  planner::AbstractPlan *plan_node =
-      new planner::MaterializationPlan(physify_flag);
+  std::unique_ptr<planner::AbstractPlan> plan_node(
+      new planner::MaterializationPlan(physify_flag));
 
-  plan_node->AddChild(child);
+  plan_node.get()->AddChild(std::move(child));
 
   return plan_node;
 }

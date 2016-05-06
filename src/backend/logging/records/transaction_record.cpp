@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// transaction_record.cpp
+//
+// Identification: src/backend/logging/records/transaction_record.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 
@@ -20,7 +31,7 @@ bool TransactionRecord::Serialize(CopySerializeOutput &output) {
   // Then reserve 4 bytes for the header size to be written later
   size_t start = output.Position();
   output.WriteInt(0);
-  output.WriteLong(txn_id);
+  output.WriteLong(cid);
 
   // Write out the header now
   int32_t header_length =
@@ -43,7 +54,7 @@ void TransactionRecord::Deserialize(CopySerializeInputBE &input) {
   input.ReadInt();
 
   // Just grab the transaction id
-  txn_id = (txn_id_t)(input.ReadLong());
+  cid = (txn_id_t)(input.ReadLong());
 }
 
 // Used for peloton logging
@@ -52,10 +63,14 @@ size_t TransactionRecord::GetTransactionRecordSize(void) {
   return sizeof(char) + sizeof(int) + sizeof(long);
 }
 
-void TransactionRecord::Print(void) {
-  std::cout << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
-  std::cout << " #Txn ID:" << GetTransactionId() << "\n";
-  std::cout << "\n";
+const std::string TransactionRecord::GetInfo() const {
+  std::ostringstream os;
+
+  os << "#LOG TYPE:" << LogRecordTypeToString(GetType()) << "\n";
+  os << " #Txn ID:" << GetTransactionId() << "\n";
+  os << "\n";
+
+  return os.str();
 }
 
 }  // namespace logging

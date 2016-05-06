@@ -1,12 +1,12 @@
-///===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // cache.cpp
 //
 // Identification: src/backend/common/cache.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon Universitry Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,8 +20,9 @@ namespace peloton {
 /** @brief the constructor, nothing fancy here
  */
 template <class Key, class Value>
-Cache<Key, Value>::Cache(size_type capacitry, ValueDeleter deleter)
-    : capacity_(capacitry), value_deleter_(deleter) {}
+Cache<Key, Value>::Cache(size_type capacity, size_t insert_threshold)
+    : capacity_(capacity),
+      insert_threshold_(insert_threshold) {}
 
 /* @brief find a value cached with key
  *
@@ -46,8 +47,7 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key &key) {
 
 /** @brief insert a key value pair
  *         if the key already exists, this updates its value, the reference
- *count
- *         of the previous value would decrement by 1
+ *         count of the previous value would decrement by 1
  *
  *         if not, this effectively insert a new entry
  *         regardless, the related entry would become the most recent one
@@ -64,10 +64,26 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     const Entry &entry) {
   assert(list_.size() == map_.size());
   assert(list_.size() <= this->capacity_);
+
   auto map_itr = map_.find(entry.first);
   auto cache_itr = iterator(map_itr);
 
   if (map_itr == map_.end()) {
+    auto count_itr = counts_.find(entry.first);
+    if (insert_threshold_ > 1) {
+      if (count_itr == counts_.end()) {
+        counts_.emplace(entry.first, 1);
+        return map_.end();
+      } else {
+        size_t count = count_itr->second;
+        if (count + 1 >= insert_threshold_) {
+          counts_.erase(entry.first);
+        } else {
+          count_itr->second += 1;
+          return map_.end();
+        }
+      }
+    }
     /* new key */
     list_.push_front(entry.first);
     auto ret =

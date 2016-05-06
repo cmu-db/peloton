@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // materialization_executor.cpp
 //
 // Identification: src/backend/executor/materialization_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -206,8 +206,9 @@ void MaterializeRowAtAtATime(
             base_tuple_id, old_column_offsets[col_itr],
             old_column_types[col_itr], old_is_inlineds[col_itr]);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id, new_column_offsets[col_itr]);
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %lu ", new_tuple_id,
+                  new_column_offsets[col_itr]);
 
         dest_tile->SetValueFast(
             value, new_tuple_id, new_column_offsets[col_itr],
@@ -279,8 +280,8 @@ void MaterializeColumnAtATime(
         auto value = old_tile->GetValueFast(base_tuple_id, old_column_offset,
                                             old_column_type, old_is_inlined);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id, new_column_id);
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
 
         dest_tile->SetValueFast(value, new_tuple_id, new_column_offset,
                                 new_is_inlined, new_column_length);

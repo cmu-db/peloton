@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_utils.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_utils.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -104,14 +104,14 @@ void PlanTransformer::GetGenericInfoFromScanState(
         "Non-trivial projections are found. Projection node will be "
         "created. ");
 
-    auto project_schema =
-        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor);
+    std::shared_ptr<const catalog::Schema> project_schema(
+        SchemaTransformer::GetSchemaFromTupleDesc(sstate->tts_tupleDescriptor));
 
     auto column_ids =
         BuildColumnListFromTargetList(project_info->GetTargetList());
 
-    parent =
-        new planner::ProjectionPlan(project_info.release(), project_schema);
+    parent = new planner::ProjectionPlan(std::move(project_info),
+                                         project_schema);
 
     ((planner::ProjectionPlan *)parent)->SetColumnIds(column_ids);
   }
@@ -173,7 +173,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
       continue;
     }
 
-    LOG_TRACE("Target : column id %lu", expr_col_id);
+    LOG_TRACE("Target : column id %u", expr_col_id);
     LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(expr_col_id, peloton_expr);
@@ -249,7 +249,7 @@ const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
       continue;
     }
 
-    LOG_TRACE("Target : column id %lu", col_id);
+    LOG_TRACE("Target : column id %u", col_id);
     LOG_TRACE("Expression : %s", peloton_expr->Debug().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
@@ -390,7 +390,7 @@ PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
       return JOIN_TYPE_LEFT;
     case JOIN_RIGHT:
       return JOIN_TYPE_RIGHT;
-    case JOIN_SEMI: // IN+Subquery is JOIN_SEMI
+    case JOIN_SEMI:  // IN+Subquery is JOIN_SEMI
       return JOIN_TYPE_SEMI;
     default:
       return JOIN_TYPE_INVALID;
@@ -427,13 +427,12 @@ void PlanTransformer::BuildColumnListFromExpr(
  * @brief Transform a ExpState List to a one-dimensional column list.
  */
 const std::vector<oid_t> PlanTransformer::BuildColumnListFromExpStateList(
-    List* expr_state_list) {
+    List *expr_state_list) {
   std::vector<oid_t> column_ids;
 
-  ListCell* expr;
-  foreach (expr, expr_state_list)
-  {
-    ExprState *expr_state = (ExprState *) lfirst(expr);
+  ListCell *expr;
+  foreach (expr, expr_state_list) {
+    ExprState *expr_state = (ExprState *)lfirst(expr);
 
     auto peloton_expr = ExprTransformer::TransformExpr(expr_state);
 
@@ -552,9 +551,9 @@ void PlanTransformer::GetColumnsAccessed(const planner::AbstractPlan *plan,
   }
 
   // Recurse through children
-  auto children = plan->GetChildren();
-  for (auto child : children)
-    GetColumnsAccessed(child, target_list, qual, database_oid, table_oid);
+  auto &children = plan->GetChildren();
+  for (auto &child : children)
+    GetColumnsAccessed(child.get(), target_list, qual, database_oid, table_oid);
 }
 
 }  // namespace bridge

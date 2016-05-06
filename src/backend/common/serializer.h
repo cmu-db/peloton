@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // serializer.h
 //
 // Identification: src/backend/common/serializer.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -512,7 +512,7 @@ class CopySerializeOutput : public SerializeOutput {
  public:
   // Start with something sizeable so we avoid a ton of initial
   // allocations.
-  static const int INITIAL_SIZE = 8388608;
+  static const int INITIAL_SIZE = 1024*4; // 4KB. The previous value is 8388608 which is too big for network
 
   CopySerializeOutput() : bytes_(INITIAL_SIZE) {
     Initialize(bytes_.Data(), INITIAL_SIZE);

@@ -154,37 +154,9 @@ AC_SUBST([DEBUG_CXXFLAGS])
 AC_SUBST([DEBUG_CPPFLAGS])
 
 #####################################################################
-# Check for NVML Library
+# Copying over Postgres files
 #####################################################################
 
-# store current *FLAGS and merge with AM_*FLAGS for compilation and linker check   
-OLD_CXXFLAGS=$CXXFLAGS;
-OLD_LDFLAGS=$LDFLAGS;
-CXXFLAGS="$AM_CXXFLAGS $CXXFLAGS"
-LDFLAGS="$AM_LDFLAGS $LDFLAGS"
-
-# ensure the library to check for is covered by the LIBS variable
-OLD_LIBS=$LIBS
-LIBS="$LIBS -lpmem"
-
-# try to link the function 'pmem_is_pmem' out of library pmem
-AC_MSG_CHECKING([whether the nvml library can be linked])
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([[#include <libpmem.h>]],
-        [[pmem_map(0);]])],
-    [AC_MSG_RESULT([yes])
-        OLD_CXXFLAGS="$OLD_CXXFLAGS -DNVML";],
-    [AC_MSG_RESULT([no])
-        LIBS=$OLD_LIBS; dnl reset to old value since PMEM was not found
-        found_pmem=0;])
-        
-# reset original *FLAGS
-CXXFLAGS=$OLD_CXXFLAGS
-LDFLAGS=$OLD_LDFLAGS
-
-#####################################################################
-# Workaround for Code Coverage
-#####################################################################
 AC_CONFIG_LINKS([src/scan.cpp:src/postgres/backend/parser/scan.cpp])
 AC_CONFIG_LINKS([src/postgres/backend/parser/gram.cpp:src/postgres/backend/parser/gram.cpp])
 AC_CONFIG_LINKS([src/guc-file.cpp:src/postgres/backend/utils/misc/guc-file.cpp])
@@ -201,8 +173,10 @@ AC_CONFIG_LINKS([src/postgres/backend/utils/sort/qsort_tuple.cpp:src/postgres/ba
 AC_CONFIG_LINKS([tools/pg_psql/sql_help.cpp:tools/pg_psql/sql_help.cpp])
 AC_CONFIG_LINKS([tools/pg_psql/psqlscan.cpp:tools/pg_psql/psqlscan.cpp])
 
-AC_OUTPUT
+CXXFLAGS="$CXXFLAGS -DPELOTON_PREFIX_DIR=\\\"${prefix}\\\""
 
+AC_OUTPUT
+                             
 echo \
     "---------------------------------------------------------------------
 

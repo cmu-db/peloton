@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // types.h
 //
 // Identification: src/backend/common/types.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -31,21 +32,24 @@ enum LoggingType {
 
   // Based on write ahead logging
   LOGGING_TYPE_DRAM_NVM = 10,
-  LOGGING_TYPE_DRAM_SSD = 11,
-  LOGGING_TYPE_DRAM_HDD = 12,
+  LOGGING_TYPE_DRAM_HDD = 11,
 
   // Based on write behind logging
   LOGGING_TYPE_NVM_NVM = 20,
-  LOGGING_TYPE_NVM_SSD = 21,
-  LOGGING_TYPE_NVM_HDD = 22,
+  LOGGING_TYPE_NVM_HDD = 21,
 
-  LOGGING_TYPE_SSD_NVM = 30,
-  LOGGING_TYPE_SSD_SSD = 31,
-  LOGGING_TYPE_SSD_HDD = 32,
+  LOGGING_TYPE_HDD_NVM = 30,
+  LOGGING_TYPE_HDD_HDD = 31,
+};
 
-  LOGGING_TYPE_HDD_NVM = 40,
-  LOGGING_TYPE_HDD_SSD = 41,
-  LOGGING_TYPE_HDD_HDD = 42,
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_NORMAL = 1,
+};
+
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_ON = 1
 };
 
 //===--------------------------------------------------------------------===//
@@ -54,7 +58,6 @@ enum LoggingType {
 
 #define NVM_DIR "/mnt/pmfs/"
 #define HDD_DIR "/data/"
-#define SSD_DIR "/data1/"
 
 #define TMP_DIR "/tmp/"
 
@@ -100,15 +103,12 @@ class Value;
 #define VALUE_COMPARE_GREATERTHAN 1
 #define VALUE_COMPARE_INVALID -2
 #define VALUE_COMPARE_NO_EQUAL \
-  -3  // assigned when comparing array list and no element matching. by michael
+  -3  // assigned when comparing array list and no element matching.
 
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
-
-// Ref count starting point
-#define BASE_REF_COUNT 1
+extern int DEFAULT_TUPLES_PER_TILEGROUP;
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
@@ -147,7 +147,7 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
   POSTGRES_VALUE_TYPE_INTEGER = 23,
   POSTGRES_VALUE_TYPE_BIGINT = 20,
-
+  POSTGRES_VALUE_TYPE_REAL = 700,
   POSTGRES_VALUE_TYPE_DOUBLE = 701,
 
   POSTGRES_VALUE_TYPE_TEXT = 25,
@@ -158,19 +158,15 @@ enum PostgresValueType {
   POSTGRES_VALUE_TYPE_VARCHAR = 1015,
   POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
 
+  POSTGRES_VALUE_TYPE_DATE = 1082,
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
 
-  POSTGRES_VALUE_TYPE_TEXT_ARRAY =
-      1009,  // added by michael: TEXTARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT2_ARRAY =
-      1005,  // added by michael: INT2ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_INT4_ARRAY =
-      1007,  // added by michael: INT4ARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_OID_ARRAY =
-      1028,  // added by michael: OIDARRAYOID in postgres code
-  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY =
-      1021,  // added by michael: FLOADT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
+  POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
 
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
 
@@ -187,8 +183,10 @@ enum ValueType {
   VALUE_TYPE_SMALLINT = 4,    // 2 bytes int
   VALUE_TYPE_INTEGER = 5,     // 4 bytes int
   VALUE_TYPE_BIGINT = 6,      // 8 bytes int
+  VALUE_TYPE_REAL = 7,        // 4 bytes floating, called float in C/C++
   VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating, called FLOAT in java
   VALUE_TYPE_VARCHAR = 9,     // variable length chars
+  VALUE_TYPE_DATE = 10,       // 4 bytes int
   VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes int
   VALUE_TYPE_DECIMAL = 22,    // decimal(p,s)
   VALUE_TYPE_BOOLEAN =
@@ -228,6 +226,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_OPERATOR_NOT = 8,      // logical not operator
   EXPRESSION_TYPE_OPERATOR_IS_NULL = 9,  // is null test.
   EXPRESSION_TYPE_OPERATOR_EXISTS = 18,  // exists test.
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 50,
 
   // -----------------------------
   // Comparison Operators
@@ -294,8 +293,17 @@ enum ExpressionType {
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
-  EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
+  EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
+
+  // -----------------------------
+  // Internals added for NULLIF
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_NULLIF = 304,
+
+  // -----------------------------
+  // Internals added for COALESCE
+  // -----------------------------
+  EXPRESSION_TYPE_OPERATOR_COALESCE = 305,
 
   // -----------------------------
   // Subquery IN/EXISTS
@@ -327,6 +335,7 @@ enum ExpressionType {
   // Date operators
   // -----------------------------
   EXPRESSION_TYPE_EXTRACT = 600,
+  EXPRESSION_TYPE_DATE_TO_TIMESTAMP = 601,
 
   //===--------------------------------------------------------------------===//
   // Parser
@@ -347,11 +356,28 @@ enum ExpressionType {
 // Storage Backend Types
 //===--------------------------------------------------------------------===//
 
+enum ConcurrencyType {
+  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
+};
+
+enum IsolationLevelType {
+  ISOLATION_LEVEL_TYPE_FULL = 0,            // full serializability
+  ISOLATION_LEVEL_TYPE_SNAPSHOT = 1,        // snapshot isolation
+  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2  // repeatable read
+};
+
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
   BACKEND_TYPE_MM = 1,   // on volatile memory
-  BACKEND_TYPE_FILE = 2  // on mmap file
+  BACKEND_TYPE_NVM = 2,  // on non-volatile memory
+  BACKEND_TYPE_SSD = 3,  // on ssd
+  BACKEND_TYPE_HDD = 4   // on hdd
 };
 
 //===--------------------------------------------------------------------===//
@@ -361,8 +387,9 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1,  // btree
-  INDEX_TYPE_BWTREE = 2  // bwtree
+  INDEX_TYPE_BTREE = 1,   // btree
+  INDEX_TYPE_BWTREE = 2,  // bwtree
+  INDEX_TYPE_HASH = 3     // hash
 };
 
 enum IndexConstraintType {
@@ -661,6 +688,8 @@ enum LogRecordType {
   LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
 };
 
+static const int INVALID_FILE_DESCRIPTOR = -1;
+
 // ------------------------------------------------------------------
 // Tuple serialization formats
 // ------------------------------------------------------------------
@@ -680,7 +709,7 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-typedef uint64_t oid_t;
+typedef uint32_t oid_t;
 
 static const oid_t START_OID = 0;
 
@@ -713,6 +742,16 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t table_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t tuple_end_cid = 0;
+};
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -727,7 +766,12 @@ struct ItemPointer {
   ItemPointer() : block(INVALID_OID), offset(INVALID_OID) {}
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
-};
+
+  bool IsNull() const { 
+    return (block == INVALID_OID && offset == INVALID_OID); 
+  }
+
+} __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
 
@@ -748,9 +792,13 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+
+BackendType GetBackendType(const LoggingType& logging_type);
+
+void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

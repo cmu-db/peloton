@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // ddl_transaction.cpp
 //
 // Identification: src/backend/bridge/ddl/ddl_transaction.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 
 #include "backend/bridge/ddl/ddl_transaction.h"
 #include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/concurrency/transaction.h"
 
 namespace peloton {
@@ -31,7 +31,7 @@ namespace bridge {
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLTransaction::ExecTransactionStmt(TransactionStmt *stmt) {
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   switch (stmt->kind) {
     case TRANS_STMT_BEGIN:

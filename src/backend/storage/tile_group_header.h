@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tile_group_header.h
 //
 // Identification: src/backend/storage/tile_group_header.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,9 +16,10 @@
 #include "backend/common/platform.h"
 #include "backend/common/printable.h"
 #include "backend/logging/log_manager.h"
+#include "backend/gc/gc_manager.h"
+#include "backend/expression/container_tuple.h"
 
 #include <atomic>
-#include <mutex>
 #include <iostream>
 #include <cassert>
 #include <queue>
@@ -38,20 +39,22 @@ namespace storage {
  *
  * Layout :
  *
- * 	-----------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- *--
- *  |InsertCommit (1 byte) | DeleteCommit (1 byte) | Prev ItemPointer (4 bytes)
- *|
- * 	-----------------------------------------------------------------------------
+ *  -----------------------------------------------------------------------------
+ *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
+ *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | IndexCount(4 bytes) | 
+ *  | ReservedField (24 bytes)
+ *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
+ *  -----------------------------------------------------------------------------
  *
  */
+
+#define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
 
 class TileGroupHeader : public Printable {
   TileGroupHeader() = delete;
 
  public:
-  TileGroupHeader(BackendType backend_type, int tuple_count);
+  TileGroupHeader(const BackendType &backend_type, const int &tuple_count);
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
@@ -63,7 +66,7 @@ class TileGroupHeader : public Printable {
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
-    unsigned long long val = other.next_tuple_slot;
+    oid_t val = other.next_tuple_slot;
     next_tuple_slot = val;
 
     return *this;
@@ -71,43 +74,47 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
+  // this function is only called by DataTable::GetEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
-    oid_t tuple_slot_id = INVALID_OID;
+    oid_t tuple_slot_id =
+        next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
 
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
-      // check tile group capacity
-      if (next_tuple_slot < num_tuple_slots) {
-        tuple_slot_id = next_tuple_slot;
-        next_tuple_slot++;
-      }
+    if (tuple_slot_id >= num_tuple_slots) {
+      return INVALID_OID;
+    } else {
+      return tuple_slot_id;
     }
-
-    return tuple_slot_id;
   }
 
   /**
    * Used by logging
    */
-  bool GetEmptyTupleSlot(oid_t tuple_slot_id) {
-    {
-      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
-      if (tuple_slot_id < num_tuple_slots) {
-        if (next_tuple_slot <= tuple_slot_id) {
-          next_tuple_slot = tuple_slot_id + 1;
-        }
-        return true;
-      } else {
-        return false;
+  // TODO: rewrite the code!!!
+  bool GetEmptyTupleSlot(const oid_t &tuple_slot_id) {
+    tile_header_lock.Lock();
+    if (tuple_slot_id < num_tuple_slots) {
+      if (next_tuple_slot <= tuple_slot_id) {
+        next_tuple_slot = tuple_slot_id + 1;
       }
+      tile_header_lock.Unlock();
+      return true;
+    } else {
+      tile_header_lock.Unlock();
+      return false;
     }
   }
 
-  oid_t GetNextTupleSlot() const { return next_tuple_slot; }
+  oid_t GetCurrentNextTupleSlot() const {
+    // Carefully check if the next_tuple_slot is out of boundary
+    oid_t next_tid = next_tuple_slot;
+    if (next_tid < num_tuple_slots) {
+      return next_tid;
+    } else {
+      return num_tuple_slots;
+    }
+  }
 
-  oid_t GetActiveTupleCount(txn_id_t txn_id);
+  oid_t GetActiveTupleCount();
 
   //===--------------------------------------------------------------------===//
   // MVCC utilities
@@ -115,174 +122,102 @@ class TileGroupHeader : public Printable {
 
   // Getters
 
-  inline txn_id_t GetTransactionId(const oid_t tuple_slot_id) const {
-    return *((txn_id_t *)(data + (tuple_slot_id * header_entry_size)));
+  // DOUBLE CHECK: whether we need atomic load???
+  // it is possible that some other transactions are modifying the txn_id,
+  // but the current transaction reads the txn_id.
+  // the returned value seems to be uncertain.
+  inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
+    // txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    // return __atomic_load_n(txn_id_ptr, __ATOMIC_RELAXED);
+    return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
-  inline cid_t GetBeginCommitId(const oid_t tuple_slot_id) const {
-    return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                       sizeof(txn_id_t)));
+  inline cid_t GetBeginCommitId(const oid_t &tuple_slot_id) const {
+    return *((cid_t *)(TUPLE_HEADER_LOCATION + begin_cid_offset));
   }
 
-  inline cid_t GetEndCommitId(const oid_t tuple_slot_id) const {
-    return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                       sizeof(txn_id_t) + sizeof(cid_t)));
+  inline cid_t GetEndCommitId(const oid_t &tuple_slot_id) const {
+    return *((cid_t *)(TUPLE_HEADER_LOCATION + end_cid_offset));
+  }
+
+  inline ItemPointer GetNextItemPointer(const oid_t &tuple_slot_id) const {
+    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset));
+  }
+
+  inline ItemPointer GetPrevItemPointer(const oid_t &tuple_slot_id) const {
+    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset));
+  }
+
+  // constraint: at most 24 bytes.
+  inline char *GetReservedFieldRef(const oid_t &tuple_slot_id) const {
+    return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
+  }
+
+  inline bool GetInsertCommit(const oid_t &tuple_slot_id) const {
+    return *((bool *)(TUPLE_HEADER_LOCATION + insert_commit_offset));
+  }
+
+  inline bool GetDeleteCommit(const oid_t &tuple_slot_id) const {
+    return *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset));
   }
 
   // Setters
-  inline bool GetInsertCommit(const oid_t tuple_slot_id) const {
-    return *((bool *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+
+  inline void SetTileGroup(TileGroup *tile_group) {
+    this->tile_group = tile_group;
+  }
+  inline void SetTransactionId(const oid_t &tuple_slot_id,
+                               const txn_id_t &transaction_id) {
+    *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
   }
 
-  inline bool GetDeleteCommit(const oid_t tuple_slot_id) const {
-    return *((bool *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(bool)));
+  inline void SetBeginCommitId(const oid_t &tuple_slot_id,
+                               const cid_t &begin_cid) {
+    *((cid_t *)(TUPLE_HEADER_LOCATION + begin_cid_offset)) = begin_cid;
   }
 
-  inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
-    return *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-                             sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                             2 * sizeof(bool)));
+  inline void SetEndCommitId(const oid_t &tuple_slot_id,
+                             const cid_t &end_cid) const {
+    *((cid_t *)(TUPLE_HEADER_LOCATION + end_cid_offset)) = end_cid;
+  }
+
+  inline void SetNextItemPointer(const oid_t &tuple_slot_id,
+                                 const ItemPointer &item) const {
+    *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset)) = item;
+  }
+
+  inline void SetPrevItemPointer(const oid_t &tuple_slot_id,
+                                 const ItemPointer &item) const {
+    *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset)) = item;
+  }
+
+  inline void SetInsertCommit(const oid_t &tuple_slot_id,
+                              const bool commit) const {
+    *((bool *)(TUPLE_HEADER_LOCATION + insert_commit_offset)) = commit;
+  }
+
+  inline void SetDeleteCommit(const oid_t &tuple_slot_id,
+                              const bool commit) const {
+    *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset)) = commit;
   }
 
   // Getters for addresses
-
-  inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
-    return ((txn_id_t *)(data + (tuple_slot_id * header_entry_size)));
+  inline txn_id_t *GetTransactionIdLocation(const oid_t &tuple_slot_id) const {
+    return ((txn_id_t *)(TUPLE_HEADER_LOCATION));
   }
 
-  inline bool LatchTupleSlot(const oid_t tuple_slot_id,
-                             txn_id_t transaction_id) {
-    txn_id_t *txn_id = (txn_id_t *)(data + (tuple_slot_id * header_entry_size));
-    if (atomic_cas(txn_id, INITIAL_TXN_ID, transaction_id)) {
-      return true;
-    } else {
-      return false;
-    }
+  inline txn_id_t SetAtomicTransactionId(const oid_t &tuple_slot_id,
+                                         const txn_id_t &old_txn_id,
+                                         const txn_id_t &new_txn_id) const {
+    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    return __sync_val_compare_and_swap(txn_id_ptr, old_txn_id, new_txn_id);
   }
 
-  inline bool ReleaseTupleSlot(const oid_t tuple_slot_id,
-                               txn_id_t transaction_id) {
-    txn_id_t *txn_id = (txn_id_t *)(data + (tuple_slot_id * header_entry_size));
-    if (!atomic_cas(txn_id, transaction_id, INITIAL_TXN_ID)) {
-      LOG_INFO("Release failed, expecting a deleted own insert: %lu",
-               GetTransactionId(tuple_slot_id));
-      assert(GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-      return false;
-    }
-    return true;
-  }
-
-  inline void SetTransactionId(const oid_t tuple_slot_id,
-                               txn_id_t transaction_id) {
-    *((txn_id_t *)(data + (tuple_slot_id * header_entry_size))) =
-        transaction_id;
-  }
-
-  inline void SetBeginCommitId(const oid_t tuple_slot_id, cid_t begin_cid) {
-    *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-                sizeof(txn_id_t))) = begin_cid;
-  }
-
-  inline void SetEndCommitId(const oid_t tuple_slot_id, cid_t end_cid) const {
-    *((cid_t *)(data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t) +
-                sizeof(cid_t))) = end_cid;
-  }
-
-  inline void SetInsertCommit(const oid_t tuple_slot_id, bool commit) const {
-    *((bool *)(data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t) +
-               2 * sizeof(cid_t))) = commit;
-  }
-
-  inline void SetDeleteCommit(const oid_t tuple_slot_id, bool commit) const {
-    *((bool *)(data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t) +
-               2 * sizeof(cid_t) + sizeof(bool))) = commit;
-  }
-
-  inline void SetPrevItemPointer(const oid_t tuple_slot_id,
-                                 ItemPointer item) const {
-    *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-                      sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                      2 * sizeof(bool))) = item;
-  }
-
-  // Visibility check
-  bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_lcid) {
-    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
-    cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
-    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
-
-    bool own = (txn_id == tuple_txn_id);
-    bool activated = (at_lcid >= tuple_begin_cid);
-    bool invalidated = (at_lcid >= tuple_end_cid);
-
-    // Own
-    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
-              tuple_txn_id);
-
-    // Activated
-    if (tuple_begin_cid == MAX_CID) {
-      LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : MAX_CID",
-                activated, at_lcid);
-    } else {
-      LOG_TRACE("Activated :: %d , lcid : %lu , tuple begin cid : %lu",
-                activated, at_lcid, tuple_begin_cid);
-    }
-
-    // Invalidated
-    if (tuple_end_cid == MAX_CID) {
-      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : MAX_CID",
-                invalidated, at_lcid);
-    } else {
-      LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
-                at_lcid, tuple_end_cid);
-    }
-
-    // overwrite activated/invalidated if using peloton logging
-    {
-      auto &log_manager = logging::LogManager::GetInstance();
-      if (log_manager.HasPelotonFrontendLogger() == LOGGING_TYPE_NVM_NVM) {
-        bool insert_commit = GetInsertCommit(tuple_slot_id);
-        bool delete_commit = GetDeleteCommit(tuple_slot_id);
-
-        activated = activated && insert_commit;
-        invalidated = invalidated && delete_commit;
-      }
-    }
-
-    // Visible iff past Insert || Own Insert
-    bool visible = !(tuple_txn_id == INVALID_TXN_ID) &&
-                   ((!own && activated && !invalidated) ||
-                    (own && !activated && !invalidated));
-
-    LOG_INFO(
-        "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, "
-        "%lu), visible = %d",
-        this, tuple_slot_id, tuple_txn_id, tuple_begin_cid, tuple_end_cid,
-        txn_id, at_lcid, visible);
-
-    return visible;
-  }
-
-  /**
-   * This is called after latching
-   */
-  bool IsDeletable(const oid_t tuple_slot_id,
-                   __attribute__((unused)) txn_id_t txn_id,
-                   __attribute__((unused)) cid_t at_lcid) {
-    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
-
-    bool deletable = tuple_end_cid == MAX_CID;
-
-    LOG_INFO(
-        "<%p, %lu> :(vtid, vbeg, vend) = (%lu, %lu, %lu), (tid, lcid) = (%lu, "
-        "%lu), deletable = %d",
-        this, tuple_slot_id, GetTransactionId(tuple_slot_id),
-        GetBeginCommitId(tuple_slot_id), tuple_end_cid, txn_id, at_lcid,
-        deletable);
-
-    return deletable;
+  inline bool SetAtomicTransactionId(const oid_t &tuple_slot_id,
+                                     const txn_id_t &transaction_id) const {
+    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
+    return __sync_bool_compare_and_swap(txn_id_ptr, INITIAL_TXN_ID,
+                                        transaction_id);
   }
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
@@ -297,11 +232,33 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  static inline size_t GetReserverdSize() {return  reserverd_size;}
+  // *
+  // -----------------------------------------------------------------------------
+  // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
+  // *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
+  // ReservedField (24 bytes)
+  // *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
+  // *
+  // -----------------------------------------------------------------------------
+
  private:
   // header entry size is the size of the layout described above
-  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          sizeof(ItemPointer) +
-                                          2 * sizeof(bool);
+  static const size_t reserverd_size = 24;
+  static const size_t header_entry_size =
+      sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(ItemPointer) + reserverd_size +
+      2 * sizeof(bool);
+  static const size_t txn_id_offset = 0;
+  static const size_t begin_cid_offset = sizeof(txn_id_t);
+  static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
+  static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
+  static const size_t prev_pointer_offset =
+      next_pointer_offset + sizeof(ItemPointer);
+  static const size_t reserved_field_offset =
+      prev_pointer_offset + sizeof(ItemPointer);
+  static const size_t insert_commit_offset = reserved_field_offset + reserverd_size;
+  static const size_t delete_commit_offset =
+      insert_commit_offset + sizeof(bool);
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -309,6 +266,9 @@ class TileGroupHeader : public Printable {
 
   // Backend
   BackendType backend_type;
+
+  // Associated tile_group
+  TileGroup *tile_group;
 
   size_t header_size;
 
@@ -319,10 +279,11 @@ class TileGroupHeader : public Printable {
   oid_t num_tuple_slots;
 
   // next free tuple slot
-  oid_t next_tuple_slot;
+  // WARNING: this variable may not be the right boundary of the tile
+  // IT MAY OUT OF BOUNDARY! ALWAYS CHECK IF IT EXCEEDS num_tuple_slots
+  std::atomic<oid_t> next_tuple_slot;
 
-  // synch helpers
-  std::mutex tile_header_mutex;
+  Spinlock tile_header_lock;
 };
 
 }  // End storage namespace

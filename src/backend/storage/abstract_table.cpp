@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // abstract_table.cpp
 //
 // Identification: src/backend/storage/abstract_table.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,9 +37,7 @@ AbstractTable::~AbstractTable() {
   if (own_schema_) delete schema;
 }
 
-const std::string AbstractTable::GetInfo() const{
-  return "AbstractTable";
-}
+const std::string AbstractTable::GetInfo() const { return "AbstractTable"; }
 
 }  // End storage namespace
 }  // End peloton namespace

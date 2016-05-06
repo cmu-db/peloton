@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// logger_configuration.cpp
 //
-// Identification: benchmark/logger/configuration.cpp
+// Identification: src/backend/benchmark/logger/logger_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,8 +14,12 @@
 #include <algorithm>
 #include <sys/stat.h>
 
+#undef NDEBUG
+
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
 namespace benchmark {
@@ -26,106 +30,62 @@ void Usage(FILE* out) {
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
           "   -l --logging-type      :  Logging type \n"
-          "   -t --tuple-count       :  Tuple count \n"
-          "   -b --backend-count     :  Backend count \n"
-          "   -z --column-count      :  # of columns per tuple \n"
-          "   -c --check-tuple-count :  Check tuple count \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -e --experiment_type   :  Experiment Type \n"
-          "   -w --wait-timeout      :  Wait timeout (us) \n");
-  exit(EXIT_FAILURE);
+          "   -w --wait-timeout      :  Wait timeout (us) \n"
+          "   -h --help              :  Print help message \n"
+          "   -k --scale-factor      :  # of tuples \n"
+          "   -t --transactions      :  # of transactions \n"
+          "   -c --column_count      :  # of columns \n"
+          "   -u --write-ratio       :  Fraction of updates \n"
+          "   -b --backend-count     :  Backend count \n"
+  );
 }
 
 static struct option opts[] = {
     {"logging-type", optional_argument, NULL, 'l'},
-    {"tuple-count", optional_argument, NULL, 't'},
-    {"backend-count", optional_argument, NULL, 'b'},
-    {"column-count", optional_argument, NULL, 'z'},
-    {"check-tuple-count", optional_argument, NULL, 'c'},
     {"data-file-size", optional_argument, NULL, 'f'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"wait-timeout", optional_argument, NULL, 'w'},
+    {"scale-factor", optional_argument, NULL, 'k'},
+    {"transaction_count", optional_argument, NULL, 't'},
+    {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
     {NULL, 0, NULL, 0}};
 
-static void ValidateLoggingType(
-    const configuration& state) {
-  std::cout << std::setw(20) << std::left << "logging_type "
-            << " : ";
 
-  std::cout << LoggingTypeToString(state.logging_type) << std::endl;
+static void ValidateLoggingType(const configuration& state) {
+  LOG_INFO("Invalid logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
 }
 
-static void ValidateColumnCount(
-    const configuration& state) {
-  if (state.column_count <= 0) {
-    std::cout << "Invalid column_count :: " << state.column_count << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "column_count "
-            << " : " << state.column_count << std::endl;
-}
-
-static void ValidateTupleCount(
-    const configuration& state) {
-  if (state.tuple_count <= 0) {
-    std::cout << "Invalid tuple_count :: " << state.tuple_count << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "tuple_count "
-            << " : " << state.tuple_count << std::endl;
-}
-
-static void ValidateBackendCount(
-    const configuration& state) {
-  if (state.backend_count <= 0) {
-    std::cout << "Invalid backend_count :: " << state.backend_count
-              << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "backend_count "
-            << " : " << state.backend_count << std::endl;
-}
-
-static void ValidateDataFileSize(
-    const configuration& state) {
+static void ValidateDataFileSize(const configuration& state) {
   if (state.data_file_size <= 0) {
-    std::cout << "Invalid pmem_file_size :: " << state.data_file_size
-              << std::endl;
+    LOG_ERROR("Invalid data_file_size :: %lu", state.data_file_size);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "data_file_size "
-            << " : " << state.data_file_size << std::endl;
+  LOG_INFO("data_file_size :: %lu", state.data_file_size);
 }
 
-static void ValidateExperiment(
-    const configuration& state) {
+static void ValidateExperiment(const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
-    std::cout << "Invalid experiment_type :: " << state.experiment_type
-              << std::endl;
+    LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type "
-            << " : " << state.experiment_type << std::endl;
+  LOG_INFO("experiment_type :: %d", state.experiment_type);
 }
 
-static void ValidateWaitTimeout(
-    const configuration& state) {
+static void ValidateWaitTimeout(const configuration& state) {
   if (state.wait_timeout < 0) {
-    std::cout << "Invalid wait_timeout :: " << state.wait_timeout << std::endl;
+    LOG_ERROR("Invalid wait_timeout :: %lu", state.wait_timeout);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "wait_timeout "
-            << " : " << state.wait_timeout << std::endl;
+  LOG_INFO("wait_timeout :: %lu", state.wait_timeout);
 }
 
-static void ValidateLogFileDir(
-    configuration& state) {
+static void ValidateLogFileDir(configuration& state) {
   struct stat data_stat;
 
   // Assign log file dir based on logging type
@@ -133,7 +93,6 @@ static void ValidateLogFileDir(
     // Log file on NVM
     case LOGGING_TYPE_DRAM_NVM:
     case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_SSD_NVM:
     case LOGGING_TYPE_HDD_NVM: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
@@ -144,22 +103,10 @@ static void ValidateLogFileDir(
     // Log file on HDD
     case LOGGING_TYPE_DRAM_HDD:
     case LOGGING_TYPE_NVM_HDD:
-    case LOGGING_TYPE_SSD_HDD:
     case LOGGING_TYPE_HDD_HDD: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = HDD_DIR;
-      }
-    } break;
-
-    // Log file on SSD
-    case LOGGING_TYPE_DRAM_SSD:
-    case LOGGING_TYPE_NVM_SSD:
-    case LOGGING_TYPE_SSD_SSD:
-    case LOGGING_TYPE_HDD_SSD: {
-      int status = stat(SSD_DIR, &data_stat);
-      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
-        state.log_file_dir = SSD_DIR;
       }
     } break;
 
@@ -168,56 +115,43 @@ static void ValidateLogFileDir(
       int status = stat(TMP_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         state.log_file_dir = TMP_DIR;
-      }
-      else {
-        throw Exception("Could not find temp directory : " + std::string(TMP_DIR));
+      } else {
+        throw Exception("Could not find temp directory : " +
+                        std::string(TMP_DIR));
       }
     } break;
   }
 
-  std::cout << std::setw(20) << std::left << "log_file_dir "
-            << " : " << state.log_file_dir << std::endl;
+  LOG_INFO("log_file_dir :: %s", state.log_file_dir.c_str());
 }
 
-void ParseArguments(int argc, char* argv[], configuration &state) {
+void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
-  state.tuple_count = 10;
-
   state.logging_type = LOGGING_TYPE_DRAM_NVM;
-  state.backend_count = 1;
-
-  state.column_count = 10;
-
-  state.check_tuple_count = false;
 
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
-  state.wait_timeout = 0;
+  state.wait_timeout = 200;
+
+  // Default Values
+  ycsb::state.scale_factor = 1;
+  ycsb::state.transaction_count = 10000;
+  ycsb::state.column_count = 10;
+  ycsb::state.update_ratio = 0.5;
+  ycsb::state.backend_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:t:b:z:c:f:e:w:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
-        break;
-      case 't':
-        state.tuple_count = atoi(optarg);
-        break;
-      case 'b':
-        state.backend_count = atoi(optarg);
-        break;
-      case 'z':
-        state.column_count = atoi(optarg);
-        break;
-      case 'c':
-        state.check_tuple_count = atoi(optarg);
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
@@ -229,25 +163,47 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         state.wait_timeout = atoi(optarg);
         break;
 
+        // YCSB
+      case 'k':
+        ycsb::state.scale_factor = atoi(optarg);
+        break;
+      case 't':
+        ycsb::state.transaction_count = atoi(optarg);
+        break;
+      case 'c':
+        ycsb::state.column_count = atoi(optarg);
+        break;
+      case 'u':
+        ycsb::state.update_ratio = atof(optarg);
+        break;
+      case 'b':
+        ycsb::state.backend_count = atoi(optarg);
+        break;
+
       case 'h':
         Usage(stderr);
         break;
 
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
+        exit(EXIT_FAILURE);
+        break;
     }
   }
 
   // Print configuration
   ValidateLoggingType(state);
-  ValidateColumnCount(state);
-  ValidateTupleCount(state);
-  ValidateBackendCount(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
+
+  // Print configuration
+  ycsb::ValidateScaleFactor(ycsb::state);
+  ycsb::ValidateColumnCount(ycsb::state);
+  ycsb::ValidateUpdateRatio(ycsb::state);
+  ycsb::ValidateBackendCount(ycsb::state);
+  //ycsb::ValidateTransactionCount(ycsb::state);
+
 }
 
 }  // namespace logger

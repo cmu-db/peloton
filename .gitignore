@@ -1,9 +1,5 @@
 #==============================================================================#
 # This file specifies intentionally untracked files that git should ignore.
-# See: http://www.kernel.org/pub/software/scm/git/docs/gitignore.html
-#
-# This file is intentionally different from the output of `git svn show-ignore`,
-# as most of those are useless.
 #==============================================================================#
 
 #==============================================================================#
@@ -141,7 +137,6 @@ doc/
 #==============================================================================#
 # Scripts
 #==============================================================================#
-*.py
 *.jar
 scripts/PelotonTest/out
 scripts/PelotonTest/lib
@@ -163,9 +158,66 @@ third_party/nvml/
 third_party/logcabin/
 
 #==============================================================================#
+<<<<<<< HEAD
 # My Stuff
 #==============================================================================#
 *.txt
 handin*
 CMakeLists.txt
 !tests/mc_client.py
+=======
+# Eclipse
+#==============================================================================#
+
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# Eclipse Core
+.project
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# PyDev specific (Python IDE for Eclipse)
+*.pydevproject
+
+# CDT-specific (C/C++ Development Tooling)
+.cproject
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# Java annotation processor (APT)
+.factorypath
+
+# PDT-specific (PHP Development Tools)
+.buildpath
+
+# sbteclipse plugin
+.target
+
+# Tern plugin
+.tern-project
+
+# TeXlipse plugin
+.texlipse
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# Code Recommenders
+.recommenders/
+CMakeLists.txt
+io_file

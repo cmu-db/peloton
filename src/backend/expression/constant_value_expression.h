@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // constant_value_expression.h
 //
 // Identification: src/backend/expression/constant_value_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,7 +45,12 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return spacer + "OptimizedConstantValueExpression:" + value.GetInfo() + "\n";
+    return spacer + "OptimizedConstantValueExpression:" + value.GetInfo() +
+           "\n";
+  }
+
+  AbstractExpression *Copy() const {
+    return new ConstantValueExpression(value);
   }
 
  protected:
