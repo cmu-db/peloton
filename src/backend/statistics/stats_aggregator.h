@@ -64,7 +64,7 @@ class StatsAggregator {
     if (backend_stats.find(id_) == backend_stats.end()) {
       thread_number++;
     } else {
-      stats_history.Aggregtate(*backend_stats[id_]);
+      stats_history.Aggregate(*backend_stats[id_]);
       delete backend_stats[id_];
     }
 
