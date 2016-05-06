@@ -169,8 +169,10 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   assert(planstate != NULL);
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
-  auto subplan = reinterpret_cast<SubPlanState *>(
-      planstate->state->es_param_exec_vals->execPlan);
+  SubPlanState *subplanstate = nullptr;
+  if (planstate->state->es_param_exec_vals != nullptr)
+    subplanstate = reinterpret_cast<SubPlanState *>(
+        planstate->state->es_param_exec_vals->execPlan);
 
   // Create the raw planstate info
   std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
@@ -191,13 +193,13 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
         peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
             plan_state, prepStmtName);
   }
-  //  if (subplan) {
-  //    auto subplan_state =
-  //        peloton::bridge::DMLUtils::peloton_prepare_data(subplan->planstate);
-  //    mapped_subplan_ptr =
-  //        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
-  //            subplan_state, nullptr);
-  //  }
+  if (subplanstate) {
+    auto subplan_state = peloton::bridge::DMLUtils::peloton_prepare_data(
+        subplanstate->planstate);
+    mapped_subplan_ptr =
+        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
+            subplan_state, nullptr);
+  }
 
   //===----------------------------------------------------------------------===//
   //   Send a query plan through network
@@ -230,10 +232,10 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   // Second set size of parameter list
   std::vector<peloton::Value> param_values =
       peloton::bridge::PlanTransformer::BuildParams(param_list);
-  //  if (subplan) {
-  //    param_values.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
-  //        mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
-  //  }
+  if (subplanstate) {
+    param_values.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
+        mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
+  }
   int param_count = param_values.size();
   request.set_param_num(param_count);
 
@@ -250,7 +252,7 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   request.set_plan(output_plan.Data(), output_plan.Size());
 
   // Finally send the request
-  pclient->QueryPlan(&request, NULL);
+  //  pclient->QueryPlan(&request, NULL);
   //===----------------------------------------------------------------------===//
   //   End for sending query
   //===----------------------------------------------------------------------===//
