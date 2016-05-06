@@ -20,17 +20,17 @@
 namespace peloton {
 namespace expression {
 
-
 class UDFExpression : public AbstractExpression {
-private:
+ private:
   Oid func_id;
   Oid collation;
   Oid return_type;
-  std::vector<expression::AbstractExpression*> m_args;
+  std::vector<expression::AbstractExpression *> m_args;
 
-public:
-  UDFExpression(Oid id, Oid col, Oid rettype, std::vector<expression::AbstractExpression*> args)
-    : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {
+ public:
+  UDFExpression(Oid id, Oid col, Oid rettype,
+                std::vector<expression::AbstractExpression *> args)
+      : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {
     func_id = id;
     collation = col;
     return_type = rettype;
@@ -38,13 +38,12 @@ public:
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-
     Datum result = 0;
 
     // Evaluate the argument expression into Value, and convert it into Datum
     // for invoking OidFunctionCall
     std::vector<Datum> args_eval(m_args.size());
-    for(size_t i = 0; i < m_args.size(); i++) {
+    for (size_t i = 0; i < m_args.size(); i++) {
       Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
@@ -58,12 +57,15 @@ public:
         result = OidFunctionCall1Coll(func_id, collation, args_eval[0]);
         break;
       case 2:
-        result = OidFunctionCall2Coll(func_id, collation, args_eval[0], args_eval[1]);
+        result = OidFunctionCall2Coll(func_id, collation, args_eval[0],
+                                      args_eval[1]);
         break;
       case 3:
-        result = OidFunctionCall3Coll(func_id, collation, args_eval[0], args_eval[1], args_eval[2]);
+        result = OidFunctionCall3Coll(func_id, collation, args_eval[0],
+                                      args_eval[1], args_eval[2]);
       case 4:
-        result = OidFunctionCall4Coll(func_id, collation, args_eval[0], args_eval[1], args_eval[2], args_eval[3]);
+        result = OidFunctionCall4Coll(func_id, collation, args_eval[0],
+                                      args_eval[1], args_eval[2], args_eval[3]);
       default:
         // This part should not be reached.
         break;

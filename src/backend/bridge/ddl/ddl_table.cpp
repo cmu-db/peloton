@@ -248,8 +248,8 @@ bool DDLTable::DropTable(Oid table_oid) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   if (database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %u table oid : %u",
-             database_oid, table_oid);
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid,
+             table_oid);
     return false;
   }
 
@@ -306,7 +306,7 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
           char *attname = strVal(lfirst(column));
           pk_column_names.push_back(attname);
           pk_column_offsets.push_back(offset);
-          offset ++;
+          offset++;
         }
       }
       if (constraint->fk_attrs != NULL && constraint->fk_attrs->length > 0) {
@@ -315,15 +315,14 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
           char *attname = strVal(lfirst(column));
           fk_column_names.push_back(attname);
           fk_column_offsets.push_back(offset);
-          offset ++;
+          offset++;
         }
       }
 
-
       catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
           PrimaryKeyTableId, pk_column_names, pk_column_offsets,
-          fk_column_names, fk_column_offsets,
-          constraint->fk_upd_action, constraint->fk_del_action, conname);
+          fk_column_names, fk_column_offsets, constraint->fk_upd_action,
+          constraint->fk_del_action, conname);
       foreign_keys.push_back(*foreign_key);
 
     } break;

@@ -17,7 +17,6 @@
 /* To avoid including a pile of parser headers, reference ParseState thus: */
 struct ParseState;
 
-
 /* ----------------
  *	  ParamListInfo
  *
@@ -48,33 +47,30 @@ struct ParseState;
  * ----------------
  */
 
-#define PARAM_FLAG_CONST	0x0001		/* parameter is constant */
+#define PARAM_FLAG_CONST 0x0001 /* parameter is constant */
 
-typedef struct ParamExternData
-{
-	Datum		value;			/* parameter value */
-	bool		isnull;			/* is it NULL? */
-	uint16		pflags;			/* flag bits, see above */
-	Oid			ptype;			/* parameter's datatype, or 0 */
+typedef struct ParamExternData {
+  Datum value;   /* parameter value */
+  bool isnull;   /* is it NULL? */
+  uint16 pflags; /* flag bits, see above */
+  Oid ptype;     /* parameter's datatype, or 0 */
 } ParamExternData;
 
 typedef struct ParamListInfoData *ParamListInfo;
 
-typedef void (*ParamFetchHook) (ParamListInfo params, int paramid);
+typedef void (*ParamFetchHook)(ParamListInfo params, int paramid);
 
-typedef void (*ParserSetupHook) (struct ParseState *pstate, void *arg);
+typedef void (*ParserSetupHook)(struct ParseState *pstate, void *arg);
 
-typedef struct ParamListInfoData
-{
-	ParamFetchHook paramFetch;	/* parameter fetch hook */
-	void	   *paramFetchArg;
-	ParserSetupHook parserSetup;	/* parser setup hook */
-	void	   *parserSetupArg;
-	int			numParams;		/* number of ParamExternDatas following */
-	struct Bitmapset *paramMask; /* if non-NULL, can ignore omitted params */
-	ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
-}	ParamListInfoData;
-
+typedef struct ParamListInfoData {
+  ParamFetchHook paramFetch; /* parameter fetch hook */
+  void *paramFetchArg;
+  ParserSetupHook parserSetup; /* parser setup hook */
+  void *parserSetupArg;
+  int numParams;               /* number of ParamExternDatas following */
+  struct Bitmapset *paramMask; /* if non-NULL, can ignore omitted params */
+  ParamExternData params[FLEXIBLE_ARRAY_MEMBER];
+} ParamListInfoData;
 
 /* ----------------
  *	  ParamExecData
@@ -93,15 +89,13 @@ typedef struct ParamListInfoData
  * ----------------
  */
 
-typedef struct ParamExecData
-{
-	void	   *execPlan;		/* should be "SubPlanState *" */
-	Datum		value;
-	bool		isnull;
+typedef struct ParamExecData {
+  void *execPlan; /* should be "SubPlanState *" */
+  Datum value;
+  bool isnull;
 } ParamExecData;
-
 
 /* Functions found in src/backend/nodes/params.c */
 extern ParamListInfo copyParamList(ParamListInfo from);
 
-#endif   /* PARAMS_H */
+#endif /* PARAMS_H */

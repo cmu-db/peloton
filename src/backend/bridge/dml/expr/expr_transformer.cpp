@@ -316,8 +316,7 @@ expression::AbstractExpression *ExprTransformer::TransformArray(
   auto array_expr = reinterpret_cast<const ArrayExpr *>(es->expr);
 
   // Can only handle one dimension array now
-  if (array_expr->multidims)
-    LOG_ERROR("Do not support multi-dimension array");
+  if (array_expr->multidims) LOG_ERROR("Do not support multi-dimension array");
 
   std::vector<expression::AbstractExpression *> vals;
   ListCell *arg;
@@ -326,7 +325,7 @@ expression::AbstractExpression *ExprTransformer::TransformArray(
     vals.push_back(TransformExpr(arg_expr));
   }
   PostgresValueType pt =
-    static_cast<PostgresValueType>(array_expr->element_typeid);
+      static_cast<PostgresValueType>(array_expr->element_typeid);
   ValueType vt = PostgresValueTypeToPelotonValueType(pt);
 
   return expression::ExpressionUtil::VectorFactory(vt, vals);
@@ -348,16 +347,16 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
 
   if (!retval) {
-
     // Check if the function is a UDF function.
-    if(CheckUserDefinedFunction(pg_func_id)) {
-      LOG_TRACE("Validating if it is a UDF Function, Op Function ID: %u", pg_func_id);
+    if (CheckUserDefinedFunction(pg_func_id)) {
+      LOG_TRACE("Validating if it is a UDF Function, Op Function ID: %u",
+                pg_func_id);
 
       auto function_id = fn_expr->funcid;
       auto collation = fn_es->fcinfo_data.fncollation;
       auto args = fn_es->args;
 
-      std::vector<expression::AbstractExpression*> m_args;
+      std::vector<expression::AbstractExpression *> m_args;
 
       // Convert arguments to Peloton's expression
       int i = 0;
@@ -371,7 +370,8 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
       // Check if the number of arguments are less then maximum allowed.
       assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
 
-      return expression::ExpressionUtil::UDFExpressionFactory(function_id, collation, rettype, m_args);
+      return expression::ExpressionUtil::UDFExpressionFactory(
+          function_id, collation, rettype, m_args);
     } else {
       // FIXME It will generate incorrect results.
       assert(list_length(fn_es->args) > 0);
@@ -720,8 +720,6 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     children[i] = TransformExpr(argstate);
 
     i++;
-
-
   }
 
   // Construct the corresponding Peloton expression

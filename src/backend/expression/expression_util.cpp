@@ -743,12 +743,11 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
   }
 }
 
-AbstractExpression *ExpressionUtil::UDFExpressionFactory(Oid function_id,
-                                         Oid collation,
-                                         Oid return_type,
-                                         std::vector<expression::AbstractExpression*> args) {
-
-  return new expression::UDFExpression(function_id, collation, return_type, args);
+AbstractExpression *ExpressionUtil::UDFExpressionFactory(
+    Oid function_id, Oid collation, Oid return_type,
+    std::vector<expression::AbstractExpression *> args) {
+  return new expression::UDFExpression(function_id, collation, return_type,
+                                       args);
 }
 
 void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
