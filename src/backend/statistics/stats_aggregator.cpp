@@ -45,11 +45,14 @@ void StatsAggregator::RunAggregator() {
   std::mutex mtx;
   std::unique_lock<std::mutex> lck(mtx);
   int64_t interval_cnt_ = 0;
+  double alpha = 0.4;
+  double weighted_avg_throughput = 0.0;
 
   while (exec_finished.wait_for(lck,
        std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
      ) {
    interval_cnt_++;
+   printf("\n////////////////////////////////////////////////////////////////////////////////////////////////////////////\n");
    printf("At interval: %ld\n", interval_cnt_);
 
    aggregated_stats.Reset();
@@ -66,13 +69,23 @@ void StatsAggregator::RunAggregator() {
    int64_t txns_committed_this_interval =
        current_txns_committed - total_prev_txn_committed;
    double throughput_ = (double)txns_committed_this_interval
-           / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
+           / 1000 * STATS_AGGREGATION_INTERVAL_MS;
+   double avg_throughput_ = (double)current_txns_committed
+           / interval_cnt_ / STATS_AGGREGATION_INTERVAL_MS * 1000;
+   if (interval_cnt_ == 1) {
+     weighted_avg_throughput = throughput_;
+   } else {
+     weighted_avg_throughput = alpha * throughput_ + (1 - alpha) * weighted_avg_throughput;
+   }
+
    total_prev_txn_committed = current_txns_committed;
-   printf("Throughput: %lf txn/s\n\n", throughput_);
+   printf("Average throughput:     %lf txn/s\n", avg_throughput_);
+   printf("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
+   printf("Current thoughput:      %lf txn/s\n\n", throughput_);
    if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
      ofs << "At interval: " << interval_cnt_ << std::endl;
      ofs << aggregated_stats.ToString();
-     ofs << throughput_ << std::endl;
+     ofs << weighted_avg_throughput << std::endl;
    }
 
   }
