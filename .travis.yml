@@ -27,3 +27,5 @@ script:
     - ../configure CXXFLAGS="-O0" --enable-debug
     - make
     - make check
+    - make install
+    - ../scripts/oltpbenchmark/test_peloton.sh
