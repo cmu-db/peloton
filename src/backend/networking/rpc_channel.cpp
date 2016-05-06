@@ -87,7 +87,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   memcpy(buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
   /*  call protobuf to serialize the request message into sending buf */
-  request->SerializeToArray(buf + +HEADERLEN + TYPELEN + OPCODELEN,
+  request->SerializeToArray(buf + HEADERLEN + TYPELEN + OPCODELEN,
                             request->ByteSize());
 
   /*
@@ -96,7 +96,8 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
    * it will be returned. If not, a new connection will be created and connect
    * to server
    */
-  Connection* conn = ConnectionManager::GetInstance().CreateConn(addr_);
+  Connection* conn = ConnectionManager::GetInstance().CreateConn(addr_); //CreateConn is used for self connect
+  //Connection* conn = ConnectionManager::GetInstance().GetConn(addr_);
 
   /* Connect to server with given address */
   if (conn == NULL) {

@@ -35,8 +35,10 @@ void Usage(FILE* out) {
           "   -w --wait-timeout      :  Wait timeout (us) \n"
           "   -h --help              :  Print help message \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transaction-count :  # of transactions \n"
-          "   -u --write_ratio       :  Fraction of updates \n"
+          "   -t --transactions      :  # of transactions \n"
+          "   -c --column_count      :  # of columns \n"
+          "   -u --write-ratio       :  Fraction of updates \n"
+          "   -b --backend-count     :  Backend count \n"
   );
 }
 
@@ -48,6 +50,7 @@ static struct option opts[] = {
     {"scale-factor", optional_argument, NULL, 'k'},
     {"transaction_count", optional_argument, NULL, 't'},
     {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
     {NULL, 0, NULL, 0}};
 
 
@@ -130,7 +133,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.data_file_size = 512;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
-  state.wait_timeout = 100;
+  state.wait_timeout = 200;
 
   // Default Values
   ycsb::state.scale_factor = 1;
@@ -182,8 +185,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
 
       default:
-        LOG_ERROR("Unknown option: -%c-", c);
-        Usage(stderr);
+        exit(EXIT_FAILURE);
+        break;
     }
   }
 
@@ -199,7 +202,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateTransactionCount(ycsb::state);
+  //ycsb::ValidateTransactionCount(ycsb::state);
 
 }
 

@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// optimistic_transaction_manager_test.cpp
+// optimistic_txn_manager_test.cpp
 //
 // Identification: tests/concurrency/optimistic_txn_manager_test.cpp
 //
@@ -24,7 +24,8 @@ namespace test {
 class OptimisticTxnManagerTests : public PelotonTest {};
 
 TEST_F(OptimisticTxnManagerTests, Test) {
-  concurrency::TransactionManagerFactory::Configure(CONCURRENCY_TYPE_OPTIMISTIC);
+  concurrency::TransactionManagerFactory::Configure(
+      CONCURRENCY_TYPE_OPTIMISTIC);
   EXPECT_TRUE(true);
 }
 

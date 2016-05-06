@@ -19,8 +19,6 @@
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
-#include "backend/planner/plan_column.h"
-#include "backend/planner/plan_util.h"
 
 namespace peloton {
 namespace planner {
@@ -29,11 +27,12 @@ AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
-void AbstractPlan::AddChild(const AbstractPlan *child) {
-  children_.push_back(child);
+void AbstractPlan::AddChild(std::unique_ptr<AbstractPlan> &&child) {
+  children_.emplace_back(std::move(child));
 }
 
-const std::vector<const AbstractPlan *> &AbstractPlan::GetChildren() const {
+const std::vector<std::unique_ptr<AbstractPlan>> &AbstractPlan::GetChildren()
+    const {
   return children_;
 }
 
@@ -55,8 +54,8 @@ const std::string AbstractPlan::GetInfo() const {
   std::string child_spacer = "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
        ctr++) {
-    os << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
-    os << children_[ctr]->GetInfo();
+    os << child_spacer << children_[ctr].get()->GetPlanNodeType() << "\n";
+    os << children_[ctr].get()->GetInfo();
   }
 
   return os.str();

@@ -12,13 +12,17 @@
 
 #pragma once
 
+#include <iostream>
+#include <memory>
 #include <cstdint>
 #include <vector>
 #include <map>
 #include <vector>
 
+#include "backend/common/assert.h"
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
+#include "backend/common/serializer.h"
 
 #include "nodes/nodes.h"
 
@@ -50,9 +54,9 @@ class AbstractPlan : public Printable {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(const AbstractPlan *child);
+  void AddChild(std::unique_ptr<AbstractPlan> &&child);
 
-  const std::vector<const AbstractPlan *> &GetChildren() const;
+  const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
   const AbstractPlan *GetParent();
 
@@ -71,12 +75,35 @@ class AbstractPlan : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 
-  virtual AbstractPlan *Copy() const = 0;
+  // A plan will be sent to anther node via serialization
+  // So serialization should be implemented by the derived classes
 
-private:
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  // Each sub-class will have to implement these functions
+  // After the implementation for each sub-class, we should set these to pure virtual
+  //===--------------------------------------------------------------------===//
+  virtual bool SerializeTo(SerializeOutput &output) const {
+      ASSERT(&output != nullptr);
+      return false;
+  }
+  virtual bool DeserializeFrom(SerializeInputBE &input) {
+      ASSERT(&input != nullptr);
+      return false;
+  }
+  virtual int SerializeSize() {
+      return 0;
+  }
+
+ protected:
+  // only used by its derived classes (when deserialization)
+  AbstractPlan *Parent() {return parent_;}
+
+ private:
   // A plan node can have multiple children
-  std::vector<const AbstractPlan *> children_;
+  std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
 };

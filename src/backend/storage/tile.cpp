@@ -399,7 +399,7 @@ void Tile::DeserializeTuplesFrom(SerializeInputBE &input, VarlenPool *pool) {
 
   // Skip the column types
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    types[column_itr] = (ValueType)input.ReadEnumInSingleByte();
+    types[column_itr] = (ValueType) input.ReadEnumInSingleByte();
   }
 
   // Skip the column names
@@ -456,10 +456,10 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInputBE &input,
 oid_t Tile::GetActiveTupleCount() const {
   // For normal tiles
   if (tile_group_header != nullptr) {
-    return tile_group_header->GetNextTupleSlot();
+    return tile_group_header->GetCurrentNextTupleSlot();
   }
-  // For temp tiles
-  else {
+      // For temp tiles
+      else {
     return num_tuple_slots;
   }
 }
