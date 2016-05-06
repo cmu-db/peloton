@@ -95,17 +95,25 @@ class StatsAggregator {
     stats_mutex.unlock();
   }
 
+  inline const BackendStatsContext& GetStatsHistory() {
+    return stats_history;
+  }
+
+  inline const BackendStatsContext& GetAggregatedStats() {
+    return aggregated_stats;
+  }
+
   BackendStatsContext *GetBackendStatsContext();
 
   void RunAggregator();
-
-  BackendStatsContext stats_history;
-  BackendStatsContext aggregated_stats;
 
   StatsAggregator();
   ~StatsAggregator();
 
  private:
+  BackendStatsContext stats_history;
+  BackendStatsContext aggregated_stats;
+
   std::mutex stats_mutex;
 
   std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
