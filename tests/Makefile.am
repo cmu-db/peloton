@@ -9,7 +9,7 @@ GMOCK_SRCDIR = $(top_srcdir)/$(GMOCK_DIR)
 GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
 
 # TESTS -- Programs run automatically by "make check"
-# check_PROGRAMS -- Programs built by "make check" but not necessarily run
+#c check_PROGRAMS -- Programs built by "make check" but not necessarily run
 # this is populated by the makefiles in the subdirs
 
 check_SCRIPTS =
@@ -49,6 +49,7 @@ include $(srcdir)/logging/Makefile.am
 include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
+#include $(srcdir)/statistics/Makefile.am
 
 #include $(srcdir)/postgres/Makefile.am
 

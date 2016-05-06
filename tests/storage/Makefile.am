@@ -11,7 +11,8 @@ check_PROGRAMS += \
 		tile_group_test \
 		data_table_test \
 		tile_group_iterator_test \
-		storage_manager_test
+		storage_manager_test \
+		basic_stats_test
 
 value_copy_test_SOURCES = \
 		harness.cpp \
@@ -32,12 +33,14 @@ data_table_test_SOURCES = \
 		storage/data_table_test.cpp \
 		executor/executor_tests_util.cpp \
 		harness.cpp
-		
+
 tile_group_iterator_test_SOURCES = \
 		storage/tile_group_iterator_test.cpp \
 		executor/executor_tests_util.cpp \
 		harness.cpp
-		
+
 storage_manager_test_SOURCES = \
 		storage/storage_manager_test.cpp
-		
+
+basic_stats_test_SOURCES = \
+		storage/basic_stats_test.cpp
