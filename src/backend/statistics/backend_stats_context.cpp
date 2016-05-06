@@ -35,6 +35,7 @@ BackendStatsContext::BackendStatsContext() {
 
 BackendStatsContext::~BackendStatsContext() {
   //peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
+  printf("BackendStatsContext destructor");
 
 }
 
