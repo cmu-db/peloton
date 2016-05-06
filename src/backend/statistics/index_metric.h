@@ -78,7 +78,8 @@ class IndexMetric : public AbstractMetric {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss << index_access_.ToString() << std::endl;
+    ss << "INDEXES: " << std::endl;
+    ss << index_name_ << ": " << index_access_.ToString() << std::endl;
     return ss.str();
   }
 
