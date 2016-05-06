@@ -35,12 +35,14 @@ BackendStatsContext::BackendStatsContext() {
   thread_id = this_id;
 
   oid_t num_databases = catalog::Manager::GetInstance().GetDatabaseCount();
+  printf("Initialize context?\n");
   for (oid_t i = 0; i < num_databases; ++i) {
     auto *database = catalog::Manager::GetInstance().GetDatabase(i);
     oid_t num_tables = database->GetTableCount();
 
     for (oid_t j = 0; j < num_tables; ++j) {
       // Initialize all per-table stats
+      printf("did we initialize table?\n");
       auto *table = database->GetTable(j);
       oid_t table_id = table->GetOid();
       table_accesses_[table_id] = new AccessMetric{MetricType::ACCESS_METRIC};
