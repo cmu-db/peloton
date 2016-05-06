@@ -70,6 +70,17 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP FUNCTION IF EXISTS modify_table_plpgsql();
+CREATE FUNCTION modify_table_plpgsql() RETURNS void AS
+$$ DECLARE i numeric;
+BEGIN
+    i = 0;
+    WHILE i < 500 LOOP
+        UPDATE A SET test=99999 where test=i;
+        i := i + 1;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
 DROP FUNCTION IF EXISTS multiply_string(integer, text);
 
