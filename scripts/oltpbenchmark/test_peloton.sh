@@ -11,7 +11,7 @@ rm -rf peloton_test_database
 initdb peloton_test_database
 
 # Copy over the peloton configuration file into the directory
-cp ../scripts/oltpbenchmark/postgresql.conf data
+cp ./scripts/oltpbenchmark/postgresql.conf data
 
 # Stop the peloton server
 pg_ctl -D peloton_test_database stop
