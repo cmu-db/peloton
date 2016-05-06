@@ -37,11 +37,7 @@
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
 #include "backend/expression/nullif_expression.h"
-<<<<<<< HEAD
 #include "backend/expression/udf_expression.h"
-#include <json_spirit.h>
-=======
->>>>>>> master
 
 namespace peloton {
 namespace expression {
