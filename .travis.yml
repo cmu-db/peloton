@@ -24,7 +24,7 @@ script:
     # bootstrap
     - ./bootstrap
     - cd build
-    - ../configure CXXFLAGS="-O0" --enable-debug
+    - ../configure CXXFLAGS="-O0"
     - make
     - make check
     - make install
