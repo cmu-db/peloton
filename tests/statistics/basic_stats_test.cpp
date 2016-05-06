@@ -37,6 +37,7 @@ namespace peloton {
       
       //int tuple_count = 10;
 
+
       // Create a table and wrap it in logical tiles
       /*
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
