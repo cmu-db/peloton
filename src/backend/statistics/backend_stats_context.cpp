@@ -64,6 +64,10 @@ BackendStatsContext::~BackendStatsContext() {
 void BackendStatsContext::Aggregtate(BackendStatsContext &source_) {
   txn_committed.Aggregate(source_.txn_committed);
   txn_aborted.Aggregate(source_.txn_aborted);
+
+  for (auto access_item : table_accesses_) {
+    access_item.second->Aggregate(*source_.GetTableAccessMetric(access_item.first));
+  }
 }
 
 
