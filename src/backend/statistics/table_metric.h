@@ -87,7 +87,8 @@ class TableMetric : public AbstractMetric {
   inline std::string ToString() {
     std::stringstream ss;
     ss << "-----------------------------" << std::endl;
-    ss << "  TABLE " << table_name_ << std::endl;
+    ss << "  TABLE " << table_name_ << "(OID=";
+    ss << table_id_ << ")" << std::endl;;
     ss << "-----------------------------" << std::endl;
     ss << table_access_.ToString() << std::endl;
     return ss.str();
