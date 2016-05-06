@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "backend/catalog/manager.h"
 #include "backend/common/types.h"
 #include "backend/statistics/access_metric.h"
 #include "backend/statistics/counter_metric.h"
@@ -60,6 +61,10 @@ class BackendStatsContext {
     std::stringstream ss;
     ss <<  "txn_committed: " << txn_committed.ToString();
     ss <<  "txn_aborted: " << txn_aborted.ToString();
+
+    for (auto table_item : table_accesses_) {
+      ss << "Table " << table_item.first << ": " << table_item.second->ToString() << std::endl;
+    }
     return ss.str();
   }
 
