@@ -1632,7 +1632,7 @@ get_set_pwd(void)
 		/*
 		 * Read password from terminal
 		 */
-		pwd1 = simple_prompt("Enter new___ superuser password: ", 100, false);
+		pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
 		pwd2 = simple_prompt("Enter it again: ", 100, false);
 		if (strcmp(pwd1, pwd2) != 0)
 		{
@@ -2769,18 +2769,18 @@ usage(const char *progname)
 	printf(_("      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"));
 	printf(_("      --auth-local=METHOD   default authentication method for local-socket connections\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
-	printf(_("  -E, --encoding=ENCODING   set default encoding for new___ databases\n"));
-	printf(_("      --locale=LOCALE       set default locale for new___ databases\n"));
+	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
+	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
 	printf(_("      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
 			 "      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
 			 "                            set default locale in the respective category for\n"
-			 "                            new___ databases (default taken from environment)\n"));
+			 "                            new databases (default taken from environment)\n"));
 	printf(_("      --no-locale           equivalent to --locale=C\n"));
-	printf(_("      --pwfile=FILE         read password for the new___ superuser from file\n"));
+	printf(_("      --pwfile=FILE         read password for the new superuser from file\n"));
 	printf(_("  -T, --text-search-config=CFG\n"
 		 "                            default text search configuration\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
-	printf(_("  -W, --pwprompt            prompt for a password for the new___ superuser\n"));
+	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
 	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
@@ -3188,7 +3188,7 @@ create_data_directory(void)
 				warn_on_mount_point(ret);
 			else
 				fprintf(stderr,
-						_("If you want to create a new___ database system, either remove or empty\n"
+						_("If you want to create a new database system, either remove or empty\n"
 						  "the directory \"%s\" or run %s\n"
 						  "with an argument other than \"%s\".\n"),
 						pg_data, progname, pg_data);

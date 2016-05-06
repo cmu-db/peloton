@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mapper_lock_rows.cpp
 //
 // Identification: src/backend/bridge/dml/mapper/mapper_lock_rows.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,7 +28,7 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  *
  */
-const planner::AbstractPlan *PlanTransformer::TransformLockRows(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLockRows(
     const LockRowsPlanState *lr_plan_state) {
   LOG_INFO("Handle LockRows");
 

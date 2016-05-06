@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // hash_range_expression.h
 //
 // Identification: src/backend/expression/hash_range_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -51,7 +51,8 @@ class HashRangeExpression : public AbstractExpression {
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
                          __attribute__((unused)) const AbstractTuple *tuple2,
-                         __attribute__((unused)) executor::ExecutorContext *context) const {
+                         __attribute__((unused))
+                         executor::ExecutorContext *context) const {
     assert(tuple1);
     if (!tuple1) {
       throw Exception(
@@ -109,6 +110,15 @@ class HashRangeExpression : public AbstractExpression {
   }
 
   int GetColumnId() const { return this->value_idx; }
+
+  AbstractExpression *Copy() const {
+    srange_type *copied_ranges = new srange_type[num_ranges];
+    for (int ii = 0; ii < num_ranges; ii++) {
+      copied_ranges[ii].first = ranges[ii].first;
+      copied_ranges[ii].second = ranges[ii].second;
+    }
+    return new HashRangeExpression(value_idx, copied_ranges, num_ranges);
+  }
 
  private:
   const int value_idx;  // which (offset) column of the tuple

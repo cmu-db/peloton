@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logical_tile_factory.cpp
 //
 // Identification: src/backend/executor/logical_tile_factory.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -88,13 +88,12 @@ LogicalTile *LogicalTileFactory::WrapTiles(
  * @return Logical tile wrapping tile group.
  */
 LogicalTile *LogicalTileFactory::WrapTileGroup(
-    const std::shared_ptr<storage::TileGroup> &tile_group,
-    txn_id_t txn_id) {
+    const std::shared_ptr<storage::TileGroup> &tile_group) {
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   const int position_list_idx = 0;
   new_tile->AddPositionList(
-      CreateIdentityPositionList(tile_group->GetActiveTupleCount(txn_id)));
+      CreateIdentityPositionList(tile_group->GetActiveTupleCount()));
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
@@ -107,55 +106,6 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
   }
 
   return new_tile.release();
-}
-
-/**
- * @brief Convenience method to construct a set of logical tiles wrapping a
- * given set of tuple locations potentially in multiple tile groups.
- * @param tuple_locations Tuple locations which are item pointers.
- *
- * @return Logical tile(s) wrapping the give tuple locations.
- */
-std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
-    const std::vector<ItemPointer> tuple_locations,
-    const std::vector<oid_t> column_ids, txn_id_t txn_id, cid_t commit_id) {
-  std::vector<LogicalTile *> result;
-
-  // Get the list of blocks
-  std::map<oid_t, std::vector<oid_t>> blocks;
-
-  for (auto tuple_location : tuple_locations) {
-    blocks[tuple_location.block].push_back(tuple_location.offset);
-  }
-
-  // Construct a logical tile for each block
-  for (auto block : blocks) {
-    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
-
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(block.first);
-    storage::TileGroupHeader *tile_group_header = tile_group.get()->GetHeader();
-
-    // Add relevant columns to logical tile
-    logical_tile->AddColumns(tile_group, column_ids);
-
-    // Print tile group visibility
-    // tile_group_header->PrintVisibility(txn_id, commit_id);
-
-    // Add visible tuples to logical tile
-    std::vector<oid_t> position_list;
-    for (auto tuple_id : block.second) {
-      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id)) {
-        position_list.push_back(tuple_id);
-      }
-    }
-
-    logical_tile->AddPositionList(std::move(position_list));
-
-    result.push_back(logical_tile);
-  }
-
-  return result;
 }
 
 }  // namespace executor

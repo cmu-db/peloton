@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // manager.cpp
 //
 // Identification: src/backend/catalog/manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,8 +17,14 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
+
+namespace concurrency {
+  class TransactionManagerFactory;
+}
+
 namespace catalog {
 
 Manager &Manager::GetInstance() {
@@ -32,7 +38,6 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
-  std::shared_ptr<storage::TileGroup> old_location;
 
   {
     std::lock_guard<std::mutex> lock(locator_mutex);
@@ -46,7 +51,9 @@ void Manager::AddTileGroup(
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
+  concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
+    LOG_INFO("Dropping tile group %u", oid);
     std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group
     locator.erase(oid);
@@ -87,8 +94,9 @@ void Manager::AddDatabase(storage::Database *database) {
 }
 
 storage::Database *Manager::GetDatabaseWithOid(const oid_t database_oid) const {
-  for (auto database : databases)
+  for (auto database : databases) {
     if (database->GetOid() == database_oid) return database;
+  }
 
   return nullptr;
 }

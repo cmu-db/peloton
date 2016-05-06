@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index.cpp
 //
 // Identification: src/backend/index/index.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -125,16 +125,15 @@ bool Index::Compare(const AbstractTuple &index_key,
       // conditions with OR in the query
       return false;
     }
-
   }
 
   return true;
 }
 
-bool Index::ConstructLowerBoundTuple(storage::Tuple *index_key,
-                               const std::vector<peloton::Value> &values,
-                               const std::vector<oid_t> &key_column_ids,
-                               const std::vector<ExpressionType> &expr_types) {
+bool Index::ConstructLowerBoundTuple(
+    storage::Tuple *index_key, const std::vector<peloton::Value> &values,
+    const std::vector<oid_t> &key_column_ids,
+    const std::vector<ExpressionType> &expr_types) {
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
   bool all_constraints_equal = true;
@@ -155,25 +154,24 @@ bool Index::ConstructLowerBoundTuple(storage::Tuple *index_key,
         placeholder = true;
         value = values[offset];
       }
-      // Not all expressions / constraints are equal
-      else {
+          // Not all expressions / constraints are equal
+          else {
         all_constraints_equal = false;
       }
     }
 
-    LOG_TRACE("Column itr : %lu  Placeholder : %d ", column_itr, placeholder);
+    LOG_TRACE("Column itr : %u  Placeholder : %d ", column_itr, placeholder);
 
     // Fill in the placeholder
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
     }
-    // Fill in the min value
-    else {
+        // Fill in the min value
+        else {
       auto value_type = schema->GetType(column_itr);
       index_key->SetValue(column_itr, Value::GetMinValue(value_type),
                           GetPool());
     }
-
   }
 
   LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// loader.cpp
+// hyadapt_loader.cpp
 //
-// Identification: benchmark/hyadapt/loader.cpp
+// Identification: src/backend/benchmark/hyadapt/hyadapt_loader.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,6 +24,7 @@
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/expression/constant_value_expression.h"
@@ -38,7 +39,7 @@ namespace peloton {
 namespace benchmark {
 namespace hyadapt {
 
-storage::DataTable *hyadapt_table;
+std::unique_ptr<storage::DataTable> hyadapt_table;
 
 void CreateTable() {
   const oid_t col_count = state.column_count + 1;
@@ -63,14 +64,11 @@ void CreateTable() {
   // Create table.
   /////////////////////////////////////////////////////////
 
-  // Clean up
-  delete hyadapt_table;
-
   bool own_schema = true;
   bool adapt_table = true;
-  hyadapt_table = storage::TableFactory::GetDataTable(
+  hyadapt_table.reset(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      state.tuples_per_tilegroup, own_schema, adapt_table);
+      state.tuples_per_tilegroup, own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -107,7 +105,7 @@ void LoadTable() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
@@ -123,13 +121,13 @@ void LoadTable() {
       tuple.SetValue(col_itr, value, pool.get());
     }
 
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
     assert(tuple_slot_id.block != INVALID_OID);
     assert(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
   }
 
-  txn_manager.CommitTransaction(txn);
+  txn_manager.CommitTransaction();
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // bridge_test_helper.cpp
 //
 // Identification: src/backend/bridge/ddl/tests/bridge_test_helper.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -140,8 +140,8 @@ bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
  * @param _fk_column_names to be compared with foreign key's fk_column_names
  * @param fk_update_action foreign key update action to be compared with foreign
  * key's update action
- * @param fk_delete_action foreign key delete action to be compared with foreign
- * key's delete action
+ * @param fk_delete_action foreign key delete_action to be compared with foreign
+ * key's delete_action
  * @return the true if we pass all
  */
 bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
@@ -231,7 +231,7 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   fk_column_names.push_back("salary");
   std::vector<catalog::ForeignKey> foreign_keys;
   catalog::ForeignKey *foreign_key =
-      new catalog::ForeignKey(pktable_oid, pk_column_names, fk_column_names,
+      new catalog::ForeignKey(pktable_oid, pk_column_names, {1}, fk_column_names, {3},
                               'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT");
   foreign_keys.push_back(*foreign_key);
 

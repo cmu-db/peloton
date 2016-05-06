@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// btree_index.h
+// bwtree_index.h
 //
-// Identification: src/backend/index/btree_index.h
+// Identification: src/backend/index/bwtree_index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +31,8 @@ namespace index {
  *
  * @see Index
  */
-template <typename KeyType, typename ValueType, typename KeyComparator, typename KeyEqualityChecker>
+template <typename KeyType, typename ValueType, typename KeyComparator,
+          typename KeyEqualityChecker>
 class BWTreeIndex : public Index {
   friend class IndexFactory;
 
@@ -42,30 +43,41 @@ class BWTreeIndex : public Index {
 
   ~BWTreeIndex();
 
-  bool InsertEntry(const storage::Tuple *key, const ItemPointer location);
+  bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
-  bool DeleteEntry(const storage::Tuple *key, const ItemPointer location);
+  bool DeleteEntry(const storage::Tuple *key, const ItemPointer &location);
 
-  std::vector<ItemPointer> Scan(const std::vector<Value> &values,
-                                const std::vector<oid_t> &key_column_ids,
-                                const std::vector<ExpressionType> &expr_types,
-                                const ScanDirectionType& scan_direction);
+  bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                       std::function<bool(const ItemPointer &)> predicate);
 
-  std::vector<ItemPointer> ScanAllKeys();
+  void Scan(const std::vector<Value> &values,
+            const std::vector<oid_t> &key_column_ids,
+            const std::vector<ExpressionType> &expr_types,
+            const ScanDirectionType &scan_direction,
+            std::vector<ItemPointer> &);
 
-  std::vector<ItemPointer> ScanKey(const storage::Tuple *key);
+  void ScanAllKeys(std::vector<ItemPointer> &);
+
+  void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &);
+
+  void Scan(const std::vector<Value> &values,
+            const std::vector<oid_t> &key_column_ids,
+            const std::vector<ExpressionType> &exprs,
+            const ScanDirectionType &scan_direction,
+            std::vector<ItemPointer *> &result);
+
+  void ScanAllKeys(std::vector<ItemPointer *> &result);
+
+  void ScanKey(const storage::Tuple *key,
+               std::vector<ItemPointer *> &result);
 
   std::string GetTypeName() const;
 
   // TODO: Implement this
-  bool Cleanup() {
-    return true;
-  }
+  bool Cleanup() { return true; }
 
   // TODO: Implement this
-  size_t GetMemoryFootprint() {
-    return 0;
-  }
+  size_t GetMemoryFootprint() { return 0; }
 
  protected:
   // container

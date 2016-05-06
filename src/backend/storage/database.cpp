@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // database.cpp
 //
 // Identification: src/backend/storage/database.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,9 +21,12 @@
 namespace peloton {
 namespace storage {
 
+Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
+
 Database::~Database() {
   // Clean up all the tables
-  for (auto table : tables) delete table;
+  for (auto table : tables)
+    delete table;
 }
 
 //===--------------------------------------------------------------------===//
@@ -84,7 +87,7 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 //===--------------------------------------------------------------------===//
 
 void Database::UpdateStats() const {
-  LOG_INFO("Update All Stats in Database(%lu)", database_oid);
+  LOG_INFO("Update All Stats in Database(%u)", database_oid);
   for (oid_t table_offset = 0; table_offset < GetTableCount(); table_offset++) {
     auto table = GetTable(table_offset);
     bridge::Bridge::SetNumberOfTuples(table->GetOid(),
@@ -100,7 +103,7 @@ void Database::UpdateStats() const {
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid) const {
-  LOG_INFO("Update table(%lu)'s stats in Database(%lu)", table_oid,
+  LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid,
            database_oid);
 
   auto table = GetTableWithOid(table_oid);
@@ -131,10 +134,9 @@ const std::string Database::GetInfo() const {
   oid_t table_itr = 0;
   for (auto table : tables) {
     if (table != nullptr) {
-      std::cout << "(" << ++table_itr << "/" << table_count << ") "
-                << "Table Name(" << table->GetOid()
-                << ") : " << table->GetName() << "\n" << *(table->GetSchema())
-                << std::endl;
+      os << "(" << ++table_itr << "/" << table_count << ") "
+         << "Table Name(" << table->GetOid() << ") : " << table->GetName()
+         << "\n" << *(table->GetSchema()) << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 

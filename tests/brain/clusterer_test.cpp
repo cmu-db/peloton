@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // clusterer_test.cpp
 //
 // Identification: tests/brain/clusterer_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #include "harness.h"
 
 #include "backend/brain/clusterer.h"
+#include "backend/common/generator.h"
 
 namespace peloton {
 namespace test {
@@ -36,11 +37,10 @@ TEST_F(ClustererTests, BasicTest) {
   double sample_weight;
 
   // initialize a uniform distribution between 0 and 1
-  std::mt19937_64 rng;
-  std::uniform_real_distribution<double> uniform(0, 1);
+  UniformGenerator generator;
 
   for (int sample_itr = 0; sample_itr < 100; sample_itr++) {
-    auto rng_val = uniform(rng);
+    auto rng_val = generator.GetSample();
 
     if (rng_val < 0.3) {
       columns_accessed = {1, 1, 0, 0, 0, 1, 1};
@@ -63,26 +63,22 @@ TEST_F(ClustererTests, BasicTest) {
     clusterer.ProcessSample(sample);
   }
 
-  std::cout << clusterer;
+  LOG_INFO("%s", clusterer.GetInfo().c_str());
 
   auto partitioning1 = clusterer.GetPartitioning(2);
 
-  std::cout << "COLUMN "
-            << "\t"
-            << " TILE"
-            << "\n";
-  for (auto entry : partitioning1)
-    std::cout << entry.first << "\t" << entry.second.first << " : "
-              << entry.second.second << "\n";
+  LOG_INFO("COLUMN \t TILE");
+  for (auto entry : partitioning1) {
+    LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
+             entry.second.second);
+  }
 
   auto partitioning2 = clusterer.GetPartitioning(4);
-  std::cout << "COLUMN "
-            << "\t"
-            << " TILE"
-            << "\n";
-  for (auto entry : partitioning2)
-    std::cout << entry.first << "\t" << entry.second.first << " : "
-              << entry.second.second << "\n";
+  LOG_INFO("COLUMN \t TILE");
+  for (auto entry : partitioning2) {
+    LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
+             entry.second.second);
+  }
 }
 
 }  // End test namespace

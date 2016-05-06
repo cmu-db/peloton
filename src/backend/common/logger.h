@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logger.h
 //
 // Identification: src/backend/common/logger.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,14 +42,10 @@ namespace peloton {
 #define LOG_OUTPUT_STREAM stdout
 #define LOG_TIME_MILLISECONDS 1
 
-// Compile time Option
-
+// Compile time debugging level option
+// Defaults to LOG_LEVEL_INFO if not already defined
 #ifndef LOG_LEVEL
-// Enable debugging mode if needed
-#ifdef DEBUG
-// Defaults to LOG_LEVEL_INFO
 #define LOG_LEVEL LOG_LEVEL_INFO
-#endif
 #endif
 
 // Disable logging if requested

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // schema.cpp
 //
 // Identification: src/backend/catalog/schema.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -81,6 +81,36 @@ Schema::Schema(const std::vector<Column> &columns)
   }
 }
 
+// Copy schema
+std::shared_ptr<const Schema> Schema::CopySchema(
+    const std::shared_ptr<const Schema> &schema) {
+  oid_t column_count = schema->GetColumnCount();
+  std::vector<oid_t> set;
+
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
+    set.push_back(column_itr);
+
+  return CopySchema(schema, set);
+}
+
+// Copy subset of columns in the given schema
+std::shared_ptr<const Schema> Schema::CopySchema(
+    const std::shared_ptr<const Schema> &schema,
+    const std::vector<oid_t> &set) {
+  oid_t column_count = schema->GetColumnCount();
+  std::vector<Column> columns;
+
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    // If column exists in set
+    if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
+      columns.push_back(schema->columns[column_itr]);
+    }
+  }
+
+  return std::shared_ptr<Schema>(new Schema(columns));
+}
+
+// Backward compatible for raw pointers
 // Copy schema
 Schema *Schema::CopySchema(const Schema *schema) {
   oid_t column_count = schema->GetColumnCount();
@@ -181,8 +211,7 @@ const std::string Schema::GetInfo() const {
      << " column_count = " << column_count
      << " is_inlined = " << tuple_is_inlined << ","
      << " length = " << length << ","
-     << " uninlined_column_count = " << uninlined_column_count
-     << std::endl;
+     << " uninlined_column_count = " << uninlined_column_count << std::endl;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     os << "\t Column " << column_itr << " :: " << columns[column_itr];

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// materialization_test.cpp
+// tile_group_layout_test.cpp
 //
-// Identification: tests/executor/materialization_test.cpp
+// Identification: tests/executor/tile_group_layout_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
 #include <iostream>
 #include <ctime>
 
@@ -29,6 +28,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/timer.h"
 #include "backend/executor/executor_context.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -37,6 +37,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/seq_scan_executor.h"
 #include "backend/expression/abstract_expression.h"
@@ -60,8 +61,6 @@ namespace test {
 class TileGroupLayoutTest : public PelotonTest {};
 
 void ExecuteTileGroupTest() {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-
   const int tuples_per_tilegroup_count = 10;
   const int tile_group_count = 5;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
@@ -120,7 +119,7 @@ void ExecuteTileGroupTest() {
   /////////////////////////////////////////////////////////
 
   // Insert tuples into tile_group.
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
@@ -135,10 +134,10 @@ void ExecuteTileGroupTest() {
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    txn->RecordInsert(tuple_slot_id);
+    txn_manager.PerformInsert(tuple_slot_id);
   }
 
   txn_manager.CommitTransaction();
@@ -146,8 +145,6 @@ void ExecuteTileGroupTest() {
   /////////////////////////////////////////////////////////
   // Do a seq scan with predicate on top of the table
   /////////////////////////////////////////////////////////
-
-  start = std::chrono::system_clock::now();
 
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -180,11 +177,11 @@ void ExecuteTileGroupTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -203,11 +200,6 @@ void ExecuteTileGroupTest() {
   EXPECT_FALSE(mat_executor.Execute());
 
   txn_manager.CommitTransaction();
-
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end - start;
-
-  std::cout << "duration :: " << elapsed_seconds.count() << "s\n";
 }
 
 TEST_F(TileGroupLayoutTest, RowLayout) {

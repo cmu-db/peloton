@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// update_node.h
+// update_plan.h
 //
-// Identification: src/backend/planner/update_node.h
+// Identification: src/backend/planner/update_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,8 +37,8 @@ class UpdatePlan : public AbstractPlan {
   UpdatePlan &operator=(UpdatePlan &&) = delete;
 
   explicit UpdatePlan(storage::DataTable *table,
-                      const planner::ProjectInfo *project_info)
-      : target_table_(table), project_info_(project_info) {}
+                      std::unique_ptr<const planner::ProjectInfo> project_info)
+      : target_table_(table), project_info_(std::move(project_info)) {}
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -49,6 +49,11 @@ class UpdatePlan : public AbstractPlan {
   storage::DataTable *GetTable() const { return target_table_; }
 
   const std::string GetInfo() const { return "UpdatePlan"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(
+        new UpdatePlan(target_table_, std::move(project_info_->Copy())));
+  }
 
  private:
   /** @brief Target table. */

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // parameter_value_expression.h
 //
 // Identification: src/backend/expression/parameter_value_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -51,6 +51,10 @@ class ParameterValueExpression : public AbstractExpression {
   }
 
   int GetParameterId() const { return this->m_valueIdx; }
+
+  AbstractExpression *Copy() const {
+    return new ParameterValueExpression(m_valueIdx, m_paramValue);
+  }
 
  private:
   size_t m_valueIdx;

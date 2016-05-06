@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rpc_method.h
 //
-// Identification: src/backend/message/rpc_method.h
+// Identification: src/backend/networking/rpc_method.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,18 +21,15 @@ namespace peloton {
 namespace networking {
 
 struct RpcMethod {
-
-public:
-
+ public:
   RpcMethod(google::protobuf::Service *service,
-	          const google::protobuf::Message *request,
-	          const google::protobuf::Message *response,
-	          const google::protobuf::MethodDescriptor *method)
-        : service_(service),
-          request_(request),
-          response_(response),
-          method_(method) {
-  }
+            const google::protobuf::Message *request,
+            const google::protobuf::Message *response,
+            const google::protobuf::MethodDescriptor *method)
+      : service_(service),
+        request_(request),
+        response_(response),
+        method_(method) {}
 
   google::protobuf::Service *service_;
   const google::protobuf::Message *request_;
