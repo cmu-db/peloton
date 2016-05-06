@@ -53,8 +53,8 @@ class BackendStatsContext {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss <<  "txn_committed: " << txn_committed.ToString() << std::endl;
-    ss <<  "txn_aborted: " << txn_aborted.ToString() << std::endl;
+    ss <<  "txn_committed: " << txn_committed.ToString();
+    ss <<  "txn_aborted: " << txn_aborted.ToString();
     return ss.str();
   }
 

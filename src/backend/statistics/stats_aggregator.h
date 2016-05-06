@@ -24,6 +24,7 @@
 #include "backend/statistics/backend_stats_context.h"
 
 #define STATS_AGGREGATION_INTERVAL_MS 1000
+#define STATS_LOG_INTERVALS 10
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -60,15 +61,15 @@ class StatsAggregator {
     stats_mutex.lock();
 
     if (backend_stats.find(id_) == backend_stats.end()) {
-
-      backend_stats[id_] = context_;
       thread_number++;
-      printf("hash map size: %ld\n", backend_stats.size());
-
-      printf("register: %d\n", thread_number);
-
-      std::cout << id_ << std::endl;
     }
+
+    backend_stats[id_] = context_;
+    printf("hash map size: %ld\n", backend_stats.size());
+
+    printf("register: %d\n", thread_number);
+
+    std::cout << id_ << std::endl;
 
     stats_mutex.unlock();
   }
