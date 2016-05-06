@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// pessimistic_transaction_manager_test.cpp
+// ssi_txn_manager_test.cpp
 //
 // Identification: tests/concurrency/ssi_txn_manager_test.cpp
 //
