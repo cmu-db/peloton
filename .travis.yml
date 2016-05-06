@@ -27,5 +27,5 @@ script:
     - ../configure CXXFLAGS="-O0"
     - make
     - make check
-    - make install
+    - sudo make install
     - ../scripts/oltpbenchmark/test_peloton.sh
