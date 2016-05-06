@@ -82,13 +82,13 @@ class StatsAggregator {
     stats_mutex.lock();
 
     if (backend_stats.find(id_) != backend_stats.end()) {
-      printf("hash map size: %ld\n", backend_stats.size());
+      //printf("hash map size: %ld\n", backend_stats.size());
       backend_stats.erase(id_);
-      printf("unregister: %d\n", thread_number);
+      //printf("unregister: %d\n", thread_number);
       thread_number--;
 
       //printf("unregister: %d\n", thread_number);
-      printf("hash map size: %ld\n", backend_stats.size());
+      //printf("hash map size: %ld\n", backend_stats.size());
       std::cout << id_ << std::endl;
     }
 
@@ -109,6 +109,8 @@ class StatsAggregator {
   std::mutex stats_mutex;
 
   std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
+
+  int64_t total_prev_txn_committed;
 
   int thread_number;
 

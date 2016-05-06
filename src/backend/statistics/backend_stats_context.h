@@ -130,18 +130,27 @@ class BackendStatsContext {
     std::stringstream ss;
 
     for (auto database_item : database_metrics_) {
+      oid_t database_id = database_item.second->GetDatabaseId();
       ss << database_item.second->ToString() << std::endl;
+
+      for (auto table_item : table_metrics_) {
+        if (table_item.second->GetDatabaseId() == database_id) {
+          ss << table_item.second->ToString() << std::endl;
+
+          oid_t table_id = table_item.second->GetTableId();
+          for (auto index_item : index_metrics_) {
+            if (index_item.second->GetDatabaseId() == database_id &&
+                index_item.second->GetTableId() == table_id) {
+              ss << index_item.second->ToString() << std::endl;
+            }
+          }
+          ss << std::endl;
+        }
+        ss << std::endl;
+      }
+      ss << std::endl;
     }
 
-    for (auto table_item : table_metrics_) {
-      ss << "Table " << table_item.second->GetName() << ": " << table_item.second->ToString()
-          << std::endl;
-    }
-
-    for (auto index_item : index_metrics_) {
-      ss << "Index " << index_item.second->GetName() << ": " << index_item.second->ToString()
-                << std::endl << std::endl;
-    }
     return ss.str();
   }
 

@@ -57,6 +57,10 @@ class DatabaseMetric : public AbstractMetric {
     return txn_aborted_;
   }
 
+  inline oid_t GetDatabaseId() {
+    return database_id_;
+  }
+
   inline void Reset() {
     txn_committed_.Reset();
     txn_aborted_.Reset();
@@ -66,8 +70,11 @@ class DatabaseMetric : public AbstractMetric {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss <<  "txn_committed: " << txn_committed_.ToString() << std::endl;
-    ss <<  "txn_aborted: " << txn_aborted_.ToString() << std::endl;
+    ss << "//===--------------------------------------------------------------------===//" << std::endl;
+    ss << "// DATABASE_ID " << database_id_ << std::endl;
+    ss << "//===--------------------------------------------------------------------===//" << std::endl;
+    ss <<  "# transactions committed: " << txn_committed_.ToString() << std::endl;
+    ss <<  "# transactions aborted:   " << txn_aborted_.ToString() << std::endl;
     return ss.str();
   }
 

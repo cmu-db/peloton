@@ -27,6 +27,8 @@ thread_local BackendStatsContext* backend_stats_context = nullptr;
 StatsAggregator::StatsAggregator() {
   thread_number = 0;
 
+  total_prev_txn_committed = 0;
+
   ofs.open (peloton_stats_directory, std::ofstream::out);
 
   aggregator_thread = std::thread(&StatsAggregator::RunAggregator, this);
@@ -49,6 +51,7 @@ void StatsAggregator::RunAggregator() {
      interval_cnt_++;
      printf("At interval: %ld\n", interval_cnt_);
 
+
      aggregated_stats.Reset();
      for(auto& val : backend_stats )
      {
@@ -56,14 +59,21 @@ void StatsAggregator::RunAggregator() {
      }
      aggregated_stats.Aggregate(stats_history);
      printf("%s", aggregated_stats.ToString().c_str());
-//     double throughput_ = (double)aggregated_stats.txn_committed.GetCounter()
-//             / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
-//     printf("Throughput: %lf txn/s\n\n", throughput_);
-//     if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
-//       ofs << "At interval: " << interval_cnt_ << std::endl;
-//       ofs << aggregated_stats.ToString();
-//       ofs << throughput_ << std::endl;
-//     }
+     int64_t current_txns_committed = 0;
+     for (auto database_item : aggregated_stats.database_metrics_) {
+       current_txns_committed += database_item.second->GetTxnCommitted().GetCounter();
+     }
+     int64_t txns_committed_this_interval =
+         current_txns_committed - total_prev_txn_committed;
+     double throughput_ = (double)txns_committed_this_interval
+             / interval_cnt_ * 1000 / STATS_AGGREGATION_INTERVAL_MS;
+     total_prev_txn_committed = current_txns_committed;
+     printf("Throughput: %lf txn/s\n\n", throughput_);
+     if (interval_cnt_ % STATS_LOG_INTERVALS == 0) {
+       ofs << "At interval: " << interval_cnt_ << std::endl;
+       ofs << aggregated_stats.ToString();
+       ofs << throughput_ << std::endl;
+     }
 
    }
    printf("Aggregator done!\n");
