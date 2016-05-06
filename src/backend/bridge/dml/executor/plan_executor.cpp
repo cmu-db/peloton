@@ -35,14 +35,129 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
 /*
  * Added for network invoking efficiently
  */
-executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
-                                                concurrency::Transaction *txn);
+executor::ExecutorContext *BuildExecutorContext(
+    const std::vector<Value> &params, concurrency::Transaction *txn);
 
 executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
     executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
+
+/*
+ * Execute the subplan and get a value from the result.
+ */
+Value PlanExecutor::ExecutePlanGetValue(const planner::AbstractPlan *plan,
+                                        const std::vector<Value> &params) {
+  peloton_status p_status;
+
+  //  if (plan == nullptr) return p_status;
+
+  LOG_TRACE("PlanExecutor Start ");
+
+  bool status;
+  bool init_failure = false;
+  bool single_statement_txn = false;
+  Value ret_val;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = peloton::concurrency::current_txn;
+  // This happens for single statement queries in PG
+  if (txn == nullptr) {
+    single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
+  assert(txn);
+
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_TRACE("Building the executor tree");
+
+  // Use const std::vector<Value> &params to make it more elegant for network
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      BuildExecutorContext(params, txn));
+  // auto executor_context = BuildExecutorContext(param_list, txn);
+
+  // Build the executor tree
+  std::unique_ptr<executor::AbstractExecutor> executor_tree(
+      BuildExecutorTree(nullptr, plan, executor_context.get()));
+
+  LOG_TRACE("Initializing the executor tree");
+
+  // Initialize the executor tree
+  status = executor_tree->Init();
+
+  // Abort and cleanup
+  if (status == false) {
+    init_failure = true;
+    txn->SetResult(Result::RESULT_FAILURE);
+    goto cleanup;
+  }
+
+  LOG_TRACE("Running the executor tree");
+
+  // Execute the tree until we get result tiles from root node
+  for (;;) {
+    status = executor_tree->Execute();
+
+    // Stop
+    if (status == false) {
+      break;
+    }
+
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        executor_tree->GetOutput());
+
+    // Some executors don't return logical tiles (e.g., Update).
+    if (logical_tile.get() == nullptr) {
+      continue;
+    }
+
+    // Go over the logical tile
+    for (oid_t tuple_id : *logical_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(
+          logical_tile.get(), tuple_id);
+      ret_val = cur_tuple.GetValue(0);
+      break;
+      //      auto slot = TupleTransformer::GetPostgresTuple(&cur_tuple,
+      //      tuple_desc);
+
+      //      if (slot != nullptr) {
+      //        slots = lappend(slots, slot);
+      //      }
+    }
+  }
+
+  // Set the result
+  p_status.m_processed = executor_context->num_processed;
+//  p_status.m_result_slots = slots;
+
+// final cleanup
+cleanup:
+
+  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
+            single_statement_txn, init_failure, txn->GetResult());
+
+  // should we commit or abort ?
+  if (single_statement_txn == true || init_failure == true) {
+    auto status = txn->GetResult();
+    switch (status) {
+      case Result::RESULT_SUCCESS:
+        // Commit
+        p_status.m_result = txn_manager.CommitTransaction();
+
+        break;
+
+      case Result::RESULT_FAILURE:
+      default:
+        // Abort
+        p_status.m_result = txn_manager.AbortTransaction();
+    }
+  }
+
+  // clean up executor tree
+  CleanExecutorTree(executor_tree.get());
+
+  return ret_val;
+}
 
 /**
  * @brief Build a executor tree and execute it.
@@ -79,8 +194,8 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-  BuildExecutorContext(params, txn));
-  //auto executor_context = BuildExecutorContext(param_list, txn);
+      BuildExecutorContext(params, txn));
+  // auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -170,10 +285,9 @@ cleanup:
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
-int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-    const std::vector<Value> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>>& logical_tile_list) {
-
+int PlanExecutor::ExecutePlan(
+    const planner::AbstractPlan *plan, const std::vector<Value> &params,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   if (plan == nullptr) return -1;
 
   LOG_TRACE("PlanExecutor Start ");
@@ -197,7 +311,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-  BuildExecutorContext(params, txn));
+      BuildExecutorContext(params, txn));
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -252,15 +366,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        return
-            executor_context->num_processed;
+        return executor_context->num_processed;
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-       return -1;
+        return -1;
     }
   }
   return executor_context->num_processed;
@@ -298,10 +411,9 @@ executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
 /**
  * @brief Build Executor Context
  */
-executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
-                                                concurrency::Transaction *txn) {
-  return new executor::ExecutorContext(
-      txn, params);
+executor::ExecutorContext *BuildExecutorContext(
+    const std::vector<Value> &params, concurrency::Transaction *txn) {
+  return new executor::ExecutorContext(txn, params);
 }
 
 /**
@@ -399,7 +511,8 @@ executor::AbstractExecutor *BuildExecutorTree(
   // Recurse
   auto &children = plan->GetChildren();
   for (auto &child : children) {
-    child_executor = BuildExecutorTree(child_executor, child.get(), executor_context);
+    child_executor =
+        BuildExecutorTree(child_executor, child.get(), executor_context);
   }
 
   return root;

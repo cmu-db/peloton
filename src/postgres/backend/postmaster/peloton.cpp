@@ -23,6 +23,7 @@
 #include <time.h>
 #include <thread>
 #include <map>
+#include <vector>
 
 #include "backend/networking/rpc_client.h"
 #include "backend/common/logger.h"
@@ -169,8 +170,10 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   assert(planstate != NULL);
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
-  auto subplanstate = cast_reinterpret<SubPlanState *>(
-      planstate->state->es_param_exec_vals->execPlan);
+  SubPlanState *subplanstate = nullptr;
+  if (planstate->state->es_param_exec_vals != nullptr)
+    subplanstate = reinterpret_cast<SubPlanState *>(
+        planstate->state->es_param_exec_vals->execPlan);
 
   // Create the raw planstate info
   std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
@@ -196,9 +199,18 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   std::vector<peloton::Value> param_values =
       peloton::bridge::PlanTransformer::BuildParams(param_list);
 
-  //===----------------------------------------------------------------------===//
-  //   End for sending query
-  //===----------------------------------------------------------------------===//
+  ListCell *lc;
+
+  foreach (lc, planstate->state->es_subplanstates) {
+    auto subplanstate = (PlanState *)lfirst(lc);
+    auto subplan_state =
+        peloton::bridge::DMLUtils::peloton_prepare_data(subplanstate);
+    mapped_subplan_ptr =
+        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
+            subplan_state, nullptr);
+    param_values.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
+        mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
+  }
 
   // Ignore empty plans
   if (mapped_plan_ptr.get() == nullptr) {
