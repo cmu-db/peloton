@@ -102,10 +102,10 @@ class StatsAggregator {
   BackendStatsContext stats_history;
   BackendStatsContext aggregated_stats;
 
- private:
   StatsAggregator();
   ~StatsAggregator();
 
+ private:
   std::mutex stats_mutex;
 
   std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
