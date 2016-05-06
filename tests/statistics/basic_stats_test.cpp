@@ -14,9 +14,9 @@
 
 #include "backend/statistics/stats_aggregator.h"
 #include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "executor/executor_tests_util.h"
+#include "concurrency/transaction_tests_util.h"
 
 namespace peloton {
   namespace test {
@@ -25,8 +25,7 @@ namespace peloton {
     
     TEST_F(BasicStatsTest, CreateTest) {
       peloton::stats::StatsAggregator * stats_ = new peloton::stats::StatsAggregator();
-
-      const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+      int tuple_count = 10;
 
       // Create a table and wrap it in logical tiles                                                                          
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

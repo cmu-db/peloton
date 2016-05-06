@@ -49,7 +49,7 @@ include $(srcdir)/logging/Makefile.am
 include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
-#include $(srcdir)/statistics/Makefile.am
+include $(srcdir)/statistics/Makefile.am
 
 #include $(srcdir)/postgres/Makefile.am
 
