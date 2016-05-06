@@ -32,14 +32,15 @@ class TileGroupIteratorTests : public PelotonTest {};
 TEST_F(TileGroupIteratorTests, BasicTest) {
   const int tuples_per_tilegroup = TESTS_TUPLES_PER_TILEGROUP;
   const int expected_tilegroup_count = 5;
+  const int allocated_tilegroup_count = 6;
   const int tuple_count = tuples_per_tilegroup * expected_tilegroup_count;
 
   // Create a table and wrap it in logical tiles
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tuples_per_tilegroup, false));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(), tuple_count, false,
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tuple_count, false,
                                    false, true);
   txn_manager.CommitTransaction();
 
@@ -52,7 +53,7 @@ TEST_F(TileGroupIteratorTests, BasicTest) {
     }
   }  // WHILE
 
-  EXPECT_EQ(expected_tilegroup_count, actual_tile_group_count);
+  EXPECT_EQ(allocated_tilegroup_count, actual_tile_group_count);
 }
 
 }  // End test namespace

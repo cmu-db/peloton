@@ -17,6 +17,7 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -43,8 +44,14 @@ enum LoggingType {
 
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
-  CHECKPOINT_TYPE_NORMAL  = 1,
+  CHECKPOINT_TYPE_NORMAL = 1,
 };
+
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_ON = 1
+};
+
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
@@ -101,7 +108,7 @@ class Value;
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default"
 
-#define DEFAULT_TUPLES_PER_TILEGROUP 1000
+extern int DEFAULT_TUPLES_PER_TILEGROUP;
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
@@ -286,8 +293,6 @@ enum ExpressionType {
   // -----------------------------
   // Internals added for Case When
   // -----------------------------
-  EXPRESSION_TYPE_OPERATOR_CASE_WHEN = 300,
-  EXPRESSION_TYPE_OPERATOR_ALTERNATIVE = 301,
   EXPRESSION_TYPE_OPERATOR_CASE_EXPR = 302,
 
   // -----------------------------
@@ -352,12 +357,12 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OPTIMISTIC = 0, // optimistic
-  CONCURRENCY_TYPE_PESSIMISTIC = 1, // pessimistic
-  CONCURRENCY_TYPE_SPECULATIVE_READ = 2, // optimistic + speculative read
-  CONCURRENCY_TYPE_EAGER_WRITE = 3, // pessimistic + eager write
-  CONCURRENCY_TYPE_TO = 4,   // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5   // serializable snapshot isolation
+  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
+  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
+  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
+  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
+  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
 };
 
 enum IsolationLevelType {
@@ -370,7 +375,9 @@ enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
   BACKEND_TYPE_MM = 1,   // on volatile memory
-  BACKEND_TYPE_FILE = 2  // on mmap file
+  BACKEND_TYPE_NVM = 2,  // on non-volatile memory
+  BACKEND_TYPE_SSD = 3,  // on ssd
+  BACKEND_TYPE_HDD = 4   // on hdd
 };
 
 //===--------------------------------------------------------------------===//
@@ -702,7 +709,7 @@ enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-typedef uint64_t oid_t;
+typedef uint32_t oid_t;
 
 static const oid_t START_OID = 0;
 
@@ -735,6 +742,16 @@ static const cid_t START_CID = 1;
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 //===--------------------------------------------------------------------===//
+// TupleMetadata
+//===--------------------------------------------------------------------===//
+struct TupleMetadata {
+  oid_t table_id = 0;
+  oid_t tile_group_id = 0;
+  oid_t tuple_slot_id = 0;
+  cid_t tuple_end_cid = 0;
+};
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -750,8 +767,11 @@ struct ItemPointer {
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
-  bool IsNull() { return (block == INVALID_OID && offset == INVALID_OID); }
-};
+  bool IsNull() const { 
+    return (block == INVALID_OID && offset == INVALID_OID); 
+  }
+
+} __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
 
@@ -772,9 +792,13 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+
+BackendType GetBackendType(const LoggingType& logging_type);
+
+void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

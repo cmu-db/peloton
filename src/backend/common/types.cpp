@@ -22,6 +22,8 @@ namespace peloton {
 
 ItemPointer INVALID_ITEMPOINTER;
 
+int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
+
 //===--------------------------------------------------------------------===//
 // Type utilities
 //===--------------------------------------------------------------------===//
@@ -162,13 +164,15 @@ std::string BackendTypeToString(BackendType type) {
   switch (type) {
     case (BACKEND_TYPE_MM):
       return "MM";
-    case (BACKEND_TYPE_FILE):
-      return "FILE";
+    case (BACKEND_TYPE_NVM):
+      return "NVM";
+    case (BACKEND_TYPE_SSD):
+      return "SSD";
+    case (BACKEND_TYPE_HDD):
+      return "HDD";
     case (BACKEND_TYPE_INVALID):
       return "INVALID";
-    default: {
-      return "UNKNOWN " + std::to_string(type);
-    }
+    default: { return "UNKNOWN " + std::to_string(type); }
   }
   return (ret);
 }
@@ -178,8 +182,12 @@ BackendType StringToBackendType(std::string str) {
     return BACKEND_TYPE_INVALID;
   } else if (str == "MM") {
     return BACKEND_TYPE_MM;
-  } else if (str == "FILE") {
-    return BACKEND_TYPE_FILE;
+  } else if (str == "NVM") {
+    return BACKEND_TYPE_NVM;
+  } else if (str == "SSD") {
+    return BACKEND_TYPE_SSD;
+  } else if (str == "HDD") {
+    return BACKEND_TYPE_HDD;
   }
   return BACKEND_TYPE_INVALID;
 }
@@ -285,7 +293,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
   return true;
 }
 
-bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
+bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type) {
   bool status = false;
 
   switch (logging_type) {
@@ -302,7 +310,7 @@ bool IsBasedOnWriteAheadLogging(LoggingType logging_type) {
   return status;
 }
 
-bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
+bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type) {
   bool status = true;
 
   switch (logging_type) {
@@ -320,6 +328,35 @@ bool IsBasedOnWriteBehindLogging(LoggingType logging_type) {
   }
 
   return status;
+}
+
+BackendType GetBackendType(const LoggingType& logging_type) {
+  // Default backend type
+  BackendType backend_type = BACKEND_TYPE_MM;
+
+  switch (logging_type) {
+    case LOGGING_TYPE_NVM_NVM:
+    case LOGGING_TYPE_NVM_HDD:
+      backend_type = BACKEND_TYPE_NVM;
+      break;
+
+    case LOGGING_TYPE_HDD_NVM:
+    case LOGGING_TYPE_HDD_HDD:
+      backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    default:
+      break;
+  }
+
+  return backend_type;
+}
+
+void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value) {
+  assert(sizeof(ItemPointer) == sizeof(int64_t));
+  int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
+  int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
+  __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);
 }
 
 //===--------------------------------------------------------------------===//
@@ -460,12 +497,6 @@ std::string ExpressionTypeToString(ExpressionType type) {
     }
     case EXPRESSION_TYPE_OPERATOR_COALESCE: {
       return "COALESCE";
-    }
-    case EXPRESSION_TYPE_OPERATOR_CASE_WHEN: {
-      return "OPERATOR_CASE_WHEN";
-    }
-    case EXPRESSION_TYPE_OPERATOR_ALTERNATIVE: {
-      return "OPERATOR_ALTERNATIVE";
     }
     case EXPRESSION_TYPE_ROW_SUBQUERY: {
       return "ROW_SUBQUERY";
@@ -629,10 +660,6 @@ ExpressionType StringToExpressionType(std::string str) {
     return EXPRESSION_TYPE_VALUE_VECTOR;
   } else if (str == "HASH_RANGE") {
     return EXPRESSION_TYPE_HASH_RANGE;
-  } else if (str == "OPERATOR_CASE_WHEN") {
-    return EXPRESSION_TYPE_OPERATOR_CASE_WHEN;
-  } else if (str == "OPERATOR_ALTERNATIVE") {
-    return EXPRESSION_TYPE_OPERATOR_ALTERNATIVE;
   } else if (str == "ROW_SUBQUERY") {
     return EXPRESSION_TYPE_ROW_SUBQUERY;
   } else if (str == "SELECT_SUBQUERY") {

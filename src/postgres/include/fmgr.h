@@ -356,7 +356,7 @@ CppConcat(pg_finfo_,funcname) (void) \
 	static const Pg_finfo_record my_finfo = { 1 }; \
 	return &my_finfo; \
 } \
-extern int no_such_variable
+//extern int no_such_variable
 
 
 /*-------------------------------------------------------------------------
@@ -425,7 +425,7 @@ PG_MAGIC_FUNCTION_NAME(void) \
 	static const Pg_magic_struct Pg_magic_data = PG_MODULE_MAGIC_DATA; \
 	return &Pg_magic_data; \
 } \
-extern int no_such_variable
+//extern int no_such_variable
 
 
 /*-------------------------------------------------------------------------
@@ -631,6 +631,7 @@ extern bool get_fn_expr_arg_stable(FmgrInfo *flinfo, int argnum);
 extern bool get_call_expr_arg_stable(fmNodePtr expr, int argnum);
 extern bool get_fn_expr_variadic(FmgrInfo *flinfo);
 extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
+extern bool CheckUserDefinedFunction(Oid functionOid);
 
 /*
  * Routines in dfmgr.c

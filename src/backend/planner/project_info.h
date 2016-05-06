@@ -81,24 +81,23 @@ class ProjectInfo {
 
   ~ProjectInfo();
 
-  ProjectInfo *Copy() const {
+  std::unique_ptr<const ProjectInfo> Copy() const {
     std::vector<Target> new_target_list;
     for (const Target &target : target_list_) {
       new_target_list.push_back(
-        std::pair<oid_t, const expression::AbstractExpression *>(
-          target.first, target.second->Copy()));
+          std::pair<oid_t, const expression::AbstractExpression *>(
+              target.first, target.second->Copy()));
     }
 
     std::vector<DirectMap> new_map_list;
     for (const DirectMap &aMap : direct_map_list_) {
       new_map_list.push_back(std::pair<oid_t, std::pair<oid_t, oid_t>>(
-        aMap.first,
-        std::pair<oid_t, oid_t>(aMap.second.first, aMap.second.second)));
+          aMap.first,
+          std::pair<oid_t, oid_t>(aMap.second.first, aMap.second.second)));
     }
 
-    ProjectInfo *ret =
-      new ProjectInfo(std::move(new_target_list), std::move(new_map_list));
-    return ret;
+    return std::unique_ptr<ProjectInfo>(
+        new ProjectInfo(std::move(new_target_list), std::move(new_map_list)));
   }
 
  private:

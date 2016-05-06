@@ -84,13 +84,19 @@ bool TsOrderTxnManager::IsVisible(
   }
 }
 
+// check whether the current transaction owns the tuple.
+// this function is called by update/delete executors.
 bool TsOrderTxnManager::IsOwner(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
+// if the tuple is not owned by any transaction and is visible to current
+// transaction.
+// this function is called by update/delete executors.
 bool TsOrderTxnManager::IsOwnable(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -104,9 +110,7 @@ bool TsOrderTxnManager::AcquireOwnership(
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  // acquire write lock.
-  assert(IsOwner(tile_group_header, tuple_id) == false);
-
+  // change timestamp
   cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
@@ -118,35 +122,13 @@ bool TsOrderTxnManager::AcquireOwnership(
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
-  // change timestamp
   return true;
 }
 
-void TsOrderTxnManager::SetOwnership(const oid_t &tile_group_id,
-                                     const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
-  auto transaction_id = current_txn->GetTransactionId();
+bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
 
-  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
-
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
-}
-
-bool TsOrderTxnManager::PerformInsert(const oid_t &tile_group_id,
-                                      const oid_t &tuple_id) {
-  SetOwnership(tile_group_id, tuple_id);
-  current_txn->RecordInsert(tile_group_id, tuple_id);
-  return true;
-}
-
-bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id,
-                                    const oid_t &tuple_id) {
   LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -161,7 +143,7 @@ bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id,
     SetLastReaderCid(tile_group_header, tuple_id,
                      current_txn->GetBeginCommitId());
 
-    current_txn->RecordRead(tile_group_id, tuple_id);
+    current_txn->RecordRead(location);
 
     return true;
 
@@ -171,102 +153,145 @@ bool TsOrderTxnManager::PerformRead(const oid_t &tile_group_id,
   }
 }
 
-bool TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
-                                      const oid_t &tuple_id,
-                                      const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %lu %lu", tile_group_id, tuple_id);
+bool TsOrderTxnManager::PerformInsert(const ItemPointer &location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto transaction_id = current_txn->GetTransactionId();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  auto tile_group_header = tile_group->GetHeader();
-  auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
-
-  // The write lock must have been acquired
-  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
-  // Set double linked list
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(
-      new_location.offset, ItemPointer(tile_group_id, tuple_id));
-
-  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
-  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
-  new_tile_group_header->SetEndCommitId(new_location.offset, MAX_CID);
-  PerformUpdate(new_location.block, new_location.offset);
-
-  // Add the old tuple into the update set
-  current_txn->RecordUpdate(tile_group_id, tuple_id);
-  return true;
-}
-
-bool TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
-                                      const oid_t &tuple_id,
-                                      const ItemPointer &new_location) {
-  LOG_TRACE("Performing Delete");
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tile_group_id);
-  auto tile_group_header = tile_group->GetHeader();
-  auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
-
-  auto transaction_id = current_txn->GetTransactionId();
-
-  // Set up double linked list
-  tile_group_header->SetNextItemPointer(tuple_id, new_location);
-  new_tile_group_header->SetPrevItemPointer(
-      new_location.offset, ItemPointer(tile_group_id, tuple_id));
-
-  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
-  new_tile_group_header->SetBeginCommitId(new_location.offset, MAX_CID);
-  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
-
-  current_txn->RecordDelete(tile_group_id, tuple_id);
-  return true;
-}
-
-void TsOrderTxnManager::PerformUpdate(const oid_t &tile_group_id,
-                                      const oid_t &tuple_id) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set MVCC info
+  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
-  tile_group_header->SetEndCommitId(tuple_id, MAX_CID);
+
+  // no need to set next item pointer.
+
+  // Add the new tuple into the insert set
+  current_txn->RecordInsert(location);
+  return true;
+}
+
+void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
+                                      const ItemPointer &new_location) {
+  LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
+
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
+  auto new_tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(new_location.block)->GetHeader();
+
+  auto transaction_id = current_txn->GetTransactionId();
+
+  // if we can perform update, then we must have already locked the older
+  // version.
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+         MAX_CID);
+  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+
+  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
+  // no
+  // one will possibly release the write lock acquired by this txn.
+  // Set double linked list
+  tile_group_header->SetNextItemPointer(old_location.offset, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
+
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+
+  // Add the old tuple into the update set
+  current_txn->RecordUpdate(old_location);
+}
+
+void TsOrderTxnManager::PerformUpdate(const ItemPointer &location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
   auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
   if (old_location.IsNull() == false) {
     // update an inserted version
-    current_txn->RecordUpdate(old_location.block, old_location.offset);
+    current_txn->RecordUpdate(old_location);
   }
-
 }
 
-void TsOrderTxnManager::PerformDelete(const oid_t &tile_group_id,
-                                      const oid_t &tuple_id) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
+                                      const ItemPointer &new_location) {
+  LOG_TRACE("Performing Delete");
+
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(old_location.block)->GetHeader();
+  auto new_tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(new_location.block)->GetHeader();
+
   auto transaction_id = current_txn->GetTransactionId();
 
-  tile_group_header->SetTransactionId(tuple_id, transaction_id);
-  tile_group_header->SetBeginCommitId(tuple_id, MAX_CID);
+  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+         transaction_id);
+  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+         INVALID_TXN_ID);
+  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+         MAX_CID);
+  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+
+  // Set up double linked list
+  tile_group_header->SetNextItemPointer(old_location.offset, new_location);
+  new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
+
+  new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
+
+  current_txn->RecordDelete(old_location);
+}
+
+void TsOrderTxnManager::PerformDelete(const ItemPointer &location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+
+  assert(tile_group_header->GetTransactionId(tuple_id) ==
+         current_txn->GetTransactionId());
+  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
   auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
   if (old_location.IsNull() == false) {
-    // delete an inserted version
-    current_txn->RecordDelete(old_location.block, old_location.offset);
+    // if this version is not newly inserted.
+    current_txn->RecordDelete(old_location);
+  } else {
+    // if this version is newly inserted.
+    current_txn->RecordDelete(location);
   }
 }
 
 Result TsOrderTxnManager::CommitTransaction() {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+
+  if (current_txn->IsReadOnly() == true) {
+    Result ret = current_txn->GetResult();
+
+    EndTransaction();
+
+    return ret;
+  }
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -415,6 +440,5 @@ Result TsOrderTxnManager::AbortTransaction() {
   EndTransaction();
   return Result::RESULT_ABORTED;
 }
-
 }
 }

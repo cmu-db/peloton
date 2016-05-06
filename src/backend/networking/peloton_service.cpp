@@ -14,6 +14,13 @@
 #include "backend/networking/peloton_endpoint.h"
 #include "backend/networking/rpc_server.h"
 #include "backend/common/logger.h"
+#include "backend/common/types.h"
+#include "backend/common/serializer.h"
+#include "backend/common/assert.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tuple.h"
+#include "backend/planner/seq_scan_plan.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -237,10 +244,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
   }
 
-  /*
-   * If request is not null, this is a rpc  call, server should handle the
-   * reqeust
-   */
+  // If request is not null, this is a rpc  call, server should handle the reqeust
   if (request != NULL) {
     LOG_TRACE("Received from client, sender site: %d, last_txn_id: %ld",
               request->sender_site(), request->last_transaction_id());
@@ -254,9 +258,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
       done->Run();
     }
   }
-  /*
-   * Here is for the client callback for Heartbeat
-   */
+  // Here is for the client callback for Heartbeat
   else {
     // proecess the response
     LOG_TRACE("proecess the Heartbeat response");
@@ -265,12 +267,6 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
       LOG_TRACE("sender site: %d", response->sender_site());
     } else {
       LOG_ERROR("No response: site is null");
-    }
-
-    if (response->has_status() == true) {
-      LOG_TRACE("Status: %d", response->status());
-    } else {
-      LOG_ERROR("No response: status is null");
     }
   }
 }
@@ -305,5 +301,146 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
   }
 }
 
-}  // namespace networking
-}  // namespace peloton
+/*
+ * This a QueryPlan Processing function. It is a framework right now. Different query type can be added.
+ */
+void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
+    const QueryPlanExecRequest* request, QueryPlanExecResponse* response,
+    ::google::protobuf::Closure* done) {
+
+  // TODO: controller should be set, we probably use it in the future
+  if (controller->Failed()) {
+    std::string error = controller->ErrorText();
+    LOG_TRACE( "PelotonService with controller failed:%s ", error.c_str());
+  }
+
+  //If request is not null, this is a rpc  call, server should handle the reqeust
+  if (request != NULL) {
+    LOG_TRACE("Received a queryplan");
+
+    if (!request->has_plan_type()) {
+      LOG_ERROR("Queryplan recived desen't have type");
+      return;
+    }
+
+    // construct parameter list
+    int param_num = request->param_num();
+    std::string param_list = request->param_list();
+    ReferenceSerializeInputBE param_input(param_list.c_str(),
+        param_list.size());
+    std::vector<Value> params;
+    for (int it = 0; it < param_num; it++) {
+      // TODO: Make sure why varlen_pool is used as parameter
+      std::shared_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+      Value value_item;
+      value_item.DeserializeFromAllocateForStorage(param_input, pool.get());
+      params.push_back(value_item);
+    }
+
+    // construct TupleDesc
+    //std::unique_ptr<tupleDesc> tuple_desc = ParseTupleDescMsg(request->tuple_dec());
+
+    PlanNodeType plan_type = static_cast<PlanNodeType>(request->plan_type());
+
+    // TODO: We can add more plan type in this switch to process
+    switch (plan_type) {
+    case PLAN_NODE_TYPE_INVALID: {
+      LOG_ERROR("Queryplan recived desen't have type");
+      break;
+    }
+
+    case PLAN_NODE_TYPE_SEQSCAN: {
+      LOG_INFO("SEQSCAN revieved");
+      std::string plan = request->plan();
+      ReferenceSerializeInputBE input(plan.c_str(), plan.size());
+      std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan = std::make_shared<
+          peloton::planner::SeqScanPlan>();
+      ss_plan->DeserializeFrom(input);
+
+      std::vector<std::unique_ptr<executor::LogicalTile>> logical_tile_list;
+      int tuple_count = peloton::bridge::PlanExecutor::ExecutePlan(
+          ss_plan.get(), params, logical_tile_list);
+      // Return result
+      if (tuple_count < 0) {
+        // ExecutePlan fails
+        LOG_ERROR("ExecutePlan fails");
+        return;
+      }
+
+      // Set the basic metadata
+      response->set_tuple_count(tuple_count);
+      response->set_tile_count(logical_tile_list.size());
+
+      // Loop the logical_tile_list to set the response
+      std::vector<std::unique_ptr<executor::LogicalTile>>::iterator it;
+      for (it = logical_tile_list.begin(); it != logical_tile_list.end();
+          it++) {
+        // First materialize logicalTile to physical tile
+        std::unique_ptr<storage::Tile> tile = (*it)->Materialize();
+
+        // Then serialize physical tile
+        CopySerializeOutput output_tiles;
+        tile->SerializeTo(output_tiles, tile->GetActiveTupleCount());
+
+        // Finally set the response, which be automatically sent back
+        response->add_result(output_tiles.Data(), output_tiles.Size());
+
+        // Debug
+        LOG_INFO("Tile content is: %s", tile->GetInfo().c_str());
+      }
+
+      break;
+    }
+
+    default: {
+      LOG_ERROR("Queryplan recived :: Unsupported TYPE: %u ", plan_type);
+      break;
+    }
+    }
+
+    // If callback exist, run it
+    if (done) {
+      done->Run();
+    }
+  }
+  // Here is for the client callback for response
+  else {
+    // Process the response
+    LOG_INFO("proecess the Query response");
+    ASSERT(response);
+
+    int tile_count = response->tile_count();
+
+    int result_size = response->result_size();
+    ASSERT(result_size == tile_count);
+
+    for (int idx = 0; idx < result_size; idx++) {
+      // Get the tile bytes
+      std::string tile_bytes = response->result(idx);
+      ReferenceSerializeInputBE tile_input(tile_bytes.c_str(),
+          tile_bytes.size());
+
+      // Create a tile or tuple that depends on our protocol.
+      // Tuple is prefered, since it voids copying from tile again
+      // But we should prepare schema before creating tuple/tile.
+      // Can we get the schema from local catalog?
+      //storage::Tile tile;
+      storage::Tuple tuple;
+
+      // TODO: Make sure why varlen_pool is used as parameter
+      // std::shared_ptr<VarlenPool> var_pool(new VarlenPool(BACKEND_TYPE_MM));
+
+      // Tile deserialization.
+      //tile.DeserializeTuplesFrom(tile_input, var_pool);
+
+      // We should remove tile header or no header when serialize, then use tuple deserialize
+      tuple.DeserializeWithHeaderFrom(tile_input);
+
+      // Debug
+      //LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
+    }
+  }
+}
+
+} // namespace networking
+} // namespace peloton

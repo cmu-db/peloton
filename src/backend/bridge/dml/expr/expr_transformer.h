@@ -50,6 +50,7 @@ class ExprTransformer {
   static expression::AbstractExpression *TransformOp(const ExprState *es);
   static expression::AbstractExpression *TransformScalarArrayOp(
       const ExprState *es);  // added by michael for IN operator
+  static expression::AbstractExpression *TransformArray(const ExprState *es);
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);
@@ -60,6 +61,10 @@ class ExprTransformer {
                         // TITLE is varchar(20)
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
   static expression::AbstractExpression *TransformAggRef(const ExprState *es);
+
+  static expression::AbstractExpression *TransformCaseExpr(const ExprState *es);
+  static expression::AbstractExpression *TransformCoalesce(const ExprState *es);
+  static expression::AbstractExpression *TransformNullIf(const ExprState *es);
 
   static expression::AbstractExpression *TransformConst(const Expr *es);
   static expression::AbstractExpression *TransformVar(const Expr *es);

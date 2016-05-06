@@ -283,11 +283,11 @@ void RunDirectTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -308,13 +308,13 @@ void RunDirectTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
-  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -390,8 +390,9 @@ void RunAggregateTest() {
     col_itr++;
   }
 
-  auto proj_info = new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
-                                            std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+                               std::move(direct_map_list)));
 
   // 3) Set up aggregates
   std::vector<planner::AggregatePlan::AggTerm> agg_terms;
@@ -403,7 +404,7 @@ void RunAggregateTest() {
   }
 
   // 4) Set up predicate (empty)
-  expression::AbstractExpression *aggregate_predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> aggregate_predicate(nullptr);
 
   // 5) Create output table schema
   auto data_table_schema = hyadapt_table->GetSchema();
@@ -411,11 +412,11 @@ void RunAggregateTest() {
   for (auto column_id : column_ids) {
     columns.push_back(data_table_schema->GetColumn(column_id));
   }
-  auto output_table_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> output_table_schema(new catalog::Schema(columns));
 
   // OK) Create the plan node
   planner::AggregatePlan aggregation_node(
-      proj_info, aggregate_predicate, std::move(agg_terms),
+      std::move(proj_info), std::move(aggregate_predicate), std::move(agg_terms),
       std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN);
 
   executor::AggregateExecutor aggregation_executor(&aggregation_node,
@@ -440,11 +441,11 @@ void RunAggregateTest() {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&aggregation_executor);
@@ -465,12 +466,13 @@ void RunAggregateTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -535,7 +537,8 @@ void RunArithmeticTest() {
   std::vector<catalog::Column> columns;
   auto orig_schema = hyadapt_table->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
-  auto projection_schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> projection_schema(
+      new catalog::Schema(columns));
 
   // target list
   expression::AbstractExpression *sum_expr = nullptr;
@@ -560,10 +563,11 @@ void RunArithmeticTest() {
   planner::ProjectInfo::Target target = std::make_pair(0, sum_expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, projection_schema);
+  planner::ProjectionPlan node(std::move(project_info), projection_schema);
 
   // Create and set up executor
   executor::ProjectionExecutor projection_executor(&node, nullptr);
@@ -583,11 +587,11 @@ void RunArithmeticTest() {
   output_columns.push_back(column);
   old_to_new_cols[col_itr] = col_itr;
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&projection_executor);
@@ -608,12 +612,12 @@ void RunArithmeticTest() {
     target_list.emplace_back(col_id, expression);
   }
 
-  project_info = new planner::ProjectInfo(std::move(target_list),
-                                          std::move(direct_map_list));
+  project_info.reset(new planner::ProjectInfo(std::move(target_list),
+                                              std::move(direct_map_list)));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -679,10 +683,12 @@ void RunJoinTest() {
   auto join_type = JOIN_TYPE_INNER;
 
   // Create join predicate
-  expression::AbstractExpression *join_predicate = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> join_predicate(nullptr);
+  std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
+  std::shared_ptr<const catalog::Schema> schema(nullptr);
 
-  planner::NestedLoopJoinPlan nested_loop_join_node(join_type, join_predicate,
-                                                    nullptr, nullptr);
+  planner::NestedLoopJoinPlan nested_loop_join_node(
+      join_type, std::move(join_predicate), std::move(project_info), schema);
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -709,11 +715,11 @@ void RunJoinTest() {
     old_to_new_cols[col_itr] = col_itr;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&nested_loop_join_executor);
@@ -811,11 +817,11 @@ void RunSubsetTest(SubsetType subset_test_type, double fraction,
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -867,13 +873,13 @@ void RunInsertTest() {
     column_ids.push_back(col_id);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
-  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -938,9 +944,10 @@ void RunUpdateTest() {
     direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
-  planner::UpdatePlan update_node(hyadapt_table.get(), project_info);
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+  planner::UpdatePlan update_node(hyadapt_table.get(), std::move(project_info));
 
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
@@ -1823,7 +1830,7 @@ void RunVersionExperiment() {
   for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    LOG_INFO("Offset : %lu", starting_tuple_offset);
+    LOG_INFO("Offset : %u", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while (prev_item_pointer.block != INVALID_OID) {
@@ -2032,11 +2039,11 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
     col_itr++;
   }
 
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema.release(), physify_flag);
+                                        output_schema, physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);
@@ -2057,13 +2064,11 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
     target_list.emplace_back(col_id, expression);
   }
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  auto bulk_insert_count = 1;
-
-  planner::InsertPlan insert_node(hyadapt_table.get(), project_info,
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -2137,8 +2142,8 @@ void RunConcurrencyExperiment() {
 
         LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        LOG_INFO("Scan count  : %lu", scan_ctr);
-        LOG_INFO("Insert count  : %lu", insert_ctr);
+        LOG_INFO("Scan count  : %u", scan_ctr);
+        LOG_INFO("Insert count  : %u", insert_ctr);
       }
     }
   }
