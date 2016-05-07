@@ -34,6 +34,13 @@ enum ExperimentType {
   EXPERIMENT_TYPE_WAIT = 4
 };
 
+enum BenchmarkType {
+  BENCHMARK_TYPE_INVALID = 0,
+
+  BENCHMARK_TYPE_YCSB = 1,
+  BENCHMARK_TYPE_TPCC = 2
+};
+
 class configuration {
  public:
   // experiment type
@@ -50,6 +57,9 @@ class configuration {
 
   // frequency with which the logger flushes
   int64_t wait_timeout;
+
+  // Benchmark type
+  BenchmarkType benchmark_type;
 };
 
 void Usage(FILE *out);

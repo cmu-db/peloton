@@ -15,6 +15,7 @@
 #include <sys/stat.h>
 
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 
@@ -37,6 +38,7 @@ void Usage(FILE* out) {
           "   -u --write-ratio       :  Fraction of updates \n"
           "   -b --backend-count     :  Backend count \n"
           "   -s --skew              :  Skew \n"
+          "   -y --benchmark_type    :  Benchmark type \n"
   );
 }
 
@@ -51,6 +53,7 @@ static struct option opts[] = {
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
     {"skew", optional_argument, NULL, 's'},
+    {"benchmark_type", optional_argument, NULL, 'y'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(
@@ -59,6 +62,36 @@ static void ValidateLoggingType(
       << " : ";
 
   std::cout << LoggingTypeToString(state.logging_type) << std::endl;
+}
+
+std::string BenchmarkTypeToString(BenchmarkType type) {
+  switch (type) {
+    case BENCHMARK_TYPE_INVALID:
+      return "INVALID";
+
+    case BENCHMARK_TYPE_YCSB:
+      return "YCSB";
+    case BENCHMARK_TYPE_TPCC:
+      return "TPCC";
+
+    default:
+      LOG_ERROR("Invalid benchmark_type :: %d", type);
+      exit(EXIT_FAILURE);
+  }
+  return "INVALID";
+}
+
+static void ValidateBenchmarkType(
+    const configuration& state) {
+  if (state.benchmark_type <= 0 || state.benchmark_type >= 3) {
+    std::cout << "Invalid benchmark_type :: " << state.benchmark_type
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "benchmark_type "
+      << " : " << BenchmarkTypeToString(state.benchmark_type) << std::endl;
+
 }
 
 static void ValidateDataFileSize(
@@ -145,6 +178,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 200;
+  state.benchmark_type = BENCHMARK_TYPE_YCSB;
 
   // Default Values
   ycsb::state.scale_factor = 1;
@@ -157,7 +191,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:s:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:s:y:", opts, &idx);
 
     if (c == -1) break;
 
@@ -173,6 +207,9 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         break;
       case 'w':
         state.wait_timeout = atoi(optarg);
+        break;
+      case 'y':
+        state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
         // YCSB
@@ -213,6 +250,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
+  ValidateBenchmarkType(state);
 
   // Print configuration
   ycsb::ValidateScaleFactor(ycsb::state);

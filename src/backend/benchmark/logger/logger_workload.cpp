@@ -56,7 +56,8 @@ size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
 	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.logging_type << " "
+	std::cout << state.benchmark_type << " "
+	    << state.logging_type << " "
 	    << ycsb::state.update_ratio << " "
 	    << ycsb::state.scale_factor << " "
 	    << ycsb::state.backend_count << " "
@@ -76,6 +77,7 @@ static void WriteOutput(double value) {
 	std::cout << "DATA :: CLFLUSH count (NVM) : " << storage_manager.GetClflushCount() << "\n";
 	std::cout << "DATA :: MSYNC count   (HDD) : " << storage_manager.GetMsyncCount() << "\n";
 
+  out << state.benchmark_type << " ";
 	out << state.logging_type << " ";
 	out << ycsb::state.update_ratio << " ";
 	out << ycsb::state.scale_factor << " ";
