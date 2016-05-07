@@ -62,7 +62,8 @@ static void WriteOutput(double value) {
 	    << ycsb::state.scale_factor << " "
 	    << ycsb::state.backend_count << " "
       << ycsb::state.skew_factor << " "
-	    " :: ";
+      << state.transaction_count << " "
+      " :: ";
 	std::cout << value << "\n";
 
 	auto &storage_manager = storage::StorageManager::GetInstance();
@@ -83,6 +84,7 @@ static void WriteOutput(double value) {
 	out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
   out << ycsb::state.skew_factor << " ";
+  out << ycsb::state.transaction_count << " ";
   out << value << "\n";
 	out.flush();
 }
