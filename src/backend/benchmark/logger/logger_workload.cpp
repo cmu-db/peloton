@@ -174,10 +174,13 @@ bool PrepareLogFile(std::string file_name) {
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
-      state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
+      state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT ||
       state.experiment_type == EXPERIMENT_TYPE_WAIT) {
     WriteOutput(throughput);
   } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
+    // TODO: Need to get more info
+    // in case of WAL: checkpoint size
+    // in case of WBL: table size, index size ?
     auto log_file_size = GetLogFileSize();
     WriteOutput(log_file_size);
   }
