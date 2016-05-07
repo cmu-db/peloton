@@ -34,6 +34,7 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_merge_join.cpp \
 			   backend/bridge/dml/mapper/mapper_hash_join.cpp \
 			   backend/bridge/dml/mapper/mapper_hash.cpp \
+   			   backend/bridge/dml/mapper/mapper_result.cpp \
 			   backend/bridge/dml/mapper/mapper_seq_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_index_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \

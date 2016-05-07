@@ -160,6 +160,9 @@ class PlanTransformer {
   static std::unique_ptr<planner::AbstractPlan> TransformHash(
       const HashPlanState *plan_state);
 
+  static std::unique_ptr<planner::AbstractPlan> TransformResult(
+      const ResultPlanState *plan_state);
+
   static PelotonJoinType TransformJoinType(const JoinType type);
 
   //===--------------------------------------------------------------------===//

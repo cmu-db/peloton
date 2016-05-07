@@ -85,83 +85,88 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
   switch (nodeTag(planstate)) {
     case T_ModifyTableState:
       peloton_plan = std::move(PlanTransformer::TransformModifyTable(
-              reinterpret_cast<const ModifyTablePlanState *>(planstate),
-              options));
+          reinterpret_cast<const ModifyTablePlanState *>(planstate), options));
       break;
     case T_SeqScanState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformSeqScan(
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformSeqScan(
               reinterpret_cast<const SeqScanPlanState *>(planstate), options)));
       break;
     case T_IndexScanState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanPlanState *>(planstate), options)));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformIndexScan(
+              reinterpret_cast<const IndexScanPlanState *>(planstate),
+              options)));
       break;
     case T_IndexOnlyScanState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanPlanState *>(planstate),
-          options)));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformIndexOnlyScan(
+              reinterpret_cast<const IndexOnlyScanPlanState *>(planstate),
+              options)));
       break;
     case T_BitmapHeapScanState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformBitmapHeapScan(
-          reinterpret_cast<const BitmapHeapScanPlanState *>(planstate),
-          options)));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformBitmapHeapScan(
+              reinterpret_cast<const BitmapHeapScanPlanState *>(planstate),
+              options)));
       break;
     case T_LockRowsState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformLockRows(
-          reinterpret_cast<const LockRowsPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformLockRows(
+              reinterpret_cast<const LockRowsPlanState *>(planstate))));
       break;
     case T_LimitState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformLimit(
-          reinterpret_cast<const LimitPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformLimit(
+              reinterpret_cast<const LimitPlanState *>(planstate))));
       break;
     case T_MergeJoinState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformMergeJoin(
-          reinterpret_cast<const MergeJoinPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformMergeJoin(
+              reinterpret_cast<const MergeJoinPlanState *>(planstate))));
       break;
     case T_HashJoinState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformHashJoin(
-          reinterpret_cast<const HashJoinPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformHashJoin(
+              reinterpret_cast<const HashJoinPlanState *>(planstate))));
       break;
     case T_NestLoopState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformNestLoop(
-          reinterpret_cast<const NestLoopPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformNestLoop(
+              reinterpret_cast<const NestLoopPlanState *>(planstate))));
       break;
     case T_MaterialState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformMaterialization(
-          reinterpret_cast<const MaterialPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformMaterialization(
+              reinterpret_cast<const MaterialPlanState *>(planstate))));
       break;
     case T_AggState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformAgg(
-          reinterpret_cast<const AggPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformAgg(
+              reinterpret_cast<const AggPlanState *>(planstate))));
       break;
 
     case T_SortState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformSort(
-          reinterpret_cast<const SortPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformSort(
+              reinterpret_cast<const SortPlanState *>(planstate))));
       break;
 
     case T_HashState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-           PlanTransformer::TransformHash(
-          reinterpret_cast<const HashPlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformHash(
+              reinterpret_cast<const HashPlanState *>(planstate))));
       break;
 
     case T_UniqueState:
-      peloton_plan = std::unique_ptr<planner::AbstractPlan>(std::move(
-          PlanTransformer::TransformUnique(
-          reinterpret_cast<const UniquePlanState *>(planstate))));
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformUnique(
+              reinterpret_cast<const UniquePlanState *>(planstate))));
+      break;
+    case T_ResultState:
+      peloton_plan = std::unique_ptr<planner::AbstractPlan>(
+          std::move(PlanTransformer::TransformResult(
+              reinterpret_cast<const ResultPlanState *>(planstate))));
       break;
 
     default: {
