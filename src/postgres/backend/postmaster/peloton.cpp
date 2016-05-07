@@ -171,10 +171,6 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
   auto subplan_list = planstate->state->es_subplanstates;
-  //  SubPlanState *subplanstate = nullptr;
-  //  if (planstate->state->es_param_exec_vals != nullptr)
-  //    subplanstate = reinterpret_cast<SubPlanState *>(
-  //        planstate->state->es_param_exec_vals->execPlan);
 
   // Create the raw planstate info
   std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
