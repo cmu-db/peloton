@@ -24,7 +24,7 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Buffer Pool
+// Circular Buffer Pool
 //===--------------------------------------------------------------------===//
 class CircularBufferPool : public BufferPool {
  public:

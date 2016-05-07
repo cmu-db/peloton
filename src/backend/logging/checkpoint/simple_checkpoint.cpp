@@ -55,8 +55,8 @@ SimpleCheckpoint::~SimpleCheckpoint() {
 }
 
 void SimpleCheckpoint::DoCheckpoint() {
-  // Create a new file for checkpoint
   // TODO split checkpoint file into multiple files in the future
+  // Create a new file for checkpoint
   CreateFile();
 
   auto &log_manager = LogManager::GetInstance();
@@ -65,6 +65,11 @@ void SimpleCheckpoint::DoCheckpoint() {
   }
 
   start_commit_id_ = log_manager.GetGlobalMaxFlushedCommitId();
+  if (start_commit_id_ == INVALID_CID) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    start_commit_id_ = txn_manager.GetMaxCommittedCid();
+  }
+
   LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
@@ -101,14 +106,15 @@ void SimpleCheckpoint::DoCheckpoint() {
   commit_record->Serialize(commit_output_buffer);
   records_.push_back(commit_record);
 
-  //TODO Add delimiter record for checkpoint recovery as well
+  // TODO Add delimiter record for checkpoint recovery as well
   Persist();
+
   Cleanup();
   most_recent_checkpoint_cid = start_commit_id_;
 }
 
 cid_t SimpleCheckpoint::DoRecovery() {
-  //No checkpoint to recover from
+  // No checkpoint to recover from
   if (checkpoint_version < 0) {
     return 0;
   }
@@ -216,7 +222,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
   auto table_tile_group_count = target_table->GetTileGroupCount();
   CheckpointTileScanner scanner;
 
-  //TODO scan assigned tile in multi-thread checkpoint
+  // TODO scan assigned tile in multi-thread checkpoint
   while (current_tile_group_offset < table_tile_group_count) {
     // Retrieve a tile group
     auto tile_group = target_table->GetTileGroup(current_tile_group_offset);
@@ -249,7 +255,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
                           this->pool.get());
         }
         ItemPointer location(tile_group_id, tuple_id);
-        //TODO is it possible to avoid `new` for checkpoint?
+        // TODO is it possible to avoid `new` for checkpoint?
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
             database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
@@ -305,8 +311,6 @@ void SimpleCheckpoint::Persist() {
     record.reset();
   }
   records_.clear();
-  // sync file
-  LoggingUtil::FFlushFsync(file_handle_);
 }
 
 void SimpleCheckpoint::Cleanup() {
@@ -316,15 +320,19 @@ void SimpleCheckpoint::Cleanup() {
   }
   records_.clear();
 
-  // Remove previous version
-  if (checkpoint_version > 0 && !disable_file_access) {
-    auto previous_version =
-        ConcatFileName(checkpoint_dir, checkpoint_version - 1).c_str();
-    if (remove(previous_version) != 0) {
-      LOG_INFO("Failed to remove file %s", previous_version);
+  if (!disable_file_access) {
+	//Close and sync the current one
+    fclose(file_handle_.file);
+
+    // Remove previous version
+    if (checkpoint_version > 0 && !disable_file_access) {
+      auto previous_version =
+          ConcatFileName(checkpoint_dir, checkpoint_version - 1).c_str();
+      if (remove(previous_version) != 0) {
+        LOG_INFO("Failed to remove file %s", previous_version);
+      }
     }
   }
-
   // Truncate logs
   LogManager::GetInstance().TruncateLogs(start_commit_id_);
 }
