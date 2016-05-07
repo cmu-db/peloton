@@ -59,7 +59,9 @@ static void WriteOutput(double value) {
 	std::cout << state.logging_type << " "
 	    << ycsb::state.update_ratio << " "
 	    << ycsb::state.scale_factor << " "
-	    << ycsb::state.backend_count << " :: ";
+	    << ycsb::state.backend_count << " "
+      << ycsb::state.skew_factor << " "
+	    " :: ";
 	std::cout << value << "\n";
 
 	auto &storage_manager = storage::StorageManager::GetInstance();
@@ -78,7 +80,8 @@ static void WriteOutput(double value) {
 	out << ycsb::state.update_ratio << " ";
 	out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
-	out << value << "\n";
+  out << ycsb::state.skew_factor << " ";
+  out << value << "\n";
 	out.flush();
 }
 
