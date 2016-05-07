@@ -94,6 +94,17 @@ void ValidateTransactionCount(const configuration &state) {
       << " : " << state.transaction_count << std::endl;
 }
 
+void ValidateSkewFactor(const configuration &state) {
+  if (state.skew_factor <= 0 || state.skew_factor >= 3) {
+    std::cout << "Invalid skew_factor :: " << state.skew_factor
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "skew_factor "
+      << " : " << state.skew_factor << std::endl;
+}
+
 int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
