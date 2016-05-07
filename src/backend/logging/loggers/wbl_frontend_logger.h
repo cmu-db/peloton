@@ -39,47 +39,19 @@ class WriteBehindFrontendLogger : public FrontendLogger {
 
   void FlushLogRecords(void);
 
-  // Collect the tuple log records for flushing
-  std::pair<bool, ItemPointer> CollectTupleRecord(
-      std::unique_ptr<TupleRecord> record);
-
   //===--------------------------------------------------------------------===//
   // Recovery
   //===--------------------------------------------------------------------===//
 
   void DoRecovery(void);
 
-  std::pair<cid_t, storage::TileGroupHeader *> SetInsertCommitMark(
-      ItemPointer location);
-
-  std::pair<cid_t, storage::TileGroupHeader *> SetDeleteCommitMark(
-      ItemPointer location);
-
-  //===--------------------------------------------------------------------===//
-  // Utility functions
-  //===--------------------------------------------------------------------===//
-
-  size_t WriteLogRecords(std::vector<txn_id_t> committing_list);
-
-  std::set<storage::TileGroupHeader *> ToggleCommitMarks(
-      std::vector<txn_id_t> committing_list);
-
-  void SyncTileGroups(std::set<oid_t> tile_group_set);
-
-  void SyncTileGroupHeaders(
-      std::set<storage::TileGroupHeader *> tile_group_header_set);
-
   void SetLoggerID(int);
 
   void RecoverIndex(){};
 
+  std::string GetLogFileName();
+
  private:
-  std::string GetLogFileName(void);
-
-  bool NeedRecovery(void);
-
-  void WriteTransactionLogRecord(TransactionRecord txnLog);
-
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
@@ -93,15 +65,11 @@ class WriteBehindFrontendLogger : public FrontendLogger {
   // Size of the log file
   size_t log_file_size;
 
-  // Global pool
-  LogRecordPool global_peloton_log_record_pool;
-
-  // Keep tracking max oid for setting next_oid in manager
-  // For active processing after recovery
+  // For now don't do anything with this
   oid_t max_oid = INVALID_OID;
 
   // Keep tracking latest cid for setting next commit in txn manager
-  cid_t latest_commit_id = INVALID_CID;
+  cid_t max_commit_id_seen = INVALID_CID;
 };
 
 }  // namespace logging

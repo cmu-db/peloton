@@ -14,6 +14,9 @@
 
 #include "backend/common/types.h"
 #include "backend/logging/backend_logger.h"
+#include "backend/concurrency/transaction_manager_factory.h"
+
+#include "unordered_set"
 
 namespace peloton {
 namespace logging {
@@ -44,7 +47,10 @@ class WriteBehindBackendLogger : public BackendLogger {
       std::vector<std::unique_ptr<LogRecord>> &frontend_queue);
 
  private:
-  std::vector<std::unique_ptr<LogRecord>> wbl_record_queue;
+
+ void SyncDataForCommit();
+
+  std::unordered_set<oid_t> tile_groups_to_sync_;
 };
 
 }  // namespace logging

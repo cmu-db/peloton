@@ -31,6 +31,8 @@
 
 #include "libcuckoo/cuckoohash_map.hh"
 
+#include <utility>
+
 namespace peloton {
 
 namespace concurrency {
@@ -44,13 +46,21 @@ class TransactionManager {
   TransactionManager() {
     next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
+    maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
   }
 
   virtual ~TransactionManager() {}
 
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-  cid_t GetNextCommitId() { return next_cid_++; }
+  cid_t GetNextCommitId() {
+	  cid_t temp_cid = next_cid_++;
+	  // wait if we do not yet have a grant for this commit id
+	  while(temp_cid > maximum_grant_cid_.load());
+	  return temp_cid;
+  }
+
+  cid_t GetCurrentCommitId() { return next_cid_.load(); }
 
   bool IsOccupied(const ItemPointer &position);
 
@@ -99,6 +109,8 @@ class TransactionManager {
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
+  void SetMaxGrantCid(cid_t cid){ maximum_grant_cid_ = cid; }
+
   virtual Transaction *BeginTransaction() = 0;
 
   virtual void EndTransaction() = 0;
@@ -119,9 +131,25 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
   }
 
+  void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range){
+	  this->dirty_range_ = dirty_range;
+  }
+
+ protected:
+
+
+  inline bool CidIsInDirtyRange(cid_t cid){
+	  return ((cid > dirty_range_.first) & (cid <= dirty_range_.second));
+  }
+  // invisible range after failure and recovery;
+  // first value is exclusive, last value is inclusive
+  std::pair<cid_t, cid_t> dirty_range_ = std::make_pair(INVALID_CID, INVALID_CID);
+
+
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
+  std::atomic<cid_t> maximum_grant_cid_;
 
 };
 }  // End storage namespace

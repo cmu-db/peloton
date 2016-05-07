@@ -210,21 +210,32 @@ void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
     auto new_tuple_tile_group = manager.GetTileGroup(new_location.block);
 
     auto tile_group = manager.GetTileGroup(new_location.block);
-    auto schema =
-        manager.GetTableWithOid(tile_group->GetDatabaseId(),
-                                tile_group->GetTableId())->GetSchema();
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-    for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-      tuple->SetValue(col,
-                      new_tuple_tile_group->GetValue(new_location.offset, col),
-                      logger->GetVarlenPool());
-    }
+    std::unique_ptr<LogRecord> record;
+    if (IsBasedOnWriteAheadLogging(logging_type_)){
+		auto schema =
+			manager.GetTableWithOid(tile_group->GetDatabaseId(),
+									tile_group->GetTableId())->GetSchema();
+		std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+		for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
+		  tuple->SetValue(col,
+						  new_tuple_tile_group->GetValue(new_location.offset, col),
+						  logger->GetVarlenPool());
+		}
 
-    std::unique_ptr<LogRecord> record(logger->GetTupleRecord(
-        LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
-        new_tuple_tile_group->GetDatabaseId(), new_location,
-        INVALID_ITEMPOINTER, tuple.get()));
+		record.reset(logger->GetTupleRecord(
+			LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
+			new_tuple_tile_group->GetDatabaseId(), new_location,
+			INVALID_ITEMPOINTER, tuple.get()));
+
+    }else{
+    	// do not construct the tuple for the wbl case
+    	record.reset(logger->GetTupleRecord(
+    				LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
+    				new_tuple_tile_group->GetDatabaseId(), new_location,
+    				INVALID_ITEMPOINTER));
+    }
     logger->Log(record.get());
+
   }
 }
 
