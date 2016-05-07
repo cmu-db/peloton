@@ -117,7 +117,7 @@ void RunBackend(oid_t thread_id) {
   durations[thread_id] = timer.GetDuration();
 }
 
-double RunWorkload() {
+void RunWorkload() {
 
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
@@ -140,9 +140,11 @@ double RunWorkload() {
     max_duration = std::max(max_duration, durations[thread_itr]);
   }
 
+  // Compute average throughput and latency
   double throughput = (state.transaction_count * num_threads)/max_duration;
+  state.throughput = throughput;
+  state.latency = max_duration/state.transaction_count;
 
-  return throughput;
 }
 
 /////////////////////////////////////////////////////////
