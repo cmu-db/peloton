@@ -117,12 +117,6 @@ Value PlanExecutor::ExecutePlanGetValue(const planner::AbstractPlan *plan,
           logical_tile.get(), tuple_id);
       ret_val = cur_tuple.GetValue(0);
       break;
-      //      auto slot = TupleTransformer::GetPostgresTuple(&cur_tuple,
-      //      tuple_desc);
-
-      //      if (slot != nullptr) {
-      //        slots = lappend(slots, slot);
-      //      }
     }
   }
 

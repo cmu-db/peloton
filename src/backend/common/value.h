@@ -995,13 +995,17 @@ class Value {
     return *reinterpret_cast<int64_t *>(m_data);
   }
 
+  // currently we are using double to store of type real.
   const double &GetDouble() const {
-    assert(GetValueType() == VALUE_TYPE_DOUBLE);
+    assert(GetValueType() == VALUE_TYPE_DOUBLE ||
+           GetValueType() == VALUE_TYPE_REAL);
     return *reinterpret_cast<const double *>(m_data);
   }
 
+  // currently we are using double to store of type real.
   double &GetDouble() {
-    assert(GetValueType() == VALUE_TYPE_DOUBLE);
+    assert(GetValueType() == VALUE_TYPE_DOUBLE ||
+           GetValueType() == VALUE_TYPE_REAL);
     return *reinterpret_cast<double *>(m_data);
   }
 
@@ -1968,7 +1972,7 @@ class Value {
   }
 
   int CompareDoubleValue(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_DOUBLE);
+    assert(m_valueType == VALUE_TYPE_DOUBLE || m_valueType == VALUE_TYPE_REAL);
 
     const double lhsValue = GetDouble();
     double rhsValue;
@@ -3274,7 +3278,8 @@ inline bool Value::IsNull() const {
 }
 
 inline bool Value::IsNan() const {
-  if (GetValueType() == VALUE_TYPE_DOUBLE) {
+  if (GetValueType() == VALUE_TYPE_DOUBLE ||
+      GetValueType() == VALUE_TYPE_REAL) {
     return std::isnan(GetDouble());
   }
   return false;
