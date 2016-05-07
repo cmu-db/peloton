@@ -48,9 +48,9 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Run the workload
-  auto stat = RunWorkload();
+  RunWorkload();
 
-  WriteOutput(stat);
+  WriteOutput(state.throughput);
 }
 
 }  // namespace ycsb

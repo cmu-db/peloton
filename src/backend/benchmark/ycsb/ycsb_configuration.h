@@ -53,6 +53,11 @@ class configuration {
   // skew (1 -- low or 2 -- high)
   int skew_factor;
 
+  // throughput
+  double throughput;
+
+  // latency average
+  double latency;
 };
 
 extern configuration state;

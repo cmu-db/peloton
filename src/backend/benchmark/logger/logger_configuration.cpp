@@ -81,6 +81,28 @@ std::string BenchmarkTypeToString(BenchmarkType type) {
   return "INVALID";
 }
 
+std::string ExperimentTypeToString(ExperimentType type) {
+  switch (type) {
+    case EXPERIMENT_TYPE_INVALID:
+      return "INVALID";
+
+    case EXPERIMENT_TYPE_THROUGHPUT:
+      return "THROUGHPUT";
+    case EXPERIMENT_TYPE_RECOVERY:
+      return "RECOVERY";
+    case EXPERIMENT_TYPE_STORAGE:
+      return "STORAGE";
+    case EXPERIMENT_TYPE_LATENCY:
+      return "LATENCY";
+
+    default:
+      LOG_ERROR("Invalid experiment_type :: %d", type);
+      exit(EXIT_FAILURE);
+  }
+
+  return "INVALID";
+}
+
 static void ValidateBenchmarkType(
     const configuration& state) {
   if (state.benchmark_type <= 0 || state.benchmark_type >= 3) {
@@ -106,7 +128,7 @@ static void ValidateDataFileSize(
       << " : " << state.data_file_size << std::endl;
 }
 
-static void ValidateExperiment(
+static void ValidateExperimentType(
     const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
     std::cout << "Invalid experiment_type :: " << state.experiment_type
@@ -115,7 +137,7 @@ static void ValidateExperiment(
   }
 
   std::cout << std::setw(20) << std::left << "experiment_type "
-      << " : " << state.experiment_type << std::endl;
+      << " : " << ExperimentTypeToString(state.experiment_type) << std::endl;
 }
 
 static void ValidateWaitTimeout(
@@ -263,7 +285,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
-  ValidateExperiment(state);
+  ValidateExperimentType(state);
   ValidateBenchmarkType(state);
   ValidateTransactionCount(state);
 
