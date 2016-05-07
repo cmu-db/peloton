@@ -26,8 +26,8 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlan.
  *
  */
-std::unique_ptr<peloton::planner::AbstractPlan>
-PlanTransformer::TransformResult(const ResultPlanState *result_state) {
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformResult(
+    const ResultPlanState *result_state) {
   LOG_INFO("Handle Result");
 
   // get the underlying plan
