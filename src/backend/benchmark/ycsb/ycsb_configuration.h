@@ -50,6 +50,9 @@ class configuration {
   // number of backends
   int backend_count;
 
+  // skew (1 -- low or 2 -- high)
+  int skew_factor;
+
 };
 
 extern configuration state;
@@ -65,6 +68,8 @@ void ValidateUpdateRatio(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateTransactionCount(const configuration &state);
+
+void ValidateSkewFactor(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
