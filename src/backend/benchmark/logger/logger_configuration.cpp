@@ -129,6 +129,17 @@ static void ValidateWaitTimeout(
       << " : " << state.wait_timeout << std::endl;
 }
 
+static void ValidateTransactionCount(const configuration &state) {
+  if (state.transaction_count <= 0) {
+    std::cout << "Invalid transaction_count :: " << state.transaction_count
+        << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "transaction_count "
+      << " : " << state.transaction_count << std::endl;
+}
+
 static void ValidateLogFileDir(
     configuration& state) {
   struct stat data_stat;
@@ -179,14 +190,16 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 200;
   state.benchmark_type = BENCHMARK_TYPE_YCSB;
+  state.transaction_count = 100;
 
   // Default Values
   ycsb::state.scale_factor = 1;
-  ycsb::state.transaction_count = 100;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
   ycsb::state.skew_factor = 1;
+
+  ycsb::state.transaction_count = state.transaction_count;
 
   // Parse args
   while (1) {
@@ -217,6 +230,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         ycsb::state.scale_factor = atoi(optarg);
         break;
       case 't':
+        state.transaction_count = atoi(optarg);
         ycsb::state.transaction_count = atoi(optarg);
         break;
       case 'c':
@@ -251,13 +265,13 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ValidateWaitTimeout(state);
   ValidateExperiment(state);
   ValidateBenchmarkType(state);
+  ValidateTransactionCount(state);
 
   // Print configuration
   ycsb::ValidateScaleFactor(ycsb::state);
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateTransactionCount(ycsb::state);
   ycsb::ValidateSkewFactor(ycsb::state);
 
 }
