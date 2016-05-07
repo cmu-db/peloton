@@ -677,7 +677,6 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
 
   return info;
 }
-
 /**
  * @brief preparing data
  * @param planstate

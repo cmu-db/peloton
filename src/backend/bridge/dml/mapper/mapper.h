@@ -62,7 +62,8 @@ class PlanTransformer {
   // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan, PlanState *planstate);
 
-  static std::vector<Value> BuildParams(const ParamListInfo param_list);
+  static std::vector<Value> BuildParams(const ParamListInfo param_list,
+                                        const List *subplan_list = nullptr);
 
  private:
   Cache<std::string, const planner::AbstractPlan> plan_cache_;

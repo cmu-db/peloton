@@ -116,7 +116,7 @@ void SimpleCheckpoint::DoCheckpoint() {
 
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext(
-            txn.get(), bridge::PlanTransformer::BuildParams(nullptr)));
+            txn.get(), bridge::PlanTransformer::BuildParams(nullptr, nullptr)));
     LOG_TRACE("Building the executor tree");
 
     auto &catalog_manager = catalog::Manager::GetInstance();
@@ -338,8 +338,8 @@ bool SimpleCheckpoint::Execute(executor::AbstractExecutor *scan_executor,
         assert(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
-        LOG_TRACE("Insert a new record for checkpoint (%u, %u)",
-                  tile_group_id, tuple_id);
+        LOG_TRACE("Insert a new record for checkpoint (%u, %u)", tile_group_id,
+                  tuple_id);
         records_.push_back(record);
       }
     }

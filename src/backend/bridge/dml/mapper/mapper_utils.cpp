@@ -12,6 +12,8 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/bridge/dml/mapper/dml_utils.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/catalog/manager.h"
 #include "backend/planner/projection_plan.h"
 #include "backend/planner/aggregate_plan.h"
@@ -25,8 +27,8 @@ namespace bridge {
 // Utils
 //===--------------------------------------------------------------------===//
 
-std::vector<Value> PlanTransformer::BuildParams(
-    const ParamListInfo param_list) {
+std::vector<Value> PlanTransformer::BuildParams(const ParamListInfo param_list,
+                                                const List *subplan_list) {
   std::vector<Value> params;
   if (param_list != nullptr) {
     params.resize(param_list->numParams);
@@ -35,7 +37,20 @@ std::vector<Value> PlanTransformer::BuildParams(
       params[i] = TupleTransformer::GetValue(postgres_param->value,
                                              postgres_param->ptype);
     }
-
+    assert(params.size() > 0);
+  }
+  ListCell *lc;
+  if (subplan_list) {
+    foreach (lc, subplan_list) {
+      auto subplanstate = (PlanState *)lfirst(lc);
+      auto subplan_state =
+          peloton::bridge::DMLUtils::peloton_prepare_data(subplanstate);
+      std::shared_ptr<const peloton::planner::AbstractPlan> mapped_subplan_ptr =
+          peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
+              subplan_state, nullptr);
+      params.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
+          mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
+    }
     assert(params.size() > 0);
   }
 
@@ -110,8 +125,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
     auto column_ids =
         BuildColumnListFromTargetList(project_info->GetTargetList());
 
-    parent = new planner::ProjectionPlan(std::move(project_info),
-                                         project_schema);
+    parent =
+        new planner::ProjectionPlan(std::move(project_info), project_schema);
 
     ((planner::ProjectionPlan *)parent)->SetColumnIds(column_ids);
   }

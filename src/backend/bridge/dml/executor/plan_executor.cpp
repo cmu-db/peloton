@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "plan_executor.h"
 #include <cassert>
 #include <vector>
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
+#include "backend/bridge/dml/mapper/dml_utils.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/executors.h"
@@ -51,7 +52,7 @@ Value PlanExecutor::ExecutePlanGetValue(const planner::AbstractPlan *plan,
                                         const std::vector<Value> &params) {
   peloton_status p_status;
 
-  //  if (plan == nullptr) return p_status;
+  assert(plan);
 
   LOG_TRACE("PlanExecutor Start ");
 
@@ -122,7 +123,6 @@ Value PlanExecutor::ExecutePlanGetValue(const planner::AbstractPlan *plan,
 
   // Set the result
   p_status.m_processed = executor_context->num_processed;
-//  p_status.m_result_slots = slots;
 
 // final cleanup
 cleanup:
@@ -189,7 +189,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
-  // auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(

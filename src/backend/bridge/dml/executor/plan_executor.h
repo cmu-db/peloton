@@ -38,12 +38,6 @@ class PlanExecutor {
   static void PrintPlan(const planner::AbstractPlan *plan,
                         std::string prefix = "");
 
-  /* TODO: Delete this mothod
-    static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                      ParamListInfo m_param_list,
-                                      TupleDesc m_tuple_desc);
-  */
-
   /*
    * Execute the subplan and get a value from the result.
    */

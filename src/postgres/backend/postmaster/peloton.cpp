@@ -170,14 +170,14 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
   assert(planstate != NULL);
   assert(planstate->state != NULL);
   auto param_list = planstate->state->es_param_list_info;
-  SubPlanState *subplanstate = nullptr;
-  if (planstate->state->es_param_exec_vals != nullptr)
-    subplanstate = reinterpret_cast<SubPlanState *>(
-        planstate->state->es_param_exec_vals->execPlan);
+  auto subplan_list = planstate->state->es_subplanstates;
+  //  SubPlanState *subplanstate = nullptr;
+  //  if (planstate->state->es_param_exec_vals != nullptr)
+  //    subplanstate = reinterpret_cast<SubPlanState *>(
+  //        planstate->state->es_param_exec_vals->execPlan);
 
   // Create the raw planstate info
   std::shared_ptr<const peloton::planner::AbstractPlan> mapped_plan_ptr;
-  std::shared_ptr<const peloton::planner::AbstractPlan> mapped_subplan_ptr;
 
   // Get our plan
   if (prepStmtName) {
@@ -197,20 +197,7 @@ void peloton_dml(const PlanState *planstate, bool sendTuples,
 
   // Construct params
   std::vector<peloton::Value> param_values =
-      peloton::bridge::PlanTransformer::BuildParams(param_list);
-
-  ListCell *lc;
-
-  foreach (lc, planstate->state->es_subplanstates) {
-    auto subplanstate = (PlanState *)lfirst(lc);
-    auto subplan_state =
-        peloton::bridge::DMLUtils::peloton_prepare_data(subplanstate);
-    mapped_subplan_ptr =
-        peloton::bridge::PlanTransformer::GetInstance().TransformPlan(
-            subplan_state, nullptr);
-    param_values.push_back(peloton::bridge::PlanExecutor::ExecutePlanGetValue(
-        mapped_subplan_ptr.get(), std::vector<peloton::Value>()));
-  }
+      peloton::bridge::PlanTransformer::BuildParams(param_list, subplan_list);
 
   // Ignore empty plans
   if (mapped_plan_ptr.get() == nullptr) {
@@ -424,8 +411,5 @@ bool peloton_status::SerializeTo(peloton::SerializeOutput &output) {
  * TODO: Deserialize
  */
 bool peloton_status::DeserializeFrom(peloton::SerializeInputBE &input) {
-  //    List *slots = NULL;
-  //    slots = lappend(slots, slot);
-
   return true;
 }
