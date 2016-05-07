@@ -148,7 +148,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
 
   // Default Values
   ycsb::state.scale_factor = 1;
-  ycsb::state.transaction_count = 10000;
+  ycsb::state.transaction_count = 100;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
