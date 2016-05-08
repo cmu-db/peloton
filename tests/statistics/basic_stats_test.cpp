@@ -23,12 +23,16 @@
 using std::cout;
 using std::endl;
 
+extern StatsType peloton_stats_mode;
+
 namespace peloton {
   namespace test {
     
     class BasicStatsTest : public PelotonTest {};
     
     TEST_F(BasicStatsTest, CreateTest) {
+      peloton_stats_mode = STATS_TYPE_ENABLE;
+
       /*
        * Register to StatsAggregator
        */

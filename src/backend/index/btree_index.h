@@ -22,6 +22,8 @@
 
 #include "stx/btree_multimap.h"
 
+extern StatsType peloton_stats_mode;
+
 namespace peloton {
 namespace index {
 

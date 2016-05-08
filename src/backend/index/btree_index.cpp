@@ -53,9 +53,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 
   }
 
-  peloton::stats::backend_stats_context->GetIndexMetric(
-      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-          ->GetIndexAccess().IncrementInserts();
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->GetIndexMetric(
+        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+            ->GetIndexAccess().IncrementInserts();
+  }
 
   return true;
 }
@@ -89,9 +91,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
           // Set try again
           try_again = true;
 
-          peloton::stats::backend_stats_context->GetIndexMetric(
-              GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-                  ->GetIndexAccess().IncrementDeletes();
+          if (peloton_stats_mode != STATS_TYPE_INVALID) {
+            peloton::stats::backend_stats_context->GetIndexMetric(
+                GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+                    ->GetIndexAccess().IncrementDeletes();
+          }
           break;
         }
       }
@@ -132,9 +136,11 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>
     index_lock.Unlock();
   }
 
-  peloton::stats::backend_stats_context->GetIndexMetric(
-      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-          ->GetIndexAccess().IncrementInserts();
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->GetIndexMetric(
+        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+              ->GetIndexAccess().IncrementInserts();
+  }
 
   return true;
 }
@@ -225,9 +231,11 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     index_lock.Unlock();
   }
 
-  peloton::stats::backend_stats_context->GetIndexMetric(
-      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-          ->GetIndexAccess().IncrementReads(result.size());
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->GetIndexMetric(
+        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+            ->GetIndexAccess().IncrementReads(result.size());
+  }
 
   return result;
 }
@@ -253,9 +261,11 @@ std::vector<ItemPointer> BTreeIndex<KeyType, ValueType, KeyComparator,
     index_lock.Unlock();
   }
 
-  peloton::stats::backend_stats_context->GetIndexMetric(
-      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-          ->GetIndexAccess().IncrementReads(result.size());
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->GetIndexMetric(
+        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+              ->GetIndexAccess().IncrementReads(result.size());
+  }
 
   return result;
 }
@@ -284,9 +294,11 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     index_lock.Unlock();
   }
 
-  peloton::stats::backend_stats_context->GetIndexMetric(
-      GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-          ->GetIndexAccess().IncrementReads(result.size());
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->GetIndexMetric(
+        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
+              ->GetIndexAccess().IncrementReads(result.size());
+  }
 
   return result;
 }

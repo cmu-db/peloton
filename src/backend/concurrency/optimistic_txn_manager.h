@@ -15,6 +15,8 @@
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/storage/tile_group.h"
 
+extern StatsType peloton_stats_mode;
+
 namespace peloton {
 namespace concurrency {
 
