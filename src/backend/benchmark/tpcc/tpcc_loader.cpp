@@ -1407,6 +1407,16 @@ void LoadTPCCDatabase() {
   LoadItems();
 
   LoadWarehouses();
+  
+  printf("warehouse count = %u\n", warehouse_table->GetAllActiveTupleCount());
+  printf("district count  = %u\n", district_table->GetAllActiveTupleCount());
+  printf("item count = %u\n", item_table->GetAllActiveTupleCount());
+  printf("customer count = %u\n", customer_table->GetAllActiveTupleCount());
+  printf("history count = %u\n", history_table->GetAllActiveTupleCount());
+  printf("stock count = %u\n", stock_table->GetAllActiveTupleCount());
+  printf("orders count = %u\n", orders_table->GetAllActiveTupleCount());
+  printf("new order count = %u\n", new_order_table->GetAllActiveTupleCount());
+  printf("order line count = %u\n", order_line_table->GetAllActiveTupleCount());
 
 }
 

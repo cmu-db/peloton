@@ -928,6 +928,7 @@ class Value {
     return GetObjectValueWithoutNull();
   }
 
+public:
   // Getters
   const int8_t &GetTinyInt() const {
     assert(GetValueType() == VALUE_TYPE_TINYINT);

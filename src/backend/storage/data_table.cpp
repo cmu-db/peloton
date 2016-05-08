@@ -644,6 +644,17 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
   return manager.GetTileGroup(tile_group_id);
 }
 
+
+oid_t DataTable::GetAllActiveTupleCount() {
+  oid_t count = 0;
+  for (auto tile_group_id : tile_groups_) {
+    auto tile_group = GetTileGroupById(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    count += tile_group_header->GetActiveTupleCount();
+  }
+  return count;
+}
+
 const std::string DataTable::GetInfo() const {
   std::ostringstream os;
 
