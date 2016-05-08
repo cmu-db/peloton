@@ -105,7 +105,8 @@ class StatsAggregator {
   }
 
   BackendStatsContext *GetBackendStatsContext();
-
+  
+  void RunAggregatorOnce();
   void RunAggregator();
 
   StatsAggregator();

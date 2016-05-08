@@ -29,10 +29,17 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id,
   database_id_ = database_id;
   table_id_ = table_id;
   index_id_ = index_id;
-  index_name_ = catalog::Manager::GetInstance().GetIndexWithOid(
-      database_id, table_id, index_id)->GetName();
-  for(auto& ch: index_name_)
-          ch = toupper(ch);
+  index_name_ = "";
+  auto index = catalog::Manager::GetInstance().GetIndexWithOid(
+      database_id, table_id, index_id);
+  if (index == nullptr) {
+    index_name_ = "";
+  } else {
+    index_name_ = index->GetName();
+    for(auto& ch: index_name_) {
+      ch = toupper(ch);
+    }
+  }
 }
 
 void IndexMetric::Aggregate(AbstractMetric &source) {
