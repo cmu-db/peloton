@@ -36,6 +36,9 @@ StatsAggregator::StatsAggregator() {
 
 StatsAggregator::~StatsAggregator() {
   printf("StatsAggregator destruction\n");
+  for (auto& stats_item : backend_stats) {
+    delete stats_item.second;
+  }
   ofs.close();
   exec_finished.notify_one();
   aggregator_thread.join();
