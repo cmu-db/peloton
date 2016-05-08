@@ -45,6 +45,15 @@ enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
   CHECKPOINT_TYPE_NORMAL = 1,
 };
+
+
+// Statistics Collection Type
+// Disable or enable
+enum StatsType {
+  STATS_TYPE_INVALID = 0,
+  STATS_TYPE_ENABLE = 1,
+};
+
 //===--------------------------------------------------------------------===//
 // Filesystem directories
 //===--------------------------------------------------------------------===//
