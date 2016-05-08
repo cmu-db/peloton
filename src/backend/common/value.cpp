@@ -1119,4 +1119,40 @@ Value Value::GetMinValue(ValueType type) {
   }
 }
 
+Value Value::GetMaxValue(ValueType type) {
+  switch (type) {
+    case VALUE_TYPE_TINYINT:
+      return GetTinyIntValue(PELOTON_INT8_MAX);
+    case VALUE_TYPE_SMALLINT:
+      return GetSmallIntValue(PELOTON_INT16_MAX);
+    case VALUE_TYPE_INTEGER:
+      return GetIntegerValue(PELOTON_INT32_MAX);
+    case VALUE_TYPE_BIGINT:
+      return GetBigIntValue(PELOTON_INT64_MAX);
+    case VALUE_TYPE_REAL:
+      return GetDoubleValue(FLT_MAX);
+    case VALUE_TYPE_DOUBLE:
+      return GetDoubleValue(DBL_MAX);
+    case VALUE_TYPE_VARCHAR:
+      // assume lenght of varchar is 256
+      return GetTempStringValue("\0", 256);
+    case VALUE_TYPE_DATE:
+      return GetIntegerValue(PELOTON_INT32_MAX;
+    case VALUE_TYPE_TIMESTAMP:
+      return GetTimestampValue(PELOTON_INT64_MAX);
+    case VALUE_TYPE_DECIMAL:
+      return GetDecimalValue(DECIMAL_MAX);
+    case VALUE_TYPE_BOOLEAN:
+      return GetFalse();
+
+    case VALUE_TYPE_INVALID:
+    case VALUE_TYPE_NULL:
+    case VALUE_TYPE_ADDRESS:
+    case VALUE_TYPE_VARBINARY:
+    default: {
+      throw UnknownTypeException((int)type, "Can't get min value for type");
+    }
+  }
+}
+
 }  // End peloton namespace

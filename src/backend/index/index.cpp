@@ -130,18 +130,80 @@ bool Index::Compare(const AbstractTuple &index_key,
   return true;
 }
 
-bool Index::IfConstructBound(ExpressionType type) {
+bool Index::IfConstructHigherBound(ExpressionType type) {
   switch (type) {
     case EXPRESSION_TYPE_COMPARE_EQUAL:
-    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
-    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
-    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
+    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
       return true;
     default:
       return false;
   }
 }
+
+bool Index::IfConstructBound(ExpressionType type) {
+  return IfConstructHigherBound(type) || IfConstructLowerBound(type);
+}
+
+bool Index::IfConstructLowerBound(ExpressionType type) {
+  switch (type) {
+    case EXPRESSION_TYPE_COMPARE_EQUAL:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO:
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool Index::ConstructHigherBoundTuple(
+  storage::Tuple *index_key, const std::vector<peloton::Value> &values,
+  const std::vector<oid_t> &key_column_ids,
+  const std::vector<ExpressionType> &expr_types) {
+  auto schema = index_key->GetSchema();
+  auto col_count = schema->GetColumnCount();
+  bool all_constraints_equal = true;
+
+  // Go over each column in the key tuple
+  // Setting either the placeholder or the min value
+  for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
+    auto key_column_itr =
+      std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
+    bool placeholder = false;
+    Value value;
+
+    // This column is part of the key column ids
+    if (key_column_itr != key_column_ids.end()) {
+      auto offset = std::distance(key_column_ids.begin(), key_column_itr);
+      // Equality constraint
+      if (IfConstructHigherBound(expr_types[offset])) {
+        placeholder = true;
+        value = values[offset];
+      } else { // Not all expressions / constraints are equal
+        all_constraints_equal = false;
+      }
+    }
+
+    LOG_TRACE("Column itr : %lu  Placeholder : %d ", column_itr, placeholder);
+
+    // Fill in the placeholder
+    if (placeholder == true) {
+      index_key->SetValue(column_itr, value, GetPool());
+    }
+      // Fill in the min value
+    else {
+      auto value_type = schema->GetType(column_itr);
+      index_key->SetValue(column_itr, Value::GetMaxValue(value_type),
+                          GetPool());
+    }
+  }
+
+  LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
+  if (col_count > values.size()) all_constraints_equal = false;
+
+  return all_constraints_equal;
+}
+
 
 bool Index::ConstructLowerBoundTuple(
     storage::Tuple *index_key, const std::vector<peloton::Value> &values,
@@ -163,7 +225,7 @@ bool Index::ConstructLowerBoundTuple(
     if (key_column_itr != key_column_ids.end()) {
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
       // Equality constraint
-      if (IfConstructBound(expr_types[offset])) {
+      if (IfConstructLowerBound(expr_types[offset])) {
         placeholder = true;
         value = values[offset];
       } else { // Not all expressions / constraints are equal

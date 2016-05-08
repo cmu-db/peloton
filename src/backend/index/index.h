@@ -233,10 +233,19 @@ class Index : public Printable {
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
 
+  bool ConstructHigherBoundTuple(storage::Tuple *index_key,
+                                const std::vector<Value> &values,
+                                const std::vector<oid_t> &key_column_ids,
+                                const std::vector<ExpressionType> &expr_types);
+
   // if set the bounds (either lower or higher bounds) for index iteration.
+  bool IfConstructLowerBound(ExpressionType type);
+
+  bool IfConstructHigherBound(ExpressionType type);
+
   bool IfConstructBound(ExpressionType type);
 
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
