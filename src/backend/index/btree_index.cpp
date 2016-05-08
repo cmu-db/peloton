@@ -171,12 +171,15 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     index_lock.ReadLock();
 
     auto scan_begin_itr = container.begin();
+    auto scan_end_itr = container.end();
     std::unique_ptr<storage::Tuple> start_key;
+    std::unique_ptr<storage::Tuple> end_key;
     bool all_constraints_are_equal = false;
 
     // If it is a special case, we can figure out the range to scan in the index
     if (special_case == true) {
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+      end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
       // Construct the lower bound key tuple
       all_constraints_are_equal = ConstructLowerBoundTuple(
@@ -186,13 +189,22 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
       // Set scan begin iterator
       scan_begin_itr = container.equal_range(index_key).first;
+
+      KeyType end_index_key;
+      all_constraints_are_equal = ConstructHigherBoundTuple(
+        end_key.get(), values, key_column_ids, expr_types);
+      LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
+      end_index_key.SetFromKey(end_key.get());
+
+      // set scan end iter
+      scan_end_itr = container.equal_range(end_index_key).second;
     }
 
     switch (scan_direction) {
       case SCAN_DIRECTION_TYPE_FORWARD:
       case SCAN_DIRECTION_TYPE_BACKWARD: {
         // Scan the index entries in forward direction
-        for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
+        for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
              scan_itr++) {
           auto scan_current_key = scan_itr->first;
           auto tuple =
@@ -306,12 +318,15 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     index_lock.ReadLock();
 
     auto scan_begin_itr = container.begin();
+    auto scan_end_itr = container.end();
     std::unique_ptr<storage::Tuple> start_key;
+    std::unique_ptr<storage::Tuple> end_key;
     bool all_constraints_are_equal = false;
 
     // If it is a special case, we can figure out the range to scan in the index
     if (special_case == true) {
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+      end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
       // Construct the lower bound key tuple
       all_constraints_are_equal = ConstructLowerBoundTuple(
@@ -321,13 +336,22 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
       // Set scan begin iterator
       scan_begin_itr = container.equal_range(index_key).first;
+
+      KeyType end_index_key;
+      all_constraints_are_equal = ConstructHigherBoundTuple(
+        end_key.get(), values, key_column_ids, expr_types);
+      LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
+      end_index_key.SetFromKey(end_key.get());
+
+      // set scan end iter
+      scan_end_itr = container.equal_range(end_index_key).second;
     }
 
     switch (scan_direction) {
       case SCAN_DIRECTION_TYPE_FORWARD:
       case SCAN_DIRECTION_TYPE_BACKWARD: {
         // Scan the index entries in forward direction
-        for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
+        for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
              scan_itr++) {
           auto scan_current_key = scan_itr->first;
           auto tuple =

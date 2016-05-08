@@ -395,6 +395,8 @@ class Value {
   // Get min value
   static Value GetMinValue(ValueType);
 
+  static Value GetMaxValue(ValueType type);
+
   int GetIntegerForTestsOnly() { return GetInteger(); }
 
   ////////////////////////////////////////////////////////////
