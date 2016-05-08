@@ -418,7 +418,7 @@ WriteBehindFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
 
   // Set the commit mark
   tile_group_header->SetDeleteCommit(location.offset, true);
-  LOG_TRACE("<%p, %lu> : slot is delete committed", tile_group.get(),
+  LOG_TRACE("<%p, %u> : slot is delete committed", tile_group.get(),
             location.offset);
 
   // Update max oid
