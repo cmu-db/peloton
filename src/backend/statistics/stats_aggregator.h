@@ -106,7 +106,8 @@ class StatsAggregator {
 
   BackendStatsContext *GetBackendStatsContext();
   
-  void RunAggregatorOnce();
+  void Aggregate(int64_t &interval_cnt, double &alpha,
+      double &weighted_avg_throughput);
   void RunAggregator();
 
   StatsAggregator();
