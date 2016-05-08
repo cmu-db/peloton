@@ -51,6 +51,9 @@ void StatsAggregator::RunAggregator() {
   while (exec_finished.wait_for(lck,
        std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
      ) {
+   if (peloton_stats_mode == STATS_TYPE_INVALID) {
+     printf("stats invalid!\n");
+   }
    interval_cnt_++;
    printf("\n////////////////////////////////////////////////////////////////////////////////////////////////////////////\n");
    printf("TIME ELAPSED: %ld sec\n", interval_cnt_);

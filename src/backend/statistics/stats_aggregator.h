@@ -30,6 +30,7 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
+extern StatsType peloton_stats_mode;
 
 namespace peloton {
 namespace stats {

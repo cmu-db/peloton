@@ -440,6 +440,19 @@ static const struct config_enum_entry peloton_checkpoint_mode_options[] = {
   {NULL, 0, false}
 };
 
+// Statistics Collection Type
+// Disable or enable
+typedef enum StatsType {
+  STATS_TYPE_INVALID = 0,
+  STATS_TYPE_ENABLE = 1,
+} StatsType;
+
+static const struct config_enum_entry peloton_stats_mode_options[] = {
+  {"invalid", STATS_TYPE_INVALID, false},
+  {"enable", STATS_TYPE_ENABLE, false},
+  {NULL, 0, false}
+};
+
 /*
  * Options for enum values stored in other modules
  */
@@ -513,6 +526,9 @@ LoggingType     peloton_logging_mode;
 
 // Checkpoint mode
 CheckpointType     peloton_checkpoint_mode;
+
+// Stats mode
+StatsType     peloton_stats_mode;
 
 // Directory for peloton logs
 char    *peloton_log_directory;
@@ -3814,7 +3830,17 @@ struct config_enum ConfigureNamesEnum[] =
       reinterpret_cast<int *>(&peloton_checkpoint_mode),
       CHECKPOINT_TYPE_INVALID, peloton_checkpoint_mode_options,
       NULL, NULL, NULL
-    },
+  },
+
+  {
+      {"peloton_stats_mode", PGC_USERSET, PELOTON_STATS_OPTIONS,
+        gettext_noop("Change peloton stats collection mode"),
+        gettext_noop("This determines the stats collection mode.")
+      },
+      reinterpret_cast<int *>(&peloton_stats_mode),
+      STATS_TYPE_INVALID, peloton_stats_mode_options,
+      NULL, NULL, NULL
+  },
 
 	/* End-of-list marker */
 	{
