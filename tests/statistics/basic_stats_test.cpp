@@ -53,7 +53,10 @@ namespace peloton {
 				       false, true);
       txn_manager.CommitTransaction();
 
-      stats_agg->RunAggregatorOnce();
+      int64_t interval_cnt = 0;
+      double alpha = 0.4;
+      double weighted_avg_throughput = 0.0;
+      stats_agg->Aggregate(interval_cnt, alpha, weighted_avg_throughput);
       //peloton::stats::BackendStatsContext context_ = stats_agg->GetAggregatedStats();
       
 
