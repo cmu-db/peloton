@@ -14,6 +14,7 @@
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
+#include "backend/executor/abstract_executor.h"
 
 namespace peloton {
 
@@ -27,6 +28,25 @@ namespace tpcc {
 extern configuration state;
 
 void RunWorkload();
+
+/////////////////////////////////////////////////////////
+// TRANSACTION TYPES
+/////////////////////////////////////////////////////////
+
+bool RunStockLevel();
+
+bool RunDelivery();
+
+bool RunOrderStatus();
+
+bool RunPayment();
+
+bool RunNewOrder();
+
+std::vector<std::vector<Value>>
+ExecuteReadTest(executor::AbstractExecutor* executor);
+
+void ExecuteUpdateTest(executor::AbstractExecutor* executor);
 
 }  // namespace tpcc
 }  // namespace benchmark
