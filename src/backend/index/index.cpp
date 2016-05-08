@@ -132,7 +132,6 @@ bool Index::Compare(const AbstractTuple &index_key,
 
 bool Index::IfConstructHigherBound(ExpressionType type) {
   switch (type) {
-    case EXPRESSION_TYPE_COMPARE_EQUAL:
     case EXPRESSION_TYPE_COMPARE_LESSTHAN:
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
       return true;
