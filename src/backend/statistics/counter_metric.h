@@ -44,8 +44,8 @@ class CounterMetric : public AbstractMetric {
     count++;
   }
 
-  inline void Increment(int64_t count_) {
-    count += count_;
+  inline void Increment(int64_t count) {
+    count += count;
   }
 
   inline void Decrement() {
