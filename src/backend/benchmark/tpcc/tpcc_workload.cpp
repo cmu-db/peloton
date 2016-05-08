@@ -97,7 +97,7 @@ void RunBackend(oid_t thread_id) {
       break;
     }
     
-    while (RunNewOrder() == false) {
+    while (RunDelivery() == false) {
       execution_count_ref++;
     }
     

@@ -91,6 +91,40 @@ bool RunDelivery(){
    "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?", # ol_total, c_id, d_id, w_id
    }
    */
+
+  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
+
+  for (int d_id = 0; d_id < state.district_per_warehouse; ++d_id) {
+    LOG_INFO("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
+
+
+
+    LOG_INFO("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
+
+
+
+    LOG_INFO("sumOLAmount: SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
+
+
+
+    LOG_INFO("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
+
+
+
+    LOG_INFO("updateOrders: UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
+
+
+
+    LOG_INFO("updateOrderLine: UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
+
+
+
+    LOG_INFO("updateCustomer: UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?");
+
+  }
+
+
    return true;
 }
 
