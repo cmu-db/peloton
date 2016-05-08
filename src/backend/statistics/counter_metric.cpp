@@ -23,12 +23,12 @@ namespace stats {
 
 
 CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
-  count = 0;
+  count_ = 0;
 }
 
 void CounterMetric::Aggregate(AbstractMetric &source) {
   assert(source.GetType() == COUNTER_METRIC);
-  count += static_cast<CounterMetric&>(source).GetCounter();
+  count_ += static_cast<CounterMetric&>(source).GetCounter();
 }
 
 }  // namespace stats
