@@ -211,11 +211,12 @@ void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
 
     auto tile_group = manager.GetTileGroup(new_location.block);
     std::unique_ptr<LogRecord> record;
+    std::unique_ptr<storage::Tuple> tuple;
     if (IsBasedOnWriteAheadLogging(logging_type_)){
 		auto schema =
 			manager.GetTableWithOid(tile_group->GetDatabaseId(),
 									tile_group->GetTableId())->GetSchema();
-		std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+		tuple.reset(new storage::Tuple(schema, true));
 		for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
 		  tuple->SetValue(col,
 						  new_tuple_tile_group->GetValue(new_location.offset, col),
