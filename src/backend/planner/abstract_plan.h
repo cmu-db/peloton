@@ -58,7 +58,7 @@ class AbstractPlan : public Printable {
 
   const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
-  const AbstractPlan *GetParent();
+  const AbstractPlan *GetParent () const;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -85,7 +85,7 @@ class AbstractPlan : public Printable {
   // Each sub-class will have to implement these functions
   // After the implementation for each sub-class, we should set these to pure virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output) const {
+  virtual bool SerializeTo (SerializeOutput &output) const {
       ASSERT(&output != nullptr);
       return false;
   }

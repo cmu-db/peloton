@@ -231,6 +231,13 @@ peloton_dml(const PlanState *planstate,
   // Fourth Serialize plan with plan
   peloton::CopySerializeOutput output_plan;
   mapped_plan_ptr->SerializeTo(output_plan);
+
+  // Test DeserializeFrom
+  peloton::ReferenceSerializeInputBE input(output_plan.Data(), output_plan.Size());
+  std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan = std::make_shared<
+      peloton::planner::SeqScanPlan>();
+  ss_plan->DeserializeFrom(input);
+
   request.set_plan(output_plan.Data(), output_plan.Size());
 
   // Finally send the request

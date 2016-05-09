@@ -50,7 +50,7 @@ class SeqScanPlan : public AbstractScan {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output);
+  bool SerializeTo (SerializeOutput &output) const;
   bool DeserializeFrom(SerializeInputBE &input);
 
   /* For init SerializeOutput */

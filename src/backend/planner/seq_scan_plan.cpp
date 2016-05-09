@@ -29,7 +29,7 @@ namespace planner {
   /**
    * The SeqScanPlan has the following members:
    *   database_id, table_id, predicate, column_id, parent(might be NULL)
-   * TODO: SeqScanPlan doesn't have children, so we don't need to handle it
+   * FIXME: SeqScanPlan doesn't have children, so we don't need to handle it
    *
    * Therefore a SeqScanPlan is serialized as:
    * [(int) total size]
@@ -43,10 +43,10 @@ namespace planner {
    * [(int8_t) plan type]     : if invalid, parent is null
    * [(bytes) parent]         : parent is also a plan
    *
-   * TODO: parent_ seems never be set or used
+   * FIXME: parent_ seems never be set or used
    */
 
-bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
+bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
 
     // A placeholder for the total size written at the end
     int start = output.Position();
