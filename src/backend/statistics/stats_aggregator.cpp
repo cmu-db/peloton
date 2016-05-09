@@ -35,7 +35,7 @@ StatsAggregator::StatsAggregator() {
 }
 
 StatsAggregator::~StatsAggregator() {
-  printf("StatsAggregator destruction\n");
+  LOG_DEBUG("StatsAggregator destruction\n");
   for (auto& stats_item : backend_stats_) {
     delete stats_item.second;
   }
@@ -57,7 +57,9 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
     }
     aggregated_stats_.Aggregate(stats_history_);
     printf("%s", aggregated_stats_.ToString().c_str());
+
     int64_t current_txns_committed = 0;
+    // Traverse the metric of all threads to get the total number of committed txns.
     for (auto database_item : aggregated_stats_.database_metrics_) {
       current_txns_committed += database_item.second->GetTxnCommitted().GetCounter();
     }
@@ -100,30 +102,22 @@ void StatsAggregator::RunAggregator() {
 
 }
 
-/**
- * @brief Return the singleton log manager instance
- */
 StatsAggregator &StatsAggregator::GetInstance() {
   static StatsAggregator stats_aggregator;
   return stats_aggregator;
 }
 
-/**
- * @brief Return the backend logger based on logging type
-    and store it into the vector
- * @param logging type can be stdout(debug), aries, peloton
- */
 BackendStatsContext *StatsAggregator::GetBackendStatsContext() {
 
-  // Check whether the backend logger exists or not
-  // if not, create a backend logger and store it in frontend logger
+  // Check whether the backend_stats_context exists or not
+  // if not, create a backend_stats_context and store it to thread_local pointer
   if (backend_stats_context == nullptr) {
     backend_stats_context = new BackendStatsContext();
 
     RegisterContext(backend_stats_context->GetThreadId(), backend_stats_context);
 
   } else {
-    printf("context pointer already had a value!\n");
+    LOG_ERROR("context pointer already had a value!\n");
   }
 
   return backend_stats_context;
