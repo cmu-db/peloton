@@ -73,6 +73,9 @@ class configuration {
   // pcommit latency
   int64_t pcommit_latency;
 
+  // asynchronous_mode
+  int64_t asynchronous_mode;
+
 };
 
 void Usage(FILE *out);

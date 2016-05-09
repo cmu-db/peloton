@@ -270,7 +270,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ab:c:e:d:f:hk:l:n:p:s:t:u:w:y:", opts, &idx);
+    int c = getopt_long(argc, argv, "a:b:c:e:d:f:hk:l:n:p:s:t:u:w:y:", opts, &idx);
 
     if (c == -1) break;
 
@@ -298,6 +298,9 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         break;
       case 'p':
         state.pcommit_latency = atoi(optarg);
+        break;
+      case 'a':
+        state.asynchronous_mode = atoi(optarg);
         break;
 
         // YCSB
