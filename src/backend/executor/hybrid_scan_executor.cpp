@@ -85,8 +85,8 @@ bool HybridScanExecutor::DInit() {
     int offset = index_->GetIndexedTileGroupOff();
     indexed_tile_offset_ = (offset == -1) ? INVALID_OID : (oid_t)offset;
 
-    printf("Current indexed_tile_offset %d, table tile group count %d\n",
-             indexed_tile_offset_, table_tile_group_count_);
+    //printf("Current indexed_tile_offset %d, table tile group count %d\n",
+    //         indexed_tile_offset_, table_tile_group_count_);
 
     if (indexed_tile_offset_ == INVALID_OID) {
       current_tile_group_offset_ = START_OID;
@@ -197,7 +197,7 @@ bool HybridScanExecutor::SeqScanUtil() {
     logical_tile->AddPositionList(std::move(position_list));
     // LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
     SetOutput(logical_tile.release());
-    printf("Construct a logical tile in seq scan\n");
+    // printf("Construct a logical tile in seq scan\n");
     return true;
   }
 
@@ -215,7 +215,7 @@ bool HybridScanExecutor::IndexScanUtil() {
     } else {
       SetOutput(result_[result_itr_]);
       result_itr_++;
-      printf("Construct a logical tile in index scan\n");
+      // printf("Construct a logical tile in index scan\n");
 
       return true;
     }
