@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/statistics/stats_aggregator.h"
 #include "backend/storage/tile_group.h"
 
 extern StatsType peloton_stats_mode;
@@ -75,10 +76,18 @@ class OptimisticTxnManager : public TransactionManager {
     
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
 
+    if (peloton_stats_mode != STATS_TYPE_INVALID) {
+      peloton::stats::backend_stats_context->GetTxnLatencyMetric().StartTimer();
+    }
+
     return txn;
   }
 
   virtual void EndTransaction() {
+    if (peloton_stats_mode != STATS_TYPE_INVALID) {
+      peloton::stats::backend_stats_context->GetTxnLatencyMetric().RecordLatency();
+    }
+
     txn_id_t txn_id = current_txn->GetTransactionId();
 
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);

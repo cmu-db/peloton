@@ -19,7 +19,6 @@
 #include "backend/catalog/manager.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
-#include "backend/statistics/stats_aggregator.h"
 
 namespace peloton {
 namespace concurrency {
