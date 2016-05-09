@@ -25,6 +25,8 @@
 
 #define STATS_AGGREGATION_INTERVAL_MS 1000
 #define STATS_LOG_INTERVALS 10
+#define LATENCY_MAX_HISTORY_THREAD 100
+#define LATENCY_MAX_HISTORY_AGGREGATOR 10000
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -119,8 +121,6 @@ class StatsAggregator {
   std::mutex stats_mutex;
 
   std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats;
-
-  int64_t total_prev_txn_committed;
 
   int thread_number;
 
