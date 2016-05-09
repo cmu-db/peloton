@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// counter_metric.h
+// table_metric.h
 //
-// Identification: src/backend/statistics/counter_metric.h
+// Identification: src/backend/statistics/table_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -35,7 +35,7 @@ namespace stats {
 
 
 /**
- * Metric as a counter. E.g. # txns committed
+ * Metric for the access of a table
  */
 class TableMetric : public AbstractMetric {
  public:
@@ -98,6 +98,8 @@ class TableMetric : public AbstractMetric {
   oid_t database_id_;
   oid_t table_id_;
   std::string table_name_;
+
+  // # read/write/update/delete of a table
   AccessMetric table_access_{ACCESS_METRIC};
 
 };

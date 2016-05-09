@@ -117,6 +117,7 @@ class AccessMetric : public AbstractMetric {
     return ss.str();
   }
 
+  // Aggregate another AccessMetric to myself
   void Aggregate(AbstractMetric &source);
 
  private:
