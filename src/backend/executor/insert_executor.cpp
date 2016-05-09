@@ -98,7 +98,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
       auto res =
-          transaction_manager.PerformInsert(location.block, location.offset);
+          transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
@@ -144,7 +144,7 @@ bool InsertExecutor::DExecute() {
 
       // Carry out insertion
       ItemPointer location = target_table->InsertTuple(tuple);
-      LOG_TRACE("Inserted into location: %lu, %lu", location.block,
+      LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
 
       if (location.block == INVALID_OID) {
@@ -154,7 +154,7 @@ bool InsertExecutor::DExecute() {
       }
 
       auto res =
-          transaction_manager.PerformInsert(location.block, location.offset);
+          transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;

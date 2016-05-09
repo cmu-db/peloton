@@ -45,20 +45,19 @@ class PessimisticTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const ItemPointer &location);
 
-  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const ItemPointer &location);
 
-  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformUpdate(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformUpdate(const ItemPointer &location);
 
-  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformDelete(const ItemPointer &location);
 
   virtual Result CommitTransaction();
 
@@ -69,7 +68,7 @@ class PessimisticTxnManager : public TransactionManager {
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
     current_txn = txn;
-    
+
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
 
     return txn;
@@ -79,7 +78,7 @@ class PessimisticTxnManager : public TransactionManager {
     txn_id_t txn_id = current_txn->GetTransactionId();
 
     running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
-    
+
     delete current_txn;
     current_txn = nullptr;
   }
@@ -100,7 +99,6 @@ class PessimisticTxnManager : public TransactionManager {
     return min_running_cid - 1;
   }
 
-
  private:
 #define READ_COUNT_MASK 0xFF
 #define TXNID_MASK 0x00FFFFFFFFFFFFFF
@@ -114,7 +112,6 @@ class PessimisticTxnManager : public TransactionManager {
 
   void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
-
 
   cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
 };

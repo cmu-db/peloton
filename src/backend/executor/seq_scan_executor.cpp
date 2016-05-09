@@ -122,26 +122,20 @@ bool SeqScanExecutor::DExecute() {
 
       oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
-      // Print tile group visibility
-      // tile_group_header->PrintVisibility(txn_id, commit_id);
 
       // Construct position list by looping through tile group
       // and applying the predicate.
       std::vector<oid_t> position_list;
       for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-        // txn_id_t tuple_txn_id =
-        // tile_group_header->GetTransactionId(tuple_id);
-        // cid_t tuple_begin_cid =
-        // tile_group_header->GetBeginCommitId(tuple_id);
-        // cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+
+        ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
         // check transaction visibility
         if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
           // if the tuple is visible, then perform predicate evaluation.
           if (predicate_ == nullptr) {
             position_list.push_back(tuple_id);
-            auto res = transaction_manager.PerformRead(
-                tile_group->GetTileGroupId(), tuple_id);
+            auto res = transaction_manager.PerformRead(location);
             if (!res) {
               transaction_manager.SetTransactionResult(RESULT_FAILURE);
               return res;
@@ -153,8 +147,7 @@ bool SeqScanExecutor::DExecute() {
                             .IsTrue();
             if (eval == true) {
               position_list.push_back(tuple_id);
-              auto res = transaction_manager.PerformRead(
-                  tile_group->GetTileGroupId(), tuple_id);
+              auto res = transaction_manager.PerformRead(location);
               if (!res) {
                 transaction_manager.SetTransactionResult(RESULT_FAILURE);
                 return res;

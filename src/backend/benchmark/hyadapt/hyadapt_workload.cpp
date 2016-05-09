@@ -314,9 +314,7 @@ void RunDirectTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -475,7 +473,6 @@ void RunAggregateTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -621,7 +618,6 @@ void RunArithmeticTest() {
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -883,9 +879,7 @@ void RunInsertTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-
   planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
                                   bulk_insert_count);
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
@@ -1836,7 +1830,7 @@ void RunVersionExperiment() {
   for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    LOG_INFO("Offset : %lu", starting_tuple_offset);
+    LOG_INFO("Offset : %u", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while (prev_item_pointer.block != INVALID_OID) {
@@ -2074,11 +2068,7 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
 
-  auto bulk_insert_count = 1;
-
-  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info),
-                                  nullptr,
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(hyadapt_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -2152,8 +2142,8 @@ void RunConcurrencyExperiment() {
 
         LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        LOG_INFO("Scan count  : %lu", scan_ctr);
-        LOG_INFO("Insert count  : %lu", insert_ctr);
+        LOG_INFO("Scan count  : %u", scan_ctr);
+        LOG_INFO("Insert count  : %u", insert_ctr);
       }
     }
   }

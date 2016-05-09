@@ -579,18 +579,12 @@ void TestSend() {
         // it is not necessary to use smart point here
         auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
 
-        for (int i = 1; i < 10001; i++) {
-            peloton::networking::HeartbeatRequest request;
-            request.set_sender_site(i);
-            request.set_last_transaction_id(i*10);
+        for (int i = 1; i < 2; i++) {
+//            peloton::networking::HeartbeatRequest request;
+//            request.set_sender_site(i);
+//            request.set_last_transaction_id(i*10);
 
-            // it is not necessary to use smart point here
-            //auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_INTER);
-
-            //peloton::message::RpcClient client(PELOTON_ENDPOINT_ADDR);
-            //client.Heartbeat(&request, &response);
-
-            pclient->Heartbeat(&request, NULL);
+//            pclient->QueryPlan(&request, NULL);
         }
 
     } catch (std::exception& e) {
