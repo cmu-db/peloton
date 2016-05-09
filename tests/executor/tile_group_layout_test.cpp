@@ -137,7 +137,7 @@ void ExecuteTileGroupTest() {
     ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
-    txn_manager.PerformInsert(tuple_slot_id.block, tuple_slot_id.offset);
+    txn_manager.PerformInsert(tuple_slot_id);
   }
 
   txn_manager.CommitTransaction();

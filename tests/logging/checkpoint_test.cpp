@@ -128,7 +128,7 @@ oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
 
 TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  txn_manager.BeginTransaction();
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -137,7 +137,7 @@ TEST_F(CheckpointTests, BasicCheckpointCreationTest) {
   // table has 3 tile groups
   std::unique_ptr<storage::DataTable> target_table(
       ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(txn, target_table.get(),
+  ExecutorTestsUtil::PopulateTable(target_table.get(),
                                    tile_group_size * table_tile_group_count,
                                    false, false, false);
   txn_manager.CommitTransaction();

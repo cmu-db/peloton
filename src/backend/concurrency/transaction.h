@@ -77,18 +77,6 @@ class Transaction : public Printable {
 
   inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
 
-  // record read set
-  void RecordRead(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  // record write set
-  void RecordUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  // record insert set
-  void RecordInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
-
-  // record delete set
-  void RecordDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
-
   void RecordRead(const ItemPointer &);
 
   void RecordUpdate(const ItemPointer &);

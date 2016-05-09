@@ -106,7 +106,7 @@ class LogManager {
 
   void ResetFrontendLogger();
 
-  void LogBeginTransaction(oid_t commit_id);
+  void LogBeginTransaction(cid_t commit_id);
 
   void LogUpdate(concurrency::Transaction *curr_txn, cid_t commit_id,
                  ItemPointer &old_version, ItemPointer &new_version);
@@ -114,9 +114,9 @@ class LogManager {
   void LogInsert(concurrency::Transaction *curr_txn, cid_t commit_id,
                  ItemPointer &new_location);
 
-  void LogDelete(oid_t commit_id, ItemPointer &delete_location);
+  void LogDelete(cid_t commit_id, ItemPointer &delete_location);
 
-  void LogCommitTransaction(oid_t commit_id);
+  void LogCommitTransaction(cid_t commit_id);
 
  private:
   LogManager();

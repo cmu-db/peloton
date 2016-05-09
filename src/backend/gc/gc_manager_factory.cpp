@@ -2,22 +2,16 @@
 //
 //                         Peloton
 //
-// plan_util.h
+// gc_manager_factory.cpp
 //
-// Identification: src/backend/planner/plan_util.h
+// Identification: src/backend/concurrency/gc_manager_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
-
-#include "backend/planner/abstract_plan.h"
+#include "gc_manager_factory.h"
 
 namespace peloton {
-namespace planner {
-
-AbstractPlan *GetEmptyPlanNode(PlanNodeType type);
-
-}  // namespace planner
-}  // namespace peloton
+namespace gc { GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF; }
+}

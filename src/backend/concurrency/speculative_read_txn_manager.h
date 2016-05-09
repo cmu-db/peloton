@@ -54,7 +54,7 @@ struct SpecTxnContext {
   // whether the inner dependent set is still changeable.
   volatile bool inner_dep_set_changeable_;
 
-  std::atomic<size_t> outer_dep_count_;   // default: 0
+  std::atomic<size_t> outer_dep_count_;            // default: 0
   volatile std::atomic<bool> is_cascading_abort_;  // default: false
 };
 
@@ -87,20 +87,19 @@ class SpeculativeReadTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
 
-  virtual void SetOwnership(const oid_t &tile_group_id, const oid_t &tuple_id);
-  virtual bool PerformInsert(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformInsert(const ItemPointer &location);
 
-  virtual bool PerformRead(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual bool PerformRead(const ItemPointer &location);
 
-  virtual bool PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformUpdate(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual bool PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id,
+  virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location);
 
-  virtual void PerformUpdate(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformUpdate(const ItemPointer &location);
 
-  virtual void PerformDelete(const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void PerformDelete(const ItemPointer &location);
 
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
@@ -196,7 +195,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+          .update_fn(child_txn_id, [](SpecTxnContext * context) {
         assert(context->outer_dep_count_ > 0);
         context->outer_dep_count_--;
       });
@@ -211,7 +210,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-      .update_fn(child_txn_id, [](SpecTxnContext * context) {
+          .update_fn(child_txn_id, [](SpecTxnContext * context) {
         assert(context->outer_dep_count_ > 0);
         context->is_cascading_abort_ = true;
       });
