@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// counter_metric.h
+// index_metric.h
 //
-// Identification: src/backend/statistics/counter_metric.h
+// Identification: src/backend/statistics/index_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -35,7 +35,7 @@ namespace stats {
 
 
 /**
- * Metric as a counter. E.g. # txns committed
+ * Metric of index accesses
  */
 class IndexMetric : public AbstractMetric {
  public:

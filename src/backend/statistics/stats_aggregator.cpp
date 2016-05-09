@@ -56,6 +56,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
   aggregated_stats_.Aggregate(stats_history_);
   printf("%s", aggregated_stats_.ToString().c_str());
+
   int64_t current_txns_committed = 0;
   // Traverse the metric of all threads to get the total number of committed txns.
   for (auto database_item : aggregated_stats_.database_metrics_) {

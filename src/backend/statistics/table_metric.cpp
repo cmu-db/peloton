@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// counter_metric.cpp
+// table_metric.cpp
 //
-// Identification: src/backend/statistics/counter_metric.cpp
+// Identification: src/backend/statistics/table_metric.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

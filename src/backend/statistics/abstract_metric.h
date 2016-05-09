@@ -44,11 +44,13 @@ class AbstractMetric {
   }
 
   virtual void Reset() = 0;
+
   virtual std::string ToString() = 0;
 
   virtual void Aggregate(AbstractMetric &source) = 0;
 
  private:
+  // The type this metric belongs to
   MetricType type_;
 
 };
