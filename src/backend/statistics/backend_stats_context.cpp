@@ -30,7 +30,8 @@ namespace peloton {
 namespace stats {
 
 
-BackendStatsContext::BackendStatsContext() {
+BackendStatsContext::BackendStatsContext(size_t max_latency_history) :
+    txn_latencies_(LATENCY_METRIC, max_latency_history) {
   std::thread::id this_id = std::this_thread::get_id();
   thread_id = this_id;
 }
@@ -64,6 +65,7 @@ void BackendStatsContext::Aggregate(BackendStatsContext &source_) {
     GetIndexMetric(access_item.second->GetDatabaseId(), access_item.second->GetTableId(),
         access_item.second->GetIndexId())->Aggregate(*access_item.second);
   }
+  txn_latencies_.Aggregate(source_.txn_latencies_);
 }
 
 

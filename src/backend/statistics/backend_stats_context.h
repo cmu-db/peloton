@@ -25,6 +25,7 @@
 #include "backend/statistics/counter_metric.h"
 #include "backend/statistics/database_metric.h"
 #include "backend/statistics/index_metric.h"
+#include "backend/statistics/latency_metric.h"
 #include "backend/statistics/table_metric.h"
 #include "backend/storage/database.h"
 
@@ -43,7 +44,7 @@ namespace stats {
 class BackendStatsContext {
  public:
 
-  BackendStatsContext();
+  BackendStatsContext(size_t max_latency_history);
   ~BackendStatsContext();
 
   inline std::thread::id GetThreadId() {
@@ -74,6 +75,10 @@ class BackendStatsContext {
     return index_metrics_[index_key];
   }
 
+  inline LatencyMetric& GetTxnLatencyMetric() {
+    return txn_latencies_;
+  }
+
   void Aggregate(BackendStatsContext &source);
 
   inline bool operator==(const BackendStatsContext &other) {
@@ -87,6 +92,8 @@ class BackendStatsContext {
   }
 
   inline void Reset() {
+    txn_latencies_.Reset();
+
     for (auto& database_item : database_metrics_) {
       database_item.second->Reset();
     }
@@ -138,6 +145,8 @@ class BackendStatsContext {
   inline std::string ToString() {
     std::stringstream ss;
 
+    ss << txn_latencies_.ToString() << std::endl;
+
     for (auto database_item : database_metrics_) {
       oid_t database_id = database_item.second->GetDatabaseId();
       ss << database_item.second->ToString();
@@ -183,6 +192,7 @@ class BackendStatsContext {
 
  private:
   std::thread::id thread_id;
+  LatencyMetric txn_latencies_;
 
 };
 

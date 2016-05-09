@@ -12,7 +12,8 @@ statistics_FILES = \
 			   backend/statistics/access_metric.cpp \
 			   backend/statistics/database_metric.cpp \
 			   backend/statistics/table_metric.cpp \
-			   backend/statistics/index_metric.cpp
+			   backend/statistics/index_metric.cpp \
+			   backend/statistics/latency_metric.cpp
 			   
 
 statistics_INCLUDES = \
