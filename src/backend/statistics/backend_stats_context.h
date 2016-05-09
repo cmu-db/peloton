@@ -39,7 +39,7 @@ namespace stats {
 
 
 /**
- * Context of backend stats as a singleton
+ * Context of backend stats as a singleton per thread
  */
 class BackendStatsContext {
  public:
@@ -79,6 +79,9 @@ class BackendStatsContext {
     return txn_latencies_;
   }
 
+  /**
+   * Aggregate another BackendStatsContext to myself
+   */
   void Aggregate(BackendStatsContext &source);
 
   inline bool operator==(const BackendStatsContext &other) {
@@ -91,6 +94,11 @@ class BackendStatsContext {
     return !(*this == other);
   }
 
+  /**
+   * Reset all metrics
+   * Including create new submetrics according to current database
+   * status.
+   */
   inline void Reset() {
     txn_latencies_.Reset();
 
@@ -109,11 +117,13 @@ class BackendStatsContext {
       auto database = catalog::Manager::GetInstance().GetDatabase(i);
       oid_t database_id = database->GetOid();
 
+      // Reset database metrics
       if (database_metrics_.find(database_id) == database_metrics_.end()) {
         database_metrics_[database_id] = new DatabaseMetric(
             DATABASE_METRIC, database_id);
       }
 
+      // Reset table metrics
       oid_t num_tables = database->GetTableCount();
       for (oid_t j = 0; j < num_tables; ++j) {
         auto table = database->GetTable(j);
@@ -126,6 +136,7 @@ class BackendStatsContext {
               database_id, table_id);
         }
 
+        // Reset indexes metrics
         oid_t num_indexes = table->GetIndexCount();
         for (oid_t k = 0; k < num_indexes; ++k) {
           auto index = table->GetIndex(k);
