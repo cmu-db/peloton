@@ -40,7 +40,7 @@ class AbstractMetric {
   virtual ~AbstractMetric();
 
   const inline MetricType& GetType() const {
-    return type;
+    return type_;
   }
 
   virtual void Reset() = 0;
@@ -49,7 +49,7 @@ class AbstractMetric {
   virtual void Aggregate(AbstractMetric &source) = 0;
 
  private:
-  MetricType type;
+  MetricType type_;
 
 };
 

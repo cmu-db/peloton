@@ -41,27 +41,27 @@ class CounterMetric : public AbstractMetric {
   CounterMetric(MetricType type);
 
   inline void Increment() {
-    count++;
+    count_++;
   }
 
-  inline void Increment(int64_t count_) {
-    count += count_;
+  inline void Increment(int64_t count) {
+    count_ += count;
   }
 
   inline void Decrement() {
-    count--;
+    count_--;
   }
 
   inline void Reset() {
-    count = 0;
+    count_ = 0;
   }
 
   inline int64_t GetCounter() {
-    return count;
+    return count_;
   }
 
   inline bool operator==(const CounterMetric &other) {
-    return count == other.count;
+    return count_ == other.count_;
   }
 
   inline bool operator!=(const CounterMetric &other) {
@@ -72,12 +72,12 @@ class CounterMetric : public AbstractMetric {
 
   inline std::string ToString() {
     std::stringstream ss;
-    ss << count;
+    ss << count_;
     return ss.str();
   }
 
  private:
-  int64_t count;
+  int64_t count_;
 
 };
 

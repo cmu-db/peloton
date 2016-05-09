@@ -38,6 +38,17 @@ BackendStatsContext::BackendStatsContext(size_t max_latency_history) :
 
 BackendStatsContext::~BackendStatsContext() {
   //peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
+  for (auto& database_item : database_metrics_) {
+    delete database_item.second;
+  }
+
+  for (auto& access_item : table_metrics_) {
+    delete access_item.second;
+  }
+
+  for (auto& access_item : index_metrics_) {
+    delete access_item.second;
+  }
 }
 
 void BackendStatsContext::Aggregate(BackendStatsContext &source_) {
@@ -45,12 +56,12 @@ void BackendStatsContext::Aggregate(BackendStatsContext &source_) {
     GetDatabaseMetric(database_item.first)->Aggregate(*database_item.second);
   }
 
-  for (auto access_item : source_.table_metrics_) {
+  for (auto& access_item : source_.table_metrics_) {
     GetTableMetric(access_item.second->GetDatabaseId(), access_item.second->GetTableId())
         ->Aggregate(*access_item.second);
   }
 
-  for (auto access_item : source_.index_metrics_) {
+  for (auto& access_item : source_.index_metrics_) {
     GetIndexMetric(access_item.second->GetDatabaseId(), access_item.second->GetTableId(),
         access_item.second->GetIndexId())->Aggregate(*access_item.second);
   }
