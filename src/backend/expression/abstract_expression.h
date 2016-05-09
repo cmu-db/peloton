@@ -21,12 +21,10 @@
 #include "backend/common/types.h"
 #include "backend/common/planner_dom_value.h"
 #include "backend/common/printable.h"
+#include "backend/common/assert.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"
-
-#include <json_spirit.h>
-#include "boost/shared_ptr.hpp"
 
 namespace peloton {
 
@@ -91,10 +89,6 @@ class AbstractExpression : public Printable {
 
   const AbstractExpression *GetRight() const { return m_right; }
 
-  // create an expression tree. call this once with the input
-  // stream positioned at the root expression node
-  static AbstractExpression *CreateExpressionTree(json_spirit::Object &obj);
-
   // Debugging methods - some various ways to create a sring
   //     describing the expression tree
   std::string Debug() const;
@@ -110,6 +104,24 @@ class AbstractExpression : public Printable {
   inline AbstractExpression *CopyUtil(
       const AbstractExpression *expression) const {
     return (expression == nullptr) ? nullptr : expression->Copy();
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  // Each sub-class will have to implement this function
+  // After the implementation for each sub-class, we should set it to pure virtual
+  //===--------------------------------------------------------------------===//
+  virtual bool SerializeTo(SerializeOutput &output) const {
+      ASSERT(&output != nullptr);
+      return false;
+  }
+  virtual bool DeserializeFrom(SerializeInputBE &input) {
+      ASSERT(&input != nullptr);
+      return false;
+  }
+
+  virtual int SerializeSize() {
+      return 0;
   }
 
  protected:
@@ -134,9 +146,6 @@ class AbstractExpression : public Printable {
 
  private:
   bool InitParamShortCircuits();
-
-  static AbstractExpression *CreateExpressionTreeRecurse(
-      json_spirit::Object &obj);
 };
 
 }  // End expression namespace

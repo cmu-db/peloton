@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include "backend/common/logger.h"
 
@@ -25,21 +26,31 @@ namespace ycsb {
 
 configuration state;
 
-std::ofstream out("outputfile.summary");
+std::ofstream out("outputfile.summary", std::ofstream::out);
 
-static void WriteOutput(double stat) {
+static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d :: %lf tps",
-           state.update_ratio,
-           state.scale_factor,
-           state.column_count,
-           stat);
+  LOG_INFO("%lf %d %d :: %lf tps, %lf", state.update_ratio, state.scale_factor,
+           state.column_count, state.throughput, state.abort_rate);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
-  out << state.column_count << " ";
-  out << stat << "\n";
+  out << state.column_count << "\n";
+
+  for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
+       ++round_id) {
+
+    out << "[" << std::setw(3) << std::left
+        << state.snapshot_duration * round_id << " - " << std::setw(3)
+        << std::left << state.snapshot_duration * (round_id + 1)
+        << " s]: " << state.snapshot_throughput[round_id] << " "
+        << state.snapshot_abort_rate[round_id] << "\n";
+  }
+
+  out << state.throughput << " ";
+  out << state.abort_rate << "\n";
   out.flush();
+  out.close();
 }
 
 // Main Entry Point
@@ -51,9 +62,9 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Run the workload
-  auto stat = RunWorkload();
+  RunWorkload();
 
-  WriteOutput(stat);
+  WriteOutput();
 }
 
 }  // namespace ycsb
@@ -61,8 +72,8 @@ void RunBenchmark() {
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-  peloton::benchmark::ycsb::ParseArguments(
-      argc, argv, peloton::benchmark::ycsb::state);
+  peloton::benchmark::ycsb::ParseArguments(argc, argv,
+                                           peloton::benchmark::ycsb::state);
 
   peloton::benchmark::ycsb::RunBenchmark();
 

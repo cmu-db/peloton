@@ -15,6 +15,7 @@
 #include <iterator>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -103,6 +104,9 @@ class LogicalTile : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
+  // Materialize and return a physical tile.
+  std::unique_ptr<storage::Tile> Materialize();
 
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator
@@ -276,6 +280,52 @@ class LogicalTile : public Printable {
  private:
   // Dummy default constructor
   LogicalTile(){};
+
+  //===--------------------------------------------------------------------===//
+  // Materialize utilities. We can make these public if it is necessary.
+  // TODO: We might refactor MaterializationExecutor using these functions in the future
+  //===--------------------------------------------------------------------===//
+
+  // Column-oriented materialization
+  void MaterializeColumnAtATime(
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      storage::Tile *dest_tile);
+
+  // Row-oriented materialization
+  void MaterializeRowAtAtATime(
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      storage::Tile *dest_tile);
+
+  /**
+   * @brief Does the actual copying of data into the new physical tile.
+   * @param tile_to_cols Map from base tile to columns in that tile
+   *        to be materialized.
+   * @param dest_tile New tile to copy data into.
+   */
+  void MaterializeByTiles(
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      storage::Tile *dest_tile);
+
+  /**
+   * @brief Generates map from each base tile to columns originally from that
+   *        base tile to be materialized.
+   * @param column_ids Ids of columns to be materialized.
+   * @param tile_to_cols Map to be populated with mappings from tile to columns.
+   *
+   * We generate this mapping so that we can materialize columns tile by tile for
+   * efficiency reasons.
+   */
+  void GenerateTileToColMap(
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+      std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+          cols_in_physical_tile);
+
+  //===--------------------------------------------------------------------===//
+  // Members
+  //===--------------------------------------------------------------------===//
 
   /**
    * @brief Mapping of column ids in this logical tile to the underlying
