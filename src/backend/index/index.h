@@ -216,8 +216,8 @@ class Index : public Printable {
   virtual size_t GetMemoryFootprint() = 0;
 
   // Get the indexed tile group offset
-  virtual oid_t GetIndexedTileGroupOff() {
-    return INVALID_OID;
+  virtual int GetIndexedTileGroupOff() {
+    return -1;
   }
 
   virtual void IncreamentIndexedTileGroupOff() {

@@ -158,15 +158,10 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   // SPECIAL CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
   bool special_case = false;
-  bool less_than = false;
   if (key_column_ids_itr != key_column_ids.end()) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
     if (IfConstructLowerBound(expr_types[offset])) {
       special_case = true;
-    }
-
-    if (IfConstructHigherBound(expr_types[offset])) {
-      less_than = true;
     }
   }
 
@@ -212,11 +207,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
             result.push_back(item_pointer);
           } else {
-            // we can stop scanning if we know cur value is not less_than given key.
-            if (less_than) {
-              break;
-            }
-
             // We can stop scanning if we know that all constraints are equal
             if (all_constraints_are_equal == true) {
               break;
@@ -303,15 +293,10 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   // SPECIAL CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
   bool special_case = false;
-  bool less_than = false;
   if (key_column_ids_itr != key_column_ids.end()) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
     if (IfConstructLowerBound(expr_types[offset])) {
       special_case = true;
-    }
-
-    if (IfConstructHigherBound(expr_types[offset])) {
-      less_than = true;
     }
   }
 
@@ -355,11 +340,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
             ItemPointer *location_header = scan_itr->second;
             result.push_back(location_header);
           } else {
-            // we can stop scanning if we know cur value is not less_than given key.
-            if (less_than) {
-              break;
-            }
-
             // We can stop scanning if we know that all constraints are equal
             if (all_constraints_are_equal == true) {
               break;
