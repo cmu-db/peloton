@@ -111,7 +111,7 @@ TEST_F(LoaderTests, LoadingTest) {
 
   // Control the scale
   oid_t loader_threads_count = 2;
-  oid_t tilegroup_count_per_loader = 10;
+  oid_t tilegroup_count_per_loader = 1;
 
   // Each tuple size ~40 B.
   oid_t tuple_size = 41;
@@ -130,7 +130,7 @@ TEST_F(LoaderTests, LoadingTest) {
 
   EXPECT_EQ(data_table->GetTileGroupCount(), expected_tile_group_count);
 
-  LOG_INFO("Dataset size : %lu MB \n",
+  LOG_INFO("Dataset size : %u MB \n",
            (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
            bytes_to_megabytes_converter);
 }

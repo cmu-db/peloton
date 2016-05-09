@@ -396,7 +396,7 @@ WriteBehindFrontendLogger::SetInsertCommitMark(ItemPointer location) {
 
   // Set the commit mark
   tile_group_header->SetInsertCommit(location.offset, true);
-  LOG_TRACE("<%p, %lu> : slot is insert committed", tile_group.get(),
+  LOG_TRACE("<%p, %u> : slot is insert committed", tile_group.get(),
             location.offset);
 
   // Update max oid
@@ -418,7 +418,7 @@ WriteBehindFrontendLogger::SetDeleteCommitMark(ItemPointer location) {
 
   // Set the commit mark
   tile_group_header->SetDeleteCommit(location.offset, true);
-  LOG_TRACE("<%p, %lu> : slot is delete committed", tile_group.get(),
+  LOG_TRACE("<%p, %u> : slot is delete committed", tile_group.get(),
             location.offset);
 
   // Update max oid
@@ -518,7 +518,7 @@ void WriteBehindFrontendLogger::DoRecovery() {
       WriteTransactionLogRecord(
           TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
 
-      LOG_INFO("Recovery_log_record_count : %lu", recovery_log_record_count);
+      LOG_INFO("Recovery_log_record_count : %u", recovery_log_record_count);
     }
 
     // After finishing recovery, set the next oid with maximum oid

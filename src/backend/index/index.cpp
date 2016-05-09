@@ -154,20 +154,20 @@ bool Index::ConstructLowerBoundTuple(
         placeholder = true;
         value = values[offset];
       }
-      // Not all expressions / constraints are equal
-      else {
+          // Not all expressions / constraints are equal
+          else {
         all_constraints_equal = false;
       }
     }
 
-    LOG_TRACE("Column itr : %lu  Placeholder : %d ", column_itr, placeholder);
+    LOG_TRACE("Column itr : %u  Placeholder : %d ", column_itr, placeholder);
 
     // Fill in the placeholder
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
     }
-    // Fill in the min value
-    else {
+        // Fill in the min value
+        else {
       auto value_type = schema->GetType(column_itr);
       index_key->SetValue(column_itr, Value::GetMinValue(value_type),
                           GetPool());

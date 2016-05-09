@@ -69,7 +69,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool);
 
-    planner::InsertPlan node(table, nullptr, tuple);
+    planner::InsertPlan node(table, std::move(tuple));
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
@@ -92,7 +92,7 @@ void UpdateTuple(storage::DataTable *table) {
   planner::ProjectInfo::DirectMapList direct_map_list;
   target_list.emplace_back(
       2, expression::ExpressionUtil::ConstantValueFactory(update_val));
-  LOG_INFO("%lu", target_list.at(0).first);
+  LOG_INFO("%u", target_list.at(0).first);
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
@@ -187,10 +187,9 @@ TEST_F(MutateTests, StressTests) {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
-  storage::Tuple *tuple;
-  tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
+  auto null_tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
-  planner::InsertPlan node(table, nullptr, tuple);
+  planner::InsertPlan node(table, std::move(null_tuple));
   executor::InsertExecutor executor(&node, context.get());
 
   try {
@@ -199,8 +198,8 @@ TEST_F(MutateTests, StressTests) {
     LOG_ERROR("%s", ce.what());
   }
 
-  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
-  planner::InsertPlan node2(table, nullptr, tuple);
+  auto non_empty_tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
+  planner::InsertPlan node2(table, std::move(non_empty_tuple));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
@@ -223,6 +222,7 @@ TEST_F(MutateTests, StressTests) {
   LOG_INFO("---------------------------------------------");
 
   LaunchParallelTest(1, DeleteTuple, table);
+
   LOG_TRACE("%s",table->GetInfo().c_str());
 
   // PRIMARY KEY
@@ -279,7 +279,7 @@ TEST_F(MutateTests, InsertTest) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  planner::InsertPlan node(dest_data_table.get(), nullptr);
+  planner::InsertPlan node(dest_data_table.get());
   executor::InsertExecutor executor(&node, context.get());
 
   MockExecutor child_executor;

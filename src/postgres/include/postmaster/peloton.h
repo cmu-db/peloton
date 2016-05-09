@@ -14,6 +14,7 @@
 #define PELOTON_H
 
 #include "backend/common/types.h"
+#include "backend/common/serializer.h"
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/planner/abstract_plan.h"
 #include "backend/bridge/dml/mapper/dml_utils.h"
@@ -28,6 +29,7 @@
 //===--------------------------------------------------------------------===//
 
 extern LoggingType peloton_logging_mode;
+extern GCType peloton_gc_mode;
 
 //===--------------------------------------------------------------------===//
 // Peloton_Status     Sent by the peloton to share the status with backend.
@@ -45,6 +47,12 @@ typedef struct peloton_status {
     m_result = peloton::RESULT_SUCCESS;
     m_result_slots = nullptr;
   }
+
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  //===--------------------------------------------------------------------===//
+  bool SerializeTo(peloton::SerializeOutput &output);
+  bool DeserializeFrom(peloton::SerializeInputBE &input);
 
 } peloton_status;
 
@@ -64,7 +72,7 @@ extern void peloton_bootstrap();
 
 extern void peloton_ddl(Node *parsetree);
 
-extern void peloton_dml(PlanState *planstate,
+extern void peloton_dml(const PlanState *planstate,
                         bool sendTuples,
                         DestReceiver *dest,
                         TupleDesc tuple_desc,
