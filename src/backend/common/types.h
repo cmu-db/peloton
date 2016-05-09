@@ -798,6 +798,12 @@ struct ItemPointer {
 
 extern ItemPointer INVALID_ITEMPOINTER;
 
+struct ItemPointerHasher {
+ size_t operator() (const ItemPointer &item) const {
+    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset); 
+ }
+};
+
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//

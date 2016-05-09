@@ -82,7 +82,7 @@ private:
 
   bool key_ready_ = false;
 
-  std::set<ItemPointer> item_pointers_;
+  std::unordered_set<ItemPointer, ItemPointerHasher> item_pointers_;
 };
 
 
