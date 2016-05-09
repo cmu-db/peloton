@@ -27,32 +27,40 @@ void Usage(FILE* out) {
   fprintf(out,
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -l --logging-type      :  Logging type \n"
+          "   -a --asynchronous-mode :  Asynchronous mode \n"
+          "   -b --backend-count     :  Backend count \n"
+          "   -c --column-count      :  # of columns \n"
+          "   -d --flush-mode        :  Flush mode \n"
+          "   -e --experiment-type   :  Experiment Type \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
-          "   -e --experiment_type   :  Experiment Type \n"
-          "   -w --wait-timeout      :  Wait timeout (us) \n"
           "   -h --help              :  Print help message \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -t --transactions      :  # of transactions \n"
-          "   -c --column_count      :  # of columns \n"
-          "   -u --write-ratio       :  Fraction of updates \n"
-          "   -b --backend-count     :  Backend count \n"
+          "   -l --logging-type      :  Logging type \n"
+          "   -n --nvm-latency       :  NVM latency \n"
+          "   -p --pcommit-latency   :  pcommit latency \n"
           "   -s --skew              :  Skew \n"
+          "   -t --transactions      :  # of transactions \n"
+          "   -u --write-ratio       :  Fraction of updates \n"
+          "   -w --wait-timeout      :  Wait timeout (us) \n"
           "   -y --benchmark_type    :  Benchmark type \n"
   );
 }
 
 static struct option opts[] = {
-    {"logging-type", optional_argument, NULL, 'l'},
-    {"data-file-size", optional_argument, NULL, 'f'},
-    {"experiment-type", optional_argument, NULL, 'e'},
-    {"wait-timeout", optional_argument, NULL, 'w'},
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"transactions", optional_argument, NULL, 't'},
-    {"column_count", optional_argument, NULL, 'c'},
-    {"update_ratio", optional_argument, NULL, 'u'},
+    {"asynchronous_mode", optional_argument, NULL, 'a'},
     {"backend_count", optional_argument, NULL, 'b'},
+    {"column_count", optional_argument, NULL, 'c'},
+    {"flush_mode", optional_argument, NULL, 'd'},
+    {"experiment-type", optional_argument, NULL, 'e'},
+    {"data-file-size", optional_argument, NULL, 'f'},
+    {"scale-factor", optional_argument, NULL, 'k'},
+    {"logging-type", optional_argument, NULL, 'l'},
+    {"nvm-latency", optional_argument, NULL, 'n'},
+    {"pcommit-latency", optional_argument, NULL, 'p'},
     {"skew", optional_argument, NULL, 's'},
+    {"transactions", optional_argument, NULL, 't'},
+    {"update_ratio", optional_argument, NULL, 'u'},
+    {"wait-timeout", optional_argument, NULL, 'w'},
     {"benchmark_type", optional_argument, NULL, 'y'},
     {NULL, 0, NULL, 0}};
 
@@ -151,6 +159,39 @@ static void ValidateWaitTimeout(
       << " : " << state.wait_timeout << std::endl;
 }
 
+static void ValidateFlushMode(
+    const configuration& state) {
+  if (state.flush_mode <= 0 || state.flush_mode >= 3) {
+    std::cout << "Invalid flush_mode :: " << state.flush_mode << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "flush_mode "
+      << " : " << state.flush_mode << std::endl;
+}
+
+static void ValidateNVMLatency(
+    const configuration& state) {
+  if (state.nvm_latency < 0) {
+    std::cout << "Invalid nvm_latency :: " << state.nvm_latency << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "nvm_latency "
+      << " : " << state.nvm_latency << std::endl;
+}
+
+static void ValidatePCOMMITLatency(
+    const configuration& state) {
+  if (state.pcommit_latency < 0) {
+    std::cout << "Invalid pcommit_latency :: " << state.pcommit_latency << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::cout << std::setw(20) << std::left << "pcommit_latency "
+      << " : " << state.pcommit_latency << std::endl;
+}
+
 static void ValidateTransactionCount(const configuration &state) {
   if (state.transaction_count <= 0) {
     std::cout << "Invalid transaction_count :: " << state.transaction_count
@@ -213,6 +254,9 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   state.wait_timeout = 200;
   state.benchmark_type = BENCHMARK_TYPE_YCSB;
   state.transaction_count = 100;
+  state.flush_mode = 2;
+  state.nvm_latency = 0;
+  state.pcommit_latency = 0;
 
   // Default Values
   ycsb::state.scale_factor = 1;
@@ -226,7 +270,7 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahl:f:e:w:k:t:c:u:b:s:y:", opts, &idx);
+    int c = getopt_long(argc, argv, "ab:c:e:d:f:hk:l:n:p:s:t:u:w:y:", opts, &idx);
 
     if (c == -1) break;
 
@@ -245,6 +289,15 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
         break;
       case 'y':
         state.benchmark_type = (BenchmarkType)atoi(optarg);
+        break;
+      case 'd':
+        state.flush_mode = atoi(optarg);
+        break;
+      case 'n':
+        state.nvm_latency = atoi(optarg);
+        break;
+      case 'p':
+        state.pcommit_latency = atoi(optarg);
         break;
 
         // YCSB
@@ -288,6 +341,9 @@ void ParseArguments(int argc, char* argv[], configuration &state) {
   ValidateExperimentType(state);
   ValidateBenchmarkType(state);
   ValidateTransactionCount(state);
+  ValidateFlushMode(state);
+  ValidateNVMLatency(state);
+  ValidatePCOMMITLatency(state);
 
   // Print configuration
   ycsb::ValidateScaleFactor(ycsb::state);
