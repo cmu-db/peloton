@@ -197,7 +197,8 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound, const 
       constant_value_expr_right);
  
   expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND, predicate_left, predicate_right);
+      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                     predicate_left, predicate_right);
  
   return predicate;
 }
@@ -247,10 +248,26 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
+  Value lower_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar);
+  Value higher_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar +
+                                                       tile_group * tuples_per_tile_group * (1.0 - scalar));
+
   while (executor->Execute() == true) {
       std::unique_ptr<executor::LogicalTile> result_tile(
         executor->GetOutput());
       tuple_counts += result_tile->GetTupleCount();
+
+      for (auto iter = result_tile->begin(); iter != result_tile->end(); iter++) {
+        oid_t tuple_id = *iter;
+        // Get key value of tuple
+        Value key_value= result_tile->GetValue(tuple_id, 0);
+
+        EXPECT_TRUE(key_value.Compare(lower_bound) == VALUE_COMPARE_EQUAL ||
+                      key_value.Compare(lower_bound) == VALUE_COMPARE_GREATERTHAN);
+        EXPECT_TRUE(key_value.Compare(higher_bound) == VALUE_COMPARE_EQUAL ||
+                    key_value.Compare(higher_bound) == VALUE_COMPARE_LESSTHAN);
+      }
+
       result_tiles.emplace_back(result_tile.release());
   }
 
@@ -263,7 +280,7 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
 //  EXPECT_EQ(tuple_counts, (tile_group * tuples_per_tile_group * 0.3) + 1);
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * scalar + 0));
+              (tile_group * tuples_per_tile_group * scalar));
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
