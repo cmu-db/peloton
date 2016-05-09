@@ -568,7 +568,6 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
 
 AbstractExpression *ExpressionUtil::CastFactory(ValueType vt,
                                                 AbstractExpression *lc) {
-  //return new OperatorCastExpression(vt, lc);
   return new CastExpression(vt, lc);
 }
 
