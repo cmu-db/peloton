@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// counter_metric.h
+// access_metric.h
 //
-// Identification: src/backend/statistics/counter_metric.h
+// Identification: src/backend/statistics/access_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,40 +12,35 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
 #include <vector>
 
 #include "backend/common/types.h"
 #include "backend/statistics/abstract_metric.h"
 #include "backend/statistics/counter_metric.h"
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-
 namespace peloton {
 namespace stats {
 
-
 /**
- * Metric as a counter. E.g. # txns committed
+ * Metric that counts the number of reads, updates,
+ * inserts, and deletes for a given storage type
+ * (e.g. index or table).
  */
 class AccessMetric : public AbstractMetric {
  public:
-
-  static const size_t READ_COUNTER   = 0;
+  static const size_t READ_COUNTER = 0;
   static const size_t UPDATE_COUNTER = 1;
   static const size_t INSERT_COUNTER = 2;
   static const size_t DELETE_COUNTER = 3;
-  static const size_t NUM_COUNTERS   = 4;
+  static const size_t NUM_COUNTERS = 4;
 
-  AccessMetric(MetricType type) : AbstractMetric(type) { }
+  AccessMetric(MetricType type) : AbstractMetric(type) {}
 
-  inline void IncrementReads() {
-    access_counters_[READ_COUNTER].Increment();
-  }
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
+  inline void IncrementReads() { access_counters_[READ_COUNTER].Increment(); }
 
   inline void IncrementUpdates() {
     access_counters_[UPDATE_COUNTER].Increment();
@@ -75,17 +70,29 @@ class AccessMetric : public AbstractMetric {
     access_counters_[DELETE_COUNTER].Increment(count);
   }
 
-  inline int64_t GetReads()   { return access_counters_[READ_COUNTER].GetCounter(); }
+  inline int64_t GetReads() {
+    return access_counters_[READ_COUNTER].GetCounter();
+  }
 
-  inline int64_t GetUpdates() { return access_counters_[UPDATE_COUNTER].GetCounter(); }
+  inline int64_t GetUpdates() {
+    return access_counters_[UPDATE_COUNTER].GetCounter();
+  }
 
-  inline int64_t GetInserts() { return access_counters_[INSERT_COUNTER].GetCounter(); }
+  inline int64_t GetInserts() {
+    return access_counters_[INSERT_COUNTER].GetCounter();
+  }
 
-  inline int64_t GetDeletes() { return access_counters_[DELETE_COUNTER].GetCounter(); }
+  inline int64_t GetDeletes() {
+    return access_counters_[DELETE_COUNTER].GetCounter();
+  }
 
-  inline CounterMetric& GetAccessCounter(size_t counter_type) {
+  inline CounterMetric &GetAccessCounter(size_t counter_type) {
     return access_counters_[counter_type];
   }
+
+  //===--------------------------------------------------------------------===//
+  // HELPER METHODS
+  //===--------------------------------------------------------------------===//
 
   inline bool operator==(const AccessMetric &other) {
     for (size_t i = 0; i < access_counters_.size(); ++i) {
@@ -100,35 +107,39 @@ class AccessMetric : public AbstractMetric {
     return !(*this == other);
   }
 
+  // Resets all access counters to zero
   inline void Reset() {
-    for (auto& counter : access_counters_) {
+    for (auto &counter : access_counters_) {
       counter.Reset();
     }
   }
 
-
+  // Returns a string representation of this access metric
   inline std::string ToString() {
     std::stringstream ss;
-    ss << "[ reads=" << access_counters_[READ_COUNTER].ToString()   <<
-        ", updates=" << access_counters_[UPDATE_COUNTER].ToString() <<
-        ", inserts=" << access_counters_[INSERT_COUNTER].ToString() <<
-        ", deletes=" << access_counters_[DELETE_COUNTER].ToString() <<
-        " ]";
+    ss << "[ reads=" << access_counters_[READ_COUNTER].ToString()
+       << ", updates=" << access_counters_[UPDATE_COUNTER].ToString()
+       << ", inserts=" << access_counters_[INSERT_COUNTER].ToString()
+       << ", deletes=" << access_counters_[DELETE_COUNTER].ToString() << " ]";
     return ss.str();
   }
 
-  // Aggregate another AccessMetric to myself
+  // Adds the counters from the source access metric to the counters
+  // in this access metric
   void Aggregate(AbstractMetric &source);
 
  private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-  std::vector<CounterMetric> access_counters_ {
-    CounterMetric(COUNTER_METRIC),  // READ_COUNTER
-    CounterMetric(COUNTER_METRIC),  // UPDATE_COUNTER
-    CounterMetric(COUNTER_METRIC),  // INSERT_COUNTER
-    CounterMetric(COUNTER_METRIC)   // DELETE_COUNTER
+  // Vector containing all access types
+  std::vector<CounterMetric> access_counters_{
+      CounterMetric(COUNTER_METRIC),  // READ_COUNTER
+      CounterMetric(COUNTER_METRIC),  // UPDATE_COUNTER
+      CounterMetric(COUNTER_METRIC),  // INSERT_COUNTER
+      CounterMetric(COUNTER_METRIC)   // DELETE_COUNTER
   };
-
 };
 
 }  // namespace stats

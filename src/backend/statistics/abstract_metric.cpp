@@ -10,24 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <mutex>
-#include <map>
-#include <vector>
-
 #include "backend/statistics/abstract_metric.h"
-
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
 
 namespace peloton {
 namespace stats {
 
-
-AbstractMetric::AbstractMetric(MetricType type) {
-    type_ = type;
-}
+AbstractMetric::AbstractMetric(MetricType type) { type_ = type; }
 
 AbstractMetric::~AbstractMetric() {}
 

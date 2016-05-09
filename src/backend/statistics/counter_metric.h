@@ -12,53 +12,41 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
-#include <vector>
-#include <iostream>
 #include <string>
 #include <sstream>
-
 
 #include "backend/common/types.h"
 #include "backend/statistics/abstract_metric.h"
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-
 namespace peloton {
 namespace stats {
 
-
 /**
- * Metric as a counter. E.g. # txns committed
+ * Metric as a counter. E.g. # txns committed, # tuples read, etc.
  */
 class CounterMetric : public AbstractMetric {
  public:
-
   CounterMetric(MetricType type);
 
-  inline void Increment() {
-    count_++;
-  }
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-  inline void Increment(int64_t count) {
-    count_ += count;
-  }
+  inline void Increment() { count_++; }
 
-  inline void Decrement() {
-    count_--;
-  }
+  inline void Increment(int64_t count) { count_ += count; }
 
-  inline void Reset() {
-    count_ = 0;
-  }
+  inline void Decrement() { count_--; }
 
-  inline int64_t GetCounter() {
-    return count_;
-  }
+  inline void Decrement(int64_t count) { count_ -= count; }
+
+  //===--------------------------------------------------------------------===//
+  // HELPER METHODS
+  //===--------------------------------------------------------------------===//
+
+  inline void Reset() { count_ = 0; }
+
+  inline int64_t GetCounter() { return count_; }
 
   inline bool operator==(const CounterMetric &other) {
     return count_ == other.count_;
@@ -68,8 +56,10 @@ class CounterMetric : public AbstractMetric {
     return !(*this == other);
   }
 
+  // Adds the source counter to this counter
   void Aggregate(AbstractMetric &source);
 
+  // Returns a string representation of this counter
   inline std::string ToString() {
     std::stringstream ss;
     ss << count_;
@@ -77,8 +67,12 @@ class CounterMetric : public AbstractMetric {
   }
 
  private:
-  int64_t count_;
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
+  // The current count
+  int64_t count_;
 };
 
 }  // namespace stats
