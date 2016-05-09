@@ -66,6 +66,7 @@ static void WriteOutput(double value) {
       << state.nvm_latency << " "
       << state.pcommit_latency << " "
       << state.flush_mode << " "
+      << state.asynchronous_mode << " "
       " :: ";
 	std::cout << value << "\n";
 
@@ -91,6 +92,7 @@ static void WriteOutput(double value) {
   out << state.nvm_latency << " ";
   out << state.pcommit_latency << " ";
   out << state.flush_mode << " ";
+  out << state.asynchronous_mode << " ";
   out << value << "\n";
 	out.flush();
 }
