@@ -23,7 +23,6 @@
 namespace peloton {
 namespace stats {
 
-
 TableMetric::TableMetric(MetricType type, oid_t database_id,
     oid_t table_id) : AbstractMetric(type) {
   database_id_ = database_id;

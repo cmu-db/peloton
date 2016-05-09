@@ -714,7 +714,8 @@ enum MetricType {
   LIFETIME_METRIC = 3,
   DATABASE_METRIC = 4,
   TABLE_METRIC    = 5,
-  INDEX_METRIC    = 6
+  INDEX_METRIC    = 6,
+  LATENCY_METRIC  = 7
 };
 
 //===--------------------------------------------------------------------===//

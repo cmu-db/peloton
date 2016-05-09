@@ -24,13 +24,11 @@ namespace stats {
 // Each thread gets a backend logger
 thread_local BackendStatsContext* backend_stats_context = nullptr;
 
-StatsAggregator::StatsAggregator() {
+StatsAggregator::StatsAggregator() :
+    stats_history(0),
+    aggregated_stats(LATENCY_MAX_HISTORY_AGGREGATOR) {
   thread_number = 0;
-
-  total_prev_txn_committed = 0;
-
   ofs.open (peloton_stats_directory, std::ofstream::out);
-
   aggregator_thread = std::thread(&StatsAggregator::RunAggregator, this);
 }
 
@@ -47,6 +45,7 @@ void StatsAggregator::RunAggregatorOnce() {
     int64_t interval_cnt_ = 0;
     double alpha = 0.4;
     double weighted_avg_throughput = 0.0;
+    int64_t total_prev_txn_committed = 0;
 
     interval_cnt_++;
     printf("\n////////////////////////////////////////////////////////////////////////////////////////////////////////////\n");
@@ -93,6 +92,7 @@ void StatsAggregator::RunAggregator() {
   int64_t interval_cnt_ = 0;
   double alpha = 0.4;
   double weighted_avg_throughput = 0.0;
+  int64_t total_prev_txn_committed = 0;
 
   while (exec_finished.wait_for(lck,
        std::chrono::milliseconds(STATS_AGGREGATION_INTERVAL_MS)) == std::cv_status::timeout
@@ -159,7 +159,7 @@ BackendStatsContext *StatsAggregator::GetBackendStatsContext() {
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_stats_context == nullptr) {
-    backend_stats_context = new BackendStatsContext();
+    backend_stats_context = new BackendStatsContext(LATENCY_MAX_HISTORY_THREAD);
 
     RegisterContext(backend_stats_context->GetThreadId(), backend_stats_context);
 
