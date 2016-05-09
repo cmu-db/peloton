@@ -202,8 +202,8 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
 
-  oid_t tile_group_id = old_location.block;
   // Increment table update op stats
+  oid_t tile_group_id = old_location.block;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
     oid_t table_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetTableId();
@@ -212,8 +212,6 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
     peloton::stats::backend_stats_context->GetTableMetric(
         database_id, table_id)->GetTableAccess().IncrementUpdates();
   }
-
-  return true;
 }
 
 // this function is invoked when it is NOT the first time to update the tuple.
@@ -278,8 +276,8 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   // Add the old tuple into the delete set
   current_txn->RecordDelete(old_location);
 
-  oid_t tile_group_id = old_location.block;
   // Increment table delete op stats
+  oid_t tile_group_id = old_location.block;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
     oid_t table_id = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetTableId();
@@ -288,8 +286,6 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
     peloton::stats::backend_stats_context->GetTableMetric(
         database_id, table_id)->GetTableAccess().IncrementDeletes();
   }
-
-  return true;
 }
 
 void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
