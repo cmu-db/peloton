@@ -63,6 +63,16 @@ class configuration {
 
   // # of times to run transaction
   unsigned long transaction_count;
+
+  // clflush or clwb
+  int flush_mode;
+
+  // nvm latency
+  int64_t nvm_latency;
+
+  // pcommit latency
+  int64_t pcommit_latency;
+
 };
 
 void Usage(FILE *out);
