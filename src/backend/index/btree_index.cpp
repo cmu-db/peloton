@@ -25,7 +25,8 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
     : Index(metadata),
       container(KeyComparator(metadata)),
       equals(metadata),
-      comparator(metadata) {}
+      comparator(metadata),
+      indexed_tile_group_offset_(-1) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
