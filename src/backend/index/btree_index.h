@@ -78,11 +78,13 @@ class BTreeIndex : public Index {
   size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
 
   int GetIndexedTileGroupOff() {
+    // printf("Get indexed_tile_group_offset_ %d\n", indexed_tile_group_offset_.load());
     return indexed_tile_group_offset_.load();
   }
 
   void IncreamentIndexedTileGroupOff() {
     indexed_tile_group_offset_++;
+    //printf("Increase to indexed_tile_group_offset_ to %d\n", indexed_tile_group_offset_.load());
   }
 
  protected:

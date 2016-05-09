@@ -413,6 +413,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
+  // std::cout << "start_tile_group_count " << start_tile_group_count << " total count " << table_tile_group_count << std::endl;
   while (start_tile_group_count < table_tile_group_count) {
     auto tile_group =
       table->GetTileGroup(start_tile_group_count++);
@@ -425,13 +426,12 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
 
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
-    printf("finsih index %d\n", start_tile_group_count);
+    // printf("finsih index %d\n", start_tile_group_count);
     index->IncreamentIndexedTileGroupOff();
-    start_tile_group_count++;
   }
 }
 
-/*TEST_F(HybridIndexTests, SeqScanTest) {
+TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -449,7 +449,6 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
-*/
 
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -479,7 +478,6 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table.get());
 
   for (size_t i = 0; i < iter; i++) {
-    sleep(2);
     LaunchHybridScan(hyadapt_table);
   }
 
