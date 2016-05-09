@@ -129,6 +129,59 @@ bool HybridScanExecutor::DInit() {
   return true;
 }
 
+bool HybridScanExecutor::HybridSeqScanUtil() {
+  assert(children_.size() == 0);
+  // LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
+
+  assert(table_ != nullptr);
+  assert(column_ids_.size() > 0);
+
+  // auto &transaction_manager =
+  //  concurrency::TransactionManagerFactory::GetInstance();
+  // Retrieve next tile group.
+  while (current_tile_group_offset_ < table_tile_group_count_) {
+    auto tile_group =
+      table_->GetTileGroup(current_tile_group_offset_++);
+    // auto tile_group_header = tile_group->GetHeader();
+
+    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
+
+
+    // Construct position list by looping through tile group
+    // and applying the predicate.
+    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
+
+      ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
+      // check transaction visibility
+      // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+      // if the tuple is visible, then perform predicate evaluation.
+      if (predicate_ == nullptr) {
+        item_pointers_.insert(location);
+        /*auto res = transaction_manager.PerformRead(location);
+        if (!res) {
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          return res;
+        }*/
+      } else {
+        expression::ContainerTuple<storage::TileGroup> tuple(
+          tile_group.get(), tuple_id);
+        auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
+          .IsTrue();
+        if (eval == true) {
+          item_pointers_.insert(location);
+          /*auto res = transaction_manager.PerformRead(location);
+          if (!res) {
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }*/
+        }
+      }
+      // }
+    }
+  }
+
+  return true;
+}
 
 bool HybridScanExecutor::SeqScanUtil() {
   assert(children_.size() == 0);
@@ -243,22 +296,197 @@ bool HybridScanExecutor::DExecute() {
     return IndexScanUtil();
   } else {
     // do two part search
+//    if (index_done_ == false) {
+//      if (indexed_tile_offset_ == INVALID_OID) {
+//        index_done_ = true;
+//      } else {
+//        ExecPrimaryIndexLookup();
+//      }
+//    }
+//
+//    if (IndexScanUtil() == true) {
+//      return true;
+//    }
+//    // Scan seq
+//    return SeqScanUtil();
+
     if (index_done_ == false) {
-      if (indexed_tile_offset_ == INVALID_OID) {
-        index_done_ = true;
-      } else {
-        ExecPrimaryIndexLookup();
+      HybridExecPrimaryIndexLookup();
+      HybridSeqScanUtil();
+
+      std::map<oid_t, std::vector<oid_t>> visible_tuples;
+      for (auto item : item_pointers_) {
+        visible_tuples[item.block].push_back(item.offset);
+      }
+
+      for (auto tuples : visible_tuples) {
+        auto &manager = catalog::Manager::GetInstance();
+        auto tile_group = manager.GetTileGroup(tuples.first);
+
+        std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+        // Add relevant columns to logical tile
+        logical_tile->AddColumns(tile_group, full_column_ids_);
+        logical_tile->AddPositionList(std::move(tuples.second));
+        if (column_ids_.size() != 0) {
+          logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+        }
+
+        result_.push_back(logical_tile.release());
       }
     }
 
-    if (IndexScanUtil() == true) {
-      return true;
-    }
-    // Scan seq
-    return SeqScanUtil();
+    assert(index_done_);
+
+    while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
+      if (result_[result_itr_]->GetTupleCount() == 0) {
+        result_itr_++;
+        continue;
+      } else {
+        SetOutput(result_[result_itr_]);
+        result_itr_++;
+        // printf("Construct a logical tile in index scan\n");
+
+        return true;
+      }
+    }  // end while
+    return false;
   }
 
   return false;
+}
+
+bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
+  assert(!index_done_);
+
+  std::vector<ItemPointer *> tuple_location_ptrs;
+
+  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+
+  if (0 == key_column_ids_.size()) {
+    index_->ScanAllKeys(tuple_location_ptrs);
+  } else {
+    index_->Scan(values_, key_column_ids_, expr_types_,
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
+  }
+
+  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
+
+  if (tuple_location_ptrs.size() == 0) {
+    index_done_ = true;
+    return false;
+  }
+//  auto &transaction_manager =
+//    concurrency::TransactionManagerFactory::GetInstance();
+
+  std::map<oid_t, std::vector<oid_t>> visible_tuples;
+  // for every tuple that is found in the index.
+  for (auto tuple_location_ptr : tuple_location_ptrs) {
+
+    ItemPointer tuple_location = *tuple_location_ptr;
+
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_location.block);
+    // auto tile_group_header = tile_group.get()->GetHeader();
+
+    size_t chain_length = 0;
+    while (true) {
+
+      ++chain_length;
+
+      // if the tuple is visible.
+//      if (transaction_manager.IsVisible(tile_group_header,
+//                                        tuple_location.offset)) {
+
+      LOG_INFO("traverse chain length : %lu", chain_length);
+      LOG_INFO("perform read: %u, %u", tuple_location.block,
+               tuple_location.offset);
+
+      // perform predicate evaluation.
+      if (predicate_ == nullptr) {
+        item_pointers_.insert(tuple_location);
+//        visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+
+//          auto res = transaction_manager.PerformRead(tuple_location);
+//          if (!res) {
+//            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+//            return res;
+//          }
+      } else {
+        expression::ContainerTuple<storage::TileGroup> tuple(
+          tile_group.get(), tuple_location.offset);
+        auto eval =
+          predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+        if (eval == true) {
+          item_pointers_.insert(tuple_location);
+//          visible_tuples[tuple_location.block]
+//            .push_back(tuple_location.offset);
+
+//            auto res = transaction_manager.PerformRead(tuple_location);
+//            if (!res) {
+//              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+//              return res;
+//            }
+        }
+      }
+      break;
+//      }
+      // if the tuple is not visible.
+//      else {
+//        ItemPointer old_item = tuple_location;
+//        cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
+//
+//        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+//        // there must exist a visible version.
+//        assert(tuple_location.IsNull() == false);
+//
+//        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+//
+//        // check whether older version is garbage.
+//        if (old_end_cid < max_committed_cid) {
+//          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
+//                 tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+//
+//          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+//
+//
+//            // atomically swap item pointer held in the index bucket.
+//            AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
+//
+//            // currently, let's assume only primary index exists.
+//            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+//              table_->GetOid(), old_item.block, old_item.offset,
+//              max_committed_cid);
+//          }
+//        }
+//
+//        tile_group = manager.GetTileGroup(tuple_location.block);
+//        tile_group_header = tile_group.get()->GetHeader();
+//
+//      }
+    }
+  }
+
+  // Construct a logical tile for each block
+//  for (auto tuples : visible_tuples) {
+//    auto &manager = catalog::Manager::GetInstance();
+//    auto tile_group = manager.GetTileGroup(tuples.first);
+//
+//    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+//    // Add relevant columns to logical tile
+//    logical_tile->AddColumns(tile_group, full_column_ids_);
+//    logical_tile->AddPositionList(std::move(tuples.second));
+//    if (column_ids_.size() != 0) {
+//      logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+//    }
+//
+//    result_.push_back(logical_tile.release());
+//  }
+
+  index_done_ = true;
+
+  LOG_TRACE("Result tiles : %lu", result_.size());
+
+  return true;
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
