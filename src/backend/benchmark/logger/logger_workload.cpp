@@ -63,6 +63,9 @@ static void WriteOutput(double value) {
 	    << ycsb::state.backend_count << " "
       << ycsb::state.skew_factor << " "
       << state.transaction_count << " "
+      << state.nvm_latency << " "
+      << state.pcommit_latency << " "
+      << state.flush_mode << " "
       " :: ";
 	std::cout << value << "\n";
 
@@ -85,6 +88,9 @@ static void WriteOutput(double value) {
   out << ycsb::state.backend_count << " ";
   out << ycsb::state.skew_factor << " ";
   out << ycsb::state.transaction_count << " ";
+  out << state.nvm_latency << " ";
+  out << state.pcommit_latency << " ";
+  out << state.flush_mode << " ";
   out << value << "\n";
 	out.flush();
 }
