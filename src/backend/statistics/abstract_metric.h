@@ -32,6 +32,12 @@ namespace stats {
 
 /**
  * Abstract class for metrics 
+ * A metric should be able to:
+ * (1) identify its type;
+ * (2) print itself (ToString);
+ * (3) reset itself;
+ * (4) aggregate itself with another source
+ *     of the same type.
  */
 class AbstractMetric {
  public:
