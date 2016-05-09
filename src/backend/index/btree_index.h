@@ -77,28 +77,12 @@ class BTreeIndex : public Index {
 
   size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
 
-  oid_t GetIndexedTileGroupOff() {
-    oid_t ret = INVALID_OID;
-
-    tile_group_offset_lock.ReadLock();
-    ret = indexed_tile_group_offset_;
-    tile_group_offset_lock.Unlock();
-
-    printf("GetIndexedTileGroupOffset : %d \n", ret);
-
-    return ret;
+  int GetIndexedTileGroupOff() {
+    return indexed_tile_group_offset_.load();
   }
 
   void IncreamentIndexedTileGroupOff() {
-
-    tile_group_offset_lock.WriteLock();
-    if (indexed_tile_group_offset_ == INVALID_OID) {
-      indexed_tile_group_offset_ = START_OID;
-    } else {
-      indexed_tile_group_offset_++;
-    }
-    tile_group_offset_lock.Unlock();
-
+    indexed_tile_group_offset_++;
   }
 
  protected:
@@ -111,8 +95,7 @@ class BTreeIndex : public Index {
   // synch helper
   RWLock index_lock;
 
-  oid_t indexed_tile_group_offset_ = INVALID_OID;
-  RWLock tile_group_offset_lock;
+  std::atomic<int> indexed_tile_group_offset_ = -1;
 
 };
 

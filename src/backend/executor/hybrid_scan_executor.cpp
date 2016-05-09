@@ -82,7 +82,8 @@ bool HybridScanExecutor::DInit() {
     }
   } else { // Hybrid type.
     table_tile_group_count_ = table_->GetTileGroupCount();
-    indexed_tile_offset_ = index_->GetIndexedTileGroupOff();
+    int offset = index_->GetIndexedTileGroupOff();
+    indexed_tile_offset_ = (offset == -1) ? INVALID_OID : (oid_t)offset;
 
     printf("Current indexed_tile_offset %d, table tile group count %d\n",
              indexed_tile_offset_, table_tile_group_count_);
