@@ -12,59 +12,57 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
-#include <vector>
-#include <iostream>
+#include <boost/circular_buffer.hpp>
 #include <string>
 #include <sstream>
-#include <boost/circular_buffer.hpp>
 
 #include "backend/common/timer.h"
 #include "backend/common/types.h"
 #include "backend/statistics/abstract_metric.h"
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-
 namespace peloton {
 namespace stats {
 
-
+// Container for different latency measurements
 struct LatencyMeasurements {
-  double average_   = 0.0;
-  double min_       = 0.0;
-  double max_       = 0.0;
-  double median_    = 0.0;
+  double average_ = 0.0;
+  double min_ = 0.0;
+  double max_ = 0.0;
+  double median_ = 0.0;
   double perc_25th_ = 0.0;
   double perc_75th_ = 0.0;
   double perc_99th_ = 0.0;
 };
 
 /**
- * Metric for the latency of transactions
+ * Metric for storing raw latency values and computing
+ * latency measurements.
  */
 class LatencyMetric : public AbstractMetric {
  public:
-
   LatencyMetric(MetricType type, size_t max_history);
+
+  //===--------------------------------------------------------------------===//
+  // HELPER METHODS
+  //===--------------------------------------------------------------------===//
 
   inline void Reset() {
     latencies_.clear();
     timer_ms_.Reset();
   }
 
+  // Starts the timer for the next latency measurement
   inline void StartTimer() {
     timer_ms_.Reset();
     timer_ms_.Start();
   }
 
+  // Stops the latency timer and records the total time elapsed
   inline void RecordLatency() {
     timer_ms_.Stop();
     double latency_value = timer_ms_.GetDuration();
-    // Record this latency value only if we can do so without blocking.
+    // Record this latency only if we can do so without blocking.
+    // Occasionally losing single latency measurements is fine.
     {
       std::unique_lock<std::mutex> lock(latency_mutex_, std::defer_lock);
       if (lock.try_lock()) {
@@ -73,33 +71,37 @@ class LatencyMetric : public AbstractMetric {
     }
   }
 
+  // Computes the latency measurements using the latencies
+  // collected so far.
   LatencyMeasurements ComputeLatencies();
 
+  // Combines the source latency metric with this latency metric
   void Aggregate(AbstractMetric &source);
 
-  inline std::string ToString() {
-    std::stringstream ss;
-    LatencyMeasurements latencies = ComputeLatencies();
-    ss << "TXN LATENCY (ms): [ ";
-    ss << "average=" << latencies.average_;
-    ss << ", min=" << latencies.min_;
-    ss << ", 25th-%-tile=" << latencies.perc_25th_;
-    ss << ", median=" << latencies.median_;
-    ss << ", 75th-%-tile=" << latencies.perc_75th_;
-    ss << ", 99th-%-tile=" << latencies.perc_99th_;
-    ss << ", max=" << latencies.max_;
-    ss << " ]" << std::endl;
-    return ss.str();
-  }
+  // Returns a string representation of this latency metric
+  std::string ToString();
 
+  // Returns a copy of the latencies collected
   boost::circular_buffer<double> Copy();
 
  private:
-  boost::circular_buffer<double> latencies_;
-  Timer<std::ratio<1, 1000>> timer_ms_;
-  size_t max_history_;
-  std::mutex latency_mutex_;
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
+  // Circular buffer with capacity N that stores the <= N
+  // most recent latencies collected
+  boost::circular_buffer<double> latencies_;
+
+  // Timer for timing individual latencies
+  Timer<std::ratio<1, 1000>> timer_ms_;
+
+  // The maximum number of latencies that can be stored
+  // (the capacity size N of the circular buffer)
+  size_t max_history_;
+
+  // Protects accesses to the circular buffer
+  std::mutex latency_mutex_;
 };
 
 }  // namespace stats

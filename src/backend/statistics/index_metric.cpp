@@ -10,22 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/statistics/index_metric.h"
 #include "backend/catalog/manager.h"
 #include "backend/index/index.h"
 
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
-
 namespace peloton {
 namespace stats {
 
-
-IndexMetric::IndexMetric(MetricType type, oid_t database_id,
-    oid_t table_id, oid_t index_id) : AbstractMetric(type) {
+IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
+                         oid_t index_id)
+    : AbstractMetric(type) {
   database_id_ = database_id;
   table_id_ = table_id;
   index_id_ = index_id;
@@ -36,13 +30,13 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id,
     index_name_ = "";
   } else {
     index_name_ = index->GetName();
-    for(auto& ch: index_name_) {
+    for (auto& ch : index_name_) {
       ch = toupper(ch);
     }
   }
 }
 
-void IndexMetric::Aggregate(AbstractMetric &source) {
+void IndexMetric::Aggregate(AbstractMetric& source) {
   assert(source.GetType() == INDEX_METRIC);
 
   IndexMetric& index_metric = static_cast<IndexMetric&>(source);

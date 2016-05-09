@@ -12,26 +12,15 @@
 
 #pragma once
 
-#include <mutex>
-#include <map>
-#include <vector>
-#include <iostream>
 #include <string>
-#include <sstream>
 
 #include "backend/common/types.h"
-
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
 
 namespace peloton {
 namespace stats {
 
-
 /**
- * Abstract class for metrics 
+ * Abstract class for metrics
  * A metric should be able to:
  * (1) identify its type;
  * (2) print itself (ToString);
@@ -41,24 +30,20 @@ namespace stats {
  */
 class AbstractMetric {
  public:
-
   AbstractMetric(MetricType type_);
   virtual ~AbstractMetric();
 
-  const inline MetricType& GetType() const {
-    return type_;
-  }
+  const inline MetricType& GetType() const { return type_; }
 
   virtual void Reset() = 0;
 
   virtual std::string ToString() = 0;
 
-  virtual void Aggregate(AbstractMetric &source) = 0;
+  virtual void Aggregate(AbstractMetric& source) = 0;
 
  private:
   // The type this metric belongs to
   MetricType type_;
-
 };
 
 }  // namespace stats

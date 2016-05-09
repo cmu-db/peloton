@@ -10,17 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/statistics/counter_metric.h"
-
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
-
 
 namespace peloton {
 namespace stats {
-
 
 CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
   count_ = 0;
@@ -28,7 +21,7 @@ CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
 
 void CounterMetric::Aggregate(AbstractMetric &source) {
   assert(source.GetType() == COUNTER_METRIC);
-  count_ += static_cast<CounterMetric&>(source).GetCounter();
+  count_ += static_cast<CounterMetric &>(source).GetCounter();
 }
 
 }  // namespace stats

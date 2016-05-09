@@ -24,21 +24,21 @@
 #include "backend/statistics/backend_stats_context.h"
 #include "backend/common/logger.h"
 
+//===--------------------------------------------------------------------===//
+// GUC Variables
+//===--------------------------------------------------------------------===//
+
 #define STATS_AGGREGATION_INTERVAL_MS 1000
 #define STATS_LOG_INTERVALS 10
 #define LATENCY_MAX_HISTORY_THREAD 100
 #define LATENCY_MAX_HISTORY_AGGREGATOR 10000
-
-//===--------------------------------------------------------------------===//
-// GUC Variables
-//===--------------------------------------------------------------------===//
 
 extern StatsType peloton_stats_mode;
 
 namespace peloton {
 namespace stats {
 
-extern thread_local BackendStatsContext* backend_stats_context;
+extern thread_local BackendStatsContext *backend_stats_context;
 
 //===--------------------------------------------------------------------===//
 // Stats Aggregator
@@ -54,88 +54,101 @@ extern thread_local BackendStatsContext* backend_stats_context;
  */
 class StatsAggregator {
  public:
-  StatsAggregator (const StatsAggregator &) = delete;
+  StatsAggregator(const StatsAggregator &) = delete;
   StatsAggregator &operator=(const StatsAggregator &) = delete;
-  StatsAggregator (StatsAggregator &&) = delete;
+  StatsAggregator(StatsAggregator &&) = delete;
   StatsAggregator &operator=(StatsAggregator &&) = delete;
 
-  // global singleton
-  static StatsAggregator  &GetInstance(void);
+  StatsAggregator();
+  StatsAggregator(int64_t aggregation_interval_ms);
+  ~StatsAggregator();
 
-  // Register the BackendStatsContext of a worker thread to global Stats Aggregator
-  inline void RegisterContext(std::thread::id id_, BackendStatsContext *context_) {
-    stats_mutex_.lock();
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-    // FIXME: This is sort of hacky. Eventually we want to free the StatsContext
-    // when the thread exit
-    if (backend_stats_.find(id_) == backend_stats_.end()) {
-      thread_number_++;
-    } else {
-      stats_history_.Aggregate(*backend_stats_[id_]);
-      delete backend_stats_[id_];
-    }
+  // Global singleton
+  static StatsAggregator &GetInstance(void);
 
-    LOG_DEBUG("Stats aggregator hash map size: %ld\n", backend_stats_.size());
-
-    LOG_DEBUG("# registered thread: %d\n", thread_number_);
-
-    backend_stats_[id_] = context_;
-
-    // print out the id of the thread
-    //std::cout << id_ << std::endl;
-
-    stats_mutex_.unlock();
-  }
-
-  // Unregister a BackendStatsContext. Currently we directly reuse the thread id
-  // instread of explicitly unregister it.
-  inline void UnregisterContext(std::thread::id id) {
-    stats_mutex_.lock();
-
-    if (backend_stats_.find(id) != backend_stats_.end()) {
-      backend_stats_.erase(id);
-      thread_number_--;
-
-      // print out the id of the thread
-      //std::cout << id << std::endl;
-    }
-
-    stats_mutex_.unlock();
-  }
+  static StatsAggregator &GetInstanceForTest(void);
 
   // Get the aggregated stats history of all exited threads
-  inline const BackendStatsContext& GetStatsHistory() {
-    return stats_history_;
-  }
+  inline BackendStatsContext &GetStatsHistory() { return stats_history_; }
 
   // Get the current aggregated stats of all threads (including history)
-  inline const BackendStatsContext& GetAggregatedStats() {
-    return aggregated_stats_;
-  }
+  inline BackendStatsContext &GetAggregatedStats() { return aggregated_stats_; }
 
   // Allocate a BackendStatsContext for a new thread
   BackendStatsContext *GetBackendStatsContext();
-  
+
+  //===--------------------------------------------------------------------===//
+  // HELPER FUNCTIONS
+  //===--------------------------------------------------------------------===//
+
+  // Register the BackendStatsContext of a worker thread to global Stats
+  // Aggregator
+  inline void RegisterContext(std::thread::id id_,
+                              BackendStatsContext *context_) {
+    {
+      std::lock_guard<std::mutex> lock(stats_mutex_);
+
+      // FIXME: This is sort of hacky. Eventually we want to free the
+      // StatsContext
+      // when the thread exit
+      if (backend_stats_.find(id_) == backend_stats_.end()) {
+        thread_number_++;
+      } else {
+        stats_history_.Aggregate(*backend_stats_[id_]);
+        delete backend_stats_[id_];
+      }
+      backend_stats_[id_] = context_;
+    }
+    LOG_DEBUG("Stats aggregator hash map size: %ld\n", backend_stats_.size());
+  }
+
+  // Unregister a BackendStatsContext. Currently we directly reuse the thread id
+  // instead of explicitly unregistering it.
+  inline void UnregisterContext(std::thread::id id) {
+    {
+      std::lock_guard<std::mutex> lock(stats_mutex_);
+
+      if (backend_stats_.find(id) != backend_stats_.end()) {
+        stats_history_.Aggregate(*backend_stats_[id]);
+        delete backend_stats_[id];
+        backend_stats_.erase(id);
+        thread_number_--;
+      }
+    }
+  }
+
   // Aggregate the stats of current living threads
   void Aggregate(int64_t &interval_cnt, double &alpha,
-      double &weighted_avg_throughput);
+                 double &weighted_avg_throughput);
 
   // Aggregate stats periodically
   void RunAggregator();
 
-  StatsAggregator();
-  ~StatsAggregator();
-
  private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  // Stores stats of exited threads
   BackendStatsContext stats_history_;
+
+  // Stores all aggregated stats
   BackendStatsContext aggregated_stats_;
 
   // Protect register and unregister of BackendStatsContext*
   std::mutex stats_mutex_;
 
   // Map the thread id to the pointer of its BackendStatsContext
-  std::unordered_map<std::thread::id, BackendStatsContext*> backend_stats_;
+  std::unordered_map<std::thread::id, BackendStatsContext *> backend_stats_;
 
+  // How often to aggregate all worker thread stats
+  int64_t aggregation_interval_ms_;
+
+  // Number of threads registered
   int thread_number_;
 
   int64_t total_prev_txn_committed_;
