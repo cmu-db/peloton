@@ -50,6 +50,9 @@ private:
   // Index Scan
   //===--------------------------------------------------------------------===//
   bool ExecPrimaryIndexLookup();
+
+  bool HybridExecPrimaryIndexLookup();
+  bool HybridSeqScanUtil();
 //  bool ExecSecondaryIndexLookup();
 
   //===--------------------------------------------------------------------===//
