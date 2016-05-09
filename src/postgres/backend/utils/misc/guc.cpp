@@ -3838,7 +3838,7 @@ struct config_enum ConfigureNamesEnum[] =
         gettext_noop("This determines the stats collection mode.")
       },
       reinterpret_cast<int *>(&peloton_stats_mode),
-      STATS_TYPE_INVALID, peloton_stats_mode_options,
+      STATS_TYPE_ENABLE, peloton_stats_mode_options,
       NULL, NULL, NULL
   },
 
