@@ -66,7 +66,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
     aggregated_stats_.Aggregate((*val.second));
   }
   aggregated_stats_.Aggregate(stats_history_);
-  LOG_INFO("%s\n", aggregated_stats_.ToString());
+  LOG_INFO("%s\n", aggregated_stats_.ToString().c_str());
 
   int64_t current_txns_committed = 0;
   // Traverse the metric of all threads to get the total number of committed
