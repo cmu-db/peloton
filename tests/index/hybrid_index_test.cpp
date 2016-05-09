@@ -261,11 +261,12 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
         oid_t tuple_id = *iter;
         // Get key value of tuple
         Value key_value= result_tile->GetValue(tuple_id, 0);
-
-        EXPECT_TRUE(key_value.Compare(lower_bound) == VALUE_COMPARE_EQUAL ||
-                      key_value.Compare(lower_bound) == VALUE_COMPARE_GREATERTHAN);
-        EXPECT_TRUE(key_value.Compare(higher_bound) == VALUE_COMPARE_EQUAL ||
-                    key_value.Compare(higher_bound) == VALUE_COMPARE_LESSTHAN);
+        auto lower_result = key_value.Compare(lower_bound);
+        auto higher_result = key_value.Compare(higher_bound);
+        EXPECT_TRUE( lower_result== VALUE_COMPARE_EQUAL ||
+                       lower_result == VALUE_COMPARE_GREATERTHAN);
+        EXPECT_TRUE( higher_result == VALUE_COMPARE_EQUAL ||
+                       higher_result == VALUE_COMPARE_LESSTHAN);
       }
 
       result_tiles.emplace_back(result_tile.release());
