@@ -18,6 +18,8 @@
 #include <limits>
 #include <cassert>
 #include "backend/common/platform.h"
+#include <boost/functional/hash.hpp>
+
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -761,6 +763,7 @@ struct TupleMetadata {
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
+
 // logical physical location
 struct ItemPointer {
   // block
@@ -792,6 +795,12 @@ struct ItemPointer {
   }
 
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
+
+struct ItemPointerHasher {
+  size_t operator()(const struct ItemPointer &lhs) {
+    return boost::hash<std::pair<oid_t, oid_t>>(std::pair<oid_t, oid_t>(lhs.block, lhs.offset));
+  }
+};
 
 extern ItemPointer INVALID_ITEMPOINTER;
 
