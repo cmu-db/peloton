@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// counter_metric.h
+// database_metric.h
 //
-// Identification: src/backend/statistics/counter_metric.h
+// Identification: src/backend/statistics/database_metric.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -34,7 +34,7 @@ namespace stats {
 
 
 /**
- * Metric as a counter. E.g. # txns committed
+ * Metric of a database, including the number of committed/aborted txns.
  */
 class DatabaseMetric : public AbstractMetric {
  public:
