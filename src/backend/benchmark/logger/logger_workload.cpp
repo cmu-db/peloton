@@ -62,12 +62,12 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-	std::cout << "----------------------------------------------------------\n";
-	std::cout << state.benchmark_type << " "
-	    << state.logging_type << " "
-	    << ycsb::state.update_ratio << " "
-	    << ycsb::state.scale_factor << " "
-	    << ycsb::state.backend_count << " "
+  std::cout << "----------------------------------------------------------\n";
+  std::cout << state.benchmark_type << " "
+      << state.logging_type << " "
+      << ycsb::state.update_ratio << " "
+      << ycsb::state.scale_factor << " "
+      << ycsb::state.backend_count << " "
       << ycsb::state.skew_factor << " "
       << ycsb::state.duration << " "
       << state.nvm_latency << " "
@@ -75,12 +75,12 @@ static void WriteOutput(double value) {
       << state.flush_mode << " "
       << state.asynchronous_mode << " "
       " :: ";
-	std::cout << value << "\n";
+  std::cout << value << "\n";
 
   out << state.benchmark_type << " ";
-	out << state.logging_type << " ";
-	out << ycsb::state.update_ratio << " ";
-	out << ycsb::state.scale_factor << " ";
+  out << state.logging_type << " ";
+  out << ycsb::state.update_ratio << " ";
+  out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
   out << ycsb::state.skew_factor << " ";
   out << ycsb::state.duration << " ";
@@ -89,7 +89,7 @@ static void WriteOutput(double value) {
   out << state.flush_mode << " ";
   out << state.asynchronous_mode << " ";
   out << value << "\n";
-	out.flush();
+  out.flush();
 }
 
 std::string GetFilePath(std::string directory_path, std::string file_name) {
@@ -119,15 +119,13 @@ bool PrepareLogFile() {
     return false;
   }
 
-        // Get an instance of the storage manager to force posix_fallocate
-        auto &storage_manager = storage::StorageManager::GetInstance();
-        auto msync_count = storage_manager.GetMsyncCount();
-        printf("msync count : %lu\n", msync_count);
-        
+  // Get an instance of the storage manager to force posix_fallocate
+  auto &storage_manager = storage::StorageManager::GetInstance();
+  auto msync_count = storage_manager.GetMsyncCount();
+  printf("msync count : %lu\n", msync_count);
 
   Timer<> timer;
   std::thread thread;
-
 
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
@@ -172,24 +170,23 @@ bool PrepareLogFile() {
 
   timer.Stop();
 
-  auto duration = timer.GetDuration();
-  auto throughput =
-      (ycsb::state.duration * ycsb::state.backend_count) / duration;
+  // TODO: Pick YCSB or TPCC metrics based on benchmark type
+  auto throughput = ycsb::state.throughput;
+  auto latency = ycsb::state.latency;
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
       state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
     WriteOutput(throughput);
-  } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
-    // TODO: Need to get more info
-    // in case of WAL: checkpoint size
+  }
+  else if(state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
+    WriteOutput(latency);
+  }
+  else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
+    // TODO: Need to get more info -- in case of WAL: checkpoint size
     // in case of WBL: table size, index size ?
     auto log_file_size = GetLogFileSize();
     WriteOutput(log_file_size);
-  }
-  else if(state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
-    // TODO: Fix this
-    WriteOutput(ycsb::state.flush_frequency);
   }
 
   return true;

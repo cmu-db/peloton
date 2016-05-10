@@ -86,7 +86,7 @@ void ValidateDuration(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "execution duration", state.duration);
+  LOG_INFO("%s : %d", "duration", state.duration);
 }
 
 void ValidateSkewFactor(const configuration &state) {
