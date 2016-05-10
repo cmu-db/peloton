@@ -457,6 +457,12 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
 
         COMPILER_MEMORY_FENCE;
 
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
+        COMPILER_MEMORY_FENCE;
+
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
@@ -472,6 +478,11 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
 
         COMPILER_MEMORY_FENCE;
 
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
+        COMPILER_MEMORY_FENCE;
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
