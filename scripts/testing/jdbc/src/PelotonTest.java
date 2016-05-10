@@ -261,7 +261,7 @@ public class PelotonTest {
     pt.Insert(20);
     //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
-    //pt.SeqScan();
+    pt.SeqScan();
     //pt.DeleteByIndexScan(3);
     //pt.SeqScan();
     //pt.UpdateBySeqScan();

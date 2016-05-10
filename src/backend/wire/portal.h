@@ -13,6 +13,7 @@ struct Portal {
   std::string query_string;
   std::string query_type;
   sqlite3_stmt *stmt;
+	size_t colcount;
 };
 
 } // namespace wire

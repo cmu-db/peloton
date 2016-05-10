@@ -332,12 +332,14 @@ void PacketManager::exec_parse_message(Packet *pkt, ResponseBuffer &responses) {
     skipped_stmt_ = true;
     skipped_query_ = std::move(query);
     skipped_query_type_ = std::move(query_type);
-    LOG_INFO("Statement skipped");
-    std::unique_ptr<Packet> response(new Packet());
-    // Send Parse complete response
-    response->msg_type = '1';
-    responses.push_back(std::move(response));
-    return;
+    LOG_INFO("Statement to be skipped");
+  } else {
+    // Prepare statement
+    int is_failed = db.PrepareStmt(query.c_str(), &stmt, err_msg);
+    if (is_failed) {
+      send_error_response({{'M', err_msg}}, responses);
+      send_ready_for_query(txn_state, responses);
+    }
   }
 
   // Read number of params
@@ -351,15 +353,9 @@ void PacketManager::exec_parse_message(Packet *pkt, ResponseBuffer &responses) {
     param_types[i] = param_type;
   }
 
-  // Prepare statement
-  bool is_failed = db.PrepareStmt(query.c_str(), &stmt, err_msg);
-  if (is_failed) {
-    send_error_response({{'M', err_msg}}, responses);
-    send_ready_for_query(txn_state, responses);
-  }
   std::shared_ptr<CacheEntry> entry(new CacheEntry());
   entry->stmt_name = prep_stmt_name;
-  entry->query_string = std::move(query);
+  entry->query_string = query;
   entry->query_type = std::move(query_type);
   entry->sql_stmt = stmt;
   entry->param_types = std::move(param_types);
@@ -512,6 +508,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
   portal->prep_stmt_name = prep_stmt_name;
   portal->portal_name = portal_name;
   portal->query_type = query_type;
+  portal->colcount = 0;
 
   auto itr = portals_.find(portal_name);
   if (itr == portals_.end()) {
@@ -547,6 +544,7 @@ void PacketManager::exec_describe_message(Packet *pkt,
     std::shared_ptr<Portal> p = portal_itr->second;
     db.GetRowDesc(p->stmt, p->rowdesc);
     put_row_desc(p->rowdesc, responses);
+    p->colcount = p->rowdesc.size();
   } else if (mode[0] == 'S') {
     // TODO: need to handle this case
   } else {
@@ -601,8 +599,14 @@ void PacketManager::exec_execute_message(Packet *pkt,
     globals.sqlite_mutex.unlock();
   }
 
+  if (portal->colcount == 0){
+    // colcount uninitialized, load the colcount
+    db.GetRowDesc(portal->stmt, portal->rowdesc);
+    portal->colcount = portal->rowdesc.size();
+  }
+
   //put_row_desc(portal->rowdesc, responses);
-  send_data_rows(results, results.size(), rows_affected, responses);
+  send_data_rows(results, portal->colcount, rows_affected, responses);
   complete_command(query_type, rows_affected, responses);
 }
 
