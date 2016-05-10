@@ -169,6 +169,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group_header = tile_group.get()->GetHeader();
 
     size_t chain_length = 0;
+
+    cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+
     while (true) {
       ++chain_length;
 
@@ -237,8 +240,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           return false;
         }
-
-        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
