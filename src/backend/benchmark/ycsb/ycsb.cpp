@@ -143,25 +143,21 @@ static void ValidateMVCC() {
                   next_tile_group_header->GetEndCommitId(next_location.offset);
 
               // 3. Timestamp consistence
-              if (next_begin_cid == MAX_CID) {
-                // It must be an aborted version, it should be at the end of the
-                // chain
-                CHECK_M(next_tile_group_header->GetNextItemPointer(
-                                                  next_location.offset)
-                            .IsNull(),
-                        "Version with MAX_CID begin cid is not version tail");
-              } else {
-                CHECK_M(prev_end_cid == next_begin_cid,
-                        "Prev end commit id should equal net begin commit id");
-                ItemPointer next_prev_location =
-                    next_tile_group_header->GetPrevItemPointer(
-                        next_location.offset);
+              // It must be an aborted version, it shouldn't exist in version chain
+              CHECK_M(next_begin_cid != MAX_CID,
+                      "Aborted version shouldn't be at version chain");
 
-                // 4. Version doubly linked list consistency
-                CHECK_M(next_prev_location.offset == prev_location.offset &&
-                            next_prev_location.block == prev_location.block,
-                        "Next version's prev version does not match");
-              }
+              // 4. Version doubly linked list consistency
+              CHECK_M(prev_end_cid == next_begin_cid,
+                      "Prev end commit id should equal net begin commit id");
+              ItemPointer next_prev_location =
+                  next_tile_group_header->GetPrevItemPointer(
+                      next_location.offset);
+
+
+              CHECK_M(next_prev_location.offset == prev_location.offset &&
+                          next_prev_location.block == prev_location.block,
+                      "Next version's prev version does not match");
 
               prev_location = next_location;
               prev_end_cid = next_end_cid;

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <ctime>
 #include <cassert>
+#include <cstring>
 
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
@@ -45,16 +46,16 @@ namespace tpcc {
 // Constants
 /////////////////////////////////////////////////////////
 
-size_t name_length = 32;
-size_t middle_name_length = 2;
-size_t data_length = 64;
-size_t state_length = 16;
-size_t zip_length = 9;
-size_t street_length = 32;
-size_t city_length = 32;
-size_t credit_length = 2;
-size_t phone_length = 32;
-size_t dist_length = 32;
+const size_t name_length = 32;
+const size_t middle_name_length = 2;
+const size_t data_length = 64;
+const size_t state_length = 16;
+const size_t zip_length = 9;
+const size_t street_length = 32;
+const size_t city_length = 32;
+const size_t credit_length = 2;
+const size_t phone_length = 32;
+const size_t dist_length = 32;
 
 double item_min_price = 1.0;
 double item_max_price = 100.0;
@@ -110,6 +111,11 @@ int stock_max_threshold = 20;
 
 double new_order_remote_txns = 0.01;
 
+const int syllable_count = 10;
+const char *syllables[syllable_count] = {"BAR", "OUGHT", "ABLE", "PRI", "PRES",
+                           "ESES", "ANTI", "CALLY", "ATION", "EING"};
+
+NURandConstant nu_rand_const;
 /////////////////////////////////////////////////////////
 // Create the tables
 /////////////////////////////////////////////////////////
@@ -857,6 +863,59 @@ void CreateTPCCDatabase() {
 std::random_device rd;
 std::mt19937 rng(rd());
 
+// Create random NURand constants, appropriate for loading the database.
+NURandConstant::NURandConstant() {
+  c_last = GetRandomInteger(0, 255);
+  c_id = GetRandomInteger(0, 1023);
+  order_line_itme_id = GetRandomInteger(0, 8191);
+}
+
+// A non-uniform random number, as defined by TPC-C 2.1.6. (page 20).
+int GetNURand(int a, int x, int y) {
+  assert(x <= y);
+  int c = nu_rand_const.c_last;
+
+  if (a == 255) {
+    c = nu_rand_const.c_last;
+  } else if (a == 1023) {
+    c = nu_rand_const.c_id;
+  } else if (a == 8191) {
+    c = nu_rand_const.order_line_itme_id;
+  } else {
+    assert(false);
+  }
+
+  return (((GetRandomInteger(0, a) | GetRandomInteger(x, y)) + c) % (y - x + 1)) + x;
+}
+
+
+// A last name as defined by TPC-C 4.3.2.3. Not actually random.
+std::string GetLastName(int number) {
+  assert(number >= 0 && number <= 999);
+
+  int idx1 = number / 100;
+  int idx2 = (number / 10 % 10);
+  int idx3 = number % 10;
+
+  char lastname_cstr[name_length];
+  std::strcpy(lastname_cstr, syllables[idx1]);
+  std::strcat(lastname_cstr, syllables[idx2]);
+  std::strcat(lastname_cstr, syllables[idx3]);
+
+  return std::string(lastname_cstr, name_length);
+}
+
+// A non-uniform random last name, as defined by TPC-C 4.3.2.3.
+// The name will be limited to maxCID
+std::string GetRandomLastName(int max_cid) {
+  int min_cid = 999;
+  if (max_cid - 1 < min_cid) {
+    min_cid = max_cid - 1;
+  }
+
+  return GetLastName(GetNURand(255, 0, min_cid));
+}
+
 std::string GetRandomAlphaNumericString(const size_t string_length) {
   const char alphanumeric[] = "0123456789"
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -868,6 +927,7 @@ std::string GetRandomAlphaNumericString(const size_t string_length) {
   std::string sample(string_length, repeated_char);
   return sample;
 }
+
 
 bool GetRandomBoolean(double ratio) {
   double sample = (double) rand() / RAND_MAX;
@@ -1045,6 +1105,9 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
                                                    const int district_id,
                                                    const int warehouse_id,
                                                    const std::unique_ptr<VarlenPool>& pool) {
+  // Customer id begins from 0
+  assert(customer_id >= 0 && customer_id < state.customers_per_district);
+
   auto customer_table_schema = customer_table->GetSchema();
   std::unique_ptr<storage::Tuple> customer_tuple(new storage::Tuple(customer_table_schema, allocate));
 
@@ -1056,10 +1119,20 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   customer_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
   // C_FIRST, C_MIDDLE, C_LAST
   auto c_first = GetRandomAlphaNumericString(name_length);
+
+  std::string c_last;
+
+  // Here our customer id begins from 0
+  if (customer_id <= 999) {
+    c_last = GetLastName(customer_id);
+  } else {
+    c_last = GetRandomLastName(state.customers_per_district);
+  }
+
   auto c_middle = GetRandomAlphaNumericString(middle_name_length);
   customer_tuple->SetValue(3, ValueFactory::GetStringValue(c_first), pool.get());
   customer_tuple->SetValue(4, ValueFactory::GetStringValue(c_middle), pool.get());
-  customer_tuple->SetValue(5, ValueFactory::GetStringValue(c_first), pool.get());
+  customer_tuple->SetValue(5, ValueFactory::GetStringValue(c_last), pool.get());
   // C_STREET_1, C_STREET_2
   auto c_street = GetStreetName();
   customer_tuple->SetValue(6, ValueFactory::GetStringValue(c_street), pool.get());
