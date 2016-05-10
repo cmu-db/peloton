@@ -21,7 +21,7 @@ public:
   Sqlite() {
     // sqlite3_open(filename, sqlite3 **db)
     // filename is null for in memory db
-    auto rc = sqlite3_open_v2("ycsb.db", &db, SQLITE_OPEN_NOMUTEX|SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
+    auto rc = sqlite3_open_v2("sqlite.db", &db, SQLITE_OPEN_NOMUTEX|SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
     if (rc) {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       LOG_ERROR("Can't open database %s", sqlite3_errmsg(db));
@@ -97,29 +97,29 @@ public:
       switch (wire_type) {
         case WIRE_INTEGER: {
           int int_val = std::stoi(wire_val);
-          LOG_INFO("BIND INT: %d", int_val);
+          // LOG_INFO("BIND INT: %d", int_val);
           rc = sqlite3_bind_int(*stmt, paramno, int_val);
         } break;
         case WIRE_FLOAT: {
           double double_val = std::stod(wire_val);
-          LOG_INFO("BIND FLOAT: %lf", double_val);
+          // LOG_INFO("BIND FLOAT: %lf", double_val);
           rc = sqlite3_bind_double(*stmt, paramno, double_val);
         } break;
         case WIRE_TEXT: {
           const char *str_val = wire_val.c_str();
           size_t str_len = wire_val.size();
-          LOG_INFO("BIND TEXT: %s", str_val);
+          // LOG_INFO("BIND TEXT: %s", str_val);
           rc = sqlite3_bind_text(*stmt, paramno, str_val, (int) str_len,
                                  SQLITE_TRANSIENT);
         } break;
 
         case WIRE_NULL: {
-          LOG_INFO("BIND NULL");
+          // LOG_INFO("BIND NULL");
           rc = sqlite3_bind_null(*stmt, paramno);
           break;
         }
         default: {
-          LOG_INFO("Unknown bind type");
+          // LOG_INFO("Unknown bind type");
           return 1;
         }
       }

@@ -16,9 +16,13 @@
 namespace peloton {
 namespace wire {
 
+// Prepares statment cache
 thread_local Cache<std::string, CacheEntry> cache_;
+
+// Query portal handler
 thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
+// Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string> PacketManager::parameter_status_map =
   boost::assign::map_list_of ("application_name","psql")("client_encoding", "UTF8")
   ("DateStyle", "ISO, MDY")("integer_datetimes", "on")
@@ -77,6 +81,7 @@ bool PacketManager::process_startup_packet(Packet* pkt,
 
   int32_t proto_version = packet_getint(pkt, sizeof(int32_t));
 
+  // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
     LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
     exit(EXIT_FAILURE);
@@ -105,15 +110,17 @@ bool PacketManager::process_startup_packet(Packet* pkt,
     }
   }
 
-  // send auth-ok
+  // send auth-ok ('R')
   response->msg_type = 'R';
   packet_putint(response, 0, 4);
   responses.push_back(std::move(response));
 
+  // Send the parameterStatus map ('S')
   for(auto it = parameter_status_map.begin(); it != parameter_status_map.end(); it++) {
     make_hardcoded_parameter_status(responses, *it);
   }
 
+  // ready-for-query packet -> 'Z'
   send_ready_for_query(TXN_IDLE, responses);
   return true;
 }
@@ -146,6 +153,7 @@ void PacketManager::put_row_desc(std::vector<wiredb::FieldInfoType> &rowdesc, Re
   responses.push_back(std::move(pkt));
 }
 
+
 void PacketManager::send_data_rows(std::vector<wiredb::ResType> &results,
                                    int colcount,
                                    int &rows_affected,
@@ -162,7 +170,9 @@ void PacketManager::send_data_rows(std::vector<wiredb::ResType> &results,
     pkt->msg_type = 'D';
     packet_putint(pkt, colcount, 2);
     for (int j = 0; j < colcount; j++) {
+      // length of the row attribute
       packet_putint(pkt, results[i*colcount + j].second.size(), 4);
+      // contents of the row attribute
       packet_putbytes(pkt, results[i*colcount + j].second);
     }
     responses.push_back(std::move(pkt));
@@ -171,47 +181,7 @@ void PacketManager::send_data_rows(std::vector<wiredb::ResType> &results,
   LOG_INFO("Rows affected: %d", rows_affected);
 }
 
-/*
- * put_dummy_row_desc - Prepare a dummy row description packet
- */
-void PacketManager::put_dummy_row_desc(ResponseBuffer& responses) {
-  std::unique_ptr<Packet> pkt(new Packet());
-  pkt->msg_type = 'T';
-  packet_putint(pkt, 5, 2);
-
-  for (int i = 0; i < 5; i++) {
-    auto field = "F" + std::to_string(i);
-    packet_putstring(pkt, field);
-    packet_putint(pkt, 0, 4);
-    packet_putint(pkt, 0, 2);
-    packet_putint(pkt, 0, 4);
-    packet_putint(pkt, 10, 2);
-    packet_putint(pkt, -1, 4);
-    // format code for text
-    packet_putint(pkt, 0, 2);
-  }
-
-  responses.push_back(std::move(pkt));
-}
-
-void PacketManager::put_dummy_data_row(int colcount, int start,
-                                       ResponseBuffer& responses) {
-  std::unique_ptr<Packet> pkt(new Packet());
-  std::string data;
-  pkt->msg_type = 'D';
-  packet_putint(pkt, colcount, 2);
-  for (int i = 0; i < colcount; i++) {
-    data = "row" + std::to_string(start + i);
-
-    // add 1 for null-terminator
-    packet_putint(pkt, data.length() + 1, 4);
-
-    packet_putstring(pkt, data);
-  }
-
-  responses.push_back(std::move(pkt));
-}
-
+/* Gets the first token of a query */
 std::string get_query_type(std::string query) {
   std::vector<std::string> query_tokens;
   boost::split(query_tokens, query, boost::is_any_of(" "), boost::token_compress_on);
@@ -223,14 +193,18 @@ void PacketManager::complete_command(const std::string &query_type,
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'C';
   std::string tag = query_type;
-  if(!query_type.compare("BEGIN"))
+  /* After Begin, we enter a txn block */
+  if(query_type.compare("BEGIN") == 0)
     txn_state = TXN_BLOCK;
-  else if(!query_type.compare("COMMIT"))
+  /* After commit, we end the txn block */
+  else if(query_type.compare("COMMIT") == 0)
     txn_state = TXN_IDLE;
-  else if(!query_type.compare("INSERT"))
-    tag += " 0 " + std::to_string(rows);
+  /* After rollback, the txn block is ended */
   else if(!query_type.compare("ROLLBACK"))
     txn_state = TXN_IDLE;
+  /* the rest are custom status messages for each command */
+  else if(!query_type.compare("INSERT"))
+    tag += " 0 " + std::to_string(rows);
   else
     tag += " " + std::to_string(rows);
   LOG_INFO("complete command tag: %s", tag.c_str());
@@ -265,6 +239,7 @@ bool PacketManager::hardcoded_execute_filter(std::string query_type) {
 }
 
 // TODO: rewrite this method
+/* The Simple Query Protocol */
 void PacketManager::exec_query_message(Packet *pkt, ResponseBuffer &responses) {
   std::string q_str;
   packet_getstring(pkt, pkt->len, q_str);
@@ -293,6 +268,7 @@ void PacketManager::exec_query_message(Packet *pkt, ResponseBuffer &responses) {
     std::string err_msg;
     int rows_affected;
 
+    // execute the query in Sqlite
     int isfailed =  db.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
 
     if(isfailed) {
@@ -300,8 +276,10 @@ void PacketManager::exec_query_message(Packet *pkt, ResponseBuffer &responses) {
       break;
     }
 
+    // send the attribute names
     put_row_desc(rowdesc, responses);
 
+    // send the result rows
     send_data_rows(results, rowdesc.size(), rows_affected, responses);
 
     // TODO: should change to query_type
@@ -329,6 +307,7 @@ void PacketManager::exec_parse_message(Packet *pkt, ResponseBuffer &responses) {
   skipped_stmt_ = false;
   query_type = get_query_type(query);
   if (!hardcoded_execute_filter(query_type)) {
+    // query to be filtered, don't execute
     skipped_stmt_ = true;
     skipped_query_ = std::move(query);
     skipped_query_type_ = std::move(query_type);
@@ -353,6 +332,7 @@ void PacketManager::exec_parse_message(Packet *pkt, ResponseBuffer &responses) {
     param_types[i] = param_type;
   }
 
+  // Cache the received qury
   std::shared_ptr<CacheEntry> entry(new CacheEntry());
   entry->stmt_name = prep_stmt_name;
   entry->query_string = query;
@@ -394,11 +374,13 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
   // Read parameter format
   int num_params_format = packet_getint(pkt, 2);
 
+  // get the format of each parameter
   std::vector<int16_t> formats(num_params_format);
   for (int i = 0; i < num_params_format; i++) {
     formats[i] = packet_getint(pkt, 2);
   }
 
+  // error handling
   int num_params = packet_getint(pkt, 2);
   if (num_params_format != num_params) {
     std::string err_msg =
@@ -414,6 +396,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
     LOG_INFO("Unnamed statement");
     entry = unnamed_entry;
   } else {
+    // fetch the statement ID from the cache
     auto itr = cache_.find(prep_stmt_name);
     if (itr != cache_.end()) {
       entry = *itr;
@@ -427,6 +410,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
   const auto &query_string = entry->query_string;
   const auto &query_type = entry->query_type;
 
+  // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
   if (!hardcoded_execute_filter(query_type)) {
     skipped_stmt_ = true;
@@ -439,6 +423,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
     return;
   }
 
+  // Group the parameter types and thae parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters;
   PktBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
@@ -446,21 +431,21 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
     // BIND packet NULL parameter case
     if (param_len == -1) {
       // NULL mode
-      LOG_INFO("NULL mode");
+      // LOG_INFO("NULL mode");
       bind_parameters.push_back(std::make_pair(WIRE_NULL, std::string("")));
     } else {
       packet_getbytes(pkt, param_len, param);
 
       if (formats[param_idx] == 0) {
         // TEXT mode
-        LOG_INFO("TEXT mode");
+        // LOG_INFO("TEXT mode");
         std::string param_str = std::string(std::begin(param),
             std::end(param));
         bind_parameters.push_back(std::make_pair(WIRE_TEXT, param_str));
-        LOG_INFO("Bind param (size: %d) : %s", param_len, param_str.c_str());
+        // LOG_INFO("Bind param (size: %d) : %s", param_len, param_str.c_str());
       } else {
         // BINARY mode
-        LOG_INFO("BINARY mode");
+        // LOG_INFO("BINARY mode");
         switch (entry->param_types[param_idx]) {
           case POSTGRES_VALUE_TYPE_INTEGER: {
             int int_val = 0;
@@ -469,7 +454,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(
                 std::make_pair(WIRE_INTEGER, std::to_string(int_val)));
-            LOG_INFO("Bind param (size: %d) : %d", param_len, int_val);
+            // LOG_INFO("Bind param (size: %d) : %d", param_len, int_val);
           }
             break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
@@ -481,7 +466,7 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
             memcpy(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(
                 std::make_pair(WIRE_FLOAT, std::to_string(float_val)));
-            LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
+            // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
           }
             break;
           default: {
