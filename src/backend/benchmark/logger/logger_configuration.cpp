@@ -225,7 +225,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
-  state.experiment_type = EXPERIMENT_TYPE_INVALID;
+  state.experiment_type = EXPERIMENT_TYPE_THROUGHPUT;
   state.wait_timeout = 200;
   state.benchmark_type = BENCHMARK_TYPE_YCSB;
   state.flush_mode = 2;
@@ -235,7 +235,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y", opts, &idx);
+    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:", opts, &idx);
 
     if (c == -1) break;
 
