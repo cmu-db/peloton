@@ -68,8 +68,8 @@ static void WriteOutput(double value) {
 	    << ycsb::state.update_ratio << " "
 	    << ycsb::state.scale_factor << " "
 	    << ycsb::state.backend_count << " "
-      << ycsb::state.zipf_theta << " "
-      << state.transaction_count << " "
+      << ycsb::state.skew_factor << " "
+      << ycsb::state.duration << " "
       << state.nvm_latency << " "
       << state.pcommit_latency << " "
       << state.flush_mode << " "
@@ -82,8 +82,8 @@ static void WriteOutput(double value) {
 	out << ycsb::state.update_ratio << " ";
 	out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
-  out << ycsb::state.zipf_theta << " ";
-  out << ycsb::state.transaction_count << " ";
+  out << ycsb::state.skew_factor << " ";
+  out << ycsb::state.duration << " ";
   out << state.nvm_latency << " ";
   out << state.pcommit_latency << " ";
   out << state.flush_mode << " ";
@@ -174,7 +174,7 @@ bool PrepareLogFile() {
 
   auto duration = timer.GetDuration();
   auto throughput =
-      (ycsb::state.transaction_count * ycsb::state.backend_count) / duration;
+      (ycsb::state.duration * ycsb::state.backend_count) / duration;
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
@@ -189,7 +189,7 @@ bool PrepareLogFile() {
   }
   else if(state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
     // TODO: Fix this
-    WriteOutput(ycsb::state.flush_freq);
+    WriteOutput(ycsb::state.flush_frequency);
   }
 
   return true;

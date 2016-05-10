@@ -264,19 +264,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   // Default Values
   ycsb::state.scale_factor = 1;
   ycsb::state.duration = 10;
-  ycsb::state.snapshot_duration = 0.1;
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
-  ycsb::state.num_loggers = 0;
-  ycsb::state.sync_commit = 0;
-  ycsb::state.wait_timeout = 0;
-  ycsb::state.file_size = 32;
-  ycsb::state.log_buffer_size = 32768;
-  ycsb::state.checkpointer = 0;
-  ycsb::state.flush_freq = 0;
-
-  ycsb::state.transaction_count = state.transaction_count;
 
   // Parse args
   while (1) {
@@ -320,7 +310,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         // YCSB
       case 't':
         state.transaction_count = atoi(optarg);
-        ycsb::state.transaction_count = atoi(optarg);
+        ycsb::state.duration = atoi(optarg);
         break;
       case 'c':
         ycsb::state.column_count = atoi(optarg);
@@ -332,7 +322,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         ycsb::state.backend_count = atoi(optarg);
         break;
       case 's':
-        ycsb::state.zipf_theta = atoi(optarg);
+        ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
         break;
 
       case 'h':
