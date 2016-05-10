@@ -127,7 +127,6 @@ int is_cpu_genuine_intel(void) {
 int is_cpu_clflush_present(void){
   unsigned cpuinfo[4] = { 0 };
 
-
   cpuid(0x1, 0x0, cpuinfo);
 
   int ret = (cpuinfo[EDX_IDX] & bit_CLFLUSH) != 0;
@@ -377,6 +376,9 @@ StorageManager::StorageManager()
 }
 
 StorageManager::~StorageManager() {
+
+  std::cout << "Allocation count : " << allocation_count << "\n";
+
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
 
@@ -398,12 +400,14 @@ StorageManager::~StorageManager() {
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
+  // Update allocation count
+  allocation_count++;
+
   switch (type) {
     case BACKEND_TYPE_MM:
     case BACKEND_TYPE_NVM:{
       return ::operator new(size);
     } break;
-
 
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
@@ -449,7 +453,6 @@ void StorageManager::Release(BackendType type, void *address) {
     case BACKEND_TYPE_NVM:{
       ::operator delete(address);
     } break;
-
 
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
