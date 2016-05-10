@@ -32,8 +32,7 @@ AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
 			  $(top_builddir)/src/libpelotonpg.la \
-			  $(top_builddir)/src/libpelotonwire.la \
-			  -lsqlite3
+			  $(top_builddir)/src/libpelotonwire.la
 
 ######################################################################
 # SUBDIRS

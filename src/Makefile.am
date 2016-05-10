@@ -109,7 +109,7 @@ libpelotonwire_la_CPPFLAGS = $(AM_CPPFLAGS) \
 
 libpelotonwire_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libpelotonwire_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads -lsqlite3
+libpelotonwire_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads
 
 
 ######################################################################
@@ -152,6 +152,6 @@ peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM
 peloton_LDADD = libpelotonpg.la libpeloton.la
 
 wire_server_SOURCES = backend/wire/wire_main.cpp 
-wire_server_LDFLAGS = -lpthread -lsqlite3
+wire_server_LDFLAGS = -lpthread
 wire_server_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
 wire_server_LDADD = libpelotonwire.la
