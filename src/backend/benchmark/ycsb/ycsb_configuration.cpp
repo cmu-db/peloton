@@ -10,15 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-// #undef NDEBUG
+#undef NDEBUG
 
 #include <iomanip>
 #include <algorithm>
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
-
-#undef NDEBUG
 
 namespace peloton {
 namespace benchmark {
@@ -84,22 +82,20 @@ void ValidateBackendCount(const configuration &state) {
 
 void ValidateDuration(const configuration &state) {
   if (state.duration <= 0) {
-    LOG_ERROR("Invalid duration :: %lf", state.duration);
+    LOG_ERROR("Invalid duration :: %d", state.duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "execution duration", state.duration);
+  LOG_INFO("%s : %d", "execution duration", state.duration);
 }
 
 void ValidateSkewFactor(const configuration &state) {
   if (state.skew_factor <= 0 || state.skew_factor >= 3) {
-    std::cout << "Invalid skew_factor :: " << state.skew_factor
-        << std::endl;
+    LOG_ERROR("Invalid skew_factor :: %d", state.skew_factor);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "skew_factor "
-      << " : " << state.skew_factor << std::endl;
+  LOG_INFO("%s : %d", "skew_factor", state.skew_factor);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {

@@ -195,7 +195,8 @@ bool RunUpdate(ZipfDistribution &zipf);
 // Used to control backend execution
 volatile bool run_backends = true;
 
-std::vector<double> committed_transaction_counts;
+// Committed transaction counts
+std::vector<double> transaction_counts;
 
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
@@ -237,15 +238,14 @@ void RunBackend(oid_t thread_id) {
   }
 
   // Set committed_transaction_count
-  committed_transaction_counts[thread_id] = committed_transaction_count;
-
+  transaction_counts[thread_id] = committed_transaction_count;
 }
 
 void RunWorkload() {
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
-  committed_transaction_counts.reserve(num_threads);
+  transaction_counts.resize(num_threads);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
@@ -263,15 +263,14 @@ void RunWorkload() {
   }
 
   // Compute total committed transactions
-  auto sum_committed_transaction_count = 0;
-  for(auto committed_transaction_count : committed_transaction_counts){
-    sum_committed_transaction_count += committed_transaction_count;
+  auto sum_transaction_count = 0;
+  for(auto transaction_count : transaction_counts){
+    sum_transaction_count += transaction_count;
   }
 
-  // TODO: Compute average throughput and latency
-  state.throughput = sum_committed_transaction_count/(state.duration/1000);
+  // Compute average throughput and latency
+  state.throughput = (sum_transaction_count * 1000)/state.duration;
   state.latency = state.backend_count/state.throughput;
-
 }
 
 /////////////////////////////////////////////////////////

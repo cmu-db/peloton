@@ -29,11 +29,15 @@ static void WriteOutput(double stat) {
   std::cout << "----------------------------------------------------------\n";
   std::cout << state.update_ratio << " "
       << state.scale_factor << " "
+      << state.backend_count << " "
+      << state.skew_factor << " "
       << state.column_count << " :: ";
   std::cout << stat << " tps\n";
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
+  out << state.backend_count << " ";
+  out << state.skew_factor << " ";
   out << state.column_count << " ";
   out << stat << "\n";
   out.flush();
