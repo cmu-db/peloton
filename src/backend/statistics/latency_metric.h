@@ -73,13 +73,13 @@ class LatencyMetric : public AbstractMetric {
 
   // Computes the latency measurements using the latencies
   // collected so far.
-  LatencyMeasurements ComputeLatencies();
+  void ComputeLatencies();
 
   // Combines the source latency metric with this latency metric
   void Aggregate(AbstractMetric &source);
 
   // Returns a string representation of this latency metric
-  std::string ToString();
+  std::string ToString() const;
 
   // Returns a copy of the latencies collected
   boost::circular_buffer<double> Copy();
@@ -95,6 +95,9 @@ class LatencyMetric : public AbstractMetric {
 
   // Timer for timing individual latencies
   Timer<std::ratio<1, 1000>> timer_ms_;
+
+  // Stores result of last call to ComputeLatencies()
+  LatencyMeasurements latency_measurements_;
 
   // The maximum number of latencies that can be stored
   // (the capacity size N of the circular buffer)

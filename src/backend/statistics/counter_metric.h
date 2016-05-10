@@ -60,7 +60,7 @@ class CounterMetric : public AbstractMetric {
   void Aggregate(AbstractMetric &source);
 
   // Returns a string representation of this counter
-  inline std::string ToString() {
+  inline std::string ToString() const {
     std::stringstream ss;
     ss << count_;
     return ss.str();

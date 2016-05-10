@@ -28,12 +28,6 @@ namespace stats {
  */
 class AccessMetric : public AbstractMetric {
  public:
-  static const size_t READ_COUNTER = 0;
-  static const size_t UPDATE_COUNTER = 1;
-  static const size_t INSERT_COUNTER = 2;
-  static const size_t DELETE_COUNTER = 3;
-  static const size_t NUM_COUNTERS = 4;
-
   AccessMetric(MetricType type) : AbstractMetric(type) {}
 
   //===--------------------------------------------------------------------===//
@@ -115,7 +109,7 @@ class AccessMetric : public AbstractMetric {
   }
 
   // Returns a string representation of this access metric
-  inline std::string ToString() {
+  inline std::string ToString() const {
     std::stringstream ss;
     ss << "[ reads=" << access_counters_[READ_COUNTER].ToString()
        << ", updates=" << access_counters_[UPDATE_COUNTER].ToString()
@@ -124,8 +118,8 @@ class AccessMetric : public AbstractMetric {
     return ss.str();
   }
 
-  // Adds the counters from the source access metric to the counters
-  // in this access metric
+  // Adds the counters from the source access metric
+  // to the counters in this access metric
   void Aggregate(AbstractMetric &source);
 
  private:
@@ -140,6 +134,15 @@ class AccessMetric : public AbstractMetric {
       CounterMetric(COUNTER_METRIC),  // INSERT_COUNTER
       CounterMetric(COUNTER_METRIC)   // DELETE_COUNTER
   };
+
+  // The different types of accesses. These also
+  // serve as indexes into the access_counters_
+  // vector.
+  static const size_t READ_COUNTER = 0;
+  static const size_t UPDATE_COUNTER = 1;
+  static const size_t INSERT_COUNTER = 2;
+  static const size_t DELETE_COUNTER = 3;
+  static const size_t NUM_COUNTERS = 4;
 };
 
 }  // namespace stats
