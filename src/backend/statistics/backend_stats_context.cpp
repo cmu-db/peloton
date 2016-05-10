@@ -30,24 +30,37 @@ BackendStatsContext::~BackendStatsContext() {
   // peloton::stats::StatsAggregator::GetInstance().UnregisterContext(thread_id);
 }
 
-void BackendStatsContext::Aggregate(BackendStatsContext& source_) {
-  for (auto& database_item : source_.database_metrics_) {
-    GetDatabaseMetric(database_item.first)->Aggregate(*database_item.second);
-  }
-
-  for (auto& table_item : source_.table_metrics_) {
-    GetTableMetric(table_item.second->GetDatabaseId(),
-                   table_item.second->GetTableId())
-        ->Aggregate(*table_item.second);
-  }
-
-  for (auto& index_item : source_.index_metrics_) {
-    GetIndexMetric(
-        index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
-        index_item.second->GetIndexId())->Aggregate(*index_item.second);
-  }
-  txn_latencies_.Aggregate(source_.txn_latencies_);
+void BackendStatsContext::Aggregate(BackendStatsContext& source) {
+  // Aggregate all global metrics
+  txn_latencies_.Aggregate(source.txn_latencies_);
   txn_latencies_.ComputeLatencies();
+
+  // Aggregate all per-database metrics
+  for (auto& database_item : database_metrics_) {
+    auto worker_db_metric = source.GetDatabaseMetric(database_item.first);
+    if (worker_db_metric != nullptr) {
+      database_item.second->Aggregate(*worker_db_metric);
+    }
+  }
+
+  // Aggregate all per-table metrics
+  for (auto& table_item : table_metrics_) {
+    auto worker_table_metric = source.GetTableMetric(
+        table_item.second->GetDatabaseId(), table_item.second->GetTableId());
+    if (worker_table_metric != nullptr) {
+      table_item.second->Aggregate(*worker_table_metric);
+    }
+  }
+
+  // Aggregate all per-index metrics
+  for (auto& index_item : source.index_metrics_) {
+    auto worker_index_metric = GetIndexMetric(
+        index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
+        index_item.second->GetIndexId());
+    if (worker_index_metric != nullptr) {
+      index_item.second->Aggregate(*worker_index_metric);
+    }
+  }
 }
 
 void BackendStatsContext::Reset() {

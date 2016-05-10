@@ -35,7 +35,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
   // we should not rely on shared_ptr to reclaim memory.
   // this is because the underlying index can split or merge leaf nodes,
   // which invokes data data copy and deletes.
-  // as the underlying index is unaware of shared_ptr, 
+  // as the underlying index is unaware of shared_ptr,
   // memory allocated should be managed carefully by programmers.
   for (auto entry = container.begin(); entry != container.end(); ++entry) {
     delete entry->second;
@@ -51,8 +51,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key,
-                                      new ItemPointer(location));
+  std::pair<KeyType, ValueType> entry(index_key, new ItemPointer(location));
 
   {
     index_lock.WriteLock();
@@ -61,13 +60,10 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     container.insert(entry);
 
     index_lock.Unlock();
-
   }
 
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetIndexMetric(
-        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-            ->GetIndexAccess().IncrementInserts();
+    peloton::stats::backend_stats_context->IncrementIndexInserts(metadata);
   }
 
   return true;
@@ -80,6 +76,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
                                                  const ItemPointer &location) {
   KeyType index_key;
   index_key.SetFromKey(key);
+  size_t delete_count = 0;
 
   {
     index_lock.WriteLock();
@@ -103,12 +100,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
           container.erase(iterator);
           // Set try again
           try_again = true;
-
-          if (peloton_stats_mode != STATS_TYPE_INVALID) {
-            peloton::stats::backend_stats_context->GetIndexMetric(
-                GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-                    ->GetIndexAccess().IncrementDeletes();
-          }
+          delete_count++;
           break;
         }
       }
@@ -117,16 +109,19 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     index_lock.Unlock();
   }
 
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->IncrementIndexDeletes(delete_count,
+                                                                 metadata);
+  }
+
   return true;
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-bool BTreeIndex<KeyType, ValueType, KeyComparator,
-                KeyEqualityChecker>::CondInsertEntry(
-    const storage::Tuple *key, const ItemPointer &location,
-    std::function<bool(const ItemPointer &)> predicate) {
-
+bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
+    CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                    std::function<bool(const ItemPointer &)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -136,7 +131,6 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
       ItemPointer item_pointer = *(entry->second);
 
       if (predicate(item_pointer)) {
@@ -146,16 +140,14 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     }
 
     // Insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(
-        index_key, new ItemPointer(location)));
+    container.insert(
+        std::pair<KeyType, ValueType>(index_key, new ItemPointer(location)));
 
     index_lock.Unlock();
   }
 
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetIndexMetric(
-        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-              ->GetIndexAccess().IncrementInserts();
+    peloton::stats::backend_stats_context->IncrementIndexInserts(metadata);
   }
 
   return true;
@@ -224,7 +216,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            
             ItemPointer item_pointer = *(scan_itr->second);
 
             result.push_back(item_pointer);
@@ -246,13 +237,18 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     index_lock.Unlock();
   }
+
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
+  }
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    std::vector<ItemPointer> &result) {
+void BTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &
+                                                     result) {
   {
     index_lock.ReadLock();
 
@@ -260,14 +256,18 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
 
     // scan all entries
     while (itr != container.end()) {
-
       ItemPointer item_pointer = *(itr->second);
-      
+
       result.push_back(std::move(item_pointer));
       itr++;
     }
 
     index_lock.Unlock();
+  }
+
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
   }
 }
 
@@ -284,7 +284,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
       ItemPointer item_pointer = *(entry->second);
 
       result.push_back(item_pointer);
@@ -294,11 +293,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   }
 
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetIndexMetric(
-        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-            ->GetIndexAccess().IncrementReads(result.size());
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -387,13 +384,18 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     index_lock.Unlock();
   }
+
+  if (peloton_stats_mode != STATS_TYPE_INVALID) {
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
+  }
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    std::vector<ItemPointer *> &result) {
+void BTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer *> &
+                                                     result) {
   {
     index_lock.ReadLock();
 
@@ -410,9 +412,8 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
   }
 
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetIndexMetric(
-        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-              ->GetIndexAccess().IncrementReads(result.size());
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
   }
 }
 
@@ -439,11 +440,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   }
 
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetIndexMetric(
-        GetOid(), metadata->GetTableOid(), metadata->GetDatabaseOid())
-              ->GetIndexAccess().IncrementReads(result.size());
+    peloton::stats::backend_stats_context->IncrementIndexReads(result.size(),
+                                                               metadata);
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -465,24 +464,24 @@ template class BTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
 template class BTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
                           IntsEqualityChecker<4>>;
 
-template class BTreeIndex<GenericKey<4>, ItemPointer *,
-                          GenericComparator<4>, GenericEqualityChecker<4>>;
-template class BTreeIndex<GenericKey<8>, ItemPointer *,
-                          GenericComparator<8>, GenericEqualityChecker<8>>;
-template class BTreeIndex<GenericKey<12>, ItemPointer *,
-                          GenericComparator<12>, GenericEqualityChecker<12>>;
-template class BTreeIndex<GenericKey<16>, ItemPointer *,
-                          GenericComparator<16>, GenericEqualityChecker<16>>;
-template class BTreeIndex<GenericKey<24>, ItemPointer *,
-                          GenericComparator<24>, GenericEqualityChecker<24>>;
-template class BTreeIndex<GenericKey<32>, ItemPointer *,
-                          GenericComparator<32>, GenericEqualityChecker<32>>;
-template class BTreeIndex<GenericKey<48>, ItemPointer *,
-                          GenericComparator<48>, GenericEqualityChecker<48>>;
-template class BTreeIndex<GenericKey<64>, ItemPointer *,
-                          GenericComparator<64>, GenericEqualityChecker<64>>;
-template class BTreeIndex<GenericKey<96>, ItemPointer *,
-                          GenericComparator<96>, GenericEqualityChecker<96>>;
+template class BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+                          GenericEqualityChecker<4>>;
+template class BTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+                          GenericEqualityChecker<8>>;
+template class BTreeIndex<GenericKey<12>, ItemPointer *, GenericComparator<12>,
+                          GenericEqualityChecker<12>>;
+template class BTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+                          GenericEqualityChecker<16>>;
+template class BTreeIndex<GenericKey<24>, ItemPointer *, GenericComparator<24>,
+                          GenericEqualityChecker<24>>;
+template class BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
+                          GenericEqualityChecker<32>>;
+template class BTreeIndex<GenericKey<48>, ItemPointer *, GenericComparator<48>,
+                          GenericEqualityChecker<48>>;
+template class BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+                          GenericEqualityChecker<64>>;
+template class BTreeIndex<GenericKey<96>, ItemPointer *, GenericComparator<96>,
+                          GenericEqualityChecker<96>>;
 template class BTreeIndex<GenericKey<128>, ItemPointer *,
                           GenericComparator<128>, GenericEqualityChecker<128>>;
 template class BTreeIndex<GenericKey<256>, ItemPointer *,
