@@ -257,14 +257,14 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    //pt.Insert(3, TABLE.A);
+    // pt.Insert(3, TABLE.A);
     pt.Insert(20);
-    //pt.ReadModifyWrite(3);
-    //pt.BitmapScan(2, 5);
-    //pt.SeqScan();
-    //pt.DeleteByIndexScan(3);
-    //pt.SeqScan();
-    //pt.UpdateBySeqScan();
+    // pt.ReadModifyWrite(3);
+    pt.BitmapScan(2, 5);
+    pt.SeqScan();
+    pt.DeleteByIndexScan(3);
+    pt.SeqScan();
+    pt.UpdateBySeqScan();
     //pt.IndexScan(3);
     pt.Close();
   }

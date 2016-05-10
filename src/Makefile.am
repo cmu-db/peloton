@@ -28,6 +28,7 @@ include $(srcdir)/backend/storage/Makefile.am
 include $(srcdir)/backend/logging/Makefile.am
 include $(srcdir)/backend/gc/Makefile.am
 include $(srcdir)/backend/benchmark/Makefile.am
+include $(srcdir)/backend/wire/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
@@ -42,9 +43,11 @@ bin_PROGRAMS = \
 			   hyadapt \
 			   logger \
 			   ycsb \
-			   tpcc
+			   tpcc \
+			   wire_server
 
 lib_LTLIBRARIES += libpeloton.la
+lib_LTLIBRARIES += libpelotonwire.la
 lib_LTLIBRARIES += libpelotonpg.la
 
 DEFAULT_INCLUDES =
@@ -72,12 +75,19 @@ libpeloton_la_SOURCES = \
 ## Use different compiler flags for Peloton and pelotonpg.
 
 ######################################################################
+# PELOTON WIRE LIBRARY
+######################################################################
+
+libpelotonwire_la_SOURCES = $(wire_FILES)
+
+######################################################################
 # LIBPELOTON
 ######################################################################
 
 libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/postgres/interfaces \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 -I /opt/local/include \
@@ -88,12 +98,28 @@ libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS)
 libpeloton_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads
 
 ######################################################################
+# LIBPELOTONWIRE
+######################################################################
+
+libpelotonwire_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 -I /opt/local/include \
+						 $(third_party_INCLUDES)
+
+libpelotonwire_la_CXXFLAGS = $(AM_CXXFLAGS)
+
+libpelotonwire_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads
+
+
+######################################################################
 # LIBPELOTONPG
 ######################################################################
 
 libpelotonpg_la_SOURCES = \
 			$(postgres_backend_FILES) \
 			$(postgres_common_FILES) \
+			$(libpq_la_SOURCES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES) \
 			$(third_party_FILES)
@@ -101,6 +127,7 @@ libpelotonpg_la_SOURCES = \
 libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/postgres/interfaces \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)
@@ -124,4 +151,7 @@ peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM
 
 peloton_LDADD = libpelotonpg.la libpeloton.la
 
-
+wire_server_SOURCES = backend/wire/wire_main.cpp 
+wire_server_LDFLAGS = -lpthread
+wire_server_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS)
+wire_server_LDADD = libpelotonwire.la
