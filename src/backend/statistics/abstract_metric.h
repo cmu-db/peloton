@@ -37,7 +37,7 @@ class AbstractMetric {
 
   virtual void Reset() = 0;
 
-  virtual std::string ToString() = 0;
+  virtual std::string ToString() const = 0;
 
   virtual void Aggregate(AbstractMetric& source) = 0;
 

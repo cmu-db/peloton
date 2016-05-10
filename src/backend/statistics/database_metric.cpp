@@ -16,9 +16,7 @@ namespace peloton {
 namespace stats {
 
 DatabaseMetric::DatabaseMetric(MetricType type, oid_t database_id)
-    : AbstractMetric(type) {
-  database_id_ = database_id;
-}
+    : AbstractMetric(type), database_id_(database_id) {}
 
 void DatabaseMetric::Aggregate(AbstractMetric& source) {
   assert(source.GetType() == DATABASE_METRIC);
@@ -28,7 +26,7 @@ void DatabaseMetric::Aggregate(AbstractMetric& source) {
   txn_aborted_.Aggregate(db_metric.GetTxnAborted());
 }
 
-std::string DatabaseMetric::ToString() {
+std::string DatabaseMetric::ToString() const {
   std::stringstream ss;
   ss << "//"
         "===-----------------------------------------------------------------"

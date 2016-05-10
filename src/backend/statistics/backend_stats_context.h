@@ -41,26 +41,26 @@ class BackendStatsContext {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  inline std::thread::id GetThreadId() { return thread_id; }
+  inline std::thread::id GetThreadId() { return thread_id_; }
 
   // Returns the table metric with the given database ID and table ID
   inline TableMetric* GetTableMetric(oid_t database_id, oid_t table_id) {
     TableMetric::TableKey table_key =
         TableMetric::GetKey(database_id, table_id);
-    if (table_metrics_.find(table_key) == table_metrics_.end()) {
-      table_metrics_[table_key] =
-          new TableMetric{TABLE_METRIC, database_id, table_id};
+    if (table_metrics_.count(table_key) == 0) {
+      table_metrics_[table_key] = std::unique_ptr<TableMetric>(
+          new TableMetric{TABLE_METRIC, database_id, table_id});
     }
-    return table_metrics_[table_key];
+    return table_metrics_[table_key].get();
   }
 
   // Returns the database metric with the given database ID
   inline DatabaseMetric* GetDatabaseMetric(oid_t database_id) {
-    if (database_metrics_.find(database_id) == database_metrics_.end()) {
-      database_metrics_[database_id] =
-          new DatabaseMetric(DATABASE_METRIC, database_id);
+    if (database_metrics_.count(database_id) == 0) {
+      database_metrics_[database_id] = std::unique_ptr<DatabaseMetric>(
+          new DatabaseMetric{DATABASE_METRIC, database_id});
     }
-    return database_metrics_[database_id];
+    return database_metrics_[database_id].get();
   }
 
   // Returns the index metric with the given database ID, table ID, and
@@ -69,11 +69,11 @@ class BackendStatsContext {
                                      oid_t index_id) {
     IndexMetric::IndexKey index_key =
         IndexMetric::GetKey(database_id, table_id, index_id);
-    if (index_metrics_.find(index_key) == index_metrics_.end()) {
-      index_metrics_[index_key] =
-          new IndexMetric{INDEX_METRIC, database_id, table_id, index_id};
+    if (index_metrics_.count(index_key) == 0) {
+      index_metrics_[index_key] = std::unique_ptr<IndexMetric>(
+          new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
     }
-    return index_metrics_[index_key];
+    return index_metrics_[index_key].get();
   }
 
   inline LatencyMetric& GetTxnLatencyMetric() { return txn_latencies_; }
@@ -97,23 +97,22 @@ class BackendStatsContext {
     return !(*this == other);
   }
 
-  /**
-   * Resets all metrics
-   * Including create new submetrics according to current database
-   * status.
-   */
+  // Resets all metrics (and sub-metrics) to their starting state
+  // (e.g., sets all counters to zero)
   void Reset();
 
-  std::string ToString();
+  std::string ToString() const;
 
   // Database metrics
-  std::unordered_map<oid_t, DatabaseMetric*> database_metrics_;
+  std::unordered_map<oid_t, std::unique_ptr<DatabaseMetric>> database_metrics_;
 
   // Table metrics
-  std::unordered_map<TableMetric::TableKey, TableMetric*> table_metrics_;
+  std::unordered_map<TableMetric::TableKey, std::unique_ptr<TableMetric>>
+      table_metrics_;
 
   // Index metrics
-  std::unordered_map<IndexMetric::IndexKey, IndexMetric*> index_metrics_;
+  std::unordered_map<IndexMetric::IndexKey, std::unique_ptr<IndexMetric>>
+      index_metrics_;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -121,7 +120,7 @@ class BackendStatsContext {
   //===--------------------------------------------------------------------===//
 
   // The thread ID of this worker
-  std::thread::id thread_id;
+  std::thread::id thread_id_;
 
   // Latencies recorded by this worker
   LatencyMetric txn_latencies_;

@@ -21,7 +21,7 @@
 namespace peloton {
 namespace stats {
 
-// Each thread gets a backend logger
+// Each thread gets a backend stats context
 thread_local BackendStatsContext *backend_stats_context = nullptr;
 
 StatsAggregator::StatsAggregator()
@@ -71,7 +71,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   int64_t current_txns_committed = 0;
   // Traverse the metric of all threads to get the total number of committed
   // txns.
-  for (auto database_item : aggregated_stats_.database_metrics_) {
+  for (auto &database_item : aggregated_stats_.database_metrics_) {
     current_txns_committed +=
         database_item.second->GetTxnCommitted().GetCounter();
   }

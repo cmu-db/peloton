@@ -3921,7 +3921,6 @@ static void BackendInitialize(Port *port) {
    */
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
     peloton::stats::BackendStatsContext* stats_ = peloton::stats::StatsAggregator::GetInstance().GetBackendStatsContext();
-    printf("have a stats context? %p\n", stats_);
   }
 
 

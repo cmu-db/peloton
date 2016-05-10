@@ -19,10 +19,10 @@ namespace stats {
 
 IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
                          oid_t index_id)
-    : AbstractMetric(type) {
-  database_id_ = database_id;
-  table_id_ = table_id;
-  index_id_ = index_id;
+    : AbstractMetric(type),
+      database_id_(database_id),
+      table_id_(table_id),
+      index_id_(index_id) {
   index_name_ = "";
   auto index = catalog::Manager::GetInstance().GetIndexWithOid(
       database_id, table_id, index_id);
