@@ -12,6 +12,7 @@
 namespace peloton {
 namespace wire {
 
+// checks for parsing overflows
 void check_overflow(Packet *pkt, size_t size) {
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
@@ -24,29 +25,25 @@ PktBuf::iterator get_end_itr(Packet *pkt, int len) {
   return std::begin(pkt->buf) + pkt->ptr + len;
 }
 
-/*
- * packet_getint -  Parse an int out of the head of the
- * 	packet. Base bytes determines the number of bytes of integer
- * 	we are parsing out.
- */
+
 int packet_getint(Packet *pkt, uchar base) {
   int value = 0;
 
   check_overflow(pkt, base);
 
   switch (base) {
-    case 1:
+    case 1: // 8-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       break;
 
-    case 2:
+    case 2: // 16-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohs(value);
       break;
 
-    case 4:
+    case 4: // 32-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohl(value);
@@ -77,20 +74,13 @@ void packet_getbytes(Packet *pkt, size_t len, PktBuf& result) {
   pkt->ptr += len;
 }
 
-/*
- * packet_getstring - parse out a string of size len.
- * 		if len=0? parse till the end of the string
- */
 void packet_getstring(Packet *pkt, size_t len, std::string& result) {
   // exclude null char for std string
   result = std::string(std::begin(pkt->buf) + pkt->ptr,
                      get_end_itr(pkt, len - 1));
 }
 
-/*
- * get_string_token - used to extract a string token
- * 		from an unsigned char vector
- */
+
 void get_string_token(Packet *pkt, std::string& result) {
   // save start itr position of string
   auto start = std::begin(pkt->buf) + pkt->ptr;
@@ -116,6 +106,7 @@ void get_string_token(Packet *pkt, std::string& result) {
 
   result = std::string(start, find_itr);
 }
+
 
 void packet_putbyte(std::unique_ptr<Packet> &pkt, const uchar c) {
   pkt->buf.push_back(c);
@@ -212,6 +203,8 @@ bool read_packet(Packet *pkt, bool has_type_field, Client *client) {
 
 bool write_packets(std::vector<std::unique_ptr<Packet>> &packets,
                    Client *client) {
+
+  // iterate through all the packets
   for (size_t i = 0; i < packets.size(); i++) {
     auto pkt = packets[i].get();
     if (!client->sock->buffer_write_bytes(pkt->buf, pkt->len, pkt->msg_type)) {

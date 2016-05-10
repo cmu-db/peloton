@@ -174,10 +174,12 @@ bool SocketManager<B>::buffer_write_bytes(B &pkt_buf, size_t len, uchar type) {
   // make len include its field size as well
   len_nb = htonl(len + sizeof(int32_t));
 
+  // append the bytes of this integer in network-byte order
   std::copy(reinterpret_cast<uchar *>(&len_nb),
             reinterpret_cast<uchar *>(&len_nb) + 4,
             std::begin(wbuf.buf) + wbuf.buf_ptr);
 
+  // move the write buffer pointer and update size of the socket buffer
   wbuf.buf_ptr += sizeof(int32_t);
   wbuf.buf_size = wbuf.buf_ptr;
 
@@ -186,18 +188,24 @@ bool SocketManager<B>::buffer_write_bytes(B &pkt_buf, size_t len, uchar type) {
     window = wbuf.get_max_size() - wbuf.buf_ptr;
 
     if (len <= window) {
-      // contents fit in window
+      // contents fit in the window, range copy "len" bytes
       std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
                 std::begin(pkt_buf) + pkt_buf_ptr + len,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
+
+      // Move the cursor and update size of socket buffer
       wbuf.buf_ptr += len;
       wbuf.buf_size = wbuf.buf_ptr;
       return true;
     } else {
-      // non-trivial window
+      /* contents longer than socket buffer size, fill up the socket buffer
+       *  with "window" bytes
+       */
       std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
                 std::begin(pkt_buf) + pkt_buf_ptr + window,
                 std::begin(wbuf.buf) + wbuf.buf_ptr);
+
+      // move the packet's cursor
       pkt_buf_ptr += window;
       len -= window;
 

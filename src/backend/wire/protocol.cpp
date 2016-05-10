@@ -31,30 +31,6 @@ const std::unordered_map<std::string, std::string> PacketManager::parameter_stat
   ("session_authorization", "postgres")("standard_conforming_strings", "on")
   ("TimeZone", "US/Eastern");
 
-void print_packet(Packet* pkt UNUSED) {
-  //if (pkt->msg_type) {
-    //LOG_INFO("MsgType: %d", pkt->msg_type);
-  //}
-
-  //LOG_INFO("Len: %zu", pkt->len);
-
-  //LOG_INFO("BufLen: %zu", pkt->buf.size());
-
-  //LOG_INFO("{");
-  //for (auto ele : pkt->buf) {
-    //LOG_INFO("%d,", ele);
-  //}
-  //LOG_INFO("}\n");
-}
-
-void print_uchar_vector(std::vector<uchar>& vec UNUSED) {
-  //LOG_INFO("{");
-  //for (auto ele : vec) {
-    //LOG_INFO("%d (%c)", ele, ele);
-  //}
-  //LOG_INFO("}\n");
-}
-
 /*
  * close_client - Close the socket of the underlying client
  */
@@ -431,21 +407,17 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
     // BIND packet NULL parameter case
     if (param_len == -1) {
       // NULL mode
-      // LOG_INFO("NULL mode");
       bind_parameters.push_back(std::make_pair(WIRE_NULL, std::string("")));
     } else {
       packet_getbytes(pkt, param_len, param);
 
       if (formats[param_idx] == 0) {
         // TEXT mode
-        // LOG_INFO("TEXT mode");
         std::string param_str = std::string(std::begin(param),
             std::end(param));
         bind_parameters.push_back(std::make_pair(WIRE_TEXT, param_str));
-        // LOG_INFO("Bind param (size: %d) : %s", param_len, param_str.c_str());
       } else {
         // BINARY mode
-        // LOG_INFO("BINARY mode");
         switch (entry->param_types[param_idx]) {
           case POSTGRES_VALUE_TYPE_INTEGER: {
             int int_val = 0;
@@ -454,7 +426,6 @@ void PacketManager::exec_bind_message(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(
                 std::make_pair(WIRE_INTEGER, std::to_string(int_val)));
-            // LOG_INFO("Bind param (size: %d) : %d", param_len, int_val);
           }
             break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
@@ -678,7 +649,6 @@ void PacketManager::manage_packets(ThreadGlobals& globals) {
     return;
   }
 
-  //print_packet(&pkt);
   status = process_startup_packet(&pkt, responses);
   if (!write_packets(responses, &client) || !status) {
     // close client on write failure or status failure
@@ -688,7 +658,6 @@ void PacketManager::manage_packets(ThreadGlobals& globals) {
 
   pkt.reset();
   while (read_packet(&pkt, true, &client)) {
-    //print_packet(&pkt);
     status = process_packet(&pkt, globals, responses);
     if (!write_packets(responses, &client) || !status) {
       // close client on write failure or status failure

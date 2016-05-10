@@ -36,7 +36,9 @@ struct Packet;
 typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
 
 struct Client {
-  SocketManager<PktBuf>* sock;
+  SocketManager<PktBuf>* sock; // handle to socket manager
+
+  // Authentication details
   std::string dbname;
   std::string user;
   std::unordered_map<std::string, std::string> cmdline_options;
@@ -46,10 +48,10 @@ struct Client {
 
 
 struct Packet {
-  PktBuf buf;
-  size_t len;
-  size_t ptr;
-  uchar msg_type;
+  PktBuf buf; //stores packet contents
+  size_t len; // size of packet
+  size_t ptr; // PktBuf cursor
+  uchar msg_type; // header
 
   // reserve buf's size as maximum packet size
   inline Packet() { reset(); }
@@ -65,13 +67,18 @@ struct Packet {
 class PacketManager {
   Client client;
 
+  // Manage standalone queries
   std::shared_ptr<CacheEntry> unnamed_entry;
+
+  // gloabl txn state
   uchar txn_state;
+
+  // state to mang skipped queries
   bool skipped_stmt_;
   std::string skipped_query_;
   std::string skipped_query_type_;
 
-  wiredb::Sqlite db;
+  wiredb::Sqlite db; // dbhandler to use sqlite
 
   static const std::unordered_map<std::string, std::string> parameter_status_map;
 

@@ -31,6 +31,7 @@ class PacketManager;
 
 typedef unsigned char uchar;
 
+// use array as memory for the socket buffers can be fixed
 typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
 
@@ -43,9 +44,10 @@ struct Server {
       : port(port), max_connections(max_conn) {}
 };
 
+// Buffers used to batch meesages at the socket
 struct Buffer {
-  size_t buf_ptr;
-  size_t buf_size;
+  size_t buf_ptr; // buffer cursor
+  size_t buf_size; // buffer size
   SockBuf buf;
 
   inline Buffer() : buf_ptr(0), buf_size(0) {}
@@ -63,20 +65,26 @@ struct Buffer {
  */
 template <typename B>
 class SocketManager {
-  int sock_fd;
-  Buffer rbuf;
-  Buffer wbuf;
+  int sock_fd; // file descriptor
+  Buffer rbuf; //socket's read buffer
+  Buffer wbuf; // socket's write buffer
 
  private:
+  /* refill_read_buffer - Used to repopulate read buffer with a fresh
+   * batch of data from the socket
+  */
   bool refill_read_buffer();
 
  public:
   inline SocketManager(int sock_fd) : sock_fd(sock_fd) {}
 
+  // Reads a packet of length "bytes" from the head of the buffer
   bool read_bytes(B &pkt_buf, size_t bytes);
 
+  // Writes a packet into the write buffer
   bool buffer_write_bytes(B &pkt_buf, size_t len, uchar type);
 
+  // Used to invoke a write into the Socket, once the write buffer is ready
   bool flush_write_buffer();
 
   void close_socket();
@@ -84,9 +92,11 @@ class SocketManager {
 
 extern void start_server(Server *server);
 
+// Thread function created per client
 template <typename P, typename B>
 void client_handler(ThreadGlobals& globals, std::unique_ptr<int> clientfd);
 
+// Server's "accept loop"
 template <typename P, typename B>
 void handle_connections(Server *server);
 
@@ -97,8 +107,7 @@ void handle_connections(Server *server);
 
 /*
  * handle_connections - Server's accept loop. Takes the protocol's PacketManager
- * (P)
- * 		and STL container type for the protocol's buffer (B)
+ * (P) and STL container type for the protocol's buffer (B)
  */
 
 template <typename P, typename B>
