@@ -54,7 +54,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
                                       new ItemPointer(location));
 
   {
-    index_lock.WriteLock();
+    index_lock.Lock();
 
     // Insert the key, val pair
     container.insert(entry);
@@ -74,7 +74,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   index_key.SetFromKey(key);
 
   {
-    index_lock.WriteLock();
+    index_lock.Lock();
 
     // Delete the < key, location > pair
     bool try_again = true;
@@ -117,7 +117,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   index_key.SetFromKey(key);
 
   {
-    index_lock.WriteLock();
+    index_lock.Lock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -168,7 +168,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   LOG_TRACE("Special case : %d ", special_case);
 
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     auto scan_begin_itr = container.begin();
     std::unique_ptr<storage::Tuple> start_key;
@@ -232,7 +232,7 @@ void
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<ItemPointer> &result) {
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     auto itr = container.begin();
 
@@ -257,7 +257,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   index_key.SetFromKey(key);
 
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -303,7 +303,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   LOG_TRACE("Special case : %d ", special_case);
 
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     auto scan_begin_itr = container.begin();
     std::unique_ptr<storage::Tuple> start_key;
@@ -365,7 +365,7 @@ void
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<ItemPointer *> &result) {
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     auto itr = container.begin();
 
@@ -392,7 +392,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   index_key.SetFromKey(key);
 
   {
-    index_lock.ReadLock();
+    index_lock.Lock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
