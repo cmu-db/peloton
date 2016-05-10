@@ -87,6 +87,7 @@ libpelotonwire_la_SOURCES = $(wire_FILES)
 libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/postgres/interfaces \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 -I /opt/local/include \
@@ -118,6 +119,7 @@ libpelotonwire_la_LDFLAGS = -levent -lprotobuf -lpthread -levent_pthreads -lsqli
 libpelotonpg_la_SOURCES = \
 			$(postgres_backend_FILES) \
 			$(postgres_common_FILES) \
+			$(libpq_la_SOURCES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES) \
 			$(third_party_FILES)
@@ -125,6 +127,7 @@ libpelotonpg_la_SOURCES = \
 libpelotonpg_la_CPPFLAGS = $(AM_CPPFLAGS) \
 						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/postgres/interfaces \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
 						 $(third_party_INCLUDES)

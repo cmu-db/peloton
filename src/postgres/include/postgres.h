@@ -47,6 +47,12 @@
 #include "c.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
+#include <string>
+#include <sys/socket.h>
+#include <unistd.h>
+
+// used by MemcachedState
+#include "lib/stringinfo.h"
 
 /* ----------------------------------------------------------------
  *				Section 1:	variable-length datatypes (TOAST support)
@@ -164,6 +170,13 @@ typedef struct
 	uint8		va_tag;			/* Type of datum */
 	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Type-specific data */
 } varattrib_1b_e;
+
+/* state struct used by memcached benchamrk */
+
+struct MemcachedState{
+	StringInfoData result;
+	/* add memcached return status */
+};
 
 /*
  * Bit layouts for varlena headers on big-endian machines:

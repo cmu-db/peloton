@@ -38,7 +38,7 @@ static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
                            DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
-                            DestReceiver *dest);
+                            DestReceiver *dest, MemcachedState *mc_state = nullptr);
 static void PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
                              DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal, bool isTopLevel, DestReceiver *dest,
@@ -631,7 +631,8 @@ void PortalSetResultFormat(Portal portal, int nFormats, int16 *formats) {
  * suspended due to exhaustion of the count parameter.
  */
 bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
-               DestReceiver *altdest, char *completionTag) {
+               DestReceiver *altdest, char *completionTag,
+               MemcachedState* mc_state) {
   bool result;
   uint32 nprocessed;
   ResourceOwner saveTopTransactionResourceOwner;
@@ -699,7 +700,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
         case PORTAL_ONE_RETURNING:
         case PORTAL_ONE_MOD_WITH:
         case PORTAL_UTIL_SELECT:
-
+          // printf("\nSELECT-LIKE QUERY\n");
           /*
            * If we have not yet run the command, do so, storing its
            * results in the portal's tuplestore.  But we don't do that
@@ -711,7 +712,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
           /*
            * Now fetch desired portion of results.
            */
-          nprocessed = PortalRunSelect(portal, true, count, dest);
+          nprocessed = PortalRunSelect(portal, true, count, dest, mc_state);
 
           /*
            * If the portal result contains a command tag and the caller
@@ -736,11 +737,11 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
           break;
 
         case PORTAL_MULTI_QUERY:
+          // printf("\nMULTI QUERY\n");
           PortalRunMulti(portal, isTopLevel, dest, altdest, completionTag);
 
           /* Prevent portal's commands from being re-executed */
           MarkPortalDone(portal);
-
           /* Always complete at end of RunMulti */
           result = true;
           break;
@@ -809,7 +810,8 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
  * Returns number of rows processed (suitable for use in result tag)
  */
 static long PortalRunSelect(Portal portal, bool forward, long count,
-                            DestReceiver *dest) {
+                            DestReceiver *dest,
+                            MemcachedState* mc_state) {
   QueryDesc *queryDesc;
   ScanDirection direction;
   uint32 nprocessed;
@@ -857,7 +859,7 @@ static long PortalRunSelect(Portal portal, bool forward, long count,
       nprocessed = RunFromStore(portal, direction, count, dest);
     else {
       PushActiveSnapshot(queryDesc->snapshot);
-      ExecutorRun(queryDesc, direction, count);
+      ExecutorRun(queryDesc, direction, count, mc_state);
       nprocessed = queryDesc->estate->es_processed;
       PopActiveSnapshot();
     }
@@ -894,7 +896,7 @@ static long PortalRunSelect(Portal portal, bool forward, long count,
       nprocessed = RunFromStore(portal, direction, count, dest);
     else {
       PushActiveSnapshot(queryDesc->snapshot);
-      ExecutorRun(queryDesc, direction, count);
+      ExecutorRun(queryDesc, direction, count, mc_state);
       nprocessed = queryDesc->estate->es_processed;
       PopActiveSnapshot();
     }
@@ -989,7 +991,7 @@ static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 
   slot = MakeSingleTupleTableSlot(portal->tupDesc);
 
-  (*dest->rStartup)(dest, CMD_SELECT, portal->tupDesc);
+  (*dest->rStartup)(dest, CMD_SELECT, portal->tupDesc, nullptr);
 
   if (ScanDirectionIsNoMovement(direction)) {
     /* do nothing except start/stop the destination */
@@ -1009,7 +1011,7 @@ static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
       if (!ok)
         break;
 
-      (*dest->receiveSlot)(slot, dest);
+      (*dest->receiveSlot)(slot, dest, nullptr);
 
       ExecClearTuple(slot);
 

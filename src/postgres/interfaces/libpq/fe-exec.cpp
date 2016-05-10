@@ -3200,7 +3200,7 @@ PQescapeStringInternal(PGconn *conn,
 		if (!IS_HIGHBIT_SET(c))
 		{
 			/* Apply quoting if needed */
-			if (SQL_STR_DOUBLE(c, !std_strings))
+			if (SQL_STR_DOUBLE(c, std_strings))
 				*target++ = c;
 			/* Copy the character */
 			*target++ = c;
