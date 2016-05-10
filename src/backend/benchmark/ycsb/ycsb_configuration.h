@@ -32,6 +32,13 @@ static const oid_t user_table_pkey_index_oid = 2001;
 
 static const oid_t ycsb_field_length = 100;
 
+enum SkewFactor {
+  SKEW_FACTOR_INVALID = 0,
+
+  SKEW_FACTOR_LOW = 1,
+  SKEW_FACTOR_HIGH = 2
+};
+
 class configuration {
  public:
   // size of the table
@@ -43,49 +50,23 @@ class configuration {
   // update ratio
   double update_ratio;
 
-  // execution duration
-  double duration;
-
-  // snapshot duration
-  double snapshot_duration;
-
-  unsigned long transaction_count;
+  // execution duration (in ms)
+  int duration;
 
   // number of backends
   int backend_count;
 
-  // whether logging is enabled
-  int num_loggers;
-
-  // synchronous commit
-  int sync_commit;
-
   // frequency with which the logger flushes
-  int64_t wait_timeout;
+  int64_t flush_frequency;
 
-  // log file size
-  int file_size;
-
-  // log buffer size
-  int log_buffer_size;
-
-  // whether do checkpoint
-  int checkpointer;
-
-  std::vector<double> snapshot_throughput;
-
-  std::vector<double> snapshot_abort_rate;
-
+  // throughput
   double throughput;
 
-  double abort_rate;
+  // skew
+  SkewFactor skew_factor;
 
-  double zipf_theta;
-
-  bool run_mix;
-
-  int flush_freq;
-
+  // latency average
+  double latency;
 };
 
 extern configuration state;
@@ -102,9 +83,7 @@ void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
 
-void ValidateSnapshotDuration(const configuration &state);
-
-void ValidateLogging(const configuration &state);
+void ValidateSkewFactor(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
