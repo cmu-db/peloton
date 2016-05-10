@@ -144,8 +144,8 @@ bool HybridScanExecutor::HybridSeqScanUtil() {
   assert(table_ != nullptr);
   assert(column_ids_.size() > 0);
 
-  Timer<> timer;
-  timer.Start();
+//  Timer<> timer;
+//  timer.Start();
   
   // auto &transaction_manager =
   //  concurrency::TransactionManagerFactory::GetInstance();
@@ -190,9 +190,9 @@ bool HybridScanExecutor::HybridSeqScanUtil() {
     }
   }
   
-  timer.Stop();
-  double time_per_transaction = timer.GetDuration();
-  printf(" %f\n", time_per_transaction);
+//  timer.Stop();
+//  double time_per_transaction = timer.GetDuration();
+//  printf(" %f\n", time_per_transaction);
   return true;
 }
 
@@ -309,67 +309,67 @@ bool HybridScanExecutor::DExecute() {
     return IndexScanUtil();
   } else {
     // do two part search
+    if (index_done_ == false) {
+      if (indexed_tile_offset_ == INVALID_OID) {
+        index_done_ = true;
+      } else {
+        ExecPrimaryIndexLookup();
+      }
+    }
+
+    if (IndexScanUtil() == true) {
+      return true;
+    }
+    // Scan seq
+    return SeqScanUtil();
+
 //    if (index_done_ == false) {
-//      if (indexed_tile_offset_ == INVALID_OID) {
-//        index_done_ = true;
-//      } else {
-//        ExecPrimaryIndexLookup();
+//      HybridExecPrimaryIndexLookup();
+//      HybridSeqScanUtil();
+//
+//     // Timer<> timer;
+//     // timer.Start();
+//
+//      std::map<oid_t, std::vector<oid_t>> visible_tuples;
+//      for (auto item : item_pointers_) {
+//        visible_tuples[item.block].push_back(item.offset);
 //      }
+//
+//      for (auto tuples : visible_tuples) {
+//        auto &manager = catalog::Manager::GetInstance();
+//        auto tile_group = manager.GetTileGroup(tuples.first);
+//
+//        std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+//        // Add relevant columns to logical tile
+//        logical_tile->AddColumns(tile_group, full_column_ids_);
+//        logical_tile->AddPositionList(std::move(tuples.second));
+//        if (column_ids_.size() != 0) {
+//          logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+//        }
+//
+//        result_.push_back(logical_tile.release());
+//      }
+//
+//      // timer.Stop();
+//     //  double time_per_transaction = timer.GetDuration();
+//     //  printf(" %f\n", time_per_transaction);
 //    }
 //
-//    if (IndexScanUtil() == true) {
-//      return true;
-//    }
-//    // Scan seq
-//    return SeqScanUtil();
-
-    if (index_done_ == false) {
-      HybridExecPrimaryIndexLookup();
-      HybridSeqScanUtil();
-
-     // Timer<> timer;
-     // timer.Start();
-
-      std::map<oid_t, std::vector<oid_t>> visible_tuples;
-      for (auto item : item_pointers_) {
-        visible_tuples[item.block].push_back(item.offset);
-      }
-
-      for (auto tuples : visible_tuples) {
-        auto &manager = catalog::Manager::GetInstance();
-        auto tile_group = manager.GetTileGroup(tuples.first);
-
-        std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-        // Add relevant columns to logical tile
-        logical_tile->AddColumns(tile_group, full_column_ids_);
-        logical_tile->AddPositionList(std::move(tuples.second));
-        if (column_ids_.size() != 0) {
-          logical_tile->ProjectColumns(full_column_ids_, column_ids_);
-        }
-
-        result_.push_back(logical_tile.release());
-      }
-     
-      // timer.Stop();
-     //  double time_per_transaction = timer.GetDuration();
-     //  printf(" %f\n", time_per_transaction);
-    }
-    
-    assert(index_done_);
-
-    while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
-      if (result_[result_itr_]->GetTupleCount() == 0) {
-        result_itr_++;
-        continue;
-      } else {
-        SetOutput(result_[result_itr_]);
-        result_itr_++;
-         // printf("Construct a logical tile scan\n");
-
-        return true;
-      }
-    }  // end while
-    return false;
+//    assert(index_done_);
+//
+//    while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
+//      if (result_[result_itr_]->GetTupleCount() == 0) {
+//        result_itr_++;
+//        continue;
+//      } else {
+//        SetOutput(result_[result_itr_]);
+//        result_itr_++;
+//         // printf("Construct a logical tile scan\n");
+//
+//        return true;
+//      }
+//    }  // end while
+//    return false;
   }
 
   return false;
@@ -552,7 +552,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
 
     ItemPointer tuple_location = *tuple_location_ptr;
-    if (type_ == planner::HYBRID) {
+    if (type_ == planner::HYBRID &&
+        tuple_location.block >= current_tile_group_offset_) {
       item_pointers_.insert(tuple_location);
     }
 
