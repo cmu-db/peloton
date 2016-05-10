@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include "logger.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace wire {

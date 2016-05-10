@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <tuple>
-#include "logger.h"
+#include "backend/common/logger.h"
 #include "wire.h"
 
 namespace peloton {
