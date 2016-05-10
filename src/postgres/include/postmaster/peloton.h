@@ -76,7 +76,8 @@ extern void peloton_dml(const PlanState *planstate,
                         bool sendTuples,
                         DestReceiver *dest,
                         TupleDesc tuple_desc,
-                        const char *prepStmtName);
+                        const char *prepStmtName,
+                        MemcachedState *mc_state);
 
 #endif   /* PELOTON_H */
 

@@ -31,7 +31,9 @@ AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(top_builddir)/src/libpeloton.la \
-			  $(top_builddir)/src/libpelotonpg.la
+			  $(top_builddir)/src/libpelotonpg.la \
+			  $(top_builddir)/src/libpelotonwire.la \
+			  -lsqlite3
 
 ######################################################################
 # SUBDIRS
@@ -49,6 +51,7 @@ include $(srcdir)/logging/Makefile.am
 include $(srcdir)/networking/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
+include $(srcdir)/wire/Makefile.am
 
 #include $(srcdir)/postgres/Makefile.am
 
