@@ -124,14 +124,7 @@ bool OptimisticTxnManager::PerformRead(const ItemPointer &location) {
 
   // Increment table read op stats
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t tile_group_id = location.block;
-
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementReads();
+    peloton::stats::backend_stats_context->IncrementTableReads(location.block);
   }
 
   return true;
@@ -159,12 +152,8 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
 
   // Increment table insert op stats
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementInserts();
+    peloton::stats::backend_stats_context->IncrementTableInserts(
+        location.block);
   }
 
   return true;
@@ -179,9 +168,11 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -203,14 +194,9 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   current_txn->RecordUpdate(old_location);
 
   // Increment table update op stats
-  oid_t tile_group_id = old_location.block;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementUpdates();
+    peloton::stats::backend_stats_context->IncrementTableUpdates(
+        new_location.block);
   }
 }
 
@@ -237,24 +223,21 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
 
   // Increment table update op stats
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementUpdates();
+    peloton::stats::backend_stats_context->IncrementTableUpdates(
+        location.block);
   }
 }
 
 void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -277,14 +260,9 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   current_txn->RecordDelete(old_location);
 
   // Increment table delete op stats
-  oid_t tile_group_id = old_location.block;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementDeletes();
+    peloton::stats::backend_stats_context->IncrementTableDeletes(
+        old_location.block);
   }
 }
 
@@ -313,12 +291,8 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
 
   // Increment table delete op stats
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    oid_t table_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetTableId();
-    oid_t database_id = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetDatabaseId();
-    peloton::stats::backend_stats_context->GetTableMetric(
-        database_id, table_id)->GetTableAccess().IncrementDeletes();
+    peloton::stats::backend_stats_context->IncrementTableDeletes(
+        location.block);
   }
 }
 
@@ -332,7 +306,8 @@ Result OptimisticTxnManager::CommitTransaction() {
   oid_t database_id = 0;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
     if (!rw_set.empty()) {
-      database_id = manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
+      database_id =
+          manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
     }
   }
 
@@ -398,8 +373,9 @@ Result OptimisticTxnManager::CommitTransaction() {
           continue;
         } else {
           if (tile_group_header->GetTransactionId(tuple_slot) ==
-                  INITIAL_TXN_ID && tile_group_header->GetBeginCommitId(
-                                        tuple_slot) <= end_commit_id &&
+                  INITIAL_TXN_ID &&
+              tile_group_header->GetBeginCommitId(tuple_slot) <=
+                  end_commit_id &&
               tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
             // the version is not owned by other txns and is still visible.
             continue;
@@ -517,8 +493,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 
   // Increment # txns committed metric
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetDatabaseMetric(database_id)
-        ->IncrementTxnCommitted();
+    peloton::stats::backend_stats_context->IncrementTxnCommitted(database_id);
   }
 
   return Result::RESULT_SUCCESS;
@@ -533,7 +508,8 @@ Result OptimisticTxnManager::AbortTransaction() {
   oid_t database_id = 0;
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
     if (!rw_set.empty()) {
-      database_id = manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
+      database_id =
+          manager.GetTileGroup(rw_set.begin()->first)->GetDatabaseId();
     }
   }
 
@@ -607,8 +583,7 @@ Result OptimisticTxnManager::AbortTransaction() {
 
   // Increment # txns aborted metric
   if (peloton_stats_mode != STATS_TYPE_INVALID) {
-    peloton::stats::backend_stats_context->GetDatabaseMetric(database_id)
-      ->IncrementTxnAborted();
+    peloton::stats::backend_stats_context->IncrementTxnAborted(database_id);
   }
 
   return Result::RESULT_ABORTED;
