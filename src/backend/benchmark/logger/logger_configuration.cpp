@@ -30,44 +30,28 @@ void Usage(FILE* out) {
           "Command line options :  logger <options> \n"
           "   -h --help              :  Print help message \n"
           "   -a --asynchronous-mode :  Asynchronous mode \n"
-          "   -b --backend-count     :  Backend count \n"
-          "   -c --column-count      :  # of columns \n"
-          "   -d --duration          :  Duration \n"
           "   -e --experiment-type   :  Experiment Type \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
-          "   -h --help              :  Print help message \n"
-          "   -k --scale-factor      :  # of tuples \n"
           "   -l --logging-type      :  Logging type \n"
           "   -n --nvm-latency       :  NVM latency \n"
           "   -p --pcommit-latency   :  pcommit latency \n"
-          "   -s --skew              :  Skew \n"
-          "   -u --update-ratio      :  Fraction of updates \n"
           "   -v --flush-mode        :  Flush mode \n"
-          "   -w --checkpointer      :  Checkpointer \n"
-          "   -x --flush-frequency   :  Flush frequency \n"
+          "   -w --commit-interval   :  Group commit interval \n"
           "   -y --benchmark-type    :  Benchmark type \n"
-          "   -z --log-buffer-size   :  Log buffer size \n"
   );
 }
 
 static struct option opts[] = {
     {"asynchronous_mode", optional_argument, NULL, 'a'},
-    {"backend_count", optional_argument, NULL, 'b'},
-    {"column-count", optional_argument, NULL, 'c'},
-    {"flush-mode", optional_argument, NULL, 'd'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"data-file-size", optional_argument, NULL, 'f'},
-    {"scale-factor", optional_argument, NULL, 'k'},
     {"logging-type", optional_argument, NULL, 'l'},
     {"nvm-latency", optional_argument, NULL, 'n'},
     {"pcommit-latency", optional_argument, NULL, 'p'},
     {"skew", optional_argument, NULL, 's'},
-    {"update-ratio", optional_argument, NULL, 'u'},
-    {"duration", optional_argument, NULL, 'v'},
-    {"checkpointer", optional_argument, NULL, 'w'},
-    {"flush-frequency", optional_argument, NULL, 'x'},
+    {"flush-mode", optional_argument, NULL, 'v'},
+    {"commit-interval", optional_argument, NULL, 'w'},
     {"benchmark-type", optional_argument, NULL, 'y'},
-    {"log-buffer-size", optional_argument, NULL, 'z'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
@@ -248,29 +232,16 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
 
-  // Default YCSB Values
-  ycsb::state.backend_count = 2;
-  ycsb::state.column_count = 10;
-  ycsb::state.scale_factor = 1;
-  ycsb::state.update_ratio = 0.5;
-  ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
-
-  ycsb::state.duration = 10;
-
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "a:b:c:d:e:f:hk:l:n:p:s:u:w:x:y:z:", opts, &idx);
+    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
       case 'a':
         state.asynchronous_mode = atoi(optarg);
-        break;
-      case 'd':
-        state.duration = atoi(optarg);
-        ycsb::state.duration = atoi(optarg);
         break;
       case 'e':
         state.experiment_type = (ExperimentType)atoi(optarg);
@@ -287,6 +258,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'p':
         state.pcommit_latency = atoi(optarg);
         break;
+      case 'v':
+        state.flush_mode = atoi(optarg);
+        break;
       case 'w':
         state.wait_timeout = atoi(optarg);
         break;
@@ -294,29 +268,14 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
-        // YCSB
-      case 'b':
-        ycsb::state.backend_count = atoi(optarg);
-        break;
-      case 'c':
-        ycsb::state.column_count = atoi(optarg);
-        break;
-      case 'k':
-        ycsb::state.scale_factor = atoi(optarg);
-        break;
-      case 's':
-        ycsb::state.skew_factor = (ycsb::SkewFactor) atoi(optarg);
-        break;
-      case 'u':
-        ycsb::state.update_ratio = atof(optarg);
-        break;
-
       case 'h':
         Usage(stderr);
+        ycsb::Usage(stderr);
         exit(EXIT_FAILURE);
         break;
+
       default:
-        exit(EXIT_FAILURE);
+        // Ignore unknown options
         break;
     }
   }
@@ -332,13 +291,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidateNVMLatency(state);
   ValidatePCOMMITLatency(state);
 
-  // Print configuration
-  ycsb::ValidateScaleFactor(ycsb::state);
-  ycsb::ValidateColumnCount(ycsb::state);
-  ycsb::ValidateUpdateRatio(ycsb::state);
-  ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateSkewFactor(ycsb::state);
-  ycsb::ValidateDuration(ycsb::state);
+  // Send the arguments to YCSB
+  ycsb::ParseArguments(argc, argv, ycsb::state);
 
 }
 

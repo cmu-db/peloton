@@ -144,9 +144,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         exit(EXIT_FAILURE);
         break;
       default:
-        fprintf(stderr, "\nUnknown option: -%c-\n", c);
-        Usage(stderr);
-        exit(EXIT_FAILURE);
+        // Ignore unknown options
+        break;
     }
   }
 

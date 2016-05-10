@@ -61,9 +61,6 @@ class configuration {
   // Benchmark type
   BenchmarkType benchmark_type;
 
-  // execution duration (in ms)
-  int duration;
-
   // clflush or clwb
   int flush_mode;
 
