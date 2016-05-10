@@ -61,8 +61,8 @@ class configuration {
   // Benchmark type
   BenchmarkType benchmark_type;
 
-  // # of times to run transaction
-  unsigned long transaction_count;
+  // execution duration (in ms)
+  int duration;
 
   // clflush or clwb
   int flush_mode;

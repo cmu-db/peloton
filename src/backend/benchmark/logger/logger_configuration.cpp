@@ -32,7 +32,7 @@ void Usage(FILE* out) {
           "   -a --asynchronous-mode :  Asynchronous mode \n"
           "   -b --backend-count     :  Backend count \n"
           "   -c --column-count      :  # of columns \n"
-          "   -d --flush-mode        :  Flush mode \n"
+          "   -d --duration          :  Duration \n"
           "   -e --experiment-type   :  Experiment Type \n"
           "   -f --data-file-size    :  Data file size (MB) \n"
           "   -h --help              :  Print help message \n"
@@ -41,9 +41,8 @@ void Usage(FILE* out) {
           "   -n --nvm-latency       :  NVM latency \n"
           "   -p --pcommit-latency   :  pcommit latency \n"
           "   -s --skew              :  Skew \n"
-          "   -t --transactions      :  # of transactions \n"
-          "   -u --write-ratio       :  Fraction of updates \n"
-          "   -v --duration          :  Duration \n"
+          "   -u --update-ratio      :  Fraction of updates \n"
+          "   -v --flush-mode        :  Flush mode \n"
           "   -w --checkpointer      :  Checkpointer \n"
           "   -x --flush-frequency   :  Flush frequency \n"
           "   -y --benchmark-type    :  Benchmark type \n"
@@ -63,7 +62,6 @@ static struct option opts[] = {
     {"nvm-latency", optional_argument, NULL, 'n'},
     {"pcommit-latency", optional_argument, NULL, 'p'},
     {"skew", optional_argument, NULL, 's'},
-    {"transactions", optional_argument, NULL, 't'},
     {"update-ratio", optional_argument, NULL, 'u'},
     {"duration", optional_argument, NULL, 'v'},
     {"checkpointer", optional_argument, NULL, 'w'},
@@ -196,17 +194,6 @@ static void ValidatePCOMMITLatency(
       << " : " << state.pcommit_latency << std::endl;
 }
 
-static void ValidateTransactionCount(const configuration &state) {
-  if (state.transaction_count <= 0) {
-    std::cout << "Invalid transaction_count :: " << state.transaction_count
-        << std::endl;
-    exit(EXIT_FAILURE);
-  }
-
-  std::cout << std::setw(20) << std::left << "transaction_count "
-      << " : " << state.transaction_count << std::endl;
-}
-
 static void ValidateLogFileDir(
     configuration& state) {
   struct stat data_stat;
@@ -247,7 +234,8 @@ static void ValidateLogFileDir(
 }
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
-  // Default Values
+
+  // Default Logger Values
   state.logging_type = LOGGING_TYPE_NVM_WAL;
 
   state.log_file_dir = TMP_DIR;
@@ -256,46 +244,42 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
   state.wait_timeout = 200;
   state.benchmark_type = BENCHMARK_TYPE_YCSB;
-  state.transaction_count = 100;
   state.flush_mode = 2;
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
 
-  // Default Values
-  ycsb::state.scale_factor = 1;
-  ycsb::state.duration = 10;
-  ycsb::state.column_count = 10;
-  ycsb::state.update_ratio = 0.5;
+  // Default YCSB Values
   ycsb::state.backend_count = 2;
+  ycsb::state.column_count = 10;
+  ycsb::state.scale_factor = 1;
+  ycsb::state.update_ratio = 0.5;
+  ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
+
+  ycsb::state.duration = 10;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "a:b:c:e:f:hk:l:n:p:t:u:w:y:", opts, &idx);
+    int c = getopt_long(argc, argv, "a:b:c:d:e:f:hk:l:n:p:s:u:w:x:y:z:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
-      case 'k':
-        ycsb::state.scale_factor = atoi(optarg);
+      case 'a':
+        state.asynchronous_mode = atoi(optarg);
         break;
-      case 'l':
-        state.logging_type = (LoggingType)atoi(optarg);
-        break;
-      case 'f':
-        state.data_file_size = atoi(optarg);
+      case 'd':
+        state.duration = atoi(optarg);
+        ycsb::state.duration = atoi(optarg);
         break;
       case 'e':
         state.experiment_type = (ExperimentType)atoi(optarg);
         break;
-      case 'w':
-        state.wait_timeout = atoi(optarg);
+      case 'f':
+        state.data_file_size = atoi(optarg);
         break;
-      case 'y':
-        state.benchmark_type = (BenchmarkType)atoi(optarg);
-        break;
-      case 'd':
-        state.flush_mode = atoi(optarg);
+      case 'l':
+        state.logging_type = (LoggingType)atoi(optarg);
         break;
       case 'n':
         state.nvm_latency = atoi(optarg);
@@ -303,26 +287,28 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'p':
         state.pcommit_latency = atoi(optarg);
         break;
-      case 'a':
-        state.asynchronous_mode = atoi(optarg);
+      case 'w':
+        state.wait_timeout = atoi(optarg);
+        break;
+      case 'y':
+        state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
         // YCSB
-      case 't':
-        state.transaction_count = atoi(optarg);
-        ycsb::state.duration = atoi(optarg);
+      case 'b':
+        ycsb::state.backend_count = atoi(optarg);
         break;
       case 'c':
         ycsb::state.column_count = atoi(optarg);
         break;
-      case 'u':
-        ycsb::state.update_ratio = atof(optarg);
-        break;
-      case 'b':
-        ycsb::state.backend_count = atoi(optarg);
+      case 'k':
+        ycsb::state.scale_factor = atoi(optarg);
         break;
       case 's':
-        ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
+        ycsb::state.skew_factor = (ycsb::SkewFactor) atoi(optarg);
+        break;
+      case 'u':
+        ycsb::state.update_ratio = atof(optarg);
         break;
 
       case 'h':
@@ -342,7 +328,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidateWaitTimeout(state);
   ValidateExperimentType(state);
   ValidateBenchmarkType(state);
-  ValidateTransactionCount(state);
   ValidateFlushMode(state);
   ValidateNVMLatency(state);
   ValidatePCOMMITLatency(state);
@@ -352,7 +337,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::ValidateColumnCount(ycsb::state);
   ycsb::ValidateUpdateRatio(ycsb::state);
   ycsb::ValidateBackendCount(ycsb::state);
-  //ycsb::ValidateSkewFactor(ycsb::state);
+  ycsb::ValidateSkewFactor(ycsb::state);
+  ycsb::ValidateDuration(ycsb::state);
 
 }
 
