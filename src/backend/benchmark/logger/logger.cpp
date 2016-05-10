@@ -59,8 +59,8 @@ void RunBenchmark() {
     // Reset data
     ResetSystem();
 
-    // Do recovery
-    DoRecovery(wal_log_file_name);
+    // TODO: Do recovery
+    //DoRecovery(wal_log_file_name);
 
   }
   //===--------------------------------------------------------------------===//
@@ -70,8 +70,8 @@ void RunBenchmark() {
     // Test a simple log process
     PrepareLogFile();
 
-    // Do recovery
-    DoRecovery(wbl_log_file_name);
+    // TODO: Do recovery
+    //DoRecovery(wbl_log_file_name);
 
   }
   //===--------------------------------------------------------------------===//
