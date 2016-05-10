@@ -128,7 +128,8 @@ AbstractPlanState *DMLUtils::PreparePlanState(AbstractPlanState *root,
       break;
 
     case T_ResultState:
-      // TODO: Do we need to handle this ?
+      child_planstate =
+          PrepareResultState(reinterpret_cast<const ResultState *>(planstate));
       break;
 
     case T_HashState:
@@ -676,7 +677,6 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
 
   return info;
 }
-
 /**
  * @brief preparing data
  * @param planstate

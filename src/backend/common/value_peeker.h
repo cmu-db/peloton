@@ -34,7 +34,9 @@ namespace peloton {
 class ValuePeeker {
  public:
   static inline double PeekDouble(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_DOUBLE);
+    // currently, REAL are stored as DOUBLE
+    assert(value.GetValueType() == VALUE_TYPE_DOUBLE ||
+           value.GetValueType() == VALUE_TYPE_REAL);
     return value.GetDouble();
   }
 

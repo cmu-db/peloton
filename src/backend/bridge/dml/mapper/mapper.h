@@ -62,7 +62,8 @@ class PlanTransformer {
   // Analyze the plan
   static void AnalyzePlan(planner::AbstractPlan *plan, PlanState *planstate);
 
-  static std::vector<Value> BuildParams(const ParamListInfo param_list);
+  static std::vector<Value> BuildParams(const ParamListInfo param_list,
+                                        const List *subplan_list = nullptr);
 
  private:
   Cache<std::string, const planner::AbstractPlan> plan_cache_;
@@ -159,6 +160,9 @@ class PlanTransformer {
 
   static std::unique_ptr<planner::AbstractPlan> TransformHash(
       const HashPlanState *plan_state);
+
+  static std::unique_ptr<planner::AbstractPlan> TransformResult(
+      const ResultPlanState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
