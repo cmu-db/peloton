@@ -93,11 +93,6 @@ bool RunPayment(){
      "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
      }
    */
-
-  LOG_INFO("-------------------------------------");
-
-  //int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  //int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   return true;
 }
 
