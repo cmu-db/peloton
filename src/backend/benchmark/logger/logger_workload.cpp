@@ -62,31 +62,34 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-  LOG_INFO("----------------------------------------------------------\n");
-  LOG_INFO("%d %f %d %d :: %lf", state.logging_type, ycsb::state.update_ratio,
-           ycsb::state.scale_factor, ycsb::state.backend_count, value);
+	std::cout << "----------------------------------------------------------\n";
+	std::cout << state.benchmark_type << " "
+	    << state.logging_type << " "
+	    << ycsb::state.update_ratio << " "
+	    << ycsb::state.scale_factor << " "
+	    << ycsb::state.backend_count << " "
+      << ycsb::state.zipf_theta << " "
+      << state.transaction_count << " "
+      << state.nvm_latency << " "
+      << state.pcommit_latency << " "
+      << state.flush_mode << " "
+      << state.asynchronous_mode << " "
+      " :: ";
+	std::cout << value << "\n";
 
-  auto& storage_manager = storage::StorageManager::GetInstance();
-  auto& log_manager = logging::LogManager::GetInstance();
-  // FIXME accumulate fsync count across all frontend loggers
-  auto frontend_logger = log_manager.GetFrontendLogger(0);
-  auto fsync_count = 0;
-  if (frontend_logger != nullptr) {
-    fsync_count = frontend_logger->GetFsyncCount();
-  }
-
-  LOG_INFO("LOG  :: FSYNC count         : %d", fsync_count);
-  LOG_INFO("DATA :: CLFLUSH count (NVM) : %lu",
-           storage_manager.GetClflushCount());
-  LOG_INFO("DATA :: MSYNC count   (HDD) : %lu",
-           storage_manager.GetMsyncCount());
-
-  out << state.logging_type << " ";
-  out << ycsb::state.update_ratio << " ";
-  out << ycsb::state.scale_factor << " ";
+  out << state.benchmark_type << " ";
+	out << state.logging_type << " ";
+	out << ycsb::state.update_ratio << " ";
+	out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
+  out << ycsb::state.zipf_theta << " ";
+  out << ycsb::state.transaction_count << " ";
+  out << state.nvm_latency << " ";
+  out << state.pcommit_latency << " ";
+  out << state.flush_mode << " ";
+  out << state.asynchronous_mode << " ";
   out << value << "\n";
-  out.flush();
+	out.flush();
 }
 
 std::string GetFilePath(std::string directory_path, std::string file_name) {
@@ -116,10 +119,15 @@ bool PrepareLogFile() {
     return false;
   }
 
+        // Get an instance of the storage manager to force posix_fallocate
+        auto &storage_manager = storage::StorageManager::GetInstance();
+        auto msync_count = storage_manager.GetMsyncCount();
+        printf("msync count : %lu\n", msync_count);
+        
+
   Timer<> timer;
   std::thread thread;
 
-  timer.Start();
 
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
@@ -149,6 +157,8 @@ bool PrepareLogFile() {
     }
   }
 
+  timer.Start();
+
   // Build the log
   BuildLog();
 
@@ -168,12 +178,18 @@ bool PrepareLogFile() {
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
-      state.experiment_type == EXPERIMENT_TYPE_ACTIVE ||
-      state.experiment_type == EXPERIMENT_TYPE_WAIT) {
+      state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
     WriteOutput(throughput);
   } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
+    // TODO: Need to get more info
+    // in case of WAL: checkpoint size
+    // in case of WBL: table size, index size ?
     auto log_file_size = GetLogFileSize();
     WriteOutput(log_file_size);
+  }
+  else if(state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
+    // TODO: Fix this
+    WriteOutput(ycsb::state.flush_freq);
   }
 
   return true;
