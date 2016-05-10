@@ -92,10 +92,10 @@ bool RunDelivery(){
    }
    */
 
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
+  // int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  // int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
 
-  for (int d_id = 0; d_id < state.district_per_warehouse; ++d_id) {
+  for (int d_id = 0; d_id < state.districts_per_warehouse; ++d_id) {
     LOG_INFO("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
 
 
