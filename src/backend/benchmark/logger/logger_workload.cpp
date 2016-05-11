@@ -142,7 +142,6 @@ int recursive_delete(const char* dir) {
   // FTS_XDEV     - Don't cross filesystem boundaries
   ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
   if (!ftsp) {
-    fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
     ret = -1;
     goto finish;
   }
@@ -152,8 +151,6 @@ int recursive_delete(const char* dir) {
       case FTS_NS:
       case FTS_DNR:
       case FTS_ERR:
-        fprintf(stderr, "%s: fts_read error: %s\n", curr->fts_accpath,
-                strerror(curr->fts_errno));
         break;
 
       case FTS_DC:
@@ -174,8 +171,6 @@ int recursive_delete(const char* dir) {
       case FTS_SLNONE:
       case FTS_DEFAULT:
         if (remove(curr->fts_accpath) < 0) {
-          fprintf(stderr, "%s: Failed to remove: %s\n", curr->fts_path,
-                  strerror(errno));
           ret = -1;
         }
         break;
