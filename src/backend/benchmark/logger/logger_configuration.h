@@ -41,6 +41,15 @@ enum BenchmarkType {
   BENCHMARK_TYPE_TPCC = 2
 };
 
+enum AsynchronousType {
+  ASYNCHRONOUS_TYPE_INVALID = 0,
+
+  ASYNCHRONOUS_TYPE_SYNC = 1,     // logging enabled + sync commits
+  ASYNCHRONOUS_TYPE_ASYNC = 2,    // logging enabled + async commits
+  ASYNCHRONOUS_TYPE_DISABLED = 3  // logging disabled
+};
+
+
 class configuration {
  public:
   // experiment type
@@ -71,7 +80,7 @@ class configuration {
   int pcommit_latency;
 
   // asynchronous_mode
-  int asynchronous_mode;
+  AsynchronousType asynchronous_mode;
 
 };
 

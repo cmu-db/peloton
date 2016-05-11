@@ -119,7 +119,24 @@ bool PrepareLogFile() {
     return false;
   }
 
+  // Pick sync commit mode
+  switch(state.asynchronous_mode) {
+    case ASYNCHRONOUS_TYPE_SYNC:
+      log_manager.SetSyncCommit(true);
+      break;
+
+    case ASYNCHRONOUS_TYPE_ASYNC:
+    case ASYNCHRONOUS_TYPE_DISABLED:
+      log_manager.SetSyncCommit(false);
+      break;
+
+    case ASYNCHRONOUS_TYPE_INVALID:
+      throw Exception("Invalid asynchronous mode : " +
+                      std::to_string(state.asynchronous_mode));
+  }
+
   // Get an instance of the storage manager to force posix_fallocate
+  // to be invoked before we begin benchmarking
   auto &storage_manager = storage::StorageManager::GetInstance();
   auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
   storage_manager.Release(BACKEND_TYPE_MM, tmp);
@@ -130,9 +147,6 @@ bool PrepareLogFile() {
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
-      // Set sync commit mode
-      log_manager.SetSyncCommit(!state.asynchronous_mode);
-
       // Wait for standby mode
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
@@ -231,9 +245,6 @@ void DoRecovery(std::string file_name) {
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
-      // Set sync commit mode
-    	log_manager.SetSyncCommit(!state.asynchronous_mode);
-
       // Wait for standby mode
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);

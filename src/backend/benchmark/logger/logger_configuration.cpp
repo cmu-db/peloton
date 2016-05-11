@@ -102,6 +102,27 @@ std::string ExperimentTypeToString(ExperimentType type) {
   return "INVALID";
 }
 
+std::string AsynchronousTypeToString(AsynchronousType type) {
+  switch (type) {
+    case ASYNCHRONOUS_TYPE_INVALID:
+      return "INVALID";
+
+    case ASYNCHRONOUS_TYPE_SYNC:
+      return "SYNC";
+    case ASYNCHRONOUS_TYPE_ASYNC:
+      return "ASYNC";
+    case ASYNCHRONOUS_TYPE_DISABLED:
+      return "DISABLED";
+
+    default:
+      LOG_ERROR("Invalid asynchronous_mode :: %d", type);
+      exit(EXIT_FAILURE);
+  }
+
+  return "INVALID";
+}
+
+
 static void ValidateBenchmarkType(
     const configuration& state) {
   if (state.benchmark_type <= 0 || state.benchmark_type > 3) {
@@ -149,6 +170,17 @@ static void ValidateFlushMode(
   }
 
   LOG_INFO("flush_mode :: %d", state.flush_mode);
+}
+
+static void ValidateAsynchronousMode(
+    const configuration& state) {
+  if (state.asynchronous_mode <= ASYNCHRONOUS_TYPE_INVALID ||
+      state.asynchronous_mode > ASYNCHRONOUS_TYPE_DISABLED) {
+    LOG_ERROR("Invalid asynchronous_mode :: %d", state.asynchronous_mode);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %s", "asynchronous_mode", AsynchronousTypeToString(state.asynchronous_mode).c_str());
 }
 
 static void ValidateNVMLatency(
@@ -224,6 +256,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.flush_mode = 2;
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
+  state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
 
   // Parse args
   while (1) {
@@ -234,7 +267,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
     switch (c) {
       case 'a':
-        state.asynchronous_mode = atoi(optarg);
+        state.asynchronous_mode = (AsynchronousType) atoi(optarg);
         break;
       case 'e':
         state.experiment_type = (ExperimentType)atoi(optarg);
@@ -274,6 +307,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   }
 
   // Print configurations
+  ValidateAsynchronousMode(state);
   ValidateLoggingType(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
