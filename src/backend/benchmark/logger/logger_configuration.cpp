@@ -330,19 +330,21 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
 
       default:
-        // Ignore unknown options
+        fprintf(stderr, "\nUnknown option: -%c-\n", c);
+        Usage(stderr);
+        exit(EXIT_FAILURE);
         break;
     }
   }
 
   // Print Logger configuration
-  ValidateAsynchronousMode(state);
   ValidateLoggingType(state);
+  ValidateExperimentType(state);
+  ValidateAsynchronousMode(state);
+  ValidateBenchmarkType(state);
   ValidateDataFileSize(state);
   ValidateLogFileDir(state);
   ValidateWaitTimeout(state);
-  ValidateExperimentType(state);
-  ValidateBenchmarkType(state);
   ValidateFlushMode(state);
   ValidateNVMLatency(state);
   ValidatePCOMMITLatency(state);

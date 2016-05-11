@@ -57,6 +57,7 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
 
+  // Emit throughput
   WriteOutput(state.throughput);
 }
 
