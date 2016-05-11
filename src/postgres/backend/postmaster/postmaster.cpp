@@ -269,7 +269,7 @@ static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
 std::string memcached_dbname = "postgres";
-std::string memcached_username = "postgres";
+std::string memcached_username = "memcached";
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
