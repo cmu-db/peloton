@@ -38,6 +38,7 @@
 #include "backend/expression/vector_comparison_expression.h"
 #include "backend/expression/coalesce_expression.h"
 #include "backend/expression/nullif_expression.h"
+#include "backend/expression/udf_expression.h"
 
 namespace peloton {
 namespace expression {
@@ -742,6 +743,13 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
     default:
       return nullptr;
   }
+}
+
+AbstractExpression *ExpressionUtil::UDFExpressionFactory(
+    Oid function_id, Oid collation, Oid return_type,
+    std::vector<expression::AbstractExpression *> args) {
+  return new expression::UDFExpression(function_id, collation, return_type,
+                                       args);
 }
 
 void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
