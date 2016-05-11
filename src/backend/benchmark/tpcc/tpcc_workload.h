@@ -41,6 +41,8 @@ bool RunOrderStatus();
 
 bool RunPayment();
 
+// void PrepareNewOrderPlans();
+
 bool RunNewOrder();
 
 std::vector<std::vector<Value>>

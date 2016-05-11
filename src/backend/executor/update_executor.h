@@ -29,14 +29,21 @@ class UpdateExecutor : public AbstractExecutor {
   explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
- protected:
-  bool DInit();
+  void SetTargetList(const planner::ProjectInfo::TargetList &target_list) {
+    project_info_->SetTargetList(target_list);
+  }
 
+ protected:
+
+  bool DInit();
+  
   bool DExecute();
 
  private:
   storage::DataTable *target_table_ = nullptr;
-  const planner::ProjectInfo *project_info_ = nullptr;
+  std::unique_ptr<planner::ProjectInfo> project_info_;
+
+  //const planner::ProjectInfo *project_info_ = nullptr;
 };
 
 }  // namespace executor

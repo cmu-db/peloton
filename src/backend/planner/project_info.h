@@ -41,7 +41,7 @@ namespace planner {
  */
 class ProjectInfo {
  public:
-  ProjectInfo(ProjectInfo &) = delete;
+  ProjectInfo(ProjectInfo & project_info) = delete;
   ProjectInfo operator=(ProjectInfo &) = delete;
   ProjectInfo(ProjectInfo &&) = delete;
   ProjectInfo operator=(ProjectInfo &&) = delete;
@@ -68,9 +68,18 @@ class ProjectInfo {
   ProjectInfo(TargetList &&tl, DirectMapList &&dml)
       : target_list_(tl), direct_map_list_(dml) {}
 
+  ProjectInfo(const ProjectInfo & project_info) {
+    target_list_ = project_info.GetTargetList();
+    direct_map_list_ = project_info.GetDirectMapList();
+  }
+
   const TargetList &GetTargetList() const { return target_list_; }
 
   const DirectMapList &GetDirectMapList() const { return direct_map_list_; }
+
+  void SetTargetList(const TargetList &target_list) {
+    target_list_ = target_list;
+  }
 
   bool isNonTrivial() const { return target_list_.size() > 0; };
 
