@@ -29,21 +29,17 @@ namespace peloton {
 namespace benchmark {
 
 namespace ycsb {
-
 configuration state;
 }
 
 namespace logger {
-
-std::string wal_log_file_name = "wal.log";
-
-std::string wbl_log_file_name = "wbl.log";
 
 // Configuration
 configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
+
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
   peloton_data_file_size = state.data_file_size;
@@ -59,8 +55,8 @@ void RunBenchmark() {
     // Reset data
     ResetSystem();
 
-    // TODO: Do recovery
-    DoRecovery(wal_log_file_name);
+    // Do recovery
+    DoRecovery();
 
   }
   //===--------------------------------------------------------------------===//
@@ -70,19 +66,10 @@ void RunBenchmark() {
     // Test a simple log process
     PrepareLogFile();
 
-    // TODO: Do recovery
-    DoRecovery(wbl_log_file_name);
-
+    // Do recovery
+    DoRecovery();
   }
-  //===--------------------------------------------------------------------===//
-  // None
-  //===--------------------------------------------------------------------===//
-  else if (state.logging_type == LOGGING_TYPE_INVALID) {
-    // Test a simple log process
-    PrepareLogFile();
 
-    // No recovery
-  }
 }
 
 }  // namespace logger
