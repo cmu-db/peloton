@@ -24,30 +24,29 @@ class NullIfExpression : public AbstractExpression {
  public:
   typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
 
-  NullIfExpression(ValueType vt, std::vector<AbstractExprPtr> &t_expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF),
-        expressions_(std::move(t_expressions)),
-        value_type_(vt) {}
+  NullIfExpression(ValueType vt, std::vector<AbstractExprPtr> &expressions)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NULLIF, vt),
+        expressions_(std::move(expressions)) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(expressions_.size() == 2);
 
     auto left_result = expressions_[0]->Evaluate(tuple1, tuple2, context);
     auto right_result = expressions_[1]->Evaluate(tuple1, tuple2, context);
 
     if (left_result == right_result) {
-      return Value::GetNullValue(value_type_);
+      return Value::GetNullValue(GetValueType());
     } else {
       return left_result;
     }
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return spacer + "NullIfExpression";
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     std::vector<AbstractExprPtr> copied_expression;
     for (auto &expression : expressions_) {
       if (expression == nullptr) {
@@ -55,15 +54,12 @@ class NullIfExpression : public AbstractExpression {
       }
       copied_expression.push_back(AbstractExprPtr(expression->Copy()));
     }
-
-    return new NullIfExpression(value_type_, copied_expression);
+    return new NullIfExpression(GetValueType(), copied_expression);
   }
 
  private:
   // Specified expressions
   std::vector<AbstractExprPtr> expressions_;
-
-  ValueType value_type_;
 };
 
 }  // End expression namespace

@@ -52,8 +52,10 @@ class JoinTests : public PelotonTest {};
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
-  auto left = expression::ExpressionUtil::TupleValueFactory(0, 1);
-  auto right = expression::ExpressionUtil::TupleValueFactory(1, 1);
+  auto left = expression::ExpressionUtil::TupleValueFactory(
+      VALUE_TYPE_INTEGER, 0, 1);
+  auto right = expression::ExpressionUtil::TupleValueFactory(
+      VALUE_TYPE_INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
@@ -442,11 +444,21 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
     case PLAN_NODE_TYPE_HASHJOIN: {
       // Create hash plan node
       expression::AbstractExpression *right_table_attr_1 =
-          new expression::TupleValueExpression(1, 1);
+          new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           hash_keys;
       hash_keys.emplace_back(right_table_attr_1);
+
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          left_hash_keys;
+      left_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
+          new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1)});
+
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          right_hash_keys;
+      right_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
+          new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1)});
 
       // Create hash plan node
       planner::HashPlan hash_plan_node(hash_keys);
