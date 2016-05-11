@@ -81,4 +81,4 @@ SELECT multiply_plpgsql(add_plpgsql(x,y), y) from A where multiply_plpgsql(add_p
 SELECT x, y, add_one_float_plpgsql(x), add_one_float_plpgsql(y) from B;
 
 -- check text type
-SELECT x, y, concat_text_c(x, y) from C;
+SELECT x, y, concat_text_plpgsql(x, y) from C;
