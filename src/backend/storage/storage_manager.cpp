@@ -24,8 +24,6 @@
 #include <string>
 #include <iostream>
 
-#undef NDEBUG
-
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 #include "backend/common/exception.h"
@@ -288,13 +286,13 @@ StorageManager::StorageManager()
 
   // Check for instruction availability
   if(is_cpu_clwb_present()) {
-    LOG_INFO("Found clwb \n");
+    LOG_TRACE("Found clwb \n");
     Func_flush = flush_clwb;
     Func_predrain_fence = predrain_fence_sfence;
   }
 
   if (is_cpu_pcommit_present()) {
-    LOG_INFO("Found pcommit \n");
+    LOG_TRACE("Found pcommit \n");
     Func_drain = drain_pcommit;
   }
 
@@ -348,7 +346,7 @@ StorageManager::StorageManager()
     }
   }
 
-  LOG_INFO("DATA DIR :: %s ", data_file_name.c_str());
+  LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
   if ((data_fd = open(data_file_name.c_str(), 
@@ -377,7 +375,7 @@ StorageManager::StorageManager()
 
 StorageManager::~StorageManager() {
 
-  std::cout << "Allocation count : " << allocation_count << "\n";
+  LOG_TRACE("Allocation count : %ld \n", allocation_count);
 
   // Check if we need a PMEM pool
   if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;

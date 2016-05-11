@@ -104,15 +104,12 @@ std::string ExperimentTypeToString(ExperimentType type) {
 
 static void ValidateBenchmarkType(
     const configuration& state) {
-  if (state.benchmark_type <= 0 || state.benchmark_type >= 3) {
-    std::cout << "Invalid benchmark_type :: " << state.benchmark_type
-        << std::endl;
+  if (state.benchmark_type <= 0 || state.benchmark_type > 3) {
+    LOG_ERROR("Invalid benchmark_type :: %d", state.benchmark_type);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "benchmark_type "
-      << " : " << BenchmarkTypeToString(state.benchmark_type) << std::endl;
-
+  LOG_INFO("%s : %s", "benchmark_type", BenchmarkTypeToString(state.benchmark_type).c_str());
 }
 
 static void ValidateDataFileSize(
@@ -132,50 +129,46 @@ static void ValidateExperimentType(
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "experiment_type "
-      << " : " << ExperimentTypeToString(state.experiment_type) << std::endl;
+  LOG_INFO("%s : %s", "experiment_type", ExperimentTypeToString(state.experiment_type).c_str());
 }
 
 static void ValidateWaitTimeout(const configuration& state) {
   if (state.wait_timeout < 0) {
-    LOG_ERROR("Invalid wait_timeout :: %lu", state.wait_timeout);
+    LOG_ERROR("Invalid wait_timeout :: %d", state.wait_timeout);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("wait_timeout :: %lu", state.wait_timeout);
+  LOG_INFO("wait_timeout :: %d", state.wait_timeout);
 }
 
 static void ValidateFlushMode(
     const configuration& state) {
   if (state.flush_mode <= 0 || state.flush_mode >= 3) {
-    std::cout << "Invalid flush_mode :: " << state.flush_mode << std::endl;
+    LOG_ERROR("Invalid flush_mode :: %d", state.flush_mode);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "flush_mode "
-      << " : " << state.flush_mode << std::endl;
+  LOG_INFO("flush_mode :: %d", state.flush_mode);
 }
 
 static void ValidateNVMLatency(
     const configuration& state) {
   if (state.nvm_latency < 0) {
-    std::cout << "Invalid nvm_latency :: " << state.nvm_latency << std::endl;
+    LOG_ERROR("Invalid nvm_latency :: %d", state.nvm_latency);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "nvm_latency "
-      << " : " << state.nvm_latency << std::endl;
+  LOG_INFO("nvm_latency :: %d", state.nvm_latency);
 }
 
 static void ValidatePCOMMITLatency(
     const configuration& state) {
   if (state.pcommit_latency < 0) {
-    std::cout << "Invalid pcommit_latency :: " << state.pcommit_latency << std::endl;
+    LOG_ERROR("Invalid pcommit_latency :: %d", state.pcommit_latency);
     exit(EXIT_FAILURE);
   }
 
-  std::cout << std::setw(20) << std::left << "pcommit_latency "
-      << " : " << state.pcommit_latency << std::endl;
+  LOG_INFO("pcommit_latency :: %d", state.pcommit_latency);
 }
 
 static void ValidateLogFileDir(

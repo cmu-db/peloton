@@ -81,7 +81,7 @@ bool IndexScanExecutor::DInit() {
 
       for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
-        LOG_INFO("Evaluated runtime scan key: %s", value.GetInfo().c_str());
+        LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
         values_.push_back(value);
       }
 
@@ -104,7 +104,7 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  LOG_INFO("Index Scan executor :: 0 child");
+  LOG_TRACE("Index Scan executor :: 0 child");
 
   if (!done_) {
     if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
@@ -173,8 +173,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       if (transaction_manager.IsVisible(tile_group_header,
                                         tuple_location.offset)) {
 
-        LOG_INFO("traverse chain length : %lu", chain_length);
-        LOG_INFO("perform read: %u, %u", tuple_location.block,
+        LOG_TRACE("traverse chain length : %lu", chain_length);
+        LOG_TRACE("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
 
         // perform predicate evaluation.
@@ -307,7 +307,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
   }
 
-  LOG_INFO("Tuple_locations.size(): %lu", tuple_locations.size());
+  LOG_TRACE("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 

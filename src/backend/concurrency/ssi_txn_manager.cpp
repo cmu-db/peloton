@@ -105,17 +105,17 @@ bool SsiTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
-  LOG_INFO("AcquireOwnership %lu", txn_id);
+  LOG_TRACE("AcquireOwnership %lu", txn_id);
 
   // jump to abort directly
   if(current_ssi_txn_ctx->is_abort()){
     assert(current_ssi_txn_ctx->is_abort_ == false);
-    LOG_INFO("detect conflicts");
+    LOG_TRACE("detect conflicts");
     return false;
   }
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to insert new tuple. Set txn failure.");
+    LOG_TRACE("Fail to insert new tuple. Set txn failure.");
     return false;
   }
 
@@ -147,14 +147,14 @@ bool SsiTxnManager::AcquireOwnership(
       if (end_cid == MAX_CID) {
         SetInConflict(current_ssi_txn_ctx);
         SetOutConflict(owner_ctx);
-        LOG_INFO("set %ld in, set %ld out", txn_id,
+        LOG_TRACE("set %ld in, set %ld out", txn_id,
                  owner_ctx->transaction_->GetTransactionId());
       } else {
         // Owner has commited and ownner commit after I start, then I must abort
         if (end_cid > current_txn->GetBeginCommitId() &&
             GetInConflict(owner_ctx) && !owner_ctx->is_abort()) {
           should_abort = true;
-          LOG_INFO("abort in acquire");
+          LOG_TRACE("abort in acquire");
 
           // Unlock the transaction context
           owner_ctx->lock_.Unlock();
@@ -179,12 +179,12 @@ bool SsiTxnManager::AcquireOwnership(
 bool SsiTxnManager::PerformRead(const ItemPointer &location){
   auto tile_group_id = location.block;
   auto tuple_id = location.offset;
-  // LOG_INFO("Perform Read %lu %lu", tile_group_id, tuple_id);
+  // LOG_TRACE("Perform Read %lu %lu", tile_group_id, tuple_id);
 
   // jump to abort directly
   if(current_ssi_txn_ctx->is_abort()){
     assert(current_ssi_txn_ctx->is_abort_ == false);
-    LOG_INFO("detect conflicts");
+    LOG_TRACE("detect conflicts");
     return false;
   }
 
@@ -196,7 +196,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
   auto &rw_set = current_txn->GetRWSet();
   if (rw_set.count(tile_group_id) == 0 ||
       rw_set.at(tile_group_id).count(tuple_id) == 0) {
-    LOG_INFO("Not read before");
+    LOG_TRACE("Not read before");
     // Previously, this tuple hasn't been read, add the txn to the reader list
     // of the tuple
     AddSIReader(tile_group.get(), tuple_id);
@@ -209,7 +209,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
       SsiTxnContext *writer_ptr = nullptr;
       if (txn_table_.find(writer, writer_ptr) && !writer_ptr->is_abort()) {
         // The writer have not been removed from the txn table
-        //LOG_INFO("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
+        //LOG_TRACE("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
         SetInConflict(writer_ptr);
         SetOutConflict(current_ssi_txn_ctx);
       }
@@ -227,7 +227,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
     // This is a potential big overhead for read operations
     // txn_manager_mutex_.ReadLock();
 
-    LOG_INFO("SI read phase 2");
+    LOG_TRACE("SI read phase 2");
 
     ItemPointer next_item = tile_group_header->GetNextItemPointer(tuple_id);
     while (!next_item.IsNull()) {
@@ -235,7 +235,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
           catalog::Manager::GetInstance().GetTileGroup(next_item.block);
       auto creator = GetCreatorTxnId(tile_group.get(), next_item.offset);
 
-      LOG_INFO("%u %u creator is %lu", next_item.block, next_item.offset,
+      LOG_TRACE("%u %u creator is %lu", next_item.block, next_item.offset,
                creator);
 
       // Check creator status, skip if creator has commited before I start
@@ -273,7 +273,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
         // I must abort
         if (creator_ctx->transaction_->GetEndCommitId() != INVALID_TXN_ID &&
             creator_ctx->out_conflict_) {
-          LOG_INFO("abort in read");
+          LOG_TRACE("abort in read");
           // Unlock the transaction context
           creator_ctx->lock_.Unlock();
           // txn_manager_mutex_.Unlock();
@@ -299,7 +299,7 @@ bool SsiTxnManager::PerformInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform insert %u %u", tile_group_id, tuple_id);
+  LOG_TRACE("Perform insert %u %u", tile_group_id, tuple_id);
 
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -419,7 +419,7 @@ void SsiTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result SsiTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
   auto &rw_set = current_txn->GetRWSet();
@@ -441,13 +441,13 @@ Result SsiTxnManager::CommitTransaction() {
     current_txn->SetEndCommitId(end_commit_id);
 
     if (ret != Result::RESULT_SUCCESS) {
-      LOG_INFO("Wierd, result is not success but go into commit state");
+      LOG_TRACE("Wierd, result is not success but go into commit state");
     }
     current_ssi_txn_ctx->lock_.Unlock();
   }
 
   if (should_abort) {
-    LOG_INFO("Abort because RW conflict");
+    LOG_TRACE("Abort because RW conflict");
     return AbortTransaction();
   }
 
@@ -540,7 +540,7 @@ Result SsiTxnManager::CommitTransaction() {
 }
 
 Result SsiTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
 
   if (current_ssi_txn_ctx->is_abort_ == false) {
     // Set abort flag
@@ -576,7 +576,7 @@ Result SsiTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        LOG_INFO("Txn %lu free %u", current_txn->GetTransactionId(),
+        LOG_TRACE("Txn %lu free %u", current_txn->GetTransactionId(),
                  tuple_slot);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
@@ -631,7 +631,7 @@ Result SsiTxnManager::AbortTransaction() {
 }
 
 void SsiTxnManager::RemoveReader(Transaction *txn) {
-  LOG_INFO("release SILock");
+  LOG_TRACE("release SILock");
 
   // Remove from the read list of accessed tuples
   auto &rw_set = txn->GetRWSet();
@@ -654,7 +654,7 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
       RemoveSIReader(tile_group_header, tuple_slot, txn->GetTransactionId());
     }
   }
-  LOG_INFO("release SILock finish");
+  LOG_TRACE("release SILock finish");
 }
 
 // Clean obsolete txn record

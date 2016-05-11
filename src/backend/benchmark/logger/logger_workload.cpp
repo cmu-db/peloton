@@ -62,20 +62,20 @@ std::ofstream out("outputfile.summary");
 size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
-  std::cout << "----------------------------------------------------------\n";
-  std::cout << state.benchmark_type << " "
-      << state.logging_type << " "
-      << ycsb::state.update_ratio << " "
-      << ycsb::state.scale_factor << " "
-      << ycsb::state.backend_count << " "
-      << ycsb::state.skew_factor << " "
-      << ycsb::state.duration << " "
-      << state.nvm_latency << " "
-      << state.pcommit_latency << " "
-      << state.flush_mode << " "
-      << state.asynchronous_mode << " "
-      " :: ";
-  std::cout << value << "\n";
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %d %lf %d %d %d %d %d %d %d %d :: %lf",
+           state.benchmark_type,
+           state.logging_type,
+           ycsb::state.update_ratio,
+           ycsb::state.backend_count,
+           ycsb::state.scale_factor,
+           ycsb::state.skew_factor,
+           ycsb::state.duration,
+           state.nvm_latency,
+           state.pcommit_latency,
+           state.flush_mode,
+           state.asynchronous_mode,
+           value);
 
   out << state.benchmark_type << " ";
   out << state.logging_type << " ";
@@ -121,8 +121,8 @@ bool PrepareLogFile() {
 
   // Get an instance of the storage manager to force posix_fallocate
   auto &storage_manager = storage::StorageManager::GetInstance();
-  auto msync_count = storage_manager.GetMsyncCount();
-  printf("msync count : %lu\n", msync_count);
+  auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
+  storage_manager.Release(BACKEND_TYPE_MM, tmp);
 
   Timer<> timer;
   std::thread thread;
