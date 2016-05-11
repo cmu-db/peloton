@@ -29,37 +29,34 @@ class ParameterValueExpression : public AbstractExpression {
   // Constructor to initialize the PVE from the static parameter vector
   // from the VoltDBEngine instance. After the construction the PVE points
   // to the Value from the global vector.
-  ParameterValueExpression(int value_idx);
+  ParameterValueExpression(ValueType type, int value_idx);
 
   // Constructor to use for testing purposes
-  ParameterValueExpression(int value_idx, Value paramValue)
-      : m_valueIdx(value_idx), m_paramValue(paramValue) {}
+  ParameterValueExpression(oid_t value_idx, Value paramValue);
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                 __attribute__((unused)) const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *context) const override;
 
   bool HasParameter() const {
     // this class represents a parameter.
     return true;
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     std::ostringstream buffer;
-    buffer << spacer << "OptimizedParameter[" << this->m_valueIdx << "]\n";
-    return (buffer.str());
+    buffer << spacer << "OptimizedParameter[" << this->value_idx_ << "]\n";
+    return buffer.str();
   }
 
-  int GetParameterId() const { return this->m_valueIdx; }
+  int GetParameterId() const { return this->value_idx_; }
 
-  AbstractExpression *Copy() const {
-    return new ParameterValueExpression(m_valueIdx, m_paramValue);
+  AbstractExpression *Copy() const override {
+    return new ParameterValueExpression(value_idx_, param_value_);
   }
 
  private:
-  size_t m_valueIdx;
-
-  Value m_paramValue;
+  oid_t value_idx_;
+  Value param_value_;
 };
 
 }  // End expression namespace

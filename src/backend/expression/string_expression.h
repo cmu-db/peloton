@@ -29,8 +29,6 @@ namespace expression {
  */
 
 class SubstringExpression : public AbstractExpression {
- private:
-  AbstractExpression *len;  // length of substring to take (optional)
  public:
   /*
    * constructor
@@ -40,36 +38,38 @@ class SubstringExpression : public AbstractExpression {
    */
   SubstringExpression(AbstractExpression *string, AbstractExpression *from,
                       AbstractExpression *len)
-      : AbstractExpression(EXPRESSION_TYPE_SUBSTR), len(len) {
-    m_left = string;
-    m_right = from;
-  };
+      : AbstractExpression(EXPRESSION_TYPE_SUBSTR, VALUE_TYPE_VARCHAR, string,
+                           from),
+        len_(len) {}
 
-  ~SubstringExpression() { delete len; }
+  ~SubstringExpression() { delete len_; }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     std::vector<Value> substr_args;
     substr_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     substr_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
     // if length not defined call 2 arg substring
-    if (len == nullptr) {
+    if (len_ == nullptr) {
       return Value::Call<FUNC_VOLT_SUBSTRING_CHAR_FROM>(substr_args);
     } else {
-      substr_args.emplace_back(len->Evaluate(tuple1, tuple2, context));
+      substr_args.emplace_back(len_->Evaluate(tuple1, tuple2, context));
       return Value::Call<FUNC_SUBSTRING_CHAR>(substr_args);
     }
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorSubstringExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new SubstringExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
-                                   CopyUtil(len));
+                                   CopyUtil(len_));
   }
+
+ private:
+  AbstractExpression *len_;  // length of substring to take (optional)
 };
 
 /*
@@ -79,13 +79,11 @@ class ConcatExpression : public AbstractExpression {
  private:
  public:
   ConcatExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_CONCAT) {
-    m_left = lc;
-    m_right = rc;
-  };
+      : AbstractExpression(EXPRESSION_TYPE_CONCAT, VALUE_TYPE_VARCHAR, lc, rc)
+  {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     std::vector<Value> concat_args;
     concat_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
@@ -93,11 +91,11 @@ class ConcatExpression : public AbstractExpression {
     return Value::Call<FUNC_CONCAT>(concat_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorConcatExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new ConcatExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -110,21 +108,20 @@ class AsciiExpression : public AbstractExpression {
  private:
  public:
   AsciiExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_ASCII) {
-    m_left = lc;
-  };
+      : AbstractExpression(EXPRESSION_TYPE_ASCII, VALUE_TYPE_VARCHAR, lc,
+                           nullptr) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_ASCII>();
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorAsciiExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new AsciiExpression(CopyUtil(GetLeft()));
   }
 };
@@ -136,22 +133,21 @@ class OctetLengthExpression : public AbstractExpression {
  private:
  public:
   OctetLengthExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN) {
-    m_left = lc;
-  };
+      : AbstractExpression(EXPRESSION_TYPE_OCTET_LEN, VALUE_TYPE_INTEGER, lc,
+                           nullptr) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context)
         .CallUnary<FUNC_OCTET_LENGTH>();
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorOctetLengthExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new OctetLengthExpression(CopyUtil(GetLeft()));
   }
 };
@@ -163,21 +159,21 @@ class CharExpression : public AbstractExpression {
  private:
  public:
   CharExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_CHAR) {
+      : AbstractExpression(EXPRESSION_TYPE_CHAR, VALUE_TYPE_VARCHAR) {
     m_left = lc;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_CHAR>();
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorCharExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new CharExpression(CopyUtil(GetLeft()));
   }
 };
@@ -189,22 +185,22 @@ class CharLengthExpression : public AbstractExpression {
  private:
  public:
   CharLengthExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_CHAR_LEN) {
+      : AbstractExpression(EXPRESSION_TYPE_CHAR_LEN, VALUE_TYPE_BIGINT) {
     m_left = lc;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     return m_left->Evaluate(tuple1, tuple2, context)
         .CallUnary<FUNC_CHAR_LENGTH>();
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorCharLengthExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new CharLengthExpression(CopyUtil(GetLeft()));
   }
 };
@@ -216,13 +212,13 @@ class RepeatExpression : public AbstractExpression {
  private:
  public:
   RepeatExpression(AbstractExpression *string, AbstractExpression *num)
-      : AbstractExpression(EXPRESSION_TYPE_REPEAT) {
+      : AbstractExpression(EXPRESSION_TYPE_REPEAT, VALUE_TYPE_VARCHAR) {
     m_left = string;
     m_right = num;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     assert(m_right);
     std::vector<Value> repeat_args;
@@ -231,11 +227,11 @@ class RepeatExpression : public AbstractExpression {
     return Value::Call<FUNC_REPEAT>(repeat_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorRepeatExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new RepeatExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -247,13 +243,13 @@ class LeftExpression : public AbstractExpression {
  private:
  public:
   LeftExpression(AbstractExpression *string, AbstractExpression *num)
-      : AbstractExpression(EXPRESSION_TYPE_LEFT) {
+      : AbstractExpression(EXPRESSION_TYPE_LEFT, VALUE_TYPE_VARCHAR) {
     m_left = string;
     m_right = num;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     assert(m_right);
     std::vector<Value> left_args;
@@ -262,11 +258,11 @@ class LeftExpression : public AbstractExpression {
     return Value::Call<FUNC_LEFT>(left_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorLeftExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new LeftExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -278,13 +274,13 @@ class RightExpression : public AbstractExpression {
  private:
  public:
   RightExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_RIGHT) {
+      : AbstractExpression(EXPRESSION_TYPE_RIGHT, VALUE_TYPE_VARCHAR) {
     m_left = lc;
     m_right = rc;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     assert(m_right);
     std::vector<Value> right_args;
@@ -293,11 +289,11 @@ class RightExpression : public AbstractExpression {
     return Value::Call<FUNC_RIGHT>(right_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorRightExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new RightExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -308,13 +304,13 @@ class RightExpression : public AbstractExpression {
 class LTrimExpression : public AbstractExpression {
  public:
   LTrimExpression(AbstractExpression *string, AbstractExpression *chars)
-      : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
+      : AbstractExpression(EXPRESSION_TYPE_RTRIM, VALUE_TYPE_VARCHAR) {
     m_left = string;
     m_right = chars;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     std::vector<Value> position_args;
     // if null do not add to the arguments
     if (m_left) {
@@ -325,11 +321,11 @@ class LTrimExpression : public AbstractExpression {
     return Value::Call<FUNC_TRIM_LEADING_CHAR>(position_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorLTrimExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new LTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -340,13 +336,13 @@ class LTrimExpression : public AbstractExpression {
 class RTrimExpression : public AbstractExpression {
  public:
   RTrimExpression(AbstractExpression *string, AbstractExpression *chars)
-      : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
+      : AbstractExpression(EXPRESSION_TYPE_RTRIM, VALUE_TYPE_VARCHAR) {
     m_left = string;
     m_right = chars;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     std::vector<Value> position_args;
     // if null do not add to the arguments
     if (m_left) {
@@ -356,11 +352,11 @@ class RTrimExpression : public AbstractExpression {
     return Value::Call<FUNC_TRIM_TRAILING_CHAR>(position_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorRTrimExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new RTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -368,13 +364,13 @@ class RTrimExpression : public AbstractExpression {
 class BTrimExpression : public AbstractExpression {
  public:
   BTrimExpression(AbstractExpression *string, AbstractExpression *chars)
-      : AbstractExpression(EXPRESSION_TYPE_BTRIM) {
+      : AbstractExpression(EXPRESSION_TYPE_BTRIM, VALUE_TYPE_VARCHAR) {
     m_left = string;
     m_right = chars;
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     std::vector<Value> position_args;
     // if null do not add to the arguments
     if (m_left) {
@@ -385,11 +381,11 @@ class BTrimExpression : public AbstractExpression {
     return Value::Call<FUNC_TRIM_BOTH_CHAR>(position_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorBTrimExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new BTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -401,13 +397,13 @@ class PositionExpression : public AbstractExpression {
  private:
  public:
   PositionExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_POSITION) {
+      : AbstractExpression(EXPRESSION_TYPE_POSITION, VALUE_TYPE_INTEGER) {
     m_left = lc;
     m_right = rc;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     assert(m_right);
     std::vector<Value> position_args;
@@ -417,11 +413,11 @@ class PositionExpression : public AbstractExpression {
     return Value::Call<FUNC_POSITION_CHAR>(position_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorPositionExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new PositionExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
@@ -437,7 +433,9 @@ class OverlayExpression : public AbstractExpression {
  public:
   OverlayExpression(AbstractExpression *string1, AbstractExpression *string2,
                     AbstractExpression *from, AbstractExpression *len)
-      : AbstractExpression(EXPRESSION_TYPE_OVERLAY), from(from), len(len) {
+      : AbstractExpression(EXPRESSION_TYPE_OVERLAY, VALUE_TYPE_VARCHAR),
+        from(from),
+        len(len) {
     m_left = string1;
     m_right = string2;
   };
@@ -448,7 +446,7 @@ class OverlayExpression : public AbstractExpression {
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     std::vector<Value> overlay_args;
     overlay_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
@@ -460,11 +458,11 @@ class OverlayExpression : public AbstractExpression {
     return Value::Call<FUNC_OVERLAY_CHAR>(overlay_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorOverlayExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new OverlayExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
                                  CopyUtil(from), CopyUtil(len));
   }
@@ -480,7 +478,8 @@ class ReplaceExpression : public AbstractExpression {
  public:
   ReplaceExpression(AbstractExpression *string, AbstractExpression *from,
                     AbstractExpression *to)
-      : AbstractExpression(EXPRESSION_TYPE_REPLACE), to(to) {
+      : AbstractExpression(EXPRESSION_TYPE_REPLACE, VALUE_TYPE_VARCHAR),
+        to(to) {
     m_left = string;
     m_right = from;
   };
@@ -488,7 +487,7 @@ class ReplaceExpression : public AbstractExpression {
   ~ReplaceExpression() { delete to; }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     assert(m_left);
     std::vector<Value> replace_args;
     replace_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
@@ -497,15 +496,15 @@ class ReplaceExpression : public AbstractExpression {
     return Value::Call<FUNC_REPLACE>(replace_args);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorReplaceExpression");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new ReplaceExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
                                  CopyUtil(to));
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton
