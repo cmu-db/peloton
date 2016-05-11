@@ -132,6 +132,3 @@ int			VacuumPageDirty = 0;
 
 int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
-
-/* Memcached state */
-thread_local struct MemcachedState *mc_state;

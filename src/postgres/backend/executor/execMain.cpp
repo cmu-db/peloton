@@ -75,7 +75,7 @@ static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
                                 DestReceiver *dest,
                                 TupleDesc tupDesc,
                                 const char *prepStmtName,
-																MemcachedState *mc_state = nullptr);
+																BackendContext *backend_state = nullptr);
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -294,7 +294,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count,
-						MemcachedState* mc_state)
+						BackendContext* backend_state)
 {
 	if (ExecutorRun_hook){
 		// printf("\nExecutorRunHook\n");
@@ -303,7 +303,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	}
 	else {
 		// printf("\nStandardExecutor\n");
-		standard_ExecutorRun(queryDesc, direction, count, mc_state);
+		standard_ExecutorRun(queryDesc, direction, count, backend_state);
 	}
 
 }
@@ -311,7 +311,7 @@ ExecutorRun(QueryDesc *queryDesc,
 void
 standard_ExecutorRun(QueryDesc *queryDesc,
 					 ScanDirection direction, long count,
-										  MemcachedState* mc_state)
+										 BackendContext* backend_state)
 {
 	EState	   *estate;
 	CmdType		operation;
@@ -353,7 +353,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 
 	/* Column names for sql query are printed here */
 	if (sendTuples)
-		(*dest->rStartup) (dest, operation, queryDesc->tupDesc, mc_state);
+		(*dest->rStartup) (dest, operation, queryDesc->tupDesc, backend_state);
 
 	/*
 	 * run plan
@@ -386,7 +386,7 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	                        dest,
 	                        queryDesc->tupDesc,
 	                        queryDesc->prepStmtName,
-													mc_state);
+													backend_state);
 	  }
 
 	}
@@ -1664,11 +1664,11 @@ peloton_ExecutePlan(EState *estate,
       DestReceiver *dest,
       TupleDesc tupDesc,
       const char *prepStmtName,
-										MemcachedState* mc_state)
+										BackendContext* backend_state)
 {
 
   // TODO: Peloton Changes
-  peloton_dml(planstate, sendTuples, dest, tupDesc, prepStmtName, mc_state);
+  peloton_dml(planstate, sendTuples, dest, tupDesc, prepStmtName, backend_state);
 
 }
 

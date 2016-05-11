@@ -38,7 +38,7 @@ static void FillPortalStore(Portal portal, bool isTopLevel);
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
                            DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
-                            DestReceiver *dest, MemcachedState *mc_state = nullptr);
+                            DestReceiver *dest, BackendContext *backend_state = nullptr);
 static void PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
                              DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal, bool isTopLevel, DestReceiver *dest,
@@ -632,7 +632,7 @@ void PortalSetResultFormat(Portal portal, int nFormats, int16 *formats) {
  */
 bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
                DestReceiver *altdest, char *completionTag,
-               MemcachedState* mc_state) {
+               BackendContext* backend_state) {
   bool result;
   uint32 nprocessed;
   ResourceOwner saveTopTransactionResourceOwner;
@@ -712,7 +712,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
           /*
            * Now fetch desired portion of results.
            */
-          nprocessed = PortalRunSelect(portal, true, count, dest, mc_state);
+          nprocessed = PortalRunSelect(portal, true, count, dest, backend_state);
 
           /*
            * If the portal result contains a command tag and the caller
@@ -811,7 +811,7 @@ bool PortalRun(Portal portal, long count, bool isTopLevel, DestReceiver *dest,
  */
 static long PortalRunSelect(Portal portal, bool forward, long count,
                             DestReceiver *dest,
-                            MemcachedState* mc_state) {
+                            BackendContext* backend_state) {
   QueryDesc *queryDesc;
   ScanDirection direction;
   uint32 nprocessed;
@@ -859,7 +859,7 @@ static long PortalRunSelect(Portal portal, bool forward, long count,
       nprocessed = RunFromStore(portal, direction, count, dest);
     else {
       PushActiveSnapshot(queryDesc->snapshot);
-      ExecutorRun(queryDesc, direction, count, mc_state);
+      ExecutorRun(queryDesc, direction, count, backend_state);
       nprocessed = queryDesc->estate->es_processed;
       PopActiveSnapshot();
     }
@@ -896,7 +896,7 @@ static long PortalRunSelect(Portal portal, bool forward, long count,
       nprocessed = RunFromStore(portal, direction, count, dest);
     else {
       PushActiveSnapshot(queryDesc->snapshot);
-      ExecutorRun(queryDesc, direction, count, mc_state);
+      ExecutorRun(queryDesc, direction, count, backend_state);
       nprocessed = queryDesc->estate->es_processed;
       PopActiveSnapshot();
     }

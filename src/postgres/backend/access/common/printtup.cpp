@@ -25,11 +25,11 @@
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-				 TupleDesc typeinfo, MemcachedState *mc_state = nullptr);
+				 TupleDesc typeinfo, BackendContext *backend_state = nullptr);
 static void printtup_20(TupleTableSlot *slot, DestReceiver *self,
-												MemcachedState *mc_state = nullptr);
+												BackendContext *backend_state = nullptr);
 static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self,
-																 MemcachedState *mc_state = nullptr);
+																 BackendContext *backend_state = nullptr);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -124,7 +124,7 @@ SetRemoteDestReceiverParams(DestReceiver *self, Portal portal)
 
 static void
 printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-								 MemcachedState *mc_state)
+								 BackendContext *backend_state)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
@@ -161,7 +161,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
 	 * descriptor of the tuples. Don't print if we are memcached.
 	 *
 	 */
-	if (myState->sendDescrip && mc_state == nullptr)
+	if (myState->sendDescrip && backend_state == nullptr)
 		SendRowDescriptionMessage(typeinfo,
 								  FetchPortalTargetList(portal),
 								  portal->formats);
@@ -303,7 +303,7 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  * ----------------
  */
 void
-printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+printtup(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
@@ -381,16 +381,16 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
 	}
 
 	// flush only if we are not memcached
-	if (!mc_state) {
+	if (backend_state == nullptr) {
 		// otherwise, send string value of message up
 		pq_endmessage(&buf);
 	}
 	else {
 		// copy buf in result
-		mc_state->result.cursor = buf.cursor;
-		mc_state->result.data = buf.data;
-		mc_state->result.len = buf.len;
-		mc_state->result.maxlen = buf.maxlen;
+		backend_state->memcached_result.cursor = buf.cursor;
+		backend_state->memcached_result.data = buf.data;
+		backend_state->memcached_result.len = buf.len;
+		backend_state->memcached_result.maxlen = buf.maxlen;
 	}
 
 	/* Return to caller's context, and flush row's temporary memory */
@@ -403,7 +403,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
  * ----------------
  */
 static void
-printtup_20(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+printtup_20(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
@@ -531,7 +531,7 @@ printatt(unsigned attributeId,
  */
 void
 debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
-						 MemcachedState *mc_state)
+						 BackendContext *backend_state)
 {
 	int			natts = typeinfo->natts;
 	Form_pg_attribute *attinfo = typeinfo->attrs;
@@ -550,7 +550,7 @@ debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
  * ----------------
  */
 void
-debugtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+debugtup(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
@@ -586,7 +586,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
  * ----------------
  */
 static void
-printtup_internal_20(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+printtup_internal_20(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;

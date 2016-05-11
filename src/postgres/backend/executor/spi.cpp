@@ -1721,7 +1721,7 @@ SPI_plan_get_cached_plan(SPIPlanPtr plan)
  */
 void
 spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-								 MemcachedState *mc_state)
+								 BackendContext *backend_state)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -1776,7 +1776,7 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
  *		of current SPI procedure
  */
 void
-spi_printtup(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+spi_printtup(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
