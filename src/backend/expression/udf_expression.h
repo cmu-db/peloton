@@ -30,7 +30,7 @@ class UDFExpression : public AbstractExpression {
  public:
   UDFExpression(Oid id, Oid col, Oid rettype,
                 std::vector<expression::AbstractExpression *> args)
-      : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {
+      : AbstractExpression(EXPRESSION_TYPE_FUNCTION, VALUE_TYPE_INVALID), m_args(args) {
     func_id = id;
     collation = col;
     return_type = rettype;
