@@ -131,7 +131,7 @@ bool PrepareLogFile() {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
       // Set sync commit mode
-      log_manager.SetSyncCommit(false);
+      log_manager.SetSyncCommit(!state.asynchronous_mode);
 
       // Wait for standby mode
       auto local_thread = std::thread(
@@ -232,7 +232,7 @@ void DoRecovery(std::string file_name) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
       // Set sync commit mode
-      log_manager.SetSyncCommit(false);
+    	log_manager.SetSyncCommit(!state.asynchronous_mode);
 
       // Wait for standby mode
       auto local_thread = std::thread(
