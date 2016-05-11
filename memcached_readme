@@ -5,8 +5,13 @@ A few points to get an idea about how the memcached queries are being handled.
 - mc_state is defined in miscadmin.h as a thread_local variable. It is initialized in postmaster.cpp:BackendRun function.
 - postgres.cpp:MemcachedMain function is responsible for receiving the command (which is sent on the memcached port: 15721) from the user, and calling execute_simple_query after traslating it into a SQL command. We send the mc_state down the function stack, and finally populate the result into mc_state in printtup.cpp instead of sending it directly as a response. After that, we decode the mc_state->result back in postgres.cpp:MemcachedMain and construct the output in memcached format and return it.
 - GET, SET, ADD, REPLACE, quit are currently supported.
-- After the support for constraints, prepared statements and debugging of the B-tree index code; this can be extended and tested properly for other Memcached APIs
-.
+- After the support for constraints, prepared statements and debugging of the B-tree index code; this can be extended and tested properly for other Memcached APIs.
+
+- After doing initdb for postgres, run:
+	- createuser memcached
+	- psql postgres memcached
+	- now in the postgres shell: run this create table query for the first use : CREATE TABLE test ( key VARCHAR(105) PRIMARY KEY, value VARCHAR(1348), flag smallint, size smallint );
+	- after this the database is setup, use 'telnet localhost 15721' to connect to the peloton database and run memcached queries. Use 'quit' to close the client.
 
 
 - We tested it against YCSB memcached benchmark to get the results, the experiments work fine for lower number of keys. We couldn't run it for more number of key, there is a bug when we try to handle more than 682 keys to be precise with the YCSB standard workloada. It is possible due to character escaping on the value of that particular key.
