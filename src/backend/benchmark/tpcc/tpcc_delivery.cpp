@@ -52,6 +52,7 @@
 #include "backend/executor/update_executor.h"
 #include "backend/executor/index_scan_executor.h"
 #include "backend/executor/insert_executor.h"
+#include "backend/executor/limit_executor.h"
 
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/constant_value_expression.h"
@@ -69,6 +70,7 @@
 #include "backend/planner/insert_plan.h"
 #include "backend/planner/update_plan.h"
 #include "backend/planner/index_scan_plan.h"
+#include "backend/planner/limit_plan.h"
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
@@ -92,8 +94,18 @@ bool RunDelivery(){
    }
    */
 
-  // int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  // int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
+
+
+  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
+
+  //====================
+  // Cache the plan node
+  //====================
+
+  planner::LimitPlan limit_node(1, 0);
+  
+
 
   for (int d_id = 0; d_id < state.districts_per_warehouse; ++d_id) {
     LOG_INFO("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");

@@ -129,7 +129,7 @@ bool RunNewOrder(){
       new executor::ExecutorContext(txn));
 
   //std::vector<float> i_prices;
-  LOG_INFO("getItemInfo": "SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
+  LOG_INFO("getItemInfo SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
   for (auto item_id : i_ids) {
     LOG_INFO("item_id: %d", int(item_id));
 
@@ -417,7 +417,7 @@ bool RunNewOrder(){
     int item_id = i_ids.at(i);
     int ol_w_id = ol_w_ids.at(i);
     int ol_qty = ol_qtys.at(i);
-    LOG_INFO("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_\%02d FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
+    // LOG_INFO("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_ FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
 
     std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
 
