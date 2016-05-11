@@ -35,8 +35,6 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
   return success;
 }
 
-char *LogBuffer::GetData() { return elastic_data_.get(); }
-
 void LogBuffer::ResetData() {
   size_ = 0;
   memset(elastic_data_.get(), 0, capacity_ * sizeof(char));
@@ -60,15 +58,6 @@ bool LogBuffer::WriteData(char *data, size_t len) {
   size_ += len;
   return true;
 }
-
-size_t LogBuffer::GetSize() { return size_; }
-
-void LogBuffer::SetSize(size_t size) {
-  assert(size < capacity_);
-  size_ = size;
-}
-
-BackendLogger *LogBuffer::GetBackendLogger() { return backend_logger_; }
 
 }  // namespace logging
 }  // namespace peloton

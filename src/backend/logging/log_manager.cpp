@@ -73,7 +73,6 @@ void LogManager::StartStandbyMode() {
   // Launch the frontend logger's main loop
   for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
     std::thread(&FrontendLogger::MainLoop, frontend_loggers[i].get()).detach();
-    // frontend_loggers[i].get()->MainLoop();
   }
 
   // before returning, query each frontend logger for its
@@ -174,8 +173,8 @@ void LogManager::LogBeginTransaction(cid_t commit_id) {
   }
 }
 
-void LogManager::LogUpdate(cid_t commit_id, ItemPointer &old_version,
-                           ItemPointer &new_version) {
+void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
+		const ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
     auto &manager = catalog::Manager::GetInstance();
 
@@ -202,7 +201,7 @@ void LogManager::LogUpdate(cid_t commit_id, ItemPointer &old_version,
   }
 }
 
-void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
+void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -228,7 +227,7 @@ void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
   }
 }
 
-void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location) {
+void LogManager::LogDelete(cid_t commit_id, const ItemPointer &delete_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -298,7 +297,6 @@ void LogManager::InitFrontendLoggers() {
           FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
 
       if (frontend_logger.get() != nullptr) {
-        // frontend_logger.get()->SetLoggerID(i);
         frontend_loggers.push_back(std::move(frontend_logger));
       }
     }
