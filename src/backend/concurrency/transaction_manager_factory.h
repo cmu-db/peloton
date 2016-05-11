@@ -18,6 +18,7 @@
 #include "backend/concurrency/eager_write_txn_manager.h"
 #include "backend/concurrency/ts_order_txn_manager.h"
 #include "backend/concurrency/ssi_txn_manager.h"
+#include "backend/concurrency/optimistic_rb_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -25,20 +26,22 @@ class TransactionManagerFactory {
  public:
   static TransactionManager &GetInstance() {
     switch (protocol_) {
-      case CONCURRENCY_TYPE_OPTIMISTIC:
-        return OptimisticTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_PESSIMISTIC:
-        return PessimisticTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_SPECULATIVE_READ:
-        return SpeculativeReadTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_EAGER_WRITE:
-        return EagerWriteTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_SSI:
-        return SsiTxnManager::GetInstance();
-      case CONCURRENCY_TYPE_TO:
-        return TsOrderTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_OPTIMISTIC:
+       return OptimisticTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_PESSIMISTIC:
+       return PessimisticTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_SPECULATIVE_READ:
+       return SpeculativeReadTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_EAGER_WRITE:
+       return EagerWriteTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_SSI:
+       return SsiTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_TO:
+       return TsOrderTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_OCC_RB:
+        return OptimisticRbTxnManager::GetInstance();
       default:
-        return OptimisticTxnManager::GetInstance();
+        return OptimisticRbTxnManager::GetInstance();
     }
   }
 

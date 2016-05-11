@@ -15,8 +15,14 @@
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/records/tuple_record.h"
 #include "backend/logging/log_file.h"
+#include "backend/executor/executors.h"
+
 #include <dirent.h>
 #include <vector>
+#include <set>
+#include <chrono>
+
+extern int peloton_flush_frequency_micros;
 
 namespace peloton {
 
@@ -28,6 +34,11 @@ class Transaction;
 
 namespace logging {
 
+typedef std::chrono::high_resolution_clock Clock;
+
+typedef std::chrono::microseconds Micros;
+
+typedef std::chrono::time_point<Clock> TimePoint;
 //===--------------------------------------------------------------------===//
 // Write Ahead Frontend Logger
 //===--------------------------------------------------------------------===//
@@ -38,6 +49,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   WriteAheadFrontendLogger(bool for_testing);
 
+  WriteAheadFrontendLogger(std::string log_dir);
+
   ~WriteAheadFrontendLogger(void);
 
   void FlushLogRecords(void);
@@ -47,6 +60,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   //===--------------------------------------------------------------------===//
 
   void DoRecovery(void);
+
+  void RecoverIndex();
 
   void StartTransactionRecovery(cid_t commit_id);
 
@@ -68,9 +83,9 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void OpenNextLogFile();
 
-  LogRecordType GetNextLogRecordTypeForRecovery(FILE *, size_t);
+  LogRecordType GetNextLogRecordTypeForRecovery();
 
-  void TruncateLog(txn_id_t);
+  void TruncateLog(cid_t);
 
   void SetLogDirectory(char *);
 
@@ -78,21 +93,33 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string GetFileNameFromVersion(int);
 
-  txn_id_t ExtractMaxCommitIdFromLogFileRecords(FILE *);
+  std::pair<cid_t, cid_t> ExtractMaxLogIdAndMaxDelimFromLogFileRecords(FILE *);
+
+  void SetLoggerID(int);
+
+  void UpdateMaxDelimiterForRecovery();
+
+  int GetLogFileCursor() { return log_file_cursor_; }
+
+  int GetLogFileCounter() { return log_file_counter_; }
+
+  void InitSelf();
 
  private:
   std::string GetLogFileName(void);
+
+  bool RecoverTableIndexHelper(storage::DataTable *target_table,
+                               cid_t start_cid);
+
+  void InsertIndexEntry(storage::Tuple *tuple, storage::DataTable *table,
+                        ItemPointer target_location);
 
   //===--------------------------------------------------------------------===//
   // Member Variables
   //===--------------------------------------------------------------------===//
 
   // File pointer and descriptor
-  FILE *log_file;
-  int log_file_fd;
-
-  // Size of the log file
-  size_t log_file_size;
+  FileHandle cur_file_handle;
 
   // Txn table during recovery
   std::map<txn_id_t, std::vector<TupleRecord *>> recovery_txn_table;
@@ -122,7 +149,19 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   std::string LOG_FILE_SUFFIX = ".log";
 
-  txn_id_t max_commit_id;
+  cid_t max_log_id_file = INVALID_CID;
+
+  CopySerializeOutput output_buffer;
+
+  int logger_id;
+
+  cid_t max_delimiter_file = 0;
+
+  bool should_create_new_file = false;
+
+  TimePoint last_flush = Clock::now();
+
+  Micros flush_frequency{peloton_flush_frequency_micros};
 };
 
 }  // namespace logging
