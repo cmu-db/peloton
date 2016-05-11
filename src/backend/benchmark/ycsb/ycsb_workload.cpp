@@ -24,6 +24,8 @@
 #include <cstddef>
 #include <limits>
 
+#undef NDEBUG
+
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
@@ -198,6 +200,9 @@ volatile bool run_backends = true;
 // Committed transaction counts
 std::vector<double> transaction_counts;
 
+// Next insert key
+std::atomic<int> next_insert_key;
+
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
@@ -210,8 +215,9 @@ void RunBackend(oid_t thread_id) {
   }
 
   fast_random rng(rand());
-  ZipfDistribution zipf(state.scale_factor * 1000 - 1, zipf_theta);
+  ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1, zipf_theta);
   auto committed_transaction_count = 0;
+  next_insert_key.store(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Run these many transactions
   while (true) {
@@ -300,6 +306,10 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 static bool EndTransaction(concurrency::Transaction *txn) {
   auto result = txn->GetResult();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  if (result == Result::RESULT_FAILURE) {
+    LOG_ERROR("Insert failed : %d", next_insert_key.load());
+  }
 
   // transaction passed execution.
   if (result == Result::RESULT_SUCCESS) {
@@ -415,7 +425,7 @@ bool RunRead(ZipfDistribution &zipf) {
   return txn_status;
 }
 
-bool RunInsert(ZipfDistribution &zipf) {
+bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   const oid_t col_count = state.column_count + 1;
@@ -434,8 +444,9 @@ bool RunInsert(ZipfDistribution &zipf) {
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
-  auto zipf_value = zipf.GetNextNumber();
-  auto key_value = ValueFactory::GetIntegerValue(zipf_value);
+
+  next_insert_key++;
+  auto key_value = ValueFactory::GetIntegerValue(next_insert_key);
   auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
   tuple->SetValue(0, key_value, nullptr);
