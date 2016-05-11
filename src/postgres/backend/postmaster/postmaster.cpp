@@ -64,11 +64,10 @@
  */
 
 // TODO: Peloton changes
-#include "backend/networking/peloton_client.h"
+#include "backend/networking/rpc_client.h"
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/rpc_server.h"
 #include "backend/networking/abstract_service.pb.h"
-#include "backend/networking/message_queue.h"
 
 #include "postgres.h"
 
@@ -137,6 +136,7 @@
 
 // TODO: Memcached Changes
 #include "postmaster/memcached.h"
+
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
  * struct bkend, these are OR-able request flag bits for SignalSomeChildren()
@@ -553,116 +553,86 @@ HANDLE PostmasterHandle;
 
 // TODO: Peloton adds
 
-void Coordinator() {
-  google::protobuf::Service *service = NULL;
+//TODO: Peloton adds for rpc test
+//extern uint64_t server_request_recv_number;
+//extern uint64_t server_request_recv_bytes;
+//extern uint64_t server_response_send_number;
+//extern uint64_t server_response_send_bytes;
 
-  try {
-    peloton::networking::RpcServer rpc_server(PELOTON_ENDPOINT_ADDR);
-    service = new peloton::networking::PelotonService();
-    rpc_server.RegisterService(service);
-    rpc_server.StartSimple();
-  } catch (std::exception &e) {
-    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-    delete service;
-  } catch (...) {
-    std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
-    delete service;
-  }
-}
+void* Coordinator(__attribute__((unused)) void* arg) {
 
-/*
- * Sender is responsible for picking up the message from send_queue and send it
- * The message should contain the dst_addr
- */
-// void Sender(
-//		peloton::networking::MessageQueue<peloton::networking::PelotonMessage>*
-// send_queue) {
-//
-//	try {
-//		while (1) {
-//			peloton::networking::PelotonMessage msg = send_queue->Pop();
-//			peloton::networking::PelotonMessage::Type msg_type = msg.type();
-//
-//			switch (msg_type) {
-//
-//			case peloton::networking::PelotonMessage::HEARTBEAT_REQUEST: {
-//				LOG_TRACE("Pick up a HEARTBEAT_REQUEST");
-//				peloton::networking::HeartbeatRequest request =
-//						msg.heartbeat_request();
-//
-//				peloton::networking::HeartbeatResponse response;
-//
-//				peloton::networking::PelotonClient
-// client("tcp://127.0.0.1:9999");
-//				client.Heartbeat(&request, &response);
-//
-//				if (response.has_sender_site() == true) {
-//					std::cout << "sender site: " << response.sender_site()
-//							<< std::endl;
-//				} else {
-//					std::cout << "No response: sender site" << std::endl;
-//				}
-//
-//				if (response.has_status() == true) {
-//					std::cout << "Status: " << response.status() << std::endl;
-//				} else {
-//					std::cout << "No response: sender status" << std::endl;
-//				}
-//
-//			}
-//				break;
-//
-//			case peloton::networking::PelotonMessage::INITIALIZE_REQUEST: {
-//				LOG_TRACE("Pick up a INITIALIZE_REQUEST");
-//
-//			}
-//				break;
-//
-//			default:
-//				LOG_ERROR("Unrecognized REQUEST %d", msg_type);
-//				break;
-//			}
-//		}
-//
-//	} catch (std::exception& e) {
-//		std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-//	} catch (...) {
-//		std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
-//	}
-//
-//}
+    google::protobuf::Service* service = NULL;
 
-void TestSend() {
-  try {
-    for (int i = 0; i < 100; i++) {
-      peloton::networking::HeartbeatRequest request;
-      peloton::networking::HeartbeatResponse response;
-
-      request.set_sender_site(i);
-      request.set_last_transaction_id(i * 10);
-
-      peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
-
-      client.Heartbeat(&request, &response);
-
-      if (response.has_sender_site() == true) {
-        std::cout << "sender site: " << response.sender_site() << std::endl;
-      } else {
-        std::cout << "No response: sender site" << std::endl;
-      }
-
-      if (response.has_status() == true) {
-        std::cout << "Status: " << response.status() << std::endl;
-      } else {
-        std::cout << "No response: sender status" << std::endl;
-      }
+    try {
+        peloton::networking::RpcServer rpc_server(PELOTON_SERVER_PORT);
+        service = new peloton::networking::PelotonService();
+        rpc_server.RegisterService(service);
+        rpc_server.Start();
+    } catch (std::exception& e) {
+        std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+        delete service;
+    } catch (...) {
+        std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+        delete service;
     }
 
-  } catch (std::exception &e) {
-    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-  } catch (...) {
-    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
-  }
+    return NULL;
+}
+
+
+void TestSend() {
+//  try {
+//    for (int i = 0; i < 100; i++) {
+//      peloton::networking::HeartbeatRequest request;
+//      peloton::networking::HeartbeatResponse response;
+//
+//<<<<<<< HEAD
+//      request.set_sender_site(i);
+//      request.set_last_transaction_id(i * 10);
+//
+//      peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
+//
+//      client.Heartbeat(&request, &response);
+//
+//      if (response.has_sender_site() == true) {
+//        std::cout << "sender site: " << response.sender_site() << std::endl;
+//      } else {
+//        std::cout << "No response: sender site" << std::endl;
+//      }
+//
+//      if (response.has_status() == true) {
+//        std::cout << "Status: " << response.status() << std::endl;
+//      } else {
+//        std::cout << "No response: sender status" << std::endl;
+//      }
+//    }
+//
+//  } catch (std::exception &e) {
+//    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+//  } catch (...) {
+//    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+//  }
+//=======
+    sleep(2);
+
+    try {
+        // it is not necessary to use smart point here
+        auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+
+        for (int i = 1; i < 2; i++) {
+//            peloton::networking::HeartbeatRequest request;
+//            request.set_sender_site(i);
+//            request.set_last_transaction_id(i*10);
+
+//            pclient->QueryPlan(&request, NULL);
+        }
+
+    } catch (std::exception& e) {
+        std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+    }
+
 }
 
 /*
@@ -1365,8 +1335,13 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-  std::thread coordinator(Coordinator);
-  coordinator.detach();
+//  std::thread coordinator(Coordinator);
+//  coordinator.detach();
+
+  pthread_t testThread;
+  int ret = pthread_create(&testThread, NULL, Coordinator, NULL);
+      if( -1 == ret ) { printf( "create thread error\n" ); }
+  pthread_detach(testThread);
 
   // Lanch test_send to put msg in send_queue.
   // This is an example how to send msg to Peloton peers
@@ -3598,6 +3573,9 @@ static void restore_backend_variables(BackendParameters *param, Port *port);
 static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
                         bool is_memcached) {
   // free(bn);
+  if(is_memcached){
+    mc_state = new MemcachedState();
+  }
 
   IsBackend = true;
 

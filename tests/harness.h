@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // harness.h
 //
 // Identification: tests/harness.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,10 @@
 #include <iostream>
 #include <atomic>
 
+#undef NDEBUG
+
 #include "backend/common/types.h"
+#include "backend/common/logger.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -99,11 +102,9 @@ class PelotonTest : public ::testing::Test {
   virtual void SetUp() {}
 
   virtual void TearDown() {
-
     // shutdown protocol buf library
     google::protobuf::ShutdownProtobufLibrary();
   }
-
 };
 
 }  // End test namespace

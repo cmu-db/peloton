@@ -172,10 +172,10 @@ typedef struct
 } varattrib_1b_e;
 
 /* state struct used by memcached benchamrk */
-struct MemcachedState {
+
+struct MemcachedState{
 	StringInfoData result;
 	/* add memcached return status */
-
 };
 
 /*

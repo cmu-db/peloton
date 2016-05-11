@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// operator_expression.h
+// string_expression.h
 //
 // Identification: src/backend/expression/string_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -65,6 +65,11 @@ class SubstringExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorSubstringExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new SubstringExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
+                                   CopyUtil(len));
+  }
 };
 
 /*
@@ -91,6 +96,10 @@ class ConcatExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorConcatExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new ConcatExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 };
 
 /*
@@ -113,6 +122,10 @@ class AsciiExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorAsciiExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new AsciiExpression(CopyUtil(GetLeft()));
   }
 };
 
@@ -137,6 +150,10 @@ class OctetLengthExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorOctetLengthExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OctetLengthExpression(CopyUtil(GetLeft()));
+  }
 };
 
 /*
@@ -158,6 +175,10 @@ class CharExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorCharExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new CharExpression(CopyUtil(GetLeft()));
   }
 };
 
@@ -181,6 +202,10 @@ class CharLengthExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorCharLengthExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new CharLengthExpression(CopyUtil(GetLeft()));
   }
 };
 
@@ -209,6 +234,10 @@ class RepeatExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorRepeatExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new RepeatExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 };
 
 /*
@@ -235,6 +264,10 @@ class LeftExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorLeftExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new LeftExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
 
@@ -263,6 +296,10 @@ class RightExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorRightExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new RightExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 };
 
 /*
@@ -270,7 +307,7 @@ class RightExpression : public AbstractExpression {
  */
 class LTrimExpression : public AbstractExpression {
  public:
-  LTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+  LTrimExpression(AbstractExpression *string, AbstractExpression *chars)
       : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
     m_left = string;
     m_right = chars;
@@ -291,6 +328,10 @@ class LTrimExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorLTrimExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new LTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 };
 
 /*
@@ -298,7 +339,7 @@ class LTrimExpression : public AbstractExpression {
  */
 class RTrimExpression : public AbstractExpression {
  public:
-  RTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+  RTrimExpression(AbstractExpression *string, AbstractExpression *chars)
       : AbstractExpression(EXPRESSION_TYPE_RTRIM) {
     m_left = string;
     m_right = chars;
@@ -318,11 +359,15 @@ class RTrimExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorRTrimExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new RTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
 };
 
 class BTrimExpression : public AbstractExpression {
  public:
-  BTrimExpression(AbstractExpression *chars, AbstractExpression *string)
+  BTrimExpression(AbstractExpression *string, AbstractExpression *chars)
       : AbstractExpression(EXPRESSION_TYPE_BTRIM) {
     m_left = string;
     m_right = chars;
@@ -342,6 +387,10 @@ class BTrimExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorBTrimExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new BTrimExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
 
@@ -370,6 +419,10 @@ class PositionExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorPositionExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new PositionExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()));
   }
 };
 
@@ -410,6 +463,11 @@ class OverlayExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorOverlayExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OverlayExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
+                                 CopyUtil(from), CopyUtil(len));
+  }
 };
 
 /*
@@ -441,6 +499,11 @@ class ReplaceExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorReplaceExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new ReplaceExpression(CopyUtil(GetLeft()), CopyUtil(GetRight()),
+                                 CopyUtil(to));
   }
 };
 

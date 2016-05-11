@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // bootstrap.cpp
 //
 // Identification: src/backend/bridge/ddl/bootstrap.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +31,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   raw_database.CollectRawForeignKeys();
 
   // create the database with current database id
-  elog(DEBUG5, "Initializing database %s(%lu) in Peloton",
+  elog(DEBUG5, "Initializing database %s(%u) in Peloton",
        raw_database.GetDbName().c_str(), raw_database.GetDbOid());
 
   bool status = raw_database.CreateDatabase();
@@ -48,9 +48,6 @@ bool Bootstrap::BootstrapPeloton(void) {
   // TODO: Update stats
   // auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   // db->UpdateStats(peloton_status, false);
-
-  // Verbose mode
-  // std::cout << "Print db :: \n"<<*db << std::endl;
 
   elog(DEBUG5, "Finished initializing Peloton");
   return true;

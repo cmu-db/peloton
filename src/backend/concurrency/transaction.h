@@ -1,25 +1,27 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction.h
 //
 // Identification: src/backend/concurrency/transaction.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <mutex>
 #include <atomic>
 #include <vector>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
-#include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -28,121 +30,98 @@ namespace concurrency {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-class Transaction : public Printable {
-  friend class TransactionManager;
+enum RWType {
+  RW_TYPE_READ,
+  RW_TYPE_UPDATE,
+  RW_TYPE_INSERT,
+  RW_TYPE_DELETE,
+  RW_TYPE_INS_DEL  // delete after insert.
+};
 
+class Transaction : public Printable {
   Transaction(Transaction const &) = delete;
 
  public:
   Transaction()
-      : txn_id(INVALID_TXN_ID),
-        cid(INVALID_CID),
-        last_cid(INVALID_CID),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+      : txn_id_(INVALID_TXN_ID),
+        begin_cid_(INVALID_CID),
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
 
-  Transaction(txn_id_t txn_id, cid_t last_cid)
-      : txn_id(txn_id),
-        cid(INVALID_CID),
-        last_cid(last_cid),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+  Transaction(const txn_id_t &txn_id)
+      : txn_id_(txn_id),
+        begin_cid_(INVALID_CID),
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
 
-  ~Transaction() {
-    if (next != nullptr) {
-      next->DecrementRefCount();
-    }
-  }
+  Transaction(const txn_id_t &txn_id, const cid_t &begin_cid)
+      : txn_id_(txn_id),
+        begin_cid_(begin_cid),
+        end_cid_(INVALID_CID),
+        is_written_(false),
+        insert_count_(0) {}
+
+  ~Transaction() {}
 
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
 
-  inline txn_id_t GetTransactionId() const { return txn_id; }
+  inline txn_id_t GetTransactionId() const { return txn_id_; }
 
-  inline cid_t GetCommitId() const { return cid; }
+  inline cid_t GetBeginCommitId() const { return begin_cid_; }
 
-  inline cid_t GetLastCommitId() const { return last_cid; }
+  inline cid_t GetEndCommitId() const { return end_cid_; }
 
-  // record inserted tuple
-  void RecordInsert(ItemPointer location);
+  inline void SetEndCommitId(cid_t eid) { end_cid_ = eid; }
 
-  // record deleted tuple
-  void RecordDelete(ItemPointer location);
+  void RecordRead(const ItemPointer &);
 
-  const std::map<oid_t, std::vector<oid_t>> &GetInsertedTuples();
+  void RecordUpdate(const ItemPointer &);
 
-  const std::map<oid_t, std::vector<oid_t>> &GetDeletedTuples();
+  void RecordInsert(const ItemPointer &);
 
-  // reset inserted tuples and deleted tuples
-  // used by recovery (logging)
-  void ResetState(void);
+  void RecordDelete(const ItemPointer &);
 
-  // maintain reference counts for transactions
-  inline void IncrementRefCount();
-
-  inline void DecrementRefCount();
+  const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
   // Set result and status
-  inline void SetResult(Result result);
+  inline void SetResult(Result result) { result_ = result; }
 
   // Get result and status
-  inline Result GetResult() const;
+  inline Result GetResult() const { return result_; }
 
- protected:
+  inline bool IsReadOnly() const {
+    return is_written_ == false && insert_count_ == 0;
+  }
+
+ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
 
   // transaction id
-  txn_id_t txn_id;
+  txn_id_t txn_id_;
 
-  // commit id
-  cid_t cid;
+  // start commit id
+  cid_t begin_cid_;
 
-  // last visible commit id
-  cid_t last_cid;
+  // end commit id
+  cid_t end_cid_;
 
-  // references
-  std::atomic<size_t> ref_count;
-
-  // waiting for commit ?
-  std::atomic<bool> waiting_to_commit;
-
-  // cid context
-  Transaction *next __attribute__((aligned(16)));
-
-  // inserted tuples
-  std::map<oid_t, std::vector<oid_t>> inserted_tuples;
-
-  // deleted tuples
-  std::map<oid_t, std::vector<oid_t>> deleted_tuples;
-
-  // synch helpers
-  std::mutex txn_mutex;
+  std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
+
+  bool is_written_;
+  size_t insert_count_;
 };
-
-inline void Transaction::IncrementRefCount() { ++ref_count; }
-
-inline void Transaction::DecrementRefCount() {
-  // DROP transaction when ref count reaches 0
-  // this returns the value immediately preceding the assignment
-  if (ref_count.fetch_sub(1) == 1) {
-    delete this;
-  }
-}
-
-inline void Transaction::SetResult(Result result) { result_ = result; }
-
-inline Result Transaction::GetResult() const { return result_; }
 
 }  // End concurrency namespace
 }  // End peloton namespace

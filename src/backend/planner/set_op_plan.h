@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// set_op_node.h
+// set_op_plan.h
 //
-// Identification: src/backend/planner/set_op_node.h
+// Identification: src/backend/planner/set_op_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -39,6 +39,10 @@ class SetOpPlan : public AbstractPlan {
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SETOP; }
 
   const std::string GetInfo() const { return "SetOp"; }
+
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new SetOpPlan(set_op_));
+  }
 
  private:
   /** @brief Set Operation of this node */

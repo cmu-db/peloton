@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // projection_test.cpp
 //
 // Identification: tests/executor/projection_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,6 +23,7 @@
 #include "backend/executor/projection_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/data_table.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -59,19 +60,16 @@ TEST_F(ProjectionTests, BasicTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -89,17 +87,18 @@ TEST_F(ProjectionTests, BasicTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -119,19 +118,16 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -151,7 +147,7 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   columns.push_back(orig_schema->GetColumn(1));
   columns.push_back(orig_schema->GetColumn(3));
 
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap map0 =
@@ -164,10 +160,11 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);
@@ -187,19 +184,16 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   size_t tile_size = 5;
 
   // Create a table and wrap it in logical tile
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto txn_id = txn->GetTransactionId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(txn, data_table.get(),
-                                   tile_size, false, false,
-                                   false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
+                                   false, false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0),
-                                                  txn_id));
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile1.release()));
@@ -217,7 +211,7 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto orig_schema = data_table.get()->GetSchema();
   columns.push_back(orig_schema->GetColumn(0));
   columns.push_back(orig_schema->GetColumn(0));
-  auto schema = new catalog::Schema(columns);
+  std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
   planner::ProjectInfo::DirectMap direct_map =
@@ -228,16 +222,18 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   auto const_val = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(0, 0);
-  expression::AbstractExpression *expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, tuple_value_expr, const_val);
+  expression::AbstractExpression *expr =
+      expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+                                                  tuple_value_expr, const_val);
 
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(std::move(target_list),
-                                               std::move(direct_map_list));
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
 
-  planner::ProjectionPlan node(project_info, schema);
+  planner::ProjectionPlan node(std::move(project_info), schema);
 
   // Create and set up executor
   executor::ProjectionExecutor executor(&node, nullptr);

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // abstract_scan_executor.h
 //
 // Identification: src/backend/executor/abstract_scan_executor.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,7 +37,7 @@ class AbstractScanExecutor : public AbstractExecutor {
  protected:
   bool DInit();
 
-  bool DExecute() = 0;
+  virtual bool DExecute() = 0;
 
  protected:
   //===--------------------------------------------------------------------===//

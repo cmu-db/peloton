@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // mock_plan.h
 //
 // Identification: src/backend/planner/mock_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -38,6 +38,10 @@ class MockPlan : public planner::AbstractPlan {
   //===--------------------------------------------------------------------===//
 
   inline const std::string GetInfo() const { return "Mock"; }
+
+  std::unique_ptr<planner::AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(new MockPlan());
+  }
 };
 
 }  // namespace test

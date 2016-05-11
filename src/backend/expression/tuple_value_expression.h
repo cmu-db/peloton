@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tuple_value_expression.h
 //
 // Identification: src/backend/expression/tuple_value_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -66,6 +66,10 @@ class TupleValueExpression : public AbstractExpression {
   int GetColumnId() const { return this->value_idx; }
 
   int GetTupleIdx() const { return this->tuple_idx; }
+
+  AbstractExpression *Copy() const {
+    return new TupleValueExpression(tuple_idx, value_idx);
+  }
 
  protected:
   const int tuple_idx;  // which tuple. defaults to tuple1

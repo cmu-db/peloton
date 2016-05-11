@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // logical_tile_test.cpp
 //
 // Identification: tests/executor/logical_tile_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value_factory.h"
 #include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/tile_group.h"
@@ -40,7 +41,7 @@ class LogicalTileTests : public PelotonTest {};
 
 TEST_F(LogicalTileTests, TileMaterializationTest) {
   const int tuple_count = 4;
-  std::unique_ptr<storage::TileGroup> tile_group(
+  std::shared_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateTileGroup(tuple_count));
 
   // Create tuple schema from tile schemas.
@@ -64,13 +65,17 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2), pool);
   tuple2.SetValue(3, ValueFactory::GetStringValue("tuple 2"), pool);
 
-  auto &txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  txn_id_t txn_id = txn->GetTransactionId();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
+  // txn_id_t txn_id = txn->GetTransactionId();
 
-  tile_group->InsertTuple(txn_id, &tuple1);
-  tile_group->InsertTuple(txn_id, &tuple2);
-  tile_group->InsertTuple(txn_id, &tuple1);
+  auto tuple_id1 = tile_group->InsertTuple(&tuple1);
+  auto tuple_id2 = tile_group->InsertTuple(&tuple2);
+  auto tuple_id3 = tile_group->InsertTuple(&tuple1);
+
+  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id1));
+  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id2));
+  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id3));
 
   txn_manager.CommitTransaction();
 
@@ -98,7 +103,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
     logical_tile->AddColumn(base_tile_ref, column_itr, column_itr);
   }
 
-  std::cout << (*logical_tile) << "\n";
+  LOG_INFO("%s", logical_tile->GetInfo().c_str());
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (2 BASE TILE)
@@ -130,20 +135,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
                             column_count1 + column_itr);
   }
 
-  std::cout << (*logical_tile) << "\n";
-
-  ////////////////////////////////////////////////////////////////
-  // LOGICAL TILE DISPLAY
-  ////////////////////////////////////////////////////////////////
-
-  std::cout << "Value : " << logical_tile->GetValue(0, 0) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(0, 1) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(0, 2) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(0, 3) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(1, 0) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(1, 1) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(1, 2) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(1, 3) << "\n";
+  LOG_INFO("%s", logical_tile->GetInfo().c_str());
 }
 
 }  // End test namespace

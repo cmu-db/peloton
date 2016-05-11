@@ -1,30 +1,16 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction_manager.cpp
 //
 // Identification: src/backend/concurrency/transaction_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <chrono>
-#include <thread>
-#include <iomanip>
-#include <mutex>
-
-#include "backend/concurrency/transaction_manager.h"
-
-#include "backend/common/platform.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/storage/tile_group.h"
+#include "transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -32,289 +18,63 @@ namespace concurrency {
 // Current transaction for the backend thread
 thread_local Transaction *current_txn;
 
-TransactionManager::TransactionManager() {
-  next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
-  next_cid = ATOMIC_VAR_INIT(START_CID);
+bool TransactionManager::IsOccupied(const ItemPointer &position) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
+  auto tuple_id = position.offset;
 
-  // BASE transaction
-  // All transactions are based on this transaction
-  last_txn = new Transaction(START_TXN_ID, START_CID);
-  last_txn->cid = START_CID;
-  last_cid = START_CID;
-}
-
-TransactionManager::~TransactionManager() {
-  // delete BASE txn
-  delete last_txn;
-}
-
-txn_id_t TransactionManager::GetNextTransactionId() {
-  if (next_txn_id == MAX_TXN_ID) {
-    throw TransactionException("Txn id equals MAX_TXN_ID");
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
+  cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  if (tuple_txn_id == INVALID_TXN_ID) {
+    // the tuple is not available.
+    return false;
   }
+  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
-  return next_txn_id++;
-}
-
-// Begin a new transaction
-Transaction *TransactionManager::BeginTransaction() {
-  Transaction *next_txn =
-      new Transaction(GetNextTransactionId(), GetLastCommitId());
-
-  // Log the BEGIN TXN record
-  {
-    auto &log_manager = logging::LogManager::GetInstance();
-    if (log_manager.IsInLoggingMode()) {
-      auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_BEGIN, next_txn->txn_id);
-      logger->Log(record);
+  // there are exactly two versions that can be owned by a transaction.
+  // unless it is an insertion.
+  if (own == true) {
+    if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
+      assert(tuple_end_cid == MAX_CID);
+      // the only version that is visible is the newly inserted one.
+      return true;
+    } else {
+      // the older version is not visible.
+      return false;
     }
-  }
-
-  // Update the next txn
-  current_txn = next_txn;
-
-  return next_txn;
-}
-
-bool TransactionManager::IsValid(txn_id_t txn_id) {
-  return (txn_id < next_txn_id);
-}
-
-void TransactionManager::ResetStates(void) {
-  next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
-  next_cid = ATOMIC_VAR_INIT(START_CID);
-
-  // BASE transaction
-  // All transactions are based on this transaction
-  delete last_txn;
-  last_txn = new Transaction(START_TXN_ID, START_CID);
-  last_txn->cid = START_CID;
-  last_cid = START_CID;
-
-  for (auto txn : txn_table) {
-    auto curr_txn = txn.second;
-    delete curr_txn;
-  }
-  txn_table.clear();
-}
-
-void TransactionManager::EndTransaction(Transaction *txn,
-                                        bool sync __attribute__((unused))) {
-  // Log the END TXN record
-  {
-    auto &log_manager = logging::LogManager::GetInstance();
-    if (log_manager.IsInLoggingMode()) {
-      auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_END, txn->txn_id);
-      logger->Log(record);
-
-      // Check for sync commit
-      // If true, wait for the fronted logger to flush the data
-      if (log_manager.GetSyncCommit()) {
-        logger->WaitForFlushing();
+  } else {
+    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+    if (tuple_txn_id != INITIAL_TXN_ID) {
+      // if the tuple is owned by other transactions.
+      if (tuple_begin_cid == MAX_CID) {
+        // uncommitted version.
+        if (tuple_end_cid == INVALID_CID) {
+          // dirty delete is invisible
+          return false;
+        } else {
+          // dirty update or insert is visible
+          return true;
+        }
+      } else {
+        // the older version may be visible.
+        if (activated && !invalidated) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    } else {
+      // if the tuple is not owned by any transaction.
+      if (activated && !invalidated) {
+        return true;
+      } else {
+        return false;
       }
     }
   }
 }
 
-//===--------------------------------------------------------------------===//
-// Commit Processing
-//===--------------------------------------------------------------------===//
-
-TransactionManager &TransactionManager::GetInstance() {
-  static TransactionManager txn_manager;
-  return txn_manager;
-}
-
-void TransactionManager::BeginCommitPhase(Transaction *txn) {
-  // successor in the transaction list will point to us
-  txn->IncrementRefCount();
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-
-    // append to the pending transaction list
-    last_txn->next = txn;
-
-    // the last transaction pointer also points to us
-    txn->IncrementRefCount();
-
-    // assign cid to the txn
-    txn->cid = last_txn->cid + 1;
-
-    auto tmp = last_txn;
-    last_txn = txn;
-
-    // drop a reference to previous last transaction pointer
-    tmp->DecrementRefCount();
-  }
-}
-
-void TransactionManager::CommitModifications(Transaction *txn, bool sync
-                                             __attribute__((unused))) {
-  auto &manager = catalog::Manager::GetInstance();
-
-  // (A) commit inserts
-  auto inserted_tuples = txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    for (auto tuple_slot : entry.second)
-      tile_group->CommitInsertedTuple(tuple_slot, txn->txn_id, txn->cid);
-  }
-
-  // (B) commit deletes
-  auto deleted_tuples = txn->GetDeletedTuples();
-  for (auto entry : deleted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    for (auto tuple_slot : entry.second)
-      tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
-  }
-
-  // Log the COMMIT TXN record
-  {
-    auto &log_manager = logging::LogManager::GetInstance();
-    if (log_manager.IsInLoggingMode()) {
-      auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_COMMIT, txn->txn_id);
-      logger->Log(record);
-    }
-  }
-}
-
-void TransactionManager::CommitPendingTransactions(
-    std::vector<Transaction *> &pending_txns, Transaction *txn) {
-  // add ourself to the list
-  pending_txns.push_back(txn);
-
-  // commit all pending transactions
-  auto next_txn = txn->next;
-
-  while (next_txn != nullptr && next_txn->waiting_to_commit == true) {
-    // try to increment last finished cid
-    if (atomic_cas(&last_cid, next_txn->cid - 1, next_txn->cid)) {
-      // if that worked, add transaction to list
-      pending_txns.push_back(next_txn);
-      LOG_TRACE("Pending Txn  : %lu ", next_txn->txn_id);
-
-      next_txn = next_txn->next;
-      continue;
-    }
-    // it did not work, so some other txn must have squeezed in
-    // so, stop processing commit dependencies
-    else {
-      break;
-    }
-  }
-}
-
-std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
-                                                              bool sync) {
-  std::vector<Transaction *> txn_list;
-
-  // try to increment last commit id
-  if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
-    LOG_TRACE("update lcid worked : %lu ", txn->txn_id);
-
-    // everything went fine and the txn was committed
-    // if that worked, commit all pending transactions
-    CommitPendingTransactions(txn_list, txn);
-
-  }
-  // it did not work, so add to waiting list
-  // some other transaction with lower commit id will commit us later
-  else {
-    LOG_TRACE("add to wait list : %lu ", txn->txn_id);
-
-    txn->waiting_to_commit = true;
-
-    // make sure that the transaction we are waiting for has not finished
-    // before we could add ourselves to the list of pending transactions
-    // we try incrementing the last finished cid again
-    if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
-      // it worked on the second try
-      txn->waiting_to_commit = false;
-
-      CommitPendingTransactions(txn_list, txn);
-    }
-  }
-
-  // clear txn entry in txn table
-  EndTransaction(txn, sync);
-
-  return std::move(txn_list);
-}
-
-void TransactionManager::CommitTransaction(bool sync) {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
-  // begin commit phase : get cid and add to transaction list
-  BeginCommitPhase(current_txn);
-
-  // commit all modifications
-  CommitModifications(current_txn, sync);
-
-  // end commit phase : increment last_cid and process pending txns if needed
-  std::vector<Transaction *> committed_txns = EndCommitPhase(current_txn, sync);
-
-  // process all committed txns
-  for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
-
-  // XXX LOG : group commit entry
-  // we already record commit entry in CommitModifications, isn't it?
-
-  current_txn = nullptr;
-}
-
-//===--------------------------------------------------------------------===//
-// Abort Processing
-//===--------------------------------------------------------------------===//
-
-void TransactionManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
-  // Log the ABORT TXN record
-  {
-    auto &log_manager = logging::LogManager::GetInstance();
-    if (log_manager.IsInLoggingMode()) {
-      auto logger = log_manager.GetBackendLogger();
-      auto record = new logging::TransactionRecord(
-          LOGRECORD_TYPE_TRANSACTION_ABORT, current_txn->txn_id);
-      logger->Log(record);
-    }
-  }
-
-  auto &manager = catalog::Manager::GetInstance();
-
-  // (A) rollback inserts
-  const txn_id_t txn_id = current_txn->GetTransactionId();
-  auto inserted_tuples = current_txn->GetInsertedTuples();
-  for (auto entry : inserted_tuples) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    for (auto tuple_slot : entry.second)
-      tile_group->AbortInsertedTuple(tuple_slot);
-  }
-
-  // (B) rollback deletes
-  auto deleted_tuples = current_txn->GetDeletedTuples();
-  for (auto entry : current_txn->GetDeletedTuples()) {
-    oid_t tile_group_id = entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    for (auto tuple_slot : entry.second)
-      tile_group->AbortDeletedTuple(tuple_slot, txn_id);
-  }
-
-  EndTransaction(current_txn, false);
-
-  // drop a reference
-  current_txn->DecrementRefCount();
-
-  current_txn = nullptr;
-}
-
-}  // End concurrency namespace
+}  // End storage namespace
 }  // End peloton namespace

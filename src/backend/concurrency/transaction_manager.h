@@ -1,111 +1,123 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // transaction_manager.h
 //
 // Identification: src/backend/concurrency/transaction_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include <atomic>
-#include <cassert>
-#include <vector>
-#include <map>
-#include <mutex>
+#include <unordered_map>
+#include <list>
 
+#include "backend/common/platform.h"
 #include "backend/common/types.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/concurrency/epoch_manager.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/catalog/manager.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/tuple.h"
+#include "backend/gc/gc_manager_factory.h"
+
+#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace concurrency {
 
-typedef unsigned int TransactionId;
-
-class Transaction;
-
 extern thread_local Transaction *current_txn;
 
-//===--------------------------------------------------------------------===//
-// Transaction Manager
-//===--------------------------------------------------------------------===//
+#define RUNNING_TXN_BUCKET_NUM 10
 
 class TransactionManager {
  public:
-  TransactionManager();
+  TransactionManager() {
+    next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid_ = ATOMIC_VAR_INIT(START_CID);
+  }
 
-  ~TransactionManager();
+  virtual ~TransactionManager() {}
 
-  // Get next transaction id
-  txn_id_t GetNextTransactionId();
+  txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-  // Get last commit id for visibility checks
-  cid_t GetLastCommitId() { return last_cid; }
+  cid_t GetNextCommitId() { return next_cid_++; }
 
-  //===--------------------------------------------------------------------===//
-  // Transaction processing
-  //===--------------------------------------------------------------------===//
+  bool IsOccupied(const ItemPointer &position);
 
-  static TransactionManager &GetInstance();
+  virtual bool IsVisible(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
 
-  // Begin a new transaction
-  Transaction *BeginTransaction();
+  virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id) = 0;
 
-  // Get entry in transaction table
-  Transaction *GetTransaction(txn_id_t txn_id);
+  virtual bool IsOwnable(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
 
-  // End the transaction
-  void EndTransaction(Transaction *txn, bool sync = true);
+  virtual bool AcquireOwnership(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  // Get the list of current transactions
-  std::vector<Transaction *> GetCurrentTransactions();
+  virtual bool PerformInsert(const ItemPointer &location) = 0;
 
-  // validity checks
-  bool IsValid(txn_id_t txn_id);
+  virtual bool PerformRead(const ItemPointer &location) = 0;
 
-  // used by recovery testing
-  void ResetStates(void);
+  virtual void PerformUpdate(const ItemPointer &old_location,
+                             const ItemPointer &new_location) = 0;
 
-  // COMMIT
+  virtual void PerformDelete(const ItemPointer &old_location,
+                             const ItemPointer &new_location) = 0;
 
-  void BeginCommitPhase(Transaction *txn);
+  virtual void PerformUpdate(const ItemPointer &location) = 0;
 
-  void CommitModifications(Transaction *txn, bool sync = true);
+  virtual void PerformDelete(const ItemPointer &location) = 0;
 
-  void CommitPendingTransactions(std::vector<Transaction *> &txns,
-                                 Transaction *txn);
 
-  std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
+  // Txn manager may store related information in TileGroupHeader, so when
+  // TileGroup is dropped, txn manager might need to be notified
+  virtual void DroppingTileGroup(const oid_t &tile_group_id
+                                 __attribute__((unused))) {
+    return;
+  }
 
-  void CommitTransaction(bool sync = true);
+  void SetTransactionResult(const Result result) {
+    current_txn->SetResult(result);
+  }
 
-  // ABORT
+  //for use by recovery
+  void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
-  void AbortTransaction();
+  virtual Transaction *BeginTransaction() = 0;
+
+  virtual void EndTransaction() = 0;
+
+  virtual Result CommitTransaction() = 0;
+
+  virtual Result AbortTransaction() = 0;
+
+  void ResetStates() {
+    next_txn_id_ = START_TXN_ID;
+    next_cid_ = START_CID;
+  }
+
+  // this function generates the maximum commit id of committed transactions.
+  // please note that this function only returns a "safe" value instead of a
+  // precise value.
+  virtual cid_t GetMaxCommittedCid() = 0;
 
  private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
+  std::atomic<txn_id_t> next_txn_id_;
+  std::atomic<cid_t> next_cid_;
 
-  std::atomic<txn_id_t> next_txn_id;
-
-  std::atomic<cid_t> next_cid;
-
-  cid_t last_cid __attribute__((aligned(16)));
-
-  Transaction *last_txn;
-
-  // Table tracking all active transactions
-  // Our transaction id -> our transaction
-  // Sync access with txn_table_mutex
-  std::map<txn_id_t, Transaction *> txn_table;
-
-  std::mutex txn_table_mutex;
 };
-
-}  // End concurrency namespace
+}  // End storage namespace
 }  // End peloton namespace
