@@ -19,7 +19,7 @@
 namespace peloton {
 namespace bridge {
 
-const planner::AbstractPlan *PlanTransformer::TransformAgg(
+std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
     const AggPlanState *plan_state) {
   // Alias all I need
   const Agg *agg = plan_state->agg_plan;
@@ -39,7 +39,12 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   /* Get project info */
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
-  LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
+  if (proj_info.get() != nullptr) {
+    LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
+  } else {
+    LOG_INFO("empty projection info");
+  }
+
 
   /* Get predicate */
   std::unique_ptr<const expression::AbstractExpression> predicate(
@@ -117,7 +122,7 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   }
 
   /* Get output schema */
-  std::unique_ptr<catalog::Schema> output_schema(
+  std::shared_ptr<const catalog::Schema> output_schema(
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   /* Map agg stragegy */
@@ -148,16 +153,16 @@ const planner::AbstractPlan *PlanTransformer::TransformAgg(
   }
 
   auto retval = new planner::AggregatePlan(
-      proj_info.release(), predicate.release(), std::move(unique_agg_terms),
-      std::move(groupby_col_ids), output_schema.release(), agg_type);
+      std::move(proj_info), std::move(predicate), std::move(unique_agg_terms),
+      std::move(groupby_col_ids), output_schema, agg_type);
 
   ((planner::AggregatePlan *)retval)->SetColumnIds(column_ids);
 
   // Find children
   auto lchild = TransformPlan(outerAbstractPlanState(plan_state));
-  retval->AddChild(lchild);
+  retval->AddChild(std::move(lchild));
 
-  return retval;
+  return std::unique_ptr<planner::AbstractPlan>(retval);
 }
 }
 }

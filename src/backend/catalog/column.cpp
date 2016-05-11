@@ -48,7 +48,11 @@ const std::string Column::GetInfo() const {
      << " offset = " << column_offset << ","
      << " fixed length = " << fixed_length << ","
      << " variable length = " << variable_length << ","
-     << " inlined = " << is_inlined << std::endl;
+     << " inlined = " << is_inlined;
+
+  if(constraints.empty() == false) {
+    os << "\n";
+  }
 
   for (auto constraint : constraints) {
     os << constraint;

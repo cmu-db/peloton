@@ -503,6 +503,26 @@ message TimeSyncResponse {
     required int64 t1_s = 4;
 }
 
+message QueryPlanExecRequest {
+    // The plan type of the top level node 
+    required int32 plan_type = 1;
+    // The size of parameter list
+    optional int32 param_num = 2;
+    // Parameter list
+    optional bytes param_list = 3;
+    // The plan
+    required bytes plan = 4;
+}
+
+message QueryPlanExecResponse {
+    // Total number of tuples
+    required int32 tuple_count = 1;
+    // Tolal number of tiles
+    optional int32 tile_count = 2;
+    // The time when the local PelotonSite sent this request
+    repeated bytes result = 3;
+}
+
 // -----------------------------------
 // SERVICE
 // -----------------------------------
@@ -524,4 +544,5 @@ service AbstractPelotonService {
     rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
     rpc UnevictData(UnevictDataRequest) returns (UnevictDataResponse);
     rpc TimeSync(TimeSyncRequest) returns (TimeSyncResponse);
+    rpc QueryPlan(QueryPlanExecRequest) returns (QueryPlanExecResponse);
 }

@@ -14,8 +14,6 @@
 #include "backend/executor/executor_context.h"
 
 #include "backend/common/value.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/tuple_record.h"
 #include "backend/planner/delete_plan.h"
 #include "backend/catalog/manager.h"
 #include "backend/expression/container_tuple.h"
@@ -95,53 +93,48 @@ bool DeleteExecutor::DExecute() {
   for (oid_t visible_tuple_id : *source_tile) {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    ItemPointer old_location(tile_group_id, physical_tuple_id);
+
+
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
-    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) == true) {
+    if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
+        true) {
       // if the thread is the owner of the tuple, then directly update in place.
 
-      transaction_manager.PerformDelete(tile_group_id, physical_tuple_id);
+      transaction_manager.PerformDelete(old_location);
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
                                              physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
 
-      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id, physical_tuple_id) == false) {
+      if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id,
+                                               physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
       // if it is the latest version and not locked by other threads, then
       // insert a new version.
-      storage::Tuple *new_tuple =
-          new storage::Tuple(target_table_->GetSchema(), true);
+      std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
 
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
           tile_group, physical_tuple_id);
 
       // finally insert updated tuple into the table
-      ItemPointer location = target_table_->InsertEmptyVersion(new_tuple);
+      ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
 
-      if (location.block == INVALID_OID) {
-        delete new_tuple;
-        new_tuple = nullptr;
+      if (new_location.IsNull() == true) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
-
-      auto res = transaction_manager.PerformDelete(tile_group_id, physical_tuple_id, location);
-      if(!res){
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
-
+      transaction_manager.PerformDelete(old_location, new_location);
+      
       executor_context_->num_processed += 1;  // deleted one
 
-      delete new_tuple;
-      new_tuple = nullptr;
     } else {
       // transaction should be aborted as we cannot update the latest version.
       LOG_TRACE("Fail to update tuple. Set txn failure.");
