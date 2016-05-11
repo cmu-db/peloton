@@ -24,7 +24,9 @@
 #include <thread>
 #include <map>
 
+#include "backend/networking/rpc_client.h"
 #include "backend/common/logger.h"
+#include "backend/common/serializer.h"
 #include "backend/bridge/ddl/configuration.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -33,6 +35,7 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/checkpoint_manager.h"
+#include "backend/planner/seq_scan_plan.h"
 #include "backend/gc/gc_manager_factory.h"
 
 #include "postgres.h"
@@ -230,6 +233,13 @@ peloton_dml(const PlanState *planstate,
     mapped_plan_ptr = peloton::bridge::PlanTransformer::GetInstance().TransformPlan(plan_state, prepStmtName);
   }
 
+  // Construct params
+  std::vector<peloton::Value> param_values = peloton::bridge::PlanTransformer::BuildParams(param_list);
+
+  //===----------------------------------------------------------------------===//
+  //   End for sending query
+  //===----------------------------------------------------------------------===//
+
   // Ignore empty plans
   if(mapped_plan_ptr.get() == nullptr) {
     elog(WARNING, "Empty or unrecognized plan sent to Peloton");
@@ -239,19 +249,11 @@ peloton_dml(const PlanState *planstate,
   std::vector<peloton::oid_t> target_list;
   std::vector<peloton::oid_t> qual;
 
-  // Analyze the plan
-  //if(rand() % 100 < 5)
-  //  peloton::bridge::PlanTransformer::AnalyzePlan(plan, planstate);
-
-  // Execute the plantree
+  // Execute the plantree mapped_plan_ptr.get()
   try {
     status = peloton::bridge::PlanExecutor::ExecutePlan(mapped_plan_ptr.get(),
-                                                        param_list,
+                                                        param_values,
                                                         tuple_desc);
-
-    // Clean up the plantree
-    // Not clean up now ! This is cached !
-    //peloton::bridge::PlanTransformer::CleanPlan(mapped_plan);
   }
   catch(const std::exception &exception) {
     elog(ERROR, "Peloton exception :: %s", exception.what());
@@ -395,3 +397,80 @@ bool IsPelotonQuery(List *relationOids) {
   return peloton_query;
 }
 
+//===--------------------------------------------------------------------===//
+// Serialization/Deserialization
+//===--------------------------------------------------------------------===//
+
+  /**
+   * The peloton_status has the following members:
+   * m_processed   : uint32
+   * m_result      : enum Result
+   * m_result_slots: list pointer (type, length, data)
+   *
+   * Therefore a peloton_status is serialized as:
+   * [(int) total size]
+   * [(int) m_processed]
+   * [(int8_t) m_result]
+   * [(int8_t) note type]
+   * [(int) list length]
+   * [(bytes) data]
+   * [(bytes) data]
+   * [(bytes) data]
+   * .....
+   *
+   * TODO: parent_ seems never be set or used
+   */
+
+bool peloton_status::SerializeTo(peloton::SerializeOutput &output) {
+
+    // A placeholder for the total size written at the end
+    int start = output.Position();
+    output.WriteInt(-1);
+
+    // Write m_processed.
+    output.WriteInt(static_cast<int>(m_processed));
+
+    // Write m_result, which is enum Result
+    output.WriteByte(static_cast<int8_t>(m_result));
+
+    if (m_result_slots != NULL) {
+        // Write the list type
+        NodeTag list_type = m_result_slots->type;
+        output.WriteByte(static_cast<int8_t>(list_type));
+
+        // Write the list length
+        int list_length = m_result_slots->length;
+        output.WriteInt(list_length);
+
+        // Write the list data one by one
+        ListCell *lc;
+        foreach(lc, m_result_slots) {
+            lfirst(lc);
+            // TODO: Write the tuple into the buffer
+        }
+    } else {
+        // Write the list type
+        output.WriteByte(static_cast<int8_t>(T_Invalid));
+
+        // Write the list length
+        output.WriteInt(-1);
+    }
+
+    // Write the total length
+    int32_t sz = static_cast<int32_t>(output.Position() - start - sizeof(int));
+    assert(sz > 0);
+    output.WriteIntAt(start, sz);
+
+    return true;
+}
+
+/**
+ * TODO: Deserialize
+ */
+bool peloton_status::DeserializeFrom(peloton::SerializeInputBE &input) {
+
+//    List *slots = NULL;
+//    slots = lappend(slots, slot);
+
+    return true;
+}

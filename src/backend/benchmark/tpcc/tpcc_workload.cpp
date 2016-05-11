@@ -561,7 +561,7 @@ bool RunNewOrder(){
   }
 
   auto w_tax = gwtr_lists_values[0][0];
-  // LOG_TRACE("W_TAX: %d", w_tax);
+  LOG_TRACE("W_TAX: %s", w_tax.GetInfo().c_str());
 
   // getDistrict
 
@@ -601,6 +601,10 @@ bool RunNewOrder(){
   }
 
   auto result = txn->GetResult();
+  auto d_tax = gd_lists_values[0][0];
+  LOG_TRACE("D_TAX: %s", d_tax.GetInfo().c_str());
+  auto d_next_o_id = gd_lists_values[0][1];
+  LOG_TRACE("D_NEXT_O_ID: %s", d_next_o_id.GetInfo().c_str());
 
   // transaction passed execution.
   if (result == Result::RESULT_SUCCESS) {

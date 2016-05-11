@@ -103,7 +103,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  LOG_TRACE("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
+  LOG_TRACE("Recover tuple from checkpoint (%u, %u)", tile_group_id,
             tuple_slot);
 
   auto &manager = catalog::Manager::GetInstance();
