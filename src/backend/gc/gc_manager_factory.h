@@ -12,15 +12,19 @@
 
 #pragma once
 
-#include "backend/gc/gc_manager.h"
+#include "backend/gc/cooperative_gc.h"
 
 namespace peloton {
 namespace gc {
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
-    static GCManager gc_manager(GC_TYPE_ON);
-    return gc_manager;
+    switch (gc_type_) {
+      case GC_TYPE_CO:
+        return Cooperative_GCManager::GetInstance();
+      default:
+        return Cooperative_GCManager::GetInstance();
+    }
   }
 
   static void Configure(GCType gc_type) { gc_type_ = gc_type; }

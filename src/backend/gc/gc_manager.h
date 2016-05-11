@@ -36,7 +36,7 @@ namespace gc {
 class GCBuffer {
 public:
   GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
-  ~GCBuffer();
+  virtual ~GCBuffer();
   inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
 private:
   oid_t table_id;
@@ -50,61 +50,23 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager(const GCType type)
-      : is_running_(true),
-        gc_type_(type),
-        reclaim_queue_(MAX_QUEUE_LENGTH) {
-    StartGC();
-  }
-
-  ~GCManager() { StopGC(); }
+  GCManager() {}
+  virtual ~GCManager() {};
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  virtual bool GetStatus() = 0;
 
-  void StartGC();
+  virtual void StartGC() = 0;
 
-  void StopGC();
+  virtual void StopGC() = 0;
 
-  void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                        const oid_t &tuple_id, const cid_t &tuple_end_cid);
+  virtual void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                        const oid_t &tuple_id, const cid_t &tuple_end_cid) = 0;
 
-  ItemPointer ReturnFreeSlot(const oid_t &table_id);
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 
- private:
-  void Running();
-  //void DeleteTupleFromIndexes(const TupleMetadata &);
-
-  bool ResetTuple(const TupleMetadata &);
-
- private:
-  //===--------------------------------------------------------------------===//
-  // Private methods
-  //===--------------------------------------------------------------------===//
-  void ClearGarbage();
-
-  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
-
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
-  volatile bool is_running_;
+private:
   GCType gc_type_;
-
-  std::unique_ptr<std::thread> gc_thread_;
-
-  // TODO: Boost lockfree queue has a bug that will cause valgrind to report mem error
-  // in lockfree/queue.hpp around line 100. Apply this patch
-  // (https://svn.boost.org/trac/boost/attachment/ticket/8395/lockfree.patch) 
-  // will fix this problem. In the future consider implementing our own
-  // lock free queue
-
-  // TODO: use shared pointer to reduce memory copy
-  LockfreeQueue<TupleMetadata> reclaim_queue_;
-
-  // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-      recycle_queue_map_;
 };
 
 }  // namespace gc
