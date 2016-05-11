@@ -51,6 +51,7 @@ class GCManager {
   GCManager &operator=(GCManager &&) = delete;
 
   GCManager() {}
+
   virtual ~GCManager() {};
 
   // Get status of whether GC thread is running or not
@@ -64,9 +65,6 @@ class GCManager {
                         const oid_t &tuple_id, const cid_t &tuple_end_cid) = 0;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
-
-private:
-  GCType gc_type_;
 };
 
 }  // namespace gc

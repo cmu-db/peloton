@@ -416,6 +416,7 @@ Result OptimisticTxnManager::CommitTransaction() {
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        RecycleTupleSlot(tile_group_id, tuple_slot, end_commit_id);
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -442,6 +443,7 @@ Result OptimisticTxnManager::CommitTransaction() {
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        RecycleTupleSlot(tile_group_id, tuple_slot, end_commit_id);
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
