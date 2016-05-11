@@ -31,7 +31,7 @@ class LogBuffer {
   ~LogBuffer(void){};
 
   // get serialized data field
-  char *GetData();
+  char *GetData() { return elastic_data_.get(); }
 
   // serialize and write a log record to buffer
   bool WriteRecord(LogRecord *);
@@ -39,15 +39,18 @@ class LogBuffer {
   // clean up and reset content
   void ResetData();
 
-  size_t GetSize();
+  inline size_t GetSize() { return size_; }
 
-  void SetSize(size_t size);
+  inline void SetSize(size_t size) {
+    assert(size < capacity_);
+    size_ = size;
+  }
 
-  void SetMaxLogId(cid_t new_max) { max_log_id = new_max; }
+  inline void SetMaxLogId(cid_t new_max) { max_log_id = new_max; }
 
-  cid_t GetMaxLogId() { return max_log_id; }
+  inline cid_t GetMaxLogId() { return max_log_id; }
 
-  BackendLogger *GetBackendLogger();
+  inline BackendLogger *GetBackendLogger() { return backend_logger_; }
 
  private:
   // write data to the log buffer, return false if not enough space
@@ -64,7 +67,7 @@ class LogBuffer {
 
   BackendLogger *backend_logger_;
 
-  //maximum log id seen so far
+  // maximum log id seen so far
   cid_t max_log_id = 0;
 };
 

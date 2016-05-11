@@ -168,14 +168,14 @@ class LogManager {
   void LogBeginTransaction(cid_t commit_id);
 
   // log an update
-  void LogUpdate(cid_t commit_id, ItemPointer &old_version,
-                 ItemPointer &new_version);
+  void LogUpdate(cid_t commit_id, const ItemPointer &old_version,
+		  const ItemPointer &new_version);
 
   // log an insert
-  void LogInsert(cid_t commit_id, ItemPointer &new_location);
+  void LogInsert(cid_t commit_id, const ItemPointer &new_location);
 
   // log a delete
-  void LogDelete(cid_t commit_id, ItemPointer &delete_location);
+  void LogDelete(cid_t commit_id, const ItemPointer &delete_location);
 
   // commit a transaction and wait until stable
   void LogCommitTransaction(cid_t commit_id);
