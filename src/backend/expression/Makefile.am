@@ -13,7 +13,9 @@ expression_FILES = \
 				   backend/expression/subquery_expression.cpp \
 				   backend/expression/function_expression.cpp \
 				   backend/expression/string_expression.h \
-				   backend/expression/date_expression.h
+				   backend/expression/date_expression.h \
+				   backend/expression/tuple_address_expression.h \
+				   backend/expression/udf_expression.h
 				   
 				   
 expression_INCLUDES = \
