@@ -188,7 +188,7 @@ class ZipfDistribution {
 
 bool RunRead(ZipfDistribution &zipf);
 
-bool RunInsert(ZipfDistribution &zipf);
+bool RunInsert(ZipfDistribution &zipf, oid_t next_insert_key);
 
 /////////////////////////////////////////////////////////
 // WORKLOAD
@@ -199,9 +199,6 @@ volatile bool run_backends = true;
 
 // Committed transaction counts
 std::vector<double> transaction_counts;
-
-// Next insert key
-std::atomic<int> next_insert_key;
 
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
@@ -217,7 +214,10 @@ void RunBackend(oid_t thread_id) {
   fast_random rng(rand());
   ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1, zipf_theta);
   auto committed_transaction_count = 0;
-  next_insert_key.store(state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP);
+
+  // Partition the domain across backends
+  auto insert_key_offset = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
+  auto next_insert_key = insert_key_offset + thread_id + 1;
 
   // Run these many transactions
   while (true) {
@@ -231,7 +231,8 @@ void RunBackend(oid_t thread_id) {
 
     // Run transaction
     if (rng_val < update_ratio) {
-      transaction_status = RunInsert(zipf);
+      next_insert_key += state.backend_count;
+      transaction_status = RunInsert(zipf, next_insert_key);
     }
     else {
       transaction_status = RunRead(zipf);
@@ -306,10 +307,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 static bool EndTransaction(concurrency::Transaction *txn) {
   auto result = txn->GetResult();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  if (result == Result::RESULT_FAILURE) {
-    LOG_ERROR("Insert failed : %d", next_insert_key.load());
-  }
 
   // transaction passed execution.
   if (result == Result::RESULT_SUCCESS) {
@@ -425,7 +422,8 @@ bool RunRead(ZipfDistribution &zipf) {
   return txn_status;
 }
 
-bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf) {
+bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf,
+               oid_t next_insert_key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   const oid_t col_count = state.column_count + 1;
@@ -444,8 +442,6 @@ bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf) {
   /////////////////////////////////////////////////////////
 
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
-
-  next_insert_key++;
   auto key_value = ValueFactory::GetIntegerValue(next_insert_key);
   auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
