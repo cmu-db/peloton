@@ -299,6 +299,8 @@ void ResetSystem() {
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.ResetStates();
+
+  ycsb::CreateYCSBDatabase();
 }
 
 /**
@@ -312,8 +314,6 @@ void DoRecovery(std::string file_name) {
   // Reset the log file if exists
 
   log_file.close();
-
-  ycsb::CreateYCSBDatabase();
 
   //===--------------------------------------------------------------------===//
   // RECOVERY
