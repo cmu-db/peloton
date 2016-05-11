@@ -151,7 +151,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
 }
 
 // called by transaction manager.
-void Vacuum_GCManager::RecycleTupleSlot(const oid_t &table_id,
+void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
                                  const cid_t &tuple_end_cid) {
@@ -168,6 +168,34 @@ void Vacuum_GCManager::RecycleTupleSlot(const oid_t &table_id,
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 }
+
+void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
+                                           const oid_t &tile_group_id,
+                                           const oid_t &tuple_id) {
+
+  TupleMetadata tuple_metadata;
+  tuple_metadata.table_id = table_id;
+  tuple_metadata.tile_group_id = tile_group_id;
+  tuple_metadata.tuple_slot_id = tuple_id;
+  tuple_metadata.tuple_end_cid = START_CID;
+
+  ResetTuple(tuple_metadata);
+
+  // Add to the recycle map
+  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  // if the entry for table_id exists.
+  if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
+    // if the entry for tuple_metadata.table_id exists.
+    recycle_queue->BlockingPush(tuple_metadata);
+  } else {
+    // if the entry for tuple_metadata.table_id does not exist.
+    recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+    recycle_queue->BlockingPush(tuple_metadata);
+    recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
+  }
+
+}
+
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
@@ -187,7 +215,7 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
                          tuple_metadata.tuple_slot_id);
     }
   }
-  return ItemPointer();
+  return INVALID_ITEMPOINTER;
 }
 
 // delete a tuple from all its indexes it belongs to.

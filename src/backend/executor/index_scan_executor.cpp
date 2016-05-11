@@ -157,7 +157,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // The deconstructor of the GC buffer
   // will automatically register garbage to GC manager
-  // gc::GCBuffer garbage_tuples(table_->GetOid());
+  gc::GCBuffer garbage_tuples(table_->GetOid());
 
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
@@ -217,9 +217,17 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // if the tuple is not visible.
       else {
         ItemPointer old_item = tuple_location;
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+        if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          continue;
+        }
+
+
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
-        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+
         // there must exist a visible version.
 
         if(tuple_location.IsNull()) {
@@ -240,18 +248,17 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           return false;
         }
-
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
           assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
                  || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
-          if (false && tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
-            // garbage_tuples.AddGarbage(old_item);
+            garbage_tuples.AddGarbage(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();

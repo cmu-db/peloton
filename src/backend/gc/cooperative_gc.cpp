@@ -25,7 +25,7 @@ GCBuffer::~GCBuffer(){
   if(garbage_tuples.size() != 0) {
     cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
     for (auto garbage : garbage_tuples) {
-      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+      gc::GCManagerFactory::GetInstance().RecycleOldTupleSlot(
         table_id, garbage.block, garbage.offset, garbage_timestamp);
     }
   }
@@ -180,8 +180,7 @@ void Cooperative_GCManager::Running() {
   }
 }
 
-// called by transaction manager.
-void Cooperative_GCManager::RecycleTupleSlot(const oid_t &table_id,
+void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
                                  const cid_t &tuple_end_cid) {
@@ -197,6 +196,19 @@ void Cooperative_GCManager::RecycleTupleSlot(const oid_t &table_id,
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 }
+
+
+void Cooperative_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                              const oid_t &tuple_id){
+  TupleMetadata tuple_metadata;
+  tuple_metadata.table_id = table_id;
+  tuple_metadata.tile_group_id = tile_group_id;
+  tuple_metadata.tuple_slot_id = tuple_id;
+  tuple_metadata.tuple_end_cid = START_CID;
+
+  AddToRecycleMap(tuple_metadata);
+}
+
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.

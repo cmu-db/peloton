@@ -97,8 +97,18 @@ class TransactionManager {
    * concurrency control) tuples into possibly free from all underlying
    * concurrency implementations of transactions.
    */
-  void RecycleTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
-                        const cid_t &tuple_end_cid) {
+  void RecycleInvalidTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
+    auto& gc_instance = gc::GCManagerFactory::GetInstance();
+
+    auto tile_group =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+
+    gc_instance.RecycleInvalidTupleSlot(
+      tile_group->GetTableId(), tile_group_id, tuple_id);
+  }
+
+  void RecycleOldTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
+                           const cid_t &tuple_end_cid) {
 
     if(gc::GCManagerFactory::GetGCType() != GC_TYPE_VACUUM) {
       return;
@@ -108,7 +118,7 @@ class TransactionManager {
     auto tile_group =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
 
-    gc_instance.RecycleTupleSlot(
+    gc_instance.RecycleOldTupleSlot(
       tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
   }
 

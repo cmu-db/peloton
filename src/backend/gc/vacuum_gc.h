@@ -21,7 +21,8 @@ class Vacuum_GCManager : public GCManager {
 public:
   Vacuum_GCManager()
     : is_running_(true),
-      unlink_queue_(MAX_QUEUE_LENGTH) {
+      unlink_queue_(MAX_QUEUE_LENGTH),
+      free_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
@@ -39,8 +40,11 @@ public:
 
   virtual void StopGC();
 
-  virtual void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+  virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
                                 const oid_t &tuple_id, const cid_t &tuple_end_cid);
+
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
@@ -67,6 +71,7 @@ private:
   std::unique_ptr<std::thread> gc_thread_;
 
   LockfreeQueue<TupleMetadata> unlink_queue_;
+  LockfreeQueue<TupleMetadata> free_queue_;
 
   // Map of actual grabage.
   // The key is the timestamp when the garbage is identified, value is the
