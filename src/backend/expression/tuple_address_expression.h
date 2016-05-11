@@ -26,8 +26,9 @@ namespace expression {
 
 class TupleAddressExpression : public AbstractExpression {
  public:
-  TupleAddressExpression();
-  ~TupleAddressExpression();
+  TupleAddressExpression()
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS,
+                           VALUE_TYPE_ADDRESS) {}
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         __attribute__((unused)) const AbstractTuple *tuple2,
