@@ -14,6 +14,7 @@
 #include <string>
 #include <getopt.h>
 #include <sys/stat.h>
+#include <fts.h>
 
 #undef NDEBUG
 
@@ -101,7 +102,6 @@ void StartLogging(std::thread& thread) {
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
-
       // Wait for standby mode
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
@@ -125,6 +125,90 @@ void StartLogging(std::thread& thread) {
   }
 }
 
+int recursive_delete(const char* dir) {
+  int ret = 0;
+  FTS* ftsp = NULL;
+  FTSENT* curr;
+
+  // Cast needed (in C) because fts_open() takes a "char * const *", instead
+  // of a "const char * const *", which is only allowed in C++. fts_open()
+  // does not modify the argument.
+  char* files[] = {(char*)dir, NULL};
+
+  // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected behavior
+  //                in multithreaded programs
+  // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files outside
+  //                of the specified directory
+  // FTS_XDEV     - Don't cross filesystem boundaries
+  ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+  if (!ftsp) {
+    fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
+    ret = -1;
+    goto finish;
+  }
+
+  while ((curr = fts_read(ftsp))) {
+    switch (curr->fts_info) {
+      case FTS_NS:
+      case FTS_DNR:
+      case FTS_ERR:
+        fprintf(stderr, "%s: fts_read error: %s\n", curr->fts_accpath,
+                strerror(curr->fts_errno));
+        break;
+
+      case FTS_DC:
+      case FTS_DOT:
+      case FTS_NSOK:
+        // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT were
+        // passed to fts_open()
+        break;
+
+      case FTS_D:
+        // Do nothing. Need depth-first search, so directories are deleted
+        // in FTS_DP
+        break;
+
+      case FTS_DP:
+      case FTS_F:
+      case FTS_SL:
+      case FTS_SLNONE:
+      case FTS_DEFAULT:
+        if (remove(curr->fts_accpath) < 0) {
+          fprintf(stderr, "%s: Failed to remove: %s\n", curr->fts_path,
+                  strerror(errno));
+          ret = -1;
+        }
+        break;
+    }
+  }
+
+finish:
+  if (ftsp) {
+    fts_close(ftsp);
+  }
+
+  return ret;
+}
+
+void CleanUpOldLogs() {
+  // start a thread for logging
+  auto& log_manager = logging::LogManager::GetInstance();
+  log_manager.SetLogFileName("wbl.log");
+
+  // remove log file if it exists
+  struct stat buffer;
+  if (stat(log_manager.GetLogFileName().c_str(), &buffer) == 0 &&
+      remove(log_manager.GetLogFileName().c_str()) != 0) {
+    LOG_ERROR("Error removing old log file");
+  }
+
+  // remove log directory (for wal if it exists)
+  // for now hardcode for 1 logger
+  auto log_dir_name = "pl_log0";
+
+  recursive_delete(log_dir_name);
+}
+
 /**
  * @brief writing a simple log file
  */
@@ -137,12 +221,8 @@ bool PrepareLogFile() {
   auto& log_manager = logging::LogManager::GetInstance();
   log_manager.SetLogFileName("wbl.log");
 
-  // truncate log file if it exists
-  struct stat buffer;
-  if (stat(log_manager.GetLogFileName().c_str(), &buffer) == 0 &&
-      remove(log_manager.GetLogFileName().c_str()) != 0) {
-    LOG_ERROR("Error removing old log file");
-  }
+  // also clean up log directory if it exists
+  CleanUpOldLogs();
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
@@ -174,30 +254,7 @@ bool PrepareLogFile() {
   Timer<> timer;
   std::thread thread;
 
-  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
-    // Launching a thread for logging
-    if (!log_manager.IsInLoggingMode()) {
-      // Wait for standby mode
-      auto local_thread = std::thread(
-          &peloton::logging::LogManager::StartStandbyMode, &log_manager);
-      thread.swap(local_thread);
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
-                                        true);
-
-      // Clean up database tile state before recovery from checkpoint
-      log_manager.PrepareRecovery();
-
-      // Do any recovery
-      log_manager.StartRecoveryMode();
-
-      // Wait for logging mode
-      log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_LOGGING,
-                                        true);
-
-      // Done recovery
-      log_manager.DoneRecovery();
-    }
-  }
+  StartLogging(thread);
 
   timer.Start();
 
