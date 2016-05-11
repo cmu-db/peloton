@@ -139,17 +139,20 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         Usage(stderr);
         exit(EXIT_FAILURE);
         break;
+
       default:
-        // Ignore unknown options
+        fprintf(stderr, "\nUnknown option: -%c-\n", c);
+        Usage(stderr);
+        exit(EXIT_FAILURE);
         break;
     }
   }
 
   // Print configuration
+  ValidateBackendCount(state);
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
-  ValidateBackendCount(state);
   ValidateDuration(state);
   ValidateSkewFactor(state);
 

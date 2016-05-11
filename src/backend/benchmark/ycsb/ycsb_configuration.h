@@ -56,9 +56,6 @@ class configuration {
   // number of backends
   int backend_count;
 
-  // frequency with which the logger flushes
-  int64_t flush_frequency;
-
   // throughput
   double throughput;
 

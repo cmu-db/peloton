@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <limits>
 
+#undef NDEBUG
 
 #include "backend/benchmark/tpcc/tpcc_workload.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
@@ -92,166 +93,305 @@ bool RunNewOrder();
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-volatile bool is_running = true;
+// Used to control backend execution
+volatile bool run_backends = true;
 
-oid_t *abort_counts;
-oid_t *commit_counts;
+// Committed transaction counts
+std::vector<double> transaction_counts;
 
 void RunBackend(oid_t thread_id) {
-
-  UniformGenerator generator;
-
-  oid_t &execution_count_ref = abort_counts[thread_id];
-  oid_t &transaction_count_ref = commit_counts[thread_id];
+  auto committed_transaction_count = 0;
 
   // Run these many transactions
   while (true) {
-    if (is_running == false) {
+    // Check if the backend should stop
+    if (run_backends == false) {
       break;
     }
-    auto rng_val = generator.GetSample();
-    
-    if (rng_val <= 0.04) {
-      while (RunStockLevel() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.08) {
-      while (RunDelivery() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.12) {
-      while (RunOrderStatus() == false) {
-        execution_count_ref++;
-      }
-    } else if (rng_val <= 0.55) {
-      while (RunPayment() == false) {
-        execution_count_ref++;
-      }
-    } else {
-      while (RunNewOrder() == false) {
-        execution_count_ref++;
-      }
+
+    // We only run new order txns
+    auto transaction_status = RunNewOrder();
+
+    // Update transaction count if it committed
+    if(transaction_status == true){
+      committed_transaction_count++;
     }
-
-    transaction_count_ref++;
-
   }
+
+  // Set committed_transaction_count
+  transaction_counts[thread_id] = committed_transaction_count;
 }
 
 void RunWorkload() {
-
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
-  
-  abort_counts = new oid_t[num_threads];
-  memset(abort_counts, 0, sizeof(oid_t) * num_threads);
-
-  commit_counts = new oid_t[num_threads];
-  memset(commit_counts, 0, sizeof(oid_t) * num_threads);
-
-  size_t snapshot_round = (size_t)(state.duration / state.snapshot_duration);
-
-  oid_t **abort_counts_snapshots = new oid_t *[snapshot_round];
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    abort_counts_snapshots[round_id] = new oid_t[num_threads];
-  }
-
-  oid_t **commit_counts_snapshots = new oid_t *[snapshot_round];
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    commit_counts_snapshots[round_id] = new oid_t[num_threads];
-  }
+  transaction_counts.resize(num_threads);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));
   }
 
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(int(state.snapshot_duration * 1000)));
-    memcpy(abort_counts_snapshots[round_id], abort_counts,
-           sizeof(oid_t) * num_threads);
-    memcpy(commit_counts_snapshots[round_id], commit_counts,
-           sizeof(oid_t) * num_threads);
-  }
-
-  is_running = false;
+  // Sleep for duration specified by user and then stop the backends
+  auto sleep_period = std::chrono::milliseconds(state.duration);
+  std::this_thread::sleep_for(sleep_period);
+  run_backends = false;
 
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group[thread_itr].join();
   }
 
-  // calculate the throughput and abort rate for the first round.
-  oid_t total_commit_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_commit_count += commit_counts_snapshots[0][i];
+  // Compute total committed transactions
+  auto sum_transaction_count = 0;
+  for(auto transaction_count : transaction_counts){
+    sum_transaction_count += transaction_count;
   }
 
-  oid_t total_abort_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_abort_count += abort_counts_snapshots[0][i];
+  // Compute average throughput and latency
+  state.throughput = (sum_transaction_count * 1000)/state.duration;
+  state.latency = state.backend_count/state.throughput;
+}
+
+/////////////////////////////////////////////////////////
+// TRANSACTIONS
+/////////////////////////////////////////////////////////
+
+std::vector<std::vector<Value>>
+ExecuteTest(executor::AbstractExecutor* executor) {
+  bool status = false;
+
+  // Run all the executors
+  status = executor->Init();
+  if (status == false) {
+    throw Exception("Init failed");
   }
 
-  state.snapshot_throughput
-      .push_back(total_commit_count * 1.0 / state.snapshot_duration);
-  state.snapshot_abort_rate
-      .push_back(total_abort_count * 1.0 / total_commit_count);
+  std::vector<std::vector<Value>> logical_tile_values;
 
-  // calculate the throughput and abort rate for the remaining rounds.
-  for (size_t round_id = 0; round_id < snapshot_round - 1; ++round_id) {
-    total_commit_count = 0;
-    for (size_t i = 0; i < num_threads; ++i) {
-      total_commit_count += commit_counts_snapshots[round_id + 1][i] -
-                            commit_counts_snapshots[round_id][i];
+  // Execute stuff
+  while (executor->Execute() == true) {
+    std::unique_ptr<executor::LogicalTile> result_tile(
+        executor->GetOutput());
+
+    if(result_tile == nullptr)
+      break;
+
+    auto column_count = result_tile->GetColumnCount();
+
+    for (oid_t tuple_id : *result_tile) {
+      expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
+                                                                  tuple_id);
+      std::vector<Value> tuple_values;
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
+        auto value = cur_tuple.GetValue(column_itr);
+        tuple_values.push_back(value);
+      }
+
+      // Move the tuple list
+      logical_tile_values.push_back(std::move(tuple_values));
+    }
+  }
+
+  return std::move(logical_tile_values);
+}
+
+bool RunNewOrder(){
+  /*
+     "NEW_ORDER": {
+     "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
+     "getDistrict": "SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = ? AND D_W_ID = ?", # d_id, w_id
+     "getCustomer": "SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
+     "incrementNextOrderId": "UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?", # d_next_o_id, d_id, w_id
+     "createOrder": "INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", # d_next_o_id, d_id, w_id, c_id, o_entry_d, o_carrier_id, o_ol_cnt, o_all_local
+     "createNewOrder": "INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)", # o_id, d_id, w_id
+     "getItemInfo": "SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?", # ol_i_id
+     "getStockInfo": "SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_%02d FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?", # d_id, ol_i_id, ol_supply_w_id
+     "updateStock": "UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?", # s_quantity, s_order_cnt, s_remote_cnt, ol_i_id, ol_supply_w_id
+     "createOrderLine": "INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", # o_id, d_id, w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info
+     }
+   */
+
+  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+  //int customer_id = GetRandomInteger(0, state.customers_per_district);
+  int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
+  //auto o_entry_ts = GetTimeStamp();
+
+  std::vector<int> i_ids, i_w_ids, i_qtys;
+  //bool o_all_local = true;
+
+  for (auto ol_itr = 0; ol_itr < o_ol_cnt; ol_itr++) {
+    i_ids.push_back(GetRandomInteger(0, state.item_count));
+    bool remote = GetRandomBoolean(new_order_remote_txns);
+    i_w_ids.push_back(warehouse_id);
+
+    if(remote == true) {
+      i_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count - 1, warehouse_id);
+      //o_all_local = false;
     }
 
-    total_abort_count = 0;
-    for (size_t i = 0; i < num_threads; ++i) {
-      total_abort_count += abort_counts_snapshots[round_id + 1][i] -
-                           abort_counts_snapshots[round_id][i];
+    i_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
+  }
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // getWarehouseTaxRate
+
+  std::vector<oid_t> warehouse_column_ids = {7}; // W_TAX
+
+  // Create and set up index scan executor
+  std::vector<oid_t> warehouse_key_column_ids = {0}; // W_ID
+  std::vector<ExpressionType> warehouse_expr_types;
+  std::vector<Value> warehouse_key_values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  warehouse_expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
+      warehouse_table_pkey_index_oid);
+  planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc(
+      warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
+      warehouse_key_values, runtime_keys);
+
+  // Create plan node.
+  auto predicate = nullptr;
+  planner::IndexScanPlan warehouse_index_scan_node(warehouse_table, predicate,
+                                                   warehouse_column_ids,
+                                                   warehouse_index_scan_desc);
+  executor::IndexScanExecutor warehouse_index_scan_executor(&warehouse_index_scan_node,
+                                                            context.get());
+
+  auto gwtr_lists_values = ExecuteTest(&warehouse_index_scan_executor);
+  if(gwtr_lists_values.empty() == true) {
+    LOG_ERROR("getWarehouseTaxRate failed");
+    txn_manager.AbortTransaction();
+    return false;
+  }
+
+  auto w_tax = gwtr_lists_values[0][0];
+  // LOG_TRACE("W_TAX: %d", w_tax);
+
+  // getDistrict
+
+  std::vector<oid_t> district_column_ids = {8, 10}; // D_TAX, D_NEXT_O_ID
+
+  // Create and set up index scan executor
+  std::vector<oid_t> district_key_column_ids = {0, 1}; // D_ID, D_W_ID
+  std::vector<ExpressionType> district_expr_types;
+  std::vector<Value> district_key_values;
+
+  district_expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_expr_types.push_back(
+      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+
+  auto district_pkey_index = district_table->GetIndexWithOid(
+      district_table_pkey_index_oid);
+  planner::IndexScanPlan::IndexScanDesc district_index_scan_desc(
+      district_pkey_index, district_key_column_ids, district_expr_types,
+      district_key_values, runtime_keys);
+
+  // Create plan node.
+  planner::IndexScanPlan district_index_scan_node(district_table, predicate,
+                                                  district_column_ids,
+                                                  district_index_scan_desc);
+  executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node,
+                                                           context.get());
+
+  auto gd_lists_values = ExecuteTest(&district_index_scan_executor);
+
+  if(gd_lists_values.empty() == true) {
+    LOG_ERROR("getDistrict failed");
+    txn_manager.AbortTransaction();
+    return false;
+  }
+
+  auto result = txn->GetResult();
+
+  // transaction passed execution.
+  if (result == Result::RESULT_SUCCESS) {
+
+    result = txn_manager.CommitTransaction();
+    auto d_tax = gd_lists_values[0][0];
+    auto d_next_o_id = gd_lists_values[0][1];
+    return true;
+  }
+  // transaction aborted during execution.
+  else {
+    assert(result == Result::RESULT_ABORTED ||
+           result == Result::RESULT_FAILURE);
+    result = txn_manager.AbortTransaction();
+    return false;
+  }
+
+}
+
+bool RunPayment(){
+  /*
+     "PAYMENT": {
+     "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?", # w_id
+     "updateWarehouseBalance": "UPDATE WAREHOUSE SET W_YTD = W_YTD + ? WHERE W_ID = ?", # h_amount, w_id
+     "getDistrict": "SELECT D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?", # w_id, d_id
+     "updateDistrictBalance": "UPDATE DISTRICT SET D_YTD = D_YTD + ? WHERE D_W_ID = ? AND D_ID = ?", # h_amount, d_w_id, d_id
+     "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
+     "getCustomersByLastName": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST", # w_id, d_id, c_last
+     "updateBCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ?, C_DATA = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # c_balance, c_ytd_payment, c_payment_cnt, c_data, c_w_id, c_d_id, c_id
+     "updateGCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # c_balance, c_ytd_payment, c_payment_cnt, c_w_id, c_d_id, c_id
+     "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+     }
+   */
+
+  LOG_INFO("-------------------------------------");
+
+  //int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  //int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+  return true;
+}
+
+bool RunOrderStatus(){
+  /*
+    "ORDER_STATUS": {
+    "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
+    "getCustomersByLastName": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST", # w_id, d_id, c_last
+    "getLastOrder": "SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1", # w_id, d_id, c_id
+    "getOrderLines": "SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?", # w_id, d_id, o_id
     }
+   */
+  return true;
+}
 
-    state.snapshot_throughput
-        .push_back(total_commit_count * 1.0 / state.snapshot_duration);
-    state.snapshot_abort_rate
-        .push_back(total_abort_count * 1.0 / total_commit_count);
-  }
+bool RunDelivery(){
+  /*
+   "DELIVERY": {
+   "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1", #
+   "deleteNewOrder": "DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?", # d_id, w_id, no_o_id
+   "getCId": "SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?", # no_o_id, d_id, w_id
+   "updateOrders": "UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?", # o_carrier_id, no_o_id, d_id, w_id
+   "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?", # o_entry_d, no_o_id, d_id, w_id
+   "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?", # no_o_id, d_id, w_id
+   "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?", # ol_total, c_id, d_id, w_id
+   }
+   */
+  return true;
+}
 
-  // calculate the aggregated throughput and abort rate.
-  total_commit_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_commit_count += commit_counts_snapshots[snapshot_round - 1][i];
-  }
-
-  total_abort_count = 0;
-  for (size_t i = 0; i < num_threads; ++i) {
-    total_abort_count += abort_counts_snapshots[snapshot_round - 1][i];
-  }
-
-  state.throughput = total_commit_count * 1.0 / state.duration;
-  state.abort_rate = total_abort_count * 1.0 / total_commit_count;
-
-  // cleanup everything.
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] abort_counts_snapshots[round_id];
-    abort_counts_snapshots[round_id] = nullptr;
-  }
-
-  for (size_t round_id = 0; round_id < snapshot_round; ++round_id) {
-    delete[] commit_counts_snapshots[round_id];
-    commit_counts_snapshots[round_id] = nullptr;
-  }
-  delete[] abort_counts_snapshots;
-  abort_counts_snapshots = nullptr;
-  delete[] commit_counts_snapshots;
-  commit_counts_snapshots = nullptr;
-
-  delete[] abort_counts;
-  abort_counts = nullptr;
-  delete[] commit_counts;
-  commit_counts = nullptr;
+bool RunStockLevel() {
+  /*
+     "STOCK_LEVEL": {
+     "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
+     "getStockCount": "SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?
+     }
+   */
+  return true;
 }
 
 
@@ -436,251 +576,6 @@ void RunWorkload() {
    0, 1, 2, 3 OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
    0, 1, 2 OL_O_ID, OL_D_ID, OL_W_ID
  */
-
-/////////////////////////////////////////////////////////
-// TRANSACTIONS
-/////////////////////////////////////////////////////////
-
-std::vector<std::vector<Value>>
-ExecuteTest(executor::AbstractExecutor* executor) {
-  bool status = false;
-
-  // Run all the executors
-  status = executor->Init();
-  if (status == false) {
-    throw Exception("Init failed");
-  }
-
-  std::vector<std::vector<Value>> logical_tile_values;
-
-  // Execute stuff
-  while (executor->Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(
-        executor->GetOutput());
-
-    if(result_tile == nullptr)
-      break;
-
-    auto column_count = result_tile->GetColumnCount();
-
-    for (oid_t tuple_id : *result_tile) {
-      expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
-                                                                  tuple_id);
-      std::vector<Value> tuple_values;
-      for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
-        auto value = cur_tuple.GetValue(column_itr);
-        tuple_values.push_back(value);
-      }
-
-      // Move the tuple list
-      logical_tile_values.push_back(std::move(tuple_values));
-    }
-  }
-
-  return std::move(logical_tile_values);
-}
-
-bool RunNewOrder(){
-  /*
-     "NEW_ORDER": {
-     "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
-     "getDistrict": "SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = ? AND D_W_ID = ?", # d_id, w_id
-     "getCustomer": "SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
-     "incrementNextOrderId": "UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?", # d_next_o_id, d_id, w_id
-     "createOrder": "INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", # d_next_o_id, d_id, w_id, c_id, o_entry_d, o_carrier_id, o_ol_cnt, o_all_local
-     "createNewOrder": "INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)", # o_id, d_id, w_id
-     "getItemInfo": "SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?", # ol_i_id
-     "getStockInfo": "SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_%02d FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?", # d_id, ol_i_id, ol_supply_w_id
-     "updateStock": "UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?", # s_quantity, s_order_cnt, s_remote_cnt, ol_i_id, ol_supply_w_id
-     "createOrderLine": "INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", # o_id, d_id, w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info
-     }
-   */
-
-  LOG_INFO("-------------------------------------");
-
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  //int customer_id = GetRandomInteger(0, state.customers_per_district);
-  int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
-  //auto o_entry_ts = GetTimeStamp();
-
-  std::vector<int> i_ids, i_w_ids, i_qtys;
-  //bool o_all_local = true;
-
-  for (auto ol_itr = 0; ol_itr < o_ol_cnt; ol_itr++) {
-    i_ids.push_back(GetRandomInteger(0, state.item_count));
-    bool remote = GetRandomBoolean(new_order_remote_txns);
-    i_w_ids.push_back(warehouse_id);
-
-    if(remote == true) {
-      i_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count - 1, warehouse_id);
-      //o_all_local = false;
-    }
-
-    i_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
-  }
-
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-
-  // getWarehouseTaxRate
-
-  std::vector<oid_t> warehouse_column_ids = {7}; // W_TAX
-
-  // Create and set up index scan executor
-  std::vector<oid_t> warehouse_key_column_ids = {0}; // W_ID
-  std::vector<ExpressionType> warehouse_expr_types;
-  std::vector<Value> warehouse_key_values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
-
-  warehouse_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-  auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
-      warehouse_table_pkey_index_oid);
-  planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc(
-      warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
-      warehouse_key_values, runtime_keys);
-
-  // Create plan node.
-  auto predicate = nullptr;
-  planner::IndexScanPlan warehouse_index_scan_node(warehouse_table, predicate,
-                                                   warehouse_column_ids,
-                                                   warehouse_index_scan_desc);
-  executor::IndexScanExecutor warehouse_index_scan_executor(&warehouse_index_scan_node,
-                                                            context.get());
-
-  auto gwtr_lists_values = ExecuteTest(&warehouse_index_scan_executor);
-  if(gwtr_lists_values.empty() == true) {
-    LOG_ERROR("getWarehouseTaxRate failed");
-    txn_manager.AbortTransaction();
-    return false;
-  }
-
-  auto w_tax = gwtr_lists_values[0][0];
-  // LOG_TRACE("W_TAX: %d", w_tax);
-
-  // getDistrict
-
-  std::vector<oid_t> district_column_ids = {8, 10}; // D_TAX, D_NEXT_O_ID
-
-  // Create and set up index scan executor
-  std::vector<oid_t> district_key_column_ids = {0, 1}; // D_ID, D_W_ID
-  std::vector<ExpressionType> district_expr_types;
-  std::vector<Value> district_key_values;
-
-  district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  district_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
-  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-
-  auto district_pkey_index = district_table->GetIndexWithOid(
-      district_table_pkey_index_oid);
-  planner::IndexScanPlan::IndexScanDesc district_index_scan_desc(
-      district_pkey_index, district_key_column_ids, district_expr_types,
-      district_key_values, runtime_keys);
-
-  // Create plan node.
-  planner::IndexScanPlan district_index_scan_node(district_table, predicate,
-                                                  district_column_ids,
-                                                  district_index_scan_desc);
-  executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node,
-                                                           context.get());
-
-  auto gd_lists_values = ExecuteTest(&district_index_scan_executor);
-
-  if(gd_lists_values.empty() == true) {
-    LOG_ERROR("getDistrict failed");
-    txn_manager.AbortTransaction();
-    return false;
-  }
-
-  auto result = txn->GetResult();
-
-  // transaction passed execution.
-  if (result == Result::RESULT_SUCCESS) {
-
-    result = txn_manager.CommitTransaction();
-    auto d_tax = gd_lists_values[0][0];
-    // LOG_TRACE("D_TAX: %d", d_tax);
-    auto d_next_o_id = gd_lists_values[0][1];
-    // LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
-
-    return true;
-  }
-  // transaction aborted during execution.
-  else {
-    assert(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
-    result = txn_manager.AbortTransaction();
-    return false;
-  }
-
-}
-
-bool RunPayment(){
-  /*
-     "PAYMENT": {
-     "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?", # w_id
-     "updateWarehouseBalance": "UPDATE WAREHOUSE SET W_YTD = W_YTD + ? WHERE W_ID = ?", # h_amount, w_id
-     "getDistrict": "SELECT D_NAME, D_STREET_1, D_STREET_2, D_CITY, D_STATE, D_ZIP FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?", # w_id, d_id
-     "updateDistrictBalance": "UPDATE DISTRICT SET D_YTD = D_YTD + ? WHERE D_W_ID = ? AND D_ID = ?", # h_amount, d_w_id, d_id
-     "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
-     "getCustomersByLastName": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_STREET_1, C_STREET_2, C_CITY, C_STATE, C_ZIP, C_PHONE, C_SINCE, C_CREDIT, C_CREDIT_LIM, C_DISCOUNT, C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_DATA FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST", # w_id, d_id, c_last
-     "updateBCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ?, C_DATA = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # c_balance, c_ytd_payment, c_payment_cnt, c_data, c_w_id, c_d_id, c_id
-     "updateGCCustomer": "UPDATE CUSTOMER SET C_BALANCE = ?, C_YTD_PAYMENT = ?, C_PAYMENT_CNT = ? WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # c_balance, c_ytd_payment, c_payment_cnt, c_w_id, c_d_id, c_id
-     "insertHistory": "INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-     }
-   */
-
-  LOG_INFO("-------------------------------------");
-
-  //int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
-  //int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  return true;
-}
-
-bool RunOrderStatus(){
-  /*
-    "ORDER_STATUS": {
-    "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
-    "getCustomersByLastName": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST", # w_id, d_id, c_last
-    "getLastOrder": "SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1", # w_id, d_id, c_id
-    "getOrderLines": "SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?", # w_id, d_id, o_id
-    }
-   */
-    return true;
-}
-
-bool RunDelivery(){
-  /*
-   "DELIVERY": {
-   "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1", #
-   "deleteNewOrder": "DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?", # d_id, w_id, no_o_id
-   "getCId": "SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?", # no_o_id, d_id, w_id
-   "updateOrders": "UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?", # o_carrier_id, no_o_id, d_id, w_id
-   "updateOrderLine": "UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?", # o_entry_d, no_o_id, d_id, w_id
-   "sumOLAmount": "SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?", # no_o_id, d_id, w_id
-   "updateCustomer": "UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?", # ol_total, c_id, d_id, w_id
-   }
-   */
-   return true;
-}
-
-bool RunStockLevel() {
-  /*
-     "STOCK_LEVEL": {
-     "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
-     "getStockCount": "SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?
-     }
-   */
-     return true;
-}
 
 }  // namespace tpcc
 }  // namespace benchmark
