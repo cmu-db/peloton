@@ -96,7 +96,7 @@ bool DeleteExecutor::DExecute() {
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
 
-    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==

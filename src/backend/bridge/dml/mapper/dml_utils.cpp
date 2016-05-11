@@ -740,7 +740,7 @@ PelotonProjectionInfo *DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi,
         info->tuple_idxs = lappend_int(info->tuple_idxs, tuple_idx);
         info->in_col_ids = lappend_int(info->in_col_ids, in_col_id);
 
-        LOG_TRACE("Input column : %lu , Output column : %lu", in_col_id,
+        LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
                   out_col_id);
       }
     }
@@ -762,7 +762,7 @@ PelotonProjectionInfo *DMLUtils::BuildProjectInfo(ProjectionInfo *pg_pi,
         info->tuple_idxs = lappend_int(info->tuple_idxs, tuple_idx);
         info->in_col_ids = lappend_int(info->in_col_ids, in_col_id);
 
-        LOG_TRACE("Input column : %lu , Output column : %lu ", in_col_id,
+        LOG_TRACE("Input column : %u , Output column : %u ", in_col_id,
                   out_col_id);
       }
     }
