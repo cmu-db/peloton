@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // column.cpp
 //
 // Identification: src/backend/catalog/column.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -48,7 +48,11 @@ const std::string Column::GetInfo() const {
      << " offset = " << column_offset << ","
      << " fixed length = " << fixed_length << ","
      << " variable length = " << variable_length << ","
-     << " inlined = " << is_inlined << std::endl;
+     << " inlined = " << is_inlined;
+
+  if(constraints.empty() == false) {
+    os << "\n";
+  }
 
   for (auto constraint : constraints) {
     os << constraint;

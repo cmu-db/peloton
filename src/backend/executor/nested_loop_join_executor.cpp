@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // nested_loop_join_executor.cpp
 //
 // Identification: src/backend/executor/nested_loop_join_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -57,14 +57,25 @@ bool NestedLoopJoinExecutor::DInit() {
  * @brief Creates logical tiles from the two input logical tiles after applying
  * join predicate.
  * @return true on success, false otherwise.
+ *
+ * ExecutorContext is set when executing IN+NestLoop. For example:
+ * select * from Foo1 where age IN (select id from Foo2 where name='mike');
+ * Here:
+ * "select id from Foo2 where name='mike'" is transformed as left child.
+ * "select * from Foo1 where age " is the right child.
+ * "IN" is transformed as a execute context, in NestLoop
+ * We put the results of left child in executor_context using NestLoop, and the
+ * right child can execute using this context. Otherwise, the right child can't
+ * execute. And there is no predicate_ for IN+NestLoop
+ *
+ * For now, we only set this context for IN operator. Normally, the right child
+ * has a complete query that can execute without the context, and we use predicate_
+ * to join the left and right result.
+ *
  */
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
-
-  const planner::NestedLoopJoinPlan &nl_plan_node =
-      GetPlanNode<planner::NestedLoopJoinPlan>();
-  const NestLoop *nl = nl_plan_node.GetNestLoop();
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
@@ -73,9 +84,9 @@ bool NestedLoopJoinExecutor::DExecute() {
       return BuildOuterJoinOutput();
     }
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Pick left and right tiles
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     LogicalTile *left_tile = nullptr;
     LogicalTile *right_tile = nullptr;
@@ -113,38 +124,6 @@ bool NestedLoopJoinExecutor::DExecute() {
       }
     }
 
-    /*
-     * Go over every pair of tuples in left (outer plan)
-     * and pass the joinkey to the executor and inner plan (right)
-     */
-    if (nl != nullptr) {  // nl is supposed to be set but here is for the
-                          // original version
-      left_tile = left_result_tiles_.back().get();
-      for (auto left_tile_row_itr : *left_tile) {
-        expression::ContainerTuple<executor::LogicalTile> left_tuple(
-            left_tile, left_tile_row_itr);
-        ListCell *lc = nullptr;
-        foreach (lc, nl->nestParams) {
-          NestLoopParam *nlp = (NestLoopParam *)lfirst(lc);
-          // int			paramno = nlp->paramno;
-          // Var		   *paramval = nlp->paramval;
-
-          /*
-           * pass the joinkeys to executor params and set the flag = 1
-           */
-          Value value = left_tuple.GetValue(nlp->paramval->varattno - 1);
-          executor_context_->ClearParams();
-          executor_context_->SetParams(value);
-          executor_context_->SetParamsExec(1);
-          children_[1]->ClearContext();
-          children_[1]->SetContext(value, 1);
-
-          /* Flag parameter value as changed */
-          // innerPlan->chgParam = bms_add_member(innerPlan->chgParam, paramno);
-        }  // end foreach
-      }    // end for
-    }      // end if
-
     if (advance_right_child == true || right_result_tiles_.empty()) {
       // return if right tile is empty
       if (right_child_done_ && right_result_tiles_.empty()) {
@@ -177,9 +156,9 @@ bool NestedLoopJoinExecutor::DExecute() {
     right_tile = right_result_tiles_.back().get();
     left_tile = left_result_tiles_[left_result_itr_].get();
 
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
     // Build Join Tile
-    //===--------------------------------------------------------------------===//
+    //===------------------------------------------------------------------===//
 
     // Build output logical tile
     auto output_tile = BuildOutputLogicalTile(left_tile, right_tile);

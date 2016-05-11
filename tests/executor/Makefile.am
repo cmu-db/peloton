@@ -17,7 +17,8 @@ check_PROGRAMS += \
 				  aggregate_test \
 				  append_test \
 				  projection_test \
-				  tile_group_layout_test
+				  tile_group_layout_test \
+				  loader_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -74,3 +75,8 @@ projection_test_SOURCES = \
 tile_group_layout_test_SOURCES = \
 								 $(executor_tests_common) \
 								 executor/tile_group_layout_test.cpp
+
+loader_test_SOURCES = \
+					$(executor_tests_common) \
+					executor/loader_test.cpp
+								 

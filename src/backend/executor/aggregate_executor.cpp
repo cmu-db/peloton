@@ -1,17 +1,18 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // aggregate_executor.cpp
 //
 // Identification: src/backend/executor/aggregate_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <utility>
 #include <vector>
+#include <backend/concurrency/transaction_manager_factory.h>
 
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
@@ -94,8 +95,6 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
-  auto transaction = executor_context_->GetTransaction();
-  auto transaction_id = transaction->GetTransactionId();
 
   // Get an aggregator
   std::unique_ptr<AbstractAggregator> aggregator(nullptr);
@@ -153,7 +152,13 @@ bool AggregateExecutor::DExecute() {
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
-      output_table->InsertTuple(transaction, tuple.get());
+      auto location = output_table->InsertTuple(tuple.get());
+      assert(location.block != INVALID_OID);
+
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
+      tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
+
     } else {
       done = true;
       return false;
@@ -170,7 +175,8 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group, transaction_id);
+    auto logical_tile =
+        LogicalTileFactory::WrapTileGroup(tile_group);
 
     result.push_back(logical_tile);
   }

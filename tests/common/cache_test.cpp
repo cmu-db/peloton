@@ -1,15 +1,14 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // cache_test.cpp
 //
 // Identification: tests/common/cache_test.cpp
 //
-// Copyright (c) 201CACHE_SIZE, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "harness.h"
 
@@ -35,8 +34,7 @@ class CacheTest : public PelotonTest {};
 static void fill(
     std::vector<std::shared_ptr<const planner::AbstractPlan> > &vec, int n) {
   for (int i = 0; i < n; i++) {
-    std::shared_ptr<const planner::AbstractPlan> plan(
-        new MockPlan(), bridge::PlanTransformer::CleanPlan);
+    std::shared_ptr<const planner::AbstractPlan> plan(new MockPlan());
     vec.push_back(std::move(plan));
   }
 }
@@ -46,8 +44,7 @@ static void fill(
  *
  */
 TEST_F(CacheTest, Basic) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   EXPECT_EQ(0, cache.size());
   EXPECT_EQ(true, cache.empty());
@@ -58,8 +55,7 @@ TEST_F(CacheTest, Basic) {
  *
  */
 TEST_F(CacheTest, Find) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   EXPECT_EQ(cache.end(), cache.find(1));
 }
@@ -69,8 +65,7 @@ TEST_F(CacheTest, Find) {
  *
  */
 TEST_F(CacheTest, Insert) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
   fill(plans, CACHE_SIZE);
@@ -89,11 +84,39 @@ TEST_F(CacheTest, Insert) {
 }
 
 /**
+ * Test insert operation with default threshold
+ *
+ */
+TEST_F(CacheTest, InsertThreshold) {
+  // Default insert threshold is 3, i.e. it will not be inserted
+  // until 3 attempts are detected.
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE);
+
+  std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
+  fill(plans, CACHE_SIZE);
+
+  // For the first two attempts, the plan will not be inserted
+  for (int i = 0; i < 2; ++i) {
+    cache.insert(std::make_pair(0, plans[0]));
+    auto cache_it = cache.find(0);
+    EXPECT_EQ(cache.end(), cache_it);
+  }
+
+  // For the third attempt, insertion should succeed.
+  cache.insert(std::make_pair(0, plans[0]));
+  auto cache_it = cache.find(0);
+  EXPECT_EQ((*cache_it).get(), plans[0].get());
+
+  // For existent key in the cache, the value should be immediately replaced
+  cache.insert(std::make_pair(0, plans[1]));
+  EXPECT_EQ((*cache_it).get(), plans[1].get());
+}
+
+/**
  * Test iterator function
  */
 TEST_F(CacheTest, Iterator) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
   fill(plans, CACHE_SIZE);
@@ -120,8 +143,7 @@ TEST_F(CacheTest, Iterator) {
  * The cache should keep the most recent half
  */
 TEST_F(CacheTest, EvictionByInsert) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
   fill(plans, CACHE_SIZE * 2);
@@ -152,8 +174,7 @@ TEST_F(CacheTest, EvictionByInsert) {
  * The cache should keep the most recent half
  */
 TEST_F(CacheTest, EvictionWithAccessing) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
   fill(plans, CACHE_SIZE * 2);
@@ -236,8 +257,7 @@ TEST_F(CacheTest, EvictionWithAccessing) {
  * The cache should keep the most recent half
  */
 TEST_F(CacheTest, Updating) {
-  Cache<uint32_t, const planner::AbstractPlan> cache(
-      CACHE_SIZE, bridge::PlanTransformer::CleanPlan);
+  Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   std::vector<std::shared_ptr<const planner::AbstractPlan> > plans;
   fill(plans, CACHE_SIZE * 2);

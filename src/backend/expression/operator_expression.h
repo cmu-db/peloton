@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // operator_expression.h
 //
 // Identification: src/backend/expression/operator_expression.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,6 +52,10 @@ class OperatorNotExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorNotExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorNotExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorIsNullExpression : public AbstractExpression {
@@ -75,6 +79,10 @@ class OperatorIsNullExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorIsNullExpression");
   }
+
+  AbstractExpression *Copy() const {
+    return new OperatorIsNullExpression(CopyUtil(m_left));
+  }
 };
 
 class OperatorCastExpression : public AbstractExpression {
@@ -94,63 +102,36 @@ class OperatorCastExpression : public AbstractExpression {
     return (spacer + "CastExpression");
   }
 
+  AbstractExpression *Copy() const {
+    return new OperatorCastExpression(m_targetType, CopyUtil(m_left));
+  }
+
  private:
   ValueType m_targetType;
 };
 
-class OperatorAlternativeExpression : public AbstractExpression {
+class OperatorUnaryMinusExpression : public AbstractExpression {
  public:
-  OperatorAlternativeExpression(AbstractExpression *left,
-                                AbstractExpression *right)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_ALTERNATIVE, left, right) {
-    assert(m_left);
-    assert(m_right);
+  OperatorUnaryMinusExpression(AbstractExpression *left)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
+    m_left = left;
   };
-
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                 __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused))
-                 executor::ExecutorContext *context) const {
-    throw Exception(
-        "OperatorAlternativeExpression::Evaluate function has no "
-        "implementation.");
-  }
-
-  std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "Operator ALTERNATIVE Expression");
-  }
-};
-
-class OperatorCaseWhenExpression : public AbstractExpression {
- public:
-  OperatorCaseWhenExpression(ValueType vt, AbstractExpression *left,
-                             OperatorAlternativeExpression *right)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_WHEN, left, right),
-        m_returnType(vt){};
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     assert(m_left);
-    assert(m_right);
-    Value thenClause = m_left->Evaluate(tuple1, tuple2, context);
-
-    if (thenClause.IsTrue()) {
-      return m_right->GetLeft()
-          ->Evaluate(tuple1, tuple2, context)
-          .CastAs(m_returnType);
-    } else {
-      return m_right->GetRight()
-          ->Evaluate(tuple1, tuple2, context)
-          .CastAs(m_returnType);
-    }
+    Value operand = m_left->Evaluate(tuple1, tuple2, context);
+    // NOT TRUE.Is FALSE
+    return Value::GetUnaryMinus(operand);
   }
 
   std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "Operator CASE WHEN Expression");
+    return (spacer + "OperatorNotExpression");
   }
 
- private:
-  ValueType m_returnType;
+  AbstractExpression *Copy() const {
+    return new OperatorUnaryMinusExpression(CopyUtil(m_left));
+  }
 };
 
 /*
@@ -211,6 +192,12 @@ class OperatorExpression : public AbstractExpression {
     return (spacer + "OptimizedOperatorExpression");
   }
 
+  AbstractExpression *Copy() const {
+    // TODO: How about OPER oper?
+    return new OperatorExpression<OPER>(
+        GetExpressionType(), CopyUtil(GetLeft()), CopyUtil(GetRight()));
+  }
+
  private:
   OPER oper;
 };
@@ -225,6 +212,10 @@ class OperatorExistsExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OperatorE.IstsExpression");
+  }
+
+  AbstractExpression *Copy() const {
+    return new OperatorExistsExpression(CopyUtil(GetLeft()));
   }
 };
 

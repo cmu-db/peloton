@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // executor_context.cpp
 //
 // Identification: src/backend/executor/executor_context.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,11 +17,11 @@ namespace peloton {
 namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
-    : transaction_(transaction) {}
+    : transaction_(transaction), params_exec_flag_(INVALID) {}
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
                                  const std::vector<Value> &params)
-    : transaction_(transaction), params_(params) {}
+    : transaction_(transaction), params_(params), params_exec_flag_(INVALID) {}
 
 ExecutorContext::~ExecutorContext() {
   // params will be freed automatically

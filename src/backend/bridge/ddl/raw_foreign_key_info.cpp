@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// raw_foreign_key_info.cpp
+//
+// Identification: src/backend/bridge/ddl/raw_foreign_key_info.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/bridge/ddl/raw_foreign_key_info.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
@@ -24,9 +36,11 @@ void raw_foreign_key_info::CreateForeignkey(void) const {
   auto sink_table = manager.GetTableWithOid(database_oid, sink_table_oid);
   assert(sink_table);
 
-  // extract column_names
+  // extract column_names and column_offsets
   std::vector<std::string> sink_column_names;
+  std::vector<oid_t> new_sink_column_offsets;
   std::vector<std::string> source_column_names;
+  std::vector<oid_t> new_source_column_offsets;
 
   auto source_table_schema = source_table->GetSchema();
   auto sink_table_schema = sink_table->GetSchema();
@@ -35,16 +49,19 @@ void raw_foreign_key_info::CreateForeignkey(void) const {
   for (auto sink_offset : sink_column_offsets) {
     catalog::Column column = sink_table_schema->GetColumn(sink_offset - 1);
     sink_column_names.push_back(column.GetName());
+    new_sink_column_offsets.push_back(sink_offset - 1);
   }
 
   // Populate source key column names
   for (auto source_offset : source_column_offsets) {
     catalog::Column column = source_table_schema->GetColumn(source_offset - 1);
     source_column_names.push_back(column.GetName());
+    new_source_column_offsets.push_back(source_offset - 1);
   }
 
   catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
-      sink_table_oid, sink_column_names, source_column_names, update_action,
+      sink_table_oid, sink_column_names, new_sink_column_offsets,
+      source_column_names, new_source_column_offsets, update_action,
       delete_action, fk_name);
 
   source_table->AddForeignKey(foreign_key);

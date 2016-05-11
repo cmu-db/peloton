@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// hash_set_op_executor.cpp
+// hash_executor.cpp
 //
-// Identification: src/backend/executor/hash_set_op_executor.cpp
+// Identification: src/backend/executor/hash_executor.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

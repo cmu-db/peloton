@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // index.h
 //
 // Identification: src/backend/index/index.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,6 +14,8 @@
 
 #include <vector>
 #include <string>
+#include <functional>
+#include <memory>
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
@@ -23,13 +25,9 @@ namespace peloton {
 class AbstractTuple;
 class VarlenPool;
 
-namespace catalog {
-class Schema;
-}
+namespace catalog { class Schema; }
 
-namespace storage {
-class Tuple;
-}
+namespace storage { class Tuple; }
 
 namespace index {
 
@@ -40,7 +38,7 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata  {
+class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
@@ -48,7 +46,6 @@ class IndexMetadata  {
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema, bool unique_keys)
-
       : index_name(index_name),
         index_oid(index_oid),
         method_type(method_type),
@@ -116,11 +113,20 @@ class Index : public Printable {
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
+                           const ItemPointer &location) = 0;
 
   // delete the index entry linked to given tuple and location
   virtual bool DeleteEntry(const storage::Tuple *key,
-                           const ItemPointer location) = 0;
+                           const ItemPointer &location) = 0;
+
+  // First retrieve all Key-Value pairs of the given key
+  // Return false if any of those k-v pairs satisfy the predicate
+  // If not any of those k-v pair satisfy the predicate, insert the k-v pair
+  // into the index and return true.
+  // This function should be called for all primary/unique index insert
+  virtual bool CondInsertEntry(
+      const storage::Tuple *key, const ItemPointer &location,
+      std::function<bool(const ItemPointer &)> predicate) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -128,16 +134,28 @@ class Index : public Printable {
 
   // scan all keys in the index matching an arbitrary key
   // used by index scan executor
-  virtual std::vector<ItemPointer> Scan(
-      const std::vector<Value> &values,
-      const std::vector<oid_t> &key_column_ids,
-      const std::vector<ExpressionType> &exprs,
-      const ScanDirectionType& scan_direction) = 0;
+  virtual void Scan(const std::vector<Value> &values,
+                    const std::vector<oid_t> &key_column_ids,
+                    const std::vector<ExpressionType> &exprs,
+                    const ScanDirectionType &scan_direction,
+                    std::vector<ItemPointer> &) = 0;
 
   // scan the entire index, working like a sort
-  virtual std::vector<ItemPointer> ScanAllKeys() = 0;
+  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
 
-  virtual std::vector<ItemPointer> ScanKey(const storage::Tuple *key) = 0;
+  virtual void ScanKey(const storage::Tuple *key,
+                       std::vector<ItemPointer> &) = 0;
+
+  virtual void Scan(const std::vector<Value> &values,
+                    const std::vector<oid_t> &key_column_ids,
+                    const std::vector<ExpressionType> &exprs,
+                    const ScanDirectionType &scan_direction,
+                    std::vector<ItemPointer *> &result) = 0;
+
+  virtual void ScanAllKeys(std::vector<ItemPointer *> &result) = 0;
+
+  virtual void ScanKey(const storage::Tuple *key,
+                       std::vector<ItemPointer *> &result) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -202,9 +220,9 @@ class Index : public Printable {
 
   // Set the lower bound tuple for index iteration
   bool ConstructLowerBoundTuple(storage::Tuple *index_key,
-                          const std::vector<Value> &values,
-                          const std::vector<oid_t> &key_column_ids,
-                          const std::vector<ExpressionType> &expr_types);
+                                const std::vector<Value> &values,
+                                const std::vector<oid_t> &key_column_ids,
+                                const std::vector<ExpressionType> &expr_types);
 
   //===--------------------------------------------------------------------===//
   //  Data members

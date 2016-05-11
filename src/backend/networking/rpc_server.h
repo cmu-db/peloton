@@ -1,72 +1,63 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rpc_server.h
 //
-// Identification: src/backend/message/rpc_server.h
+// Identification: src/backend/networking/rpc_server.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <thread>
 #include <map>
 
-#include "backend/networking/nanomsg.h"
-#include "backend/networking/message_queue.h"
+#include "backend/common/thread_manager.h"
+#include "backend/common/logger.h"
 #include "backend/networking/rpc_method.h"
+#include "backend/networking/tcp_listener.h"
 
 namespace peloton {
 namespace networking {
 
 class RpcServer {
-
   typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
-  typedef struct RecvItem {
-    NanoMsg*                    socket;
-    RpcMethod* 					method;
-    google::protobuf::Message* 	request;
-  } QueueItem;
 
-public:
-  RpcServer(const char* url);
+ public:
+  RpcServer(const int port);
   ~RpcServer();
-
-  // add more endpoints
-  void EndPoint(const char* url);
 
   // start
   void Start();
-  void StartSimple();
 
-  // Multiple woker threads
-  void Worker(const char* debuginfo);
+  // register service
+  bool RegisterService(google::protobuf::Service* service);
 
-//  std::thread WorkerThread(const char* debuginfo) {
-//    return std::thread([=] { Worker(debuginfo); });
-//  }
+  // find a rpcmethod
+  RpcMethod* FindMethod(uint64_t opcode);
 
-  // register a service
-  void RegisterService(google::protobuf::Service *service);
+  // get listener
+  Listener* GetListener();
 
-  // remove all services
+ private:
+  // remove all services. It is only invoked by destroy constructor
   void RemoveService();
 
-  // close
-  void Close();
+  // the rpc function can call this to execute something
+  static void Callback() {
+    LOG_TRACE("This is server backcall");
+  }
 
-private:
+  RpcMethodMap rpc_method_map_;
 
-  NanoMsg        socket_;
-  int            socket_id_;
-  RpcMethodMap   rpc_method_map_;
+  Listener listener_;
 
-  std::thread    worker_thread_;
-  MessageQueue<RecvItem>   recv_queue_;
+  //  MessageQueue<RecvItem>   recv_queue_;
 };
 
 }  // namespace networking

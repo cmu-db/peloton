@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // auto_test.cpp
 //
-// Identification: tests/common/feature_test.cpp
+// Identification: tests/language/auto_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,6 +15,8 @@
 #include <iostream>
 #include <cmath>
 #include <typeinfo>
+
+#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -44,19 +46,19 @@ auto get_fun(int arg) -> double (*)(double) {
 
 TEST(AutoTests, BasicTest) {
   auto a = 1 + 2;
-  std::cout << "type of a: " << typeid(a).name() << '\n';
+  LOG_INFO("type of a: %s", typeid(a).name());
   auto b = add(1, 1.2);
-  std::cout << "type of b: " << typeid(b).name() << '\n';
-  // auto int c; //compile-time error
+  LOG_INFO("type of b: %s", typeid(b).name());
   auto d = {1, 2};
-  std::cout << "type of d: " << typeid(d).name() << '\n';
+  LOG_INFO("type of d: %s", typeid(d).name());
 
   auto my_lambda = [](int x) { return x + 3; };
-  std::cout << "my_lambda: " << my_lambda(5) << '\n';
+  LOG_INFO("my_lambda: %d",  my_lambda(5));
 
   auto my_fun = get_fun(2);
-  std::cout << "type of my_fun: " << typeid(my_fun).name() << '\n';
-  std::cout << "my_fun: " << my_fun(3) << '\n';
+  LOG_INFO("type of my_fun: %s", typeid(my_fun).name());
+
+  LOG_INFO("my_fun: %lf", my_fun(3));
 }
 
 }  // End test namespace

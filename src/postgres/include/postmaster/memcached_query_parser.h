@@ -1,9 +1,7 @@
 
-#pragma once
 
 #include <string>
 #include <cstring>
-#include <vector>
 #include <algorithm>
 
 
@@ -12,15 +10,12 @@ namespace memcached {
 
 class QueryParser {
 private:
-  //MemcachedSocket* mcsocket;
   std::string memcached_query;
   int op_type;
 public:
-  int getOpType();
-  std::string parseQuery();
-//  QueryParser(std::string query, MemcachedSocket* mc_sock) {
+  int getOpType(); // denotes the optype corresponding to the query
+  std::string parseQuery(); // parses the command
   QueryParser(std::string query) {
-      //mcsocket=mc_sock;
     memcached_query = query;
   };
 
