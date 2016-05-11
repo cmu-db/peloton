@@ -154,24 +154,6 @@ AC_SUBST([DEBUG_CXXFLAGS])
 AC_SUBST([DEBUG_CPPFLAGS])
 
 #####################################################################
-# Check for NVML Library
-#####################################################################
-
-# ensure the library to check for is covered by the LIBS variable
-OLD_LIBS=$LIBS
-LIBS="$LIBS -lpmem -ljemalloc"
-
-# try to link the function 'pmem_is_pmem' out of library pmem
-AC_MSG_CHECKING([whether the nvml library can be linked])
-AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([[#include <libpmem.h>]],
-        [[pmem_map(0);]])],
-    [AC_MSG_RESULT([yes])
-        CXXFLAGS="$CXXFLAGS -DNVML";],
-    [AC_MSG_RESULT([no])
-        LIBS=$OLD_LIBS; dnl reset to old value since PMEM was not found])
-
-#####################################################################
 # Copying over Postgres files
 #####################################################################
 

@@ -61,7 +61,7 @@ void AddTileGroup() {
 TEST_F(ManagerTests, TransactionTest) {
   LaunchParallelTest(8, AddTileGroup);
 
-  LOG_INFO("Catalog allocations :: %lu",
+  LOG_INFO("Catalog allocations :: %u",
            catalog::Manager::GetInstance().GetCurrentOid());
 
   EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);

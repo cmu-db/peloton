@@ -84,7 +84,7 @@ column_map_type Clusterer::GetPartitioning(oid_t tile_count) const {
   // look for most significant cluster
   for (auto entry = frequencies.rbegin(); entry != frequencies.rend();
        ++entry) {
-    LOG_TRACE(" %lu :: %.3lf", entry->second, entry->first);
+    LOG_TRACE(" %u :: %.3lf", entry->second, entry->first);
 
     // first, check if remaining columns less than tile count
     if (remaining_column_count <= tile_count) {
