@@ -85,7 +85,7 @@ class BTreeIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  RWLock index_lock;
+  std::mutex index_lock;
 };
 
 }  // End index namespace
