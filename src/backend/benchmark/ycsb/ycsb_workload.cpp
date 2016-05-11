@@ -79,14 +79,6 @@ namespace ycsb {
 ///// Random Generator //////
 /////////////////////////////
 
-// Helper function to pin current thread to a specific core
-static void PinToCore(size_t core) {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
-
 // Fast random number generator
 class fast_random {
  public:
@@ -201,8 +193,6 @@ volatile bool run_backends = true;
 std::vector<double> transaction_counts;
 
 void RunBackend(oid_t thread_id) {
-  PinToCore(thread_id);
-
   auto update_ratio = state.update_ratio;
 
   // Set zipfian skew
