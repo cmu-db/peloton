@@ -246,7 +246,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
 
   // Default Logger Values
   state.logging_type = LOGGING_TYPE_NVM_WAL;
-
   state.log_file_dir = TMP_DIR;
   state.data_file_size = 512;
 
@@ -258,10 +257,20 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
 
+  // Default YCSB Values
+  ycsb::state.scale_factor = 1;
+  ycsb::state.duration = 1000;
+  ycsb::state.column_count = 10;
+  ycsb::state.update_ratio = 0.5;
+  ycsb::state.backend_count = 2;
+  ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:", opts, &idx);
+    // logger - a:e:f:hl:n:p:v:w:y:
+    // ycsb   - b:c:d:k:s:u:
+    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
 
     if (c == -1) break;
 
@@ -294,6 +303,26 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
+        // YCSB
+      case 'b':
+        ycsb::state.backend_count = atoi(optarg);
+        break;
+      case 'c':
+        ycsb::state.column_count = atoi(optarg);
+        break;
+      case 'd':
+        ycsb::state.duration = atoi(optarg);
+        break;
+      case 'k':
+        ycsb::state.scale_factor = atoi(optarg);
+        break;
+      case 's':
+        ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
+        break;
+      case 'u':
+        ycsb::state.update_ratio = atof(optarg);
+        break;
+
       case 'h':
         Usage(stderr);
         ycsb::Usage(stderr);
@@ -306,7 +335,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
-  // Print configurations
+  // Print Logger configuration
   ValidateAsynchronousMode(state);
   ValidateLoggingType(state);
   ValidateDataFileSize(state);
@@ -318,8 +347,13 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidateNVMLatency(state);
   ValidatePCOMMITLatency(state);
 
-  // Send the arguments to YCSB
-  ycsb::ParseArguments(argc, argv, ycsb::state);
+  // Print YCSB configuration
+  ycsb::ValidateScaleFactor(ycsb::state);
+  ycsb::ValidateColumnCount(ycsb::state);
+  ycsb::ValidateUpdateRatio(ycsb::state);
+  ycsb::ValidateBackendCount(ycsb::state);
+  ycsb::ValidateDuration(ycsb::state);
+  ycsb::ValidateSkewFactor(ycsb::state);
 
 }
 
