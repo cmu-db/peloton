@@ -268,8 +268,8 @@ static int Shutdown = NoShutdown;
 static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
-std::string memcached_dbname = std::string("postgres");
-std::string memcached_username = std::string("postgres");
+std::string memcached_dbname = "postgres";
+std::string memcached_username = "postgres";
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
@@ -3912,8 +3912,8 @@ static void BackendInitialize(Port *port, bool is_memcached) {
     if (status != STATUS_OK) proc_exit(0);
   } else {
     // memcached credentials
-   strcpy( port->database_name, memcached_dbname.c_str());
-   strcpy( port->user_name, memcached_username.c_str());
+   port->database_name =  pstrdup(memcached_dbname.c_str());
+   port->user_name =  pstrdup(memcached_username.c_str());
   }
 
 

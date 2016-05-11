@@ -27,9 +27,10 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
   CONCURRENCY_TYPE_OPTIMISTIC,
   CONCURRENCY_TYPE_PESSIMISTIC,
   CONCURRENCY_TYPE_SSI,
-  CONCURRENCY_TYPE_SPECULATIVE_READ,
+  // CONCURRENCY_TYPE_SPECULATIVE_READ,
   CONCURRENCY_TYPE_EAGER_WRITE,
-  CONCURRENCY_TYPE_TO
+  CONCURRENCY_TYPE_TO,
+  CONCURRENCY_TYPE_OCC_RB
 };
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
@@ -67,6 +68,16 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
         TransactionTestsUtil::CreateTable());
+    // Just scan the table
+    {
+      TransactionScheduler scheduler(1, table.get(), &txn_manager);
+      scheduler.Txn(0).Scan(0);
+      scheduler.Txn(0).Commit();
+
+      scheduler.Run();
+
+      EXPECT_EQ(10, scheduler.schedules[0].results.size());
+    }
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
@@ -95,7 +106,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(1, scheduler.schedules[1].results[0]);
     }
 
-    // update, update, update, update, read
+    // // update, update, update, update, read
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 1);
@@ -111,9 +122,9 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(4, scheduler.schedules[0].results[0]);
     }
 
-    // delete not exist, delete exist, read deleted, update deleted,
-    // read deleted, insert back, update inserted, read newly updated,
-    // delete inserted, read deleted
+    // // delete not exist, delete exist, read deleted, update deleted,
+    // // read deleted, insert back, update inserted, read newly updated,
+    // // delete inserted, read deleted
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
       scheduler.Txn(0).Delete(100);
@@ -138,8 +149,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       LOG_INFO("FINISH THIS");
     }
 
-    // insert, delete inserted, read deleted, insert again, delete again
-    // read deleted, insert again, read inserted, update inserted, read updated
+    // // insert, delete inserted, read deleted, insert again, delete again
+    // // read deleted, insert again, read inserted, update inserted, read updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
 
@@ -164,9 +175,9 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(3, scheduler.schedules[0].results[3]);
     }
 
-    // Deadlock detection test for eager write
-    // T0:  R0      W0      C0
-    // T1:      R1      W1      C1
+    // // Deadlock detection test for eager write
+    // // T0:  R0      W0      C0
+    // // T1:      R1      W1      C1
     if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE)
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -201,7 +212,6 @@ TEST_F(TransactionTests, AbortTest) {
 
       EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
       EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
-      //printf("==========result=%d\n", int(scheduler.schedules[1].results[0]));
       EXPECT_EQ(0, scheduler.schedules[1].results[0]);
     }
 

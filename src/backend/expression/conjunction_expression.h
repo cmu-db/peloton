@@ -29,25 +29,19 @@ class ConjunctionExpression : public AbstractExpression {
  public:
   ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
-      : AbstractExpression(type, left, right) {
-    this->m_left = left;
-    this->m_right = right;
-  }
+      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const;
+                 executor::ExecutorContext *context) const override;
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "ConjunctionExpression\n");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new ConjunctionExpression<C>(GetExpressionType(), CopyUtil(m_left),
                                         CopyUtil(m_right));
   }
-
-  AbstractExpression *m_left;
-  AbstractExpression *m_right;
 };
 
 template <>
@@ -98,5 +92,5 @@ inline Value ConjunctionExpression<ConjunctionOr>::Evaluate(
   return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
 }
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

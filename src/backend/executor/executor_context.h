@@ -25,7 +25,7 @@ namespace executor {
 
 // TODO: We might move this flag into the types.h in the future
 enum ParamsExecFlag {
-  INVALID,
+  INVALID_FLAG,
   IN_NESTLOOP = 1 // nestloop (in+indexscan)
   //IN_**         // other types
 };
