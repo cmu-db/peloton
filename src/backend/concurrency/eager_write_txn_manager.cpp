@@ -258,7 +258,7 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
   assert(tile_group_header->GetTransactionId(tuple_id) == 0);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
-  //SetOwnership(tile_group_id, tuple_id);
+  // SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -274,9 +274,11 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   // if we can perform update, then we must have already locked the older
   // version.
@@ -326,14 +328,15 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Delete %u %u", old_location.block,
-           old_location.offset);
+  LOG_INFO("Performing Delete %u %u", old_location.block, old_location.offset);
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -395,10 +398,15 @@ Result EagerWriteTxnManager::CommitTransaction() {
     LOG_INFO("Read Only txn: %lu ", current_txn->GetTransactionId());
     // is it always true???
     Result ret = current_txn->GetResult();
+
     EndTransaction();
     return ret;
   }
   //*****************************************************
+
+  // generate transaction id.
+  cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   // Check if we cause dead lock
   if (CauseDeadLock()) {
@@ -416,8 +424,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   }
   LOG_INFO("End waiting");
 
-  // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
+
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
@@ -437,8 +444,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
         ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-                              new_version);
+        log_manager.LogUpdate(end_commit_id, old_version, new_version);
 
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
@@ -487,7 +493,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
-        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        log_manager.LogInsert(end_commit_id, insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -497,7 +503,6 @@ Result EagerWriteTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
 
@@ -540,12 +545,17 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         // AtomicSetOnlyTxnId(tile_group_header, tuple_slot, INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -559,6 +569,10 @@ Result EagerWriteTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
+
+        // reset the item pointers.
+        tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 

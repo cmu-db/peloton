@@ -24,7 +24,8 @@ namespace expression {
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const Value &value)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT,
+                           value.GetValueType()) {
     /**
      * A deep copy is desired here because we don't know
      * if the expression will live longer than the passed value
@@ -33,23 +34,21 @@ class ConstantValueExpression : public AbstractExpression {
     this->value = ValueFactory::Clone(value, nullptr);
   }
 
-  virtual ~ConstantValueExpression() {}
-
   Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                  __attribute__((unused)) const AbstractTuple *tuple2,
                  __attribute__((unused))
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     LOG_TRACE("returning constant value as Value:%s type:%d",
               value.GetInfo().c_str(), (int)this->m_type);
     return this->value;
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return spacer + "OptimizedConstantValueExpression:" + value.GetInfo() +
            "\n";
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     return new ConstantValueExpression(value);
   }
 

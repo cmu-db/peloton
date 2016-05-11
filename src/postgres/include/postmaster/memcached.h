@@ -1,7 +1,14 @@
-//
-// Created by siddharth on 25/3/16.
-//
-
+/*-------------------------------------------------------------------------
+ *
+ * memcached.h
+ * file description
+ *
+ * Copyright(c) 2015-2016, CMU
+ *
+ * src/postgres/include/postmaster/memcached.h
+ *
+ *-------------------------------------------------------------------------
+ */
 #ifndef MEMCACHED_SOCKET_H
 #define MEMCACHED_SOCKET_H
 
@@ -10,8 +17,8 @@
 #define MC_SOCK_BUFFER_SIZE_BYTES 8192
 
 // memcached db login credentials
-extern char *memcached_dbname;
-extern char *memcached_username;
+extern std::string memcached_dbname;
+extern std::string memcached_username;
 
 /* wrapper over pgsocket used for memcached */
 struct MemcachedSocket {

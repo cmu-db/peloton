@@ -96,6 +96,11 @@ void DDL::ProcessUtility(Node *parsetree) {
       DDLTransaction::ExecTransactionStmt(stmt);
     } break;
 
+    case T_CreateFunctionStmt: {
+      LOG_TRACE("UDF function added.");
+      break;
+    }
+
     default: {
       LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
     } break;

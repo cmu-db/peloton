@@ -13,9 +13,12 @@
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
+
 #include <memory>
 #include <vector>
+
+#include "backend/expression/expression_util.h"
+
 namespace peloton {
 namespace expression {
 
@@ -24,27 +27,26 @@ namespace expression {
 class CoalesceExpression : public AbstractExpression {
  public:
   typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
-  CoalesceExpression(ValueType vt, std::vector<AbstractExprPtr> &t_expressions)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_COALESCE),
-        expressions_(std::move(t_expressions)),
-        value_type_(vt) {}
+  CoalesceExpression(ValueType vt, std::vector<AbstractExprPtr> &expressions)
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_COALESCE, vt),
+        expressions_(std::move(expressions)) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     for (auto &expression : expressions_) {
       auto result = expression->Evaluate(tuple1, tuple2, context);
       if (result.IsNull()) continue;
       return result;
     }
 
-    return Value::GetNullValue(value_type_);
+    return Value::GetNullValue(GetValueType());
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return spacer + "CoalesceExpression";
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     std::vector<AbstractExprPtr> copied_expression;
     for (auto &expression : expressions_) {
       if (expression == nullptr) {
@@ -53,14 +55,12 @@ class CoalesceExpression : public AbstractExpression {
       copied_expression.push_back(AbstractExprPtr(expression->Copy()));
     }
 
-    return new CoalesceExpression(value_type_, copied_expression);
+    return new CoalesceExpression(GetValueType(), copied_expression);
   }
 
  private:
   // Expression arguments
   std::vector<AbstractExprPtr> expressions_;
-
-  ValueType value_type_;
 };
 
 }  // End expression namespace

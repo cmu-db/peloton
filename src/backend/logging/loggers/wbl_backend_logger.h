@@ -30,22 +30,13 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_NVM; }
-
-  void Log(LogRecord *record);
-
-  void TruncateLocalQueue(oid_t offset);
+  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
 
   LogRecord *GetTupleRecord(LogRecordType log_record_type, txn_id_t txn_id,
-                            oid_t table_oid,
-                            oid_t db_oid,
+                            oid_t table_oid, oid_t db_oid,
                             ItemPointer insert_location,
                             ItemPointer delete_location,
                             const void *data = nullptr);
-
- private:
-
-  CopySerializeOutput output_buffer;
 };
 
 }  // namespace logging
