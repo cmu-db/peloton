@@ -60,7 +60,7 @@ void RunBenchmark() {
     ResetSystem();
 
     // TODO: Do recovery
-    //DoRecovery(wal_log_file_name);
+    DoRecovery(wal_log_file_name);
 
   }
   //===--------------------------------------------------------------------===//
@@ -71,7 +71,7 @@ void RunBenchmark() {
     PrepareLogFile();
 
     // TODO: Do recovery
-    //DoRecovery(wbl_log_file_name);
+    DoRecovery(wbl_log_file_name);
 
   }
   //===--------------------------------------------------------------------===//
