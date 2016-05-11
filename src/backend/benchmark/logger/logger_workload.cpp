@@ -219,8 +219,7 @@ bool PrepareLogFile() {
   auto latency = ycsb::state.latency;
 
   // Log the build log time
-  if (state.experiment_type == EXPERIMENT_TYPE_INVALID ||
-      state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
+  if (state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
     WriteOutput(throughput);
   } else if (state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
     WriteOutput(latency);
@@ -283,8 +282,9 @@ void DoRecovery(std::string file_name) {
   timer.Stop();
 
   // Recovery time (in ms)
-
-  WriteOutput(timer.GetDuration());
+  if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
+    WriteOutput(timer.GetDuration());
+  }
 }
 
 //===--------------------------------------------------------------------===//
