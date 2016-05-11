@@ -85,11 +85,40 @@ bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf);
 
 
 /////////////////////////////////////////////////////////
-// void PrepareMixedPlan();
 
-bool RunMixed(ZipfDistribution &zipf, int read_count, int write_count);
+struct MixedPlans {
+
+  executor::IndexScanExecutor* index_scan_executor_;
+
+  executor::IndexScanExecutor* update_index_scan_executor_;
+  executor::UpdateExecutor* update_executor_;
+
+  void ResetState() {
+
+    index_scan_executor_->ResetState();
+
+    update_index_scan_executor_->ResetState();
+  }
+
+  void Cleanup() {
+    delete index_scan_executor_;
+    index_scan_executor_ = nullptr;
+
+    delete update_index_scan_executor_;
+    update_index_scan_executor_ = nullptr;
+
+    delete update_executor_;
+    update_executor_ = nullptr;
+  }
+
+};
+
+MixedPlans PrepareMixedPlan();
+
+bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, int write_count);
 
 
+/////////////////////////////////////////////////////////
 
 
 std::vector<std::vector<Value>>

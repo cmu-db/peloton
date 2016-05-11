@@ -161,13 +161,12 @@ UpdatePlans PrepareUpdatePlan() {
 
 
 bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(nullptr));
-  update_plans.ResetState();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
+
+  update_plans.ResetState();
 
   std::vector<Value> values;
 

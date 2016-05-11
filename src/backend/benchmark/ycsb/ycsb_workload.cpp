@@ -104,6 +104,7 @@ void RunBackend(oid_t thread_id) {
 
   ReadPlans read_plans = PrepareReadPlan();
   UpdatePlans update_plans = PrepareUpdatePlan();
+  MixedPlans mixed_plans = PrepareMixedPlan();
 
 
   // Run these many transactions
@@ -113,7 +114,7 @@ void RunBackend(oid_t thread_id) {
     }
 
     if (state.run_mix) {
-      while (RunMixed(zipf, 12, 2) == false) {
+      while (RunMixed(mixed_plans, zipf, 12, 2) == false) {
         execution_count_ref++;
       }
     } else {

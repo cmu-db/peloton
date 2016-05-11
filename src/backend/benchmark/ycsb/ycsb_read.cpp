@@ -119,17 +119,19 @@ ReadPlans PrepareReadPlan() {
 
   ReadPlans read_plans;
   read_plans.index_scan_executor_ = index_scan_executor;
+  
   return read_plans;
 }
 
 
 bool RunRead(ReadPlans &read_plans, ZipfDistribution &zipf) {
   
-  read_plans.ResetState();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   
   auto txn = txn_manager.BeginTransaction();
+
+  read_plans.ResetState();
   
   // std::unique_ptr<executor::ExecutorContext> context(
   //     new executor::ExecutorContext(nullptr));
@@ -155,7 +157,7 @@ bool RunRead(ReadPlans &read_plans, ZipfDistribution &zipf) {
 
   // auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
-  // Create and set up index scan executor
+    // set up parameter values
   std::vector<Value> values;
 
   auto lookup_key = zipf.GetNextNumber();
