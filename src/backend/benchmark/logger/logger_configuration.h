@@ -56,7 +56,7 @@ class configuration {
   size_t data_file_size;
 
   // frequency with which the logger flushes
-  int64_t wait_timeout;
+  int wait_timeout;
 
   // Benchmark type
   BenchmarkType benchmark_type;
@@ -65,13 +65,13 @@ class configuration {
   int flush_mode;
 
   // nvm latency
-  int64_t nvm_latency;
+  int nvm_latency;
 
   // pcommit latency
-  int64_t pcommit_latency;
+  int pcommit_latency;
 
   // asynchronous_mode
-  int64_t asynchronous_mode;
+  int asynchronous_mode;
 
 };
 
