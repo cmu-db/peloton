@@ -16,8 +16,6 @@
 
 #include "backend/expression/abstract_expression.h"
 
-#include <boost/scoped_ptr.hpp>
-
 namespace peloton {
 namespace expression {
 
@@ -30,12 +28,10 @@ namespace expression {
  */
 class SubqueryExpression : public AbstractExpression {
  public:
-  SubqueryExpression(ExpressionType subqueryType, int subqueryId,
-                     const std::vector<int> &paramIdxs,
+  SubqueryExpression(ExpressionType subqueryType, ValueType result_type,
+                     int subqueryId, const std::vector<int> &paramIdxs,
                      const std::vector<int> &otherParamIdxs,
                      const std::vector<AbstractExpression *> &tveParams);
-
-  ~SubqueryExpression();
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const;
@@ -43,8 +39,8 @@ class SubqueryExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const;
 
   AbstractExpression *Copy() const {
-    return new SubqueryExpression(GetExpressionType(), m_subqueryId,
-                                  m_paramIdxs, m_otherParamIdxs,
+    return new SubqueryExpression(GetExpressionType(), GetValueType(),
+                                  m_subqueryId, m_paramIdxs, m_otherParamIdxs,
                                   std::vector<AbstractExpression *>());
   }
 
@@ -61,5 +57,5 @@ class SubqueryExpression : public AbstractExpression {
   std::vector<int> m_otherParamIdxs;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

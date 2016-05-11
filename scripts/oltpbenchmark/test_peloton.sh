@@ -11,7 +11,7 @@ rm -rf peloton_test_database
 initdb peloton_test_database
 
 # Copy over the peloton configuration file into the directory
-cp ../scripts/oltpbenchmark/postgresql.conf data
+cp ./scripts/oltpbenchmark/postgresql.conf data
 
 # Stop the peloton server
 pg_ctl -D peloton_test_database stop
@@ -53,20 +53,20 @@ cd oltpbench
 ant
 
 # Run the YCSB benchmark on Peloton
-./oltpbenchmark -b ycsb -c config/peloton_ycsb_config.xml --create=true --load=true --execute=true -s 5 -o outputfile
+./oltpbenchmark -b ycsb -c config/jenkins_ycsb_config.xml --create=true --load=true --execute=true -s 5 -o outputfile
 
 # check the outputfile
 min_oltpbench_output=0
 oltpbench_output=`sed -n '6p' outputfile.summary`;
 
-if [ 1 -eq "$(echo "${oltpbench_output} < ${min_oltpbench_output}" | bc)" ]
-then  
+# check if the throughput is non-zero
+if [ 1 -eq "$(echo "${oltpbench_output} <= ${min_oltpbench_output}" | bc)" ]
+then
 	echo "oltpbench failed"
-    exit 1 # terminate and indicate error
+	exit 1 # terminate and indicate error
 fi
 
 echo "oltpbench success"
 
 # Go outside the oltpbench directory
 cd ..
-
