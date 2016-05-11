@@ -30,10 +30,7 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-#define MAX_ATTEMPT_COUNT 100000
-#define MAX_QUEUE_LENGTH 100000
 
-#define GC_PERIOD_MILLISECONDS 100
 
 class Cooperative_GCManager : public GCManager {
 public:
@@ -45,7 +42,10 @@ public:
 
   virtual ~Cooperative_GCManager() { StopGC(); }
 
-  static Cooperative_GCManager &GetInstance();
+  static Cooperative_GCManager &GetInstance() {
+    static Cooperative_GCManager gcManager;
+    return gcManager;
+  }
 
   // Get status of whether GC thread is running or not
   virtual bool GetStatus() { return this->is_running_; }

@@ -31,10 +31,6 @@ GCBuffer::~GCBuffer(){
   }
 }
 
-Cooperative_GCManager &Cooperative_GCManager::GetInstance() {
-  static Cooperative_GCManager gcManager;
-  return gcManager;
-}
 
 void Cooperative_GCManager::StartGC() {
   LOG_INFO("Starting GC");

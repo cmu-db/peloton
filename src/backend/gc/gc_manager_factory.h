@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/gc/cooperative_gc.h"
+#include "backend/gc/vacuum_gc.h"
 
 namespace peloton {
 namespace gc {
@@ -22,6 +23,8 @@ class GCManagerFactory {
     switch (gc_type_) {
       case GC_TYPE_CO:
         return Cooperative_GCManager::GetInstance();
+      case GC_TYPE_VACUUM:
+        return Vacuum_GCManager::GetInstance();
       default:
         return Cooperative_GCManager::GetInstance();
     }

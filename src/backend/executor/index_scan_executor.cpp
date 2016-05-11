@@ -157,7 +157,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // The deconstructor of the GC buffer
   // will automatically register garbage to GC manager
-  gc::GCBuffer garbage_tuples(table_->GetOid());
+  // gc::GCBuffer garbage_tuples(table_->GetOid());
 
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
@@ -246,12 +246,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
                  || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
-          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+          if (false && tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
-            garbage_tuples.AddGarbage(old_item);
+            // garbage_tuples.AddGarbage(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
