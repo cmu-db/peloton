@@ -104,7 +104,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.scale_factor = 1;
   state.duration = 1000;
   state.column_count = 10;
-  state.update_ratio = 0.5;
+  state.update_ratio = 1;
   state.backend_count = 2;
   state.skew_factor = SKEW_FACTOR_LOW;
 
