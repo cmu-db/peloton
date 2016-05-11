@@ -224,6 +224,12 @@ bool PrepareLogFile() {
     return false;
   }
 
+  // Get an instance of the storage manager to force posix_fallocate
+  // to be invoked before we begin benchmarking
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
+  storage_manager.Release(BACKEND_TYPE_MM, tmp);
+
   // Pick sync commit mode
   switch (state.asynchronous_mode) {
     case ASYNCHRONOUS_TYPE_SYNC:
@@ -240,15 +246,10 @@ bool PrepareLogFile() {
                       std::to_string(state.asynchronous_mode));
   }
 
-  // Get an instance of the storage manager to force posix_fallocate
-  // to be invoked before we begin benchmarking
-  auto& storage_manager = storage::StorageManager::GetInstance();
-  auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
-  storage_manager.Release(BACKEND_TYPE_MM, tmp);
-
   Timer<> timer;
   std::thread thread;
 
+  // Initializing logging module
   StartLogging(thread);
 
   timer.Start();
@@ -290,8 +291,6 @@ bool PrepareLogFile() {
 //===--------------------------------------------------------------------===//
 
 void ResetSystem() {
-  // XXX Initialize oid since we assume that we restart the system
-
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.ResetStates();
 
@@ -301,30 +300,26 @@ void ResetSystem() {
 /**
  * @brief recover the database and check the tuples
  */
-void DoRecovery(std::string file_name) {
-  auto file_path = GetFilePath(state.log_file_dir, file_name);
-
-  std::ifstream log_file(file_path);
-
-  // Reset the log file if exists
-
-  log_file.close();
+void DoRecovery() {
 
   //===--------------------------------------------------------------------===//
   // RECOVERY
   //===--------------------------------------------------------------------===//
+
+  // Reset log manager state
+  auto& log_manager = peloton::logging::LogManager::GetInstance();
+  log_manager.ResetLogStatus();
+  log_manager.ResetFrontendLoggers();
 
   Timer<std::milli> timer;
   std::thread thread;
 
   timer.Start();
 
-  auto& log_manager = peloton::logging::LogManager::GetInstance();
-  log_manager.ResetLogStatus();
-  log_manager.ResetFrontendLoggers();
-
+  // Do recovery
   StartLogging(thread);
 
+  // Synchronize and finish recovery
   if (log_manager.EndLogging()) {
     thread.join();
   } else {
@@ -348,9 +343,6 @@ void BuildLog() {
 
   ycsb::LoadYCSBDatabase();
 
-  //===--------------------------------------------------------------------===//
-  // ACTIVE PROCESSING
-  //===--------------------------------------------------------------------===//
   ycsb::RunWorkload();
 }
 

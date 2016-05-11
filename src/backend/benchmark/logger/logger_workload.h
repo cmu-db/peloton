@@ -45,7 +45,7 @@ bool PrepareLogFile();
 
 void ResetSystem(void);
 
-void DoRecovery(std::string file_name);
+void DoRecovery();
 
 //===--------------------------------------------------------------------===//
 // WRITING LOG RECORD
