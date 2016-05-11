@@ -113,8 +113,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     int idx = 0;
     int c = getopt_long(argc, argv, "hb:c:d:k:s:u:", opts, &idx);
 
-    printf("c: %c \n", c);
-
     if (c == -1) break;
 
     switch (c) {
