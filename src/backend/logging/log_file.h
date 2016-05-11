@@ -19,46 +19,55 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Logger
+// LogFile metadata
 //===--------------------------------------------------------------------===//
 
 class LogFile {
  public:
-  LogFile(FILE *log_file, std::string log_file_name, int log_file_fd,
-          int log_number, txn_id_t max_commit_id)
-      : log_file_(log_file),
+
+  LogFile(FileHandle file_handle, std::string log_file_name, int log_number,
+          cid_t max_log_id_file, cid_t max_delimiter_file)
+      : file_handle_(file_handle),
         log_file_name_(log_file_name),
-        log_file_fd_(log_file_fd),
         log_number_(log_number),
-        max_commit_id_(max_commit_id) {
-    log_file_size_ = 0;
-  };
+        max_log_id_file_(max_log_id_file),
+        max_delimiter_file_(max_delimiter_file){};
 
   virtual ~LogFile(void){};
 
-  void SetMaxCommitId(txn_id_t);
+  // set the maximum commit id in this file
+  void SetMaxLogId(cid_t);
 
-  txn_id_t GetMaxCommitId();
+  // gethe maximum commit id for this file
+  cid_t GetMaxLogId();
 
+  // get the number of logs in this file
   int GetLogNumber();
 
+  // get the name of this log file
   std::string GetLogFileName();
 
+  // set the size of this log file
   void SetLogFileSize(int);
 
-  FILE *GetFilePtr();
-
+  // set the file descriptor for this file
   void SetLogFileFD(int);
 
+  //set the file pointer
   void SetFilePtr(FILE *);
 
+  //set the max delimeter this file contains
+  void SetMaxDelimiter(cid_t);
+
+  // get the max delimiter in this file
+  cid_t GetMaxDelimiter();
+
  private:
-  FILE *log_file_;
+  FileHandle file_handle_;
   std::string log_file_name_;
-  int log_file_fd_;
-  int log_file_size_;
   int log_number_;
-  txn_id_t max_commit_id_;
+  cid_t max_log_id_file_;
+  cid_t max_delimiter_file_;
 
  protected:
 };

@@ -34,7 +34,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // size of the table
   int scale_factor;
 
@@ -55,6 +54,24 @@ class configuration {
   // number of backends
   int backend_count;
 
+  // whether logging is enabled
+  int num_loggers;
+
+  // synchronous commit
+  int sync_commit;
+
+  // frequency with which the logger flushes
+  int64_t wait_timeout;
+
+  // log file size
+  int file_size;
+
+  // log buffer size
+  int log_buffer_size;
+
+  // whether do checkpoint
+  int checkpointer;
+
   std::vector<double> snapshot_throughput;
 
   std::vector<double> snapshot_abort_rate;
@@ -62,6 +79,12 @@ class configuration {
   double throughput;
 
   double abort_rate;
+
+  double zipf_theta;
+
+  bool run_mix;
+
+  int flush_freq;
 
 };
 
@@ -80,6 +103,8 @@ void ValidateBackendCount(const configuration &state);
 void ValidateDuration(const configuration &state);
 
 void ValidateSnapshotDuration(const configuration &state);
+
+void ValidateLogging(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
