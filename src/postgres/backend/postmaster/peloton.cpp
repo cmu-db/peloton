@@ -82,7 +82,7 @@ static void peloton_process_status(const peloton_status& status, const PlanState
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
                                 DestReceiver *dest,
-                                MemcachedState *mc_state = nullptr);
+                                BackendContext* backend_state = nullptr);
 
 static void __attribute__((unused)) peloton_test_config();
 
@@ -176,7 +176,7 @@ peloton_dml(const PlanState *planstate,
             DestReceiver *dest,
             TupleDesc tuple_desc,
             const char *prepStmtName,
-            MemcachedState *mc_state) {
+            BackendContext *backend_state) {
   peloton_status status;
 
   // Get the parameter list
@@ -228,7 +228,7 @@ peloton_dml(const PlanState *planstate,
   peloton_process_status(status, planstate);
 
   // Send output to dest
-  peloton_send_output(status, sendTuples, dest, mc_state);
+  peloton_send_output(status, sendTuples, dest, backend_state);
 
 }
 
@@ -272,7 +272,7 @@ void
 peloton_send_output(const peloton_status& status,
                     bool sendTuples,
                     DestReceiver *dest,
-                    MemcachedState *mc_state) {
+                    BackendContext* backend_state) {
   TupleTableSlot *slot;
 
   // Go over any result slots
@@ -296,12 +296,12 @@ peloton_send_output(const peloton_status& status,
        */
 
       // for memcached, directly call printtup
-      if (sendTuples && mc_state) {
-        printtup(slot, dest, mc_state);
+      if (sendTuples && backend_state) {
+        printtup(slot, dest, backend_state);
       }
       else if (sendTuples)
         // otherwise use dest fp
-        (*dest->receiveSlot) (slot, dest, mc_state);
+        (*dest->receiveSlot) (slot, dest, backend_state);
 
       /*
        * Free the underlying heap_tuple

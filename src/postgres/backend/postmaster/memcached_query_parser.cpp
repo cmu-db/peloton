@@ -1,6 +1,14 @@
-//
-// Created by siddharth on 17/3/16.
-//
+/*-------------------------------------------------------------------------
+ *
+ * memcached_query_parser.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * src/postgres/backend/postmaster/memcached_query_parser.cpp
+ *
+ *-------------------------------------------------------------------------
+ */
 #include "postmaster/memcached_query_parser.h"
 
 namespace peloton {

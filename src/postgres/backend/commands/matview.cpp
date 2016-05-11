@@ -57,10 +57,10 @@ static int	matview_maintenance_depth = 0;
 
 // added dummy memcached state parameter
 static void transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-																 MemcachedState *mc_state = nullptr);
+																 BackendContext *backend_state = nullptr);
 // added dummy memcached state parameter
 static void transientrel_receive(TupleTableSlot *slot, DestReceiver *self,
-																 MemcachedState *mc_state = nullptr);
+																 BackendContext *backend_state = nullptr);
 static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static void refresh_matview_datafill(DestReceiver *dest, Query *query,
@@ -400,7 +400,7 @@ CreateTransientRelDestReceiver(Oid transientoid)
  */
 static void
 transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-										 MemcachedState *mc_state)
+										 BackendContext *backend_state)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
 	Relation	transientrel;
@@ -433,7 +433,7 @@ transientrel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
  */
 static void
 transientrel_receive(TupleTableSlot *slot, DestReceiver *self,
-										 MemcachedState *mc_state)
+										 BackendContext *backend_state)
 {
 	DR_transientrel *myState = (DR_transientrel *) self;
 	HeapTuple	tuple;

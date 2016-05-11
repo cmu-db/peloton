@@ -63,10 +63,10 @@ static ObjectAddress CreateAsReladdr = {InvalidOid, InvalidOid, 0};
 
 // add memcached dummy ptr
 static void intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-														MemcachedState *mc_state = nullptr);
+														BackendContext *backend_state = nullptr);
 // add memcached dummy ptr
 static void intorel_receive(TupleTableSlot *slot, DestReceiver *self,
-														MemcachedState *mc_state = nullptr);
+														BackendContext *backend_state = nullptr);
 static void intorel_shutdown(DestReceiver *self);
 static void intorel_destroy(DestReceiver *self);
 
@@ -286,7 +286,7 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
  */
 static void
 intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-								MemcachedState *mc_state)
+								BackendContext *backend_state)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	IntoClause *into = myState->into;
@@ -488,7 +488,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
  * intorel_receive --- receive one tuple
  */
 static void
-intorel_receive(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+intorel_receive(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	DR_intorel *myState = (DR_intorel *) self;
 	HeapTuple	tuple;

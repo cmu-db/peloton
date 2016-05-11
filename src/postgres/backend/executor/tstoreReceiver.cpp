@@ -39,9 +39,9 @@ typedef struct
 
 // Note: added dummy memcached pointer
 static void tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self,
-																			MemcachedState *mc_state = nullptr);
+																			BackendContext *backend_state = nullptr);
 static void tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self,
-																			MemcachedState *mc_state = nullptr);
+																			BackendContext *backend_state = nullptr);
 
 
 /*
@@ -51,7 +51,7 @@ static void tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self,
  */
 static void
 tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo,
-											MemcachedState *mc_state = nullptr)
+											BackendContext *backend_state = nullptr)
 {
 	TStoreState *myState = (TStoreState *) self;
 	bool		needtoast = false;
@@ -97,7 +97,7 @@ tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo,
  * This is for the easy case where we don't have to detoast.
  */
 static void
-tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TStoreState *myState = (TStoreState *) self;
 
@@ -109,7 +109,7 @@ tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self, MemcachedSta
  * This is for the case where we have to detoast any toasted values.
  */
 static void
-tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TStoreState *myState = (TStoreState *) self;
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;

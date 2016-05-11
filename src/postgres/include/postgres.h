@@ -51,7 +51,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-// used by MemcachedState
+// used for Memcached State
 #include "lib/stringinfo.h"
 
 /* ----------------------------------------------------------------
@@ -171,11 +171,9 @@ typedef struct
 	char		va_data[FLEXIBLE_ARRAY_MEMBER]; /* Type-specific data */
 } varattrib_1b_e;
 
-/* state struct used by memcached benchamrk */
-
-struct MemcachedState{
-	StringInfoData result;
-	/* add memcached return status */
+/* generic state struct, used by memcached for now */
+struct BackendContext {
+	StringInfoData memcached_result;
 };
 
 /*

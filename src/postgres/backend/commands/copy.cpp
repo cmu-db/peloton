@@ -4391,7 +4391,7 @@ CopyGetAttnums(TupleDesc tupDesc, Relation rel, List *attnamelist)
  */
 static void
 copy_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-									MemcachedState *mc_state)
+									BackendContext *backend_state)
 {
 	/* no-op */
 }
@@ -4402,7 +4402,7 @@ copy_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
  * Note: added dummy memcached state
  */
 static void
-copy_dest_receive(TupleTableSlot *slot, DestReceiver *self, MemcachedState *mc_state)
+copy_dest_receive(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	DR_copy    *myState = (DR_copy *) self;
 	CopyState	cstate = myState->cstate;

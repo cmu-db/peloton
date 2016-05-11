@@ -46,13 +46,13 @@
  */
 static void
 donothingReceive(TupleTableSlot *slot, DestReceiver *self,
-								 MemcachedState *mc_state = nullptr)
+								 BackendContext *backend_state = nullptr)
 {
 }
 
 static void
 donothingStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
-								 MemcachedState *mc_state = nullptr)
+								 BackendContext *backend_state = nullptr)
 {
 }
 

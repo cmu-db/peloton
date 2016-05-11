@@ -173,9 +173,6 @@ extern thread_local char pkglib_path[];
 extern char postgres_exec_path[];
 #endif
 
-/* Memcached state */
-extern thread_local struct MemcachedState *mc_state;
-
 /*
  * done in storage/backendid.h for now.
  *
