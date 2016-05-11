@@ -168,9 +168,9 @@ static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
 // added dummy memcached state
 static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-																MemcachedState *mc_state = nullptr);
+																BackendContext *backend_state = nullptr);
 static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self,
-																MemcachedState *mc_state = nullptr);
+																BackendContext *backend_state = nullptr);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
 
@@ -1897,7 +1897,7 @@ CreateSQLFunctionDestReceiver(void)
  */
 static void
 sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
-										MemcachedState *mc_state)
+										BackendContext *backend_state)
 {
 	/* no-op */
 }
@@ -1907,7 +1907,7 @@ sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
  */
 static void
 sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self,
-										MemcachedState *mc_state)
+										BackendContext *backend_state)
 {
 	DR_sqlfunction *myState = (DR_sqlfunction *) self;
 

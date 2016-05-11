@@ -268,8 +268,8 @@ static int Shutdown = NoShutdown;
 static bool FatalError = false;    /* T if recovering from backend crash */
 static bool RecoveryError = false; /* T if WAL recovery failed */
 
-char *memcached_dbname = strdup("postgres");
-char *memcached_username = strdup("nitin");
+std::string memcached_dbname = "postgres";
+std::string memcached_username = "postgres";
 /*
  * We use a simple state machine to control startup, shutdown, and
  * crash recovery (which is rather like shutdown followed by startup).
@@ -3573,10 +3573,6 @@ static void restore_backend_variables(BackendParameters *param, Port *port);
 static void BackendTask(Backend *bn, Port *port, BackendParameters *param,
                         bool is_memcached) {
   // free(bn);
-  if(is_memcached){
-    mc_state = new MemcachedState();
-  }
-
   IsBackend = true;
 
   MemoryContextInit();
@@ -3916,8 +3912,8 @@ static void BackendInitialize(Port *port, bool is_memcached) {
     if (status != STATUS_OK) proc_exit(0);
   } else {
     // memcached credentials
-    port->database_name = memcached_dbname;
-    port->user_name = memcached_username;
+   port->database_name =  pstrdup(memcached_dbname.c_str());
+   port->user_name =  pstrdup(memcached_username.c_str());
   }
 
 
@@ -4587,10 +4583,6 @@ static void ExitPostmaster(int status) {
    *
    * MUST		-- vadim 05-10-1999
    */
-
-  // free memcached db data
-  free(memcached_dbname);
-  free(memcached_username);
 
   proc_exit(status);
 }

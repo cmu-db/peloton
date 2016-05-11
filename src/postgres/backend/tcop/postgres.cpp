@@ -81,10 +81,10 @@
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
-// TODO: Peloton Changes
+// Peloton Changes
 #include "backend/logging/log_manager.h"
 
-// TODO: Memcached Changes
+// Memcached Changes
 
 #include "postmaster/memcached.h"
 
@@ -822,7 +822,7 @@ List *pg_plan_queries(List *querytrees, int cursorOptions,
  * Execute a "simple Query" protocol message.
  */
 static void exec_simple_query(const char *query_string,
-                              MemcachedState* mc_state = nullptr) {
+                              BackendContext* backend_state = nullptr) {
   CommandDest dest = whereToSendOutput;
   MemoryContext oldcontext;
   List *parsetree_list;
@@ -1025,7 +1025,7 @@ static void exec_simple_query(const char *query_string,
      *
      */
     (void)PortalRun(portal, FETCH_ALL, isTopLevel, receiver, receiver,
-                    completionTag, mc_state);
+                    completionTag, backend_state);
 
     (*receiver->rDestroy)(receiver);
 
@@ -4404,19 +4404,20 @@ void MemcachedMain(int argc, char *argv[], Port *port) {
         }
       }
 
-      mc_state->result.len = 0;
+      BackendContext backend_state;
+      backend_state.memcached_result.len = 0;
 
-      exec_simple_query(&query_line[0], mc_state);
+      exec_simple_query(&query_line[0], &backend_state);
       // proceed to frontend write only if response is not empty
-      parse_select_result_cols(&mc_state->result, query_result, op, mc_state->result.len);
+      parse_select_result_cols(&backend_state.memcached_result, query_result, op, backend_state.memcached_result.len);
 
       if (!mc_sock.write_response(query_result + "\r\n")) {
         // terminate the thread
         terminate = true;
       }
       // clear the result data
-      if(mc_state->result.len > 0)
-        pfree(mc_state->result.data);
+      if(backend_state.memcached_result.len > 0)
+        pfree(backend_state.memcached_result.data);
     } else {
       // terminate the thread
       terminate = true;

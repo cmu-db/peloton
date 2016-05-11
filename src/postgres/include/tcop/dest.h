@@ -112,11 +112,11 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveSlot) (TupleTableSlot *slot,
-											DestReceiver *self, MemcachedState* mc_state);
+											DestReceiver *self, BackendContext* backend_state);
 	/* Per-executor-run initialization and shutdown: */
 	void		(*rStartup) (DestReceiver *self,
 										 int operation,
-										 TupleDesc typeinfo, MemcachedState* mc_state);
+										 TupleDesc typeinfo, BackendContext* backend_state);
 	void		(*rShutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
 	void		(*rDestroy) (DestReceiver *self);
