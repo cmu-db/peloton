@@ -75,6 +75,18 @@ void Usage(FILE *out);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
+void ValidateScaleFactor(const configuration &state);
+
+void ValidateColumnCount(const configuration &state);
+
+void ValidateUpdateRatio(const configuration &state);
+
+void ValidateBackendCount(const configuration &state);
+
+void ValidateDuration(const configuration &state);
+
+void ValidateSkewFactor(const configuration &state);
+
 }  // namespace ycsb
 }  // namespace benchmark
 }  // namespace peloton
