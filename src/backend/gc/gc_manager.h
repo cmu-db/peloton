@@ -66,7 +66,7 @@ class GCManager {
                         const oid_t &tuple_id, const cid_t &tuple_end_cid) = 0;
 
   // recycle invalid version
-  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id) = 0;
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 };

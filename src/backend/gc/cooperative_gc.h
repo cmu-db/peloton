@@ -59,8 +59,7 @@ public:
                         const oid_t &tuple_id, const cid_t &tuple_end_cid);
 
 
-  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                                const oid_t &tuple_id);
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
