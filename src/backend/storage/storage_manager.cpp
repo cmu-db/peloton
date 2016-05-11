@@ -85,8 +85,8 @@ StorageManager::StorageManager()
 
   switch (peloton_logging_mode) {
     // Check for NVM FS for data
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD: {
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
@@ -96,8 +96,8 @@ StorageManager::StorageManager()
     } break;
 
     // Check for HDD FS
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD: {
+    case LOGGING_TYPE_HDD_WAL:
+    case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
@@ -149,7 +149,7 @@ StorageManager::StorageManager()
 
 StorageManager::~StorageManager() {
   // Check if we need a PMEM pool
-  if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
+  if (peloton_logging_mode != LOGGING_TYPE_NVM_WAL) return;
 
   // sync and unmap the data file
   if (data_file_address != nullptr) {
