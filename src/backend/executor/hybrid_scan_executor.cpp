@@ -287,17 +287,18 @@ bool HybridScanExecutor::DExecute() {
     // do two part search
     if (index_done_ == false) {
 
-      Timer<> timer;
-      timer.Start();
+      //Timer<> timer;
+      //timer.Start();
 
       if (indexed_tile_offset_ == INVALID_OID) {
         index_done_ = true;
       } else {
         ExecPrimaryIndexLookup();
       }
-      timer.Stop();
+      /*timer.Stop();
       double time_per_transaction = timer.GetDuration();
       printf(" %f\n", time_per_transaction);
+      */
     }
 
     if (IndexScanUtil() == true) {
@@ -364,8 +365,8 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
   
-  // Timer<> timer;
-  // timer.Start();
+ // Timer<> timer;
+ // timer.Start();
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -374,9 +375,9 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
   
-  // timer.Stop();
-  // double time_per_transaction = timer.GetDuration();
-  // printf(" %f\n", time_per_transaction);
+  //timer.Stop();
+  //double time_per_transaction = timer.GetDuration();
+  //printf(" %f\n", time_per_transaction);
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
   
@@ -430,7 +431,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
-
+  Timer<> timer;
+  timer.Start();
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
@@ -442,6 +444,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   if (tuple_location_ptrs.size() == 0) {
    // printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
+    timer.Stop();
+    double time_per_transaction = timer.GetDuration();
+    printf(" %f\n", time_per_transaction);
     index_done_ = true;
     return false;
   }
@@ -471,6 +476,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     std::cout << "block  " << t  << std::endl;
   }*/
 
+  timer.Stop();
+  double time_per_transaction = timer.GetDuration();
+  printf(" %f\n", time_per_transaction);
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {

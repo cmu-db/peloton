@@ -395,7 +395,6 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate, column_ids,
                                            index_scan_desc);
 
-  //const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
@@ -406,7 +405,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
   
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTestNoTime(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -460,7 +459,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTestNoTime(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
