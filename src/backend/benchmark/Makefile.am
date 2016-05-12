@@ -40,7 +40,7 @@ logger_SOURCES =  \
 
 logger_LDFLAGS =
 logger_CPPFLAGS = $(benchmark_common_cppflags)
-logger_LDADD = $(benchmark_common_ldadd)
+logger_LDADD = $(benchmark_common_ldadd) -lboost_system -lboost_filesystem
 
 ######################################################################
 # YCSB
