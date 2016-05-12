@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/common/value.h"
 
 namespace peloton {
 namespace storage{
@@ -121,6 +122,8 @@ extern double new_order_remote_txns;
 extern const int syllable_count;
 extern const char *syllables[];
 
+extern const std::string data_constant;
+
 struct NURandConstant {
   int c_last;
   int c_id;
@@ -191,6 +194,7 @@ BuildStockTuple(const int stock_id,
 /////////////////////////////////////////////////////////
 // Utils
 /////////////////////////////////////////////////////////
+void GetStringFromValue(const peloton::Value &value, std::string &str);
 
 std::string GetRandomAlphaNumericString(const size_t string_length);
 
@@ -210,6 +214,8 @@ int GetRandomIntegerExcluding(const int lower_bound,
                               const int exclude_sample);
 
 double GetRandomDouble(const double lower_bound, const double upper_bound);
+
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum);
 
 std::string GetStreetName();
 

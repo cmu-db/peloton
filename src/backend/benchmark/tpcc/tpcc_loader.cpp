@@ -114,6 +114,7 @@ double new_order_remote_txns = 0.01;
 const int syllable_count = 10;
 const char *syllables[syllable_count] = {"BAR", "OUGHT", "ABLE", "PRI", "PRES",
                            "ESES", "ANTI", "CALLY", "ATION", "EING"};
+const std::string data_constant = std::string("FOO");
 
 NURandConstant nu_rand_const;
 /////////////////////////////////////////////////////////
@@ -893,16 +894,19 @@ int GetNURand(int a, int x, int y) {
 std::string GetLastName(int number) {
   assert(number >= 0 && number <= 999);
 
-  int idx1 = number / 100;
-  int idx2 = (number / 10 % 10);
-  int idx3 = number % 10;
+  int idx[3];
+  idx[0] = number / 100;
+  idx[1] = (number / 10 % 10);
+  idx[2] = number % 10;
+  auto res = std::string(name_length, '\0');
+  int res_itr = 0;
 
-  char lastname_cstr[name_length];
-  std::strcpy(lastname_cstr, syllables[idx1]);
-  std::strcat(lastname_cstr, syllables[idx2]);
-  std::strcat(lastname_cstr, syllables[idx3]);
-
-  return std::string(lastname_cstr, name_length);
+  for ( int i = 0; i < 3; ++i) {
+    for (const char *c = syllables[idx[i]]; *c != '\0'; ++c) {
+      res[res_itr++] = *c;
+    }
+  }
+  return res;
 }
 
 // A non-uniform random last name, as defined by TPC-C 4.3.2.3.
@@ -928,6 +932,31 @@ std::string GetRandomAlphaNumericString(const size_t string_length) {
   return sample;
 }
 
+void GetStringFromValue(const Value &value, std::string &str) {
+  assert(value.GetValueType() == VALUE_TYPE_VARCHAR);
+  str.clear();
+
+  // Check if it's null
+  if (value.IsNull()) {
+    return;
+  }
+
+  const char *str_bytes;
+  auto length = value.GetObjectLengthWithoutNull();
+  if (value.m_sourceInlined) {
+    str_bytes = *reinterpret_cast<char *const *>(value.m_data) + value.GetObjectLengthLength();
+  } else {
+    Varlen *sref = *reinterpret_cast<Varlen *const *>(value.m_data);
+    str_bytes = sref->Get() + value.GetObjectLengthLength();
+  }
+
+  str.reserve(length+1);
+  for (int i = 0; i < length; ++i) {
+    str.push_back(*(str_bytes + i));
+  }
+
+  LOG_INFO("Get string %s from value", str.c_str());
+}
 
 bool GetRandomBoolean(double ratio) {
   double sample = (double) rand() / RAND_MAX;
@@ -962,6 +991,21 @@ double GetRandomDouble(const double lower_bound, const double upper_bound) {
 
   double sample = dist(rng);
   return sample;
+}
+
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum) {
+  assert(decimal_places > 0);
+  assert(minimum < maximum);
+
+  int multiplier = 1;
+  for ( int i = 0; i < decimal_places; ++i ) {
+    multiplier *= 10;
+  }
+
+  int int_min = (int)(minimum * multiplier + 0.5);
+  int int_max = (int)(maximum * multiplier + 0.5);
+
+  return GetRandomDouble(int_min, int_max) / (double)(multiplier);
 }
 
 std::string GetStreetName() {
@@ -1037,7 +1081,7 @@ std::unique_ptr<storage::Tuple> BuildWarehouseTuple(const int warehouse_id,
   std::unique_ptr<storage::Tuple> warehouse_tuple(new storage::Tuple(warehouse_table_schema, allocate));
 
   // W_ID
-  warehouse_tuple->SetValue(0, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  warehouse_tuple->SetValue(0, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
   // W_NAME
   auto w_name = GetRandomAlphaNumericString(warehouse_name_length);
   warehouse_tuple->SetValue(1, ValueFactory::GetStringValue(w_name), pool.get());
@@ -1070,7 +1114,7 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
   std::unique_ptr<storage::Tuple> district_tuple(new storage::Tuple(district_table_schema, allocate));
 
   // D_ID
-  district_tuple->SetValue(0, ValueFactory::GetIntegerValue(district_id), nullptr);
+  district_tuple->SetValue(0, ValueFactory::GetTinyIntValue(district_id), nullptr);
   // D_W_ID
   district_tuple->SetValue(1, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
   // D_NAME
@@ -1166,9 +1210,9 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   // C_YTD_PAYMENT
   customer_tuple->SetValue(17, ValueFactory::GetDoubleValue(customers_init_ytd), nullptr);
   // C_PAYMENT_CNT
-  customer_tuple->SetValue(18, ValueFactory::GetDoubleValue(customers_init_payment_cnt), nullptr);
+  customer_tuple->SetValue(18, ValueFactory::GetIntegerValue(customers_init_payment_cnt), nullptr);
   // C_DELIVERY_CNT
-  customer_tuple->SetValue(19, ValueFactory::GetDoubleValue(customers_init_delivery_cnt), nullptr);
+  customer_tuple->SetValue(19, ValueFactory::GetIntegerValue(customers_init_delivery_cnt), nullptr);
   // C_DATA
   auto c_data = GetRandomAlphaNumericString(data_length);
   customer_tuple->SetValue(20, ValueFactory::GetStringValue(c_data), pool.get());

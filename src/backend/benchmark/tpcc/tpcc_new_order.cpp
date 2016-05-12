@@ -79,6 +79,39 @@ namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
+// static Planner::IndexScanPlan &BuildItemIndexScanPlan() {
+//   std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
+
+//   // Create and set up index scan executor
+//   std::vector<oid_t> item_key_column_ids = {0}; // I_ID
+//   std::vector<ExpressionType> item_expr_types;
+//   std::vector<Value> item_key_values;
+//   std::vector<expression::AbstractExpression *> runtime_keys;
+
+//   item_expr_types.push_back(
+//     ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+//   item_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
+
+//   auto item_pkey_index = item_table->GetIndexWithOid(
+//     item_table_pkey_index_oid);
+  
+//   planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
+//     item_pkey_index, item_key_column_ids, item_expr_types,
+//     item_key_values, runtime_keys);
+
+//   // Create plan node.
+//   auto predicate = nullptr;
+
+//   static planner::IndexScanPlan item_index_scan_node(item_table, predicate,
+//    item_column_ids,
+//    item_index_scan_desc);
+//   return item_index_scan_node;
+// }
+
+
+
+
+
 bool RunNewOrder(){
   /*
      "NEW_ORDER": {
@@ -97,9 +130,14 @@ bool RunNewOrder(){
 
   LOG_INFO("-------------------------------------");
 
+/////////////////////////////////////////////////////////
+// PREPARE ARGUMENTS
+/////////////////////////////////////////////////////////
+
   int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  int customer_id = GetRandomInteger(0, state.customers_per_district);
+  // FIXME: minus one here?
+  int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
   //auto o_entry_ts = GetTimeStamp();
 
@@ -122,42 +160,54 @@ bool RunNewOrder(){
     ol_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
   }
 
+
+/////////////////////////////////////////////////////////
+// BEGIN TRANSACTION
+/////////////////////////////////////////////////////////
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
+
   //std::vector<float> i_prices;
-  LOG_INFO("getItemInfo SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
+  LOG_INFO("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
   for (auto item_id : i_ids) {
     LOG_INFO("item_id: %d", int(item_id));
 
-    std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
+//    Planner::IndexScanPlan &item_index_scan_node = BuildItemIndexScanPlan();
 
-    // Create and set up index scan executor
-    std::vector<oid_t> item_key_column_ids = {0}; // I_ID
-    std::vector<ExpressionType> item_expr_types;
-    std::vector<Value> item_key_values;
-    std::vector<expression::AbstractExpression *> runtime_keys;
 
-    item_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    item_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
 
-    auto item_pkey_index = item_table->GetIndexWithOid(
-      item_table_pkey_index_oid);
-    
-    planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
-      item_pkey_index, item_key_column_ids, item_expr_types,
-      item_key_values, runtime_keys);
+  std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
 
-    // Create plan node.
-    auto predicate = nullptr;
+  // Create and set up index scan executor
+  std::vector<oid_t> item_key_column_ids = {0}; // I_ID
+  std::vector<ExpressionType> item_expr_types;
+  std::vector<Value> item_key_values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-    planner::IndexScanPlan item_index_scan_node(item_table, predicate,
-     item_column_ids,
-     item_index_scan_desc);
+  item_expr_types.push_back(
+    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  item_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
+
+  auto item_pkey_index = item_table->GetIndexWithOid(
+    item_table_pkey_index_oid);
+  
+  planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
+    item_pkey_index, item_key_column_ids, item_expr_types,
+    item_key_values, runtime_keys);
+
+  // Create plan node.
+  auto predicate = nullptr;
+
+  static planner::IndexScanPlan item_index_scan_node(item_table, predicate,
+   item_column_ids,
+   item_index_scan_desc);  
+
+
+
 
     executor::IndexScanExecutor item_index_scan_executor(&item_index_scan_node,
       context.get());
@@ -418,7 +468,8 @@ bool RunNewOrder(){
     int item_id = i_ids.at(i);
     int ol_w_id = ol_w_ids.at(i);
     int ol_qty = ol_qtys.at(i);
-    // LOG_INFO("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_ FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
+    
+    LOG_INFO("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
 
     std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
 

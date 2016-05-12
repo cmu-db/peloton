@@ -117,7 +117,6 @@ bool IndexScanExecutor::DExecute() {
   }
   // Already performed the index lookup
   assert(done_);
-
   while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
     if (result_[result_itr_]->GetTupleCount() == 0) {
       result_itr_++;
@@ -129,7 +128,6 @@ bool IndexScanExecutor::DExecute() {
     }
 
   }  // end while
-
   return false;
 }
 
