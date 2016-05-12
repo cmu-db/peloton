@@ -194,6 +194,10 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
     recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
   }
 
+  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
+           tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
+           tuple_metadata.table_id);
+
 }
 
 

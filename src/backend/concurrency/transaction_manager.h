@@ -97,7 +97,9 @@ class TransactionManager {
    * concurrency control) tuples into possibly free from all underlying
    * concurrency implementations of transactions.
    */
+
   void RecycleInvalidTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
+    return;
     auto& gc_instance = gc::GCManagerFactory::GetInstance();
 
     auto tile_group =
@@ -113,6 +115,7 @@ class TransactionManager {
     if(gc::GCManagerFactory::GetGCType() != GC_TYPE_VACUUM) {
       return;
     }
+
     auto& gc_instance = gc::GCManagerFactory::GetInstance();
 
     auto tile_group =
