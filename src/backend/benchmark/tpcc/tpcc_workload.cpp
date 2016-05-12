@@ -485,6 +485,17 @@ void ExecuteUpdateTest(executor::AbstractExecutor* executor) {
   while (executor->Execute() == true);
 }
 
+// Note: this function is the same as \b ExecuteUpdateTest
+void ExecuteDeleteTest(executor::AbstractExecutor* executor) {
+  bool status = executor->Init();
+  if (status == false) {
+    throw Exception("Init failed");
+  }
+
+  while (executor->Execute() == true)
+    ;
+}
+
 
 }  // namespace tpcc
 }  // namespace benchmark

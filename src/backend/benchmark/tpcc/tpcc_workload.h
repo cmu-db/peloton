@@ -99,6 +99,8 @@ ExecuteReadTest(executor::AbstractExecutor* executor);
 
 void ExecuteUpdateTest(executor::AbstractExecutor* executor);
 
+void ExecuteDeleteTest(executor::AbstractExecutor* executor);
+
 }  // namespace tpcc
 }  // namespace benchmark
 }  // namespace peloton
