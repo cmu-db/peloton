@@ -74,6 +74,37 @@ namespace tpcc {
 #define COL_IDX_C_PAYMENT_CNT     18
 #define COL_IDX_C_DELIVERY_CNT    19
 #define COL_IDX_C_DATA            20
+// District
+#define COL_IDX_D_ID              0
+#define COL_IDX_D_W_ID            1
+#define COL_IDX_D_NAME            2
+#define COL_IDX_D_STREET_1        3
+#define COL_IDX_D_STREET_2        4
+#define COL_IDX_D_CITY            5
+#define COL_IDX_D_STATE           6
+#define COL_IDX_D_ZIP             7
+#define COL_IDX_D_TAX             8
+#define COL_IDX_D_YTD             9
+#define COL_IDX_D_NEXT_O_ID       10
+// Stock
+#define COL_IDX_S_I_ID            0
+#define COL_IDX_S_W_ID            1
+#define COL_IDX_S_QUANTITY        2
+#define COL_IDX_S_DIST_01         3
+#define COL_IDX_S_DIST_02         4
+#define COL_IDX_S_DIST_03         5
+#define COL_IDX_S_DIST_04         6
+#define COL_IDX_S_DIST_05         7
+#define COL_IDX_S_DIST_06         8
+#define COL_IDX_S_DIST_07         9
+#define COL_IDX_S_DIST_08         10
+#define COL_IDX_S_DIST_09         11
+#define COL_IDX_S_DIST_10         12
+#define COL_IDX_S_YTD             13
+#define COL_IDX_S_ORDER_CNT       14
+#define COL_IDX_S_REMOTE_CNT      15
+#define COL_IDX_S_DATA            16
+
 
 
 extern configuration state;

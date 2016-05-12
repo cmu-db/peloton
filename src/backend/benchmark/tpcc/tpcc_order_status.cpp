@@ -125,10 +125,10 @@ bool RunOrderStatus(){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+    customer_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
@@ -164,10 +164,10 @@ bool RunOrderStatus(){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+    customer_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_key_values.push_back(ValueFactory::GetStringValue(c_last));
@@ -221,9 +221,9 @@ bool RunOrderStatus(){
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  orders_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+  orders_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+  orders_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   orders_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
 
@@ -274,9 +274,9 @@ bool RunOrderStatus(){
     std::vector<Value> order_line_key_values;
 
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+    order_line_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    order_line_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(orders[0][0]);
 

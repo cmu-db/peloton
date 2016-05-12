@@ -124,7 +124,7 @@ bool RunDelivery(){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    new_order_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);    
@@ -173,7 +173,7 @@ bool RunDelivery(){
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_key_values.push_back(no_o_id);
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    orders_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
@@ -216,7 +216,7 @@ bool RunDelivery(){
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(no_o_id);
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    order_line_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
@@ -235,7 +235,7 @@ bool RunDelivery(){
     // Construct aggregate executor
     std::vector<oid_t> group_by_columns;
     // Prepare proj info
-    planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 0}}};
+    planner::ProjectInfo::DirectMapList direct_map_list = {{0, {1, 0}}};
     std::unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
                               std::move(direct_map_list)));
@@ -284,7 +284,7 @@ bool RunDelivery(){
     std::vector<Value> new_order_key_values2;
 
     new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values2.push_back(ValueFactory::GetIntegerValue(d_id));
+    new_order_key_values2.push_back(ValueFactory::GetTinyIntValue(d_id));
     new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values2.push_back(ValueFactory::GetIntegerValue(warehouse_id));
     new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);    
@@ -420,7 +420,7 @@ bool RunDelivery(){
     customer_key_values.push_back(c_id);
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
