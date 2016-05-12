@@ -29,9 +29,14 @@
 
 #include "backend/benchmark/logger/logger_workload.h"
 #include "backend/benchmark/logger/logger_loader.h"
+
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
+
+#include "backend/benchmark/tpcc/tpcc_workload.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_loader.h"
 
 #include <unistd.h>
 
@@ -68,10 +73,16 @@ size_t GetLogFileSize();
 static void WriteOutput(double value) {
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%d %d %lf %d %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
-           state.logging_type, ycsb::state.update_ratio,
-           ycsb::state.backend_count, ycsb::state.scale_factor,
-           ycsb::state.skew_factor, ycsb::state.duration, state.nvm_latency,
-           state.pcommit_latency, state.flush_mode, state.asynchronous_mode,
+           state.logging_type,
+           ycsb::state.update_ratio,
+           ycsb::state.backend_count,
+           ycsb::state.scale_factor,
+           ycsb::state.skew_factor,
+           ycsb::state.duration,
+           state.nvm_latency,
+           state.pcommit_latency,
+           state.flush_mode,
+           state.asynchronous_mode,
            value);
 
   out << state.benchmark_type << " ";
@@ -215,9 +226,17 @@ bool PrepareLogFile() {
 
   timer.Stop();
 
-  // TODO: Pick YCSB or TPCC metrics based on benchmark type
-  auto throughput = ycsb::state.throughput;
-  auto latency = ycsb::state.latency;
+  // Pick metrics based on benchmark type
+  double throughput = 0;
+  double latency = 0;
+  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    throughput = ycsb::state.throughput;
+    latency = ycsb::state.latency;
+  }
+  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+    throughput = tpcc::state.throughput;
+    latency = tpcc::state.latency;
+  }
 
   // Log the build log time
   if (state.experiment_type == EXPERIMENT_TYPE_THROUGHPUT) {
@@ -242,7 +261,14 @@ void ResetSystem() {
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.ResetStates();
 
-  ycsb::CreateYCSBDatabase();
+  // Reset database (only needed for WAL not WBL)
+  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::CreateYCSBDatabase();
+  }
+  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+    tpcc::CreateTPCCDatabase();
+  }
+
 }
 
 /**
@@ -290,11 +316,23 @@ void DoRecovery() {
 //===--------------------------------------------------------------------===//
 
 void BuildLog() {
-  ycsb::CreateYCSBDatabase();
 
-  ycsb::LoadYCSBDatabase();
+  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::CreateYCSBDatabase();
 
-  ycsb::RunWorkload();
+    ycsb::LoadYCSBDatabase();
+
+    ycsb::RunWorkload();
+  }
+  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+    tpcc::CreateTPCCDatabase();
+
+    tpcc::LoadTPCCDatabase();
+
+    tpcc::RunWorkload();
+  }
+
+
 }
 
 size_t GetLogFileSize() {

@@ -36,7 +36,10 @@ logger_SOURCES =  \
                     backend/benchmark/logger/logger_loader.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
-                    backend/benchmark/ycsb/ycsb_loader.cpp
+                    backend/benchmark/ycsb/ycsb_loader.cpp \
+                    backend/benchmark/tpcc/tpcc_configuration.cpp \
+                    backend/benchmark/tpcc/tpcc_workload.cpp \
+                    backend/benchmark/tpcc/tpcc_loader.cpp
 
 logger_LDFLAGS =
 logger_CPPFLAGS = $(benchmark_common_cppflags)

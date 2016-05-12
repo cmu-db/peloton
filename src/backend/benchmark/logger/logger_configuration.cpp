@@ -20,6 +20,7 @@
 #include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
 
 namespace peloton {
 namespace benchmark {
@@ -265,11 +266,17 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.backend_count = 2;
   ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
 
+  // Default Values
+  tpcc::state.scale_factor = 1;
+  tpcc::state.duration = 1000;
+  tpcc::state.backend_count = 2;
+
   // Parse args
   while (1) {
     int idx = 0;
     // logger - a:e:f:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:s:u:
+    // tpcc   - b:d:k:
     int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
 
     if (c == -1) break;
@@ -306,15 +313,18 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         // YCSB
       case 'b':
         ycsb::state.backend_count = atoi(optarg);
+        tpcc::state.backend_count = atoi(optarg);
         break;
       case 'c':
         ycsb::state.column_count = atoi(optarg);
         break;
       case 'd':
         ycsb::state.duration = atoi(optarg);
+        tpcc::state.duration = atoi(optarg);
         break;
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
+        tpcc::state.scale_factor = atoi(optarg);
         break;
       case 's':
         ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
@@ -350,12 +360,27 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidatePCOMMITLatency(state);
 
   // Print YCSB configuration
-  ycsb::ValidateScaleFactor(ycsb::state);
-  ycsb::ValidateColumnCount(ycsb::state);
-  ycsb::ValidateUpdateRatio(ycsb::state);
-  ycsb::ValidateBackendCount(ycsb::state);
-  ycsb::ValidateDuration(ycsb::state);
-  ycsb::ValidateSkewFactor(ycsb::state);
+  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+    ycsb::ValidateScaleFactor(ycsb::state);
+    ycsb::ValidateColumnCount(ycsb::state);
+    ycsb::ValidateUpdateRatio(ycsb::state);
+    ycsb::ValidateBackendCount(ycsb::state);
+    ycsb::ValidateDuration(ycsb::state);
+    ycsb::ValidateSkewFactor(ycsb::state);
+  }
+  // Print TPCC configuration
+  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+    tpcc::ValidateBackendCount(tpcc::state);
+    tpcc::ValidateDuration(tpcc::state);
+    tpcc::ValidateScaleFactor(tpcc::state);
+
+    // Static TPCC parameters
+    tpcc::state.warehouse_count = tpcc::state.scale_factor;
+    tpcc::state.item_count = 10 * tpcc::state.warehouse_count;
+    tpcc::state.districts_per_warehouse = 2;
+    tpcc::state.customers_per_district = 30;
+    tpcc::state.new_orders_per_district = 9;
+  }
 
 }
 

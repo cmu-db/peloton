@@ -71,7 +71,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.scale_factor = 1;
   state.duration = 1000;
   state.backend_count = 2;
-  state.warehouse_count = 1;
 
   // Parse args
   while (1) {
@@ -103,7 +102,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     }
   }
 
-  // Static parameters
+  // Static TPCC parameters
   state.warehouse_count = state.scale_factor;
   state.item_count = 10 * state.warehouse_count;
   state.districts_per_warehouse = 2;

@@ -15,8 +15,8 @@
 
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/logger/logger_workload.h"
-
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
 
 // Logging mode
 extern LoggingType peloton_logging_mode;
@@ -29,6 +29,9 @@ namespace peloton {
 namespace benchmark {
 
 namespace ycsb {
+configuration state;
+}
+namespace tpcc {
 configuration state;
 }
 
