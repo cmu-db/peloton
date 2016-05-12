@@ -4,7 +4,7 @@
 //
 // gc_manager.h
 //
-// Identification: src/backend/gc/gc_manager.h
+// Identification: src/backend/gc/off_gc.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
