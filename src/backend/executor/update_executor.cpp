@@ -33,7 +33,10 @@ namespace executor {
  */
 UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {
+		delete project_info_;
+		project_info_ = nullptr;
+	}
 
 /**
  * @brief Nothing to init at the moment.
