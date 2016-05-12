@@ -173,7 +173,7 @@ void CleanUpLogDirectory() {
 bool PrepareLogFile() {
 
   // Clean up log directory
-  //CleanUpLogDirectory();
+  CleanUpLogDirectory();
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
