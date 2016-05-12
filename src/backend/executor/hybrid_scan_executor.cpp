@@ -440,6 +440,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     return false;
   }
 
+  std::set<oid_t> oid_ts;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
@@ -449,6 +450,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
         tuple_location.block >= current_tile_group_offset_) {
  //     oid_ts_.insert(tuple_location.block); 
       item_pointers_.insert(tuple_location);
+      oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
@@ -471,9 +473,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
-//  for (auto t : oid_ts_) {
-//    printf("block %d\n", t);
- // }
+  for (auto t : oid_ts) {
+    std::cout << "block  " << t  << std::endl;
+  }
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
