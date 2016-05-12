@@ -79,8 +79,8 @@ namespace ycsb {
 
 MixedPlans PrepareMixedPlan() {
 
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(nullptr));
+  // std::unique_ptr<executor::ExecutorContext> context(
+  //     new executor::ExecutorContext(nullptr));
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
@@ -112,7 +112,7 @@ MixedPlans PrepareMixedPlan() {
       user_table, predicate, column_ids, index_scan_desc);
 
   executor::IndexScanExecutor *index_scan_executor =
-      new executor::IndexScanExecutor(&index_scan_node, context.get());
+      new executor::IndexScanExecutor(&index_scan_node, nullptr);
 
   index_scan_executor->Init();
 
@@ -126,7 +126,7 @@ MixedPlans PrepareMixedPlan() {
       user_table, predicate, column_ids, index_scan_desc);
   
   executor::IndexScanExecutor *update_index_scan_executor =
-      new executor::IndexScanExecutor(&index_scan_node, context.get());
+      new executor::IndexScanExecutor(&index_scan_node, nullptr);
 
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
@@ -145,7 +145,7 @@ MixedPlans PrepareMixedPlan() {
   planner::UpdatePlan update_node(user_table, std::move(project_info));
 
   executor::UpdateExecutor *update_executor = 
-      new executor::UpdateExecutor(&update_node, context.get());
+      new executor::UpdateExecutor(&update_node, nullptr);
 
   update_executor->AddChild(index_scan_executor);
 
@@ -165,6 +165,11 @@ MixedPlans PrepareMixedPlan() {
 }
   
 bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, int write_count) {
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
+  mixed_plans.SetContext(context.get());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

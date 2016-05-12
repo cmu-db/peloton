@@ -29,6 +29,13 @@ class UpdateExecutor : public AbstractExecutor {
   explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
+  // for plan/executor caching.
+  // for OLTP queries, most of the member variables in plan/executor can be reused.
+  void SetContext(ExecutorContext *executor_context) {
+    executor_context_ = executor_context;
+  }
+
+
   void SetTargetList(const planner::ProjectInfo::TargetList &target_list) {
     project_info_->SetTargetList(target_list);
   }

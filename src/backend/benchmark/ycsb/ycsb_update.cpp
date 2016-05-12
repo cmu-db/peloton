@@ -78,8 +78,8 @@ namespace ycsb {
 
 UpdatePlans PrepareUpdatePlan() {
 
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(nullptr));
+  // std::unique_ptr<executor::ExecutorContext> context(
+  //     new executor::ExecutorContext(nullptr));
 
   /////////////////////////////////////////////////////////
   // INDEX SCAN + PREDICATE
@@ -115,7 +115,7 @@ UpdatePlans PrepareUpdatePlan() {
       user_table, predicate, column_ids, index_scan_desc);
   
   executor::IndexScanExecutor *index_scan_executor =
-      new executor::IndexScanExecutor(&index_scan_node, context.get());
+      new executor::IndexScanExecutor(&index_scan_node, nullptr);
 
   //index_scan_executor->Init();
 
@@ -146,7 +146,7 @@ UpdatePlans PrepareUpdatePlan() {
   planner::UpdatePlan update_node(user_table, std::move(project_info));
 
   executor::UpdateExecutor *update_executor = 
-      new executor::UpdateExecutor(&update_node, context.get());
+      new executor::UpdateExecutor(&update_node, nullptr);
 
   update_executor->AddChild(index_scan_executor);
 
@@ -161,12 +161,15 @@ UpdatePlans PrepareUpdatePlan() {
 
 
 bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(nullptr));
+
+  update_plans.SetContext(context.get());
+  update_plans.ResetState();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
-
-  update_plans.ResetState();
 
   std::vector<Value> values;
 

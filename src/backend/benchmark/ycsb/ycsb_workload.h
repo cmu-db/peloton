@@ -66,6 +66,11 @@ struct UpdatePlans {
   executor::IndexScanExecutor* index_scan_executor_;
   executor::UpdateExecutor* update_executor_;
 
+  void SetContext(executor::ExecutorContext* context) {
+    index_scan_executor_->SetContext(context);
+    update_executor_->SetContext(context);
+  }
+
   void ResetState() {
     index_scan_executor_->ResetState();
   }
@@ -93,12 +98,20 @@ struct MixedPlans {
   executor::IndexScanExecutor* update_index_scan_executor_;
   executor::UpdateExecutor* update_executor_;
 
-  void ResetState() {
 
-    index_scan_executor_->ResetState();
+  void SetContext(executor::ExecutorContext* context) {
+    index_scan_executor_->SetContext(context);
 
-    update_index_scan_executor_->ResetState();
+    update_index_scan_executor_->SetContext(context);
+
+    update_executor_->SetContext(context);
   }
+
+  // in a mixed transaction, an executor is reused for several times.
+  // so we must reset the state every time we use it.
+
+  // void ResetState() {
+  // }
 
   void Cleanup() {
     delete index_scan_executor_;
