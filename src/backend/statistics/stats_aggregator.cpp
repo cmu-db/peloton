@@ -30,12 +30,13 @@ StatsAggregator::StatsAggregator()
       aggregation_interval_ms_(STATS_AGGREGATION_INTERVAL_MS),
       thread_number_(0),
       total_prev_txn_committed_(0) {
+  /*
   try {
     ofs_.open(peloton_stats_directory_, std::ofstream::out);
   }
   catch (std::ofstream::failure &e) {
     LOG_ERROR("Couldn't open the stats log file %s", e.what());
-  }
+  }*/
   aggregator_thread_ = std::thread(&StatsAggregator::RunAggregator, this);
 }
 StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
@@ -44,12 +45,13 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
       aggregation_interval_ms_(aggregation_interval_ms),
       thread_number_(0),
       total_prev_txn_committed_(0) {
+  /*
   try {
     ofs_.open(peloton_stats_directory_, std::ofstream::out);
   }
   catch (std::ofstream::failure &e) {
     LOG_ERROR("Couldn't open the stats log file %s", e.what());
-  }
+  }*/
   aggregator_thread_ = std::thread(&StatsAggregator::RunAggregator, this);
 }
 
@@ -94,8 +96,8 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
       current_txns_committed - total_prev_txn_committed_;
   double throughput_ = (double)txns_committed_this_interval / 1000 *
                        STATS_AGGREGATION_INTERVAL_MS;
-  double avg_throughput_ = (double)current_txns_committed / interval_cnt /
-                           STATS_AGGREGATION_INTERVAL_MS * 1000;
+  //double avg_throughput_ = (double)current_txns_committed / interval_cnt /
+  //                         STATS_AGGREGATION_INTERVAL_MS * 1000;
   if (interval_cnt == 1) {
     weighted_avg_throughput = throughput_;
   } else {
@@ -104,9 +106,10 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   }
 
   total_prev_txn_committed_ = current_txns_committed;
-  LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
+  //LOG_INFO("Average throughput:     %lf txn/s\n", avg_throughput_);
   LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
   LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
+  /*
   if (interval_cnt % STATS_LOG_INTERVALS == 0) {
     try {
       ofs_ << "At interval: " << interval_cnt << std::endl;
@@ -118,7 +121,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
     catch (std::ofstream::failure &e) {
       LOG_ERROR("Error when writing to the stats log file %s", e.what());
     }
-  }
+  }*/
 }
 
 void StatsAggregator::RunAggregator() {
