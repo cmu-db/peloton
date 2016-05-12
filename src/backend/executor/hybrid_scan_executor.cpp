@@ -287,11 +287,17 @@ bool HybridScanExecutor::DExecute() {
     // do two part search
     if (index_done_ == false) {
 
+      Timer<> timer;
+      timer.Start();
+
       if (indexed_tile_offset_ == INVALID_OID) {
         index_done_ = true;
       } else {
         ExecPrimaryIndexLookup();
       }
+      timer.Stop();
+      double time_per_transaction = timer.GetDuration();
+      printf(" %f\n", time_per_transaction);
     }
 
     if (IndexScanUtil() == true) {
@@ -447,7 +453,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
     ItemPointer tuple_location = *tuple_location_ptr;
     if (type_ == planner::HYBRID &&
-        tuple_location.block >= (current_tile_group_offset_ * 2 + 1)) {
+      tuple_location.block >= (current_tile_group_offset_ * 2 + 1)) {
       item_pointers_.insert(tuple_location);
       // oid_ts.insert(tuple_location.block);
     }
@@ -456,25 +462,15 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     // auto tile_group_header = tile_group.get()->GetHeader();
 
-      // perform predicate evaluation.
-      //if (predicate_ == nullptr) {
-          visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-      /*} else {
-          expression::ContainerTuple<storage::TileGroup> tuple(
-            tile_group.get(), tuple_location.offset);
-          auto eval =
-            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          if (eval == true) {
-            visible_tuples[tuple_location.block]
-              .push_back(tuple_location.offset);
-          }
-      }*/
+    // perform predicate evaluation.
+    visible_tuples[tuple_location.block].push_back(tuple_location.offset);
   }
 
   //printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
  /* for (auto t : oid_ts) {
     std::cout << "block  " << t  << std::endl;
   }*/
+
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
