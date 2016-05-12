@@ -48,7 +48,8 @@ class UpdateExecutor : public AbstractExecutor {
 
  private:
   storage::DataTable *target_table_ = nullptr;
-  std::unique_ptr<planner::ProjectInfo> project_info_;
+  //std::unique_ptr<planner::ProjectInfo> project_info_;
+  planner::ProjectInfo *project_info_ = nullptr;
 
   //const planner::ProjectInfo *project_info_ = nullptr;
 };
