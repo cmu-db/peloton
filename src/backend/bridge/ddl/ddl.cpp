@@ -102,7 +102,7 @@ void DDL::ProcessUtility(Node *parsetree) {
     }
 
     default: {
-      LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
+      LOG_TRACE("unrecognized node type: %d", (int)nodeTag(parsetree));
     } break;
   }
 }

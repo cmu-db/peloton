@@ -38,7 +38,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
     return std::unique_ptr<planner::AbstractPlan>();
   }
 
-  LOG_INFO("Handle merge join with join type: %d", join_type);
+  LOG_TRACE("Handle merge join with join type: %d", join_type);
 
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses =
       BuildMergeJoinClauses(mj_plan_state->mj_Clauses,
@@ -73,14 +73,14 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
                       project_info.get()->isNonTrivial());
   if (non_trivial) {
     // we have non-trivial projection
-    LOG_INFO("We have non-trivial projection");
+    LOG_TRACE("We have non-trivial projection");
 
     result = std::unique_ptr<planner::AbstractPlan>(
         new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
-    LOG_INFO("We have direct mapping projection");
+    LOG_TRACE("We have direct mapping projection");
   }
 
   std::unique_ptr<planner::MergeJoinPlan> plan_node(new planner::MergeJoinPlan(
@@ -102,7 +102,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformMergeJoin(
     result.reset(plan_node.release());
   }
 
-  LOG_INFO("Finishing mapping Merge join, JoinType: %d", join_type);
+  LOG_TRACE("Finishing mapping Merge join, JoinType: %d", join_type);
 
   return result;
 }
@@ -113,19 +113,19 @@ static std::vector<planner::MergeJoinPlan::JoinClause> BuildMergeJoinClauses(
   expression::AbstractExpression *left = nullptr;
   expression::AbstractExpression *right = nullptr;
   std::vector<planner::MergeJoinPlan::JoinClause> clauses;
-  LOG_INFO("Mapping merge join clauses of size %d", num_clauses);
+  LOG_TRACE("Mapping merge join clauses of size %d", num_clauses);
   for (int i = 0; i < num_clauses; ++i, ++join_clause) {
     left = ExprTransformer::TransformExpr(join_clause->lexpr);
     right = ExprTransformer::TransformExpr(join_clause->rexpr);
     planner::MergeJoinPlan::JoinClause clause(left, right,
                                               join_clause->ssup.ssup_reverse);
 
-    LOG_INFO("left: %s", clause.left_->Debug(" ").c_str());
-    LOG_INFO("right: %s", clause.right_->Debug(" ").c_str());
+    LOG_TRACE("left: %s", clause.left_->Debug(" ").c_str());
+    LOG_TRACE("right: %s", clause.right_->Debug(" ").c_str());
 
     clauses.push_back(std::move(clause));
   }
-  LOG_INFO("Build join clauses of size %lu", clauses.size());
+  LOG_TRACE("Build join clauses of size %lu", clauses.size());
   return clauses;
 }
 }  // namespace bridge

@@ -182,8 +182,8 @@ bool UpdateExecutor::DExecute() {
           return false;
         }
 
-        LOG_INFO("perform update old location: %u, %u", old_location.block, old_location.offset);
-        LOG_INFO("perform update new location: %u, %u", new_location.block, new_location.offset);
+        LOG_TRACE("perform update old location: %u, %u", old_location.block, old_location.offset);
+        LOG_TRACE("perform update new location: %u, %u", new_location.block, new_location.offset);
         transaction_manager.PerformUpdate(old_location, new_location);
       }
 

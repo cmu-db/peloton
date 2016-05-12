@@ -71,7 +71,7 @@ PlanTransformer::TransformIndexScan(const IndexScanPlanState *iss_plan_state,
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Fail to get index with oid : %u ", iss_plan->indexid);
   };
-  LOG_INFO("Index scan on %s using oid %u, index name: %s",
+  LOG_TRACE("Index scan on %s using oid %u, index name: %s",
            table->GetName().c_str(), iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
@@ -198,33 +198,33 @@ static void BuildScanKey(
     LOG_TRACE("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_INFO("key < %s", value.GetInfo().c_str());
+        LOG_TRACE("key < %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_INFO("key <= %s", value.GetInfo().c_str());
+        LOG_TRACE("key <= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
       case BTEqualStrategyNumber: {
         if (scan_key->sk_flags & SK_SEARCHARRAY) {
-          LOG_INFO("key >= %s", value.GetInfo().c_str());
+          LOG_TRACE("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
         } else {
-          LOG_INFO("key >= %s", value.GetInfo().c_str());
+          LOG_TRACE("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
         }
       } break;
       case BTGreaterEqualStrategyNumber:
-        LOG_INFO("key >= %s", value.GetInfo().c_str());
+        LOG_TRACE("key >= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
         break;
       case BTGreaterStrategyNumber:
-        LOG_INFO("key > %s", value.GetInfo().c_str());
+        LOG_TRACE("key > %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
         break;
@@ -284,7 +284,7 @@ PlanTransformer::TransformIndexOnlyScan(
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(ioss_plan->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", ioss_plan->indexid,
+  LOG_TRACE("Index scan on oid %u, index name: %s", ioss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
@@ -362,7 +362,7 @@ PlanTransformer::TransformBitmapHeapScan(
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Can't find Index oid %u ", biss_plan->indexid);
   }
-  LOG_INFO("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
+  LOG_TRACE("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
            table->GetName().c_str(), biss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 

@@ -27,7 +27,7 @@ class TupleValueExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type),
         tuple_idx_(tuple_idx),
         value_idx_(value_idx) {
-    LOG_INFO(
+    LOG_TRACE(
         "OptimizedTupleValueExpression %d using tuple index %d and value index "
         "%d",
         GetValueType(), tuple_idx_, value_idx_);

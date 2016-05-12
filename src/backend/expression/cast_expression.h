@@ -36,7 +36,7 @@ class CastExpression : public AbstractExpression {
     assert(GetLeft() != nullptr);
     assert(GetValueType() != VALUE_TYPE_INVALID);
     Value child_value = GetLeft()->Evaluate(tuple1, tuple2, econtext);
-    LOG_INFO("CastExpr: cast %d as %d", child_value.GetValueType(),
+    LOG_TRACE("CastExpr: cast %d as %d", child_value.GetValueType(),
              GetValueType());
 
     switch (GetValueType()) {

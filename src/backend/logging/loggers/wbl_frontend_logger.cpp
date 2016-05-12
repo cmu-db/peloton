@@ -47,7 +47,7 @@ LogRecordType GetNextLogRecordType(FILE *log_file, size_t log_file_size) {
 
   // Check if the log record type is broken
   if (LoggingUtil::IsFileTruncated(file_handle, 1)) {
-    LOG_INFO("Log file is truncated");
+    LOG_TRACE("Log file is truncated");
     return LOGRECORD_TYPE_INVALID;
   }
 
@@ -597,7 +597,7 @@ void WriteBehindFrontendLogger::DoRecovery() {
       WriteTransactionLogRecord(
           TransactionRecord(LOGRECORD_TYPE_TRANSACTION_DONE));
 
-      LOG_INFO("Recovery_log_record_count : %u", recovery_log_record_count);
+      LOG_TRACE("Recovery_log_record_count : %u", recovery_log_record_count);
     }
 
     // After finishing recovery, set the next oid with maximum oid

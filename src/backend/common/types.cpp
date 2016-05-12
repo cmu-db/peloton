@@ -1107,7 +1107,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
+      LOG_TRACE("INVALID VALUE TYPE : %d ", PostgresValType);
       value_type = VALUE_TYPE_INVALID;
       break;
   }

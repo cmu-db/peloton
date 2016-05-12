@@ -36,18 +36,18 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformModifyTable(
 
   switch (operation) {
     case CMD_INSERT:
-      LOG_INFO("CMD_INSERT");
+      LOG_TRACE("CMD_INSERT");
       return std::move(
           PlanTransformer::TransformInsert(mt_plan_state, options));
       break;
 
     case CMD_UPDATE:
-      LOG_INFO("CMD_UPDATE");
+      LOG_TRACE("CMD_UPDATE");
       return PlanTransformer::TransformUpdate(mt_plan_state, options);
       break;
 
     case CMD_DELETE:
-      LOG_INFO("CMD_DELETE");
+      LOG_TRACE("CMD_DELETE");
       return PlanTransformer::TransformDelete(mt_plan_state, options);
       break;
 
@@ -79,7 +79,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_INFO("Insert into: database oid %u table oid %u: %s", database_oid,
+  LOG_TRACE("Insert into: database oid %u table oid %u: %s", database_oid,
            table_oid, target_table->GetName().c_str());
 
   AbstractPlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -121,7 +121,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformUpdate(
     return nullptr;
   }
 
-  LOG_INFO("Update table : database oid %u table oid %u: %s", database_oid,
+  LOG_TRACE("Update table : database oid %u table oid %u: %s", database_oid,
            table_oid, target_table->GetName().c_str());
 
   // Child must be a scan node
@@ -168,7 +168,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformDelete(
     return nullptr;
   }
 
-  LOG_INFO("Delete :: database oid %u table oid %u: %s", database_oid,
+  LOG_TRACE("Delete :: database oid %u table oid %u: %s", database_oid,
            table_oid, target_table->GetName().c_str());
 
   // Create the peloton plan node

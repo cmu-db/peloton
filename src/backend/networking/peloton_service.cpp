@@ -350,7 +350,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     }
 
     case PLAN_NODE_TYPE_SEQSCAN: {
-      LOG_INFO("SEQSCAN revieved");
+      LOG_TRACE("SEQSCAN revieved");
       std::string plan = request->plan();
       ReferenceSerializeInputBE input(plan.c_str(), plan.size());
       std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan = std::make_shared<
@@ -386,7 +386,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         response->add_result(output_tiles.Data(), output_tiles.Size());
 
         // Debug
-        LOG_INFO("Tile content is: %s", tile->GetInfo().c_str());
+        LOG_TRACE("Tile content is: %s", tile->GetInfo().c_str());
       }
 
       break;
@@ -406,7 +406,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
   // Here is for the client callback for response
   else {
     // Process the response
-    LOG_INFO("proecess the Query response");
+    LOG_TRACE("proecess the Query response");
     ASSERT(response);
 
     int tile_count = response->tile_count();
@@ -437,7 +437,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       tuple.DeserializeWithHeaderFrom(tile_input);
 
       // Debug
-      //LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
+      //LOG_TRACE("Recv a tile: %s", tile.GetInfo().c_str());
     }
   }
 }

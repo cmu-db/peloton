@@ -325,7 +325,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       // 1. Get string representation of the PG numeric (this is tricky)
       char *cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
 
-      LOG_INFO("PG decimal = %s ", cstr);
+      LOG_TRACE("PG decimal = %s ", cstr);
 
       // 2. Construct Peloton Decimal from the string
       value = ValueFactory::GetDecimalValueFromString(std::string(cstr));
