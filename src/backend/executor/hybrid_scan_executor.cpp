@@ -327,8 +327,8 @@ bool HybridScanExecutor::DExecute() {
       HybridExecPrimaryIndexLookup();
       HybridSeqScanUtil();
 
-     // Timer<> timer;
-     // timer.Start();
+      //Timer<> timer;
+      //timer.Start();
 
       std::map<oid_t, std::vector<oid_t>> visible_tuples;
       for (auto item : item_pointers_) {
@@ -351,8 +351,8 @@ bool HybridScanExecutor::DExecute() {
       }
 
       // timer.Stop();
-     //  double time_per_transaction = timer.GetDuration();
-     //  printf(" %f\n", time_per_transaction);
+      // double time_per_transaction = timer.GetDuration();
+      // printf(" %f\n", time_per_transaction);
     }
 
     assert(index_done_);
@@ -398,14 +398,14 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
   
-//  Timer<> timer;
-//  timer.Start();
+  Timer<> timer;
+  timer.Start();
 
   if (tuple_location_ptrs.size() == 0) {
     index_done_ = true;
-//    timer.Stop();
-//    double time_per_transaction = timer.GetDuration();
-//    printf(" %f\n", time_per_transaction);
+    timer.Stop();
+    double time_per_transaction = timer.GetDuration();
+    printf(" %f\n", time_per_transaction);
     return false;
   }
 //  auto &transaction_manager =
@@ -436,7 +436,7 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
 
       // perform predicate evaluation.
       if (predicate_ == nullptr) {
-        item_pointers_.insert(tuple_location);
+ //       item_pointers_.insert(tuple_location);
 //        visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
 //          auto res = transaction_manager.PerformRead(tuple_location);
@@ -450,7 +450,7 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
         auto eval =
           predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
-          item_pointers_.insert(tuple_location);
+  //        item_pointers_.insert(tuple_location);
 //          visible_tuples[tuple_location.block]
 //            .push_back(tuple_location.offset);
 
@@ -516,9 +516,9 @@ bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
 //  }
 
   index_done_ = true;
- // timer.Stop();
- // double time_per_transaction = timer.GetDuration();
- // printf(" %f\n", time_per_transaction);
+  timer.Stop();
+  double time_per_transaction = timer.GetDuration();
+  printf(" %f\n", time_per_transaction);
   LOG_TRACE("Result tiles : %lu", result_.size());
 
   return true;
