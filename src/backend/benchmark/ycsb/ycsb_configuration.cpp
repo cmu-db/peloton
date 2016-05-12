@@ -10,15 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-// #undef NDEBUG
-
 #include <iomanip>
 #include <algorithm>
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
-
-#undef NDEBUG
 
 namespace peloton {
 namespace benchmark {

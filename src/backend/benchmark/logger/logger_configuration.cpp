@@ -14,8 +14,6 @@
 #include <algorithm>
 #include <sys/stat.h>
 
-#undef NDEBUG
-
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/benchmark/logger/logger_configuration.h"
