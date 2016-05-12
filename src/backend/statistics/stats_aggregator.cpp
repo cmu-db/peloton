@@ -30,7 +30,12 @@ StatsAggregator::StatsAggregator()
       aggregation_interval_ms_(STATS_AGGREGATION_INTERVAL_MS),
       thread_number_(0),
       total_prev_txn_committed_(0) {
-  ofs_.open(peloton_stats_directory_, std::ofstream::out);
+  try {
+    ofs_.open(peloton_stats_directory_, std::ofstream::out);
+  }
+  catch (std::ofstream::failure &e) {
+    LOG_ERROR("Couldn't open the stats log file %s", e.what());
+  }
   aggregator_thread_ = std::thread(&StatsAggregator::RunAggregator, this);
 }
 StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
@@ -39,7 +44,12 @@ StatsAggregator::StatsAggregator(int64_t aggregation_interval_ms)
       aggregation_interval_ms_(aggregation_interval_ms),
       thread_number_(0),
       total_prev_txn_committed_(0) {
-  ofs_.open(peloton_stats_directory_, std::ofstream::out);
+  try {
+    ofs_.open(peloton_stats_directory_, std::ofstream::out);
+  }
+  catch (std::ofstream::failure &e) {
+    LOG_ERROR("Couldn't open the stats log file %s", e.what());
+  }
   aggregator_thread_ = std::thread(&StatsAggregator::RunAggregator, this);
 }
 
@@ -48,7 +58,12 @@ StatsAggregator::~StatsAggregator() {
   for (auto &stats_item : backend_stats_) {
     delete stats_item.second;
   }
-  ofs_.close();
+  try {
+    ofs_.close();
+  }
+  catch (std::ofstream::failure &e) {
+    LOG_ERROR("Couldn't close the stats log file %s", e.what());
+  }
   exec_finished_.notify_one();
   aggregator_thread_.join();
 }
@@ -93,11 +108,16 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   LOG_INFO("Moving avg. throughput: %lf txn/s\n", weighted_avg_throughput);
   LOG_INFO("Current throughput:     %lf txn/s\n\n", throughput_);
   if (interval_cnt % STATS_LOG_INTERVALS == 0) {
-    ofs_ << "At interval: " << interval_cnt << std::endl;
-    ofs_ << aggregated_stats_.ToString();
-    ofs_ << "Weighted avg. throughput=" << weighted_avg_throughput << std::endl;
-    ofs_ << "Average throughput=" << avg_throughput_ << std::endl;
-    ofs_ << "Current throughput=" << throughput_ << std::endl;
+    try {
+      ofs_ << "At interval: " << interval_cnt << std::endl;
+      ofs_ << aggregated_stats_.ToString();
+      ofs_ << "Weighted avg. throughput=" << weighted_avg_throughput << std::endl;
+      ofs_ << "Average throughput=" << avg_throughput_ << std::endl;
+      ofs_ << "Current throughput=" << throughput_ << std::endl;
+    }
+    catch (std::ofstream::failure &e) {
+      LOG_ERROR("Error when writing to the stats log file %s", e.what());
+    }
   }
 }
 
