@@ -36,7 +36,10 @@ logger_SOURCES =  \
                     backend/benchmark/logger/logger_loader.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
-                    backend/benchmark/ycsb/ycsb_loader.cpp
+                    backend/benchmark/ycsb/ycsb_loader.cpp \
+                    backend/benchmark/ycsb/ycsb_read.cpp \
+                    backend/benchmark/ycsb/ycsb_update.cpp \
+                    backend/benchmark/ycsb/ycsb_mixed.cpp
 
 logger_LDFLAGS =
 logger_CPPFLAGS = $(benchmark_common_cppflags)
@@ -50,7 +53,10 @@ ycsb_SOURCES =  \
 					backend/benchmark/ycsb/ycsb.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
-                    backend/benchmark/ycsb/ycsb_loader.cpp
+                    backend/benchmark/ycsb/ycsb_loader.cpp \
+                    backend/benchmark/ycsb/ycsb_read.cpp \
+                    backend/benchmark/ycsb/ycsb_update.cpp \
+                    backend/benchmark/ycsb/ycsb_mixed.cpp
 
 ycsb_LDFLAGS =
 ycsb_CPPFLAGS = $(benchmark_common_cppflags)

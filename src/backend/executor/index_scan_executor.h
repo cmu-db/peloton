@@ -35,6 +35,28 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
   ~IndexScanExecutor();
 
+
+
+  void ResetState() {
+    result_.clear();
+
+    result_itr_ = START_OID;
+
+    done_ = false;
+
+  }
+  
+  // for plan/executor caching.
+  // for OLTP queries, most of the member variables in plan/executor can be reused.
+  // we only need to reset executor context as well as the parameter values.
+  void SetContext(ExecutorContext *executor_context) {
+    executor_context_ = executor_context;
+  }
+
+  void SetValues(const std::vector<peloton::Value> &values) {
+    values_ = values;
+  }
+
  protected:
   bool DInit();
 
