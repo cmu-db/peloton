@@ -161,9 +161,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-    
+
     ItemPointer tuple_location = *tuple_location_ptr;
-    
+
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
@@ -218,13 +218,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       else {
         ItemPointer old_item = tuple_location;
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
-        if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
-          tile_group = manager.GetTileGroup(tuple_location.block);
-          tile_group_header = tile_group.get()->GetHeader();
-          continue;
-        }
-
-
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
 
@@ -248,6 +241,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
           return false;
         }
+
+        if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          continue;
+        }
+
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
           assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
