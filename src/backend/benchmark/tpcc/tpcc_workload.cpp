@@ -268,9 +268,8 @@ bool RunNewOrder(){
 
   int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  int customer_id = GetRandomInteger(0, state.customers_per_district);
+  int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
-  //auto o_entry_ts = GetTimeStamp();
 
   std::vector<int> i_ids, ol_w_ids, ol_qtys;
   bool o_all_local = true;
@@ -297,8 +296,6 @@ bool RunNewOrder(){
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-
-  //std::vector<float> i_prices;
   LOG_TRACE("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
   for (auto item_id : i_ids) {
     LOG_TRACE("item_id: %d", int(item_id));
@@ -344,7 +341,6 @@ bool RunNewOrder(){
     }
 
   }
-
 
   // getWarehouseTaxRate
   LOG_TRACE("getWarehouseTaxRate: SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?");
@@ -483,17 +479,13 @@ bool RunNewOrder(){
   }
 
   if (gc_lists_values.size() != 1) {
-    LOG_ERROR("Could not find customer \n");
+    LOG_ERROR("Could not find customer : %d", customer_id);
     return false;
   }
 
   // auto c_last = gd_lists_values[0][0];
   // auto c_credit = gd_lists_values[0][1];
   // auto c_discount = gd_lists_values[0][2];
-
-  //LOG_TRACE("D_TAX: %d", d_tax);
-  //LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
-
 
   // incrementNextOrderId
   LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?");
@@ -537,10 +529,7 @@ bool RunNewOrder(){
     return false;
   }
 
-
-
   LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)");
-
 
   std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
 
@@ -581,14 +570,15 @@ bool RunNewOrder(){
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
 
-
   for (size_t i = 0; i < i_ids.size(); ++i) {
     int item_id = i_ids.at(i);
     int ol_w_id = ol_w_ids.at(i);
     int ol_qty = ol_qtys.at(i);
+
     LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
 
-    std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
+    // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
+    std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16};
 
     // Create and set up index scan executor
     std::vector<oid_t> stock_key_column_ids = {0, 1}; // S_I_ID, S_W_ID
@@ -697,14 +687,6 @@ bool RunNewOrder(){
       return false;
     }
 
-    // the original benchmark requires check constraints.
-    // however, we ignored here.
-    // it does not influence the performance.
-    // if i_data.find(constants.ORIGINAL_STRING) != -1 and s_data.find(constants.ORIGINAL_STRING) != -1:
-    // brand_generic = 'B'
-    // else:
-    // brand_generic = 'G'
-
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
@@ -743,16 +725,11 @@ bool RunNewOrder(){
   auto result = txn_manager.CommitTransaction();
 
   if (result == Result::RESULT_SUCCESS) {
-    // transaction passed commitment.
-    // auto d_tax = gd_lists_values[0][0];
-    // LOG_TRACE("D_TAX: %d", d_tax);
-    // auto d_next_o_id = gd_lists_values[0][1];
-    // LOG_TRACE("D_NEXT_O_ID: %d", d_next_o_id);
+    LOG_TRACE("D_TAX: %d", gd_lists_values[0][0]);
+    LOG_TRACE("D_NEXT_O_ID: %d", gd_lists_values[0][1]);
 
     return true;
-
   } else {
-    // transaction failed commitment.
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     return false;
