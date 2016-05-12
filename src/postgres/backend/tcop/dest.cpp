@@ -45,12 +45,14 @@
  * ----------------
  */
 static void
-donothingReceive(TupleTableSlot *slot, DestReceiver *self)
+donothingReceive(TupleTableSlot *slot, DestReceiver *self,
+								 BackendContext *backend_state = nullptr)
 {
 }
 
 static void
-donothingStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
+donothingStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
+								 BackendContext *backend_state = nullptr)
 {
 }
 
