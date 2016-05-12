@@ -67,6 +67,9 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
+// for memcached support
+#include "access/printtup.h"
+
 /* ----------
  * Logging Flag
  * ----------
@@ -79,7 +82,8 @@ static void peloton_process_status(const peloton_status& status, const PlanState
 
 static void peloton_send_output(const peloton_status&  status,
                                 bool sendTuples,
-                                DestReceiver *dest);
+                                DestReceiver *dest,
+                                BackendContext* backend_state = nullptr);
 
 static void __attribute__((unused)) peloton_test_config();
 
@@ -211,7 +215,8 @@ peloton_dml(const PlanState *planstate,
             bool sendTuples,
             DestReceiver *dest,
             TupleDesc tuple_desc,
-            const char *prepStmtName) {
+            const char *prepStmtName,
+            BackendContext *backend_state) {
   peloton_status status;
 
   // Get the parameter list
@@ -263,7 +268,7 @@ peloton_dml(const PlanState *planstate,
   peloton_process_status(status, planstate);
 
   // Send output to dest
-  peloton_send_output(status, sendTuples, dest);
+  peloton_send_output(status, sendTuples, dest, backend_state);
 
 }
 
@@ -306,7 +311,8 @@ peloton_process_status(const peloton_status& status, const PlanState *planstate)
 void
 peloton_send_output(const peloton_status& status,
                     bool sendTuples,
-                    DestReceiver *dest) {
+                    DestReceiver *dest,
+                    BackendContext* backend_state) {
   TupleTableSlot *slot;
 
   // Go over any result slots
@@ -328,8 +334,14 @@ peloton_send_output(const peloton_status& status,
        * If we are supposed to send the tuple somewhere, do so. (In
        * practice, this is probably always the case at this point.)
        */
-      if (sendTuples)
-        (*dest->receiveSlot) (slot, dest);
+
+      // for memcached, directly call printtup
+      if (sendTuples && backend_state) {
+        printtup(slot, dest, backend_state);
+      }
+      else if (sendTuples)
+        // otherwise use dest fp
+        (*dest->receiveSlot) (slot, dest, backend_state);
 
       /*
        * Free the underlying heap_tuple

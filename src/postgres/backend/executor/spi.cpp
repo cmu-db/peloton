@@ -1468,7 +1468,8 @@ CachedPlan *SPI_plan_get_cached_plan(SPIPlanPtr plan) {
  *		Initialize to receive tuples from Executor into SPITupleTable
  *		of current SPI procedure
  */
-void spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo) {
+void spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
+                      BackendContext *backend_state) {
   SPITupleTable *tuptable;
   MemoryContext oldcxt;
   MemoryContext tuptabcxt;
@@ -1519,7 +1520,8 @@ void spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo) {
  *		store tuple retrieved by Executor into SPITupleTable
  *		of current SPI procedure
  */
-void spi_printtup(TupleTableSlot *slot, DestReceiver *self) {
+void spi_printtup(TupleTableSlot *slot, DestReceiver *self,
+                  BackendContext *backend_state) {
   SPITupleTable *tuptable;
   MemoryContext oldcxt;
 
