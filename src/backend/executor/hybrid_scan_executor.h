@@ -86,6 +86,7 @@ private:
   bool key_ready_ = false;
 
   std::unordered_set<ItemPointer, ItemPointerHasher> item_pointers_;
+  //std::set<oid_t> oid_ts_;
 };
 
 
