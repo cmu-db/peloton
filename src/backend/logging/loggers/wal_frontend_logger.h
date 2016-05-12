@@ -87,8 +87,6 @@ class WriteAheadFrontendLogger : public FrontendLogger {
 
   void TruncateLog(cid_t);
 
-  void SetLogDirectory(char *);
-
   void InitLogDirectory();
 
   std::string GetFileNameFromVersion(int);
@@ -104,6 +102,8 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   int GetLogFileCounter() { return log_file_counter_; }
 
   void InitSelf();
+
+  static constexpr auto wal_directory_path = "wal_log";
 
  private:
   std::string GetLogFileName(void);
@@ -143,7 +143,7 @@ class WriteAheadFrontendLogger : public FrontendLogger {
   // for recovery from in memory buffer instead of file.
   char *input_log_buffer;
 
-  std::string peloton_log_directory = "pl_log";
+  std::string peloton_log_directory;
 
   std::string LOG_FILE_PREFIX = "peloton_log_";
 

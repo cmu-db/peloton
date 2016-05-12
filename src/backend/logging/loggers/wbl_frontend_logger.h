@@ -51,6 +51,8 @@ class WriteBehindFrontendLogger : public FrontendLogger {
 
   std::string GetLogFileName();
 
+  static constexpr auto wbl_log_path = "wbl.log";
+
  private:
   //===--------------------------------------------------------------------===//
   // Member Variables

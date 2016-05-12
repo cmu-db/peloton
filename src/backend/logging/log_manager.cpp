@@ -27,8 +27,6 @@
 namespace peloton {
 namespace logging {
 
-#define LOG_FILE_NAME "wal.log"
-
 // Each thread gets a backend logger
 thread_local static BackendLogger *backend_logger = nullptr;
 
@@ -359,6 +357,16 @@ void LogManager::SetLogFileName(std::string log_file) {
 std::string LogManager::GetLogFileName(void) {
   assert(log_file_name.empty() == false);
   return log_file_name;
+}
+
+void LogManager::SetLogDirectoryName(std::string log_directory) {
+  log_directory_name = log_directory;
+}
+
+// XXX change to read configuration file
+std::string LogManager::GetLogDirectoryName(void) {
+  assert(log_directory_name.empty() == false);
+  return log_directory_name;
 }
 
 void LogManager::PrepareRecovery() {

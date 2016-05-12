@@ -1061,6 +1061,11 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
 }
 
 void WriteAheadFrontendLogger::InitLogDirectory() {
+
+  // Get log directory
+  auto &log_manager = logging::LogManager::GetInstance();
+  peloton_log_directory = log_manager.GetLogDirectoryName() + wal_directory_path;
+
   auto success =
       LoggingUtil::CreateDirectory(peloton_log_directory.c_str(), 0700);
   if (success) {
@@ -1068,12 +1073,6 @@ void WriteAheadFrontendLogger::InitLogDirectory() {
   } else {
     LOG_ERROR("Failed to create logging directory");
   }
-}
-
-// TODO should we probably implement this
-void WriteAheadFrontendLogger::SetLogDirectory(char *arg
-                                               __attribute__((unused))) {
-  LOG_INFO("%s", arg);
 }
 
 std::string WriteAheadFrontendLogger::GetFileNameFromVersion(int version) {

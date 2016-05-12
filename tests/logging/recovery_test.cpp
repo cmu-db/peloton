@@ -110,7 +110,9 @@ TEST_F(RecoveryTests, RestartTest) {
   cid_t default_commit_id = INVALID_CID;
   cid_t default_delimiter = INVALID_CID;
 
-  std::string dir_name = "pl_log0";
+  // XXX: for now hardcode for one logger (suffix 0)
+  std::string dir_name = logging::WriteAheadFrontendLogger::wal_directory_path;
+
   storage::Database db(DEFAULT_DB_ID);
   manager.AddDatabase(&db);
   db.AddTable(recovery_table);
@@ -213,7 +215,7 @@ TEST_F(RecoveryTests, RestartTest) {
     EXPECT_EQ(index->GetNumberOfTuples(), 0);
   }
 
-  logging::WriteAheadFrontendLogger wal_fel(std::string("pl_log"));
+  logging::WriteAheadFrontendLogger wal_fel;
 
   EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files + 1);
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files);

@@ -38,6 +38,8 @@
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 
+#include "backend/logging/loggers/wbl_frontend_logger.h"
+
 #include <unistd.h>
 
 #include <boost/filesystem/operations.hpp>
@@ -142,11 +144,13 @@ void StartLogging(std::thread& thread) {
 void CleanUpLogDirectory() {
 
   // remove wbl log file if it exists
-  boost::filesystem::path wbl_directory_path = state.log_file_dir + "wbl.log";
+  boost::filesystem::path wbl_directory_path = state.log_file_dir +
+      logging::WriteBehindFrontendLogger::wbl_log_path;
 
   // remove wal log directory (for wal if it exists)
   // for now hardcode for 1 logger
-  boost::filesystem::path wal_directory_path = state.log_file_dir + "pl_log0";
+  boost::filesystem::path wal_directory_path = state.log_file_dir +
+      logging::WriteAheadFrontendLogger::wal_directory_path;
 
   try {
     if(boost::filesystem::exists(wbl_directory_path)) {
@@ -167,16 +171,14 @@ void CleanUpLogDirectory() {
  * @brief writing a simple log file
  */
 bool PrepareLogFile() {
-  if (chdir(state.log_file_dir.c_str())) {
-    LOG_ERROR("change directory failed");
-  }
+
+  // Clean up log directory
+  //CleanUpLogDirectory();
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
-  log_manager.SetLogFileName("wbl.log");
-
-  // also clean up log directory if it exists
-  CleanUpLogDirectory();
+  log_manager.SetLogDirectoryName(state.log_file_dir);
+  log_manager.SetLogFileName(state.log_file_dir + "/" + logging::WriteBehindFrontendLogger::wbl_log_path);
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
@@ -243,11 +245,6 @@ bool PrepareLogFile() {
     WriteOutput(throughput);
   } else if (state.experiment_type == EXPERIMENT_TYPE_LATENCY) {
     WriteOutput(latency);
-  } else if (state.experiment_type == EXPERIMENT_TYPE_STORAGE) {
-    // TODO: Need to get more info -- in case of WAL: checkpoint size
-    // in case of WBL: table size, index size ?
-    auto log_file_size = GetLogFileSize();
-    WriteOutput(log_file_size);
   }
 
   return true;
@@ -307,8 +304,6 @@ void DoRecovery() {
     WriteOutput(timer.GetDuration());
   }
 
-  // Clean up log directory if it exists
-  CleanUpLogDirectory();
 }
 
 //===--------------------------------------------------------------------===//
@@ -332,32 +327,6 @@ void BuildLog() {
     tpcc::RunWorkload();
   }
 
-
-}
-
-size_t GetLogFileSize() {
-  struct stat log_stats;
-
-  auto& log_manager = logging::LogManager::GetInstance();
-  std::string log_file_name = log_manager.GetLogFileName();
-
-  // open log file and file descriptor
-  // we open it in append + binary mode
-  auto log_file = fopen(log_file_name.c_str(), "r");
-  if (log_file == NULL) {
-    LOG_ERROR("LogFile is NULL");
-  }
-
-  // also, get the descriptor
-  auto log_file_fd = fileno(log_file);
-  if (log_file_fd == -1) {
-    LOG_ERROR("log_file_fd is -1");
-  }
-
-  fstat(log_file_fd, &log_stats);
-  auto log_file_size = log_stats.st_size;
-
-  return log_file_size;
 }
 
 }  // namespace logger

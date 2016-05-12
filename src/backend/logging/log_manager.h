@@ -127,6 +127,10 @@ class LogManager {
 
   std::string GetLogFileName(void);
 
+  void SetLogDirectoryName(std::string log_dir);
+
+  std::string GetLogDirectoryName(void);
+
   bool HasPelotonFrontendLogger() const {
     return (peloton_logging_mode == LOGGING_TYPE_NVM_WBL);
   }
@@ -247,6 +251,8 @@ class LogManager {
       true;  // default should be true because it is safest
 
   std::string log_file_name;
+
+  std::string log_directory_name;
 
   int frontend_logger_assign_counter;
 
