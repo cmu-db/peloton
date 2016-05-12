@@ -435,22 +435,21 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
   if (tuple_location_ptrs.size() == 0) {
-    printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
+   // printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
     index_done_ = true;
     return false;
   }
 
-  std::set<oid_t> oid_ts;
+ // std::set<oid_t> oid_ts;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
 
     ItemPointer tuple_location = *tuple_location_ptr;
     if (type_ == planner::HYBRID &&
-        tuple_location.block >= current_tile_group_offset_) {
- //     oid_ts_.insert(tuple_location.block); 
+        tuple_location.block >= (current_tile_group_offset_ * 2 + 1)) {
       item_pointers_.insert(tuple_location);
-      oid_ts.insert(tuple_location.block);
+      // oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
@@ -458,9 +457,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     // auto tile_group_header = tile_group.get()->GetHeader();
 
       // perform predicate evaluation.
-      if (predicate_ == nullptr) {
+      //if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
-      } else {
+      /*} else {
           expression::ContainerTuple<storage::TileGroup> tuple(
             tile_group.get(), tuple_location.offset);
           auto eval =
@@ -469,13 +468,13 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
             visible_tuples[tuple_location.block]
               .push_back(tuple_location.offset);
           }
-      }
+      }*/
   }
 
-  printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
-  for (auto t : oid_ts) {
+  //printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
+ /* for (auto t : oid_ts) {
     std::cout << "block  " << t  << std::endl;
-  }
+  }*/
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
