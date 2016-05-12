@@ -45,15 +45,23 @@ bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &expr_types,
                     const std::vector<Value> &values) {
+  // construct the key_column_ids and indexed column ids map
+  std::unordered_map<oid_t, oid_t> id_map;
+  auto indexed_column_ids =
+    GetMetadata()->GetKeySchema()->GetIndexedColumns();
+  for(size_t i = 0; i < indexed_column_ids.size(); i++){
+    id_map[indexed_column_ids[i]] = (oid_t)i;
+  }
+
   int diff;
 
   oid_t key_column_itr = -1;
   // Go over each attribute in the list of comparison columns
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
-    (void) column_itr;
+    //(void) column_itr;
     const Value &rhs = values[key_column_itr];
-    const Value &lhs = index_key.GetValue(key_column_itr);
+    const Value &lhs = index_key.GetValue(id_map[column_itr]);
     const ExpressionType expr_type = expr_types[key_column_itr];
 
     if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
