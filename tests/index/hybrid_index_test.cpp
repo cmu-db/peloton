@@ -460,7 +460,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
-  ExecuteTestNoTime(&Hybrid_scan_executor);
+  ExecuteTest(&Hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -488,7 +488,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
   }
 }
 
-/*TEST_F(HybridIndexTests, SeqScanTest) {
+TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -506,7 +506,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
 }
-*/
+
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
