@@ -96,8 +96,8 @@ void RunBackend(oid_t thread_id) {
     if (is_running == false) {
       break;
     }
-    
-    while (RunDelivery() == false) {
+
+    while (RunPayment() == false) {
       execution_count_ref++;
     }
     

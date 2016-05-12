@@ -41,6 +41,12 @@
 
 namespace peloton {
 
+namespace benchmark {
+  namespace tpcc {
+    void GetStringFromValue(const peloton::Value &, std::string &);
+  }
+}
+
 //===--------------------------------------------------------------------===//
 // Type system
 //===--------------------------------------------------------------------===//
@@ -231,6 +237,7 @@ inline void StreamSQLFloatFormat(std::stringstream &streamOut,
 class Value {
   friend class ValuePeeker;
   friend class ValueFactory;
+  friend void peloton::benchmark::tpcc::GetStringFromValue(const peloton::Value &, std::string &);
 
  public:
   /* Create a default Value */
