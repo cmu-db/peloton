@@ -435,6 +435,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
 
   if (tuple_location_ptrs.size() == 0) {
+    printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
     index_done_ = true;
     return false;
   }
@@ -446,6 +447,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     ItemPointer tuple_location = *tuple_location_ptr;
     if (type_ == planner::HYBRID &&
         tuple_location.block >= current_tile_group_offset_) {
+ //     oid_ts_.insert(tuple_location.block); 
       item_pointers_.insert(tuple_location);
     }
 
@@ -468,7 +470,10 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       }
   }
 
-  printf("set size %lu", item_pointers_.size());
+  printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
+//  for (auto t : oid_ts_) {
+//    printf("block %d\n", t);
+ // }
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {

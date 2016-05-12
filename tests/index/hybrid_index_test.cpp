@@ -271,9 +271,9 @@ void ExecuteTestNoTime(executor::AbstractExecutor *executor) {
   // Execute stuff
   executor->Execute();
 
-  // EXPECT_EQ(tuple_counts,
-   //         tile_group * tuples_per_tile_group -
-   //           (tile_group * tuples_per_tile_group * scalar));
+  EXPECT_EQ(tuple_counts,
+            tile_group * tuples_per_tile_group -
+              (tile_group * tuples_per_tile_group * scalar));
 }
 
 void ExecuteTest(executor::AbstractExecutor *executor) {
@@ -505,8 +505,8 @@ TEST_F(HybridIndexTests, IndexScanTest) {
 
   for (size_t i = 0; i < iter; i++)
     LaunchIndexScan(hyadapt_table);
-}*/
-
+}
+*/
 TEST_F(HybridIndexTests, HybridScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
