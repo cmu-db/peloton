@@ -22,7 +22,7 @@ void BridgeTest::RunTests() {
   // Create the new storage database and add it to the manager
   DDLDatabase::CreateDatabase(Bridge::GetCurrentDatabaseOid());
 
-  LOG_INFO(":::::::::::::  TEST CASES START :::::::::::::");
+  LOG_TRACE(":::::::::::::  TEST CASES START :::::::::::::");
 
   DDL_Database_TEST();
 
@@ -32,7 +32,7 @@ void BridgeTest::RunTests() {
 
   DDL_MIX_TEST();
 
-  LOG_INFO(":::::::::::::  TEST CASES END   :::::::::::::");
+  LOG_TRACE(":::::::::::::  TEST CASES END   :::::::::::::");
 }
 
 }  // End bridge namespace

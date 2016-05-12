@@ -70,7 +70,7 @@ void SimpleCheckpoint::DoCheckpoint() {
     start_commit_id_ = txn_manager.GetMaxCommittedCid();
   }
 
-  LOG_INFO("DoCheckpoint cid = %lu", start_commit_id_);
+  LOG_TRACE("DoCheckpoint cid = %lu", start_commit_id_);
 
   // Add txn begin record
   std::shared_ptr<LogRecord> begin_record(new TransactionRecord(
@@ -93,7 +93,7 @@ void SimpleCheckpoint::DoCheckpoint() {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
       assert(target_table);
-      LOG_INFO("SeqScan: database idx %u table idx %u: %s", database_idx,
+      LOG_TRACE("SeqScan: database idx %u table idx %u: %s", database_idx,
                table_idx, target_table->GetName().c_str());
       Scan(target_table, database_oid);
     }
@@ -292,7 +292,7 @@ void SimpleCheckpoint::CreateFile() {
     assert(false);
     return;
   }
-  LOG_INFO("Created a new checkpoint file: %s", file_name.c_str());
+  LOG_TRACE("Created a new checkpoint file: %s", file_name.c_str());
 }
 
 // Only called when checkpoint has actual contents
@@ -301,7 +301,7 @@ void SimpleCheckpoint::Persist() {
   assert(file_handle_.file);
   assert(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
 
-  LOG_INFO("Persisting %lu checkpoint entries", records_.size());
+  LOG_TRACE("Persisting %lu checkpoint entries", records_.size());
   // write all the record in the queue and free them
   for (auto record : records_) {
     assert(record);
@@ -329,7 +329,7 @@ void SimpleCheckpoint::Cleanup() {
       auto previous_version =
           ConcatFileName(checkpoint_dir, checkpoint_version - 1).c_str();
       if (remove(previous_version) != 0) {
-        LOG_INFO("Failed to remove file %s", previous_version);
+        LOG_TRACE("Failed to remove file %s", previous_version);
       }
     }
   }
@@ -339,18 +339,18 @@ void SimpleCheckpoint::Cleanup() {
 
 void SimpleCheckpoint::InitVersionNumber() {
   // Get checkpoint version
-  LOG_INFO("Trying to read checkpoint directory");
+  LOG_TRACE("Trying to read checkpoint directory");
   struct dirent *file;
   auto dirp = opendir(checkpoint_dir.c_str());
   if (dirp == nullptr) {
-    LOG_INFO("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
+    LOG_TRACE("Opendir failed: Errno: %d, error: %s", errno, strerror(errno));
     return;
   }
 
   while ((file = readdir(dirp)) != NULL) {
     if (strncmp(file->d_name, FILE_PREFIX.c_str(), FILE_PREFIX.length()) == 0) {
       // found a checkpoint file!
-      LOG_INFO("Found a checkpoint file with name %s", file->d_name);
+      LOG_TRACE("Found a checkpoint file with name %s", file->d_name);
       int version = LoggingUtil::ExtractNumberFromFileName(file->d_name);
       if (version > checkpoint_version) {
         checkpoint_version = version;
@@ -358,7 +358,7 @@ void SimpleCheckpoint::InitVersionNumber() {
     }
   }
   closedir(dirp);
-  LOG_INFO("set checkpoint version to: %d", checkpoint_version);
+  LOG_TRACE("set checkpoint version to: %d", checkpoint_version);
 }
 
 }  // namespace logging

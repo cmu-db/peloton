@@ -69,7 +69,7 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual ~SsiTxnManager() {
-    LOG_INFO("Deconstruct SSI manager");
+    LOG_TRACE("Deconstruct SSI manager");
     if(!stopped) {
       stopped = true;
       vacuum.join();
@@ -126,7 +126,7 @@ class SsiTxnManager : public TransactionManager {
 
     txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
     // txn_manager_mutex_.Unlock();
-    LOG_INFO("Begin txn %lu", txn->GetTransactionId());
+    LOG_TRACE("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
 
@@ -166,7 +166,7 @@ class SsiTxnManager : public TransactionManager {
   // The txn_id could only be the cur_txn's txn id.
   void InitTupleReserved(const txn_id_t txn_id, const oid_t tile_group_id,
                          const oid_t tuple_id) {
-    LOG_INFO("init reserved txn %ld, group %u tid %u", txn_id, tile_group_id,
+    LOG_TRACE("init reserved txn %ld, group %u tid %u", txn_id, tile_group_id,
              tuple_id);
 
     auto tile_group_header = catalog::Manager::GetInstance()
@@ -218,9 +218,9 @@ class SsiTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveSIReader(storage::TileGroupHeader *tile_group_header,
                       const oid_t &tuple_id, txn_id_t txn_id) {
-    LOG_INFO("Acquire read lock");
+    LOG_TRACE("Acquire read lock");
     GetReadLock(tile_group_header, tuple_id);
-    LOG_INFO("Acquired");
+    LOG_TRACE("Acquired");
 
     ReadList **headp = (ReadList **)(
         tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
@@ -266,12 +266,12 @@ class SsiTxnManager : public TransactionManager {
   }
 
   inline void SetInConflict(SsiTxnContext *txn_ctx) {
-    LOG_INFO("Set in conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    LOG_TRACE("Set in conflict %lu", txn_ctx->transaction_->GetTransactionId());
     txn_ctx->in_conflict_ = true;
   }
 
   inline void SetOutConflict(SsiTxnContext *txn_ctx) {
-    LOG_INFO("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    LOG_TRACE("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
     txn_ctx->out_conflict_ = true;
   }
 

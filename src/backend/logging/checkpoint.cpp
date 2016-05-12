@@ -44,7 +44,7 @@ void Checkpoint::MainLoop(void) {
 
       // First, do recovery if needed
       DoRecovery();
-      LOG_INFO("Checkpoint DoRecovery Done");
+      LOG_TRACE("Checkpoint DoRecovery Done");
       checkpoint_status = CHECKPOINT_STATUS_DONE_RECOVERY;
       break;
     }
@@ -82,7 +82,7 @@ std::string Checkpoint::ConcatFileName(std::string checkpoint_dir,
 void Checkpoint::InitDirectory() {
   auto success = LoggingUtil::CreateDirectory(checkpoint_dir.c_str(), 0700);
   if (success) {
-    LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
+    LOG_TRACE("Checkpoint directory is: %s", checkpoint_dir.c_str());
   } else {
     LOG_ERROR("Failed to create checkpoint directory");
   }

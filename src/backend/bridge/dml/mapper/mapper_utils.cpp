@@ -39,7 +39,7 @@ std::vector<Value> PlanTransformer::BuildParams(
     assert(params.size() > 0);
   }
 
-  LOG_INFO("Built %lu params ", params.size());
+  LOG_TRACE("Built %lu params ", params.size());
   return std::move(params);
 }
 
@@ -85,7 +85,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     project_info.reset(BuildProjectInfoFromTLSkipJunk(sstate->targetlist));
   }
 
-  LOG_INFO("project_info : %s",
+  LOG_TRACE("project_info : %s",
            project_info.get() ? project_info->Debug().c_str() : "<NULL>");
 
   /*
@@ -95,12 +95,12 @@ void PlanTransformer::GetGenericInfoFromScanState(
    */
   if (nullptr ==
       project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
-    LOG_INFO("No projections (all pass through)");
+    LOG_TRACE("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
   } else if (project_info->GetTargetList().size() >
              0) {  // Have non-trivial projection, add a plan node
-    LOG_INFO(
+    LOG_TRACE(
         "Non-trivial projections are found. Projection node will be "
         "created. ");
 
@@ -120,7 +120,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_INFO("Pure direct map projection.");
+    LOG_TRACE("Pure direct map projection.");
 
     auto column_ids =
         BuildColumnListFromDirectMap(project_info->GetDirectMapList());
@@ -267,8 +267,8 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
     List *qual) {
   expression::AbstractExpression *predicate =
       ExprTransformer::TransformExpr(reinterpret_cast<ExprState *>(qual));
-  LOG_INFO("Predicate:");
-  LOG_INFO("%s",
+  LOG_TRACE("Predicate:");
+  LOG_TRACE("%s",
            (nullptr == predicate) ? "NULL" : predicate->DebugInfo(" ").c_str());
 
   return predicate;
@@ -410,7 +410,7 @@ void PlanTransformer::BuildColumnListFromExpr(
     case EXPRESSION_TYPE_VALUE_TUPLE: {
       auto col_id =
           ((expression::TupleValueExpression *)expression)->GetColumnId();
-      LOG_INFO("Col Id :: %d", col_id);
+      LOG_TRACE("Col Id :: %d", col_id);
       col_ids.push_back(col_id);
     } break;
 

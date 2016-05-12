@@ -48,7 +48,7 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
       break;
 
     default: {
-      LOG_WARN("Unsupported TUPLE RECORD TYPE");
+      LOG_TRACE("Unsupported TUPLE RECORD TYPE");
       status = false;
       break;
     }

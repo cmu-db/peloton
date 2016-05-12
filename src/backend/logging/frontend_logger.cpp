@@ -32,7 +32,7 @@ FrontendLogger::FrontendLogger() {
 
   // Set wait timeout
   wait_timeout = peloton_wait_timeout;
-  LOG_INFO("Init frontend logger with wait_time: %d ", (int)wait_timeout);
+  LOG_TRACE("Init frontend logger with wait_time: %d ", (int)wait_timeout);
 }
 
 FrontendLogger::~FrontendLogger() {
@@ -51,7 +51,7 @@ FrontendLogger *FrontendLogger::GetFrontendLogger(LoggingType logging_type,
                                                   bool test_mode) {
   FrontendLogger *frontend_logger = nullptr;
 
-  LOG_INFO("Logging_type is %d", (int)logging_type);
+  LOG_TRACE("Logging_type is %d", (int)logging_type);
   if (IsBasedOnWriteAheadLogging(logging_type) == true) {
     frontend_logger = new WriteAheadFrontendLogger(test_mode);
   } else if (IsBasedOnWriteBehindLogging(logging_type) == true) {
@@ -109,9 +109,9 @@ void FrontendLogger::MainLoop(void) {
       /////////////////////////////////////////////////////////////////////
 
       // First, do recovery if needed
-      LOG_INFO("Invoking DoRecovery");
+      LOG_TRACE("Invoking DoRecovery");
       DoRecovery();
-      LOG_INFO("DoRecovery done");
+      LOG_TRACE("DoRecovery done");
 
       // Now, enter LOGGING mode
       // log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);
@@ -139,11 +139,11 @@ void FrontendLogger::MainLoop(void) {
   // Periodically, wake up and do logging
   while (log_manager.GetLoggingStatus() == LOGGING_STATUS_TYPE_LOGGING) {
     // Collect LogRecords from all backend loggers
-    // LOG_INFO("Log manager: Invoking CollectLogRecordsFromBackendLoggers");
+    // LOG_TRACE("Log manager: Invoking CollectLogRecordsFromBackendLoggers");
     CollectLogRecordsFromBackendLoggers();
 
     // Flush the data to the file
-    // LOG_INFO("Log manager: Invoking FlushLogRecords");
+    // LOG_TRACE("Log manager: Invoking FlushLogRecords");
     FlushLogRecords();
 
     // update the global max flushed ID (only distinguished logger does this)
@@ -196,10 +196,10 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       cid_t backend_lower_bound = cid_pair.first;
       cid_t backend_committed = cid_pair.second;
       if (backend_committed > backend_lower_bound) {
-        LOG_INFO("bel: %d got max_committed_cid:%lu", i, backend_committed);
+        LOG_TRACE("bel: %d got max_committed_cid:%lu", i, backend_committed);
         max_committed_cid = std::max(max_committed_cid, backend_committed);
       } else if (backend_lower_bound != INVALID_CID) {
-        LOG_INFO("bel: %d got lower_bound_cid:%lu", i, backend_lower_bound);
+        LOG_TRACE("bel: %d got lower_bound_cid:%lu", i, backend_lower_bound);
         lower_bound = std::min(lower_bound, backend_lower_bound);
       }
       // Skip current backend_logger, nothing to do
@@ -241,12 +241,12 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       debug_flag = 4;
     }
     // max_collected_commit_id should never decrease
-    // LOG_INFO("Before assert");
+    // LOG_TRACE("Before assert");
     if (max_possible_commit_id < max_collected_commit_id) {
-      LOG_INFO(
+      LOG_TRACE(
           "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
           (int)max_possible_commit_id, (int)max_collected_commit_id);
-      LOG_INFO("Had entered Case %d", (int)debug_flag);
+      LOG_TRACE("Had entered Case %d", (int)debug_flag);
       (void)debug_flag;
     }
     assert(max_possible_commit_id >= max_collected_commit_id);
@@ -254,7 +254,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       max_seen_commit_id = max_committed_cid;
     }
     max_collected_commit_id = max_possible_commit_id;
-    // LOG_INFO("max_collected_commit_id: %d, max_possible_commit_id: %d",
+    // LOG_TRACE("max_collected_commit_id: %d, max_possible_commit_id: %d",
     // (int)max_collected_commit_id, (int)max_possible_commit_id);
     backend_loggers_lock.Unlock();
   }

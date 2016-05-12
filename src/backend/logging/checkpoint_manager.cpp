@@ -45,7 +45,7 @@ void CheckpointManager::StartStandbyMode() {
 
   // If checkpointer still doesn't exist, then we have disabled logging
   if (checkpointers_.size() == 0) {
-    LOG_INFO("We have disabled checkpoint");
+    LOG_TRACE("We have disabled checkpoint");
     return;
   }
 

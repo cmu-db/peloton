@@ -30,9 +30,9 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
     const LimitPlanState *limit_state) {
   // TODO: does not do pass down bound to child node
   // TODO: handle no limit and no offset cases
-  LOG_INFO("Flags :: Limit: %d, Offset: %d", limit_state->noLimit,
+  LOG_TRACE("Flags :: Limit: %d, Offset: %d", limit_state->noLimit,
            limit_state->noOffset);
-  LOG_INFO("Limit: %ld, Offset: %ld", limit_state->limit, limit_state->offset);
+  LOG_TRACE("Limit: %ld, Offset: %ld", limit_state->limit, limit_state->offset);
   std::unique_ptr<planner::AbstractPlan> plan_node(
       new planner::LimitPlan(limit_state->limit, limit_state->offset));
 

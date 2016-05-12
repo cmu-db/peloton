@@ -150,7 +150,7 @@ void DDLUtils::ParsingCreateStmt(
             break;
           }
           default: {
-            LOG_WARN("Unrecognized constraint type %d", (int)contype);
+            LOG_TRACE("Unrecognized constraint type %d", (int)contype);
             break;
           }
         }
