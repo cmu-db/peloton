@@ -116,12 +116,7 @@ bool RunDelivery(){
   for (int d_id = 0; d_id < state.districts_per_warehouse; ++d_id) {
     LOG_INFO("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
 
-    // Prepare the limit plan
-    size_t limit = 1;
-    size_t offset = 0;
-    planner::LimitPlan limit_node(limit, offset);
-
-    // Prepare index scan plan
+    // Construct index scan executor
     std::vector<oid_t> new_order_column_ids = {COL_IDX_NO_O_ID};
     std::vector<oid_t> new_order_key_column_ids = {COL_IDX_NO_D_ID, COL_IDX_O_W_ID, COL_IDX_NO_O_ID};
     std::vector<ExpressionType> new_order_expr_types;
@@ -143,14 +138,17 @@ bool RunDelivery(){
 
     auto predicate = nullptr;
 
-    // Create index scan plan node
     planner::IndexScanPlan new_order_idex_scan_node(new_order_table,
       predicate, new_order_column_ids, new_order_idex_scan_desc);
 
-    // Create executors
-    executor::LimitExecutor limit_executor(&limit_node, context.get());
     executor::IndexScanExecutor new_order_index_scan_executor(
       &new_order_idex_scan_node, context.get());
+
+    // Construct limit executor
+    size_t limit = 1;
+    size_t offset = 0;
+    planner::LimitPlan limit_node(limit, offset);
+    executor::LimitExecutor limit_executor(&limit_node, context.get());
     limit_executor.AddChild(&new_order_index_scan_executor);
 
     auto new_order_ids = ExecuteReadTest(&limit_executor);

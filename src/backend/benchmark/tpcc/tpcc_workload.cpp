@@ -97,9 +97,13 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    while (RunPayment() == false) {
+    while (RunDelivery() == false) {
       execution_count_ref++;
     }
+
+    // while (RunPayment() == false) {
+    //   execution_count_ref++;
+    // }
     
     // auto rng_val = generator.GetSample();
     
