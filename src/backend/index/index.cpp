@@ -59,7 +59,6 @@ bool Index::Compare(const AbstractTuple &index_key,
   // Go over each attribute in the list of comparison columns
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
-    //(void) column_itr;
     const Value &rhs = values[key_column_itr];
     const Value &lhs = index_key.GetValue(id_map[column_itr]);
     const ExpressionType expr_type = expr_types[key_column_itr];
