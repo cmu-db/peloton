@@ -21,19 +21,15 @@ namespace peloton {
 namespace expression {
 
 class UDFExpression : public AbstractExpression {
- private:
-  Oid func_id;
-  Oid collation;
-  Oid return_type;
-  std::vector<expression::AbstractExpression *> m_args;
-
  public:
-  UDFExpression(Oid id, Oid col, Oid rettype,
-                std::vector<expression::AbstractExpression *> args)
-      : AbstractExpression(EXPRESSION_TYPE_FUNCTION, VALUE_TYPE_INVALID), m_args(args) {
+  UDFExpression(
+      Oid id, Oid col, Oid ret_type,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &args)
+      : AbstractExpression(EXPRESSION_TYPE_FUNCTION, VALUE_TYPE_INVALID),
+        args_(std::move(args)) {
     func_id = id;
     collation = col;
-    return_type = rettype;
+    return_type = ret_type;
   };
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
@@ -42,14 +38,14 @@ class UDFExpression : public AbstractExpression {
 
     // Evaluate the argument expression into Value, and convert it into Datum
     // for invoking OidFunctionCall
-    std::vector<Datum> args_eval(m_args.size());
-    for (size_t i = 0; i < m_args.size(); i++) {
-      Value value = m_args[i]->Evaluate(tuple1, tuple2, context);
+    std::vector<Datum> args_eval(args_.size());
+    for (size_t i = 0; i < args_.size(); i++) {
+      Value value = args_[i]->Evaluate(tuple1, tuple2, context);
       args_eval[i] = bridge::TupleTransformer::GetDatum(value);
     }
 
     // Invoking the udf function call
-    switch (m_args.size()) {
+    switch (args_.size()) {
       case 0:
         result = OidFunctionCall0Coll(func_id, collation);
         break;
@@ -80,8 +76,18 @@ class UDFExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const {
-    return new UDFExpression(func_id, collation, return_type, m_args);
+    std::vector<std::unique_ptr<expression::AbstractExpression>> copied_args;
+    for (const auto &arg : args_) {
+      copied_args.emplace_back(arg->Copy());
+    }
+    return new UDFExpression(func_id, collation, return_type, copied_args);
   }
+
+ private:
+  Oid func_id;
+  Oid collation;
+  Oid return_type;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> args_;
 };
 
 }  // End expression namespace
