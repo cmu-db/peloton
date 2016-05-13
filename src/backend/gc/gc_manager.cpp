@@ -75,7 +75,7 @@ void GCManager::Running() {
     for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
       TupleMetadata tuple_metadata;
       // if there's no more tuples in the queue, then break.
-      if (reclaim_queue_.TryPop(tuple_metadata) == false) {
+      if (reclaim_queue_.Dequeue(tuple_metadata) == false) {
         break;
       }
 
@@ -88,7 +88,7 @@ void GCManager::Running() {
         if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
             true) {
           // if the entry for tuple_metadata.table_id exists.
-          recycle_queue->BlockingPush(tuple_metadata);
+          recycle_queue->Enqueue(tuple_metadata);
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
           recycle_queue.reset(
@@ -96,17 +96,17 @@ void GCManager::Running() {
           bool ret =
               recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
           if (ret == true) {
-            recycle_queue->BlockingPush(tuple_metadata);
+            recycle_queue->Enqueue(tuple_metadata);
           } else {
             recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-            recycle_queue->BlockingPush(tuple_metadata);
+            recycle_queue->Enqueue(tuple_metadata);
           }
         }
 
         tuple_counter++;
       } else {
         // if a tuple cannot be reclaimed, then add it back to the list.
-        reclaim_queue_.BlockingPush(tuple_metadata);
+        reclaim_queue_.Enqueue(tuple_metadata);
       }
     }  // end for
 
@@ -133,7 +133,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
-  reclaim_queue_.BlockingPush(tuple_metadata);
+  reclaim_queue_.Enqueue(tuple_metadata);
 
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
@@ -151,7 +151,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
-    if (recycle_queue->TryPop(tuple_metadata) == true) {
+    if (recycle_queue->Dequeue(tuple_metadata) == true) {
       LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
@@ -167,7 +167,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
 void GCManager::ClearGarbage() {
   // iterate reclaim queue and reclaim every thing because it's the end of the world now.
   TupleMetadata tuple_metadata;
-  while (reclaim_queue_.TryPop(tuple_metadata) == true) {
+  while (reclaim_queue_.Dequeue(tuple_metadata) == true) {
     ResetTuple(tuple_metadata);
 
     // Add to the recycle map
@@ -176,7 +176,7 @@ void GCManager::ClearGarbage() {
     if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
         true) {
       // if the entry for tuple_metadata.table_id exists.
-      recycle_queue->BlockingPush(tuple_metadata);
+      recycle_queue->Enqueue(tuple_metadata);
     } else {
       // if the entry for tuple_metadata.table_id does not exist.
       recycle_queue.reset(
@@ -184,10 +184,10 @@ void GCManager::ClearGarbage() {
       bool ret =
         recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
       if (ret == true) {
-        recycle_queue->BlockingPush(tuple_metadata);
+        recycle_queue->Enqueue(tuple_metadata);
       } else {
         recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-        recycle_queue->BlockingPush(tuple_metadata);
+        recycle_queue->Enqueue(tuple_metadata);
       }
     }
   }
