@@ -254,7 +254,6 @@ SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
                                                  // container tuple
       num_input_columns_(num_input_columns) {
   aggregates = new Agg *[node->GetUniqueAggTerms().size()];
-  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
 
   assert(delegate_tuple_values_.empty());
 }
@@ -358,7 +357,6 @@ PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
     : AbstractAggregator(node, output_table, econtext) {
   // allocate aggregators
   aggregates = new Agg *[node->GetUniqueAggTerms().size()];
-  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
 
   // initialize aggregators
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {

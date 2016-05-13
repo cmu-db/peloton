@@ -26,8 +26,7 @@ namespace logging {
 LogBuffer::LogBuffer(BackendLogger *backend_logger)
     : backend_logger_(backend_logger) {
   capacity_ = LogManager::GetInstance().GetLogBufferCapacity();
-  elastic_data_.reset(new char[capacity_]());
-  memset(elastic_data_.get(), 0, capacity_ * sizeof(char));
+  elastic_data_.reset(new char[capacity_]);
 }
 
 bool LogBuffer::WriteRecord(LogRecord *record) {
@@ -37,7 +36,6 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
 
 void LogBuffer::ResetData() {
   size_ = 0;
-  memset(elastic_data_.get(), 0, capacity_ * sizeof(char));
 }
 
 // Internal Methods

@@ -49,10 +49,11 @@ void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id,
                                         INVALID_ITEMPOINTER);
+
+  // Reset the reserved field space in the header
   std::memset(
       tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-      storage::TileGroupHeader::GetReserverdSize());
-  // TODO: set the unused 2 boolean value
+      storage::TileGroupHeader::GetReservedSize());
 }
 
 void GCManager::Running() {

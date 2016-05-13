@@ -240,7 +240,7 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReserverdSize() {return  reserverd_size;}
+  static inline size_t GetReservedSize() {return  reserverd_size;}
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
