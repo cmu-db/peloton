@@ -34,7 +34,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
   // we should not rely on shared_ptr to reclaim memory.
   // this is because the underlying index can split or merge leaf nodes,
   // which invokes data data copy and deletes.
-  // as the underlying index is unaware of shared_ptr, 
+  // as the underlying index is unaware of shared_ptr,
   // memory allocated should be managed carefully by programmers.
   for (auto entry = container.begin(); entry != container.end(); ++entry) {
     delete entry->second;
@@ -54,11 +54,12 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
                                       new ItemPointer(location));
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.WriteLock();
 
     // Insert the key, val pair
     container.insert(entry);
 
+    index_lock.Unlock();
   }
 
   return true;
@@ -73,7 +74,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   index_key.SetFromKey(key);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.WriteLock();
 
     // Delete the < key, location > pair
     bool try_again = true;
@@ -99,6 +100,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
       }
     }
 
+    index_lock.Unlock();
   }
 
   return true;
@@ -115,16 +117,17 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   index_key.SetFromKey(key);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.WriteLock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
+
       ItemPointer item_pointer = *(entry->second);
 
       if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
+        index_lock.Unlock();
         return false;
       }
     }
@@ -133,6 +136,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     container.insert(std::pair<KeyType, ValueType>(
         index_key, new ItemPointer(location)));
 
+    index_lock.Unlock();
   }
 
   return true;
@@ -165,7 +169,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   LOG_TRACE("Special case : %d ", special_case);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     auto scan_begin_itr = container.begin();
     std::unique_ptr<storage::Tuple> start_key;
@@ -201,7 +205,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            
+
             ItemPointer item_pointer = *(scan_itr->second);
 
             result.push_back(item_pointer);
@@ -221,6 +225,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         break;
     }
 
+    index_lock.Unlock();
   }
 }
 
@@ -230,7 +235,7 @@ void
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<ItemPointer> &result) {
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     auto itr = container.begin();
 
@@ -238,11 +243,12 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     while (itr != container.end()) {
 
       ItemPointer item_pointer = *(itr->second);
-      
+
       result.push_back(std::move(item_pointer));
       itr++;
     }
 
+    index_lock.Unlock();
   }
 }
 
@@ -254,17 +260,18 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   index_key.SetFromKey(key);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
+
       ItemPointer item_pointer = *(entry->second);
 
       result.push_back(item_pointer);
     }
 
+    index_lock.Unlock();
   }
 
 }
@@ -299,7 +306,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   LOG_TRACE("Special case : %d ", special_case);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     auto scan_begin_itr = container.begin();
     std::unique_ptr<storage::Tuple> start_key;
@@ -353,6 +360,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         break;
     }
 
+    index_lock.Unlock();
   }
 }
 
@@ -362,7 +370,7 @@ void
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<ItemPointer *> &result) {
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     auto itr = container.begin();
 
@@ -373,6 +381,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
       itr++;
     }
 
+    index_lock.Unlock();
   }
 
 }
@@ -388,7 +397,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
   index_key.SetFromKey(key);
 
   {
-    std::lock_guard<std::mutex> lock(index_lock);
+    index_lock.ReadLock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -396,6 +405,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
       result.push_back(entry->second);
     }
 
+    index_lock.Unlock();
   }
 }
 
