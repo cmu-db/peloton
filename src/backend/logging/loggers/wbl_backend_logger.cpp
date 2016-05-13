@@ -63,11 +63,16 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
 
 void WriteBehindBackendLogger::SyncDataForCommit(){
 	auto &manager = catalog::Manager::GetInstance();
+
+  // Sync the tiles in the modified tile groups and their headers
 	for (oid_t tile_group_id : tile_groups_to_sync_){
 		auto tile_group = manager.GetTileGroup(tile_group_id);
 		tile_group->Sync();
 		tile_group->GetHeader()->Sync();
 	}
+
+	// Clear the list of tile groups
+	tile_groups_to_sync_.clear();
 }
 
 LogRecord *WriteBehindBackendLogger::GetTupleRecord(
