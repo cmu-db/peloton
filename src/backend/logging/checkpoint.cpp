@@ -44,7 +44,7 @@ void Checkpoint::MainLoop(void) {
 
       // First, do recovery if needed
       DoRecovery();
-      LOG_INFO("Checkpoint DoRecovery Done");
+      LOG_TRACE("Checkpoint DoRecovery Done");
       checkpoint_status = CHECKPOINT_STATUS_DONE_RECOVERY;
       break;
     }
@@ -82,7 +82,7 @@ std::string Checkpoint::ConcatFileName(std::string checkpoint_dir,
 void Checkpoint::InitDirectory() {
   auto success = LoggingUtil::CreateDirectory(checkpoint_dir.c_str(), 0700);
   if (success) {
-    LOG_INFO("Checkpoint directory is: %s", checkpoint_dir.c_str());
+    LOG_TRACE("Checkpoint directory is: %s", checkpoint_dir.c_str());
   } else {
     LOG_ERROR("Failed to create checkpoint directory");
   }
@@ -103,7 +103,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  LOG_TRACE("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
+  LOG_TRACE("Recover tuple from checkpoint (%u, %u)", tile_group_id,
             tuple_slot);
 
   auto &manager = catalog::Manager::GetInstance();

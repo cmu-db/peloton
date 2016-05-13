@@ -182,7 +182,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
-    LOG_WARN("Failed to get next empty tuple slot within tile group.");
+    LOG_TRACE("Failed to get next empty tuple slot within tile group.");
     return INVALID_OID;
   }
 

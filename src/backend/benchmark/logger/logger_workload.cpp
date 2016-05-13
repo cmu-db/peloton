@@ -16,8 +16,6 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-#undef NDEBUG
-
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/value_factory.h"

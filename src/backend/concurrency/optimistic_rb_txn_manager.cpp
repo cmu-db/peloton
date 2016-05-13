@@ -273,7 +273,7 @@ bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const 
 }
 
 Result OptimisticRbTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -308,7 +308,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
             // the version is not owned by other txns and is still visible.
             continue;
           }
-          LOG_INFO("Abort in read only txn");
+          LOG_TRACE("Abort in read only txn");
           // otherwise, validation fails. abort transaction.
           return AbortTransaction();
         } else {
@@ -342,11 +342,11 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         if (ValidateRead(tile_group_header, tuple_slot, end_commit_id)) {
           continue;
         }
-        LOG_INFO("transaction id=%lu",
+        LOG_TRACE("transaction id=%lu",
                   tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu",
+        LOG_TRACE("begin commit id=%lu",
                   tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu",
+        LOG_TRACE("end commit id=%lu",
                   tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -446,7 +446,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 }
 
 Result OptimisticRbTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();

@@ -36,7 +36,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
     return nullptr;
   }
 
-  LOG_INFO("Handle hash join with join type: %d", join_type);
+  LOG_TRACE("Handle hash join with join type: %d", join_type);
 
   /*
   std::vector<planner::HashJoinPlan::JoinClause> join_clauses(
@@ -66,9 +66,9 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
   project_info.reset(BuildProjectInfoFromTLSkipJunk(hj_plan_state->targetlist));
 
   if (project_info.get() != nullptr) {
-    LOG_INFO("%s", project_info.get()->Debug().c_str());
+    LOG_TRACE("%s", project_info.get()->Debug().c_str());
   } else {
-    LOG_INFO("empty projection info");
+    LOG_TRACE("empty projection info");
   }
 
   std::shared_ptr<const catalog::Schema> project_schema(
@@ -82,13 +82,13 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
                       project_info.get()->isNonTrivial());
   if (non_trivial) {
     // we have non-trivial projection
-    LOG_INFO("We have non-trivial projection");
+    LOG_TRACE("We have non-trivial projection");
     result = std::unique_ptr<planner::AbstractPlan>(
         new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
-    LOG_INFO("We have direct mapping projection");
+    LOG_TRACE("We have direct mapping projection");
   }
 
   std::unique_ptr<planner::HashJoinPlan> plan_node(new planner::HashJoinPlan(
@@ -110,7 +110,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHashJoin(
     result.reset(plan_node.release());
   }
 
-  LOG_INFO("Finishing mapping Hash join, JoinType: %d", join_type);
+  LOG_TRACE("Finishing mapping Hash join, JoinType: %d", join_type);
   return result;
 }
 

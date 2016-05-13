@@ -100,7 +100,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             __attribute__((unused)) int socklen, void *ctx) {
   assert(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
-  LOG_INFO("Server: connection received");
+  LOG_TRACE("Server: connection received");
 
   /* We got a new connection! Set up a bufferevent for it. */
   struct event_base *base = evconnlistener_get_base(listener);
@@ -113,7 +113,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
   /* The connection is added in the conn pool, which can be used in the future*/
   ConnectionManager::GetInstance().AddConn(*address, conn);
 
-  LOG_INFO("Server: connection received from fd: %d, address: %s, port:%d", fd,
+  LOG_TRACE("Server: connection received from fd: %d, address: %s, port:%d", fd,
            addr.IpToString().c_str(), addr.GetPort());
 }
 

@@ -71,6 +71,7 @@ class LogManager {
     }
   }
 
+  // reset log status to invalid
   void ResetLogStatus() {
     this->recovery_to_logging_counter = 0;
     SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
@@ -97,12 +98,16 @@ class LogManager {
   // End the actual logging
   bool EndLogging();
 
+  // method for frontend to inform waiting backends of a flush to disk
   void FrontendLoggerFlushed();
 
+  // wait for the flush of a frontend logger (for worker thread)
   void WaitForFlush(cid_t cid);
 
+  // get the current persistent flushed commit
   cid_t GetPersistentFlushedCommitId();
 
+  // called by frontends when recovery is complete.(for a particular frontend)
   void NotifyRecoveryDone();
 
   //===--------------------------------------------------------------------===//
@@ -117,14 +122,20 @@ class LogManager {
   // Whether to enable or disable synchronous commit ?
   void SetSyncCommit(bool sync_commit) { syncronization_commit = sync_commit; }
 
+  // get the status of sychronus commit
   bool GetSyncCommit(void) const { return syncronization_commit; }
 
+  // returns true if a frontend logger is active
   bool ContainsFrontendLogger(void);
 
+  // get a backend logger
+  // can give a hint of the frontend logger
   BackendLogger *GetBackendLogger(unsigned int hint = 0);
 
+  // set the name of the log file (only used in wbl)
   void SetLogFileName(std::string log_file);
 
+  // get the log file name (used only in wbl)
   std::string GetLogFileName(void);
 
   void SetLogDirectoryName(std::string log_dir);
@@ -151,52 +162,70 @@ class LogManager {
   // get a frontend logger at given index
   FrontendLogger *GetFrontendLogger(unsigned int logger_idx);
 
-  void ResetFrontendLogger();
-
+  // remove all frontend loggers (used for testing)
   void DropFrontendLoggers();
 
+  // perpare to log must be called before a commit id is generated for a transaction
   void PrepareLogging();
 
+  // log the beginning of a commited transaction
   void LogBeginTransaction(cid_t commit_id);
 
-  void LogUpdate(cid_t commit_id, ItemPointer &old_version,
-                 ItemPointer &new_version);
+  // log an update
+  void LogUpdate(cid_t commit_id, const ItemPointer &old_version,
+		  const ItemPointer &new_version);
 
-  void LogInsert(cid_t commit_id, ItemPointer &new_location);
+  // log an insert
+  void LogInsert(cid_t commit_id, const ItemPointer &new_location);
 
-  void LogDelete(cid_t commit_id, ItemPointer &delete_location);
+  // log a delete
+  void LogDelete(cid_t commit_id, const ItemPointer &delete_location);
 
+  // commit a transaction and wait until stable
   void LogCommitTransaction(cid_t commit_id);
 
+  // used by the checkpointer to truncate unneeded log files
   void TruncateLogs(txn_id_t commit_id);
 
+  // called if a transaction aborts before starting a commit
   void DoneLogging();
 
+  // the maximum flushed commit id for all frontend loggers
   cid_t GetGlobalMaxFlushedIdForRecovery() {
     return global_max_flushed_id_for_recovery;
   }
 
+  // set the max flushed id for recovery
   void SetGlobalMaxFlushedIdForRecovery(cid_t new_max) {
     global_max_flushed_id_for_recovery = new_max;
   }
-  void UpdateCatalogAndTxnManagers(oid_t, cid_t);
 
+  // updates the catalog and transaction managers to the correct oid and cid after recovery
+  void UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid);
+
+  // set the maximum commit id which has been persisted to disk
   void SetGlobalMaxFlushedCommitId(cid_t);
 
+  // set the maximum commit id which has been persisted to disk
   cid_t GetGlobalMaxFlushedCommitId();
 
+  // get the list of frontend loggers
   std::vector<std::unique_ptr<FrontendLogger>> &GetFrontendLoggersList() {
     return frontend_loggers;
   }
 
+  // get the threshold for creating a new log file
   inline unsigned int GetLogFileSizeLimit() { return log_file_size_limit_; }
 
+  // set the threshold for creating a new log file
   inline void SetLogFileSizeLimit(unsigned int file_size_limit) {
     log_file_size_limit_ = file_size_limit;
   }
 
+  // get the beginning capacity of a log buffer
   inline unsigned int GetLogBufferCapacity() { return log_buffer_capacity_; }
 
+  // set the initial capacity of log buffers passed between frontend and backend loggers
   inline void SetLogBufferCapacity(unsigned int log_buffer_capacity) {
     log_buffer_capacity_ = log_buffer_capacity;
   }
@@ -212,10 +241,13 @@ class LogManager {
   // static configurations for logging
   LoggingType logging_type_ = LOGGING_TYPE_INVALID;
 
+  // test mode will not log to disk
   bool test_mode_ = false;
 
+  // numbe of frontend loggers
   unsigned int num_frontend_loggers_ = DEFAULT_NUM_FRONTEND_LOGGERS;
 
+  // set the strategy for mapping frontend loggers to worker threads
   LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
   // default log file size: 32 MB
@@ -230,6 +262,7 @@ class LogManager {
 
   LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
+
   bool prepared_recovery_ = false;
 
   // To synch the status
@@ -243,27 +276,34 @@ class LogManager {
   // To update catalog and txn managers
   std::mutex update_managers_mutex;
 
+  // count of loggers who moved from the recovery to loggin state
   unsigned int recovery_to_logging_counter = 0;
 
+  // maximum flushed commit id
   cid_t max_flushed_cid = 0;
 
   bool syncronization_commit =
       true;  // default should be true because it is safest
 
+  // name of log file (for wbl)
   std::string log_file_name;
 
   std::string log_directory_name;
 
+  // round robin counter for frontend logger assignment
   int frontend_logger_assign_counter;
 
   cid_t global_max_flushed_id_for_recovery = UINT64_MAX;
 
   cid_t global_max_flushed_commit_id = 0;
 
+  // number the fronted loggers who have updated the manager of their max oid and cid
   int update_managers_count = 0;
 
+  // max oid after recovery
   oid_t max_oid = 0;
 
+  // max cid after recovery
   cid_t max_cid = 0;
 };
 

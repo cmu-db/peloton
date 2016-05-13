@@ -31,7 +31,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   auto tupleDesc = plan_state->result_tupleDescriptor;
   auto aggstrategy = plan_state->agg_plan->aggstrategy;
 
-  LOG_INFO("Number of Agg phases: %d ", numphases);
+  LOG_TRACE("Number of Agg phases: %d ", numphases);
 
   // When we'll have >1 phases?
   if (numphases != 1) return nullptr;
@@ -40,9 +40,9 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       BuildProjectInfoFromTLSkipJunk(targetlist));
   if (proj_info.get() != nullptr) {
-    LOG_INFO("proj_info : %s", proj_info->Debug().c_str());
+    LOG_TRACE("proj_info : %s", proj_info->Debug().c_str());
   } else {
-    LOG_INFO("empty projection info");
+    LOG_TRACE("empty projection info");
   }
 
 
@@ -53,7 +53,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   /* Get Aggregate terms */
   std::vector<planner::AggregatePlan::AggTerm> unique_agg_terms;
 
-  LOG_INFO("Number of (unique) Agg nodes: %d ", numaggs);
+  LOG_TRACE("Number of (unique) Agg nodes: %d ", numaggs);
   for (int aggno = 0; aggno < numaggs; aggno++) {
     auto transfn_oid = peragg[aggno].transfn_oid;
 
@@ -74,9 +74,9 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
     if (arguments) {
       GenericExprState *gstate =
           (GenericExprState *)lfirst(list_head(arguments));
-      LOG_INFO("Creating Agg Expr");
+      LOG_TRACE("Creating Agg Expr");
       agg_expr = ExprTransformer::TransformExpr(gstate->arg);
-      LOG_INFO("Done creating Agg Expr");
+      LOG_TRACE("Done creating Agg Expr");
     }
 
     /*
@@ -95,7 +95,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
 
     unique_agg_terms.emplace_back(fn_meta.exprtype, agg_expr, distinct);
 
-    LOG_INFO(
+    LOG_TRACE(
         "Unique Agg # : %d , transfn_oid : %u\n , aggtype = %s \n expr = %s, "
         "numDistinctCols = %d",
         aggno, transfn_oid, ExpressionTypeToString(fn_meta.exprtype).c_str(),
@@ -103,16 +103,16 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
         peragg[aggno].numDistinctCols);
 
     for (int i = 0; i < peragg[aggno].numDistinctCols; i++) {
-      LOG_INFO("sortColIdx[%d] : %d ", i, peragg[aggno].sortColIdx[i]);
+      LOG_TRACE("sortColIdx[%d] : %d ", i, peragg[aggno].sortColIdx[i]);
     }
 
   }  // end loop aggno
 
   /* Get Group by columns */
   std::vector<oid_t> groupby_col_ids;
-  LOG_INFO("agg.numCols = %d", agg->numCols);
+  LOG_TRACE("agg.numCols = %d", agg->numCols);
   for (int i = 0; i < agg->numCols; i++) {
-    LOG_INFO("agg.grpColIdx[%d] = %d ", i, agg->grpColIdx[i]);
+    LOG_TRACE("agg.grpColIdx[%d] = %d ", i, agg->grpColIdx[i]);
 
     auto attrno = agg->grpColIdx[i];
     if (AttributeNumberIsValid(attrno) &&
@@ -126,7 +126,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
       SchemaTransformer::GetSchemaFromTupleDesc(tupleDesc));
 
   /* Map agg stragegy */
-  LOG_INFO("aggstrategy : %s", (AGG_HASHED == aggstrategy)
+  LOG_TRACE("aggstrategy : %s", (AGG_HASHED == aggstrategy)
                                    ? "HASH"
                                    : (AGG_SORTED ? "SORT" : "PLAIN"));
 
@@ -147,7 +147,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformAgg(
   std::vector<oid_t> column_ids;
   for (auto agg_term : unique_agg_terms) {
     if (agg_term.expression) {
-      LOG_INFO("AGG TERM :: %s", agg_term.expression->Debug().c_str());
+      LOG_TRACE("AGG TERM :: %s", agg_term.expression->Debug().c_str());
     }
     BuildColumnListFromExpr(column_ids, agg_term.expression);
   }

@@ -18,7 +18,7 @@ namespace peloton {
 namespace gc {
 
 void GCManager::StartGC() {
-  LOG_INFO("Starting GC");
+  LOG_TRACE("Starting GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
@@ -26,7 +26,7 @@ void GCManager::StartGC() {
 }
 
 void GCManager::StopGC() {
-  LOG_INFO("Stopping GC");
+  LOG_TRACE("Stopping GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
@@ -62,7 +62,7 @@ void GCManager::Running() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
-    LOG_INFO("reclaim tuple thread...");
+    LOG_TRACE("reclaim tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
@@ -110,7 +110,7 @@ void GCManager::Running() {
       }
     }  // end for
 
-    LOG_INFO("Marked %d tuples as garbage", tuple_counter);
+    LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
 
     if (is_running_ == false) {
       return;
@@ -135,7 +135,7 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
 
   reclaim_queue_.Enqueue(tuple_metadata);
 
-  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
+  LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 }
@@ -152,7 +152,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
     if (recycle_queue->Dequeue(tuple_metadata) == true) {
-      LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);

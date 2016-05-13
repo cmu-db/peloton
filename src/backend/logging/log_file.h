@@ -19,11 +19,12 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Logger
+// LogFile metadata
 //===--------------------------------------------------------------------===//
 
 class LogFile {
  public:
+
   LogFile(FileHandle file_handle, std::string log_file_name, int log_number,
           cid_t max_log_id_file, cid_t max_delimiter_file)
       : file_handle_(file_handle),
@@ -34,22 +35,31 @@ class LogFile {
 
   virtual ~LogFile(void){};
 
+  // set the maximum commit id in this file
   void SetMaxLogId(cid_t);
 
+  // gethe maximum commit id for this file
   cid_t GetMaxLogId();
 
+  // get the number of logs in this file
   int GetLogNumber();
 
+  // get the name of this log file
   std::string GetLogFileName();
 
+  // set the size of this log file
   void SetLogFileSize(int);
 
+  // set the file descriptor for this file
   void SetLogFileFD(int);
 
+  //set the file pointer
   void SetFilePtr(FILE *);
 
+  //set the max delimeter this file contains
   void SetMaxDelimiter(cid_t);
 
+  // get the max delimiter in this file
   cid_t GetMaxDelimiter();
 
  private:

@@ -30,7 +30,7 @@ namespace bridge {
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformUnique(
     const UniquePlanState *unique_plan_state) {
-  LOG_INFO("Handle Unique");
+  LOG_TRACE("Handle Unique");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state =
