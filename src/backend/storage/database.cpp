@@ -13,6 +13,8 @@
 #include <sstream>
 
 #include "postmaster/peloton.h"
+#include "backend/bridge/ddl/bridge.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
 #include "backend/common/logger.h"

@@ -13,8 +13,16 @@
 #include <cstring>
 #include <cassert>
 
-#include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
+#include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "backend/common/logger.h"
+#include "backend/common/cache.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression_util.h"
+#include "backend/planner/abstract_plan.h"
+#include "backend/planner/project_info.h"
 #include "backend/planner/insert_plan.h"
 
 #include "nodes/print.h"

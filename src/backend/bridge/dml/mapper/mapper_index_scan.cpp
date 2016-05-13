@@ -11,9 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/catalog/manager.h"
-#include "backend/planner/index_scan_plan.h"
 #include "backend/index/index.h"
+#include "backend/planner/index_scan_plan.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace bridge {

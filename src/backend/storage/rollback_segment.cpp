@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/storage/rollback_segment.h"
+#include "backend/logging/log_manager.h"
+#include "backend/planner/project_info.h"
 
 namespace peloton {
 namespace storage {
@@ -26,7 +28,7 @@ namespace storage {
  * can bypass these columns when making a new rollback segment.
  */
 RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
-                                                const planner::ProjectInfo::TargetList &target_list,
+                                                const TargetList &target_list,
                                                 const AbstractTuple *tuple) {
   assert(schema);
   assert(target_list.size() != 0); 

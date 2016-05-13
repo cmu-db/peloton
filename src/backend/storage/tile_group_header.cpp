@@ -14,7 +14,13 @@
 #include <iomanip>
 #include <sstream>
 
+#include "backend/common/logger.h"
+#include "backend/common/platform.h"
+#include "backend/common/printable.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/gc/gc_manager.h"
+#include "backend/logging/log_manager.h"
 #include "backend/storage/storage_manager.h"
 #include "backend/storage/tile_group_header.h"
 

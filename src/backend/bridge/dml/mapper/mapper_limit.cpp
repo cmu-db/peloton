@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/common/logger.h"
 #include "backend/planner/limit_plan.h"
 
 namespace peloton {

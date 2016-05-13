@@ -13,20 +13,26 @@
 #include <mutex>
 #include <utility>
 
+#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
 #include "backend/brain/clusterer.h"
-#include "backend/storage/data_table.h"
-
-#include "../benchmark/hyadapt/hyadapt_configuration.h"
-#include "backend/storage/database.h"
+#include "backend/brain/sample.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/platform.h"
+#include "backend/catalog/foreign_key.h"
+#include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/gc/gc_manager_factory.h"
 #include "backend/index/index.h"
+#include "backend/logging/log_manager.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/storage/tile_group_factory.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/storage/abstract_table.h"
+#include "backend/storage/database.h"
+#include "backend/storage/data_table.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables

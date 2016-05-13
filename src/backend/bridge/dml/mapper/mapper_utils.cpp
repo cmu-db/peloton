@@ -10,8 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/brain/sample.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/catalog/manager.h"
 #include "backend/planner/projection_plan.h"
 #include "backend/planner/aggregate_plan.h"
@@ -152,7 +155,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
   }
 
   // (A) Construct target list
-  planner::ProjectInfo::TargetList target_list;
+  TargetList target_list;
   ListCell *item;
   std::vector<oid_t> expr_col_ids;
 
@@ -181,7 +184,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
   }
 
   // (B) Construct direct map list
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  DirectMapList direct_map_list;
   std::vector<oid_t> out_col_ids, tuple_idxs, in_col_ids;
 
   size_t col_count;
@@ -221,9 +224,9 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 /**
  * Transform a target list.
  */
-const planner::ProjectInfo::TargetList PlanTransformer::BuildTargetList(
+const TargetList PlanTransformer::BuildTargetList(
     const List *targetList, int column_count) {
-  planner::ProjectInfo::TargetList target_list;
+  TargetList target_list;
 
   ListCell *tl;
 
@@ -281,10 +284,10 @@ expression::AbstractExpression *PlanTransformer::BuildPredicateFromQual(
  * from 0 ~ N-1
  */
 const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
-    planner::ProjectInfo::DirectMapList dmlist) {
+    DirectMapList dmlist) {
   std::sort(dmlist.begin(), dmlist.end(),
-            [](const planner::ProjectInfo::DirectMap &a,
-               const planner::ProjectInfo::DirectMap &b) {
+            [](const DirectMap &a,
+               const DirectMap &b) {
               return a.first < b.first;
             });
 
@@ -312,8 +315,8 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfoFromTLSkipJunk(
     List *targetList) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   ListCell *tl;
 
   foreach (tl, targetList) {
@@ -450,7 +453,7 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromExpStateList(
  * @brief Transform a TargetList to a one-dimensional column list.
  */
 const std::vector<oid_t> PlanTransformer::BuildColumnListFromTargetList(
-    planner::ProjectInfo::TargetList target_list) {
+    TargetList target_list) {
   std::vector<oid_t> rv;
 
   for (auto target : target_list) {

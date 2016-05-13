@@ -15,7 +15,9 @@
 #include "backend/logging/logging_util.h"
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
+#include "backend/logging/checkpoint_manager.h"
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/storage/database.h"
 
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/logical_tile_factory.h"

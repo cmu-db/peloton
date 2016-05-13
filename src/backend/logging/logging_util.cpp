@@ -10,10 +10,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/logging_util.h"
 #include <sys/stat.h>
 #include <dirent.h>
 #include <cstring>
+
+#include "backend/catalog/manager.h"
+#include "backend/logging/logging_util.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace logging {

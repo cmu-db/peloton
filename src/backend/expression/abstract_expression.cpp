@@ -14,6 +14,11 @@
 #include <cassert>
 #include <stdexcept>
 
+#include "backend/common/abstract_tuple.h"
+#include "backend/common/planner_dom_value.h"
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/common/types.h"

@@ -35,6 +35,12 @@
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 
+#include "backend/logging/log_record.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint_manager.h"
+#include "backend/storage/database.h"
+#include "backend/executor/seq_scan_executor.h"
+
 namespace peloton {
 namespace logging {
 //===--------------------------------------------------------------------===//
