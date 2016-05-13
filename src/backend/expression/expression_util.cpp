@@ -747,7 +747,7 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
 
 AbstractExpression *ExpressionUtil::UDFExpressionFactory(
     Oid function_id, Oid collation, Oid return_type,
-    std::vector<expression::AbstractExpression *> args) {
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &args) {
   return new expression::UDFExpression(function_id, collation, return_type,
                                        args);
 }

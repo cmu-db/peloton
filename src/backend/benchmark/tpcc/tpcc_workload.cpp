@@ -723,8 +723,8 @@ bool RunNewOrder(){
   auto result = txn_manager.CommitTransaction();
 
   if (result == Result::RESULT_SUCCESS) {
-    LOG_TRACE("D_TAX: %d", gd_lists_values[0][0]);
-    LOG_TRACE("D_NEXT_O_ID: %d", gd_lists_values[0][1]);
+    LOG_TRACE("D_TAX: %s", gd_lists_values[0][0].GetInfo().c_str());
+    LOG_TRACE("D_NEXT_O_ID: %s", gd_lists_values[0][1].GetInfo().c_str());
 
     return true;
   } else {

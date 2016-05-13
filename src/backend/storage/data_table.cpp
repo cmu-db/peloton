@@ -650,7 +650,7 @@ void DataTable::DropTileGroups() {
   for (auto tile_group_id : tile_groups_) {
     // add tile group in catalog
     catalog_manager.DropTileGroup(tile_group_id);
-    LOG_TRACE("Dropping tile group : %lu ", tile_group_id);
+    LOG_TRACE("Dropping tile group : %u ", tile_group_id);
   }
   tile_groups_.clear();
 }

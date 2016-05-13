@@ -212,7 +212,7 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
-  LOG_TRACE("Inserted a tuple from checkpoint: (%lu, %lu)",
+  LOG_TRACE("Inserted a tuple from checkpoint: (%u, %u)",
             target_location.block, target_location.offset);
 }
 

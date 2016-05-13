@@ -439,7 +439,7 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
     auto tile_group_id = logical_tile->GetColumnInfo(0)
                              .base_tile->GetTileGroup()
                              ->GetTileGroupId();
-    LOG_TRACE("Retrieved tile group %lu", tile_group_id);
+    LOG_TRACE("Retrieved tile group %u", tile_group_id);
 
     // Go over the logical tile
     for (oid_t tuple_id : *logical_tile) {
@@ -470,7 +470,7 @@ void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
   assert(tuple);
   assert(table);
   auto index_count = table->GetIndexCount();
-  LOG_TRACE("Insert tuple (%lu, %lu) into %lu indexes", target_location.block,
+  LOG_TRACE("Insert tuple (%u, %u) into %u indexes", target_location.block,
             target_location.offset, index_count);
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
