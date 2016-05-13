@@ -103,6 +103,8 @@ int is_cpu_genuine_intel(void) {
     unsigned cpuinfo[3];
   } vendor;
 
+  memset(&vendor, 0, sizeof (vendor));
+
   cpuid(0x0, 0x0, cpuinfo);
 
   vendor.cpuinfo[0] = cpuinfo[EBX_IDX];
