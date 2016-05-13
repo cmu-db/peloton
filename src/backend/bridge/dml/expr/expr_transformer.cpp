@@ -362,24 +362,24 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
 
       auto function_id = fn_expr->funcid;
       auto collation = fn_es->fcinfo_data.fncollation;
-      auto args = fn_es->args;
+      //auto args = fn_es->args;
 
-      std::vector<expression::AbstractExpression *> m_args;
+      std::vector<std::unique_ptr<expression::AbstractExpression>> args;
 
       // Convert arguments to Peloton's expression
       int i = 0;
       ListCell *arg;
-      foreach (arg, args) {
+      foreach (arg, fn_es->args) {
         ExprState *argstate = (ExprState *)lfirst(arg);
-        m_args.push_back(TransformExpr(argstate));
+        args.emplace_back(TransformExpr(argstate));
         i++;
       }
 
       // Check if the number of arguments are less then maximum allowed.
-      assert(m_args.size() < EXPRESSION_MAX_ARG_NUM);
+      assert(args.size() < EXPRESSION_MAX_ARG_NUM);
 
       return expression::ExpressionUtil::UDFExpressionFactory(
-          function_id, collation, rettype, m_args);
+          function_id, collation, rettype, args);
     } else {
       // FIXME It will generate incorrect results.
       assert(list_length(fn_es->args) > 0);

@@ -130,6 +130,7 @@ TEST_F(RecoveryTests, RestartTest) {
 
   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
   EXPECT_EQ(status, true);
+  logging::LogManager::GetInstance().SetLogDirectoryName("./");
 
   for (int i = 0; i < num_files; i++) {
     std::string file_name = dir_name + "/" + std::string("peloton_log_") +
