@@ -40,6 +40,8 @@ namespace logging {
 // Logger refers to the implementation -- like frontend or backend
 // Transition diagram :: standby -> recovery -> logging -> terminate -> sleep
 
+#define LOG_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
+
 /**
  * Global Log Manager
  */
@@ -250,11 +252,11 @@ class LogManager {
   // set the strategy for mapping frontend loggers to worker threads
   LoggerMappingStrategyType logger_mapping_strategy_ = LOGGER_MAPPING_INVALID;
 
-  // default log file size: 32 MB
-  unsigned int log_file_size_limit_ = 32768;
+  // default log file size
+  size_t log_file_size_limit_ = LOG_FILE_LEN;
 
   // default capacity for log buffer
-  unsigned int log_buffer_capacity_ = 32768;
+  size_t log_buffer_capacity_ = LOG_FILE_LEN;
 
   // There is only one frontend_logger of some type
   // either write ahead or write behind logging
