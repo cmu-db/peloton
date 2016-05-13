@@ -431,8 +431,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
-  Timer<> timer;
-  timer.Start();
+  // Timer<> timer;
+  // timer.Start();
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
@@ -441,17 +441,23 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
-
-  if (tuple_location_ptrs.size() == 0) {
+  //Timer<> timer;
+  //timer.Start();
+  
+  //timer.Stop();
+  //double time_per_transaction = timer.GetDuration();
+  //printf(" %f\n", time_per_transaction);
+ 
+   if (tuple_location_ptrs.size() == 0) {
    // printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
-    timer.Stop();
-    double time_per_transaction = timer.GetDuration();
-    printf(" %f\n", time_per_transaction);
+    //timer.Stop();
+    //double time_per_transaction = timer.GetDuration();
+    //printf(" %f\n", time_per_transaction);
     index_done_ = true;
     return false;
   }
 
- // std::set<oid_t> oid_ts;
+  //std::set<oid_t> oid_ts;
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
@@ -460,7 +466,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     if (type_ == planner::HYBRID &&
       tuple_location.block >= (current_tile_group_offset_ * 2 + 1)) {
       item_pointers_.insert(tuple_location);
-      // oid_ts.insert(tuple_location.block);
+  //    oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
@@ -472,13 +478,13 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   //printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
- /* for (auto t : oid_ts) {
-    std::cout << "block  " << t  << std::endl;
-  }*/
+  //for (auto t : oid_ts) {
+  //  std::cout << "block  " << t  << std::endl;
+  //}
 
-  timer.Stop();
-  double time_per_transaction = timer.GetDuration();
-  printf(" %f\n", time_per_transaction);
+   //timer.Stop();
+   //double time_per_transaction = timer.GetDuration();
+   //printf(" %f\n", time_per_transaction);
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
