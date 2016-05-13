@@ -100,6 +100,13 @@ bool HybridScanExecutor::DInit() {
       current_tile_group_offset_ = START_OID;
     } else {
       current_tile_group_offset_ = indexed_tile_offset_ + 1;
+      if (current_tile_group_offset_ < table_tile_group_count_) {
+        auto tile_group =
+          table_->GetTileGroup(current_tile_group_offset_);
+        oid_t tuple_id = 0;
+        ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
+        block_threshold = location.block;
+      }
     }
 
     result_itr_ = START_OID;
@@ -464,7 +471,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
     ItemPointer tuple_location = *tuple_location_ptr;
     if (type_ == planner::HYBRID &&
-      tuple_location.block >= (current_tile_group_offset_ * 2 + 1)) {
+      tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
   //    oid_ts.insert(tuple_location.block);
     }
