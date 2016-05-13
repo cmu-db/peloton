@@ -86,6 +86,8 @@ private:
   bool key_ready_ = false;
 
   std::unordered_set<ItemPointer, ItemPointerHasher> item_pointers_;
+
+  oid_t block_threshold = 0;
 };
 
 
