@@ -124,7 +124,7 @@ class ExpressionUtil {
 
   static AbstractExpression *UDFExpressionFactory(
       Oid function_id, Oid collation, Oid return_type,
-      std::vector<expression::AbstractExpression *> args);
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &args);
 };
 
 }  // End expression namespace
