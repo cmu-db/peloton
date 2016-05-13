@@ -36,30 +36,43 @@ void BackendStatsContext::Aggregate(BackendStatsContext& source) {
   txn_latencies_.ComputeLatencies();
 
   // Aggregate all per-database metrics
-  for (auto& database_item : database_metrics_) {
-    auto worker_db_metric = source.GetDatabaseMetric(database_item.first);
-    if (worker_db_metric != nullptr) {
-      database_item.second->Aggregate(*worker_db_metric);
-    }
+//  for (auto& database_item : database_metrics_) {
+//    auto worker_db_metric = source.GetDatabaseMetric(database_item.first);
+//    if (worker_db_metric != nullptr) {
+//      database_item.second->Aggregate(*worker_db_metric);
+//    }
+//  }
+  for (auto& database_item : source.database_metrics_) {
+    GetDatabaseMetric(database_item.first)->Aggregate(*database_item.second);
   }
 
   // Aggregate all per-table metrics
-  for (auto& table_item : table_metrics_) {
-    auto worker_table_metric = source.GetTableMetric(
-        table_item.second->GetDatabaseId(), table_item.second->GetTableId());
-    if (worker_table_metric != nullptr) {
-      table_item.second->Aggregate(*worker_table_metric);
-    }
+//  for (auto& table_item : table_metrics_) {
+//    auto worker_table_metric = source.GetTableMetric(
+//        table_item.second->GetDatabaseId(), table_item.second->GetTableId());
+//    if (worker_table_metric != nullptr) {
+//      table_item.second->Aggregate(*worker_table_metric);
+//    }
+//  }
+  for (auto& table_item : source.table_metrics_) {
+    GetTableMetric(table_item.second->GetDatabaseId(),
+     table_item.second->GetTableId())
+     ->Aggregate(*table_item.second);
   }
 
   // Aggregate all per-index metrics
+//  for (auto& index_item : source.index_metrics_) {
+//    auto worker_index_metric = GetIndexMetric(
+//        index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
+//        index_item.second->GetIndexId());
+//    if (worker_index_metric != nullptr) {
+//      index_item.second->Aggregate(*worker_index_metric);
+//    }
+//  }
   for (auto& index_item : source.index_metrics_) {
-    auto worker_index_metric = GetIndexMetric(
+    GetIndexMetric(
         index_item.second->GetDatabaseId(), index_item.second->GetTableId(),
-        index_item.second->GetIndexId());
-    if (worker_index_metric != nullptr) {
-      index_item.second->Aggregate(*worker_index_metric);
-    }
+        index_item.second->GetIndexId())->Aggregate(*index_item.second);
   }
 }
 
