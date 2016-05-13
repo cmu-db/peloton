@@ -179,6 +179,7 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = START_CID;
 
+  DeleteInvalidTupleFromIndex(tuple_metadata);
   ResetTuple(tuple_metadata);
 
   // Add to the recycle map

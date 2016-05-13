@@ -99,7 +99,6 @@ class TransactionManager {
    */
 
   void RecycleInvalidTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
-    return;
     auto& gc_instance = gc::GCManagerFactory::GetInstance();
 
     auto tile_group =

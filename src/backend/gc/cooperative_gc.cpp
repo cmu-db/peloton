@@ -201,12 +201,13 @@ void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
 void Cooperative_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
                               const oid_t &tuple_id){
 
-  return;
   TupleMetadata tuple_metadata;
   tuple_metadata.table_id = table_id;
   tuple_metadata.tile_group_id = tile_group_id;
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = START_CID;
+
+  DeleteInvalidTupleFromIndex(tuple_metadata);
 
   AddToRecycleMap(tuple_metadata);
 }
