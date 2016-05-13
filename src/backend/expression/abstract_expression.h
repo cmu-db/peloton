@@ -17,7 +17,6 @@
 
 #include "backend/common/assert.h"
 #include "backend/common/abstract_tuple.h"
-#include "backend/common/planner_dom_value.h"
 #include "backend/common/printable.h"
 
 #include "postgres.h"

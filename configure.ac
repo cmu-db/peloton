@@ -104,7 +104,7 @@ AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
 AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
 
 # Check for Boost libraries
-AX_BOOST_BASE([1.55])
+AX_BOOST_BASE([1.46])
 #AX_BOOST_ASIO
 AX_BOOST_FILESYSTEM
 #AX_BOOST_SERIALIZATION
