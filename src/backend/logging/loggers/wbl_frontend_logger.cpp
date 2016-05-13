@@ -154,7 +154,6 @@ void WriteBehindFrontendLogger::DoRecovery() {
 	// for now assume that the maximum tile group oid and table tile group
 	// membership info are already set
 
-
 }
 
 std::string WriteBehindFrontendLogger::GetLogFileName(void) {

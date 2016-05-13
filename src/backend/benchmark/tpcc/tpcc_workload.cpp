@@ -24,8 +24,6 @@
 #include <cstddef>
 #include <limits>
 
-#undef NDEBUG
-
 #include "backend/benchmark/tpcc/tpcc_workload.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"

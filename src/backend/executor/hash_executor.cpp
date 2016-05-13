@@ -45,7 +45,7 @@ bool HashExecutor::DInit() {
 }
 
 bool HashExecutor::DExecute() {
-  LOG_INFO("Hash Executor");
+  LOG_TRACE("Hash Executor");
 
   if (done_ == false) {
     const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();

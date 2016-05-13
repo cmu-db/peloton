@@ -183,7 +183,7 @@ class EagerWriteTxnManager : public TransactionManager {
   void AddReader(storage::TileGroupHeader *tile_group_header,
                  const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
-    LOG_INFO("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
+    LOG_TRACE("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
 
     TxnList *reader = new TxnList(txn_id);
 
@@ -198,7 +198,7 @@ class EagerWriteTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveReader(storage::TileGroupHeader *tile_group_header,
                     const oid_t &tuple_id, txn_id_t txn_id) {
-    LOG_INFO("Remove reader with txn_id = %lu", txn_id);
+    LOG_TRACE("Remove reader with txn_id = %lu", txn_id);
     GetEwReaderLock(tile_group_header, tuple_id);
 
     TxnList *headp = (TxnList *)(

@@ -437,7 +437,6 @@ Result OptimisticTxnManager::CommitTransaction() {
     }
   }
   log_manager.LogCommitTransaction(end_commit_id);
-  log_manager.DoneLogging();
   EndTransaction();
 
   return Result::RESULT_SUCCESS;

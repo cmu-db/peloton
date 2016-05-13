@@ -162,8 +162,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     AddDefaultTileGroup();
   }
 
-  LOG_TRACE("tile group count: %u, tile group id: %u, address: %p",
-            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
+            tile_group_count_.load(), tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -178,19 +178,19 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -204,19 +204,19 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -230,7 +230,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
@@ -238,13 +238,13 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -381,7 +381,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
+        LOG_TRACE("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
@@ -391,7 +391,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         // FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_INFO("check key: %s", key->GetInfo().c_str());
+        LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
         std::vector<ItemPointer> locations;
         index->ScanKey(key.get(), locations);

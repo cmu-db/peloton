@@ -158,6 +158,14 @@ third_party/nvml/
 third_party/logcabin/
 
 #==============================================================================#
+<<<<<<< HEAD
+# My Stuff
+#==============================================================================#
+*.txt
+handin*
+CMakeLists.txt
+!tests/mc_client.py
+=======
 # Eclipse
 #==============================================================================#
 
@@ -211,7 +219,5 @@ local.properties
 
 # Code Recommenders
 .recommenders/
-
 CMakeLists.txt
-
 io_file

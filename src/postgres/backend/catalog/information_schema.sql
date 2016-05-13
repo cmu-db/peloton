@@ -2934,3 +2934,22 @@ CREATE VIEW user_mappings AS
     FROM _pg_user_mappings;
 
 GRANT SELECT ON user_mappings TO PUBLIC;
+
+/*
+ * Peloton customiazation
+ * Memcached Schema
+ * currently hardcoded
+ * TODO change to like a plugin
+ * 
+ * create stored procedure, when client specify the key/value columns
+ * create index on the specified `key columns`, and store in schema
+ * 
+ * http://osxr.org:8080/mysql/source/plugin/innodb_memcached/innodb_memcache/scripts/innodb_memcached_config.sql
+ */
+CREATE TABLE pg_memcached (
+    name              character_data,
+    db_schema         character_data,
+    db_table          character_data,
+    key_columns       character_data,
+    value_columns     character_data
+) WITHOUT OIDS;

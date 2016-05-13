@@ -118,7 +118,7 @@ LogRecordType LoggingUtil::GetNextLogRecordType(FileHandle &file_handle) {
 
   // Check if the log record type is broken
   if (IsFileTruncated(file_handle, 1)) {
-    LOG_INFO("Log file is truncated");
+    LOG_TRACE("Log file is truncated");
     return LOGRECORD_TYPE_INVALID;
   }
 
@@ -244,7 +244,7 @@ storage::DataTable *LoggingUtil::GetTable(TupleRecord &tuple_record) {
   }
   assert(db);
 
-  LOG_INFO("Table ID for this tuple: %d", (int)tuple_record.GetTableId());
+  LOG_TRACE("Table ID for this tuple: %d", (int)tuple_record.GetTableId());
   auto table = db->GetTableWithOid(tuple_record.GetTableId());
   if (!table) {
     return nullptr;
@@ -267,11 +267,11 @@ int LoggingUtil::GetFileSizeFromFileName(const char *file_name) {
 bool LoggingUtil::CreateDirectory(const char *dir_name, int mode) {
   int return_val = mkdir(dir_name, mode);
   if (return_val == 0) {
-    LOG_INFO("Created directory %s successfully", dir_name);
+    LOG_TRACE("Created directory %s successfully", dir_name);
   } else if (errno == EEXIST) {
-    LOG_INFO("Directory %s already exists", dir_name);
+    LOG_TRACE("Directory %s already exists", dir_name);
   } else {
-    LOG_WARN("Creating directory failed: %s", strerror(errno));
+    LOG_TRACE("Creating directory failed: %s", strerror(errno));
     return false;
   }
   return true;

@@ -171,7 +171,7 @@ void *Connection::ProcessMessage(void *connection) {
         google::protobuf::Message *response = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len - TYPELEN - OPCODELEN);
 
         // Invoke rpc call.
         rpc_method->service_->CallMethod(method, &controller, message, response,
@@ -249,12 +249,12 @@ void *Connection::ProcessMessage(void *connection) {
       gettimeofday(&end, NULL);
       useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
 
-      LOG_INFO("server_response_send_number: %lu", server_response_send_number);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_number: %lu", server_response_send_number);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_number * 1000000)/useconds);
 
-      LOG_INFO("server_response_send_bytes: %lu", server_response_send_bytes);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_bytes: %lu", server_response_send_bytes);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_bytes * 1000000)/useconds);
     }*/
 

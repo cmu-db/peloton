@@ -9,7 +9,7 @@ check_PROGRAMS += logging_test \
 				recovery_test \
 				checkpoint_test \
 				logging_util_test \
-				write_behind_logging_test 
+				write_behind_logging_test
 
 logging_tests_common = executor/executor_tests_util.cpp \
 						harness.cpp \
@@ -37,4 +37,4 @@ logging_util_test_SOURCES = \
 							
 write_behind_logging_test_SOURCES = \
 							$(logging_tests_common) \
-							logging/write_behind_logging_test.cpp 							
+							logging/write_behind_logging_test.cpp

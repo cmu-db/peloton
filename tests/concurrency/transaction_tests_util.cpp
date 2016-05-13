@@ -230,7 +230,7 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
 
 expression::ComparisonExpression<expression::CmpEq> *
 TransactionTestsUtil::MakePredicate(int id) {
-  auto tup_val_exp = new expression::TupleValueExpression(0, 0);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -375,7 +375,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
-  auto tup_val_exp = new expression::TupleValueExpression(0, 1);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -402,7 +402,7 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       new executor::ExecutorContext(transaction));
 
   // Predicate, WHERE `id`>=id1
-  auto tup_val_exp = new expression::TupleValueExpression(0, 0);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
 

@@ -1288,7 +1288,8 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate->slot = MakeSingleTupleTableSlot(tupdesc);
 	tstate->dest = dest;
 
-	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc);
+	// Note: added dummy memcached parameter
+	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc, nullptr);
 
 	return tstate;
 }
@@ -1313,7 +1314,8 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 	ExecStoreVirtualTuple(slot);
 
 	/* send the tuple to the receiver */
-	(*tstate->dest->receiveSlot) (slot, tstate->dest);
+	// Note: added dummy memcached parameter
+	(*tstate->dest->receiveSlot) (slot, tstate->dest, nullptr);
 
 	/* clean up */
 	ExecClearTuple(slot);

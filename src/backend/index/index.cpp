@@ -160,7 +160,7 @@ bool Index::ConstructLowerBoundTuple(
       }
     }
 
-    LOG_TRACE("Column itr : %lu  Placeholder : %d ", column_itr, placeholder);
+    LOG_TRACE("Column itr : %u  Placeholder : %d ", column_itr, placeholder);
 
     // Fill in the placeholder
     if (placeholder == true) {

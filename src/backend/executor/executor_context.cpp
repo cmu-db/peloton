@@ -17,11 +17,11 @@ namespace peloton {
 namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
-    : transaction_(transaction) {}
+    : transaction_(transaction), params_exec_flag_(INVALID_FLAG) {}
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
                                  const std::vector<Value> &params)
-    : transaction_(transaction), params_(params) {}
+    : transaction_(transaction), params_(params), params_exec_flag_(INVALID_FLAG) {}
 
 ExecutorContext::~ExecutorContext() {
   // params will be freed automatically

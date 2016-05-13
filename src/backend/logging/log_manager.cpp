@@ -52,12 +52,12 @@ LogManager &LogManager::GetInstance() {
  */
 void LogManager::StartStandbyMode() {
   // If frontend logger doesn't exist
-  LOG_INFO("TRACKING: LogManager::StartStandbyMode()");
+  LOG_TRACE("TRACKING: LogManager::StartStandbyMode()");
   InitFrontendLoggers();
 
   // If frontend logger still doesn't exist, then we have disabled logging
   if (frontend_loggers.size() == 0) {
-    LOG_INFO("We have disabled logging");
+    LOG_TRACE("We have disabled logging");
     return;
   }
 
@@ -71,7 +71,6 @@ void LogManager::StartStandbyMode() {
   // Launch the frontend logger's main loop
   for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
     std::thread(&FrontendLogger::MainLoop, frontend_loggers[i].get()).detach();
-    // frontend_loggers[i].get()->MainLoop();
   }
 
   // before returning, query each frontend logger for its
@@ -88,18 +87,18 @@ void LogManager::StartStandbyMode() {
   if (global_max_flushed_id_for_recovery ==
       UINT64_MAX)  // no one has logged anything
     global_max_flushed_id_for_recovery = 0;
-  LOG_INFO("Log manager set global_max_flushed_id_for_recovery as %d",
+  LOG_TRACE("Log manager set global_max_flushed_id_for_recovery as %d",
            (int)global_max_flushed_id_for_recovery);
 }
 
 void LogManager::StartRecoveryMode() {
   // Toggle the status after STANDBY
-  LOG_INFO("TRACKING: LogManager::StartRecoveryMode()");
+  LOG_TRACE("TRACKING: LogManager::StartRecoveryMode()");
   SetLoggingStatus(LOGGING_STATUS_TYPE_RECOVERY);
 }
 
 void LogManager::TerminateLoggingMode() {
-  LOG_INFO("TRACKING: LogManager::TerminateLoggingMode()");
+  LOG_TRACE("TRACKING: LogManager::TerminateLoggingMode()");
   SetLoggingStatus(LOGGING_STATUS_TYPE_TERMINATE);
 
   // We set the frontend logger status to Terminate
@@ -126,19 +125,19 @@ void LogManager::WaitForModeTransition(LoggingStatus logging_status_,
  */
 bool LogManager::EndLogging() {
   // Wait if current status is recovery
-  LOG_INFO("TRACKING: LogManager::EndLogging()");
+  LOG_TRACE("TRACKING: LogManager::EndLogging()");
   WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
 
-  LOG_INFO("Wait until frontend logger escapes main loop..");
+  LOG_TRACE("Wait until frontend logger escapes main loop..");
 
   // Wait for the frontend logger to enter sleep mode
   TerminateLoggingMode();
 
-  LOG_INFO("Escaped from MainLoop");
+  LOG_TRACE("Escaped from MainLoop");
 
   // Remove the frontend logger
   SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
-  LOG_INFO("Terminated successfully");
+  LOG_TRACE("Terminated successfully");
 
   return true;
 }
@@ -152,16 +151,16 @@ void LogManager::PrepareLogging() {
     this->GetBackendLogger();
     auto logger = this->GetBackendLogger();
     int frontend_logger_id = logger->GetFrontendLoggerID();
-    LOG_INFO("Got frontend_logger_id as %d", (int)frontend_logger_id);
+    LOG_TRACE("Got frontend_logger_id as %d", (int)frontend_logger_id);
     frontend_loggers[frontend_logger_id]->SetBackendLoggerLoggedCid(*logger);
   }
 }
 
 void LogManager::DoneLogging() {
-  //  if (this->IsInLoggingMode()) {
-  //    auto logger = this->GetBackendLogger();
-  //    logger->SetLoggingCidLowerBound(INVALID_CID);
-  //  }
+  if (this->IsInLoggingMode()) {
+	auto logger = this->GetBackendLogger();
+	logger->SetLoggingCidLowerBound(INVALID_CID);
+  }
 }
 
 void LogManager::LogBeginTransaction(cid_t commit_id) {
@@ -172,8 +171,8 @@ void LogManager::LogBeginTransaction(cid_t commit_id) {
   }
 }
 
-void LogManager::LogUpdate(cid_t commit_id, ItemPointer &old_version,
-                           ItemPointer &new_version) {
+void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
+		const ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
     auto &manager = catalog::Manager::GetInstance();
 
@@ -200,7 +199,7 @@ void LogManager::LogUpdate(cid_t commit_id, ItemPointer &old_version,
   }
 }
 
-void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
+void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -238,7 +237,7 @@ void LogManager::LogInsert(cid_t commit_id, ItemPointer &new_location) {
   }
 }
 
-void LogManager::LogDelete(cid_t commit_id, ItemPointer &delete_location) {
+void LogManager::LogDelete(cid_t commit_id, const ItemPointer &delete_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -276,7 +275,7 @@ BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
     assert(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
-    LOG_INFO("Creating a new backend logger!");
+    LOG_TRACE("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
 
@@ -308,7 +307,6 @@ void LogManager::InitFrontendLoggers() {
           FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
 
       if (frontend_logger.get() != nullptr) {
-        // frontend_logger.get()->SetLoggerID(i);
         frontend_loggers.push_back(std::move(frontend_logger));
       }
     }
@@ -407,13 +405,6 @@ void LogManager::DoneRecovery() {
   }
 }
 
-void LogManager::ResetFrontendLogger() {
-  // TODO don't know what to do here, so just reset the first one among them
-  int i = 0;
-  frontend_loggers[i].reset(
-      FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
-}
-
 void LogManager::DropFrontendLoggers() {
   ResetFrontendLoggers();
   frontend_loggers.clear();
@@ -437,7 +428,7 @@ cid_t LogManager::GetGlobalMaxFlushedCommitId() {
 
 void LogManager::SetGlobalMaxFlushedCommitId(cid_t new_max) {
   if (new_max != global_max_flushed_commit_id) {
-    LOG_INFO("Setting global_max_flushed_commit_id to %d", (int)new_max);
+    LOG_TRACE("Setting global_max_flushed_commit_id to %d", (int)new_max);
   }
   global_max_flushed_commit_id = new_max;
 }
@@ -451,7 +442,7 @@ cid_t LogManager::GetPersistentFlushedCommitId() {
     FrontendLogger *frontend_logger = this->frontend_loggers[i].get();
     id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
              ->GetMaxFlushedCommitId();
-    LOG_INFO("FrontendLogger%d has max flushed commit id as %d", (int)i,
+    LOG_TRACE("FrontendLogger%d has max flushed commit id as %d", (int)i,
              (int)id);
 
     // assume 0 is INACTIVE STATE
@@ -473,29 +464,29 @@ void LogManager::FrontendLoggerFlushed() {
 }
 
 void LogManager::WaitForFlush(cid_t cid) {
-  LOG_INFO("Waiting for flush with %d", (int)cid);
+  LOG_TRACE("Waiting for flush with %d", (int)cid);
   {
     std::unique_lock<std::mutex> wait_lock(flush_notify_mutex);
 
     while (this->GetPersistentFlushedCommitId() < cid) {
-      LOG_INFO(
+      LOG_TRACE(
           "Logs up to %lu cid is flushed. %lu cid is not flushed yet. Wait...",
           this->GetPersistentFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
-    LOG_INFO("Flushes done! Can return! Got persistent flushed commit id as %d",
+    LOG_TRACE("Flushes done! Can return! Got persistent flushed commit id as %d",
              (int)this->GetPersistentFlushedCommitId());
   }
 }
 
 void LogManager::NotifyRecoveryDone() {
-  LOG_INFO("One frontend logger has notified that it has completed recovery");
+  LOG_TRACE("One frontend logger has notified that it has completed recovery");
 
   unsigned int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
-  LOG_INFO("%d loggers have done recovery so far.",
+  LOG_TRACE("%d loggers have done recovery so far.",
            (int)recovery_to_logging_counter);
   if (i == num_frontend_loggers_) {
-    LOG_INFO(
+    LOG_TRACE(
         "This was the last one! Recover Index and change to LOGGING mode.");
     frontend_loggers[0].get()->RecoverIndex();
     SetLoggingStatus(LOGGING_STATUS_TYPE_LOGGING);

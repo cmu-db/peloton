@@ -4,6 +4,8 @@
 //
 // wal_backend_logger.cpp
 //
+// interface for a worker thread to write persistent logs
+//
 // Identification: src/backend/logging/loggers/wal_backend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
@@ -20,12 +22,14 @@
 namespace peloton {
 namespace logging {
 
+// constructor
 WriteAheadBackendLogger::WriteAheadBackendLogger() : BackendLogger() {
   logging_type = LOGGING_TYPE_NVM_WAL;
   frontend_logger_id = -1;  // invalid
-  LOG_INFO("INSIDE CONSTRUCTOR");
+  LOG_TRACE("INSIDE CONSTRUCTOR");
 }
 
+// create a tuple record for this logger
 LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
