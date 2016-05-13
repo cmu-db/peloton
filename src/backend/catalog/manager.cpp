@@ -14,17 +14,14 @@
 #include <string>
 
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
-
-namespace concurrency {
-  class TransactionManagerFactory;
-}
-
 namespace catalog {
 
 Manager &Manager::GetInstance() {

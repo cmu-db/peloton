@@ -643,5 +643,22 @@ bool EagerWriteTxnManager::CauseDeadLock() {
 
   return false;
 }
+
+// init reserved area of a tuple
+// creator txnid | lock (for read list) | read list head
+// The txn_id could only be the cur_txn's txn id.
+void EagerWriteTxnManager::InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetHeader();
+
+  auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+  new ((reserved_area + LOCK_OFFSET)) Spinlock();
+  // Hack
+  *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
+}
+
+
 }
 }

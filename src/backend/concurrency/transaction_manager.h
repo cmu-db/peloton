@@ -15,27 +15,27 @@
 #include <atomic>
 #include <unordered_map>
 #include <list>
+#include <utility>
 
-#include "backend/common/platform.h"
-#include "backend/common/types.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/epoch_manager.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
 #include "backend/catalog/manager.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/storage/tuple.h"
-#include "backend/gc/gc_manager_factory.h"
-#include "backend/planner/project_info.h"
+#include "backend/common/logger.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 
-#include <utility>
-
 namespace peloton {
 
+class ItemPointer;
+
+namespace storage{
+class DataTable;
+}
+
 namespace concurrency {
+
+class Transaction;
 
 extern thread_local Transaction *current_txn;
 

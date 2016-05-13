@@ -12,16 +12,10 @@
 
 #pragma once
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include <string>
+
 #include "backend/bridge/dml/mapper/dml_raw_structures.h"
-#include "backend/common/logger.h"
 #include "backend/common/cache.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/project_info.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -31,6 +25,14 @@
 #define PLAN_CACHE_SIZE 100
 
 namespace peloton {
+
+class Value;
+
+namespace planner{
+class AbstractPlan;
+class ProjectInfo;
+}
+
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
@@ -181,16 +183,16 @@ class PlanTransformer {
   static const planner::ProjectInfo *BuildProjectInfo(
       const PelotonProjectionInfo *pi);
 
-  static const planner::ProjectInfo::TargetList BuildTargetList(
+  static const TargetList BuildTargetList(
       const List *targetList, int column_count);
 
   static expression::AbstractExpression *BuildPredicateFromQual(List *qual);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(
-      planner::ProjectInfo::DirectMapList dmlist);
+      DirectMapList dmlist);
 
   static const std::vector<oid_t> BuildColumnListFromTargetList(
-      planner::ProjectInfo::TargetList target_list);
+      TargetList target_list);
 
   static void BuildColumnListFromExpr(
       std::vector<oid_t> &col_ids,

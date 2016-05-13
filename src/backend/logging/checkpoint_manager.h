@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
 #include <vector>
 #include <memory>
+#include <condition_variable>
 
 #include "backend/logging/checkpoint.h"
 #include "backend/common/logger.h"

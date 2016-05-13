@@ -88,8 +88,8 @@ void UpdateTuple(storage::DataTable *table) {
   std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   target_list.emplace_back(
       2, expression::ExpressionUtil::ConstantValueFactory(update_val));
   LOG_INFO("%u", target_list.at(0).first);

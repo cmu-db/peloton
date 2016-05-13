@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
 #include "backend/planner/hash_plan.h"
 
 namespace peloton {

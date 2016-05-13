@@ -12,13 +12,6 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/logging/log_manager.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/expression/container_tuple.h"
-
 #include <atomic>
 #include <iostream>
 #include <cassert>
@@ -26,8 +19,13 @@
 #include <vector>
 #include <cstring>
 
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+
 namespace peloton {
 namespace storage {
+
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header

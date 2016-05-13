@@ -23,6 +23,7 @@
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace logging {

@@ -12,18 +12,16 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/common/pool.h"
-#include "backend/common/types.h"
-#include "backend/logging/log_manager.h"
-#include "backend/planner/project_info.h"
-
 #include <atomic>
 #include <mutex>
 #include <cassert>
 #include <unordered_map>
+
+#include "backend/common/logger.h"
+#include "backend/common/platform.h"
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/abstract_tuple.h"
 
 namespace peloton {
 
@@ -161,7 +159,7 @@ public:
   // Get a prepared rollback segment from a tuple
   // TODO: Return nullptr if there is no need to generate a new segment
   RBSegType CreateSegmentFromTuple(const catalog::Schema *schema,
-                            const planner::ProjectInfo::TargetList &target_list,
+                            const TargetList &target_list,
                             const AbstractTuple *tuple);
 
   inline static void SetColIdOffsetPair(char *rb_seg,

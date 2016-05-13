@@ -31,6 +31,7 @@
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint_tile_scanner.h"
 #include "backend/logging/logging_util.h"
+#include "backend/logging/checkpoint_manager.h"
 
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"

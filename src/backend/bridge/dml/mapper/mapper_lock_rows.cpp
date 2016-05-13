@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace bridge {

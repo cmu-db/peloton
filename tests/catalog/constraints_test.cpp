@@ -14,6 +14,7 @@
 #include "harness.h"
 
 #include "backend/catalog/schema.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/common/value.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
@@ -21,6 +22,7 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/table_factory.h"
+#include "backend/storage/database.h"
 #include "backend/index/index_factory.h"
 #include "backend/bridge/ddl/bridge.h"
 

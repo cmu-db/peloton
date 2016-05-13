@@ -24,6 +24,7 @@
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
 #include "backend/logging/logging_util.h"
+#include "backend/logging/log_manager.h"
 
 #define POSSIBLY_DIRTY_GRANT_SIZE 10000000; // ten million seems reasonable
 
