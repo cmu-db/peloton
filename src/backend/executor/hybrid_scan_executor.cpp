@@ -100,13 +100,18 @@ bool HybridScanExecutor::DInit() {
       current_tile_group_offset_ = START_OID;
     } else {
       current_tile_group_offset_ = indexed_tile_offset_ + 1;
+      std::shared_ptr<storage::TileGroup> tile_group; 
       if (current_tile_group_offset_ < table_tile_group_count_) {
-        auto tile_group =
+        tile_group =
           table_->GetTileGroup(current_tile_group_offset_);
-        oid_t tuple_id = 0;
-        ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-        block_threshold = location.block;
+      } else {
+        tile_group =
+          table_->GetTileGroup(table_tile_group_count_ - 1);
       }
+      
+      oid_t tuple_id = 0;
+      ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
+      block_threshold = location.block;
     }
 
     result_itr_ = START_OID;
@@ -468,12 +473,11 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-
     ItemPointer tuple_location = *tuple_location_ptr;
     if (type_ == planner::HYBRID &&
       tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
-  //    oid_ts.insert(tuple_location.block);
+    //  oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
@@ -484,10 +488,10 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     visible_tuples[tuple_location.block].push_back(tuple_location.offset);
   }
 
-  //printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
-  //for (auto t : oid_ts) {
-  //  std::cout << "block  " << t  << std::endl;
-  //}
+  /*printf("set size %lu current seq scan off %d, block threshlod %d\n", item_pointers_.size(), current_tile_group_offset_, block_threshold);
+  for (auto t : oid_ts) {
+    std::cout << "block  " << t  << std::endl;
+  }*/
 
    //timer.Stop();
    //double time_per_transaction = timer.GetDuration();
