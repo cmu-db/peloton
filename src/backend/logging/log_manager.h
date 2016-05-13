@@ -40,7 +40,7 @@ namespace logging {
 // Logger refers to the implementation -- like frontend or backend
 // Transition diagram :: standby -> recovery -> logging -> terminate -> sleep
 
-#define LOG_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
+#define LOG_FILE_LEN 1024 * UINT64_C(128)  // 128 MB
 
 /**
  * Global Log Manager
