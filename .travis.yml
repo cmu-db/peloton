@@ -28,6 +28,6 @@ script:
     - cd build
     - ../configure CXXFLAGS="-O0"
     - make
-    # - make check
+    - cd tests; make check-valgrind; cd ..;
     - sudo make install
     - ../scripts/oltpbenchmark/test_peloton.sh
