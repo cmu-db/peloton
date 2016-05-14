@@ -22,6 +22,11 @@ namespace peloton {
 
 ItemPointer INVALID_ITEMPOINTER;
 
+FileHandle INVALID_FILE_HANDLE;
+
+// WARNING: It will limit scalability if tupers per tile group is too small,
+// When a tile group is full, a new tile group needs to be allocated, until
+// then no new insertion of new versions or tuples are available in the table.
 int DEFAULT_TUPLES_PER_TILEGROUP = 1000;
 
 //===--------------------------------------------------------------------===//
@@ -276,7 +281,7 @@ int32_t HexCharToInt(char c) {
   return retval;
 }
 
-bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
+bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
   assert(hexString);
   size_t len = strlen(hexString);
   if ((len % 2) != 0) return false;
@@ -297,8 +302,8 @@ bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type) {
   bool status = false;
 
   switch (logging_type) {
-    case LOGGING_TYPE_DRAM_NVM:
-    case LOGGING_TYPE_DRAM_HDD:
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_HDD_WAL:
       status = true;
       break;
 
@@ -314,11 +319,8 @@ bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type) {
   bool status = true;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD:
-
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_NVM_WBL:
+    case LOGGING_TYPE_HDD_WBL:
       status = true;
       break;
 
@@ -335,13 +337,11 @@ BackendType GetBackendType(const LoggingType& logging_type) {
   BackendType backend_type = BACKEND_TYPE_MM;
 
   switch (logging_type) {
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD:
+    case LOGGING_TYPE_NVM_WBL:
       backend_type = BACKEND_TYPE_NVM;
       break;
 
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD:
+    case LOGGING_TYPE_HDD_WBL:
       backend_type = BACKEND_TYPE_HDD;
       break;
 
@@ -944,22 +944,17 @@ std::string LoggingTypeToString(LoggingType type) {
       return "INVALID";
 
     // WAL Based
-    case LOGGING_TYPE_DRAM_NVM:
-      return "DRAM_NVM";
-    case LOGGING_TYPE_DRAM_HDD:
-      return "DRAM_HDD";
+    case LOGGING_TYPE_NVM_WAL:
+      return "NVM_WAL";
+    case LOGGING_TYPE_HDD_WAL:
+      return "HDD_WAL";
 
     // WBL Based
 
-    case LOGGING_TYPE_NVM_NVM:
-      return "NVM_NVM";
-    case LOGGING_TYPE_NVM_HDD:
-      return "NVM_HDD";
-
-    case LOGGING_TYPE_HDD_NVM:
-      return "HDD_NVM";
-    case LOGGING_TYPE_HDD_HDD:
-      return "HDD_HDD";
+    case LOGGING_TYPE_NVM_WBL:
+      return "NVM_WBL";
+    case LOGGING_TYPE_HDD_WBL:
+      return "HDD_WBL";
 
     default:
       LOG_ERROR("Invalid logging_type :: %d", type);
@@ -1054,6 +1049,9 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
       return "LOGRECORD_TYPE_WBL_TUPLE_UPDATE";
     }
+    case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+      return "LOGRECORD_TYPE_ITERATION_DELIMITER";
+    }
   }
   return "INVALID";
 }
@@ -1113,7 +1111,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      LOG_WARN("INVALID VALUE TYPE : %d ", PostgresValType);
+      LOG_TRACE("INVALID VALUE TYPE : %d ", PostgresValType);
       value_type = VALUE_TYPE_INVALID;
       break;
   }

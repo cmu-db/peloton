@@ -103,7 +103,7 @@ bool SpeculativeReadTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to insert new tuple. Set txn failure.");
+    LOG_TRACE("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -164,9 +164,11 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -228,9 +230,11 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &old_location,
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(old_location.block)->GetHeader();
+                               .GetTileGroup(old_location.block)
+                               ->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(new_location.block)->GetHeader();
+                                   .GetTileGroup(new_location.block)
+                                   ->GetHeader();
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -288,7 +292,7 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result SpeculativeReadTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -296,6 +300,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
+  current_txn->SetEndCommitId(end_commit_id);
 
   // validation must be performed. otherwise, deadlock can occur.
   // validate read set.
@@ -411,7 +416,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 }
 
 Result SpeculativeReadTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();

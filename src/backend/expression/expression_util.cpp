@@ -36,32 +36,34 @@
 #include "backend/expression/string_expression.h"
 #include "backend/expression/date_expression.h"
 #include "backend/expression/vector_comparison_expression.h"
+#include "backend/expression/coalesce_expression.h"
 #include "backend/expression/nullif_expression.h"
+#include "backend/expression/udf_expression.h"
 
 namespace peloton {
 namespace expression {
 
 // Parse JSON parameters to create a hash range expression
 AbstractExpression *ExpressionUtil::HashRangeFactory(PlannerDomValue obj) {
-  PlannerDomValue hashColumnValue = obj.valueForKey("HASH_COLUMN");
+  PlannerDomValue hash_column_value = obj.valueForKey("HASH_COLUMN");
 
-  PlannerDomValue rangesArray = obj.valueForKey("RANGES");
+  PlannerDomValue ranges_array = obj.valueForKey("RANGES");
 
-  srange_type *ranges = new srange_type[rangesArray.arrayLen()];
-  for (int ii = 0; ii < rangesArray.arrayLen(); ii++) {
-    PlannerDomValue arrayObject = rangesArray.valueAtIndex(ii);
+  std::vector<srange_type> ranges;
+  ranges.resize(ranges_array.arrayLen());
+  for (int ii = 0; ii < ranges_array.arrayLen(); ii++) {
+    PlannerDomValue arrayObject = ranges_array.valueAtIndex(ii);
     PlannerDomValue rangeStartValue = arrayObject.valueForKey("RANGE_START");
     PlannerDomValue rangeEndValue = arrayObject.valueForKey("RANGE_END");
 
     ranges[ii] = srange_type(rangeStartValue.asInt(), rangeEndValue.asInt());
   }
-  return new HashRangeExpression(hashColumnValue.asInt(), ranges,
-                                 static_cast<int>(rangesArray.arrayLen()));
+  return new HashRangeExpression(hash_column_value.asInt(), ranges);
 }
 
 // Parse JSON parameters to create a subquery expression
 AbstractExpression *ExpressionUtil::SubqueryFactory(
-    ExpressionType subqueryType, PlannerDomValue obj,
+    ExpressionType subquery_type, ValueType value_type, PlannerDomValue obj,
     const std::vector<AbstractExpression *> &args) {
   int subqueryId = obj.valueForKey("SUBQUERY_ID").asInt();
   std::vector<int> paramIdxs;
@@ -88,8 +90,8 @@ AbstractExpression *ExpressionUtil::SubqueryFactory(
       otherParamIdxs.push_back(paramIdx);
     }
   }
-  return new SubqueryExpression(subqueryType, subqueryId, paramIdxs,
-                                otherParamIdxs, args);
+  return new SubqueryExpression(subquery_type, value_type, subqueryId,
+                                paramIdxs, otherParamIdxs, args);
 }
 
 // Function static helper templated functions to vivify an optimal
@@ -112,29 +114,29 @@ AbstractExpression *SubqueryComparisonFactory(
   if (l_subquery != NULL && r_subquery != NULL) {
     switch (c) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
-            return new VectorComparisonExpression<CmpEq, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpEq, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-            return new VectorComparisonExpression<CmpNe, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpNe, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-            return new VectorComparisonExpression<CmpLt, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLt, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-            return new VectorComparisonExpression<CmpGt, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGt, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpLte, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLte, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpGte, TupleExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGte, TupleExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       default:
         char message[256];
         snprintf(message, 256,
@@ -146,29 +148,29 @@ AbstractExpression *SubqueryComparisonFactory(
   } else if (l_subquery != NULL) {
     switch (c) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
-            return new VectorComparisonExpression<CmpEq, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpEq, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-            return new VectorComparisonExpression<CmpNe, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpNe, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-            return new VectorComparisonExpression<CmpLt, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLt, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-            return new VectorComparisonExpression<CmpGt, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGt, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpLte, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLte, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpGte, TupleExtractor,
-                ValueExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGte, TupleExtractor,
+                                              ValueExtractor>(c, l, r,
+                                                              quantifier);
       default:
         char message[256];
         snprintf(message, 256,
@@ -181,29 +183,29 @@ AbstractExpression *SubqueryComparisonFactory(
     assert(r_subquery != NULL);
     switch (c) {
       case (EXPRESSION_TYPE_COMPARE_EQUAL):
-            return new VectorComparisonExpression<CmpEq, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpEq, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-            return new VectorComparisonExpression<CmpNe, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpNe, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-            return new VectorComparisonExpression<CmpLt, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLt, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-            return new VectorComparisonExpression<CmpGt, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGt, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpLte, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpLte, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-            return new VectorComparisonExpression<CmpGte, ValueExtractor,
-                TupleExtractor>(c, l, r,
-                                quantifier);
+        return new VectorComparisonExpression<CmpGte, ValueExtractor,
+                                              TupleExtractor>(c, l, r,
+                                                              quantifier);
       default:
         char message[256];
         snprintf(message, 256,
@@ -213,7 +215,7 @@ AbstractExpression *SubqueryComparisonFactory(
         throw Exception(message);
     }
   }
-  */
+   */
 }
 
 AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
@@ -415,25 +417,26 @@ AbstractExpression *ExpressionUtil::ComparisonFactory(PlannerDomValue obj,
 // convert the enumerated value type into a concrete c type for the
 //  operator expression templated ctors
 AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
+                                                    ValueType vt,
                                                     AbstractExpression *lc,
                                                     AbstractExpression *rc) {
   AbstractExpression *ret = NULL;
 
   switch (et) {
     case (EXPRESSION_TYPE_OPERATOR_PLUS):
-      ret = new OperatorExpression<OpPlus>(et, lc, rc);
+      ret = new OperatorExpression<OpPlus>(et, vt, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MINUS):
-      ret = new OperatorExpression<OpMinus>(et, lc, rc);
+      ret = new OperatorExpression<OpMinus>(et, vt, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
-      ret = new OperatorExpression<OpMultiply>(et, lc, rc);
+      ret = new OperatorExpression<OpMultiply>(et, vt, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
-      ret = new OperatorExpression<OpDivide>(et, lc, rc);
+      ret = new OperatorExpression<OpDivide>(et, vt, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
@@ -463,13 +466,14 @@ AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
 // convert the enumerated value type into a concrete c type for the
 //  operator expression templated ctors
 AbstractExpression *ExpressionUtil::OperatorFactory(
-    ExpressionType et, AbstractExpression *first, AbstractExpression *second,
-    AbstractExpression *third, AbstractExpression *fourth) {
+    ExpressionType et, ValueType vt, AbstractExpression *first,
+    AbstractExpression *second, AbstractExpression *third,
+    AbstractExpression *fourth) {
   AbstractExpression *ret = nullptr;
 
   switch (et) {
     case (EXPRESSION_TYPE_OPERATOR_PLUS):
-      ret = new OperatorExpression<OpPlus>(et, first, second);
+      ret = new OperatorExpression<OpPlus>(et, vt, first, second);
       break;
 
     case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
@@ -477,15 +481,15 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MINUS):
-      ret = new OperatorExpression<OpMinus>(et, first, second);
+      ret = new OperatorExpression<OpMinus>(et, vt, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
-      ret = new OperatorExpression<OpMultiply>(et, first, second);
+      ret = new OperatorExpression<OpMultiply>(et, vt, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
-      ret = new OperatorExpression<OpDivide>(et, first, second);
+      ret = new OperatorExpression<OpDivide>(et, vt, first, second);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
@@ -543,7 +547,7 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       ret = new BTrimExpression(first, second);
       break;
     case (EXPRESSION_TYPE_OPERATOR_MOD):
-      ret = new OperatorExpression<OpMod>(et, first, second);
+      ret = new OperatorExpression<OpMod>(et, vt, first, second);
       break;
     case (EXPRESSION_TYPE_EXTRACT):
       ret = new ExtractExpression(first, second);
@@ -565,12 +569,7 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
 
 AbstractExpression *ExpressionUtil::CastFactory(ValueType vt,
                                                 AbstractExpression *lc) {
-  return new OperatorCastExpression(vt, lc);
-}
-
-AbstractExpression *ExpressionUtil::CastFactory(PostgresValueType type,
-                                                AbstractExpression *child) {
-  return new expression::CastExpression(type, child);
+  return new CastExpression(vt, lc);
 }
 
 // provide an interface for creating constant value expressions that
@@ -657,50 +656,54 @@ AbstractExpression *ExpressionUtil::VectorFactory(
   return new VectorExpression(elementType, arguments);
 }
 
-AbstractExpression *ExpressionUtil::ParameterValueFactory(int idx) {
-  return new ParameterValueExpression(idx);
+AbstractExpression *ExpressionUtil::ParameterValueFactory(ValueType type,
+                                                          int idx) {
+  return new ParameterValueExpression(type, idx);
 }
 
 // convert the enumerated value type into a concrete c type for
 // parameter value expression templated ctors
 AbstractExpression *ExpressionUtil::ParameterValueFactory(
-    PlannerDomValue obj, __attribute__((unused)) ExpressionType et,
+    PlannerDomValue obj, ValueType vt,
+    __attribute__((unused)) ExpressionType et,
     __attribute__((unused)) AbstractExpression *lc,
     __attribute__((unused)) AbstractExpression *rc) {
   // read before ctor - can then instantiate fully init'd obj.
   int param_idx = obj.valueForKey("PARAM_IDX").asInt();
   assert(param_idx >= 0);
-  return new ParameterValueExpression(param_idx);
+  return new ParameterValueExpression(vt, param_idx);
 }
 
-AbstractExpression *ExpressionUtil::TupleValueFactory(int tuple_idx,
+AbstractExpression *ExpressionUtil::TupleValueFactory(ValueType type,
+                                                      int tuple_idx,
                                                       int value_idx) {
-  return new TupleValueExpression(tuple_idx, value_idx);
+  return new TupleValueExpression(type, tuple_idx, value_idx);
 }
 
 // convert the enumerated value type into a concrete c type for
 // tuple value expression templated ctors
 AbstractExpression *ExpressionUtil::TupleValueFactory(
-    PlannerDomValue obj, __attribute__((unused)) ExpressionType et,
+    PlannerDomValue obj, ValueType vt,
+    __attribute__((unused)) ExpressionType et,
     __attribute__((unused)) AbstractExpression *lc,
     __attribute__((unused)) AbstractExpression *rc) {
   // read the tuple value expression specific data
-  int columnIndex = obj.valueForKey("COLUMN_IDX").asInt();
-  int tableIdx = 0;
+  int column_index = obj.valueForKey("COLUMN_IDX").asInt();
+  int table_idx = 0;
   if (obj.hasNonNullKey("TABLE_IDX")) {
-    tableIdx = obj.valueForKey("TABLE_IDX").asInt();
+    table_idx = obj.valueForKey("TABLE_IDX").asInt();
   }
 
   // verify input
-  if (columnIndex < 0) {
+  if (column_index < 0) {
     std::ostringstream message;
-    message << "tupleValueFactory: invalid column_idx " << columnIndex
-            << " for " << ((tableIdx == 0) ? "" : "inner ");
+    message << "tupleValueFactory: invalid column_idx " << column_index
+            << " for " << ((table_idx == 0) ? "" : "inner ");
     // comment out because the exception type not found.
     throw Exception(message.str());
   }
 
-  return new TupleValueExpression(tableIdx, columnIndex);
+  return new TupleValueExpression(vt, table_idx, column_index);
 }
 
 AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
@@ -712,7 +715,7 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
     case (EXPRESSION_TYPE_CONJUNCTION_OR):
       return new ConjunctionExpression<ConjunctionOr>(et, lc, rc);
     default:
-      return NULL;
+      return nullptr;
   }
 }
 
@@ -742,6 +745,13 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
   }
 }
 
+AbstractExpression *ExpressionUtil::UDFExpressionFactory(
+    Oid function_id, Oid collation, Oid return_type,
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &args) {
+  return new expression::UDFExpression(function_id, collation, return_type,
+                                       args);
+}
+
 void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
                                const std::vector<AbstractExpression *> &args) {
   char fn_message[1024];
@@ -759,7 +769,7 @@ void RaiseFunctionFactoryError(const std::string &nameString, int functionId,
 // pursuit. Each instantiated expression must consume any
 // class-specific serialization from serialize_io. */
 AbstractExpression *ExpressionUtil::ExpressionFactory(
-    PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
+    PlannerDomValue obj, ExpressionType et, ValueType vt,
     AbstractExpression *lc, AbstractExpression *rc,
     const std::vector<AbstractExpression *> &args) {
   AbstractExpression *ret = NULL;
@@ -780,7 +790,7 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     case (EXPRESSION_TYPE_OPERATOR_NOT):
     case (EXPRESSION_TYPE_OPERATOR_IS_NULL):
     case (EXPRESSION_TYPE_OPERATOR_EXISTS):
-      ret = ExpressionUtil::OperatorFactory(et, lc, rc);
+      ret = ExpressionUtil::OperatorFactory(et, vt, lc, rc);
       break;
 
     // Comparisons
@@ -837,18 +847,18 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
       break;
 
     case (EXPRESSION_TYPE_VALUE_PARAMETER):
-      ret = ParameterValueFactory(obj, et, lc, rc);
+      ret = ParameterValueFactory(obj, vt, et, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_VALUE_TUPLE):
-      ret = TupleValueFactory(obj, et, lc, rc);
+      ret = TupleValueFactory(obj, vt, et, lc, rc);
       break;
 
     case (EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS):
       ret = new TupleAddressExpression();
       break;
     case (EXPRESSION_TYPE_VALUE_SCALAR):
-      ret = new ScalarValueExpression(lc);
+      ret = new ScalarValueExpression(vt, lc);
       break;
     case (EXPRESSION_TYPE_HASH_RANGE):
       ret = HashRangeFactory(obj);
@@ -861,7 +871,7 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
     // Subquery
     case (EXPRESSION_TYPE_ROW_SUBQUERY):
     case (EXPRESSION_TYPE_SELECT_SUBQUERY):
-      ret = SubqueryFactory(et, obj, args);
+      ret = SubqueryFactory(et, vt, obj, args);
       break;
 
     // must handle all known expression in this factory
@@ -874,8 +884,8 @@ AbstractExpression *ExpressionUtil::ExpressionFactory(
       throw Exception(message);
   }
 
-  ret->setValueType(vt);
-  ret->setValueSize(vs);
+  //ret->setValueType(vt);
+
   // written thusly to ease testing/inspecting return content.
   LOG_TRACE("Created expression %p", ret);
   return ret;
@@ -888,7 +898,7 @@ boost::shared_array<int> ExpressionUtil::ConvertIfAllTupleValues(
   for (size_t i = 0; i < cnt; ++i) {
     TupleValueExpression *casted =
         dynamic_cast<TupleValueExpression *>(expression[i]);
-    if (casted == NULL) {
+    if (casted == nullptr) {
       return boost::shared_array<int>();
     }
     ret[i] = casted->GetColumnId();
@@ -913,7 +923,7 @@ boost::shared_array<int> ExpressionUtil::ConvertIfAllParameterValues(
 
 void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
                                                  std::vector<int> &columnIds) {
-  if (expr == NULL) {
+  if (expr == nullptr) {
     return;
   }
   if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {

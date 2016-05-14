@@ -23,19 +23,21 @@ namespace expression {
 
 class TupleValueExpression : public AbstractExpression {
  public:
-  TupleValueExpression(const int tableIdx, const int valueIdx)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE),
-        tuple_idx(tableIdx),
-        value_idx(valueIdx) {
-    LOG_INFO("OptimizedTupleValueExpression %d using tupleIdx %d valueIdx %d",
-             m_type, tableIdx, valueIdx);
+  TupleValueExpression(ValueType type, const int tuple_idx, const int value_idx)
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE, type),
+        tuple_idx_(tuple_idx),
+        value_idx_(value_idx) {
+    LOG_TRACE(
+        "OptimizedTupleValueExpression %d using tuple index %d and value index "
+        "%d",
+        GetValueType(), tuple_idx_, value_idx_);
   };
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
                          const AbstractTuple *tuple2,
                          __attribute__((unused))
-                         executor::ExecutorContext *context) const {
-    if (tuple_idx == 0) {
+                         executor::ExecutorContext *context) const override {
+    if (tuple_idx_ == 0) {
       assert(tuple1);
       if (!tuple1) {
         throw Exception(
@@ -43,7 +45,7 @@ class TupleValueExpression : public AbstractExpression {
             "Evaluate:"
             " Couldn't find tuple 1 (possible index scan planning error)");
       }
-      return tuple1->GetValue(value_idx);
+      return tuple1->GetValue(value_idx_);
     } else {
       assert(tuple2);
       if (!tuple2) {
@@ -52,28 +54,28 @@ class TupleValueExpression : public AbstractExpression {
             "Evaluate:"
             " Couldn't find tuple 2 (possible index scan planning error)");
       }
-      return tuple2->GetValue(value_idx);
+      return tuple2->GetValue(value_idx_);
     }
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     std::ostringstream buffer;
-    buffer << spacer << "Optimized Column Reference[" << tuple_idx << ", "
-           << value_idx << "]\n";
+    buffer << spacer << "Optimized Column Reference[" << tuple_idx_ << ", "
+           << value_idx_ << "]\n";
     return (buffer.str());
   }
 
-  int GetColumnId() const { return this->value_idx; }
+  int GetColumnId() const { return this->value_idx_; }
 
-  int GetTupleIdx() const { return this->tuple_idx; }
+  int GetTupleIdx() const { return this->tuple_idx_; }
 
-  AbstractExpression *Copy() const {
-    return new TupleValueExpression(tuple_idx, value_idx);
+  AbstractExpression *Copy() const override {
+    return new TupleValueExpression(GetValueType(), tuple_idx_, value_idx_);
   }
 
  protected:
-  const int tuple_idx;  // which tuple. defaults to tuple1
-  const int value_idx;  // which (offset) column of the tuple
+  const int tuple_idx_;  // which tuple. defaults to tuple1
+  const int value_idx_;  // which (offset) column of the tuple
 };
 
 }  // End expression namespace

@@ -18,6 +18,7 @@ namespace peloton {
 namespace gc {
 
 void GCManager::StartGC() {
+  LOG_TRACE("Starting GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
@@ -25,11 +26,13 @@ void GCManager::StartGC() {
 }
 
 void GCManager::StopGC() {
+  LOG_TRACE("Stopping GC");
   if (this->gc_type_ == GC_TYPE_OFF) {
     return;
   }
   this->is_running_ = false;
   this->gc_thread_->join();
+  ClearGarbage();
 }
 
 void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
@@ -59,7 +62,7 @@ void GCManager::Running() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
-    LOG_INFO("reclaim tuple thread...");
+    LOG_TRACE("reclaim tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
@@ -72,11 +75,11 @@ void GCManager::Running() {
     for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
       TupleMetadata tuple_metadata;
       // if there's no more tuples in the queue, then break.
-      if (reclaim_queue_.TryPop(tuple_metadata) == false) {
+      if (reclaim_queue_.Dequeue(tuple_metadata) == false) {
         break;
       }
 
-      if (tuple_metadata.tuple_end_cid < max_cid) {
+      if (tuple_metadata.tuple_end_cid <= max_cid) {
         ResetTuple(tuple_metadata);
 
         // Add to the recycle map
@@ -85,7 +88,7 @@ void GCManager::Running() {
         if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
             true) {
           // if the entry for tuple_metadata.table_id exists.
-          recycle_queue->BlockingPush(tuple_metadata);
+          recycle_queue->Enqueue(tuple_metadata);
         } else {
           // if the entry for tuple_metadata.table_id does not exist.
           recycle_queue.reset(
@@ -93,21 +96,21 @@ void GCManager::Running() {
           bool ret =
               recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
           if (ret == true) {
-            recycle_queue->BlockingPush(tuple_metadata);
+            recycle_queue->Enqueue(tuple_metadata);
           } else {
             recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-            recycle_queue->BlockingPush(tuple_metadata);
+            recycle_queue->Enqueue(tuple_metadata);
           }
         }
 
         tuple_counter++;
       } else {
         // if a tuple cannot be reclaimed, then add it back to the list.
-        reclaim_queue_.BlockingPush(tuple_metadata);
+        reclaim_queue_.Enqueue(tuple_metadata);
       }
     }  // end for
 
-    LOG_INFO("Marked %d tuples as garbage", tuple_counter);
+    LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
 
     if (is_running_ == false) {
       return;
@@ -130,9 +133,9 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
-  reclaim_queue_.BlockingPush(tuple_metadata);
+  reclaim_queue_.Enqueue(tuple_metadata);
 
-  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
+  LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 }
@@ -148,14 +151,46 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
-    if (recycle_queue->TryPop(tuple_metadata) == true) {
-      LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
+    if (recycle_queue->Dequeue(tuple_metadata) == true) {
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
     }
   }
   return ItemPointer();
+}
+
+// this function can only be called after:
+//    1) All txns have exited
+//    2) The background gc thread has exited
+void GCManager::ClearGarbage() {
+  // iterate reclaim queue and reclaim every thing because it's the end of the world now.
+  TupleMetadata tuple_metadata;
+  while (reclaim_queue_.Dequeue(tuple_metadata) == true) {
+    ResetTuple(tuple_metadata);
+
+    // Add to the recycle map
+    std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+    // if the entry for table_id exists.
+    if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
+        true) {
+      // if the entry for tuple_metadata.table_id exists.
+      recycle_queue->Enqueue(tuple_metadata);
+    } else {
+      // if the entry for tuple_metadata.table_id does not exist.
+      recycle_queue.reset(
+        new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      bool ret =
+        recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+      if (ret == true) {
+        recycle_queue->Enqueue(tuple_metadata);
+      } else {
+        recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+        recycle_queue->Enqueue(tuple_metadata);
+      }
+    }
+  }
 }
 
 }  // namespace gc

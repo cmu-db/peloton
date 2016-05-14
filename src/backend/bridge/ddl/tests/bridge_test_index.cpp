@@ -53,7 +53,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_INVALID_OID() {
   // CHECK :: status must be false
   if (status != false) throw CatalogException("Could create index");
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 /**
@@ -77,7 +77,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
   // CHECK :: status must be false
   if (status != false) throw CatalogException("Could create index");
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 /**
@@ -116,7 +116,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   status = DDLTable::DropTable(table_oid);
   if (status == false) throw CatalogException("Could not drop table");
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 }  // End bridge namespace

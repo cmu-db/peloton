@@ -51,7 +51,7 @@ bool MergeJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool MergeJoinExecutor::DExecute() {
-  LOG_INFO(
+  LOG_TRACE(
       "********** Merge Join executor :: 2 children "
       "left:: start: %lu, end: %lu, done: %d "
       "right:: start: %lu, end: %lu, done: %d",

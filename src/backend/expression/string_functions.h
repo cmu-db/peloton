@@ -420,7 +420,7 @@ inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
   }
 
   std::string result = trim_function(inputStr, trimArg, leading, trailing);
-  LOG_INFO("%s %s %s", result.c_str(), inputStr.c_str(), trimArg.c_str());
+  LOG_TRACE("%s %s %s", result.c_str(), inputStr.c_str(), trimArg.c_str());
   return GetTempStringValue(result.c_str(), result.length());
 }
 

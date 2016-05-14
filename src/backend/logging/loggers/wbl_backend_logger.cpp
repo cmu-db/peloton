@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "backend/logging/records/tuple_record.h"
+#include "backend/logging/records/transaction_record.h"
 #include "backend/logging/log_manager.h"
 #include "backend/logging/frontend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
@@ -20,27 +21,59 @@
 namespace peloton {
 namespace logging {
 
-/**
- * @brief log LogRecord
- * @param log record
- */
 void WriteBehindBackendLogger::Log(LogRecord *record) {
-  // Enqueue the serialized log record into the queue
-  record->Serialize(output_buffer);
-
-  {
-    std::lock_guard<std::mutex> lock(local_queue_mutex);
-    local_queue.push_back(std::unique_ptr<LogRecord>(record));
+  // if we are committing, sync all data before taking the lock
+  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT){
+	  SyncDataForCommit();
   }
+  log_buffer_lock.Lock();
+  switch (record->GetType()) {
+    case LOGRECORD_TYPE_TRANSACTION_COMMIT:
+      highest_logged_commit_message = record->GetTransactionId();
+    // fallthrough
+    case LOGRECORD_TYPE_TRANSACTION_ABORT:
+    case LOGRECORD_TYPE_TRANSACTION_BEGIN:
+    case LOGRECORD_TYPE_TRANSACTION_DONE:
+    case LOGRECORD_TYPE_TRANSACTION_END: {
+      if(logging_cid_lower_bound < record->GetTransactionId()-1 ){
+    	  logging_cid_lower_bound = record->GetTransactionId()-1;
+      }
+      break;
+    }
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:{
+        tile_groups_to_sync_.insert(((TupleRecord *)record)->GetDeleteLocation().block);
+        break;
+      }
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:{
+    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetInsertLocation().block);
+        break;
+      }
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetDeleteLocation().block);
+    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetInsertLocation().block);
+      break;
+    }
+    default:
+      LOG_INFO("Invalid log record type");
+      break;
+  }
+
+  log_buffer_lock.Unlock();
 }
 
-LogRecord *WriteBehindBackendLogger::GetTupleRecord(LogRecordType log_record_type,
-                                                    txn_id_t txn_id,
-                                                    oid_t table_oid,
-                                                    oid_t db_oid,
-                                                    ItemPointer insert_location,
-                                                    ItemPointer delete_location,
-                                                    __attribute__((unused)) const void *data) {
+void WriteBehindBackendLogger::SyncDataForCommit(){
+	auto &manager = catalog::Manager::GetInstance();
+	for (oid_t tile_group_id : tile_groups_to_sync_){
+		auto tile_group = manager.GetTileGroup(tile_group_id);
+		tile_group->Sync();
+		tile_group->GetHeader()->Sync();
+	}
+}
+
+LogRecord *WriteBehindBackendLogger::GetTupleRecord(
+    LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
+    oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
+    __attribute__((unused)) const void *data) {
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {

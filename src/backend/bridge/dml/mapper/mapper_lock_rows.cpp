@@ -30,7 +30,7 @@ namespace bridge {
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLockRows(
     const LockRowsPlanState *lr_plan_state) {
-  LOG_INFO("Handle LockRows");
+  LOG_TRACE("Handle LockRows");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state = outerAbstractPlanState(lr_plan_state);

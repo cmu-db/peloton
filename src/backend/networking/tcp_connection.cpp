@@ -249,12 +249,12 @@ void *Connection::ProcessMessage(void *connection) {
       gettimeofday(&end, NULL);
       useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
 
-      LOG_INFO("server_response_send_number: %lu", server_response_send_number);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_number: %lu", server_response_send_number);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_number * 1000000)/useconds);
 
-      LOG_INFO("server_response_send_bytes: %lu", server_response_send_bytes);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_bytes: %lu", server_response_send_bytes);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_bytes * 1000000)/useconds);
     }*/
 

@@ -29,6 +29,8 @@ AC_PROG_YACC
 AC_PROG_LEX
 AM_PATH_PYTHON
 
+TS_CHECK_JEMALLOC
+
 ######################################################################
 # LIBRARIES : DL, RT, and M
 ######################################################################
@@ -102,11 +104,11 @@ AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : zlib1g-dev]))
 AX_CHECK_SSL([], AC_MSG_ERROR([Please install ssl library : libssl-dev]))
 
 # Check for Boost libraries
-#AX_BOOST_BASE([1.42])
+AX_BOOST_BASE([1.55])
 #AX_BOOST_ASIO
-#AX_BOOST_FILESYSTEM
+AX_BOOST_FILESYSTEM
 #AX_BOOST_SERIALIZATION
-#AX_BOOST_SYSTEM
+AX_BOOST_SYSTEM
 #AX_BOOST_THREAD
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])

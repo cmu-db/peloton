@@ -43,11 +43,11 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::GetCachedPlan(
   auto itr = plan_cache_.find(name_str);
   if (itr == plan_cache_.end()) {
     /* A plan cache miss */
-    LOG_INFO("Cache miss for %s", name_str.c_str());
+    LOG_TRACE("Cache miss for %s", name_str.c_str());
     return nullptr;
   } else {
     /* A plan cache hit */
-    LOG_INFO("Cache hit for %s", name_str.c_str());
+    LOG_TRACE("Cache hit for %s", name_str.c_str());
     return *itr;
   }
 }
