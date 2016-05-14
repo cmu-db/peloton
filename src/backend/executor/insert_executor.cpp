@@ -144,7 +144,7 @@ bool InsertExecutor::DExecute() {
 
       // Carry out insertion
       ItemPointer location = target_table->InsertTuple(tuple);
-      LOG_TRACE("Inserted into location: %lu, %lu", location.block,
+      LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
 
       if (location.block == INVALID_OID) {
