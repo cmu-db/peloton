@@ -47,15 +47,15 @@ class CmpEq {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return false;
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }
@@ -69,15 +69,15 @@ class CmpNe {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return false;
   }
@@ -91,9 +91,9 @@ class CmpLt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpLessThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
@@ -110,9 +110,9 @@ class CmpGt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpGreaterThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
@@ -132,9 +132,9 @@ class CmpLte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }
@@ -151,9 +151,9 @@ class CmpGte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }

@@ -123,7 +123,7 @@ Value::Value(const Value &other) {
 }
 
 Value Value::Clone(const Value &src,
-                   VarlenPool *varlen_pool __attribute__((unused))) {
+                   VarlenPool *varlen_pool UNUSED_ATTRIBUTE) {
   Value rv = src;
 
   return rv;
@@ -713,7 +713,7 @@ struct ValueList {
     return (int)(sizeof(ValueList) + length * sizeof(StlFriendlyValue));
   }
 
-  void *operator new(__attribute__((unused)) size_t size, char *placement) {
+  void *operator new(UNUSED_ATTRIBUTE size_t size, char *placement) {
     return placement;
   }
   void operator delete(void *, char *) {}
@@ -1071,7 +1071,7 @@ int64_t Value::parseTimestampString(const std::string &str) {
   return result;
 }
 
-int WarnIf(int condition, __attribute__((unused)) const char *message) {
+int WarnIf(int condition, UNUSED_ATTRIBUTE const char *message) {
   if (condition) {
     // LogManager::GetThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
   }

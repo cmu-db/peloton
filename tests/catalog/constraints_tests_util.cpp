@@ -116,7 +116,7 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
+void ConstraintsTestsUtil::PopulateTable(UNUSED_ATTRIBUTE
                                          concurrency::Transaction *transaction,
                                          storage::DataTable *table,
                                          int num_rows) {

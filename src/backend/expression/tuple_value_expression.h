@@ -35,7 +35,7 @@ class TupleValueExpression : public AbstractExpression {
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
                          const AbstractTuple *tuple2,
-                         __attribute__((unused))
+                         UNUSED_ATTRIBUTE
                          executor::ExecutorContext *context) const override {
     if (tuple_idx_ == 0) {
       ALWAYS_ASSERT(tuple1);

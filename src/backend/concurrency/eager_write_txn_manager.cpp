@@ -141,7 +141,7 @@ bool EagerWriteTxnManager::IsOwnable(
 
 bool EagerWriteTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+    const oid_t &tile_group_id UNUSED_ATTRIBUTE, const oid_t &tuple_id) {
   LOG_TRACE("AcquireOwnership");
   ALWAYS_ASSERT(IsOwner(tile_group_header, tuple_id) == false);
 

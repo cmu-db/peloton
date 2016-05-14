@@ -372,7 +372,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                           __attribute__((unused))) {
+                                           UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =

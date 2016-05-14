@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "harness.h"
+
 #include "gtest/gtest.h"
 
 namespace peloton {
@@ -25,7 +27,7 @@ namespace vec {
 template <typename T>
 class vector {
  public:
-  bool operator==(const vector<T>& rhs __attribute__((unused))) { return true; }
+  bool operator==(const vector<T>& rhs UNUSED_ATTRIBUTE) { return true; }
 };
 
 }  // of vec

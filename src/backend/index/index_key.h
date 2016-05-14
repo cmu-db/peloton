@@ -163,7 +163,7 @@ template <std::size_t KeySize> class IntsKey {
     return retval;
   }
 
-  const storage::Tuple GetTupleForComparison(__attribute__((unused)) const
+  const storage::Tuple GetTupleForComparison(UNUSED_ATTRIBUTE const
                                              catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
@@ -541,7 +541,7 @@ class TupleKey {
 
   // Set a key from a table-schema tuple.
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
-                           __attribute__((unused)) const
+                           UNUSED_ATTRIBUTE const
                            catalog::Schema *key_schema) {
     ALWAYS_ASSERT(tuple);
     ALWAYS_ASSERT(indices);
