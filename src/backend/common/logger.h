@@ -48,12 +48,6 @@ namespace peloton {
 #define LOG_LEVEL LOG_LEVEL_INFO
 #endif
 
-// Disable logging if requested
-#ifdef NDEBUG
-#undef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_OFF
-#endif
-
 // For compilers which do not support __FUNCTION__
 #if !defined(__FUNCTION__) && !defined(__GNUC__)
 #define __FUNCTION__ ""

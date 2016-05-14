@@ -12,6 +12,8 @@
 
 #pragma once
 
+#undef NDEBUG
+
 #include <string>
 #include <getopt.h>
 #include <vector>
@@ -58,20 +60,26 @@ static const oid_t order_line_table_skey_index_oid = 20081; // OL_W_ID, OL_D_ID,
 class configuration {
  public:
 
+  // scale factor
+  int scale_factor;
+
   // num of warehouses
   int warehouse_count;
 
   // number of backends
   int backend_count;
 
-  // scale factor
-  int scale_factor;
+  // execution duration (ms)
+  int duration;
+
+  // throughput
+  double throughput;
+
+  // average latency
+  double latency;
 
   // item count
   int item_count;
-
-  // number of transactions
-  unsigned long int transaction_count;
 
   int districts_per_warehouse;
 
@@ -84,11 +92,11 @@ extern configuration state;
 
 void Usage(FILE *out);
 
+void ValidateScaleFactor(const configuration &state);
+
 void ValidateBackendCount(const configuration &state);
 
-void ValidateWarehouseCount(const configuration &state);
-
-void ValidateTransactionCount(const configuration &state);
+void ValidateDuration(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

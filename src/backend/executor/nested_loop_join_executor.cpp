@@ -74,7 +74,7 @@ bool NestedLoopJoinExecutor::DInit() {
  *
  */
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
+  LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit

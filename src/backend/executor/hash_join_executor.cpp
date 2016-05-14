@@ -49,7 +49,7 @@ bool HashJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool HashJoinExecutor::DExecute() {
-  LOG_INFO("********** Hash Join executor :: 2 children \n");
+  LOG_TRACE("********** Hash Join executor :: 2 children \n");
 
   // Loop until we have non-empty result tile or exit
   for (;;) {
@@ -89,7 +89,7 @@ bool HashJoinExecutor::DExecute() {
     LOG_TRACE("Got left tile \n");
 
     if (right_result_tiles_.size() == 0) {
-      LOG_INFO("Did not get any right tiles \n");
+      LOG_TRACE("Did not get any right tiles \n");
       return BuildOuterJoinOutput();
     }
 

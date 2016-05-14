@@ -49,7 +49,7 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_INVALID_OID() {
   // CHECK :: status must be false
   if (status != false) throw CatalogException("Could create table");
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 /**
@@ -109,7 +109,7 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
   status = DDLTable::DropTable(table_oid);
   if (status == false) throw CatalogException("Drop table failed");
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 }  // End bridge namespace

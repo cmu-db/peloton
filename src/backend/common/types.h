@@ -17,6 +17,8 @@
 #include <climits>
 #include <limits>
 #include <cassert>
+#include <bitset>
+
 #include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
@@ -31,15 +33,19 @@ enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
   // Based on write ahead logging
-  LOGGING_TYPE_DRAM_NVM = 10,
-  LOGGING_TYPE_DRAM_HDD = 11,
+  LOGGING_TYPE_NVM_WAL = 1,
+  LOGGING_TYPE_HDD_WAL = 2,
 
   // Based on write behind logging
-  LOGGING_TYPE_NVM_NVM = 20,
-  LOGGING_TYPE_NVM_HDD = 21,
+  LOGGING_TYPE_NVM_WBL = 3,
+  LOGGING_TYPE_HDD_WBL = 4
+};
 
-  LOGGING_TYPE_HDD_NVM = 30,
-  LOGGING_TYPE_HDD_HDD = 31,
+enum LoggerMappingStrategyType {
+	LOGGER_MAPPING_INVALID,
+	LOGGER_MAPPING_ROUND_ROBIN,
+	LOGGER_MAPPING_AFFINITY,
+	LOGGER_MAPPING_MANUAL,
 };
 
 enum CheckpointType {
@@ -58,6 +64,7 @@ enum GCType {
 
 #define NVM_DIR "/mnt/pmfs/"
 #define HDD_DIR "/data/"
+#define SSD_DIR "/data1/"
 
 #define TMP_DIR "/tmp/"
 
@@ -362,7 +369,8 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
   CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
   CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5                // serializable snapshot isolation
+  CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
+  CONCURRENCY_TYPE_OCC_RB = 6             // optimistic + rollback segment
 };
 
 enum IsolationLevelType {
@@ -685,7 +693,19 @@ enum LogRecordType {
   // DML records for Write behind logging
   LOGRECORD_TYPE_WBL_TUPLE_INSERT = 31,
   LOGRECORD_TYPE_WBL_TUPLE_DELETE = 32,
-  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33
+  LOGRECORD_TYPE_WBL_TUPLE_UPDATE = 33,
+
+  // Record for delimiting transactions
+  // includes max persistent commit_id
+  LOGRECORD_TYPE_ITERATION_DELIMITER = 41,
+};
+
+enum CheckpointStatus {
+  CHECKPOINT_STATUS_INVALID = 0,
+  CHECKPOINT_STATUS_STANDBY = 1,
+  CHECKPOINT_STATUS_RECOVERY = 2,
+  CHECKPOINT_STATUS_DONE_RECOVERY = 3,
+  CHECKPOINT_STATUS_CHECKPOINTING = 4,
 };
 
 static const int INVALID_FILE_DESCRIPTOR = -1;
@@ -752,6 +772,12 @@ struct TupleMetadata {
 };
 
 //===--------------------------------------------------------------------===//
+// Column Bitmap
+//===--------------------------------------------------------------------===//
+static const size_t max_col_count = 128;
+typedef std::bitset<max_col_count> ColBitmap;
+
+//===--------------------------------------------------------------------===//
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
@@ -768,12 +794,31 @@ struct ItemPointer {
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
   bool IsNull() const { 
-    return (block == INVALID_OID && offset == INVALID_OID); 
+    return (block == INVALID_OID && offset == INVALID_OID);
   }
-
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
+
+//===--------------------------------------------------------------------===//
+// File Handle
+//===--------------------------------------------------------------------===//
+struct FileHandle {
+  // FILE pointer
+  FILE *file = nullptr;
+
+  // File descriptor
+  int fd;
+
+  // Size of the file
+  size_t size;
+
+  FileHandle() : file(nullptr), fd(INVALID_FILE_DESCRIPTOR), size(0) {}
+
+  FileHandle(FILE *file, int fd, size_t size)
+      : file(file), fd(fd), size(size) {}
+};
+extern FileHandle INVALID_FILE_HANDLE;
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -792,11 +837,11 @@ int64_t GetMaxTypeValue(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
-bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type);
+bool IsBasedOnWriteAheadLogging(const LoggingType &logging_type);
 
-bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type);
+bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
-BackendType GetBackendType(const LoggingType& logging_type);
+BackendType GetBackendType(const LoggingType &logging_type);
 
 void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
