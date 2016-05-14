@@ -573,7 +573,7 @@ class Value {
       char nextPotentialCodePoint[] = {0, 0, 0, 0, 0, 0};
       char *nextPotentialCodePointIter = nextPotentialCodePoint;
       // Copy 6 bytes or until the end
-      ::memcpy(nextPotentialCodePoint, m_cursor,
+      PL_MEMCPY(nextPotentialCodePoint, m_cursor,
                std::min(6L, m_end - m_cursor));
 
       /*
@@ -1209,7 +1209,7 @@ class Value {
     const int32_t strLength = GetObjectLengthWithoutNull();
     // Guarantee termination at end of object -- or strtod might not stop there.
     char safeBuffer[strLength + 1];
-    memcpy(safeBuffer, GetObjectValueWithoutNull(), strLength);
+    PL_MEMCPY(safeBuffer, GetObjectValueWithoutNull(), strLength);
     safeBuffer[strLength] = '\0';
     char *bufferEnd = safeBuffer;
     double result = strtod(safeBuffer, &bufferEnd);
@@ -1598,7 +1598,7 @@ class Value {
         // here...
         // Peloton Changes:
         // Value retval(VALUE_TYPE_VARCHAR);
-        // memcpy(retval.m_data, m_data, sizeof(m_data));
+        // PL_MEMCPY(retval.m_data, m_data, sizeof(m_data));
         return *this;
       }
       case VALUE_TYPE_DATE: {
@@ -1624,7 +1624,7 @@ class Value {
     const ValueType type = GetValueType();
     switch (type) {
       case VALUE_TYPE_VARBINARY:
-        memcpy(retval.m_data, m_data, sizeof(m_data));
+        PL_MEMCPY(retval.m_data, m_data, sizeof(m_data));
         break;
       default:
         ThrowCastSQLException(type, VALUE_TYPE_VARBINARY);
@@ -1656,7 +1656,7 @@ class Value {
         break;
       }
       case VALUE_TYPE_DECIMAL:
-        ::memcpy(retval.m_data, m_data, sizeof(TTInt));
+        PL_MEMCPY(retval.m_data, m_data, sizeof(TTInt));
         break;
       case VALUE_TYPE_DOUBLE: {
         const double &value = GetDouble();
@@ -1708,7 +1708,7 @@ class Value {
     if (IsNull()) {
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      ::memset(storage, 0, maxLength + 1);
+      PL_MEMSET(storage, 0, maxLength + 1);
 
       /*
        * The 7th bit of the length preceding value
@@ -1724,14 +1724,14 @@ class Value {
 
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      ::memset(storage, 0, maxLength + 1);
+      PL_MEMSET(storage, 0, maxLength + 1);
 
       if (m_sourceInlined) {
-        ::memcpy(storage, *reinterpret_cast<char *const *>(m_data),
+        PL_MEMCPY(storage, *reinterpret_cast<char *const *>(m_data),
                  GetObjectLengthLength() + objLength);
       } else {
         const Varlen *sref = *reinterpret_cast<Varlen *const *>(m_data);
-        ::memcpy(storage, sref->Get(), GetObjectLengthLength() + objLength);
+        PL_MEMCPY(storage, sref->Get(), GetObjectLengthLength() + objLength);
       }
     }
   }
@@ -2820,7 +2820,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
-      ::memcpy(storage, m_data, sizeof(TTInt));
+      PL_MEMCPY(storage, m_data, sizeof(TTInt));
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
@@ -2842,7 +2842,7 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
           Varlen *sref = Varlen::Create(minlength, varlen_pool);
           char *copy = sref->Get();
           SetObjectLengthToLocation(objLength, copy);
-          ::memcpy(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
+          PL_MEMCPY(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
           *reinterpret_cast<Varlen **>(storage) = sref;
         }
       }
@@ -2895,7 +2895,7 @@ inline void Value::SerializeToTupleStorage(void *storage, const bool isInlined,
       *reinterpret_cast<double *>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
-      ::memcpy(storage, m_data, sizeof(TTInt));
+      PL_MEMCPY(storage, m_data, sizeof(TTInt));
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
@@ -2980,7 +2980,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
       // the NULL SQL string is a NULL C pointer
       if (isInlined) {
         // Always reSet the bits regardless of how long the actual value is.
-        ::memset(storage, 0, lengthLength + maxLength);
+        PL_MEMSET(storage, 0, lengthLength + maxLength);
 
         SetObjectLengthToLocation(length, storage);
         if (length == OBJECTLENGTH_NULL) {
@@ -2991,7 +2991,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
         checkTooNarrowVarcharAndVarbinary(type, data, length, maxLength,
                                           isInBytes);
 
-        ::memcpy(storage + lengthLength, data, length);
+        PL_MEMCPY(storage + lengthLength, data, length);
       } else {
         if (length == OBJECTLENGTH_NULL) {
           *reinterpret_cast<void **>(storage) = NULL;
@@ -3006,7 +3006,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
         Varlen *sref = Varlen::Create(minlength, varlen_pool);
         char *copy = sref->Get();
         SetObjectLengthToLocation(length, copy);
-        ::memcpy(copy + lengthLength, data, length);
+        PL_MEMCPY(copy + lengthLength, data, length);
         *reinterpret_cast<Varlen **>(storage) = sref;
       }
       break;
@@ -3118,7 +3118,7 @@ inline void Value::DeserializeFromAllocateForStorage(ValueType type,
       }
       char *storage = AllocateValueStorage(length, varlen_pool);
       const char *str = (const char *)input.GetRawPointer(length);
-      ::memcpy(storage, str, length);
+      PL_MEMCPY(storage, str, length);
       break;
     }
     case VALUE_TYPE_DECIMAL: {

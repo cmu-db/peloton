@@ -214,7 +214,7 @@ template <std::size_t KeySize> class IntsKey {
   }
 
   inline void SetFromKey(const storage::Tuple *tuple) {
-    ::memset(data, 0, KeySize * sizeof(uint64_t));
+    PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
     ALWAYS_ASSERT(tuple);
     const catalog::Schema *key_schema = tuple->GetSchema();
     const int GetColumnCount = key_schema->GetColumnCount();
@@ -264,7 +264,7 @@ template <std::size_t KeySize> class IntsKey {
 
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            const catalog::Schema *key_schema) {
-    ::memset(data, 0, KeySize * sizeof(uint64_t));
+    PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
@@ -398,7 +398,7 @@ template <std::size_t KeySize> class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     ALWAYS_ASSERT(tuple);
-    ::memcpy(data, tuple->GetData(), KeySize);
+    PL_MEMCPY(data, tuple->GetData(), KeySize);
   }
 
   const storage::Tuple GetTupleForComparison(

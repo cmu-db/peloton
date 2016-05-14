@@ -12,6 +12,7 @@
 
 #include "backend/logging/records/tuple_record.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tuple.h"
 
 namespace peloton {
@@ -56,7 +57,7 @@ bool TupleRecord::Serialize(CopySerializeOutput &output) {
 
   message_length = output.Size();
   message = new char[message_length];
-  std::memcpy(message, output.Data(), message_length);
+  PL_MEMCPY(message, output.Data(), message_length);
 
   return status;
 }

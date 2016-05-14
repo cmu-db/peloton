@@ -57,7 +57,7 @@ void Listener::Run(void *arg) {
 
   /* Clear the sockaddr before using it, in case there are extra
    *          * platform-specific fields that can mess us up. */
-  memset(&sin, 0, sizeof(sin));
+  PL_MEMSET(&sin, 0, sizeof(sin));
 
   /* This is an INET address */
   sin.sin_family = AF_INET;

@@ -19,9 +19,11 @@
 #include <locale>
 #include <iomanip>
 
+#include "backend/common/macros.h"
+#include "backend/expression/function_expression.h"
+
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>
-#include "backend/expression/function_expression.h"
 
 namespace peloton {
 
@@ -312,7 +314,7 @@ inline Value Value::Call<FUNC_CONCAT>(const std::vector<Value> &arguments) {
        iter != arguments.end(); iter++) {
     size_t cur_size = iter->GetObjectLengthWithoutNull();
     char *next = reinterpret_cast<char *>(iter->GetObjectValueWithoutNull());
-    memcpy((void *)(buffer + cur), (void *)next, cur_size);
+    PL_MEMCPY((void *)(buffer + cur), (void *)next, cur_size);
     cur += cur_size;
   }
 

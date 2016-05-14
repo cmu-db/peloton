@@ -52,7 +52,7 @@ bool LogBuffer::WriteData(char *data, size_t len) {
   }
   ALWAYS_ASSERT(data);
   ALWAYS_ASSERT(len);
-  std::memcpy(elastic_data_.get() + size_, data, len);
+  PL_MEMCPY(elastic_data_.get() + size_, data, len);
   size_ += len;
   return true;
 }

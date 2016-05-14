@@ -666,7 +666,7 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
 
     info->peragg[i].sortColIdx =
         (AttrNumber *)palloc(sizeof(AttrNumber) * info->peragg[i].numSortCols);
-    ::memcpy(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
+    PL_MEMCPY(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
              sizeof(AttrNumber) * info->peragg[i].numSortCols);
   }
 

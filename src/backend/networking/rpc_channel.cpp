@@ -18,6 +18,7 @@
 #include "backend/networking/connection_manager.h"
 #include "backend/common/thread_manager.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include <google/protobuf/descriptor.h>
 
@@ -76,15 +77,15 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   char buf[HEADERLEN + msg_len];
 
   /* copy the header into the buf */
-  memcpy(buf, &msg_len, sizeof(msg_len));
+  PL_MEMCPY(buf, &msg_len, sizeof(msg_len));
 
   /* copy the type into the buf, following the header */
   ALWAYS_ASSERT(TYPELEN == sizeof(type));
-  memcpy(buf + HEADERLEN, &type, TYPELEN);
+  PL_MEMCPY(buf + HEADERLEN, &type, TYPELEN);
 
   /*  copy the hashcode into the buf, following the type */
   ALWAYS_ASSERT(OPCODELEN == sizeof(opcode));
-  memcpy(buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
+  PL_MEMCPY(buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
   /*  call protobuf to serialize the request message into sending buf */
   request->SerializeToArray(buf + HEADERLEN + TYPELEN + OPCODELEN,

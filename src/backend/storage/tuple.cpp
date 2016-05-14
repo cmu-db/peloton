@@ -108,10 +108,10 @@ void Tuple::Copy(const void *source, VarlenPool *pool) {
 
   if (is_inlined) {
     // copy the data
-    ::memcpy(tuple_data, source, tuple_schema->GetLength());
+    PL_MEMCPY(tuple_data, source, tuple_schema->GetLength());
   } else {
     // copy the data
-    ::memcpy(tuple_data, source, tuple_schema->GetLength());
+    PL_MEMCPY(tuple_data, source, tuple_schema->GetLength());
 
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
