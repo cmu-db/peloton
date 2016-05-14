@@ -33,8 +33,8 @@ class CastExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *econtext) const override {
-    assert(GetLeft() != nullptr);
-    assert(GetValueType() != VALUE_TYPE_INVALID);
+    ALWAYS_ASSERT(GetLeft() != nullptr);
+    ALWAYS_ASSERT(GetValueType() != VALUE_TYPE_INVALID);
     Value child_value = GetLeft()->Evaluate(tuple1, tuple2, econtext);
     LOG_TRACE("CastExpr: cast %d as %d", child_value.GetValueType(),
              GetValueType());

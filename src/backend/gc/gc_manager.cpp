@@ -68,7 +68,7 @@ void GCManager::Running() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
-    assert(max_cid != MAX_CID);
+    ALWAYS_ASSERT(max_cid != MAX_CID);
 
     int tuple_counter = 0;
 

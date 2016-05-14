@@ -135,7 +135,7 @@ class SsiTxnManager : public TransactionManager {
     CleanUp();
   }
 
-  virtual void EndTransaction() { assert(false); }
+  virtual void EndTransaction() { ALWAYS_ASSERT(false); }
 
   virtual Result CommitTransaction();
 
@@ -172,8 +172,8 @@ class SsiTxnManager : public TransactionManager {
     auto tile_group_header = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetHeader();
 
-    assert(tile_group_header->GetTransactionId(tuple_id) == txn_id);
-    assert(current_txn->GetTransactionId() == txn_id);
+    ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == txn_id);
+    ALWAYS_ASSERT(current_txn->GetTransactionId() == txn_id);
 
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
@@ -246,7 +246,7 @@ class SsiTxnManager : public TransactionManager {
 
     ReleaseReadLock(tile_group_header, tuple_id);
     if (find == false) {
-      assert(false);
+      ALWAYS_ASSERT(false);
     }
   }
 

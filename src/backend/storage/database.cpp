@@ -69,7 +69,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
       }
       table_offset++;
     }
-    assert(table_offset < tables.size());
+    ALWAYS_ASSERT(table_offset < tables.size());
 
     // Drop the database
     tables.erase(tables.begin() + table_offset);
@@ -77,7 +77,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 }
 
 storage::DataTable *Database::GetTable(const oid_t table_offset) const {
-  assert(table_offset < tables.size());
+  ALWAYS_ASSERT(table_offset < tables.size());
   auto table = tables.at(table_offset);
   return table;
 }

@@ -26,6 +26,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
+#include "backend/common/macros.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/cast_expression.h"
 #include "backend/expression/abstract_expression.h"
@@ -166,7 +167,7 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
   if (nodeTag(expr_state->expr) == T_List) {
     const List *list = reinterpret_cast<const List *>(expr_state);
     ListCell *l;
-    assert(list_length(list) > 0);
+    ALWAYS_ASSERT(list_length(list) > 0);
     LOG_TRACE("Expression List of length %d", list_length(list));
 
     foreach (l, list) {
@@ -271,7 +272,7 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
   auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
 
   // Hopefully it has been filled in by PG planner
-  assert(op_expr->opfuncid != 0);
+  ALWAYS_ASSERT(op_expr->opfuncid != 0);
 
   auto pg_func_id = op_expr->opfuncid;
 
@@ -284,10 +285,10 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr *>(es->expr);
   // auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
-  assert(op_expr->opfuncid !=
+  ALWAYS_ASSERT(op_expr->opfuncid !=
          0);  // Hopefully it has been filled in by PG planner
   const List *list = op_expr->args;
-  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
+  ALWAYS_ASSERT(list_length(list) <= 2);  // Hopefully it has at most two parameters
 
   // Extract function arguments (at most two)
   expression::AbstractExpression *lc = nullptr;
@@ -341,7 +342,7 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto fn_es = reinterpret_cast<const FuncExprState *>(es);
   auto fn_expr = reinterpret_cast<const FuncExpr *>(es->expr);
 
-  assert(fn_expr->xpr.type == T_FuncExpr);
+  ALWAYS_ASSERT(fn_expr->xpr.type == T_FuncExpr);
 
   auto pg_func_id = fn_expr->funcid;
   auto rettype = fn_expr->funcresulttype;
@@ -376,13 +377,13 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
       }
 
       // Check if the number of arguments are less then maximum allowed.
-      assert(args.size() < EXPRESSION_MAX_ARG_NUM);
+      ALWAYS_ASSERT(args.size() < EXPRESSION_MAX_ARG_NUM);
 
       return expression::ExpressionUtil::UDFExpressionFactory(
           function_id, collation, rettype, args);
     } else {
       // FIXME It will generate incorrect results.
-      assert(list_length(fn_es->args) > 0);
+      ALWAYS_ASSERT(list_length(fn_es->args) > 0);
       LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
       ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
       return TransformExpr(first_child);
@@ -554,9 +555,9 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
    * AND and OR can take >=2 arguments,
    * while NOT should take only one.
    */
-  assert(bool_state->args);
-  assert(bool_op != NOT_EXPR || list_length(bool_state->args) == 1);
-  assert(bool_op == NOT_EXPR || list_length(bool_state->args) >= 2);
+  ALWAYS_ASSERT(bool_state->args);
+  ALWAYS_ASSERT(bool_op != NOT_EXPR || list_length(bool_state->args) == 1);
+  ALWAYS_ASSERT(bool_op == NOT_EXPR || list_length(bool_state->args) >= 2);
 
   auto args = bool_state->args;
 
@@ -629,7 +630,7 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
   auto expr = reinterpret_cast<const RelabelType *>(es->expr);
   auto child_state = state->arg;
 
-  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
+  ALWAYS_ASSERT(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child =
@@ -646,7 +647,7 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
   auto expr = reinterpret_cast<const RelabelType *>(es);
   auto child_state = expr->arg;
 
-  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
+  ALWAYS_ASSERT(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child =
@@ -663,7 +664,7 @@ expression::AbstractExpression *ExprTransformer::TransformAggRef(
   auto *aggref_state = reinterpret_cast<const AggrefExprState *>(es);
   auto *aggref = reinterpret_cast<const Aggref *>(aggref_state->xprstate.expr);
 
-  assert(aggref_state->aggno >= 0);
+  ALWAYS_ASSERT(aggref_state->aggno >= 0);
 
   int value_idx = aggref_state->aggno;
   int tuple_idx = 1;
@@ -677,7 +678,7 @@ expression::AbstractExpression *ExprTransformer::TransformAggRef(
 
 expression::AbstractExpression *ExprTransformer::TransformList(
     const ExprState *es, ExpressionType et) {
-  assert(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
+  ALWAYS_ASSERT(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
          et == EXPRESSION_TYPE_CONJUNCTION_OR);
 
   const List *list = reinterpret_cast<const List *>(es);
@@ -709,7 +710,7 @@ expression::AbstractExpression *ExprTransformer::TransformList(
 expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
                                                              ValueType ret_type,
                                                              List *args) {
-  assert(pg_func_id > 0);
+  ALWAYS_ASSERT(pg_func_id > 0);
 
   // Perform lookup
   auto itr = kPgFuncMap.find(pg_func_id);
@@ -729,9 +730,9 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
   }
 
   // mperron some string functions have 4 children
-  assert(list_length(args) <=
+  ALWAYS_ASSERT(list_length(args) <=
          EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
-  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
+  ALWAYS_ASSERT(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
   // Extract function arguments (at most four)
   expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM] = {};
@@ -761,7 +762,7 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LIKE:
     case EXPRESSION_TYPE_COMPARE_NOTLIKE:
       // These are all boolean expressions
-      ASSERT(ret_type == VALUE_TYPE_BOOLEAN);
+      ALWAYS_ASSERT(ret_type == VALUE_TYPE_BOOLEAN);
       return expression::ExpressionUtil::ComparisonFactory(
           plt_exprtype, children[0], children[1]);
 

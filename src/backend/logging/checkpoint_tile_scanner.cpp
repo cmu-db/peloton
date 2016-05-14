@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/common/macros.h"
 #include "backend/logging/checkpoint_tile_scanner.h"
 #include "backend/storage/tile_group_header.h"
 #include "backend/executor/logical_tile_factory.h"

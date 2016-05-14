@@ -38,7 +38,7 @@ Connection::Connection(int fd, struct event_base *base, void *arg,
                        NetworkAddress &addr)
 : addr_(addr), close_(false), status_(INIT), base_(base) {
   // we must pass rpc_server when new a connection
-  assert(arg != NULL);
+  ALWAYS_ASSERT(arg != NULL);
   rpc_server_ = (RpcServer *)arg;
 
   // BEV_OPT_THREADSAFE must be specified
@@ -98,7 +98,7 @@ void Connection::Close() {
  *          corresponding RPC method.
  */
 void *Connection::ProcessMessage(void *connection) {
-  assert(connection != NULL);
+  ALWAYS_ASSERT(connection != NULL);
 
   Connection *conn = (Connection *)connection;
 
@@ -182,7 +182,7 @@ void *Connection::ProcessMessage(void *connection) {
         msg_len = response->ByteSize() + OPCODELEN + TYPELEN;
 
         char send_buf[sizeof(msg_len) + msg_len];
-        assert(sizeof(msg_len) == HEADERLEN);
+        ALWAYS_ASSERT(sizeof(msg_len) == HEADERLEN);
 
         // copy the header into the buf
         memcpy(send_buf, &msg_len, sizeof(msg_len));
@@ -190,11 +190,11 @@ void *Connection::ProcessMessage(void *connection) {
         // copy the type into the buf
         type = MSG_TYPE_REP;
 
-        assert(sizeof(type) == TYPELEN);
+        ALWAYS_ASSERT(sizeof(type) == TYPELEN);
         memcpy(send_buf + HEADERLEN, &type, TYPELEN);
 
         // copy the opcode into the buf
-        assert(sizeof(opcode) == OPCODELEN);
+        ALWAYS_ASSERT(sizeof(opcode) == OPCODELEN);
         memcpy(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
         // call protobuf to serialize the request message into sending buf
@@ -203,7 +203,7 @@ void *Connection::ProcessMessage(void *connection) {
 
         // send data
         // Note: if we use raw socket send api, we should loop send
-        assert(sizeof(send_buf) == HEADERLEN + msg_len);
+        ALWAYS_ASSERT(sizeof(send_buf) == HEADERLEN + msg_len);
         conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
         delete message;
@@ -269,7 +269,7 @@ void *Connection::ProcessMessage(void *connection) {
 void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
                         void *ctx) {
   // TODO: We might use bev in future
-  assert(bev != NULL);
+  ALWAYS_ASSERT(bev != NULL);
 
   Connection *conn = (Connection *)ctx;
 
@@ -300,7 +300,7 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
 void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
                          short events, void *ctx) {
   Connection *conn = (Connection *)ctx;
-  assert(conn != NULL && bev != NULL);
+  ALWAYS_ASSERT(conn != NULL && bev != NULL);
 
   if (events & BEV_EVENT_ERROR) {
     LOG_TRACE("Error from client bufferevent: %s",

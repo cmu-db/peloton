@@ -255,7 +255,7 @@ SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
       num_input_columns_(num_input_columns) {
   aggregates = new Agg *[node->GetUniqueAggTerms().size()]();
 
-  assert(delegate_tuple_values_.empty());
+  ALWAYS_ASSERT(delegate_tuple_values_.empty());
 }
 
 SortedAggregator::~SortedAggregator() {
@@ -275,7 +275,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     LOG_TRACE("Current group keys are empty!");
     start_new_agg = true;
   } else {  // Current group exists
-    assert(delegate_tuple_values_.size() == num_input_columns_);
+    ALWAYS_ASSERT(delegate_tuple_values_.size() == num_input_columns_);
     // Check whether crossed group boundary
     for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
          grpColOffset++) {

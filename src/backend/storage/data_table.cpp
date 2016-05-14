@@ -96,7 +96,7 @@ DataTable::~DataTable() {
 //===--------------------------------------------------------------------===//
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
-  assert(schema->GetColumnCount() == tuple->GetColumnCount());
+  ALWAYS_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
 
   oid_t column_count = schema->GetColumnCount();
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
@@ -132,7 +132,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          bool check_constraint) {
-  assert(tuple);
+  ALWAYS_ASSERT(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
   }
@@ -542,7 +542,7 @@ oid_t DataTable::AddDefaultTileGroup() {
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
-  assert(tile_group.get());
+  ALWAYS_ASSERT(tile_group.get());
   tile_group_id = tile_group->GetTileGroupId();
 
   LOG_TRACE("Trying to add a tile group ");
@@ -569,7 +569,7 @@ oid_t DataTable::AddDefaultTileGroup() {
 }
 
 void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
-  assert(tile_group_id);
+  ALWAYS_ASSERT(tile_group_id);
 
   std::vector<catalog::Schema> schemas;
   schemas.push_back(*schema);
@@ -629,7 +629,7 @@ size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
     const oid_t &tile_group_offset) const {
-  assert(tile_group_offset < GetTileGroupCount());
+  ALWAYS_ASSERT(tile_group_offset < GetTileGroupCount());
 
   tile_group_lock_.ReadLock();
   auto tile_group_id = tile_groups_.at(tile_group_offset);
@@ -721,7 +721,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_id) {
       if (index->GetOid() == index_id) break;
       index_offset++;
     }
-    assert(index_offset < indexes_.size());
+    ALWAYS_ASSERT(index_offset < indexes_.size());
 
     // Drop the index
     indexes_.erase(indexes_.begin() + index_offset);
@@ -729,7 +729,7 @@ void DataTable::DropIndexWithOid(const oid_t &index_id) {
 }
 
 index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
-  assert(index_offset < indexes_.size());
+  ALWAYS_ASSERT(index_offset < indexes_.size());
   auto index = indexes_.at(index_offset);
   return index;
 }
@@ -765,7 +765,7 @@ catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
 void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
     std::lock_guard<std::mutex> lock(tile_group_mutex_);
-    assert(key_offset < foreign_keys_.size());
+    ALWAYS_ASSERT(key_offset < foreign_keys_.size());
     foreign_keys_.erase(foreign_keys_.begin() + key_offset);
   }
 }
@@ -815,7 +815,7 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   // Check the schema of the two tile groups
   auto new_column_map = new_tile_group->GetColumnMap();
   auto orig_column_map = orig_tile_group->GetColumnMap();
-  assert(new_column_map.size() == orig_column_map.size());
+  ALWAYS_ASSERT(new_column_map.size() == orig_column_map.size());
 
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;

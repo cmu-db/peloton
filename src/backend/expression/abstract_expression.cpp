@@ -11,8 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <sstream>
-#include <cassert>
-#include <stdexcept>
 
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/printable.h"

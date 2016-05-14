@@ -16,7 +16,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/common/serializer.h"
-#include "backend/common/assert.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tuple.h"
 #include "backend/planner/seq_scan_plan.h"
@@ -407,12 +407,12 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
   else {
     // Process the response
     LOG_TRACE("proecess the Query response");
-    ASSERT(response);
+    ALWAYS_ASSERT(response);
 
     int tile_count = response->tile_count();
 
     int result_size = response->result_size();
-    ASSERT(result_size == tile_count);
+    ALWAYS_ASSERT(result_size == tile_count);
 
     for (int idx = 0; idx < result_size; idx++) {
       // Get the tile bytes

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
@@ -18,6 +17,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/expression/expression_util.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/hash_range_expression.h"
@@ -45,8 +45,8 @@ namespace expression {
 
 AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
                                AbstractExpression *r) {
-  assert(l);
-  assert(r);
+  ALWAYS_ASSERT(l);
+  ALWAYS_ASSERT(r);
   switch (c) {
     case (EXPRESSION_TYPE_COMPARE_EQUAL):
       return new ComparisonExpression<CmpEq>(c, l, r);
@@ -78,8 +78,8 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
 
 template <typename L, typename R>
 AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
-  assert(l);
-  assert(r);
+  ALWAYS_ASSERT(l);
+  ALWAYS_ASSERT(r);
   switch (c) {
     case (EXPRESSION_TYPE_COMPARE_EQUAL):
       return new InlinedComparisonExpression<CmpEq, L, R>(c, l, r);
@@ -116,7 +116,7 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
 AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c,
                                                       AbstractExpression *lc,
                                                       AbstractExpression *rc) {
-  assert(lc);
+  ALWAYS_ASSERT(lc);
 
   TupleValueExpression *l_tuple = dynamic_cast<TupleValueExpression *>(lc);
 
@@ -470,7 +470,7 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
   if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
     const TupleValueExpression *tve =
         dynamic_cast<const TupleValueExpression *>(expr);
-    assert(tve != NULL);
+    ALWAYS_ASSERT(tve != NULL);
     columnIds.push_back(tve->GetColumnId());
     return;
   }

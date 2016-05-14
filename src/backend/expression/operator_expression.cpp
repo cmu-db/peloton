@@ -29,7 +29,7 @@ Value OperatorExistsExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     executor::ExecutorContext *context) const {
   // Execute the subquery and.Get its subquery id
-  assert(m_left != NULL);
+  ALWAYS_ASSERT(m_left != NULL);
   Value lnv = m_left->Evaluate(tuple1, tuple2, context);
   // int subqueryId = ValuePeeker::PeekInteger(lnv);
 
@@ -39,7 +39,7 @@ Value OperatorExistsExpression::Evaluate(
   // The subquery produces an empty result set => FALSE
   /*
   Table* outputTable = exeContext-.GetSubqueryOutputTable(subqueryId);
-  assert(outputTable != NULL);
+  ALWAYS_ASSERT(outputTable != NULL);
   if (outputTable->activeTupleCount() > 0) {
       return Value::GetTrue();
   } else {

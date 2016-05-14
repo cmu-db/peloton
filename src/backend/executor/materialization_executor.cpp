@@ -12,11 +12,11 @@
 
 #include "backend/executor/materialization_executor.h"
 
-#include <cassert>
 #include <memory>
 #include <utility>
 
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -54,7 +54,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DInit() {
-  assert(children_.size() == 1);
+  ALWAYS_ASSERT(children_.size() == 1);
 
   return true;
 }
@@ -169,7 +169,7 @@ void MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      ALWAYS_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -183,7 +183,7 @@ void MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    assert(new_column_offsets.size() == old_column_ids.size());
+    ALWAYS_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -255,7 +255,7 @@ void MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      ALWAYS_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -319,7 +319,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
 
   // Create a default identity mapping node if we did not get one
   if (node == nullptr) {
-    assert(source_tile_schema.get());
+    ALWAYS_ASSERT(source_tile_schema.get());
     output_schema = source_tile_schema.get();
 
     old_to_new_cols = BuildIdentityMapping(output_schema);

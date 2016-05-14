@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "plan_executor.h"
-#include <cassert>
+
 #include <vector>
 
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -72,7 +72,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  assert(txn);
+  ALWAYS_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
@@ -190,7 +190,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  assert(txn);
+  ALWAYS_ASSERT(txn);
 
   LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");

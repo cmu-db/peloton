@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-#include <iostream>
-
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/format_transformer.h"
 #include "backend/bridge/ddl/bridge.h"
@@ -63,7 +60,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
 void DDLUtils::ParsingCreateStmt(
 
     CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos) {
-  assert(Cstmt);
+  ALWAYS_ASSERT(Cstmt);
 
   //===--------------------------------------------------------------------===//
   // Column Infomation

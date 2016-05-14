@@ -13,9 +13,10 @@
 #pragma once
 
 #include <atomic>
+#include <cstring>
+
 #include "backend/logging/buffer_pool.h"
 #include "backend/common/logger.h"
-#include <cstring>
 
 #define BUFFER_POOL_MASK (BUFFER_POOL_SIZE - 1)
 #define GET_BUFFER_POOL_INDEX(a) (a & BUFFER_POOL_MASK)

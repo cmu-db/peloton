@@ -2,7 +2,7 @@
 //
 //                         PelotonDB
 //
-// catalog_test.cpp
+// constraints_test.cpp
 //
 // Identification: tests/catalog/constraints_test.cpp
 //

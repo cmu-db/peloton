@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <cassert>
 #include <iostream>
 #include <sstream>
 
 #include "backend/common/value_peeker.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
@@ -215,7 +215,7 @@ template <std::size_t KeySize> class IntsKey {
 
   inline void SetFromKey(const storage::Tuple *tuple) {
     ::memset(data, 0, KeySize * sizeof(uint64_t));
-    assert(tuple);
+    ALWAYS_ASSERT(tuple);
     const catalog::Schema *key_schema = tuple->GetSchema();
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
@@ -397,7 +397,7 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
 template <std::size_t KeySize> class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
-    assert(tuple);
+    ALWAYS_ASSERT(tuple);
     ::memcpy(data, tuple->GetData(), KeySize);
   }
 
@@ -533,7 +533,7 @@ class TupleKey {
 
   // Set a key from a key-schema tuple.
   inline void SetFromKey(const storage::Tuple *tuple) {
-    assert(tuple);
+    ALWAYS_ASSERT(tuple);
     column_indices = NULL;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();
@@ -543,8 +543,8 @@ class TupleKey {
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            __attribute__((unused)) const
                            catalog::Schema *key_schema) {
-    assert(tuple);
-    assert(indices);
+    ALWAYS_ASSERT(tuple);
+    ALWAYS_ASSERT(indices);
     column_indices = indices;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();

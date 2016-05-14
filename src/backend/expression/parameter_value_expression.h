@@ -19,7 +19,6 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <cassert>
 
 namespace peloton {
 namespace expression {

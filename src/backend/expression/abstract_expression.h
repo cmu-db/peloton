@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/assert.h"
+#include "backend/common/macros.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/common/printable.h"
 
@@ -89,11 +89,11 @@ class AbstractExpression : public Printable {
   // virtual
   //===--------------------------------------------------------------------===//
   virtual bool SerializeTo(SerializeOutput &output) const {
-    ASSERT(&output != nullptr);
+    ALWAYS_ASSERT(&output != nullptr);
     return false;
   }
   virtual bool DeserializeFrom(SerializeInputBE &input) {
-    ASSERT(&input != nullptr);
+    ALWAYS_ASSERT(&input != nullptr);
     return false;
   }
 

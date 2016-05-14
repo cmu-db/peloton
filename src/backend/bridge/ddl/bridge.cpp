@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
-#include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -24,6 +24,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "access/htup.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
@@ -289,7 +290,7 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
-  assert(relation_id);
+  ALWAYS_ASSERT(relation_id);
 
   Relation pg_class_rel;
   HeapTuple tuple;

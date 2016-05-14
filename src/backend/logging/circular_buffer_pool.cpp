@@ -11,7 +11,6 @@
  */
 
 #include <atomic>
-#include <cassert>
 #include <xmmintrin.h>
 
 #include "backend/logging/circular_buffer_pool.h"

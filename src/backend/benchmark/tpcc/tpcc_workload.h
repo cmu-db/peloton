@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "backend/common/macros.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 

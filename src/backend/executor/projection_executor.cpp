@@ -37,7 +37,7 @@ ProjectionExecutor::ProjectionExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool ProjectionExecutor::DInit() {
-  assert(children_.size() == 1 || children_.size() == 2);
+  ALWAYS_ASSERT(children_.size() == 1 || children_.size() == 2);
 
   // Grab settings from plan node
   const planner::ProjectionPlan &node = GetPlanNode<planner::ProjectionPlan>();
@@ -54,9 +54,9 @@ bool ProjectionExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool ProjectionExecutor::DExecute() {
-  assert(project_info_);
-  assert(schema_);
-  assert(children_.size() == 1);
+  ALWAYS_ASSERT(project_info_);
+  ALWAYS_ASSERT(schema_);
+  ALWAYS_ASSERT(children_.size() == 1);
 
   // NOTE: We only handle 1 child for now
   if (children_.size() == 1) {

@@ -79,7 +79,7 @@ if (m_tveParams.Get() != NULL) {
 // since the last invocation.
 if (hasPriorResult) {
   std::vector<Value> &lastParams = context->accessLastParams();
-  assert(lastParams.size() == m_otherParamIdxs.size());
+  ALWAYS_ASSERT(lastParams.size() == m_otherParamIdxs.size());
   for (size_t i = 0; i < lastParams.size(); ++i) {
     Value &prevParam = parameterContainer[m_otherParamIdxs[i]];
     if (lastParams[i].compare(prevParam) != VALUE_COMPARE_EQUAL) {

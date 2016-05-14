@@ -649,7 +649,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, PelotonJoinType join_type,
 }
 
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
-  assert(logical_tile);
+  ALWAYS_ASSERT(logical_tile);
 
   // Get column count
   auto column_count = logical_tile->GetColumnCount();
@@ -674,7 +674,7 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 }
 
 void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
-  assert(logical_tile);
+  ALWAYS_ASSERT(logical_tile);
 
   // Get column count
   auto column_count = logical_tile->GetColumnCount();

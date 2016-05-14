@@ -12,11 +12,12 @@
 
 #pragma once
 
-#include <cassert>
 #include <cstring>
 #include <string>
 #include <sstream>
 #include <algorithm>
+
+#include "backend/common/macros.h"
 
 #include "jsoncpp/jsoncpp.h"
 #include "jsoncpp/jsoncpp-forwards.h"
@@ -296,7 +297,7 @@ class JsonDocument {
   }
 
   bool readChar(char &c) {
-    assert(m_head != NULL && m_tail != NULL);
+    ALWAYS_ASSERT(m_head != NULL && m_tail != NULL);
     if (m_head == m_tail) {
       return false;
     }
@@ -325,7 +326,7 @@ class JsonDocument {
 /** implement the 2-argument SQL FIELD function */
 template <>
 inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
 
   const Value &docNVal = arguments[0];
   const Value &pathNVal = arguments[1];
@@ -363,7 +364,7 @@ inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
 
   const Value &docNVal = arguments[0];
   if (docNVal.IsNull()) {
@@ -402,8 +403,8 @@ inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(
   }
 
   // Sure, root[-1].IsNull() would return true just like we want it to
-  // -- but only in production with asserts turned off.
-  // Turn on asserts for Debugging and you'll want this guard up front.
+  // -- but only in production with ALWAYS_ASSERTs turned off.
+  // Turn on ALWAYS_ASSERTs for Debugging and you'll want this guard up front.
   // Forcing the null return for a negative index seems more con.Istent than
   // crashing in Debug mode
   // or even Throwing an SQL error in any mode. It's the same handling that a
@@ -471,7 +472,7 @@ inline Value Value::CallUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 template <>
 inline Value Value::Call<FUNC_VOLT_SET_FIELD>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 3);
+  ALWAYS_ASSERT(arguments.size() == 3);
 
   const Value &docNVal = arguments[0];
   const Value &pathNVal = arguments[1];
