@@ -98,7 +98,7 @@ class TransactionManager {
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified
   virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 __attribute__((unused))) {
+                                 UNUSED_ATTRIBUTE) {
     return;
   }
 

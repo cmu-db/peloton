@@ -33,8 +33,8 @@ ParameterValueExpression::ParameterValueExpression(oid_t value_idx,
       param_value_(param_value) {}
 
 Value ParameterValueExpression::Evaluate(
-    __attribute__((unused)) const AbstractTuple *tuple1,
-    __attribute__((unused)) const AbstractTuple *tuple2,
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
     executor::ExecutorContext *context) const {
   auto& params = context->GetParams();
   ALWAYS_ASSERT(value_idx_ < params.size());

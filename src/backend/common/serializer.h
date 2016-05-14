@@ -469,7 +469,7 @@ class ReferenceSerializeOutput : public SerializeOutput {
 
  protected:
   /** Reference output can't resize the buffer: Frowny-Face. */
-  virtual void Expand(__attribute__((unused)) size_t minimum_desired) {
+  virtual void Expand(UNUSED_ATTRIBUTE size_t minimum_desired) {
     throw Exception(
         "Output from SQL stmt overflowed output/network buffer of 10mb. "
         "Try a \"limit\" clause or a stronger predicate.");

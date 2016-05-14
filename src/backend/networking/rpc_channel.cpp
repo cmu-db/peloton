@@ -48,7 +48,7 @@ RpcChannel::~RpcChannel() { Close(); }
 void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                             google::protobuf::RpcController* controller,
                             const google::protobuf::Message* request,
-                            __attribute__((unused))
+                            UNUSED_ATTRIBUTE
                             google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
   ALWAYS_ASSERT(request != nullptr);

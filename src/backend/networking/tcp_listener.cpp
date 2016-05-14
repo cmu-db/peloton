@@ -99,7 +99,7 @@ void Listener::Run(void *arg) {
  */
 void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             struct sockaddr *address,
-                            __attribute__((unused)) int socklen, void *ctx) {
+                            UNUSED_ATTRIBUTE int socklen, void *ctx) {
   ALWAYS_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
   LOG_TRACE("Server: connection received");
@@ -120,7 +120,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,
-                             __attribute__((unused)) void *ctx) {
+                             UNUSED_ATTRIBUTE void *ctx) {
   ALWAYS_ASSERT(ctx != NULL);
 
   struct event_base *base = evconnlistener_get_base(listener);

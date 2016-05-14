@@ -103,7 +103,7 @@ bool SsiTxnManager::IsOwnable(
 
 bool SsiTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+    const oid_t &tile_group_id UNUSED_ATTRIBUTE, const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
   LOG_TRACE("AcquireOwnership %lu", txn_id);
 

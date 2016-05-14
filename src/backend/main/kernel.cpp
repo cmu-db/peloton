@@ -16,6 +16,7 @@
 
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace backend {
@@ -83,7 +84,7 @@ class aggregator_task {
   }
 };
 
-Result Kernel::Handler(__attribute__((unused)) const char *query) {
+Result Kernel::Handler(const char *query UNUSED_ATTRIBUTE) {
   Result status = RESULT_INVALID;
   status = RESULT_SUCCESS;
   return status;

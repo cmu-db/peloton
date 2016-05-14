@@ -31,7 +31,7 @@ struct S {
   const std::pair<int, int>& mp;  // reference member
 
   friend std::ostream& operator<<(std::ostream& output,
-                                  const S& s __attribute__((unused))) {
+                                  const S& s UNUSED_ATTRIBUTE) {
     output << "S \n";
     return output;
   }
@@ -41,7 +41,7 @@ void foo(int) {}
 
 struct A {
   friend std::ostream& operator<<(std::ostream& output,
-                                  const A& a __attribute__((unused))) {
+                                  const A& a UNUSED_ATTRIBUTE) {
     output << "A \n";
     return output;
   }
@@ -52,7 +52,7 @@ struct B : A {
   operator int&() { return n; };
 
   friend std::ostream& operator<<(std::ostream& output,
-                                  const B& b __attribute__((unused))) {
+                                  const B& b UNUSED_ATTRIBUTE) {
     output << "B \n";
     return output;
   }

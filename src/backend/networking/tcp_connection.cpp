@@ -267,7 +267,7 @@ void *Connection::ProcessMessage(void *connection) {
 /*
  * ReadCb is invoked when there is new data coming.
  */
-void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
+void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
                         void *ctx) {
   // TODO: We might use bev in future
   ALWAYS_ASSERT(bev != NULL);
@@ -298,7 +298,7 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
 /*
  * If recv close event, we should delete the connection from conn_pool
  */
-void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
+void Connection::EventCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
                          short events, void *ctx) {
   Connection *conn = (Connection *)ctx;
   ALWAYS_ASSERT(conn != NULL && bev != NULL);
@@ -336,7 +336,7 @@ void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
   }
 }
 
-void Connection::BufferCb(__attribute__((unused)) struct evbuffer *buffer,
+void Connection::BufferCb(UNUSED_ATTRIBUTE struct evbuffer *buffer,
                           const struct evbuffer_cb_info *info, void *arg) {
   struct total_processed *tp = (total_processed *)arg;
   size_t old_n = tp->n;

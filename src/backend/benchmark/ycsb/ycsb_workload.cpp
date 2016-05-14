@@ -409,7 +409,7 @@ bool RunRead(ZipfDistribution &zipf) {
   return txn_status;
 }
 
-bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf,
+bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf,
                oid_t next_insert_key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

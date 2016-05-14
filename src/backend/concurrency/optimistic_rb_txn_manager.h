@@ -81,13 +81,13 @@ class OptimisticRbTxnManager : public TransactionManager {
    */
   virtual bool PerformRead(const ItemPointer &location);
 
-  virtual void PerformUpdate(const ItemPointer &old_location __attribute__((unused)),
-                             const ItemPointer &new_location __attribute__((unused))) { ALWAYS_ASSERT(false); }
+  virtual void PerformUpdate(const ItemPointer &old_location UNUSED_ATTRIBUTE,
+                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
 
-  virtual void PerformDelete(const ItemPointer &old_location  __attribute__((unused)),
-                             const ItemPointer &new_location __attribute__((unused))) { ALWAYS_ASSERT(false); }
+  virtual void PerformDelete(const ItemPointer &old_location  UNUSED_ATTRIBUTE,
+                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
 
-  virtual void PerformUpdate(const ItemPointer &location  __attribute__((unused))) { ALWAYS_ASSERT(false); }
+  virtual void PerformUpdate(const ItemPointer &location  UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
 
   /**
    * Interfaces for rollback segment

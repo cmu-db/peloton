@@ -131,7 +131,7 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 __attribute__((unused))) {
+                                 UNUSED_ATTRIBUTE) {
     CleanUp();
   }
 
