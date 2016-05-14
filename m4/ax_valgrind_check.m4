@@ -107,8 +107,8 @@ VALGRIND_CHECK_RULES='
 
 # Optional variables
 VALGRIND_SUPPRESSIONS ?= $(addprefix --suppressions=,$(VALGRIND_SUPPRESSIONS_FILES))
-VALGRIND_FLAGS ?= --num-callers=30
-VALGRIND_memcheck_FLAGS ?= --leak-check=full --show-reachable=no
+VALGRIND_FLAGS ?= --num-callers=30 --soname-synonyms=somalloc=libjemalloc\*
+VALGRIND_memcheck_FLAGS ?= --leak-check=full --show-reachable=no --trace-children=yes --track-origins=yes
 VALGRIND_helgrind_FLAGS ?= --history-level=approx
 VALGRIND_drd_FLAGS ?=
 VALGRIND_sgcheck_FLAGS ?=

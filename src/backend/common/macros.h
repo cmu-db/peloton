@@ -111,4 +111,11 @@ namespace peloton {
 #define OVERRIDE
 #endif
 
+//===--------------------------------------------------------------------===//
+// utils
+//===--------------------------------------------------------------------===//
+
+
+#define ARRAY_NELEMS(a) (sizeof(a)/sizeof((a)[0]))
+
 }  // End peloton namespace
