@@ -86,7 +86,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
 void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
-  assert(columns.size() > 0);
+  ALWAYS_ASSERT(columns.size() > 0);
 
   // Table name and oid
   std::string table_name = "simple_table";

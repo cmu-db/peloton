@@ -23,14 +23,14 @@ Value ScalarValueExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
     executor::ExecutorContext *context) const {
   // Execute the subquery and.Get its subquery id
-  assert(m_left != NULL);
+  ALWAYS_ASSERT(m_left != NULL);
   Value lnv = m_left->Evaluate(tuple1, tuple2, context);
 
   // TODO: Get the subquery context
   // int subqueryId = ValuePeeker::PeekInteger(lnv);
   /*
   Table* table = context->GetSubqueryOutputTable(subqueryId);
-  assert(table != NULL);
+  ALWAYS_ASSERT(table != NULL);
   if (table->activeTupleCount() > 1) {
       // throw runtime exception
       char message[256];

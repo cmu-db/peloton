@@ -11,11 +11,11 @@
  */
 
 #include "backend/logging/log_buffer.h"
-#include "backend/common/logger.h"
 #include "backend/logging/log_manager.h"
+#include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include <cstring>
-#include <cassert>
 
 namespace peloton {
 namespace logging {
@@ -50,8 +50,8 @@ bool LogBuffer::WriteData(char *data, size_t len) {
       return false;
     }
   }
-  assert(data);
-  assert(len);
+  ALWAYS_ASSERT(data);
+  ALWAYS_ASSERT(len);
   std::memcpy(elastic_data_.get() + size_, data, len);
   size_ += len;
   return true;

@@ -14,6 +14,7 @@
 
 #include <memory>
 
+#include "backend/common/macros.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 
 namespace peloton {

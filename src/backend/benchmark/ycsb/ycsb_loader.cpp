@@ -17,7 +17,6 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 
 #include "backend/benchmark/ycsb/ycsb_loader.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"

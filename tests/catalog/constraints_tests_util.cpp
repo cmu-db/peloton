@@ -123,7 +123,7 @@ void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;

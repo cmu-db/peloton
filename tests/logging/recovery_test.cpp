@@ -58,7 +58,7 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
   std::srand(std::time(nullptr));
   const catalog::Schema *schema = table->GetSchema();
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;

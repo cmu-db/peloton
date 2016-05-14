@@ -110,7 +110,7 @@ inline Value Value::CallUnary<FUNC_FOLD_UPPER>() const {
 /** implement the 2-argument SQL REPEAT function */
 template <>
 inline Value Value::Call<FUNC_REPEAT>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &strValue = arguments[0];
   if (strValue.IsNull()) {
     return strValue;
@@ -155,7 +155,7 @@ inline Value Value::Call<FUNC_REPEAT>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_POSITION_CHAR>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &tarGet = arguments[0];
   if (tarGet.IsNull()) {
     return GetNullValue();
@@ -209,7 +209,7 @@ inline Value Value::CallUnary<FUNC_ASCII>() const {
 /** implement the 2-argument SQL LEFT function */
 template <>
 inline Value Value::Call<FUNC_LEFT>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &strValue = arguments[0];
   if (strValue.IsNull()) {
     return strValue;
@@ -245,7 +245,7 @@ inline Value Value::Call<FUNC_LEFT>(const std::vector<Value> &arguments) {
 /** implement the 2-argument SQL RIGHT function */
 template <>
 inline Value Value::Call<FUNC_RIGHT>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &strValue = arguments[0];
   if (strValue.IsNull()) {
     return strValue;
@@ -285,7 +285,7 @@ inline Value Value::Call<FUNC_RIGHT>(const std::vector<Value> &arguments) {
 /** implement the 2-or-more-argument SQL CONCAT function */
 template <>
 inline Value Value::Call<FUNC_CONCAT>(const std::vector<Value> &arguments) {
-  assert(arguments.size() >= 2);
+  ALWAYS_ASSERT(arguments.size() >= 2);
   int64_t size = 0;
   for (std::vector<Value>::const_iterator iter = arguments.begin();
        iter != arguments.end(); iter++) {
@@ -323,7 +323,7 @@ inline Value Value::Call<FUNC_CONCAT>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_VOLT_SUBSTRING_CHAR_FROM>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &strValue = arguments[0];
   if (strValue.IsNull()) {
     return strValue;
@@ -355,7 +355,7 @@ static inline std::string trim_function(std::string source,
                                         bool dortrim) {
   // Assuming SOURCE string and MATCH string are both valid UTF-8 strings
   size_t mlen = match.length();
-  assert(mlen > 0);
+  ALWAYS_ASSERT(mlen > 0);
   if (doltrim) {
     while (boost::starts_with(source, match)) {
       source.erase(0, mlen);
@@ -373,7 +373,7 @@ static inline std::string trim_function(std::string source,
 /** implement the 2-argument SQL TRIM functions */
 inline Value Value::trimWithOptions(const std::vector<Value> &arguments,
                                     bool leading, bool trailing) {
-  //  assert(arguments.size() == 2);
+  //  ALWAYS_ASSERT(arguments.size() == 2);
   for (size_t i = 0; i < arguments.size(); i++) {
     const Value &arg = arguments[i];
     if (arg.IsNull()) {
@@ -445,7 +445,7 @@ inline Value Value::Call<FUNC_TRIM_TRAILING_CHAR>(
 /** implement the 3-argument SQL REPLACE function */
 template <>
 inline Value Value::Call<FUNC_REPLACE>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 3);
+  ALWAYS_ASSERT(arguments.size() == 3);
 
   for (size_t i = 0; i < arguments.size(); i++) {
     const Value &arg = arguments[i];
@@ -486,7 +486,7 @@ inline Value Value::Call<FUNC_REPLACE>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_SUBSTRING_CHAR>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 3);
+  ALWAYS_ASSERT(arguments.size() == 3);
   const Value &strValue = arguments[0];
   if (strValue.IsNull()) {
     return strValue;
@@ -556,7 +556,7 @@ static inline std::string overlay_function(const char *ptrSource,
 template <>
 inline Value Value::Call<FUNC_OVERLAY_CHAR>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 3 || arguments.size() == 4);
+  ALWAYS_ASSERT(arguments.size() == 3 || arguments.size() == 4);
 
   for (size_t i = 0; i < arguments.size(); i++) {
     const Value &arg = arguments[i];
@@ -609,7 +609,7 @@ inline Value Value::Call<FUNC_OVERLAY_CHAR>(
     length = GetCharLength(ptrInsert, lengthInsert);
   }
 
-  assert(start >= 1);
+  ALWAYS_ASSERT(start >= 1);
   std::string resultStr =
       overlay_function(ptrSource, lengthSource, insertStr, start, length);
 
@@ -632,7 +632,7 @@ inline Value Value::Call<FUNC_VOLT_FORMAT_CURRENCY>(
   static TTInt one("1");
   static TTInt five("5");
 
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &arg1 = arguments[0];
   if (arg1.IsNull()) {
     return GetNullStringValue();

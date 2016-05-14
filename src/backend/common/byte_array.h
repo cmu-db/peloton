@@ -13,6 +13,9 @@
 #pragma once
 
 #include <cstring>
+
+#include "backend/common/macros.h"
+
 #include <boost/shared_array.hpp>
 
 namespace peloton {
@@ -94,7 +97,7 @@ class GenericArray {
 
   /// corresponds to "bar = new byte[len];" in Java
   void ResetAndExpand(int newLength) {
-    assert(newLength >= 0);
+    ALWAYS_ASSERT(newLength >= 0);
     array_data = boost::shared_array<T>(new T[newLength]);
     ::memset(array_data.get(), 0, newLength * sizeof(T));
     array_length = newLength;
@@ -103,8 +106,8 @@ class GenericArray {
   /// corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar
   /// = tmp;" in Java
   void CopyAndExpand(int newLength) {
-    assert(newLength >= 0);
-    assert(newLength > array_length);
+    ALWAYS_ASSERT(newLength >= 0);
+    ALWAYS_ASSERT(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
     ::memset(newData.get(), 0,
              newLength * sizeof(T));  /// makes valgrind happy.
@@ -120,16 +123,16 @@ class GenericArray {
 
   /// helper functions for convenience.
   void Assign(const T *assignedData, int offset, int assignedLength) {
-    assert(!IsNull());
-    assert(array_length >= offset + assignedLength);
-    assert(offset >= 0);
+    ALWAYS_ASSERT(!IsNull());
+    ALWAYS_ASSERT(array_length >= offset + assignedLength);
+    ALWAYS_ASSERT(offset >= 0);
     ::memcpy(array_data.get() + offset, assignedData,
              assignedLength * sizeof(T));
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {
-    assert(!IsNull());
-    assert(!tail.IsNull());
+    ALWAYS_ASSERT(!IsNull());
+    ALWAYS_ASSERT(!tail.IsNull());
     GenericArray<T> concated(this->array_length + tail.array_length);
     concated.Assign(this->array_data.get(), 0, this->array_length);
     concated.Assign(tail.array_data.get(), this->array_length,
@@ -138,14 +141,14 @@ class GenericArray {
   };
 
   const T &operator[](int index) const {
-    assert(!IsNull());
-    assert(array_length > index);
+    ALWAYS_ASSERT(!IsNull());
+    ALWAYS_ASSERT(array_length > index);
     return array_data.get()[index];
   };
 
   T &operator[](int index) {
-    assert(!IsNull());
-    assert(array_length > index);
+    ALWAYS_ASSERT(!IsNull());
+    ALWAYS_ASSERT(array_length > index);
     return array_data.get()[index];
   };
 

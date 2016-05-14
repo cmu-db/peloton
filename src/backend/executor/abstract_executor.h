@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <memory>
 #include <vector>
 
@@ -96,7 +95,7 @@ class AbstractExecutor {
   template <class T>
   inline const T &GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
-    assert(node);
+    ALWAYS_ASSERT(node);
     return *node;
   }
 

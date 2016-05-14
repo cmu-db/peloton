@@ -14,7 +14,6 @@
 
 #include <atomic>
 #include <iostream>
-#include <cassert>
 #include <queue>
 #include <vector>
 #include <cstring>

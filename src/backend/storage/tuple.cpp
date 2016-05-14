@@ -14,11 +14,11 @@
 
 #include <cstdlib>
 #include <sstream>
-#include <cassert>
 
 #include "backend/storage/tuple.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/catalog/schema.h"
 
 namespace peloton {
@@ -32,8 +32,8 @@ Tuple::~Tuple() {
 
 // Get the value of a specified column (const)
 Value Tuple::GetValue(const oid_t column_id) const {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   const ValueType column_type = tuple_schema->GetType(column_id);
 
@@ -46,8 +46,8 @@ Value Tuple::GetValue(const oid_t column_id) const {
 // Set all columns by value into this tuple.
 void Tuple::SetValue(const oid_t column_id, const Value &value,
                      VarlenPool *data_pool) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   const ValueType type = tuple_schema->GetType(column_id);
 
@@ -99,8 +99,8 @@ void Tuple::SetFromTuple(const storage::Tuple *tuple,
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
 void Tuple::Copy(const void *source, VarlenPool *pool) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   const bool is_inlined = tuple_schema->IsInlined();
   const oid_t uninlineable_column_count =
@@ -200,8 +200,8 @@ size_t Tuple::GetUninlinedMemorySize() const {
 }
 
 void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   input.ReadInt();
   const int column_count = tuple_schema->GetColumnCount();
@@ -237,8 +237,8 @@ void Tuple::DeserializeFrom(SerializeInputBE &input, VarlenPool *dataPool) {
 }
 
 void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   input.ReadInt();  // Read in the tuple size, discard
 
@@ -259,8 +259,8 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInputBE &input) {
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
 
   size_t start = output.Position();
   output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
@@ -280,7 +280,7 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
 }
 
 void Tuple::SerializeTo(SerializeOutput &output) {
-  assert(tuple_schema);
+  ALWAYS_ASSERT(tuple_schema);
   size_t start = output.ReserveBytes(4);
   const int column_count = tuple_schema->GetColumnCount();
 
@@ -351,8 +351,8 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
 }
 
 void Tuple::SetAllNulls() {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -407,7 +407,7 @@ size_t Tuple::HashCode(size_t seed) const {
 }
 
 void Tuple::MoveToTuple(const void *tuple_data_) {
-  assert(tuple_schema);
+  ALWAYS_ASSERT(tuple_schema);
   tuple_data = reinterpret_cast<char *>(const_cast<void *>(tuple_data_));
 }
 
@@ -417,14 +417,14 @@ size_t Tuple::HashCode() const {
 }
 
 char *Tuple::GetDataPtr(const oid_t column_id) {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
 const char *Tuple::GetDataPtr(const oid_t column_id) const {
-  assert(tuple_schema);
-  assert(tuple_data);
+  ALWAYS_ASSERT(tuple_schema);
+  ALWAYS_ASSERT(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 

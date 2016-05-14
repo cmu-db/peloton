@@ -12,6 +12,7 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/logger.h"
+#include "backend/planner/abstract_plan.h"
 
 namespace peloton {
 namespace bridge {

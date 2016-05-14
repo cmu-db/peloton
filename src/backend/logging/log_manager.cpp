@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <condition_variable>
 #include <memory>
 
@@ -18,6 +17,7 @@
 #include "backend/logging/log_manager.h"
 #include "backend/logging/records/transaction_record.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/executor/executor_context.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/tuple.h"
@@ -270,12 +270,12 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
-  assert(frontend_loggers.size() != 0);
+  ALWAYS_ASSERT(frontend_loggers.size() != 0);
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-    assert(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
+    ALWAYS_ASSERT(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
     LOG_TRACE("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
@@ -288,12 +288,12 @@ BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
 
     } else if (logger_mapping_strategy_ == LOGGER_MAPPING_MANUAL) {
       // manual mapping with hint
-      assert(hint_idx < frontend_loggers.size());
+      ALWAYS_ASSERT(hint_idx < frontend_loggers.size());
       frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);
       backend_logger->SetFrontendLoggerID(hint_idx);
     } else {
       LOG_ERROR("Unsupported Logger Mapping Strategy");
-      assert(false);
+      ALWAYS_ASSERT(false);
       return nullptr;
     }
   }
@@ -320,7 +320,7 @@ void LogManager::InitFrontendLoggers() {
  * @return the frontend logger otherwise nullptr
  */
 FrontendLogger *LogManager::GetFrontendLogger(unsigned int logger_idx) {
-  assert(logger_idx < frontend_loggers.size());
+  ALWAYS_ASSERT(logger_idx < frontend_loggers.size());
   return frontend_loggers[logger_idx].get();
 }
 
@@ -354,7 +354,7 @@ void LogManager::SetLogFileName(std::string log_file) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogFileName(void) {
-  assert(log_file_name.empty() == false);
+  ALWAYS_ASSERT(log_file_name.empty() == false);
   return log_file_name;
 }
 
@@ -364,7 +364,7 @@ void LogManager::SetLogDirectoryName(std::string log_directory) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogDirectoryName(void) {
-  assert(log_directory_name.empty() == false);
+  ALWAYS_ASSERT(log_directory_name.empty() == false);
   return log_directory_name;
 }
 

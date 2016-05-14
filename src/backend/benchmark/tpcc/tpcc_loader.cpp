@@ -17,7 +17,6 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <cstring>
 
 #include "backend/benchmark/tpcc/tpcc_loader.h"
@@ -872,7 +871,7 @@ NURandConstant::NURandConstant() {
 
 // A non-uniform random number, as defined by TPC-C 2.1.6. (page 20).
 int GetNURand(int a, int x, int y) {
-  assert(x <= y);
+  ALWAYS_ASSERT(x <= y);
   int c = nu_rand_const.c_last;
 
   if (a == 255) {
@@ -882,7 +881,7 @@ int GetNURand(int a, int x, int y) {
   } else if (a == 8191) {
     c = nu_rand_const.order_line_itme_id;
   } else {
-    assert(false);
+    ALWAYS_ASSERT(false);
   }
 
   return (((GetRandomInteger(0, a) | GetRandomInteger(x, y)) + c) % (y - x + 1)) + x;
@@ -891,7 +890,7 @@ int GetNURand(int a, int x, int y) {
 
 // A last name as defined by TPC-C 4.3.2.3. Not actually random.
 std::string GetLastName(int number) {
-  assert(number >= 0 && number <= 999);
+  ALWAYS_ASSERT(number >= 0 && number <= 999);
 
   int idx1 = number / 100;
   int idx2 = (number / 10 % 10);
@@ -1106,7 +1105,7 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
                                                    const int warehouse_id,
                                                    const std::unique_ptr<VarlenPool>& pool) {
   // Customer id begins from 0
-  assert(customer_id >= 0 && customer_id < state.customers_per_district);
+  ALWAYS_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
 
   auto customer_table_schema = customer_table->GetSchema();
   std::unique_ptr<storage::Tuple> customer_tuple(new storage::Tuple(customer_table_schema, allocate));

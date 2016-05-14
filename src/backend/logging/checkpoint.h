@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <string>
 #include <sys/stat.h>
 

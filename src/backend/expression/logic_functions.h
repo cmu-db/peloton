@@ -20,7 +20,7 @@ namespace peloton {
 template <>
 inline Value Value::Call<FUNC_DECODE>(const std::vector<Value> &arguments) {
   int size = (int)arguments.size();
-  assert(size >= 3);
+  ALWAYS_ASSERT(size >= 3);
   int loopnum = (size - 1) / 2;
   const Value &basEvaluate = arguments[0];
   for (int i = 0; i < loopnum; i++) {

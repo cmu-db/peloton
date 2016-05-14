@@ -14,7 +14,6 @@
 
 #include <atomic>
 #include <mutex>
-#include <cassert>
 #include <unordered_map>
 
 #include "backend/common/logger.h"
@@ -22,6 +21,7 @@
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/abstract_tuple.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 
@@ -109,7 +109,7 @@ public:
   }
 
   inline static ColIdOffsetPair *GetIdOffsetPair(char *rb_seg, int idx) {
-    assert(idx >= 0);
+    ALWAYS_ASSERT(idx >= 0);
     return (reinterpret_cast<ColIdOffsetPair*>(rb_seg + pairs_start_offset
                                                + sizeof(ColIdOffsetPair) * idx));
   }

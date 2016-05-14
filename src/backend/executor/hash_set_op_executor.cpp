@@ -35,9 +35,9 @@ HashSetOpExecutor::HashSetOpExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool HashSetOpExecutor::DInit() {
-  assert(children_.size() == 2);
-  assert(!hash_done_);
-  assert(set_op_ == SETOP_TYPE_INVALID);
+  ALWAYS_ASSERT(children_.size() == 2);
+  ALWAYS_ASSERT(!hash_done_);
+  ALWAYS_ASSERT(set_op_ == SETOP_TYPE_INVALID);
 
   return true;
 }
@@ -47,7 +47,7 @@ bool HashSetOpExecutor::DExecute() {
 
   if (!hash_done_) ExecuteHelper();
 
-  assert(hash_done_);
+  ALWAYS_ASSERT(hash_done_);
 
   // Avoid returning empty tiles
   while (next_tile_to_return_ < left_tiles_.size()) {
@@ -62,13 +62,13 @@ bool HashSetOpExecutor::DExecute() {
 }
 
 bool HashSetOpExecutor::ExecuteHelper() {
-  assert(children_.size() == 2);
-  assert(!hash_done_);
+  ALWAYS_ASSERT(children_.size() == 2);
+  ALWAYS_ASSERT(!hash_done_);
 
   // Grab data from plan node
   const planner::SetOpPlan &node = GetPlanNode<planner::SetOpPlan>();
   set_op_ = node.GetSetOp();
-  assert(set_op_ != SETOP_TYPE_INVALID);
+  ALWAYS_ASSERT(set_op_ != SETOP_TYPE_INVALID);
 
   // Extract all input from left child
   while (children_[0]->Execute()) {
@@ -131,7 +131,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
     for (oid_t tuple_id : *tile) {
       auto it = htable_.find(HashSetOpMapType::key_type(tile.get(), tuple_id));
 
-      assert(it != htable_.end());
+      ALWAYS_ASSERT(it != htable_.end());
 
       if (it->first.GetContainer() == tile.get() &&
           it->first.GetTupleId() == tuple_id)
@@ -146,7 +146,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
   // 2nd round
   for (auto &item : htable_) {
     // We should have at most one quota left
-    assert(item.second.left == 1 || item.second.left == 0);
+    ALWAYS_ASSERT(item.second.left == 1 || item.second.left == 0);
     if (item.second.left == 0) {
       item.first.GetContainer()->RemoveVisibility(item.first.GetTupleId());
     }

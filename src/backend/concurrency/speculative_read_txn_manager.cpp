@@ -56,7 +56,7 @@ bool SpeculativeReadTxnManager::IsVisible(
   if (own == true) {
     if (tuple_end_cid == MAX_CID) {
       // a transaction will immediately write ts to the version.
-      assert(tuple_begin_cid == txn_begin_cid);
+      ALWAYS_ASSERT(tuple_begin_cid == txn_begin_cid);
       // the only version that is visible is the newly inserted one.
       return true;
     } else {
@@ -140,9 +140,9 @@ bool SpeculativeReadTxnManager::PerformInsert(const ItemPointer &location) {
   auto transaction_id = current_txn->GetTransactionId();
   auto txn_begin_id = current_txn->GetBeginCommitId();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetBeginCommitId(tuple_id, txn_begin_id);
 
@@ -170,13 +170,13 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+  ALWAYS_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
 
@@ -209,11 +209,11 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &location) {
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) ==
          current_txn->GetBeginCommitId());
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
   auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
@@ -236,13 +236,13 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &old_location,
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+  ALWAYS_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
@@ -272,11 +272,11 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) ==
          current_txn->GetBeginCommitId());
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
@@ -383,7 +383,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -393,7 +393,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);

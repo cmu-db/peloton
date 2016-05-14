@@ -17,7 +17,6 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 #include <random>
@@ -335,7 +334,7 @@ bool RunNewOrder(){
     }
 
     if (gii_lists_values.size() != 1) {
-      assert(false);
+      ALWAYS_ASSERT(false);
     }
 
   }
@@ -380,7 +379,7 @@ bool RunNewOrder(){
   }
 
   if (gwtr_lists_values.size() != 1) {
-    assert(false);
+    ALWAYS_ASSERT(false);
   }
 
   auto w_tax = gwtr_lists_values[0][0];
@@ -427,7 +426,7 @@ bool RunNewOrder(){
   }
 
   if (gd_lists_values.size() != 1) {
-    assert(false);
+    ALWAYS_ASSERT(false);
   }
 
   auto d_tax = gd_lists_values[0][0];
@@ -616,7 +615,7 @@ bool RunNewOrder(){
     }
 
     if (gsi_lists_values.size() != 1) {
-      assert(false);
+      ALWAYS_ASSERT(false);
     }
 
     int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
@@ -718,7 +717,7 @@ bool RunNewOrder(){
   }
 
   // transaction passed execution.
-  assert(txn->GetResult() == Result::RESULT_SUCCESS);
+  ALWAYS_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
 
   auto result = txn_manager.CommitTransaction();
 
@@ -728,7 +727,7 @@ bool RunNewOrder(){
 
     return true;
   } else {
-    assert(result == Result::RESULT_ABORTED ||
+    ALWAYS_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     return false;
   }

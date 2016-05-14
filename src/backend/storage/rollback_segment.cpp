@@ -30,8 +30,8 @@ namespace storage {
 RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
                                                 const TargetList &target_list,
                                                 const AbstractTuple *tuple) {
-  assert(schema);
-  assert(target_list.size() != 0); 
+  ALWAYS_ASSERT(schema);
+  ALWAYS_ASSERT(target_list.size() != 0); 
 
   size_t col_count = target_list.size();
   size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
@@ -46,7 +46,7 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
 
   // Allocate the RBSeg
   rb_seg = (RBSegType)pool_.AllocateZeroes(header_size + data_size);
-  assert(rb_seg);
+  ALWAYS_ASSERT(rb_seg);
 
   // Fill in the header
   SetNextPtr(rb_seg, nullptr);
@@ -70,7 +70,7 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
     // Set the value
     char *value_location = GetColDataLocation(rb_seg, idx);
     Value value = tuple->GetValue(col_id);
-    assert(schema->GetType(col_id) == value.GetValueType());
+    ALWAYS_ASSERT(schema->GetType(col_id) == value.GetValueType());
     value.SerializeToTupleStorageAllocateForObjects(
                 value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
 

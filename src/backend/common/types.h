@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <climits>
 #include <limits>
-#include <cassert>
 #include <bitset>
 #include <vector>
 

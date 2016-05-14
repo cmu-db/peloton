@@ -30,7 +30,7 @@ class NullIfExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(expressions_.size() == 2);
+    ALWAYS_ASSERT(expressions_.size() == 2);
 
     auto left_result = expressions_[0]->Evaluate(tuple1, tuple2, context);
     auto right_result = expressions_[1]->Evaluate(tuple1, tuple2, context);

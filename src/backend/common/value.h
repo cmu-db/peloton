@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <cfloat>
 #include <climits>
 #include <cmath>
@@ -33,6 +32,7 @@
 #include "backend/common/types.h"
 #include "backend/common/varlen.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include "boost/scoped_ptr.hpp"
 #include "ttmath/ttmathint.h"
@@ -187,7 +187,7 @@ inline void StreamSQLFloatFormat(std::stringstream &streamOut,
   // match any format with the regular expression:
   std::string fancyText = fancy.str();
   size_t ePos = fancyText.find('E', 3);  // find E after "[-]n.n".
-  assert(ePos != std::string::npos);
+  ALWAYS_ASSERT(ePos != std::string::npos);
   size_t endSignifMantissa;
   // Never truncate mantissa down to the bare '.' EVEN for the case of "n.0".
   for (endSignifMantissa = ePos; fancyText[endSignifMantissa - 2] != '.';
@@ -455,13 +455,13 @@ class Value {
 
   /**
    * If this Value is an array value, Get it's length.
-   * Undefined behavior if not an array (cassert fail in Debug).
+   * Undefined behavior if not an array (cALWAYS_ASSERT fail in Debug).
    */
   int ArrayLength() const;
 
   /**
    * If this Value is an array value, Get a value.
-   * Undefined behavior if not an array or if oob (cassert fail in Debug).
+   * Undefined behavior if not an array or if oob (cALWAYS_ASSERT fail in Debug).
    */
   Value ItemAtIndex(int index) const;
 
@@ -472,7 +472,7 @@ class Value {
    * they might return duplicate rows from the inner join.
    * See MaterializedScanPlanNode & MaterializedScanExecutor
    *
-   * Undefined behavior if not an array (cassert fail in Debug).
+   * Undefined behavior if not an array (cALWAYS_ASSERT fail in Debug).
    */
   void CastAndSortAndDedupArrayForInList(const ValueType outputType,
                                          std::vector<Value> &outList) const;
@@ -529,13 +529,13 @@ class Value {
     // off the end of the buffer.
     // That done, ExtractCodePoint could be considerably simpler/faster.
     {
-      assert(m_cursor <= m_end);
+      ALWAYS_ASSERT(m_cursor <= m_end);
     }
 
     // Construct a one-off with an alternative current cursor position
     UTF8Iterator(const UTF8Iterator &other, const char *start)
         : m_cursor(start), m_end(other.m_end) {
-      assert(m_cursor <= m_end);
+      ALWAYS_ASSERT(m_cursor <= m_end);
     }
 
     const char *GetCursor() { return m_cursor; }
@@ -562,7 +562,7 @@ class Value {
      * That wouldn't be needed if we pre-validated the buffer.
      */
     uint32_t ExtractCodePoint() {
-      assert(m_cursor <
+      ALWAYS_ASSERT(m_cursor <
              m_end);  // Caller should have tested and handled AtEnd() condition
                       /*
                        * Copy the next 6 bytes to a temp buffer and retrieve.
@@ -688,7 +688,7 @@ class Value {
     // unless/until those legitimate cases Get re-routed to some other code
     // path,
     // it is not safe here to ...
-    // assert(rt != VALUE_TYPE_INVALID);
+    // ALWAYS_ASSERT(rt != VALUE_TYPE_INVALID);
     return rt;
   }
 
@@ -833,8 +833,8 @@ class Value {
    * Calling correctness.
    */
   int32_t GetObjectLengthWithoutNull() const {
-    assert(IsNull() == false);
-    assert(GetValueType() == VALUE_TYPE_VARCHAR ||
+    ALWAYS_ASSERT(IsNull() == false);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_VARCHAR ||
            GetValueType() == VALUE_TYPE_VARBINARY);
     // now safe to read and return the length preceding value.
     return *reinterpret_cast<const int32_t *>(&m_data[8]);
@@ -930,100 +930,100 @@ class Value {
 
   // Getters
   const int8_t &GetTinyInt() const {
-    assert(GetValueType() == VALUE_TYPE_TINYINT);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_TINYINT);
     return *reinterpret_cast<const int8_t *>(m_data);
   }
 
   int8_t &GetTinyInt() {
-    assert(GetValueType() == VALUE_TYPE_TINYINT);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_TINYINT);
     return *reinterpret_cast<int8_t *>(m_data);
   }
 
   const int16_t &GetSmallInt() const {
-    assert(GetValueType() == VALUE_TYPE_SMALLINT);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_SMALLINT);
     return *reinterpret_cast<const int16_t *>(m_data);
   }
 
   int16_t &GetSmallInt() {
-    assert(GetValueType() == VALUE_TYPE_SMALLINT);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_SMALLINT);
     return *reinterpret_cast<int16_t *>(m_data);
   }
 
   const int32_t &GetInteger() const {
-    assert(GetValueType() == VALUE_TYPE_INTEGER ||
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
            GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
-    assert(GetValueType() == VALUE_TYPE_INTEGER ||
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
            GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
   const int64_t &GetBigInt() const {
-    assert((GetValueType() == VALUE_TYPE_BIGINT) ||
+    ALWAYS_ASSERT((GetValueType() == VALUE_TYPE_BIGINT) ||
            (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
            (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<const int64_t *>(m_data);
   }
 
   int64_t &GetBigInt() {
-    assert((GetValueType() == VALUE_TYPE_BIGINT) ||
+    ALWAYS_ASSERT((GetValueType() == VALUE_TYPE_BIGINT) ||
            (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
            (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<int64_t *>(m_data);
   }
 
   const int32_t &GetDate() const {
-    assert(GetValueType() == VALUE_TYPE_DATE);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetDate() {
-    assert(GetValueType() == VALUE_TYPE_DATE);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
   const int64_t &GetTimestamp() const {
-    assert(GetValueType() == VALUE_TYPE_TIMESTAMP);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_TIMESTAMP);
     return *reinterpret_cast<const int64_t *>(m_data);
   }
 
   int64_t &GetTimestamp() {
-    assert(GetValueType() == VALUE_TYPE_TIMESTAMP);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_TIMESTAMP);
     return *reinterpret_cast<int64_t *>(m_data);
   }
 
   const double &GetDouble() const {
-    assert(GetValueType() == VALUE_TYPE_DOUBLE);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DOUBLE);
     return *reinterpret_cast<const double *>(m_data);
   }
 
   double &GetDouble() {
-    assert(GetValueType() == VALUE_TYPE_DOUBLE);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DOUBLE);
     return *reinterpret_cast<double *>(m_data);
   }
 
   const TTInt &GetDecimal() const {
-    assert(GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DECIMAL);
     const void *retval = reinterpret_cast<const void *>(m_data);
     return *reinterpret_cast<const TTInt *>(retval);
   }
 
   TTInt &GetDecimal() {
-    assert(GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_DECIMAL);
     void *retval = reinterpret_cast<void *>(m_data);
     return *reinterpret_cast<TTInt *>(retval);
   }
 
   const bool &GetBoolean() const {
-    assert(GetValueType() == VALUE_TYPE_BOOLEAN);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_BOOLEAN);
     return *reinterpret_cast<const bool *>(m_data);
   }
 
   bool &GetBoolean() {
-    assert(GetValueType() == VALUE_TYPE_BOOLEAN);
+    ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_BOOLEAN);
     return *reinterpret_cast<bool *>(m_data);
   }
 
@@ -1065,10 +1065,10 @@ class Value {
    * DOUBLE, DECIMAL should not be handled here
    */
   int64_t CastAsBigIntAndGetValue() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const ValueType type = GetValueType();
-    assert(type != VALUE_TYPE_NULL);
+    ALWAYS_ASSERT(type != VALUE_TYPE_NULL);
     switch (type) {
       case VALUE_TYPE_TINYINT:
         return static_cast<int64_t>(GetTinyInt());
@@ -1093,7 +1093,7 @@ class Value {
    * DOUBLE, DECIMAL should not be handled here
    */
   int32_t CastAsIntegerAndGetValue() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const ValueType type = GetValueType();
     switch (type) {
@@ -1120,7 +1120,7 @@ class Value {
   }
 
   double CastAsDoubleAndGetValue() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const ValueType type = GetValueType();
 
@@ -1163,7 +1163,7 @@ class Value {
   }
 
   TTInt CastAsDecimalAndGetValue() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const ValueType type = GetValueType();
 
@@ -1204,7 +1204,7 @@ class Value {
    * This funciton does not check NULL value.
    */
   double GetNumberFromString() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const int32_t strLength = GetObjectLengthWithoutNull();
     // Guarantee termination at end of object -- or strtod might not stop there.
@@ -1231,7 +1231,7 @@ class Value {
   }
 
   Value CastAsBigInt() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_BIGINT);
     const ValueType type = GetValueType();
@@ -1280,7 +1280,7 @@ class Value {
   }
 
   Value CastAsTimestamp() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_TIMESTAMP);
     const ValueType type = GetValueType();
@@ -1412,7 +1412,7 @@ class Value {
   }
 
   Value CastAsSmallInt() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_SMALLINT);
     const ValueType type = GetValueType();
@@ -1464,7 +1464,7 @@ class Value {
   }
 
   Value CastAsTinyInt() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_TINYINT);
     const ValueType type = GetValueType();
@@ -1507,7 +1507,7 @@ class Value {
   }
 
   Value CastAsDouble() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_DOUBLE);
     const ValueType type = GetValueType();
@@ -1549,7 +1549,7 @@ class Value {
   void streamTimestamp(std::stringstream &value) const;
 
   Value CastAsString() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     const ValueType type = GetValueType();
     switch (type) {
@@ -1618,7 +1618,7 @@ class Value {
   }
 
   Value CastAsBinary() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
 
     Value retval(VALUE_TYPE_VARBINARY);
     const ValueType type = GetValueType();
@@ -1639,7 +1639,7 @@ class Value {
   }
 
   Value CastAsDecimal() const {
-    assert(IsNull() == false);
+    ALWAYS_ASSERT(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
     const ValueType type = GetValueType();
     if (IsNull()) {
@@ -1848,7 +1848,7 @@ class Value {
   }
 
   int CompareTinyInt(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_TINYINT);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_TINYINT);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1868,7 +1868,7 @@ class Value {
   }
 
   int CompareSmallInt(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_SMALLINT);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_SMALLINT);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1888,7 +1888,7 @@ class Value {
   }
 
   int CompareInteger(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_INTEGER);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_INTEGER);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1908,7 +1908,7 @@ class Value {
   }
 
   int CompareBigInt(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_BIGINT);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_BIGINT);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1928,7 +1928,7 @@ class Value {
   }
 
   int CompareDate(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_DATE);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_DATE);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1948,7 +1948,7 @@ class Value {
   }
 
   int CompareTimestamp(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_TIMESTAMP);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_TIMESTAMP);
 
     // Get the right hand side as a bigint
     if (rhs.GetValueType() == VALUE_TYPE_DOUBLE) {
@@ -1968,7 +1968,7 @@ class Value {
   }
 
   int CompareDoubleValue(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_DOUBLE);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_DOUBLE);
 
     const double lhsValue = GetDouble();
     double rhsValue;
@@ -2022,7 +2022,7 @@ class Value {
   }
 
   int CompareStringValue(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_VARCHAR);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR);
 
     ValueType rhsType = rhs.GetValueType();
     if ((rhsType != VALUE_TYPE_VARCHAR) && (rhsType != VALUE_TYPE_VARBINARY)) {
@@ -2033,7 +2033,7 @@ class Value {
       throw TypeMismatchException(message, rhs.GetValueType(), GetValueType());
     }
 
-    assert(m_valueType == VALUE_TYPE_VARCHAR);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR);
 
     const int32_t leftLength = GetObjectLengthWithoutNull();
     const int32_t rightLength = rhs.GetObjectLengthWithoutNull();
@@ -2060,7 +2060,7 @@ class Value {
   }
 
   int CompareBinaryValue(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_VARBINARY);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARBINARY);
 
     if (rhs.GetValueType() != VALUE_TYPE_VARBINARY) {
       char message[128];
@@ -2094,7 +2094,7 @@ class Value {
   }
 
   int CompareDecimalValue(const Value rhs) const {
-    assert(m_valueType == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(m_valueType == VALUE_TYPE_DECIMAL);
     switch (rhs.GetValueType()) {
       case VALUE_TYPE_DECIMAL: {
         return CompareValue<TTInt>(GetDecimal(), rhs.GetDecimal());
@@ -2276,10 +2276,10 @@ class Value {
   }
 
   Value OpAddDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.IsNull() == false);
-    assert(rhs.IsNull() == false);
-    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(lhs.IsNull() == false);
+    ALWAYS_ASSERT(rhs.IsNull() == false);
+    ALWAYS_ASSERT(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTInt retval(lhs.GetDecimal());
     if (retval.Add(rhs.GetDecimal()) || retval > s_maxDecimalValue ||
@@ -2296,10 +2296,10 @@ class Value {
   }
 
   Value OpSubtractDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.IsNull() == false);
-    assert(rhs.IsNull() == false);
-    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(lhs.IsNull() == false);
+    ALWAYS_ASSERT(rhs.IsNull() == false);
+    ALWAYS_ASSERT(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTInt retval(lhs.GetDecimal());
     if (retval.Sub(rhs.GetDecimal()) || retval > s_maxDecimalValue ||
@@ -2322,10 +2322,10 @@ class Value {
    * E-12, which can overflow unnecessarily at the middle step.
    */
   Value OpMultiplyDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.IsNull() == false);
-    assert(rhs.IsNull() == false);
-    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(lhs.IsNull() == false);
+    ALWAYS_ASSERT(rhs.IsNull() == false);
+    ALWAYS_ASSERT(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTLInt calc;
     calc.FromInt(lhs.GetDecimal());
@@ -2359,10 +2359,10 @@ class Value {
    */
 
   Value OpDivideDecimals(const Value &lhs, const Value &rhs) const {
-    assert(lhs.IsNull() == false);
-    assert(rhs.IsNull() == false);
-    assert(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
-    assert(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(lhs.IsNull() == false);
+    ALWAYS_ASSERT(rhs.IsNull() == false);
+    ALWAYS_ASSERT(lhs.GetValueType() == VALUE_TYPE_DECIMAL);
+    ALWAYS_ASSERT(rhs.GetValueType() == VALUE_TYPE_DECIMAL);
 
     TTLInt calc;
     calc.FromInt(lhs.GetDecimal());
@@ -2610,7 +2610,7 @@ inline bool Value::IsFalse() const {
 }
 
 inline bool Value::IsBooleanNULL() const {
-  assert(GetValueType() == VALUE_TYPE_BOOLEAN);
+  ALWAYS_ASSERT(GetValueType() == VALUE_TYPE_BOOLEAN);
   return *reinterpret_cast<const int8_t *>(m_data) == INT8_NULL;
 }
 
@@ -2690,7 +2690,7 @@ inline int Value::CompareNull(const Value rhs) const {
  * comparison in favor of Op*.
  */
 inline int Value::CompareWithoutNull(const Value rhs) const {
-  assert(IsNull() == false && rhs.IsNull() == false);
+  ALWAYS_ASSERT(IsNull() == false && rhs.IsNull() == false);
 
   switch (m_valueType) {
     case VALUE_TYPE_VARCHAR:
@@ -3206,7 +3206,7 @@ inline void Value::SerializeTo(SerializeOutput &output) const {
 
 inline void Value::SerializeToExportWithoutNull(
     ExportSerializeOutput &io) const {
-  assert(IsNull() == false);
+  ALWAYS_ASSERT(IsNull() == false);
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_VARCHAR:
@@ -3769,8 +3769,8 @@ inline Value Value::Like(const Value rhs) const {
   char *valueChars = reinterpret_cast<char *>(GetObjectValueWithoutNull());
   char *patternChars =
       reinterpret_cast<char *>(rhs.GetObjectValueWithoutNull());
-  assert(valueChars);
-  assert(patternChars);
+  ALWAYS_ASSERT(valueChars);
+  ALWAYS_ASSERT(patternChars);
 
   /*
    * Because lambdas are for poseurs.

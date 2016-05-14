@@ -92,11 +92,11 @@ void TupleRecord::SerializeHeader(CopySerializeOutput &output) {
 void TupleRecord::DeserializeHeader(CopySerializeInputBE &input) {
   input.ReadInt();
   db_oid = (oid_t)(input.ReadLong());
-  assert(db_oid);
+  ALWAYS_ASSERT(db_oid);
   table_oid = (oid_t)(input.ReadLong());
-  assert(table_oid);
+  ALWAYS_ASSERT(table_oid);
   cid = (txn_id_t)(input.ReadLong());
-  assert(cid);
+  ALWAYS_ASSERT(cid);
   insert_location.block = (oid_t)(input.ReadLong());
   insert_location.offset = (oid_t)(input.ReadLong());
   delete_location.block = (oid_t)(input.ReadLong());

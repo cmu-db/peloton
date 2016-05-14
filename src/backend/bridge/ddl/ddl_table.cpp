@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -58,7 +57,7 @@ bool DDLTable::ExecCreateStmt(Node *parsetree,
       char *relation_name = Cstmt->relation->relname;
       Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-      assert(relation_oid);
+      ALWAYS_ASSERT(relation_oid);
 
       std::vector<catalog::Column> column_infos;
 
@@ -174,7 +173,7 @@ bool DDLTable::ExecDropStmt(Node *parsetree) {
 bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
                            std::vector<catalog::Column> column_infos,
                            catalog::Schema *schema) {
-  assert(!table_name.empty());
+  ALWAYS_ASSERT(!table_name.empty());
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   // if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return
@@ -286,7 +285,7 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
   switch (contype) {
     case CONSTRAINT_TYPE_FOREIGN: {
       oid_t database_oid = Bridge::GetCurrentDatabaseOid();
-      assert(database_oid);
+      ALWAYS_ASSERT(database_oid);
 
       auto &manager = catalog::Manager::GetInstance();
       storage::Database *db = manager.GetDatabaseWithOid(database_oid);
@@ -349,9 +348,9 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
  */
 bool DDLTable::SetReferenceTables(
     std::vector<catalog::ForeignKey> &foreign_keys, oid_t relation_oid) {
-  assert(relation_oid);
+  ALWAYS_ASSERT(relation_oid);
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
-  assert(database_oid);
+  ALWAYS_ASSERT(database_oid);
 
   storage::DataTable *current_table =
       (storage::DataTable *)catalog::Manager::GetInstance().GetTableWithOid(

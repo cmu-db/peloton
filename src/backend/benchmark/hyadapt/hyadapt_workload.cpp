@@ -16,7 +16,6 @@
 #include <vector>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 
@@ -33,6 +32,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
 #include "backend/common/timer.h"
+#include "backend/common/macros.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 

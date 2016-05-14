@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cstring>
-#include <cassert>
 
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
@@ -83,7 +81,7 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
     AbstractPlanState *planstate, const TransformOptions options) {
-  assert(planstate);
+  ALWAYS_ASSERT(planstate);
 
   // Ignore empty plans
   if (planstate == nullptr) return nullptr;

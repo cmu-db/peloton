@@ -58,7 +58,7 @@ bool OptimisticRbTxnManager::IsVisible(
       // the tuple is deleted by current transaction
       return false;
     } else {
-      assert(tuple_end_cid == MAX_CID);
+      ALWAYS_ASSERT(tuple_end_cid == MAX_CID);
       // the tuple is updated/inserted by current transaction
       return true;
     }
@@ -136,9 +136,9 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
@@ -158,12 +158,12 @@ void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, ch
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == current_txn->GetTransactionId());
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == current_txn->GetTransactionId());
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // new_rb_seg is a new segment
-  assert(storage::RollbackSegmentPool::GetNextPtr(new_rb_seg) == nullptr);
-  assert(storage::RollbackSegmentPool::GetTimeStamp(new_rb_seg) == MAX_CID);
+  ALWAYS_ASSERT(storage::RollbackSegmentPool::GetNextPtr(new_rb_seg) == nullptr);
+  ALWAYS_ASSERT(storage::RollbackSegmentPool::GetTimeStamp(new_rb_seg) == MAX_CID);
 
   // First link it to the old roolback segment
   auto old_rb_seg = GetRbSeg(tile_group_header, tuple_id);
@@ -186,11 +186,11 @@ void OptimisticRbTxnManager::PerformDelete(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
       current_txn->GetTransactionId());
 
   // tuple deleted should be globally visible
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Set the delete flag
   SetDeleteFlag(tile_group_header, tuple_id);
@@ -315,8 +315,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
           return AbortTransaction();
         } else {
           // It must be a deleted
-          assert(tuple_entry.second == RW_TYPE_INS_DEL);
-          assert(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+          ALWAYS_ASSERT(tuple_entry.second == RW_TYPE_INS_DEL);
+          ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
         }
       }
     }
@@ -378,7 +378,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 
         // First set the timestamp of the updated master copy
         // Since we have the rollback segment, it's safe to do so
-        assert(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
+        ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
 
         // Then we mark all rollback segment's timestamp as our end timestamp
@@ -399,7 +399,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 
         // we do not change begin cid for master copy
         // First set the timestamp of the master copy
-        assert(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
+        ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
 
         // COMPILER_MEMORY_FENCE;
@@ -420,7 +420,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         // RecycleTupleSlot(tile_group_id, tuple_slot, START_OID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
             current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         // ItemPointer insert_location(tile_group_id, tuple_slot);
@@ -434,7 +434,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+        ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
         // Do nothing for INS_DEL
       }
     }
@@ -463,10 +463,10 @@ Result OptimisticRbTxnManager::AbortTransaction() {
       if (tuple_entry.second == RW_TYPE_UPDATE) {
 
         // We do not have new version now, no need to mantain it
-        assert(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
+        ALWAYS_ASSERT(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
 
         // The master copy under updating must be a valid version
-        assert(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
+        ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
 
         // Rollback the master copy
         RollbackTuple(tile_group, tuple_slot);
@@ -478,7 +478,7 @@ Result OptimisticRbTxnManager::AbortTransaction() {
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
 
         // We do not have new version now, no need to mantain it
-        assert(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
+        ALWAYS_ASSERT(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -503,7 +503,7 @@ Result OptimisticRbTxnManager::AbortTransaction() {
         // RecycleTupleSlot(tile_group_id, tuple_slot, START_OID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+        ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
         // Do nothing for INS_DEL
         // GC this tuple
       }
@@ -537,9 +537,9 @@ char* OptimisticRbTxnManager::GetActivatedEvidence(const storage::TileGroupHeade
   cid_t txn_begin_cid = current_txn->GetBeginCommitId();
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
 
-  assert(tuple_begin_cid != MAX_CID);
+  ALWAYS_ASSERT(tuple_begin_cid != MAX_CID);
   // Owner can not call this function
-  assert(IsOwner(tile_group_header, tuple_slot_id) == false);
+  ALWAYS_ASSERT(IsOwner(tile_group_header, tuple_slot_id) == false);
 
   RBSegType rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
   char *prev_visible;

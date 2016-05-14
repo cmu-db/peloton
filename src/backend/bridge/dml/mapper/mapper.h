@@ -13,9 +13,11 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "backend/bridge/dml/mapper/dml_raw_structures.h"
 #include "backend/common/cache.h"
+#include "backend/common/types.h"
 
 #include "postgres.h"
 #include "c.h"

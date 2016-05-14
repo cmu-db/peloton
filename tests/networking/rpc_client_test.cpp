@@ -56,7 +56,7 @@ TEST_F(RpcClientTests, BasicTest) {
 
   // total length of the message: header length (4bytes) + message length
   // (8bytes + ...)
-  assert(HEADERLEN == sizeof(msg_len));
+  ALWAYS_ASSERT(HEADERLEN == sizeof(msg_len));
   char buf[sizeof(msg_len) + msg_len];
 
   // copy the header into the buf
@@ -66,7 +66,7 @@ TEST_F(RpcClientTests, BasicTest) {
   memcpy(buf + sizeof(msg_len), &type, sizeof(type));
 
   // copy the hashcode into the buf, following the header
-  assert(OPCODELEN == sizeof(opcode));
+  ALWAYS_ASSERT(OPCODELEN == sizeof(opcode));
   memcpy(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
 
   // call protobuf to serialize the request message into sending buf
