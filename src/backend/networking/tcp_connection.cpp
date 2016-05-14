@@ -19,6 +19,7 @@
 #include "backend/networking/connection_manager.h"
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/rpc_type.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace networking {
@@ -145,11 +146,11 @@ void *Connection::ProcessMessage(void *connection) {
 
     // Get the message type
     uint16_t type = 0;
-    memcpy((char *)(&type), buf + HEADERLEN, sizeof(type));
+    PL_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
 
     // Get the hashcode of the rpc method
     uint64_t opcode = 0;
-    memcpy((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
+    PL_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
 
     // Get the rpc method meta info: method descriptor
     RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
@@ -185,17 +186,17 @@ void *Connection::ProcessMessage(void *connection) {
         ALWAYS_ASSERT(sizeof(msg_len) == HEADERLEN);
 
         // copy the header into the buf
-        memcpy(send_buf, &msg_len, sizeof(msg_len));
+        PL_MEMCPY(send_buf, &msg_len, sizeof(msg_len));
 
         // copy the type into the buf
         type = MSG_TYPE_REP;
 
         ALWAYS_ASSERT(sizeof(type) == TYPELEN);
-        memcpy(send_buf + HEADERLEN, &type, TYPELEN);
+        PL_MEMCPY(send_buf + HEADERLEN, &type, TYPELEN);
 
         // copy the opcode into the buf
         ALWAYS_ASSERT(sizeof(opcode) == OPCODELEN);
-        memcpy(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
+        PL_MEMCPY(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
         // call protobuf to serialize the request message into sending buf
         response->SerializeToArray(send_buf + HEADERLEN + TYPELEN + OPCODELEN,

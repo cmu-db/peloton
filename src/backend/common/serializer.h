@@ -123,7 +123,7 @@ class SerializeInput {
       value = ntohl(value);
     }
     float retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -133,7 +133,7 @@ class SerializeInput {
       value = ntohll(value);
     }
     double retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -169,7 +169,7 @@ class SerializeInput {
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void *destination, size_t length) {
-    ::memcpy(destination, GetRawPointer(length), length);
+    ::PL_MEMCPY(destination, GetRawPointer(length), length);
   };
 
   /** Write the buffer as hex bytes for debugging */
@@ -187,7 +187,7 @@ class SerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    ::memcpy(&value, current_, sizeof(value));
+    ::PL_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -246,13 +246,13 @@ class SerializeOutput {
 
   inline void WriteFloat(float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(htonl(Data));
   }
 
   inline void WriteDouble(double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(htonll(Data));
   }
 
@@ -288,13 +288,13 @@ class SerializeOutput {
 
   inline size_t WriteFloatAt(size_t Position, float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     return WritePrimitiveAt(Position, htonl(Data));
   }
 
   inline size_t WriteDoubleAt(size_t Position, double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     return WritePrimitiveAt(Position, htonll(Data));
   }
 
@@ -308,9 +308,9 @@ class SerializeOutput {
     int32_t networkOrderLen = htonl(stringLength);
 
     char *current = buffer_ + position_;
-    memcpy(current, &networkOrderLen, sizeof(networkOrderLen));
+    PL_MEMCPY(current, &networkOrderLen, sizeof(networkOrderLen));
     current += sizeof(stringLength);
-    memcpy(current, value, length);
+    PL_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -324,13 +324,13 @@ class SerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
-    memcpy(buffer_ + position_, value, length);
+    PL_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     AssureExpand(length);
-    memset(buffer_ + position_, 0, length);
+    PL_MEMSET(buffer_ + position_, 0, length);
     position_ += length;
   }
 
@@ -349,14 +349,14 @@ class SerializeOutput {
     length */
   inline size_t WriteBytesAt(size_t offset, const void *value, size_t length) {
     ALWAYS_ASSERT(offset + length <= position_);
-    memcpy(buffer_ + offset, value, length);
+    PL_MEMCPY(buffer_ + offset, value, length);
     return offset + length;
   }
 
   static bool IsLittleEndian() {
     static const uint16_t s = 0x0001;
     uint8_t byte;
-    memcpy(&byte, &s, 1);
+    PL_MEMCPY(&byte, &s, 1);
     return byte != 0;
   }
 
@@ -374,7 +374,7 @@ class SerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
-    memcpy(buffer_ + position_, &value, sizeof(value));
+    PL_MEMCPY(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
@@ -580,14 +580,14 @@ class ExportSerializeInput {
   inline float ReadFloat() {
     int32_t value = ReadPrimitive<int32_t>();
     float retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
   inline double ReadDouble() {
     int64_t value = ReadPrimitive<int64_t>();
     double retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -611,7 +611,7 @@ class ExportSerializeInput {
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void *destination, size_t length) {
-    ::memcpy(destination, getRawPointer(length), length);
+    ::PL_MEMCPY(destination, getRawPointer(length), length);
   };
 
   /** Move the Read Position back by bytes. Warning: this method is
@@ -624,7 +624,7 @@ class ExportSerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    ::memcpy(&value, current_, sizeof(value));
+    ::PL_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -679,13 +679,13 @@ class ExportSerializeOutput {
 
   inline void WriteFloat(float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
   inline void WriteDouble(double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
@@ -702,9 +702,9 @@ class ExportSerializeOutput {
     AssureExpand(length + sizeof(stringLength));
 
     char *current = buffer_ + position_;
-    memcpy(current, &stringLength, sizeof(stringLength));
+    PL_MEMCPY(current, &stringLength, sizeof(stringLength));
     current += sizeof(stringLength);
-    memcpy(current, value, length);
+    PL_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -714,13 +714,13 @@ class ExportSerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
-    memcpy(buffer_ + position_, value, length);
+    PL_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     AssureExpand(length);
-    memset(buffer_ + position_, 0, length);
+    PL_MEMSET(buffer_ + position_, 0, length);
     position_ += length;
   }
 
@@ -741,7 +741,7 @@ class ExportSerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
-    memcpy(buffer_ + position_, &value, sizeof(value));
+    PL_MEMCPY(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 

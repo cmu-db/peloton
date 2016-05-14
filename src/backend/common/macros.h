@@ -33,17 +33,17 @@ namespace peloton {
 #define UNUSED_ATTRIBUTE __attribute__((unused))
 
 //===--------------------------------------------------------------------===//
-// memcpy
+// memfuncs
 //===--------------------------------------------------------------------===//
 
 #define USE_BUILTIN_MEMFUNCS
 
 #ifdef USE_BUILTIN_MEMFUNCS
-#define NDB_MEMCPY __builtin_memcpy
-#define NDB_MEMSET __builtin_memset
+#define PL_MEMCPY __builtin_memcpy
+#define PL_MEMSET __builtin_memset
 #else
-#define NDB_MEMCPY memcpy
-#define NDB_MEMSET memset
+#define PL_MEMCPY memcpy
+#define PL_MEMSET memset
 #endif
 
 //===--------------------------------------------------------------------===//
@@ -70,9 +70,9 @@ namespace peloton {
 // unimplemented
 //===--------------------------------------------------------------------===//
 
-// throw exception after the ALWAYS_ASSERT(), so that GCC knows
+// throw exception after the assert(), so that GCC knows
 // we'll never return
-#define NDB_UNIMPLEMENTED(what) \
+#define PL_UNIMPLEMENTED(what) \
   do { \
     ALWAYS_ASSERT(false); \
     throw ::std::runtime_error(what); \
@@ -85,8 +85,14 @@ namespace peloton {
 #ifdef NDEBUG
   #define ALWAYS_ASSERT(expr) (likely_branch((expr)) ? (void)0 : abort())
 #else
-  #define ALWAYS_ASSERT(expr) ALWAYS_ASSERT((expr))
+  #define ALWAYS_ASSERT(expr) assert((expr))
 #endif /* NDEBUG */
+
+#ifdef CHECK_INVARIANTS
+  #define INVARIANT(expr) ALWAYS_ASSERT(expr)
+#else
+  #define INVARIANT(expr) ((void)0)
+#endif /* CHECK_INVARIANTS */
 
 //===--------------------------------------------------------------------===//
 // override

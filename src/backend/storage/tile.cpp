@@ -61,7 +61,7 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   ALWAYS_ASSERT(data != NULL);
 
   // zero out the data
-  std::memset(data, 0, tile_size);
+  PL_MEMSET(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
   if (schema.IsInlined() == false) pool = new VarlenPool(backend_type);
@@ -97,7 +97,7 @@ void Tile::InsertTuple(const oid_t tuple_offset, Tuple *tuple) {
   char *location = tuple_offset * tuple_length + data;
 
   // Copy over the tuple data into the tuple slot in the tile
-  std::memcpy(location, tuple->tuple_data, tuple_length);
+  PL_MEMCPY(location, tuple->tuple_data, tuple_length);
 }
 
 /**
@@ -215,7 +215,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       backend_type, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
       new_header, *schema, tile_group, allocated_tuple_count);
 
-  ::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data),
+  PL_MEMCPY(static_cast<void *>(new_tile->data), static_cast<void *>(data),
            tile_size);
 
   // Do a deep copy if some column is uninlined, so that
@@ -372,8 +372,8 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Cache the column header
   column_header = new char[column_header_size];
-  memcpy(column_header, static_cast<const char *>(output.Data()) + start,
-         column_header_size);
+  PL_MEMCPY(column_header, static_cast<const char *>(output.Data()) + start,
+            column_header_size);
 
   return true;
 }

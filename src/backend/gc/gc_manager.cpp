@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/types.h"
+#include "backend/common/macros.h"
 #include "backend/gc/gc_manager.h"
 #include "backend/index/index.h"
 #include "backend/concurrency/transaction_manager_factory.h"
@@ -51,7 +52,7 @@ void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
 
   // Reset the reserved field space in the header
-  std::memset(
+  PL_MEMSET(
       tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
       storage::TileGroupHeader::GetReservedSize());
 }

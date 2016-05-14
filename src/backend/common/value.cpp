@@ -12,6 +12,7 @@
 
 #include "backend/common/value.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/stl_friendly_value.h"
 #include "backend/expression/function_expression.h"
 
@@ -27,7 +28,7 @@ namespace peloton {
  * with other Values.  Useful for declaring storage for an Value.
  */
 Value::Value() {
-  ::memset(m_data, 0, 16);
+  PL_MEMSET(m_data, 0, 16);
   SetValueType(VALUE_TYPE_INVALID);
   m_sourceInlined = true;
   m_cleanUp = true;
@@ -39,7 +40,7 @@ Value::Value() {
  * that will be stored in this instance
  */
 Value::Value(const ValueType type) {
-  ::memset(m_data, 0, 16);
+  PL_MEMSET(m_data, 0, 16);
   SetValueType(type);
   m_sourceInlined = true;
   m_cleanUp = true;
@@ -200,7 +201,7 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool *pool) {
   Varlen *sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
   char *storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
-  ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
+  PL_MEMCPY(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
   SetObjectValue(sref);
   SetSourceInlined(false);
   SetCleanUp(false);
@@ -232,7 +233,7 @@ void Value::AllocateObjectFromOutlinedValue() {
   Varlen *sref = Varlen::Create(length, nullptr);
   char *storage = sref->Get();
   // Copy the value into the allocated out-of-line storage
-  ::memcpy(storage, source, length);
+  PL_MEMCPY(storage, source, length);
   SetObjectValue(sref);
   SetSourceInlined(false);
   SetCleanUp(false);
@@ -242,7 +243,7 @@ Value Value::GetAllocatedValue(ValueType type, const char *value, size_t size,
                                VarlenPool *varlen_pool) {
   Value retval(type);
   char *storage = retval.AllocateValueStorage((int32_t)size, varlen_pool);
-  ::memcpy(storage, value, (int32_t)size);
+  PL_MEMCPY(storage, value, (int32_t)size);
   retval.SetSourceInlined(false);
   retval.SetCleanUp(varlen_pool == nullptr);
   return retval;
@@ -388,7 +389,7 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       }
       break;
     case VALUE_TYPE_DECIMAL: {
-      ::memcpy(retval.m_data, storage, sizeof(TTInt));
+      PL_MEMCPY(retval.m_data, storage, sizeof(TTInt));
       break;
     }
     default:
@@ -780,7 +781,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input,
   size_t length = input.ReadShort();
   int trueSize = ValueList::AllocationSizeForLength(length);
   char *storage = AllocateValueStorage(trueSize, varlen_pool);
-  ::memset(storage, 0, trueSize);
+  PL_MEMSET(storage, 0, trueSize);
   ValueList *nvset = new (storage) ValueList(length, elementType);
   nvset->DeserializeValues(input, varlen_pool);
   // TODO: An O(ln(length)) implementation vs. the current O(length)
@@ -792,7 +793,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input,
 void Value::AllocateANewValueList(size_t length, ValueType elementType) {
   int trueSize = ValueList::AllocationSizeForLength(length);
   char *storage = AllocateValueStorage(trueSize, nullptr);
-  ::memset(storage, 0, trueSize);
+  PL_MEMSET(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
 

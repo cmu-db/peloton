@@ -99,7 +99,7 @@ class GenericArray {
   void ResetAndExpand(int newLength) {
     ALWAYS_ASSERT(newLength >= 0);
     array_data = boost::shared_array<T>(new T[newLength]);
-    ::memset(array_data.get(), 0, newLength * sizeof(T));
+    PL_MEMSET(array_data.get(), 0, newLength * sizeof(T));
     array_length = newLength;
   };
 
@@ -109,9 +109,9 @@ class GenericArray {
     ALWAYS_ASSERT(newLength >= 0);
     ALWAYS_ASSERT(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
-    ::memset(newData.get(), 0,
+    PL_MEMSET(newData.get(), 0,
              newLength * sizeof(T));  /// makes valgrind happy.
-    ::memcpy(newData.get(), array_data.get(), array_length * sizeof(T));
+    PL_MEMCPY(newData.get(), array_data.get(), array_length * sizeof(T));
     array_data = newData;
     array_length = newLength;
   };
@@ -126,7 +126,7 @@ class GenericArray {
     ALWAYS_ASSERT(!IsNull());
     ALWAYS_ASSERT(array_length >= offset + assignedLength);
     ALWAYS_ASSERT(offset >= 0);
-    ::memcpy(array_data.get() + offset, assignedData,
+    PL_MEMCPY(array_data.get() + offset, assignedData,
              assignedLength * sizeof(T));
   };
 

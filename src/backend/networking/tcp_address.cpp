@@ -143,7 +143,7 @@ void NetworkAddress::FillAddr(struct sockaddr_in* addr) const {
   addr->sin_family = AF_INET;
   addr->sin_port = port_;
   addr->sin_addr.s_addr = ip_address_;
-  memset(addr->sin_zero, 0, sizeof(addr->sin_zero));
+  PL_MEMSET(addr->sin_zero, 0, sizeof(addr->sin_zero));
 }
 
 sockaddr_in NetworkAddress::Sockaddr() const {

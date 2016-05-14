@@ -17,6 +17,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/platform.h"
 #include "backend/common/printable.h"
+#include "backend/common/macros.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/expression/container_tuple.h"
 #include "backend/gc/gc_manager.h"
@@ -43,7 +44,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   ALWAYS_ASSERT(data != nullptr);
 
   // zero out the data
-  std::memset(data, 0, header_size);
+  PL_MEMSET(data, 0, header_size);
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
