@@ -19,14 +19,18 @@
 
 #include "backend/common/macros.h"
 
-#define JEMALLOC_NO_DEMANGLE
-#include <jemalloc/jemalloc.h>
+# define JEMALLOC_NO_DEMANGLE
+# include <jemalloc/jemalloc.h>
+# define malloc(size) je_malloc(size)
+# define calloc(count, size) je_calloc(count, size)
+# define realloc(ptr, size) je_realloc(ptr, size)
+# define free(ptr) je_free(ptr)
 
 namespace peloton {
 
 void *do_allocation(size_t size, bool do_throw){
 
-  void *location = je_malloc(size);
+  void *location = malloc(size);
   if (unlikely_branch(!location && do_throw)) {
     throw std::bad_alloc();
   }
@@ -35,7 +39,7 @@ void *do_allocation(size_t size, bool do_throw){
 }
 
 void do_deletion(void *location) {
-  je_free(location);
+  free(location);
 }
 
 }  // End peloton namespace

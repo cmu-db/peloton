@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "harness.h"
+
 #include "backend/networking/tcp_address.h"
 #include "backend/networking/rpc_type.h"
 #include "backend/networking/rpc_client.h"
@@ -60,14 +61,14 @@ TEST_F(RpcClientTests, BasicTest) {
   char buf[sizeof(msg_len) + msg_len];
 
   // copy the header into the buf
-  memcpy(buf, &msg_len, sizeof(msg_len));
+  PL_MEMCPY(buf, &msg_len, sizeof(msg_len));
 
   // copy the type into the buf
-  memcpy(buf + sizeof(msg_len), &type, sizeof(type));
+  PL_MEMCPY(buf + sizeof(msg_len), &type, sizeof(type));
 
   // copy the hashcode into the buf, following the header
   ALWAYS_ASSERT(OPCODELEN == sizeof(opcode));
-  memcpy(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
+  PL_MEMCPY(buf + sizeof(msg_len) + sizeof(type), &opcode, sizeof(opcode));
 
   // call protobuf to serialize the request message into sending buf
   request.SerializeToArray(
