@@ -17,12 +17,7 @@
 #include <map>
 #include <mutex>
 
-#include "backend/brain/sample.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/common/platform.h"
-#include "backend/logging/log_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -55,6 +50,14 @@ extern std::vector<peloton::oid_t> hyadapt_column_ids;
 namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
+
+namespace brain{
+class Sample;
+}
+
+namespace catalog{
+class ForeignKey;
+}
 
 namespace index {
 class Index;

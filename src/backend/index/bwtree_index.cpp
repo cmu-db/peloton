@@ -36,9 +36,9 @@ BWTreeIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool BWTreeIndex<KeyType, ValueType, KeyComparator,
-                 KeyEqualityChecker>::InsertEntry(__attribute__((unused)) const
+                 KeyEqualityChecker>::InsertEntry(UNUSED_ATTRIBUTE const
                                                   storage::Tuple *key,
-                                                  __attribute__((unused)) const
+                                                  UNUSED_ATTRIBUTE const
                                                   ItemPointer &location) {
   // Add your implementation here
   return false;
@@ -47,9 +47,9 @@ bool BWTreeIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool BWTreeIndex<KeyType, ValueType, KeyComparator,
-                 KeyEqualityChecker>::DeleteEntry(__attribute__((unused)) const
+                 KeyEqualityChecker>::DeleteEntry(UNUSED_ATTRIBUTE const
                                                   storage::Tuple *key,
-                                                  __attribute__((unused)) const
+                                                  UNUSED_ATTRIBUTE const
                                                   ItemPointer &location) {
   // Add your implementation here
   return false;
@@ -59,8 +59,8 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool BWTreeIndex<KeyType, ValueType, KeyComparator,
                  KeyEqualityChecker>::CondInsertEntry(
-    __attribute__((unused)) const storage::Tuple *key,
-    __attribute__((unused)) const ItemPointer &location, __attribute__((unused))
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE const ItemPointer &location, UNUSED_ATTRIBUTE
     std::function<bool(const ItemPointer &)> predicate) {
   return false;
 }
@@ -68,46 +68,46 @@ bool BWTreeIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
-    __attribute__((unused)) const std::vector<Value> &values,
-    __attribute__((unused)) const std::vector<oid_t> &key_column_ids,
-    __attribute__((unused)) const std::vector<ExpressionType> &expr_types,
-    __attribute__((unused)) const ScanDirectionType &scan_direction,
-    __attribute__((unused)) std::vector<ItemPointer> &result) {}
+    UNUSED_ATTRIBUTE const std::vector<Value> &values,
+    UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
+    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
+    UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    __attribute__((unused)) std::vector<ItemPointer> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
-    __attribute__((unused)) const storage::Tuple *key,
-    __attribute__((unused)) std::vector<ItemPointer> &result) {}
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
-    __attribute__((unused)) const std::vector<Value> &values,
-    __attribute__((unused)) const std::vector<oid_t> &key_column_ids,
-    __attribute__((unused)) const std::vector<ExpressionType> &expr_types,
-    __attribute__((unused)) const ScanDirectionType &scan_direction,
-    __attribute__((unused)) std::vector<ItemPointer *> &result) {}
+    UNUSED_ATTRIBUTE const std::vector<Value> &values,
+    UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
+    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
+    UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    __attribute__((unused)) std::vector<ItemPointer *> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
-    __attribute__((unused)) const storage::Tuple *key,
-    __attribute__((unused)) std::vector<ItemPointer *> &result) {}
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>

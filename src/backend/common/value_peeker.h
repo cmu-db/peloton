@@ -15,8 +15,6 @@
 #include "backend/common/value.h"
 #include "backend/common/types.h"
 
-#include <cassert>
-
 namespace peloton {
 
 /**
@@ -34,27 +32,27 @@ namespace peloton {
 class ValuePeeker {
  public:
   static inline double PeekDouble(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_DOUBLE);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_DOUBLE);
     return value.GetDouble();
   }
 
   static inline int8_t PeekTinyInt(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_TINYINT);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_TINYINT);
     return value.GetTinyInt();
   }
 
   static inline int16_t PeekSmallInt(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_SMALLINT);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_SMALLINT);
     return value.GetSmallInt();
   }
 
   static inline int32_t PeekInteger(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_INTEGER);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_INTEGER);
     return value.GetInteger();
   }
 
   static inline bool PeekBoolean(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_BOOLEAN);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_BOOLEAN);
     return value.GetBoolean();
   }
 
@@ -66,34 +64,34 @@ class ValuePeeker {
   }
 
   static inline int64_t PeekBigInt(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_BIGINT);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_BIGINT);
     return value.GetBigInt();
   }
 
   static inline int32_t PeekDate(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_DATE);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_DATE);
     return value.GetDate();
   }
 
   static inline int64_t PeekTimestamp(const Value &value) {
-    assert(value.GetValueType() == VALUE_TYPE_TIMESTAMP);
+    ALWAYS_ASSERT(value.GetValueType() == VALUE_TYPE_TIMESTAMP);
     return value.GetTimestamp();
   }
 
   static inline void *PeekObjectValue(const Value &value) {
-    assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
+    ALWAYS_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
            (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectValue();
   }
 
   static inline void *PeekObjectValueWithoutNull(const Value &value) {
-    assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
+    ALWAYS_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
            (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectValueWithoutNull();
   }
 
   static inline int32_t PeekObjectLengthWithoutNull(const Value &value) {
-    assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
+    ALWAYS_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
            (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectLengthWithoutNull();
   }
@@ -103,7 +101,7 @@ class ValuePeeker {
    * is not used in source code? Get rid of it? -xin
    */
   static std::string PeekStringCopyWithoutNull(const Value &value) {
-    assert((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
+    ALWAYS_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
            (value.GetValueType() == VALUE_TYPE_VARBINARY));
     std::string result(
         reinterpret_cast<const char *>(value.GetObjectValueWithoutNull()),
@@ -156,7 +154,7 @@ class ValuePeeker {
         return value.m_data;
 
       default:
-        assert(false);
+        ALWAYS_ASSERT(false);
         return NULL;
     }
   }

@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/planner/aggregate_plan.h"
+#include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
 #include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+
 #include "executor/nodeAgg.h"
 
 namespace peloton {

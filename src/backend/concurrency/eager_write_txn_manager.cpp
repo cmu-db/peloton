@@ -54,7 +54,7 @@ bool EagerWriteTxnManager::IsVisible(
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      assert(tuple_end_cid == MAX_CID);
+      ALWAYS_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
     } else {
@@ -141,9 +141,9 @@ bool EagerWriteTxnManager::IsOwnable(
 
 bool EagerWriteTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+    const oid_t &tile_group_id UNUSED_ATTRIBUTE, const oid_t &tuple_id) {
   LOG_TRACE("AcquireOwnership");
-  assert(IsOwner(tile_group_header, tuple_id) == false);
+  ALWAYS_ASSERT(IsOwner(tile_group_header, tuple_id) == false);
 
   // Try to get write lock
   auto current_tid = current_txn->GetTransactionId();
@@ -185,7 +185,7 @@ bool EagerWriteTxnManager::AcquireOwnership(
           current_txn_ctx->wait_for_counter_++;
         }
       } else {
-        assert(false);
+        ALWAYS_ASSERT(false);
       }
     }
     ptr = ptr->next;
@@ -193,7 +193,7 @@ bool EagerWriteTxnManager::AcquireOwnership(
 
   ReleaseEwReaderLock(tile_group_header, tuple_id);
   // Atomically increase the wait_for counter
-  assert(current_txn_ctx->wait_for_counter_ >= 0);
+  ALWAYS_ASSERT(current_txn_ctx->wait_for_counter_ >= 0);
 
   return true;
 }
@@ -251,11 +251,11 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == 0);
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) == 0);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
   // SetOwnership(tile_group_id, tuple_id);
@@ -282,13 +282,13 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   // if we can perform update, then we must have already locked the older
   // version.
-  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+  ALWAYS_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
@@ -313,10 +313,10 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
   auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
@@ -338,13 +338,13 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
                                    .GetTileGroup(new_location.block)
                                    ->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
-  assert(new_tile_group_header->GetTransactionId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
          INVALID_TXN_ID);
-  assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
+  ALWAYS_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
-  assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+  ALWAYS_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -365,10 +365,10 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &location) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) ==
+  ALWAYS_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
          current_txn->GetTransactionId());
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  ALWAYS_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
@@ -394,7 +394,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   // we can optimize read-only transaction.
   if (current_txn->IsReadOnly() == true) {
     // no dependency
-    assert(current_txn_ctx->wait_for_counter_ == 0);
+    ALWAYS_ASSERT(current_txn_ctx->wait_for_counter_ == 0);
     LOG_TRACE("Read Only txn: %lu ", current_txn->GetTransactionId());
     // is it always true???
     Result ret = current_txn->GetResult();
@@ -643,5 +643,22 @@ bool EagerWriteTxnManager::CauseDeadLock() {
 
   return false;
 }
+
+// init reserved area of a tuple
+// creator txnid | lock (for read list) | read list head
+// The txn_id could only be the cur_txn's txn id.
+void EagerWriteTxnManager::InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+  auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetHeader();
+
+  auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+  new ((reserved_area + LOCK_OFFSET)) Spinlock();
+  // Hack
+  *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
+}
+
+
 }
 }

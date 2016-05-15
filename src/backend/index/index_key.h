@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <cassert>
 #include <iostream>
 #include <sstream>
 
 #include "backend/common/value_peeker.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
@@ -163,7 +163,7 @@ template <std::size_t KeySize> class IntsKey {
     return retval;
   }
 
-  const storage::Tuple GetTupleForComparison(__attribute__((unused)) const
+  const storage::Tuple GetTupleForComparison(UNUSED_ATTRIBUTE const
                                              catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
@@ -214,8 +214,8 @@ template <std::size_t KeySize> class IntsKey {
   }
 
   inline void SetFromKey(const storage::Tuple *tuple) {
-    ::memset(data, 0, KeySize * sizeof(uint64_t));
-    assert(tuple);
+    PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
+    ALWAYS_ASSERT(tuple);
     const catalog::Schema *key_schema = tuple->GetSchema();
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
@@ -264,7 +264,7 @@ template <std::size_t KeySize> class IntsKey {
 
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            const catalog::Schema *key_schema) {
-    ::memset(data, 0, KeySize * sizeof(uint64_t));
+    PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
@@ -397,8 +397,8 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
 template <std::size_t KeySize> class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
-    assert(tuple);
-    ::memcpy(data, tuple->GetData(), KeySize);
+    ALWAYS_ASSERT(tuple);
+    PL_MEMCPY(data, tuple->GetData(), KeySize);
   }
 
   const storage::Tuple GetTupleForComparison(
@@ -533,7 +533,7 @@ class TupleKey {
 
   // Set a key from a key-schema tuple.
   inline void SetFromKey(const storage::Tuple *tuple) {
-    assert(tuple);
+    ALWAYS_ASSERT(tuple);
     column_indices = NULL;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();
@@ -541,10 +541,10 @@ class TupleKey {
 
   // Set a key from a table-schema tuple.
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
-                           __attribute__((unused)) const
+                           UNUSED_ATTRIBUTE const
                            catalog::Schema *key_schema) {
-    assert(tuple);
-    assert(indices);
+    ALWAYS_ASSERT(tuple);
+    ALWAYS_ASSERT(indices);
     column_indices = indices;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();

@@ -26,6 +26,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/exception.h"
 #include "backend/storage/storage_manager.h"
 
@@ -103,7 +104,7 @@ int is_cpu_genuine_intel(void) {
     unsigned cpuinfo[3];
   } vendor;
 
-  memset(&vendor, 0, sizeof (vendor));
+  PL_MEMSET(&vendor, 0, sizeof (vendor));
 
   cpuid(0x0, 0x0, cpuinfo);
 

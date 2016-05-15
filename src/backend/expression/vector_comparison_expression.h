@@ -21,9 +21,6 @@
 #include "backend/expression/comparison_expression.h"
 #include "backend/storage/data_table.h"
 
-#include <string>
-#include <cassert>
-
 namespace peloton {
 namespace expression {
 
@@ -34,7 +31,7 @@ Value compare_tuple(const AbstractTuple &tuple1, const AbstractTuple &tuple2) {
       OP::includes_equality() ? Value::GetTrue() : Value::GetFalse();
 
   /* TODO: Fix this
-    assert(tuple1.GetSchema()->columnCount() ==
+    ALWAYS_ASSERT(tuple1.GetSchema()->columnCount() ==
     tuple2.GetSchema()->columnCount());
     int schemaSize = tuple1.GetSchema()->columnCount();
     for (int columnIdx = 0; columnIdx < schemaSize; ++columnIdx) {
@@ -84,16 +81,16 @@ class VectorComparisonExpression : public AbstractExpression {
                              AbstractExpression *right,
                              executor::ExecutorContext *context)
       : AbstractExpression(et, left, right) {
-    assert(left != NULL);
-    assert(right != NULL);
+    ALWAYS_ASSERT(left != NULL);
+    ALWAYS_ASSERT(right != NULL);
   }
 
   VectorComparisonExpression(ExpressionType et, AbstractExpression *left,
                              AbstractExpression *right,
                              QuantifierType quantifier)
       : AbstractExpression(et, left, right) {
-    assert(left != NULL);
-    assert(right != NULL);
+    ALWAYS_ASSERT(left != NULL);
+    ALWAYS_ASSERT(right != NULL);
     SetQuantifierType(quantifier);
   }
 
@@ -138,8 +135,8 @@ struct ValueExtractor {
 
   template <typename OP>
   Value compare(const AbstractTuple &tuple) const {
-    // TODO: enable assert
-    // assert(tuple.GetSchema()->columnCount() == 1);
+    // TODO: enable ALWAYS_ASSERT
+    // ALWAYS_ASSERT(tuple.GetSchema()->columnCount() == 1);
     return compare<OP>(tuple.GetValue(0));
   }
 
@@ -213,7 +210,7 @@ struct TupleExtractor {
     template<typename OP>
     Value compare(const Value& nvalue) const
     {
-        assert(m_tuple.GetSchema()->columnCount() == 1);
+        ALWAYS_ASSERT(m_tuple.GetSchema()->columnCount() == 1);
         Value lvalue = m_tuple.GetValue(0);
         if (lvalue.IsNull()) {
             return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
@@ -235,7 +232,7 @@ private:
         int subqueryId = ValuePeeker::PeekInteger(value);
         ExecutorContext* exeContext = ExecutorContext::GetExecutorContext();
         Table* table = exeContext->GetSubqueryOutputTable(subqueryId);
-        assert(table != NULL);
+        ALWAYS_ASSERT(table != NULL);
         return table;
     }
 
@@ -320,7 +317,7 @@ Value VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::
     }
   }
 
-  assert(innerExtractor.resultSize() > 0);
+  ALWAYS_ASSERT(innerExtractor.resultSize() > 0);
   if (!outerExtractor.hasNext() || outerExtractor.hasNullValue()) {
     return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
   }

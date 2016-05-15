@@ -223,7 +223,7 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   bool status;
   // Create a sample table that has primary key index
   status = DDLTable::CreateTable(pktable_oid, pktable_name, columns);
-  assert(status);
+  ALWAYS_ASSERT(status);
 
   std::vector<std::string> pk_column_names;
   std::vector<std::string> fk_column_names;

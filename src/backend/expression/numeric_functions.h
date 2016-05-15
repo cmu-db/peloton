@@ -201,7 +201,7 @@ inline Value Value::CallUnary<FUNC_LN>() const {
 /** implement the SQL POWER function for all numeric values */
 template <>
 inline Value Value::Call<FUNC_POWER>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   Value retval(VALUE_TYPE_DOUBLE);
   const Value &base = arguments[0];
   const Value &exponent = arguments[1];
@@ -238,7 +238,7 @@ inline Value Value::Call<FUNC_POWER>(const std::vector<Value> &arguments) {
  */
 template <>
 inline Value Value::Call<FUNC_MOD>(const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const Value &base = arguments[0];
   const Value &divisor = arguments[1];
 

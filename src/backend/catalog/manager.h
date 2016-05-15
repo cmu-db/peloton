@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <memory>
 
+#include "backend/common/macros.h"
 #include "backend/common/types.h"
 #include "libcuckoo/cuckoohash_map.hh"
 

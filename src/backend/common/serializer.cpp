@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/serializer.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 
@@ -31,7 +32,7 @@ void FallbackSerializeOutput::Expand(size_t minimum_desired) {
         "Try a \"limit\" clause or a stronger predicate.");
   }
   fallbackBuffer_ = new char[maxAllocationSize];
-  //::memcpy(fallbackBuffer_, Data(), position_);
+  //PL_MEMCPY(fallbackBuffer_, Data(), position_);
   // SetPosition(position_);
   Initialize(fallbackBuffer_, maxAllocationSize);
   // ExecutorContext::getExecutorContext()->getTopend()->fallbackToEEAllocatedBuffer(fallbackBuffer_,

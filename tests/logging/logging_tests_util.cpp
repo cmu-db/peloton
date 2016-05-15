@@ -29,7 +29,7 @@ std::vector<logging::TupleRecord> LoggingTestsUtil::BuildTupleRecords(
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
       ItemPointer location(block, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
-      assert(tuple->GetSchema());
+      ALWAYS_ASSERT(tuple->GetSchema());
       logging::TupleRecord record(
           LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID, INVALID_OID,
           location, INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
@@ -51,7 +51,7 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     for (size_t offset = 0; offset < tile_group_size; ++offset) {
       ItemPointer location(block, offset);
       auto &tuple = tuples[(block - 1) * tile_group_size + offset];
-      assert(tuple->GetSchema());
+      ALWAYS_ASSERT(tuple->GetSchema());
       logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, block + 1,
                                   INVALID_OID, location, INVALID_ITEMPOINTER,
                                   tuple.get(), DEFAULT_DB_ID);
@@ -62,7 +62,7 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
   for (int i = 0; i < out_of_range_tuples; i++) {
     ItemPointer location(tile_group_size, table_tile_group_count + i);
     auto &tuple = tuples[tile_group_size * table_tile_group_count + i];
-    assert(tuple->GetSchema());
+    ALWAYS_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, 1000,
                                 INVALID_OID, location, INVALID_ITEMPOINTER,
                                 tuple.get(), DEFAULT_DB_ID);
@@ -73,7 +73,7 @@ LoggingTestsUtil::BuildTupleRecordsForRestartTest(
     ItemPointer location(1, 0);
     auto &tuple = tuples[tile_group_size * table_tile_group_count +
                          out_of_range_tuples + i];
-    assert(tuple->GetSchema());
+    ALWAYS_ASSERT(tuple->GetSchema());
     logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_DELETE, 4, INVALID_OID,
                                 INVALID_ITEMPOINTER, location, nullptr,
                                 DEFAULT_DB_ID);
@@ -94,7 +94,7 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
   std::srand(std::time(nullptr));
   const catalog::Schema *schema = table->GetSchema();
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -128,7 +128,7 @@ std::vector<std::shared_ptr<storage::Tuple>> LoggingTestsUtil::BuildTuples(
         std::to_string(ExecutorTestsUtil::PopulatedValue(
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple->SetValue(3, string_value, testing_pool);
-    assert(tuple->GetSchema());
+    ALWAYS_ASSERT(tuple->GetSchema());
     tuples.push_back(std::move(tuple));
   }
   return tuples;
@@ -175,20 +175,20 @@ void FrontendLoggingThread::ExecuteNext() {
   switch (op) {
     case LOGGING_OP_COLLECT: {
       LOG_INFO("Execute Collect");
-      assert(frontend_logger);
+      ALWAYS_ASSERT(frontend_logger);
       frontend_logger->CollectLogRecordsFromBackendLoggers();
       break;
     }
     case LOGGING_OP_FLUSH: {
       LOG_INFO("Execute Flush");
-      assert(frontend_logger);
+      ALWAYS_ASSERT(frontend_logger);
       frontend_logger->FlushLogRecords();
       results.push_back(frontend_logger->GetMaxFlushedCommitId());
       break;
     }
     default: {
       LOG_ERROR("Unsupported operation type!");
-      assert(false);
+      ALWAYS_ASSERT(false);
       break;
     }
   }
@@ -262,7 +262,7 @@ void BackendLoggingThread::ExecuteNext() {
       LOG_INFO("Execute Commit txn %d", (int)cid);
       std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
           LOGRECORD_TYPE_TRANSACTION_COMMIT, cid));
-      assert(backend_logger);
+      ALWAYS_ASSERT(backend_logger);
       backend_logger->Log(record.get());
       break;
     }
@@ -270,7 +270,7 @@ void BackendLoggingThread::ExecuteNext() {
       LOG_INFO("Execute Abort txn %d", (int)cid);
       std::unique_ptr<logging::LogRecord> record(new logging::TransactionRecord(
           LOGRECORD_TYPE_TRANSACTION_ABORT, cid));
-      assert(backend_logger);
+      ALWAYS_ASSERT(backend_logger);
       backend_logger->Log(record.get());
       break;
     }
@@ -290,7 +290,7 @@ void LoggingScheduler::Run() {
     for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
       auto front_id = itr->second.front;
       auto backend_id = itr->second.back;
-      assert(front_id != INVALID_LOGGER_IDX);
+      ALWAYS_ASSERT(front_id != INVALID_LOGGER_IDX);
 
       // frontend logger's turn
       if (backend_id == INVALID_LOGGER_IDX) {

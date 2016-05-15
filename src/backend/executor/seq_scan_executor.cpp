@@ -78,8 +78,8 @@ bool SeqScanExecutor::DExecute() {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
 
-    assert(target_table_ == nullptr);
-    assert(column_ids_.size() == 0);
+    ALWAYS_ASSERT(target_table_ == nullptr);
+    ALWAYS_ASSERT(column_ids_.size() == 0);
 
     while (children_[0]->Execute()) {
       std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
@@ -110,8 +110,8 @@ bool SeqScanExecutor::DExecute() {
   else if (children_.size() == 0) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
-    assert(target_table_ != nullptr);
-    assert(column_ids_.size() > 0);
+    ALWAYS_ASSERT(target_table_ != nullptr);
+    ALWAYS_ASSERT(column_ids_.size() > 0);
 
     // Force to use occ txn manager if dirty read is forbidden
     concurrency::TransactionManager &transaction_manager =

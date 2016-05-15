@@ -164,7 +164,7 @@ class CountStarAgg : public Agg {
  public:
   CountStarAgg() : count(0) {}
 
-  void DAdvance(const Value val __attribute__((unused))) { ++count; }
+  void DAdvance(const Value val UNUSED_ATTRIBUTE) { ++count; }
 
   Value DFinalize() { return ValueFactory::GetBigIntValue(count); }
 
