@@ -215,7 +215,7 @@ template <std::size_t KeySize> class IntsKey {
 
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_MEMSET(data, 0, KeySize * sizeof(uint64_t));
-    ALWAYS_ASSERT(tuple);
+    PL_ASSERT(tuple);
     const catalog::Schema *key_schema = tuple->GetSchema();
     const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
@@ -397,7 +397,7 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
 template <std::size_t KeySize> class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
-    ALWAYS_ASSERT(tuple);
+    PL_ASSERT(tuple);
     PL_MEMCPY(data, tuple->GetData(), KeySize);
   }
 
@@ -533,7 +533,7 @@ class TupleKey {
 
   // Set a key from a key-schema tuple.
   inline void SetFromKey(const storage::Tuple *tuple) {
-    ALWAYS_ASSERT(tuple);
+    PL_ASSERT(tuple);
     column_indices = NULL;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();
@@ -543,8 +543,8 @@ class TupleKey {
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            UNUSED_ATTRIBUTE const
                            catalog::Schema *key_schema) {
-    ALWAYS_ASSERT(tuple);
-    ALWAYS_ASSERT(indices);
+    PL_ASSERT(tuple);
+    PL_ASSERT(indices);
     column_indices = indices;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();

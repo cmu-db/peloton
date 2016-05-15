@@ -184,7 +184,7 @@ void ThreadPool::Invoke() {
     }
 
     // if running here, task_pool must not be empty
-    ALWAYS_ASSERT(!task_pool_.empty());
+    PL_ASSERT(!task_pool_.empty());
 
     // Get next task in the queue.
     task = task_pool_.front();

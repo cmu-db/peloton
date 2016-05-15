@@ -55,7 +55,7 @@ inline Value Value::CallUnary<FUNC_VOLT_SQL_ERROR>() const {
 template <>
 inline Value Value::Call<FUNC_VOLT_SQL_ERROR>(
     const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const char *sqlstatecode;
   char msg_format_buffer[1024];
   char state_format_buffer[6];
@@ -136,7 +136,7 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    ALWAYS_ASSERT(m_child);
+    PL_ASSERT(m_child);
     return (m_child->Evaluate(tuple1, tuple2, context)).CallUnary<F>();
   }
 
@@ -147,7 +147,7 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
   }
 
     expression::AbstractExpression *Copy() const {
-      ALWAYS_ASSERT(m_child != nullptr);
+      PL_ASSERT(m_child != nullptr);
       return new UnaryFunctionExpression<F>(m_child->Copy());
     }
 };
@@ -173,7 +173,7 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
 
   virtual bool hasParameter() const {
     for (size_t i = 0; i < m_args.size(); i++) {
-      ALWAYS_ASSERT(m_args[i]);
+      PL_ASSERT(m_args[i]);
       if (m_args[i]->HasParameter()) {
         return true;
       }
@@ -500,7 +500,7 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
   // (with more context?) to generate an exception.
   // But having fallen through to this point indicates that
   // a FunctionExpression was constructed.
-  ALWAYS_ASSERT(ret);
+  PL_ASSERT(ret);
   return ret;
 }
 

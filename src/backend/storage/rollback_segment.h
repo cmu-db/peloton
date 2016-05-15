@@ -109,7 +109,7 @@ public:
   }
 
   inline static ColIdOffsetPair *GetIdOffsetPair(char *rb_seg, int idx) {
-    ALWAYS_ASSERT(idx >= 0);
+    PL_ASSERT(idx >= 0);
     return (reinterpret_cast<ColIdOffsetPair*>(rb_seg + pairs_start_offset
                                                + sizeof(ColIdOffsetPair) * idx));
   }

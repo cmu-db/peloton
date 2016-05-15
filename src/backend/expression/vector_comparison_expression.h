@@ -81,16 +81,16 @@ class VectorComparisonExpression : public AbstractExpression {
                              AbstractExpression *right,
                              executor::ExecutorContext *context)
       : AbstractExpression(et, left, right) {
-    ALWAYS_ASSERT(left != NULL);
-    ALWAYS_ASSERT(right != NULL);
+    PL_ASSERT(left != NULL);
+    PL_ASSERT(right != NULL);
   }
 
   VectorComparisonExpression(ExpressionType et, AbstractExpression *left,
                              AbstractExpression *right,
                              QuantifierType quantifier)
       : AbstractExpression(et, left, right) {
-    ALWAYS_ASSERT(left != NULL);
-    ALWAYS_ASSERT(right != NULL);
+    PL_ASSERT(left != NULL);
+    PL_ASSERT(right != NULL);
     SetQuantifierType(quantifier);
   }
 
@@ -317,7 +317,7 @@ Value VectorComparisonExpression<OP, ValueExtractorOuter, ValueExtractorInner>::
     }
   }
 
-  ALWAYS_ASSERT(innerExtractor.resultSize() > 0);
+  PL_ASSERT(innerExtractor.resultSize() > 0);
   if (!outerExtractor.hasNext() || outerExtractor.hasNullValue()) {
     return Value::GetNullValue(VALUE_TYPE_BOOLEAN);
   }

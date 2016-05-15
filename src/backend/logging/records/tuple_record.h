@@ -43,13 +43,13 @@ class TupleRecord : public LogRecord, Printable {
         delete_location(delete_location),
         data(data),
         db_oid(_db_oid) {
-    ALWAYS_ASSERT(cid);
-    ALWAYS_ASSERT(table_oid);
+    PL_ASSERT(cid);
+    PL_ASSERT(table_oid);
 
     if (db_oid == INVALID_OID) {
       db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     }
-    ALWAYS_ASSERT(db_oid);
+    PL_ASSERT(db_oid);
   }
 
   ~TupleRecord() {

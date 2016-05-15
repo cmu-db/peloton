@@ -60,7 +60,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
 void DDLUtils::ParsingCreateStmt(
 
     CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos) {
-  ALWAYS_ASSERT(Cstmt);
+  PL_ASSERT(Cstmt);
 
   //===--------------------------------------------------------------------===//
   // Column Infomation

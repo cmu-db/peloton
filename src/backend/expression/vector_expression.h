@@ -45,7 +45,7 @@ class VectorExpression : public AbstractExpression {
 
   virtual bool HasParameter() const {
     for (auto argument : arguments) {
-      ALWAYS_ASSERT(argument);
+      PL_ASSERT(argument);
       if (argument->HasParameter()) {
         return true;
       }

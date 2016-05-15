@@ -80,7 +80,7 @@ void BackendLogger::Log(LogRecord *record) {
   // update max logged commit id
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
     auto new_log_commit_id = record->GetTransactionId();
-    ALWAYS_ASSERT(new_log_commit_id > highest_logged_commit_message);
+    PL_ASSERT(new_log_commit_id > highest_logged_commit_message);
     highest_logged_commit_message = new_log_commit_id;
     logging_cid_lower_bound = INVALID_CID;
   }

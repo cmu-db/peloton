@@ -53,7 +53,7 @@ class OptimisticRbTxnManager : public TransactionManager {
   inline bool IsInserted(
       const storage::TileGroupHeader *const tile_grou_header,
       const oid_t &tuple_id) {
-      ALWAYS_ASSERT(IsOwner(tile_grou_header, tuple_id));
+      PL_ASSERT(IsOwner(tile_grou_header, tuple_id));
       return tile_grou_header->GetBeginCommitId(tuple_id) == MAX_CID;
   }
 
@@ -82,12 +82,12 @@ class OptimisticRbTxnManager : public TransactionManager {
   virtual bool PerformRead(const ItemPointer &location);
 
   virtual void PerformUpdate(const ItemPointer &old_location UNUSED_ATTRIBUTE,
-                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
+                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
 
   virtual void PerformDelete(const ItemPointer &old_location  UNUSED_ATTRIBUTE,
-                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
+                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
 
-  virtual void PerformUpdate(const ItemPointer &location  UNUSED_ATTRIBUTE) { ALWAYS_ASSERT(false); }
+  virtual void PerformUpdate(const ItemPointer &location  UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
 
   /**
    * Interfaces for rollback segment

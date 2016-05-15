@@ -44,7 +44,7 @@ class ExpressionTest : public PelotonTest {};
    unique fields.
 
    3. Using this utilities, the test defines several expressions (in
-   std::queue) formats and ALWAYS_ASSERTs on the expected result.
+   std::queue) formats and PL_ASSERTs on the expected result.
 
  */
 

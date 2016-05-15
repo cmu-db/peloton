@@ -54,7 +54,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DInit() {
-  ALWAYS_ASSERT(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   return true;
 }
@@ -169,7 +169,7 @@ void MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      ALWAYS_ASSERT(it != old_to_new_cols.end());
+      PL_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -183,7 +183,7 @@ void MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    ALWAYS_ASSERT(new_column_offsets.size() == old_column_ids.size());
+    PL_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -255,7 +255,7 @@ void MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      ALWAYS_ASSERT(it != old_to_new_cols.end());
+      PL_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -319,7 +319,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
 
   // Create a default identity mapping node if we did not get one
   if (node == nullptr) {
-    ALWAYS_ASSERT(source_tile_schema.get());
+    PL_ASSERT(source_tile_schema.get());
     output_schema = source_tile_schema.get();
 
     old_to_new_cols = BuildIdentityMapping(output_schema);

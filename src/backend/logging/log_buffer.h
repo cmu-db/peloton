@@ -44,7 +44,7 @@ class LogBuffer {
   inline size_t GetSize() { return size_; }
 
   inline void SetSize(size_t size) {
-    ALWAYS_ASSERT(size < capacity_);
+    PL_ASSERT(size < capacity_);
     size_ = size;
   }
 

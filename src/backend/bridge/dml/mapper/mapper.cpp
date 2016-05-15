@@ -81,7 +81,7 @@ std::shared_ptr<const planner::AbstractPlan> PlanTransformer::TransformPlan(
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformPlan(
     AbstractPlanState *planstate, const TransformOptions options) {
-  ALWAYS_ASSERT(planstate);
+  PL_ASSERT(planstate);
 
   // Ignore empty plans
   if (planstate == nullptr) return nullptr;

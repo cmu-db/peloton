@@ -126,7 +126,7 @@ storage::DataTable *CreateTable() {
  */
 expression::AbstractExpression *CreatePredicate(
     const std::set<oid_t> &tuple_ids) {
-  ALWAYS_ASSERT(tuple_ids.size() >= 1);
+  PL_ASSERT(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConstantValueFactory(Value::GetFalse());

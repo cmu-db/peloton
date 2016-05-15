@@ -37,7 +37,7 @@ namespace bridge {
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree) {
-  ALWAYS_ASSERT(parsetree != nullptr);
+  PL_ASSERT(parsetree != nullptr);
 
   LOG_TRACE("Process Utility");
 

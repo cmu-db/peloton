@@ -39,8 +39,8 @@ InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DInit() {
-  ALWAYS_ASSERT(children_.size() == 0 || children_.size() == 1);
-  ALWAYS_ASSERT(executor_context_);
+  PL_ASSERT(children_.size() == 0 || children_.size() == 1);
+  PL_ASSERT(executor_context_);
 
   done_ = false;
   return true;
@@ -53,13 +53,13 @@ bool InsertExecutor::DInit() {
 bool InsertExecutor::DExecute() {
   if (done_) return false;
 
-  ALWAYS_ASSERT(!done_);
-  ALWAYS_ASSERT(executor_context_ != nullptr);
+  PL_ASSERT(!done_);
+  PL_ASSERT(executor_context_ != nullptr);
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
   oid_t bulk_insert_count = node.GetBulkInsertCount();
-  ALWAYS_ASSERT(target_table);
+  PL_ASSERT(target_table);
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -74,7 +74,7 @@ bool InsertExecutor::DExecute() {
     }
 
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
-    ALWAYS_ASSERT(logical_tile.get() != nullptr);
+    PL_ASSERT(logical_tile.get() != nullptr);
     auto target_table_schema = target_table->GetSchema();
     auto column_count = target_table_schema->GetColumnCount();
 
@@ -123,9 +123,9 @@ bool InsertExecutor::DExecute() {
     // Check if this is not a raw tuple
     if(tuple == nullptr) {
       // Otherwise, there must exist a project info
-      ALWAYS_ASSERT(project_info);
+      PL_ASSERT(project_info);
       // There should be no direct maps
-      ALWAYS_ASSERT(project_info->GetDirectMapList().size() == 0);
+      PL_ASSERT(project_info->GetDirectMapList().size() == 0);
 
       project_tuple.reset(new storage::Tuple(schema, true));
 

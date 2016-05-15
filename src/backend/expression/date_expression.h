@@ -60,8 +60,8 @@ class ExtractExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    ALWAYS_ASSERT(m_left);
-    ALWAYS_ASSERT(m_right);
+    PL_ASSERT(m_left);
+    PL_ASSERT(m_right);
     TimestampSubfield local_subfield;
 
     if (subfield == NOT_CONSTANT) {
@@ -187,14 +187,14 @@ class DateToTimestampExpression : public AbstractExpression {
   DateToTimestampExpression(AbstractExpression *date_expr)
       : AbstractExpression(EXPRESSION_TYPE_DATE_TO_TIMESTAMP, VALUE_TYPE_BIGINT,
                            date_expr, nullptr) {
-    ALWAYS_ASSERT(GetLeft() != nullptr);
-    ALWAYS_ASSERT(GetRight() == nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
+    PL_ASSERT(GetRight() == nullptr);
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
     Value date = GetLeft()->Evaluate(tuple1, tuple2, context);
-    ALWAYS_ASSERT(date.GetValueType() == VALUE_TYPE_DATE);
+    PL_ASSERT(date.GetValueType() == VALUE_TYPE_DATE);
     return date.CallUnary<FUNC_TO_TIMESTAMP_DAY>();
   }
 

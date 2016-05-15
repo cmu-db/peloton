@@ -89,8 +89,8 @@ class EpochManager {
   }
 
   void ExitEpoch(size_t epoch) {
-    ALWAYS_ASSERT(epoch >= queue_tail_);
-    ALWAYS_ASSERT(epoch <= current_epoch_);
+    PL_ASSERT(epoch >= queue_tail_);
+    PL_ASSERT(epoch <= current_epoch_);
 
     auto epoch_idx = epoch % epoch_queue_size_;
 

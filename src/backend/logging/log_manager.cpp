@@ -270,12 +270,12 @@ void LogManager::LogCommitTransaction(cid_t commit_id) {
  * @param logging type can be stdout(debug), aries, peloton
  */
 BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
-  ALWAYS_ASSERT(frontend_loggers.size() != 0);
+  PL_ASSERT(frontend_loggers.size() != 0);
 
   // Check whether the backend logger exists or not
   // if not, create a backend logger and store it in frontend logger
   if (backend_logger == nullptr) {
-    ALWAYS_ASSERT(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
+    PL_ASSERT(logger_mapping_strategy_ != LOGGER_MAPPING_INVALID);
     LOG_TRACE("Creating a new backend logger!");
     backend_logger = BackendLogger::GetBackendLogger(logging_type_);
     int i = __sync_fetch_and_add(&this->frontend_logger_assign_counter, 1);
@@ -288,12 +288,12 @@ BackendLogger *LogManager::GetBackendLogger(unsigned int hint_idx) {
 
     } else if (logger_mapping_strategy_ == LOGGER_MAPPING_MANUAL) {
       // manual mapping with hint
-      ALWAYS_ASSERT(hint_idx < frontend_loggers.size());
+      PL_ASSERT(hint_idx < frontend_loggers.size());
       frontend_loggers[hint_idx].get()->AddBackendLogger(backend_logger);
       backend_logger->SetFrontendLoggerID(hint_idx);
     } else {
       LOG_ERROR("Unsupported Logger Mapping Strategy");
-      ALWAYS_ASSERT(false);
+      PL_ASSERT(false);
       return nullptr;
     }
   }
@@ -320,7 +320,7 @@ void LogManager::InitFrontendLoggers() {
  * @return the frontend logger otherwise nullptr
  */
 FrontendLogger *LogManager::GetFrontendLogger(unsigned int logger_idx) {
-  ALWAYS_ASSERT(logger_idx < frontend_loggers.size());
+  PL_ASSERT(logger_idx < frontend_loggers.size());
   return frontend_loggers[logger_idx].get();
 }
 
@@ -354,7 +354,7 @@ void LogManager::SetLogFileName(std::string log_file) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogFileName(void) {
-  ALWAYS_ASSERT(log_file_name.empty() == false);
+  PL_ASSERT(log_file_name.empty() == false);
   return log_file_name;
 }
 
@@ -364,7 +364,7 @@ void LogManager::SetLogDirectoryName(std::string log_directory) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogDirectoryName(void) {
-  ALWAYS_ASSERT(log_directory_name.empty() == false);
+  PL_ASSERT(log_directory_name.empty() == false);
   return log_directory_name;
 }
 
