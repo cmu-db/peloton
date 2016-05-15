@@ -76,5 +76,5 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
   }
 }
 
-}  // End storage namespace
+}  // End concurrency namespace
 }  // End peloton namespace

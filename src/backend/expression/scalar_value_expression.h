@@ -21,16 +21,16 @@ namespace expression {
 
 class ScalarValueExpression : public AbstractExpression {
  public:
-  ScalarValueExpression(AbstractExpression *lc)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, lc, NULL){};
+  ScalarValueExpression(ValueType type, AbstractExpression *lc)
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_SCALAR, type, lc, nullptr) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const;
+                 executor::ExecutorContext *context) const override;
 
-  std::string DebugInfo(const std::string &spacer) const;
+  std::string DebugInfo(const std::string &spacer) const override;
 
-  AbstractExpression *Copy() const {
-    return new ScalarValueExpression(CopyUtil(GetLeft()));
+  AbstractExpression *Copy() const override {
+    return new ScalarValueExpression(GetValueType(), CopyUtil(GetLeft()));
   }
 };
 

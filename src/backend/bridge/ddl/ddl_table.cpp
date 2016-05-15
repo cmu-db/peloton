@@ -150,8 +150,13 @@ bool DDLTable::ExecDropStmt(Node *parsetree) {
         DDLTable::DropTable(table_oid);
       } break;
 
+      case OBJECT_FUNCTION: {
+        LOG_TRACE("UDF function dropped.");
+        break;
+      }
+
       default: {
-        LOG_WARN("Unsupported drop object %d ", drop->removeType);
+        LOG_TRACE("Unsupported drop object %d ", drop->removeType);
       } break;
     }
   }
@@ -191,7 +196,7 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
       DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 
   if (table != nullptr) {
-    LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid,
+    LOG_TRACE("Created table(%u)%s in database(%u) ", relation_oid,
              table_name.c_str(), database_oid);
 
     db->AddTable(table);
@@ -220,7 +225,7 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
         bool status = AddConstraint(relation_oid, (Constraint *)cmd->def);
 
         if (status == false) {
-          LOG_WARN("Failed to add constraint");
+          LOG_TRACE("Failed to add constraint");
         }
         break;
       }
@@ -229,7 +234,7 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
     }
   }
 
-  LOG_INFO("Altered the table (%u)", relation_oid);
+  LOG_TRACE("Altered the table (%u)", relation_oid);
   return true;
 }
 
@@ -243,8 +248,8 @@ bool DDLTable::DropTable(Oid table_oid) {
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   if (database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %u table oid : %u",
-             database_oid, table_oid);
+    LOG_TRACE("Could not drop table :: db oid : %u table oid : %u", database_oid,
+             table_oid);
     return false;
   }
 
@@ -254,7 +259,7 @@ bool DDLTable::DropTable(Oid table_oid) {
 
   db->DropTableWithOid(table_oid);
 
-  LOG_INFO("Dropped table with oid : %u", table_oid);
+  LOG_TRACE("Dropped table with oid : %u", table_oid);
 
   return true;
 }
@@ -301,7 +306,7 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
           char *attname = strVal(lfirst(column));
           pk_column_names.push_back(attname);
           pk_column_offsets.push_back(offset);
-          offset ++;
+          offset++;
         }
       }
       if (constraint->fk_attrs != NULL && constraint->fk_attrs->length > 0) {
@@ -310,27 +315,26 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
           char *attname = strVal(lfirst(column));
           fk_column_names.push_back(attname);
           fk_column_offsets.push_back(offset);
-          offset ++;
+          offset++;
         }
       }
 
-
       catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
           PrimaryKeyTableId, pk_column_names, pk_column_offsets,
-          fk_column_names, fk_column_offsets,
-          constraint->fk_upd_action, constraint->fk_del_action, conname);
+          fk_column_names, fk_column_offsets, constraint->fk_upd_action,
+          constraint->fk_del_action, conname);
       foreign_keys.push_back(*foreign_key);
 
     } break;
     default:
-      LOG_WARN("Unrecognized constraint type %d", (int)contype);
+      LOG_TRACE("Unrecognized constraint type %d", (int)contype);
       break;
   }
 
   // FIXME :
   bool status = SetReferenceTables(foreign_keys, relation_oid);
   if (status == false) {
-    LOG_WARN("Failed to set reference tables");
+    LOG_TRACE("Failed to set reference tables");
   }
 
   return true;

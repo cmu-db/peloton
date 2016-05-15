@@ -195,17 +195,17 @@ ModifyTablePlanState *DMLUtils::PrepareModifyTableState(
 
   switch (info->operation) {
     case CMD_INSERT:
-      LOG_INFO("CMD_INSERT");
+      LOG_TRACE("CMD_INSERT");
       PrepareInsertState(info, mt_plan_state);
       break;
 
     case CMD_UPDATE:
-      LOG_INFO("CMD_UPDATE");
+      LOG_TRACE("CMD_UPDATE");
       PrepareUpdateState(info, mt_plan_state);
       break;
 
     case CMD_DELETE:
-      LOG_INFO("CMD_DELETE");
+      LOG_TRACE("CMD_DELETE");
       PrepareDeleteState(info, mt_plan_state);
       break;
 
@@ -648,9 +648,9 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
   info->numphases = agg_plan_state->numphases;
 
   /* Target list and qual */
-  LOG_INFO("PrepareAggState : copying targetlist");
+  LOG_TRACE("PrepareAggState : copying targetlist");
   info->ps_targetlist = CopyExprStateList(agg_plan_state->ss.ps.targetlist);
-  LOG_INFO("PrepareAggState : copying qual");
+  LOG_TRACE("PrepareAggState : copying qual");
   info->ps_qual = CopyExprStateList(agg_plan_state->ss.ps.qual);
 
   /* Peraggs */
@@ -659,7 +659,7 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
   info->peragg =
       (AggStatePerAgg)palloc(sizeof(struct AggStatePerAggData) * info->numaggs);
   for (int i = 0; i < info->numaggs; i++) {
-    LOG_INFO("PrepareAggState : copying AggrefState");
+    LOG_TRACE("PrepareAggState : copying AggrefState");
 
     info->peragg[i] = agg_plan_state->peragg[i];  // Shallow copy
     info->peragg[i].aggrefstate = (AggrefExprState *)CopyExprState(

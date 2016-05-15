@@ -356,6 +356,7 @@ postgres_backend_FILES = \
 						 postgres/backend/postmaster/pgarch.cpp \
 						 postgres/backend/postmaster/pgstat.cpp \
 						 postgres/backend/postmaster/postmaster.cpp \
+						 postgres/backend/postmaster/memcached_query_parser.cpp \
 						 postgres/backend/postmaster/startup.cpp \
 						 postgres/backend/postmaster/syslogger.cpp \
 						 postgres/backend/postmaster/walwriter.cpp \
