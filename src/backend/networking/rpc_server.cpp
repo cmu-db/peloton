@@ -27,7 +27,7 @@ namespace networking {
 
 RpcServer::RpcServer(const int port) : listener_(port) {
   // We have listener here, so we also have event base
-  ConnectionManager::GetInstance().ResterRpcServer(this);
+  ConnectionManager::GetInstance().RegisterRpcServer(this);
 }
 
 RpcServer::~RpcServer() { RemoveService(); }
@@ -66,11 +66,17 @@ bool RpcServer::RegisterService(google::protobuf::Service *service) {
 
     // Put the method into rpc_method_map_: hashcode-->method
     std::string methodname = std::string(method->full_name());
+
+    // FIXME: remove the garbage code or describe what's the TODO
     // TODO:
     // uint64_t hash = CityHash64(methodname.c_str(), methodname.length());
 
     // although the return type is size_t, again we should specify the size of
     // the type
+    // FIXME: There should be a public member function which is a wrapper of
+    // string_hash_fn. Otherwise people have to know the implementation of
+    // string_hash_fn to use FindMethod(). Another alternative is to use methodname
+    // as the argument of FindMethod() and then hash it inside.
     uint64_t hash = string_hash_fn(methodname);
     RpcMethodMap::const_iterator iter = rpc_method_map_.find(hash);
     if (iter == rpc_method_map_.end()) {

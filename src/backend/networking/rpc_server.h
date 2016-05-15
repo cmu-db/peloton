@@ -53,6 +53,7 @@ class RpcServer {
     LOG_TRACE("This is server backcall");
   }
 
+  // Map the hash code of the name of the rpc method to RpcMethod*
   RpcMethodMap rpc_method_map_;
 
   Listener listener_;

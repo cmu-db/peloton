@@ -19,6 +19,7 @@ namespace networking {
 
 class AbstractMessage {
  public:
+  // FIXME: comments of these functions needs to be more descriptive.
   /** @brief BindSocket function nanomsg implementation */
   int Bind(const char *address);
 

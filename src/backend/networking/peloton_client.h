@@ -21,6 +21,8 @@
 namespace peloton {
 namespace networking {
 
+// FIXME: Is PelotonClient ever used? If this is garbage code, then
+// we should delete it.
 class PelotonClient {
  public:
   PelotonClient(const char* url) {

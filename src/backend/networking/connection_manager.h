@@ -33,11 +33,13 @@ class ConnectionManager {
   // global singleton
   static ConnectionManager& GetInstance(void);
 
-  void ResterRpcServer(RpcServer* server);
+  void RegisterRpcServer(RpcServer* server);
   RpcServer* GetRpcServer();
 
   struct event_base* GetEventBase();
 
+  // FIXME: what's the difference between the two GetConn? what's the relationship
+  // between those Connection* function and their bool counterparts?
   Connection* GetConn(std::string& addr);
 
   Connection* GetConn(NetworkAddress& addr);
