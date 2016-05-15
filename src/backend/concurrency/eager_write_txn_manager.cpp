@@ -37,53 +37,63 @@ EagerWriteTxnManager &EagerWriteTxnManager::GetInstance() {
 // check whether a tuple is visible to current transaction.
 // in this protocol, we require that a transaction cannot see other
 // transaction's local copy.
-bool EagerWriteTxnManager::IsVisible(
+VisibilityType EagerWriteTxnManager::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_id);
   cid_t tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
+  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
+  bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
+  bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
+
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
-    return false;
+    if (activated && !invalidated) {
+      // deleted tuple
+      return VISIBILITY_DELETED;
+    } else {
+      // aborted tuple
+      return VISIBILITY_INVISIBLE;
+    }
   }
-  bool own = (current_txn->GetTransactionId() == tuple_txn_id);
 
   // there are exactly two versions that can be owned by a transaction.
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       assert(tuple_end_cid == MAX_CID);
-      // the only version that is visible is the newly inserted one.
-      return true;
+      // the only version that is visible is the newly inserted/updated one.
+      return VISIBILITY_OK;
+    } else if (tuple_end_cid == INVALID_CID) {
+      // tuple being deleted by current txn
+      return VISIBILITY_DELETED;
     } else {
-      // the older version is not visible.
-      return false;
+      // old version of the tuple that is being updated by current txn
+      return VISIBILITY_INVISIBLE;
     }
   } else {
-    bool activated = (current_txn->GetBeginCommitId() >= tuple_begin_cid);
-    bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
       if (tuple_begin_cid == MAX_CID) {
-        // currently, we do not handle cascading abort. so never read an
+        // in this protocol, we do not allow cascading abort. so never read an
         // uncommitted version.
-        return false;
+        return VISIBILITY_INVISIBLE;
       } else {
         // the older version may be visible.
         if (activated && !invalidated) {
-          return true;
+          return VISIBILITY_OK;
         } else {
-          return false;
+          return VISIBILITY_INVISIBLE;
         }
       }
     } else {
       // if the tuple is not owned by any transaction.
       if (activated && !invalidated) {
-        return true;
+        return VISIBILITY_OK;
       } else {
-        return false;
+        return VISIBILITY_INVISIBLE;
       }
     }
   }
@@ -198,6 +208,23 @@ bool EagerWriteTxnManager::AcquireOwnership(
   return true;
 }
 
+
+// release write lock on a tuple.
+// one example usage of this method is when a tuple is acquired, but operation
+// (insert,update,delete) can't proceed, the executor needs to yield the 
+// ownership before return false to upper layer.
+// It should not be called if the tuple is in the write set as commit and abort
+// will release the write lock anyway.
+// TODO: may want to do other stuffs here
+void EagerWriteTxnManager::YieldOwnership(const oid_t &tile_group_id,
+  const oid_t &tuple_id) {
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  assert(IsOwner(tile_group_header, tuple_id));
+  tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
+}
+
 bool EagerWriteTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -258,7 +285,6 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
   assert(tile_group_header->GetTransactionId(tuple_id) == 0);
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
-  //SetOwnership(tile_group_id, tuple_id);
   // no need to set next item pointer.
 
   // Add the new tuple into the insert set
@@ -349,6 +375,7 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
+
   InitTupleReserved(new_location.block, new_location.offset);
 
   current_txn->RecordDelete(old_location);
@@ -577,7 +604,6 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
-        // AtomicSetOnlyTxnId(tile_group_header, tuple_slot, INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {

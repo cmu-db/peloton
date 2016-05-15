@@ -56,6 +56,8 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
+  LOG_INFO("Data table %u created", table_oid);
+
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -82,8 +84,9 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
   }
-
   // AbstractTable cleans up the schema
+  LOG_INFO("Data table %u destroyed", table_oid);
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -125,8 +128,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // new tile group.
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         bool check_constraint) {
+ItemPointer DataTable::FillInEmptyTupleSlot(const storage::Tuple *tuple,
+                                            bool check_constraint) {
   assert(tuple);
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
@@ -136,6 +139,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
+    auto tg = catalog::Manager::GetInstance().GetTileGroup(free_item_pointer.block);
+    tg->CopyTuple(tuple, free_item_pointer.offset);
     return free_item_pointer;
   }
   //====================================================
@@ -163,8 +168,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
     AddDefaultTileGroup();
   }
 
-  LOG_TRACE("tile group count: %u, tile group id: %u, address: %p",
-            tile_group_count_, tile_group->GetTileGroupId(), tile_group.get());
+  LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
+            tile_group_count_.load(), tile_group->GetTileGroupId(), tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -177,7 +182,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
 //===--------------------------------------------------------------------===//
 ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, false);
+  ItemPointer location = FillInEmptyTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -203,7 +208,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple, true);
+  ItemPointer location = FillInEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -229,8 +234,6 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **itemptr_ptr) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetEmptyTupleSlot(tuple);
-
   ItemPointer *temp_ptr = nullptr;
 
   // Upper layer don't want to know infomation about index
@@ -238,6 +241,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
     itemptr_ptr = &temp_ptr;
   }
 
+  ItemPointer location = FillInEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
@@ -657,6 +661,17 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
     const oid_t &tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
   return manager.GetTileGroup(tile_group_id);
+}
+
+
+oid_t DataTable::GetAllActiveTupleCount() {
+  oid_t count = 0;
+  for (auto tile_group_id : tile_groups_) {
+    auto tile_group = GetTileGroupById(tile_group_id);
+    auto tile_group_header = tile_group->GetHeader();
+    count += tile_group_header->GetActiveTupleCount();
+  }
+  return count;
 }
 
 const std::string DataTable::GetInfo() const {

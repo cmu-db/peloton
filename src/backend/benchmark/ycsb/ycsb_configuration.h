@@ -34,7 +34,6 @@ static const oid_t ycsb_field_length = 100;
 
 class configuration {
  public:
-
   // size of the table
   int scale_factor;
 
@@ -63,6 +62,14 @@ class configuration {
 
   double abort_rate;
 
+  // Theta in zipf distribution to control skewness
+  double zipf_theta;
+
+  // Run mix workload or not
+  bool run_mix;
+
+  // protocol type
+  ConcurrencyType protocol;
 };
 
 extern configuration state;

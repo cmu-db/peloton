@@ -36,7 +36,10 @@ logger_SOURCES =  \
                     backend/benchmark/logger/logger_loader.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
-                    backend/benchmark/ycsb/ycsb_loader.cpp
+                    backend/benchmark/ycsb/ycsb_loader.cpp \
+                    backend/benchmark/ycsb/ycsb_read.cpp \
+                    backend/benchmark/ycsb/ycsb_update.cpp \
+                    backend/benchmark/ycsb/ycsb_mixed.cpp
 
 logger_LDFLAGS =
 logger_CPPFLAGS = $(benchmark_common_cppflags)
@@ -50,7 +53,10 @@ ycsb_SOURCES =  \
 					backend/benchmark/ycsb/ycsb.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
-                    backend/benchmark/ycsb/ycsb_loader.cpp
+                    backend/benchmark/ycsb/ycsb_loader.cpp \
+                    backend/benchmark/ycsb/ycsb_read.cpp \
+                    backend/benchmark/ycsb/ycsb_update.cpp \
+                    backend/benchmark/ycsb/ycsb_mixed.cpp
 
 ycsb_LDFLAGS =
 ycsb_CPPFLAGS = $(benchmark_common_cppflags)
@@ -64,7 +70,12 @@ tpcc_SOURCES =  \
 					backend/benchmark/tpcc/tpcc.cpp \
                     backend/benchmark/tpcc/tpcc_configuration.cpp \
                     backend/benchmark/tpcc/tpcc_workload.cpp \
-                    backend/benchmark/tpcc/tpcc_loader.cpp
+                    backend/benchmark/tpcc/tpcc_loader.cpp \
+                    backend/benchmark/tpcc/tpcc_new_order.cpp \
+                    backend/benchmark/tpcc/tpcc_delivery.cpp \
+                    backend/benchmark/tpcc/tpcc_payment.cpp \
+                    backend/benchmark/tpcc/tpcc_stock_level.cpp \
+                    backend/benchmark/tpcc/tpcc_order_status.cpp
 
 tpcc_LDFLAGS =
 tpcc_CPPFLAGS = $(benchmark_common_cppflags)

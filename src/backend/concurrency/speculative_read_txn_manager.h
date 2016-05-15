@@ -72,7 +72,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   static SpeculativeReadTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
@@ -86,6 +86,9 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
 
   virtual bool PerformInsert(const ItemPointer &location);
 

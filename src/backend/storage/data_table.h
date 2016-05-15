@@ -115,7 +115,7 @@ class DataTable : public AbstractTable {
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
 
-  // Offset is a 0-based number local to the table
+  // Offset is a 0-based number local to the table.
   std::shared_ptr<storage::TileGroup> GetTileGroup(
       const oid_t &tile_group_offset) const;
 
@@ -127,6 +127,8 @@ class DataTable : public AbstractTable {
 
   // Get a tile group with given layout
   TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
+
+  oid_t GetAllActiveTupleCount();
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -215,8 +217,8 @@ class DataTable : public AbstractTable {
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                bool check_constraint = true);
+  ItemPointer FillInEmptyTupleSlot(const storage::Tuple *tuple,
+                                   bool check_constraint = true);
 
   // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();

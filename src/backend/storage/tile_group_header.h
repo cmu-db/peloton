@@ -73,7 +73,7 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
-  // this function is only called by DataTable::GetEmptyTupleSlot().
+  // this function is only called by DataTable::FillInEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
     oid_t tuple_slot_id =
         next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
@@ -225,6 +225,10 @@ class TileGroupHeader : public Printable {
   }
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
+
+  TileGroup *GetTileGroup() const {
+    return tile_group;
+  }
 
   // Sync the contents
   void Sync();

@@ -157,7 +157,7 @@ bool InsertExecutor::DExecute() {
                 location.offset);
 
       if (location.block == INVALID_OID) {
-        LOG_TRACE("Failed to Insert. Set txn failure.");
+        LOG_INFO("Failed to Insert. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }

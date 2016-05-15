@@ -54,7 +54,7 @@ class TransactionManager {
 
   bool IsOccupied(const ItemPointer &position);
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
@@ -69,6 +69,14 @@ class TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  // This method is used by executor to yield ownership after the acquired
+  // ownership, some of them will not perform update after they acquired the
+  // ownership, leaving the write lock on the tuple unreleased.
+  virtual void YieldOwnership(const oid_t &tile_group_id __attribute__((unused)),
+    const oid_t &tuple_id __attribute__((unused))) {
+    // Do nothing, specific txn manager can choose to implement it
+  }
 
   virtual bool PerformInsert(const ItemPointer &location) = 0;
 

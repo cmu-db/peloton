@@ -106,6 +106,9 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
 TEST_F(LoaderTests, LoadingTest) {
   // We are going to simply load tile groups concurrently in this test
+  // WARNING: This test may potentially run for a long time if 
+  // DEFAULT_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard
+  // code the number of tuples per tile group in this test
   oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
   bool build_indexes = false;
 

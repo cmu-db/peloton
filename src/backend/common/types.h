@@ -385,6 +385,16 @@ enum BackendType {
 };
 
 //===--------------------------------------------------------------------===//
+// Visibility Types
+//===--------------------------------------------------------------------===//
+enum VisibilityType {
+  VISIBILITY_INVISIBLE = 0,
+  VISIBILITY_DELETED = 1,
+  VISIBILITY_OK = 2
+};
+
+
+//===--------------------------------------------------------------------===//
 // Index Types
 //===--------------------------------------------------------------------===//
 
@@ -749,10 +759,12 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 // TupleMetadata
 //===--------------------------------------------------------------------===//
 struct TupleMetadata {
-  oid_t table_id = 0;
-  oid_t tile_group_id = 0;
-  oid_t tuple_slot_id = 0;
-  cid_t tuple_end_cid = 0;
+  oid_t table_id;
+  oid_t tile_group_id;
+  oid_t tuple_slot_id;
+  cid_t tuple_end_cid;
+
+  TupleMetadata():table_id(0), tile_group_id(0), tuple_slot_id(0), tuple_end_cid(0){}
 };
 
 //===--------------------------------------------------------------------===//

@@ -17,6 +17,8 @@ namespace peloton {
 
 namespace test {
 
+static oid_t next_id = 10000;
+
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
@@ -67,8 +69,10 @@ TEST_F(TransactionTests, SingleTransactionTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto id1 = next_id++;
+    auto id2 = next_id++;
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+        TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, id1, id2, true));
     // Just scan the table
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
@@ -107,7 +111,7 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(1, scheduler.schedules[1].results[0]);
     }
 
-    // // update, update, update, update, read
+     // update, update, update, update, read
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 1);
@@ -123,9 +127,9 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(4, scheduler.schedules[0].results[0]);
     }
 
-    // // delete not exist, delete exist, read deleted, update deleted,
-    // // read deleted, insert back, update inserted, read newly updated,
-    // // delete inserted, read deleted
+     // delete not exist, delete exist, read deleted, update deleted,
+     // read deleted, insert back, update inserted, read newly updated,
+     // delete inserted, read deleted
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
       scheduler.Txn(0).Delete(100);
@@ -150,8 +154,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       LOG_INFO("FINISH THIS");
     }
 
-    // // insert, delete inserted, read deleted, insert again, delete again
-    // // read deleted, insert again, read inserted, update inserted, read updated
+     // insert, delete inserted, read deleted, insert again, delete again
+     // read deleted, insert again, read inserted, update inserted, read updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
 
@@ -176,9 +180,9 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(3, scheduler.schedules[0].results[3]);
     }
 
-    // // Deadlock detection test for eager write
-    // // T0:  R0      W0      C0
-    // // T1:      R1      W1      C1
+     // Deadlock detection test for eager write
+     // T0:  R0      W0      C0
+     // T1:      R1      W1      C1
     if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE)
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -200,8 +204,11 @@ TEST_F(TransactionTests, AbortTest) {
   for (auto test_type : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(test_type);
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+    auto id1 = next_id++;
+    auto id2 = next_id++;
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, id1, id2, true));
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);

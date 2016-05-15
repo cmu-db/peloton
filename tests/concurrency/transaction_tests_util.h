@@ -183,7 +183,7 @@ class TransactionThread {
         table(table_),
         cur_seq(0),
         go(false) {
-    LOG_TRACE("Thread has %d ops", (int)sched->operations.size());
+    LOG_INFO("Thread has %d ops", (int)sched->operations.size());
   }
 
   void RunLoop() {
@@ -240,13 +240,13 @@ class TransactionThread {
     // Execute the operation
     switch (op) {
       case TXN_OP_INSERT: {
-        LOG_TRACE("Execute Insert");
+        LOG_INFO("Execute Insert id=%d, v=%d", id, value);
         execute_result =
             TransactionTestsUtil::ExecuteInsert(txn, table, id, value);
         break;
       }
       case TXN_OP_READ: {
-        LOG_TRACE("Execute Read");
+        LOG_INFO("Execute Read id=%d", id);
         int result;
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
@@ -254,7 +254,7 @@ class TransactionThread {
         break;
       }
       case TXN_OP_DELETE: {
-        LOG_TRACE("Execute Delete");
+        LOG_INFO("Execute Delete %d, %d", id, value);
         execute_result = TransactionTestsUtil::ExecuteDelete(txn, table, id);
         break;
       }
@@ -265,7 +265,7 @@ class TransactionThread {
         break;
       }
       case TXN_OP_SCAN: {
-        LOG_TRACE("Execute Scan");
+        LOG_INFO("Execute Scan");
         execute_result = TransactionTestsUtil::ExecuteScan(
             txn, schedule->results, table, id);
         break;
@@ -305,8 +305,8 @@ class TransactionThread {
     if (txn != NULL && txn->GetResult() == RESULT_FAILURE) {
       txn_manager->AbortTransaction();
       txn = NULL;
-      LOG_TRACE("ABORT NOW");
-      if (execute_result == false) LOG_TRACE("Executor returns false");
+      LOG_INFO("ABORT NOW");
+      if (execute_result == false) LOG_INFO("Executor returns false");
       schedule->txn_result = RESULT_ABORTED;
     }
   }
@@ -344,13 +344,13 @@ class TransactionScheduler {
         t.detach();
       }
       for (auto itr = sequence.begin(); itr != sequence.end(); itr++) {
-        LOG_TRACE("Execute %d", (int)itr->second);
+        LOG_INFO("Execute %d", (int)itr->second);
         tthreads[itr->second].go = true;
         while (tthreads[itr->second].go) {
           std::chrono::milliseconds sleep_time(1);
           std::this_thread::sleep_for(sleep_time);
         }
-        LOG_TRACE("Done %d", (int)itr->second);
+        LOG_INFO("Done %d", (int)itr->second);
       }
     } else {
       // Run the txns concurrently
@@ -361,7 +361,7 @@ class TransactionScheduler {
       for (auto &thread : threads) {
         thread.join();
       }
-      LOG_TRACE("Done conccurent transaction schedule");
+      LOG_INFO("Done conccurent transaction schedule");
     }
   }
 

@@ -33,7 +33,8 @@ namespace executor {
  */
 UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {
+	}
 
 /**
  * @brief Nothing to init at the moment.
@@ -47,7 +48,9 @@ bool UpdateExecutor::DInit() {
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
-  project_info_ = node.GetProjectInfo();
+  //project_info_ = node.GetProjectInfo();
+  //project_info_.reset(new planner::ProjectInfo(*(node.GetProjectInfo())));
+  project_info_ = new planner::ProjectInfo(*(node.GetProjectInfo()));
 
   assert(target_table_);
   assert(project_info_);
@@ -65,11 +68,9 @@ bool UpdateExecutor::DExecute() {
 
   // We are scanning over a logical tile.
   LOG_TRACE("Update executor :: 1 child ");
-
   if (!children_[0]->Execute()) {
     return false;
   }
-
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
@@ -137,7 +138,6 @@ bool UpdateExecutor::DExecute() {
                                              physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
-
       if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id,
                                                physical_tuple_id) == false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -147,15 +147,13 @@ bool UpdateExecutor::DExecute() {
       // if it is the latest version and not locked by other threads, then
       // insert a new version.
       std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
-
       // Make a copy of the original tuple and allocate a new tuple
       expression::ContainerTuple<storage::TileGroup> old_tuple(
           tile_group, physical_tuple_id);
       // Execute the projections
       project_info_->Evaluate(new_tuple.get(), &old_tuple, nullptr,
                               executor_context_);
-
-      if ( concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
+      if (concurrency_protocol == CONCURRENCY_TYPE_OCC_RB) {
         // For rollback segment implementation
         auto rb_txn_manager = (concurrency::OptimisticRbTxnManager*)&transaction_manager;
 
@@ -171,13 +169,13 @@ bool UpdateExecutor::DExecute() {
       } else {
         // finally insert updated tuple into the table
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
-
         // FIXME: PerformUpdate() will not be executed if the insertion failed,
-        // There is a write lock acquired, but since it is not in the write set,
-        // because we haven't yet put them into the write set.
+        // There is a write lock acquired, but it is not in the write set.
         // the acquired lock can't be released when the txn is aborted.
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          // First yield ownership
+          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
           return false;
         }

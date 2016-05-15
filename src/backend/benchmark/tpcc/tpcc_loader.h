@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/common/value.h"
 
 namespace peloton {
 namespace storage{
@@ -53,16 +54,16 @@ extern storage::DataTable* order_line_table;
 // Constants
 /////////////////////////////////////////////////////////
 
-extern size_t name_length;
-extern size_t middle_name_length ;
-extern size_t data_length;
-extern size_t state_length;
-extern size_t zip_length;
-extern size_t street_length;
-extern size_t city_length;
-extern size_t credit_length;
-extern size_t phone_length;
-extern size_t dist_length;
+extern const size_t name_length;
+extern const size_t middle_name_length ;
+extern const size_t data_length;
+extern const size_t state_length;
+extern const size_t zip_length;
+extern const size_t street_length;
+extern const size_t city_length;
+extern const size_t credit_length;
+extern const size_t phone_length;
+extern const size_t dist_length;
 
 extern double item_min_price;
 extern double item_max_price;
@@ -117,6 +118,21 @@ extern int stock_min_threshold;
 extern int stock_max_threshold;
 
 extern double new_order_remote_txns;
+
+extern const int syllable_count;
+extern const char *syllables[];
+
+extern const std::string data_constant;
+
+struct NURandConstant {
+  int c_last;
+  int c_id;
+  int order_line_itme_id;
+
+  NURandConstant();
+};
+
+extern NURandConstant nu_rand_const;
 
 /////////////////////////////////////////////////////////
 // Tuple Constructors
@@ -178,8 +194,15 @@ BuildStockTuple(const int stock_id,
 /////////////////////////////////////////////////////////
 // Utils
 /////////////////////////////////////////////////////////
+void GetStringFromValue(const peloton::Value &value, std::string &str);
 
 std::string GetRandomAlphaNumericString(const size_t string_length);
+
+int GetNURand(int a, int x, int y);
+
+std::string GetLastName(int number);
+
+std::string GetRandomLastName(int max_cid);
 
 bool GetRandomBoolean(double ratio);
 
@@ -191,6 +214,8 @@ int GetRandomIntegerExcluding(const int lower_bound,
                               const int exclude_sample);
 
 double GetRandomDouble(const double lower_bound, const double upper_bound);
+
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum);
 
 std::string GetStreetName();
 

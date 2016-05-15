@@ -45,7 +45,7 @@ void Checkpoint::RecoverIndex(storage::Tuple *tuple, storage::DataTable *table,
   assert(tuple);
   assert(table);
   auto index_count = table->GetIndexCount();
-  LOG_TRACE("Insert tuple (%lu, %lu) into %lu indexes", target_location.block,
+  LOG_TRACE("Insert tuple (%u, %u) into %u indexes", target_location.block,
             target_location.offset, index_count);
 
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
@@ -66,7 +66,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
   auto tile_group_id = target_location.block;
   auto tuple_slot = target_location.offset;
 
-  LOG_TRACE("Recover tuple from checkpoint (%lu, %lu)", tile_group_id,
+  LOG_TRACE("Recover tuple from checkpoint (%u, %u)", tile_group_id,
             tuple_slot);
 
   auto &manager = catalog::Manager::GetInstance();
