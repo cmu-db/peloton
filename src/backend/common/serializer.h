@@ -28,8 +28,6 @@
 #include "backend/common/exception.h"
 #include "backend/common/macros.h"
 
-#include <boost/ptr_container/ptr_vector.hpp>
-
 namespace peloton {
 
 #ifdef __DARWIN_OSSwapInt64  // for darwin/macosx
