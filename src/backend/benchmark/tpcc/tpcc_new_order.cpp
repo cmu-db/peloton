@@ -136,7 +136,8 @@ bool RunNewOrder(){
 
   int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  int customer_id = GetRandomInteger(0, state.customers_per_district);
+  // FIXME: minus one here?
+  int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
   //auto o_entry_ts = GetTimeStamp();
 
@@ -377,7 +378,8 @@ bool RunNewOrder(){
 
   // incrementNextOrderId
   LOG_INFO("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?");
-
+  // NOTE: why it is different from ycsb update, where all columns ids are 
+  // in this vector
   std::vector<oid_t> district_update_column_ids = {10}; // D_NEXT_O_ID
 
   // Create plan node.
@@ -466,6 +468,7 @@ bool RunNewOrder(){
     int item_id = i_ids.at(i);
     int ol_w_id = ol_w_ids.at(i);
     int ol_qty = ol_qtys.at(i);
+    
     LOG_INFO("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = ? AND S_W_ID = ?");
 
     std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA

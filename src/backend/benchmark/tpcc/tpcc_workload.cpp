@@ -96,10 +96,14 @@ void RunBackend(oid_t thread_id) {
     if (is_running == false) {
       break;
     }
-    
-    while (RunNewOrder() == false) {
+
+    while (RunDelivery() == false) {
       execution_count_ref++;
     }
+
+    // while (RunPayment() == false) {
+    //   execution_count_ref++;
+    // }
     
     // auto rng_val = generator.GetSample();
     
@@ -483,6 +487,17 @@ void ExecuteUpdateTest(executor::AbstractExecutor* executor) {
 
   // Execute stuff
   while (executor->Execute() == true);
+}
+
+// Note: this function is the same as \b ExecuteUpdateTest
+void ExecuteDeleteTest(executor::AbstractExecutor* executor) {
+  bool status = executor->Init();
+  if (status == false) {
+    throw Exception("Init failed");
+  }
+
+  while (executor->Execute() == true)
+    ;
 }
 
 

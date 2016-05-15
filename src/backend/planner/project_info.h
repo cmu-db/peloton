@@ -69,8 +69,14 @@ class ProjectInfo {
       : target_list_(tl), direct_map_list_(dml) {}
 
   ProjectInfo(const ProjectInfo & project_info) {
-    target_list_ = project_info.GetTargetList();
     direct_map_list_ = project_info.GetDirectMapList();
+    // target_list_ = project_info.GetTargetList();
+
+    for (const Target &target : project_info.GetTargetList()) {
+      target_list_.push_back(
+        std::pair<oid_t, const expression::AbstractExpression *>(
+          target.first, target.second->Copy()));
+    }
   }
 
   const TargetList &GetTargetList() const { return target_list_; }
