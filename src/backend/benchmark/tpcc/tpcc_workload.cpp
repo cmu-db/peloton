@@ -244,7 +244,7 @@ void ExecuteUpdateTest(executor::AbstractExecutor* executor) {
 }
 
 bool RunNewOrder(){
-   /*
+  /*
      "NEW_ORDER": {
      "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
      "getDistrict": "SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = ? AND D_W_ID = ?", # d_id, w_id
@@ -259,19 +259,26 @@ bool RunNewOrder(){
      }
    */
 
+  LOG_TRACE("-------------------------------------");
+
   /////////////////////////////////////////////////////////
   // PREPARE ARGUMENTS
   /////////////////////////////////////////////////////////
 
   int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+  // FIXME: minus one here?
   int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
+  //auto o_entry_ts = GetTimeStamp();
 
   std::vector<int> i_ids, ol_w_ids, ol_qtys;
   bool o_all_local = true;
 
   for (auto ol_itr = 0; ol_itr < o_ol_cnt; ol_itr++) {
+    // in the original TPC-C benchmark, it is possible to read an item that does not exist.
+    // for simplicity, we ignore this case.
+    // this essentially makes the processing of NewOrder transaction more time-consuming.
     i_ids.push_back(GetRandomInteger(0, state.item_count - 1));
     bool remote = GetRandomBoolean(new_order_remote_txns);
     ol_w_ids.push_back(warehouse_id);
@@ -284,6 +291,7 @@ bool RunNewOrder(){
     ol_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
   }
 
+
   /////////////////////////////////////////////////////////
   // BEGIN TRANSACTION
   /////////////////////////////////////////////////////////
@@ -293,9 +301,13 @@ bool RunNewOrder(){
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
+
+  //std::vector<float> i_prices;
   LOG_TRACE("getItemInfo: SELECT I_PRICE, I_NAME, I_DATA FROM ITEM WHERE I_ID = ?");
   for (auto item_id : i_ids) {
     LOG_TRACE("item_id: %d", int(item_id));
+
+    //    Planner::IndexScanPlan &item_index_scan_node = BuildItemIndexScanPlan();
 
     std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
 
@@ -323,6 +335,9 @@ bool RunNewOrder(){
                                                        item_column_ids,
                                                        item_index_scan_desc);
 
+
+
+
     executor::IndexScanExecutor item_index_scan_executor(&item_index_scan_node,
                                                          context.get());
 
@@ -334,10 +349,11 @@ bool RunNewOrder(){
     }
 
     if (gii_lists_values.size() != 1) {
-      PL_ASSERT(false);
+      assert(false);
     }
 
   }
+
 
   // getWarehouseTaxRate
   LOG_TRACE("getWarehouseTaxRate: SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?");
@@ -352,7 +368,7 @@ bool RunNewOrder(){
 
   warehouse_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  warehouse_key_values.push_back(ValueFactory::GetSmallIntValue(warehouse_id));
+  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
   auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
       warehouse_table_pkey_index_oid);
@@ -379,13 +395,12 @@ bool RunNewOrder(){
   }
 
   if (gwtr_lists_values.size() != 1) {
-    PL_ASSERT(false);
+    assert(false);
   }
 
   auto w_tax = gwtr_lists_values[0][0];
 
-  LOG_TRACE("W_TAX: %s", w_tax.GetInfo().c_str());
-
+  LOG_TRACE("w_tax: %s", w_tax.GetInfo().c_str());
 
   // getDistrict
   LOG_TRACE("getDistrict: SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = ? AND D_W_ID = ?");
@@ -401,8 +416,8 @@ bool RunNewOrder(){
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   district_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  district_key_values.push_back(ValueFactory::GetTinyIntValue(district_id));
-  district_key_values.push_back(ValueFactory::GetSmallIntValue(warehouse_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
@@ -422,17 +437,17 @@ bool RunNewOrder(){
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
+    LOG_TRACE("getDistrict failed");
     return false;
   }
 
   if (gd_lists_values.size() != 1) {
-    PL_ASSERT(false);
+    assert(false);
   }
 
   auto d_tax = gd_lists_values[0][0];
   auto d_next_o_id = gd_lists_values[0][1];
   LOG_TRACE("D_TAX: %s, D_NEXT_O_ID: %s", d_tax.GetInfo().c_str(), d_next_o_id.GetInfo().c_str());
-
 
   // getCustomer
   LOG_TRACE("getCustomer: SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?");
@@ -451,8 +466,8 @@ bool RunNewOrder(){
   customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   customer_key_values.push_back(ValueFactory::GetIntegerValue(customer_id));
-  customer_key_values.push_back(ValueFactory::GetTinyIntValue(district_id));
-  customer_key_values.push_back(ValueFactory::GetSmallIntValue(warehouse_id));
+  customer_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
   auto customer_pkey_index = customer_table->GetIndexWithOid(
       customer_table_pkey_index_oid);
@@ -472,21 +487,17 @@ bool RunNewOrder(){
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
+    LOG_TRACE("getCustomer failed");
     return false;
   }
 
   if (gc_lists_values.size() != 1) {
-    LOG_ERROR("Could not find customer : %d", customer_id);
-    return false;
+    assert(false);
   }
-
-  // auto c_last = gd_lists_values[0][0];
-  // auto c_credit = gd_lists_values[0][1];
-  // auto c_discount = gd_lists_values[0][2];
 
   // incrementNextOrderId
   LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?");
-
+  // NOTE: why it is different from ycsb update, where all columns ids are in this vector
   std::vector<oid_t> district_update_column_ids = {10}; // D_NEXT_O_ID
 
   // Create plan node.
@@ -523,6 +534,7 @@ bool RunNewOrder(){
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
+    LOG_TRACE("incrementNextOrderId failed");
     return false;
   }
 
@@ -535,9 +547,9 @@ bool RunNewOrder(){
   // O_C_ID
   orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // O_D_ID
-  orders_tuple->SetValue(2, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
   // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // O_ENTRY_D
   //auto o_entry_d = GetTimeStamp();
   orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(1) , nullptr);
@@ -559,13 +571,14 @@ bool RunNewOrder(){
   // NO_O_ID
   new_order_tuple->SetValue(0, d_next_o_id, nullptr);
   // NO_D_ID
-  new_order_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
 
   planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
+
 
   for (size_t i = 0; i < i_ids.size(); ++i) {
     int item_id = i_ids.at(i);
@@ -587,8 +600,8 @@ bool RunNewOrder(){
         ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     stock_expr_types.push_back(
         ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    stock_key_values.push_back(ValueFactory::GetTinyIntValue(item_id));
-    stock_key_values.push_back(ValueFactory::GetSmallIntValue(ol_w_id));
+    stock_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
+    stock_key_values.push_back(ValueFactory::GetIntegerValue(ol_w_id));
 
     auto stock_pkey_index = stock_table->GetIndexWithOid(
         stock_table_pkey_index_oid);
@@ -611,11 +624,12 @@ bool RunNewOrder(){
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
+      LOG_TRACE("getStockInfo failed");
       return false;
     }
 
     if (gsi_lists_values.size() != 1) {
-      PL_ASSERT(false);
+      assert(false);
     }
 
     int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
@@ -629,9 +643,7 @@ bool RunNewOrder(){
     Value s_data = gsi_lists_values[0][1];
 
     int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
-
     int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
-
     int s_remote_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][4]);
 
     if (ol_w_id != warehouse_id) {
@@ -681,25 +693,35 @@ bool RunNewOrder(){
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
+      LOG_TRACE("updateStock failed");
       return false;
     }
 
+    // the original benchmark requires check constraints.
+    // however, we ignored here.
+    // it does not influence the performance.
+    // if i_data.find(constants.ORIGINAL_STRING) != -1 and s_data.find(constants.ORIGINAL_STRING) != -1:
+    // brand_generic = 'B'
+    // else:
+    // brand_generic = 'G'
+
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
 
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
     order_line_tuple->SetValue(0, d_next_o_id, nullptr);
     // OL_D_ID
-    order_line_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+    order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
     // OL_W_ID
-    order_line_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+    order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
     // OL_NUMBER
     order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(i), nullptr);
     // OL_I_ID
     order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(item_id), nullptr);
     // OL_SUPPLY_W_ID
-    order_line_tuple->SetValue(5, ValueFactory::GetSmallIntValue(ol_w_id), nullptr);
+    order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_w_id), nullptr);
     // OL_DELIVERY_D
     order_line_tuple->SetValue(6, ValueFactory::GetTimestampValue(1) , nullptr);
     // OL_QUANTITY
@@ -717,20 +739,22 @@ bool RunNewOrder(){
   }
 
   // transaction passed execution.
-  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
+  assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
   auto result = txn_manager.CommitTransaction();
 
   if (result == Result::RESULT_SUCCESS) {
     LOG_TRACE("D_TAX: %s", gd_lists_values[0][0].GetInfo().c_str());
     LOG_TRACE("D_NEXT_O_ID: %s", gd_lists_values[0][1].GetInfo().c_str());
-
+    LOG_TRACE("transaction committed");
     return true;
   } else {
     PL_ASSERT(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
+              result == Result::RESULT_FAILURE);
+    LOG_TRACE("createOrderLine failed");
     return false;
   }
+
 }
 
 bool RunPayment(){
@@ -791,189 +815,6 @@ bool RunStockLevel() {
    */
   return true;
 }
-
-
-/////////////////////////////////////////////////////////
-// TABLES
-/////////////////////////////////////////////////////////
-
-/*
-   CREATE TABLE WAREHOUSE (
-   0 W_ID SMALLINT DEFAULT '0' NOT NULL,
-   1 W_NAME VARCHAR(16) DEFAULT NULL,
-   2 W_STREET_1 VARCHAR(32) DEFAULT NULL,
-   3 W_STREET_2 VARCHAR(32) DEFAULT NULL,
-   4 W_CITY VARCHAR(32) DEFAULT NULL,
-   5 W_STATE VARCHAR(2) DEFAULT NULL,
-   6 W_ZIP VARCHAR(9) DEFAULT NULL,
-   7 W_TAX FLOAT DEFAULT NULL,
-   8 W_YTD FLOAT DEFAULT NULL,
-   CONSTRAINT W_PK_ARRAY PRIMARY KEY (W_ID)
-   );
-
-   INDEXES:
-   0 W_ID
- */
-
-/*
-   CREATE TABLE DISTRICT (
-   0 D_ID TINYINT DEFAULT '0' NOT NULL,
-   1 D_W_ID SMALLINT DEFAULT '0' NOT NULL REFERENCES WAREHOUSE (W_ID),
-   2 D_NAME VARCHAR(16) DEFAULT NULL,
-   3 D_STREET_1 VARCHAR(32) DEFAULT NULL,
-   4 D_STREET_2 VARCHAR(32) DEFAULT NULL,
-   5 D_CITY VARCHAR(32) DEFAULT NULL,
-   6 D_STATE VARCHAR(2) DEFAULT NULL,
-   7 D_ZIP VARCHAR(9) DEFAULT NULL,
-   8 D_TAX FLOAT DEFAULT NULL,
-   9 D_YTD FLOAT DEFAULT NULL,
-   10 D_NEXT_O_ID INT DEFAULT NULL,
-   PRIMARY KEY (D_W_ID,D_ID)
-   );
-
-   INDEXES:
-   0, 1 D_ID, D_W_ID
- */
-
-/*
-   CREATE TABLE ITEM (
-   0 I_ID INTEGER DEFAULT '0' NOT NULL,
-   1 I_IM_ID INTEGER DEFAULT NULL,
-   2 I_NAME VARCHAR(32) DEFAULT NULL,
-   3 I_PRICE FLOAT DEFAULT NULL,
-   4 I_DATA VARCHAR(64) DEFAULT NULL,
-   CONSTRAINT I_PK_ARRAY PRIMARY KEY (I_ID)
-   );
-
-   INDEXES:
-   0 I_ID
- */
-/*
-     CREATE TABLE CUSTOMER (
-     0  C_ID INTEGER DEFAULT '0' NOT NULL,
-     1  C_D_ID TINYINT DEFAULT '0' NOT NULL,
-     2  C_W_ID SMALLINT DEFAULT '0' NOT NULL,
-     3  C_FIRST VARCHAR(32) DEFAULT NULL,
-     4  C_MIDDLE VARCHAR(2) DEFAULT NULL,
-     5  C_LAST VARCHAR(32) DEFAULT NULL,
-     6  C_STREET_1 VARCHAR(32) DEFAULT NULL,
-     7  C_STREET_2 VARCHAR(32) DEFAULT NULL,
-     8  C_CITY VARCHAR(32) DEFAULT NULL,
-     9  C_STATE VARCHAR(2) DEFAULT NULL,
-     10 C_ZIP VARCHAR(9) DEFAULT NULL,
-     11 C_PHONE VARCHAR(32) DEFAULT NULL,
-     12 C_SINCE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     13 C_CREDIT VARCHAR(2) DEFAULT NULL,
-     14 C_CREDIT_LIM FLOAT DEFAULT NULL,
-     15 C_DISCOUNT FLOAT DEFAULT NULL,
-     16 C_BALANCE FLOAT DEFAULT NULL,
-     17 C_YTD_PAYMENT FLOAT DEFAULT NULL,
-     18 C_PAYMENT_CNT INTEGER DEFAULT NULL,
-     19 C_DELIVERY_CNT INTEGER DEFAULT NULL,
-     20 C_DATA VARCHAR(500),
-     PRIMARY KEY (C_W_ID,C_D_ID,C_ID),
-     UNIQUE (C_W_ID,C_D_ID,C_LAST,C_FIRST),
-     CONSTRAINT C_FKEY_D FOREIGN KEY (C_D_ID, C_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
-     );
-     CREATE INDEX IDX_CUSTOMER ON CUSTOMER (C_W_ID,C_D_ID,C_LAST);
-
-     INDEXES:
-     0, 1, 2 C_ID, C_W_ID, C_D_ID
-     1, 2, 5 C_W_ID, C_D_ID, C_LAST
- */
-/*
-    CREATE TABLE HISTORY (
-    0 H_C_ID INTEGER DEFAULT NULL,
-    1 H_C_D_ID TINYINT DEFAULT NULL,
-    2 H_C_W_ID SMALLINT DEFAULT NULL,
-    3 H_D_ID TINYINT DEFAULT NULL,
-    4 H_W_ID SMALLINT DEFAULT '0' NOT NULL,
-    5 H_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    6 H_AMOUNT FLOAT DEFAULT NULL,
-    7 H_DATA VARCHAR(32) DEFAULT NULL,
-    CONSTRAINT H_FKEY_C FOREIGN KEY (H_C_ID, H_C_D_ID, H_C_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID),
-    CONSTRAINT H_FKEY_D FOREIGN KEY (H_D_ID, H_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
-    );
- */
-/*
-   CREATE TABLE STOCK (
-   0  S_I_ID INTEGER DEFAULT '0' NOT NULL REFERENCES ITEM (I_ID),
-   1  S_W_ID SMALLINT DEFAULT '0 ' NOT NULL REFERENCES WAREHOUSE (W_ID),
-   2  S_QUANTITY INTEGER DEFAULT '0' NOT NULL,
-   3  S_DIST_01 VARCHAR(32) DEFAULT NULL,
-   4  S_DIST_02 VARCHAR(32) DEFAULT NULL,
-   5  S_DIST_03 VARCHAR(32) DEFAULT NULL,
-   6  S_DIST_04 VARCHAR(32) DEFAULT NULL,
-   7  S_DIST_05 VARCHAR(32) DEFAULT NULL,
-   8  S_DIST_06 VARCHAR(32) DEFAULT NULL,
-   9  S_DIST_07 VARCHAR(32) DEFAULT NULL,
-   10 S_DIST_08 VARCHAR(32) DEFAULT NULL,
-   11 S_DIST_09 VARCHAR(32) DEFAULT NULL,
-   12 S_DIST_10 VARCHAR(32) DEFAULT NULL,
-   13 S_YTD INTEGER DEFAULT NULL,
-   14 S_ORDER_CNT INTEGER DEFAULT NULL,
-   15 S_REMOTE_CNT INTEGER DEFAULT NULL,
-   16 S_DATA VARCHAR(64) DEFAULT NULL,
-   PRIMARY KEY (S_W_ID,S_I_ID)
-   );
-
-   INDEXES:
-   0, 1 S_I_ID, S_W_ID
- */
-/*
-   CREATE TABLE ORDERS (
-   0 O_ID INTEGER DEFAULT '0' NOT NULL,
-   1 O_C_ID INTEGER DEFAULT NULL,
-   2 O_D_ID TINYINT DEFAULT '0' NOT NULL,
-   3 O_W_ID SMALLINT DEFAULT '0' NOT NULL,
-   4 O_ENTRY_D TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-   5 O_CARRIER_ID INTEGER DEFAULT NULL,
-   6 O_OL_CNT INTEGER DEFAULT NULL,
-   7 O_ALL_LOCAL INTEGER DEFAULT NULL,
-   PRIMARY KEY (O_W_ID,O_D_ID,O_ID),
-   UNIQUE (O_W_ID,O_D_ID,O_C_ID,O_ID),
-   CONSTRAINT O_FKEY_C FOREIGN KEY (O_C_ID, O_D_ID, O_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID)
-   );
-   CREATE INDEX IDX_ORDERS ON ORDERS (O_W_ID,O_D_ID,O_C_ID);
-
-   INDEXES:
-   0, 2, 3 O_ID, O_D_ID, O_W_ID
-   1, 2, 3 O_C_ID, O_D_ID, O_W_ID
- */
-/*
-   CREATE TABLE NEW_ORDER (
-   0 NO_O_ID INTEGER DEFAULT '0' NOT NULL,
-   1 NO_D_ID TINYINT DEFAULT '0' NOT NULL,
-   2 NO_W_ID SMALLINT DEFAULT '0' NOT NULL,
-   CONSTRAINT NO_PK_TREE PRIMARY KEY (NO_D_ID,NO_W_ID,NO_O_ID),
-   CONSTRAINT NO_FKEY_O FOREIGN KEY (NO_O_ID, NO_D_ID, NO_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID)
-   );
-
-   INDEXES:
-   0, 1, 2 NO_O_ID, NO_D_ID, NO_W_ID
- */
-/*
-   CREATE TABLE ORDER_LINE (
-   0 OL_O_ID INTEGER DEFAULT '0' NOT NULL,
-   1 OL_D_ID TINYINT DEFAULT '0' NOT NULL,
-   2 OL_W_ID SMALLINT DEFAULT '0' NOT NULL,
-   3 OL_NUMBER INTEGER DEFAULT '0' NOT NULL,
-   4 OL_I_ID INTEGER DEFAULT NULL,
-   5 OL_SUPPLY_W_ID SMALLINT DEFAULT NULL,
-   6 OL_DELIVERY_D TIMESTAMP DEFAULT NULL,
-   7 OL_QUANTITY INTEGER DEFAULT NULL,
-   8 OL_AMOUNT FLOAT DEFAULT NULL,
-   9 OL_DIST_INFO VARCHAR(32) DEFAULT NULL,
-   PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER),
-   CONSTRAINT OL_FKEY_O FOREIGN KEY (OL_O_ID, OL_D_ID, OL_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID),
-   CONSTRAINT OL_FKEY_S FOREIGN KEY (OL_I_ID, OL_SUPPLY_W_ID) REFERENCES STOCK (S_I_ID, S_W_ID)
-   );
-   CREATE INDEX IDX_ORDER_LINE_TREE ON ORDER_LINE (OL_W_ID,OL_D_ID,OL_O_ID);
-
-   INDEXES:
-   0, 1, 2, 3 OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
-   0, 1, 2 OL_O_ID, OL_D_ID, OL_W_ID
- */
 
 }  // namespace tpcc
 }  // namespace benchmark

@@ -155,7 +155,7 @@ void CreateWarehouseTable() {
   // Create schema first
   std::vector<catalog::Column> warehouse_columns;
 
-  auto w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "W_ID", is_inlined);
+  auto w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "W_ID", is_inlined);
   warehouse_columns.push_back(w_id_column);
   auto w_name_column = catalog::Column(VALUE_TYPE_VARCHAR, warehouse_name_length, "W_NAME", is_inlined);
   warehouse_columns.push_back(w_name_column);
@@ -225,9 +225,9 @@ void CreateDistrictTable() {
   // Create schema first
   std::vector<catalog::Column> district_columns;
 
-  auto d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "D_ID", is_inlined);
+  auto d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_ID", is_inlined);
   district_columns.push_back(d_id_column);
-  auto d_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "D_W_ID", is_inlined);
+  auto d_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_W_ID", is_inlined);
   district_columns.push_back(d_w_id_column);
   auto d_name_column = catalog::Column(VALUE_TYPE_VARCHAR, district_name_length, "D_NAME", is_inlined);
   district_columns.push_back(d_name_column);
@@ -371,9 +371,9 @@ void CreateCustomerTable() {
 
   auto c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_ID", is_inlined);
   customer_columns.push_back(c_id_column);
-  auto c_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C_D_ID", is_inlined);
+  auto c_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_D_ID", is_inlined);
   customer_columns.push_back(c_d_id_column);
-  auto c_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "C_W_ID", is_inlined);
+  auto c_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_W_ID", is_inlined);
   customer_columns.push_back(c_w_id_column);
   auto c_first_name_column = catalog::Column(VALUE_TYPE_VARCHAR, name_length, "C_FIRST", is_inlined);
   customer_columns.push_back(c_first_name_column);
@@ -479,13 +479,13 @@ void CreateHistoryTable() {
 
   auto h_c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_ID", is_inlined);
   history_columns.push_back(h_c_id_column);
-  auto h_c_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "H_C_D_ID", is_inlined);
+  auto h_c_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_D_ID", is_inlined);
   history_columns.push_back(h_c_d_id_column);
-  auto h_c_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "H_C_W_ID", is_inlined);
+  auto h_c_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_W_ID", is_inlined);
   history_columns.push_back(h_c_w_id_column);
-  auto h_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "H_D_ID", is_inlined);
+  auto h_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_D_ID", is_inlined);
   history_columns.push_back(h_d_id_column);
-  auto h_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "H_W_ID", is_inlined);
+  auto h_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_W_ID", is_inlined);
   history_columns.push_back(h_w_id_column);
   auto h_date_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "H_DATE", is_inlined);
   history_columns.push_back(h_date_column);
@@ -538,7 +538,7 @@ void CreateStockTable() {
 
   auto s_i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_I_ID", is_inlined);
   stock_columns.push_back(s_i_id_column);
-  auto s_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "S_W_ID", is_inlined);
+  auto s_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_W_ID", is_inlined);
   stock_columns.push_back(s_w_id_column);
   auto s_quantity_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_QUANTITY", is_inlined);
   stock_columns.push_back(s_quantity_column);
@@ -626,9 +626,9 @@ void CreateOrdersTable() {
   orders_columns.push_back(o_id_column);
   auto o_c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_C_ID", is_inlined);
   orders_columns.push_back(o_c_id_column);
-  auto o_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "O_D_ID", is_inlined);
+  auto o_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_D_ID", is_inlined);
   orders_columns.push_back(o_d_id_column);
-  auto o_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "O_W_ID", is_inlined);
+  auto o_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_W_ID", is_inlined);
   orders_columns.push_back(o_w_id_column);
   auto o_entry_d_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "O_ENTRY_D", is_inlined);
   orders_columns.push_back(o_entry_d_column);
@@ -700,9 +700,9 @@ void CreateNewOrderTable() {
 
   auto no_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_O_ID", is_inlined);
   new_order_columns.push_back(no_o_id_column);
-  auto no_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "NO_D_ID", is_inlined);
+  auto no_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_D_ID", is_inlined);
   new_order_columns.push_back(no_d_id_column);
-  auto no_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "NO_W_ID", is_inlined);
+  auto no_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_W_ID", is_inlined);
   new_order_columns.push_back(no_w_id_column);
 
   catalog::Schema *table_schema = new catalog::Schema(new_order_columns);
@@ -760,15 +760,15 @@ void CreateOrderLineTable() {
 
   auto ol_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_O_ID", is_inlined);
   order_line_columns.push_back(ol_o_id_column);
-  auto ol_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "OL_D_ID", is_inlined);
+  auto ol_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_D_ID", is_inlined);
   order_line_columns.push_back(ol_d_id_column);
-  auto ol_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "OL_W_ID", is_inlined);
+  auto ol_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_W_ID", is_inlined);
   order_line_columns.push_back(ol_w_id_column);
   auto ol_number_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_NUMBER", is_inlined);
   order_line_columns.push_back(ol_number_column);
   auto ol_i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_I_ID", is_inlined);
   order_line_columns.push_back(ol_i_id_column);
-  auto ol_supply_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "OL_SUPPLY_W_ID", is_inlined);
+  auto ol_supply_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_SUPPLY_W_ID", is_inlined);
   order_line_columns.push_back(ol_supply_w_id_column);
   auto ol_delivery_d_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "OL_DELIVERY_D", is_inlined);
   order_line_columns.push_back(ol_delivery_d_column);
@@ -1071,7 +1071,7 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
   // D_ID
   district_tuple->SetValue(0, ValueFactory::GetIntegerValue(district_id), nullptr);
   // D_W_ID
-  district_tuple->SetValue(1, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  district_tuple->SetValue(1, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // D_NAME
   auto d_name = GetRandomAlphaNumericString(district_name_length);
   district_tuple->SetValue(2, ValueFactory::GetStringValue(d_name), pool.get());
@@ -1113,9 +1113,9 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   // C_ID
   customer_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // C_D_ID
-  customer_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  customer_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // C_W_ID
-  customer_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  customer_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // C_FIRST, C_MIDDLE, C_LAST
   auto c_first = GetRandomAlphaNumericString(name_length);
 
@@ -1187,13 +1187,13 @@ std::unique_ptr<storage::Tuple> BuildHistoryTuple(const int customer_id,
   // H_C_ID
   history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // H_C_D_ID
-  history_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // H_C_W_ID
-  history_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // H_D_ID
-  history_tuple->SetValue(3, ValueFactory::GetTinyIntValue(history_district_id), nullptr);
+  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(history_district_id), nullptr);
   // H_W_ID
-  history_tuple->SetValue(4, ValueFactory::GetSmallIntValue(history_warehouse_id), nullptr);
+  history_tuple->SetValue(4, ValueFactory::GetIntegerValue(history_warehouse_id), nullptr);
   // H_DATE
   auto h_date = GetTimeStamp();
   history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date) , nullptr);
@@ -1222,7 +1222,7 @@ std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
   // O_D_ID
   orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
   // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // O_ENTRY_D
   auto o_entry_d = GetTimeStamp();
   orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(o_entry_d) , nullptr);
@@ -1251,7 +1251,7 @@ std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
   // NO_D_ID
   new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
 
   return new_order_tuple;
 }
@@ -1271,14 +1271,14 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(const int orders_id,
   // OL_D_ID
   order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // OL_W_ID
-  order_line_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // OL_NUMBER
   order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(order_line_id), nullptr);
   // OL_I_ID
   auto ol_i_id = GetRandomInteger(0, state.item_count);
   order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(ol_i_id), nullptr);
   // OL_SUPPLY_W_ID
-  order_line_tuple->SetValue(5, ValueFactory::GetSmallIntValue(ol_supply_w_id), nullptr);
+  order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_supply_w_id), nullptr);
   // OL_DELIVERY_D
   int64_t ol_delivery_d = GetTimeStamp();
   if(new_order == true) {
@@ -1309,7 +1309,7 @@ std::unique_ptr<storage::Tuple> BuildStockTuple(const int stock_id,
   // S_I_ID
   stock_tuple->SetValue(0, ValueFactory::GetIntegerValue(stock_id), nullptr);
   // S_W_ID
-  stock_tuple->SetValue(1, ValueFactory::GetSmallIntValue(s_w_id), nullptr);
+  stock_tuple->SetValue(1, ValueFactory::GetIntegerValue(s_w_id), nullptr);
   // S_QUANTITY
   auto s_quantity = GetRandomInteger(stock_min_quantity, stock_max_quantity);
   stock_tuple->SetValue(2, ValueFactory::GetIntegerValue(s_quantity), nullptr);
