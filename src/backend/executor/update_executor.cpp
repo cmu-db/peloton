@@ -49,8 +49,8 @@ bool UpdateExecutor::DInit() {
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   //project_info_ = node.GetProjectInfo();
-  //project_info_.reset(new planner::ProjectInfo(*(node.GetProjectInfo())));
-  project_info_ = new planner::ProjectInfo(*(node.GetProjectInfo()));
+  project_info_.reset(new planner::ProjectInfo(*(node.GetProjectInfo())));
+  //project_info_ = new planner::ProjectInfo(*(node.GetProjectInfo()));
 
   assert(target_table_);
   assert(project_info_);

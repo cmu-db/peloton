@@ -29,11 +29,11 @@ class UpdateExecutor : public AbstractExecutor {
   explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
-  virtual ~UpdateExecutor() {
-    if (project_info_) {
-      delete project_info_;
-    }
-  }
+  // virtual ~UpdateExecutor() {
+  //   if (project_info_) {
+  //     delete project_info_;
+  //   }
+  // }
   // for plan/executor caching.
   // for OLTP queries, most of the member variables in plan/executor can be reused.
   void SetContext(ExecutorContext *executor_context) {
@@ -53,8 +53,10 @@ class UpdateExecutor : public AbstractExecutor {
 
  private:
   storage::DataTable *target_table_ = nullptr;
-  //std::unique_ptr<planner::ProjectInfo> project_info_;
-  planner::ProjectInfo *project_info_ = nullptr;
+
+  std::unique_ptr<planner::ProjectInfo> project_info_;
+  
+  //planner::ProjectInfo *project_info_ = nullptr;
 
   //const planner::ProjectInfo *project_info_ = nullptr;
 };
