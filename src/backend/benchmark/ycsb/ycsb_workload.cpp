@@ -17,14 +17,11 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 #include <random>
 #include <cstddef>
 #include <limits>
-
-#undef NDEBUG
 
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
@@ -307,14 +304,14 @@ static bool EndTransaction(concurrency::Transaction *txn) {
       return true;
     } else {
       // transaction aborted or failed
-      assert(result == Result::RESULT_ABORTED ||
+      ALWAYS_ASSERT(result == Result::RESULT_ABORTED ||
              result == Result::RESULT_FAILURE);
       return false;
     }
   }
   // transaction aborted during execution.
   else {
-    assert(result == Result::RESULT_ABORTED ||
+    ALWAYS_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     result = txn_manager.AbortTransaction();
     return false;
@@ -412,7 +409,7 @@ bool RunRead(ZipfDistribution &zipf) {
   return txn_status;
 }
 
-bool RunInsert(__attribute__((unused)) ZipfDistribution &zipf,
+bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf,
                oid_t next_insert_key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

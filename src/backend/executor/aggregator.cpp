@@ -253,10 +253,9 @@ SortedAggregator::SortedAggregator(const planner::AggregatePlan *node,
       delegate_tuple_(&delegate_tuple_values_),  // Bind value vector to wrapper
                                                  // container tuple
       num_input_columns_(num_input_columns) {
-  aggregates = new Agg *[node->GetUniqueAggTerms().size()];
-  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
+  aggregates = new Agg *[node->GetUniqueAggTerms().size()]();
 
-  assert(delegate_tuple_values_.empty());
+  ALWAYS_ASSERT(delegate_tuple_values_.empty());
 }
 
 SortedAggregator::~SortedAggregator() {
@@ -276,7 +275,7 @@ bool SortedAggregator::Advance(AbstractTuple *next_tuple) {
     LOG_TRACE("Current group keys are empty!");
     start_new_agg = true;
   } else {  // Current group exists
-    assert(delegate_tuple_values_.size() == num_input_columns_);
+    ALWAYS_ASSERT(delegate_tuple_values_.size() == num_input_columns_);
     // Check whether crossed group boundary
     for (oid_t grpColOffset = 0; grpColOffset < node->GetGroupbyColIds().size();
          grpColOffset++) {
@@ -357,8 +356,7 @@ PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
                                  executor::ExecutorContext *econtext)
     : AbstractAggregator(node, output_table, econtext) {
   // allocate aggregators
-  aggregates = new Agg *[node->GetUniqueAggTerms().size()];
-  ::memset(aggregates, 0, sizeof(Agg *) * node->GetUniqueAggTerms().size());
+  aggregates = new Agg *[node->GetUniqueAggTerms().size()]();
 
   // initialize aggregators
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {

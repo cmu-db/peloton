@@ -22,11 +22,11 @@
 #include <iostream>
 #include <exception>
 #include <arpa/inet.h>
-#include <cassert>
 #include <arpa/inet.h>
 
 #include "backend/common/byte_array.h"
 #include "backend/common/exception.h"
+#include "backend/common/macros.h"
 
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -123,7 +123,7 @@ class SerializeInput {
       value = ntohl(value);
     }
     float retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -133,7 +133,7 @@ class SerializeInput {
       value = ntohll(value);
     }
     double retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -143,7 +143,7 @@ class SerializeInput {
     const char *result = current_;
     current_ += length;
     // TODO: Make this a non-optional check?
-    assert(current_ <= end_);
+    ALWAYS_ASSERT(current_ <= end_);
     return result;
   }
 
@@ -152,7 +152,7 @@ class SerializeInput {
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int32_t stringLength = ReadInt();
-    assert(stringLength >= 0);
+    ALWAYS_ASSERT(stringLength >= 0);
     return std::string(
         reinterpret_cast<const char *>(GetRawPointer(stringLength)),
         stringLength);
@@ -161,7 +161,7 @@ class SerializeInput {
   /** Copy a ByteArray from the buffer. */
   inline ByteArray ReadBinaryString() {
     int32_t stringLength = ReadInt();
-    assert(stringLength >= 0);
+    ALWAYS_ASSERT(stringLength >= 0);
     return ByteArray(
         reinterpret_cast<const char *>(GetRawPointer(stringLength)),
         stringLength);
@@ -169,7 +169,7 @@ class SerializeInput {
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void *destination, size_t length) {
-    ::memcpy(destination, GetRawPointer(length), length);
+    ::PL_MEMCPY(destination, GetRawPointer(length), length);
   };
 
   /** Write the buffer as hex bytes for debugging */
@@ -187,7 +187,7 @@ class SerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    ::memcpy(&value, current_, sizeof(value));
+    ::PL_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -212,7 +212,7 @@ class SerializeOutput {
    * Position. */
   void Initialize(void *buffer, size_t capacity) {
     buffer_ = reinterpret_cast<char *>(buffer);
-    assert(position_ <= capacity);
+    ALWAYS_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
   void SetPosition(size_t Position) { this->position_ = Position; }
@@ -246,18 +246,18 @@ class SerializeOutput {
 
   inline void WriteFloat(float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(htonl(Data));
   }
 
   inline void WriteDouble(double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(htonll(Data));
   }
 
   inline void WriteEnumInSingleByte(int value) {
-    assert(std::numeric_limits<int8_t>::min() <= value &&
+    ALWAYS_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
            value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -288,13 +288,13 @@ class SerializeOutput {
 
   inline size_t WriteFloatAt(size_t Position, float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     return WritePrimitiveAt(Position, htonl(Data));
   }
 
   inline size_t WriteDoubleAt(size_t Position, double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     return WritePrimitiveAt(Position, htonll(Data));
   }
 
@@ -308,9 +308,9 @@ class SerializeOutput {
     int32_t networkOrderLen = htonl(stringLength);
 
     char *current = buffer_ + position_;
-    memcpy(current, &networkOrderLen, sizeof(networkOrderLen));
+    PL_MEMCPY(current, &networkOrderLen, sizeof(networkOrderLen));
     current += sizeof(stringLength);
-    memcpy(current, value, length);
+    PL_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -324,13 +324,13 @@ class SerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
-    memcpy(buffer_ + position_, value, length);
+    PL_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     AssureExpand(length);
-    memset(buffer_ + position_, 0, length);
+    PL_MEMSET(buffer_ + position_, 0, length);
     position_ += length;
   }
 
@@ -348,15 +348,15 @@ class SerializeOutput {
     does not affect the current Write Position.  * @return offset +
     length */
   inline size_t WriteBytesAt(size_t offset, const void *value, size_t length) {
-    assert(offset + length <= position_);
-    memcpy(buffer_ + offset, value, length);
+    ALWAYS_ASSERT(offset + length <= position_);
+    PL_MEMCPY(buffer_ + offset, value, length);
     return offset + length;
   }
 
   static bool IsLittleEndian() {
     static const uint16_t s = 0x0001;
     uint8_t byte;
-    memcpy(&byte, &s, 1);
+    PL_MEMCPY(&byte, &s, 1);
     return byte != 0;
   }
 
@@ -374,7 +374,7 @@ class SerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
-    memcpy(buffer_ + position_, &value, sizeof(value));
+    PL_MEMCPY(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
@@ -388,7 +388,7 @@ class SerializeOutput {
     if (minimum_desired > capacity_) {
       Expand(minimum_desired);
     }
-    assert(capacity_ >= minimum_desired);
+    ALWAYS_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.
@@ -469,7 +469,7 @@ class ReferenceSerializeOutput : public SerializeOutput {
 
  protected:
   /** Reference output can't resize the buffer: Frowny-Face. */
-  virtual void Expand(__attribute__((unused)) size_t minimum_desired) {
+  virtual void Expand(UNUSED_ATTRIBUTE size_t minimum_desired) {
     throw Exception(
         "Output from SQL stmt overflowed output/network buffer of 10mb. "
         "Try a \"limit\" clause or a stronger predicate.");
@@ -531,7 +531,7 @@ class CopySerializeOutput : public SerializeOutput {
   /** Resize this buffer to contain twice the amount desired. */
   virtual void Expand(size_t minimum_desired) {
     size_t next_capacity = (bytes_.Length() + minimum_desired) * 2;
-    assert(next_capacity <
+    ALWAYS_ASSERT(next_capacity <
            static_cast<size_t>(std::numeric_limits<int>::max()));
     bytes_.CopyAndExpand(static_cast<int>(next_capacity));
     Initialize(bytes_.Data(), next_capacity);
@@ -580,14 +580,14 @@ class ExportSerializeInput {
   inline float ReadFloat() {
     int32_t value = ReadPrimitive<int32_t>();
     float retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
   inline double ReadDouble() {
     int64_t value = ReadPrimitive<int64_t>();
     double retval;
-    memcpy(&retval, &value, sizeof(retval));
+    PL_MEMCPY(&retval, &value, sizeof(retval));
     return retval;
   }
 
@@ -596,14 +596,14 @@ class ExportSerializeInput {
   const void *getRawPointer(size_t length) {
     const void *result = current_;
     current_ += length;
-    assert(current_ <= end_);
+    ALWAYS_ASSERT(current_ <= end_);
     return result;
   }
 
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int32_t stringLength = ReadInt();
-    assert(stringLength >= 0);
+    ALWAYS_ASSERT(stringLength >= 0);
     return std::string(
         reinterpret_cast<const char *>(getRawPointer(stringLength)),
         stringLength);
@@ -611,7 +611,7 @@ class ExportSerializeInput {
 
   /** Copy the next length bytes from the buffer to destination. */
   inline void ReadBytes(void *destination, size_t length) {
-    ::memcpy(destination, getRawPointer(length), length);
+    ::PL_MEMCPY(destination, getRawPointer(length), length);
   };
 
   /** Move the Read Position back by bytes. Warning: this method is
@@ -624,7 +624,7 @@ class ExportSerializeInput {
   template <typename T>
   T ReadPrimitive() {
     T value;
-    ::memcpy(&value, current_, sizeof(value));
+    ::PL_MEMCPY(&value, current_, sizeof(value));
     current_ += sizeof(value);
     return value;
   }
@@ -645,7 +645,7 @@ class ExportSerializeOutput {
   ExportSerializeOutput(void *buffer, size_t capacity)
       : buffer_(NULL), position_(0), capacity_(0) {
     buffer_ = reinterpret_cast<char *>(buffer);
-    assert(position_ <= capacity);
+    ALWAYS_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
 
@@ -679,18 +679,18 @@ class ExportSerializeOutput {
 
   inline void WriteFloat(float value) {
     int32_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
   inline void WriteDouble(double value) {
     int64_t Data;
-    memcpy(&Data, &value, sizeof(Data));
+    PL_MEMCPY(&Data, &value, sizeof(Data));
     WritePrimitive(Data);
   }
 
   inline void WriteEnumInSingleByte(int value) {
-    assert(std::numeric_limits<int8_t>::min() <= value &&
+    ALWAYS_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
            value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -702,9 +702,9 @@ class ExportSerializeOutput {
     AssureExpand(length + sizeof(stringLength));
 
     char *current = buffer_ + position_;
-    memcpy(current, &stringLength, sizeof(stringLength));
+    PL_MEMCPY(current, &stringLength, sizeof(stringLength));
     current += sizeof(stringLength);
-    memcpy(current, value, length);
+    PL_MEMCPY(current, value, length);
     position_ += sizeof(stringLength) + length;
   }
 
@@ -714,13 +714,13 @@ class ExportSerializeOutput {
 
   inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
-    memcpy(buffer_ + position_, value, length);
+    PL_MEMCPY(buffer_ + position_, value, length);
     position_ += length;
   }
 
   inline void WriteZeros(size_t length) {
     AssureExpand(length);
-    memset(buffer_ + position_, 0, length);
+    PL_MEMSET(buffer_ + position_, 0, length);
     position_ += length;
   }
 
@@ -741,7 +741,7 @@ class ExportSerializeOutput {
   template <typename T>
   void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
-    memcpy(buffer_ + position_, &value, sizeof(value));
+    PL_MEMCPY(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
@@ -755,7 +755,7 @@ class ExportSerializeOutput {
     if (minimum_desired > capacity_) {
       // TODO: die
     }
-    assert(capacity_ >= minimum_desired);
+    ALWAYS_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.

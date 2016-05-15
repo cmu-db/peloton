@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <queue>
 #include <atomic>
+
 #include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
@@ -123,7 +124,7 @@ class EagerWriteTxnManager : public TransactionManager {
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_--;
-          assert(running_txn_map_[wtid]->wait_for_counter_ >= 0);
+          ALWAYS_ASSERT(running_txn_map_[wtid]->wait_for_counter_ >= 0);
         }
       }
       running_txn_map_.erase(txn_id);
@@ -143,17 +144,7 @@ class EagerWriteTxnManager : public TransactionManager {
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
   // The txn_id could only be the cur_txn's txn id.
-  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
-
-    auto tile_group_header = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetHeader();
-
-    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
-
-    new ((reserved_area + LOCK_OFFSET)) Spinlock();
-    // Hack
-    *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
-  }
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id);
 
   TxnList *GetEwReaderList(
       const storage::TileGroupHeader *const tile_group_header,
@@ -220,7 +211,7 @@ class EagerWriteTxnManager : public TransactionManager {
 
     ReleaseEwReaderLock(tile_group_header, tuple_id);
     if (find == false) {
-      assert(false);
+      ALWAYS_ASSERT(false);
     }
   }
 

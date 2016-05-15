@@ -42,10 +42,10 @@ DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DInit() {
-  assert(children_.size() == 1);
-  assert(executor_context_);
+  ALWAYS_ASSERT(children_.size() == 1);
+  ALWAYS_ASSERT(executor_context_);
 
-  assert(target_table_ == nullptr);
+  ALWAYS_ASSERT(target_table_ == nullptr);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child ");
@@ -53,7 +53,7 @@ bool DeleteExecutor::DInit() {
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
-  assert(target_table_);
+  ALWAYS_ASSERT(target_table_);
 
   return true;
 }
@@ -65,7 +65,7 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
-  assert(target_table_);
+  ALWAYS_ASSERT(target_table_);
 
   // Retrieve next tile.
   if (!children_[0]->Execute()) {

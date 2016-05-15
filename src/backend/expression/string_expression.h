@@ -12,14 +12,12 @@
 
 #pragma once
 
-#include "backend/common/serializer.h"
+#include <string>
+#include <vector>
 
+#include "backend/common/serializer.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/string_functions.h"
-
-#include <string>
-#include <cassert>
-#include <vector>
 
 namespace peloton {
 namespace expression {
@@ -46,7 +44,7 @@ class SubstringExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     std::vector<Value> substr_args;
     substr_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     substr_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -84,7 +82,7 @@ class ConcatExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     std::vector<Value> concat_args;
     concat_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     concat_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -113,7 +111,7 @@ class AsciiExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_ASCII>();
   }
 
@@ -138,7 +136,7 @@ class OctetLengthExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     return m_left->Evaluate(tuple1, tuple2, context)
         .CallUnary<FUNC_OCTET_LENGTH>();
   }
@@ -165,7 +163,7 @@ class CharExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     return m_left->Evaluate(tuple1, tuple2, context).CallUnary<FUNC_CHAR>();
   }
 
@@ -191,7 +189,7 @@ class CharLengthExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     return m_left->Evaluate(tuple1, tuple2, context)
         .CallUnary<FUNC_CHAR_LENGTH>();
   }
@@ -219,8 +217,8 @@ class RepeatExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
-    assert(m_right);
+    ALWAYS_ASSERT(m_left);
+    ALWAYS_ASSERT(m_right);
     std::vector<Value> repeat_args;
     repeat_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     repeat_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -250,8 +248,8 @@ class LeftExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
-    assert(m_right);
+    ALWAYS_ASSERT(m_left);
+    ALWAYS_ASSERT(m_right);
     std::vector<Value> left_args;
     left_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     left_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -281,8 +279,8 @@ class RightExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
-    assert(m_right);
+    ALWAYS_ASSERT(m_left);
+    ALWAYS_ASSERT(m_right);
     std::vector<Value> right_args;
     right_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     right_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -404,8 +402,8 @@ class PositionExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
-    assert(m_right);
+    ALWAYS_ASSERT(m_left);
+    ALWAYS_ASSERT(m_right);
     std::vector<Value> position_args;
     position_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
     position_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
@@ -447,7 +445,7 @@ class OverlayExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     std::vector<Value> overlay_args;
     overlay_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     overlay_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));
@@ -488,7 +486,7 @@ class ReplaceExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(m_left);
+    ALWAYS_ASSERT(m_left);
     std::vector<Value> replace_args;
     replace_args.emplace_back(m_left->Evaluate(tuple1, tuple2, context));
     replace_args.emplace_back(m_right->Evaluate(tuple1, tuple2, context));

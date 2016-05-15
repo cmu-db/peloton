@@ -26,6 +26,8 @@
 #include "postgres/include/utils/pg_locale.h"
 #include "postgres/include/utils/ps_status.h"
 
+#include "backend/common/macros.h"
+
 const char *progname;
 
 static void startup_hacks(const char *progname);
@@ -178,7 +180,7 @@ int main(int argc, char *argv[]) {
  * is too brain-dead to provide a standard C execution environment
  * without help.  Avoid adding more here, if you can.
  */
-static void startup_hacks(const char *progname __attribute__((unused))) {
+static void startup_hacks(const char *progname UNUSED_ATTRIBUTE) {
   /*
    * Initialize dummy_spinlock, in case we are on a platform where we have
    * to use the fallback implementation of pg_memory_barrier().

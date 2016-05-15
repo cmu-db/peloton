@@ -31,8 +31,8 @@ class TupleAddressExpression : public AbstractExpression {
                            VALUE_TYPE_ADDRESS) {}
 
   inline Value Evaluate(const AbstractTuple *tuple1,
-                        __attribute__((unused)) const AbstractTuple *tuple2,
-                        __attribute__((unused))
+                        UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+                        UNUSED_ATTRIBUTE
                         executor::ExecutorContext *context) const {
     return ValueFactory::GetAddressValue(tuple1->GetData());
   }

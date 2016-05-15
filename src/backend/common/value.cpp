@@ -12,8 +12,8 @@
 
 #include "backend/common/value.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/stl_friendly_value.h"
-#include "backend/logging/log_manager.h"
 #include "backend/expression/function_expression.h"
 
 #include <cstdio>
@@ -28,7 +28,7 @@ namespace peloton {
  * with other Values.  Useful for declaring storage for an Value.
  */
 Value::Value() {
-  ::memset(m_data, 0, 16);
+  PL_MEMSET(m_data, 0, 16);
   SetValueType(VALUE_TYPE_INVALID);
   m_sourceInlined = true;
   m_cleanUp = true;
@@ -40,7 +40,7 @@ Value::Value() {
  * that will be stored in this instance
  */
 Value::Value(const ValueType type) {
-  ::memset(m_data, 0, 16);
+  PL_MEMSET(m_data, 0, 16);
   SetValueType(type);
   m_sourceInlined = true;
   m_cleanUp = true;
@@ -123,7 +123,7 @@ Value::Value(const Value &other) {
 }
 
 Value Value::Clone(const Value &src,
-                   VarlenPool *varlen_pool __attribute__((unused))) {
+                   VarlenPool *varlen_pool UNUSED_ATTRIBUTE) {
   Value rv = src;
 
   return rv;
@@ -178,9 +178,9 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool *pool) {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
   }
-  assert(m_valueType == VALUE_TYPE_VARCHAR ||
+  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
          m_valueType == VALUE_TYPE_VARBINARY);
-  assert(m_sourceInlined);
+  ALWAYS_ASSERT(m_sourceInlined);
 
   if (IsNull()) {
     *reinterpret_cast<void **>(m_data) = NULL;
@@ -201,7 +201,7 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool *pool) {
   Varlen *sref = Varlen::Create(length + SHORT_OBJECT_LENGTHLENGTH, pool);
   char *storage = sref->Get();
   // Copy length and value into the allocated out-of-line storage
-  ::memcpy(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
+  PL_MEMCPY(storage, source, length + SHORT_OBJECT_LENGTHLENGTH);
   SetObjectValue(sref);
   SetSourceInlined(false);
   SetCleanUp(false);
@@ -217,9 +217,9 @@ void Value::AllocateObjectFromOutlinedValue() {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
   }
-  assert(m_valueType == VALUE_TYPE_VARCHAR ||
+  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
          m_valueType == VALUE_TYPE_VARBINARY);
-  assert(!m_sourceInlined);
+  ALWAYS_ASSERT(!m_sourceInlined);
 
   if (IsNull()) {
     *reinterpret_cast<void **>(m_data) = NULL;
@@ -233,7 +233,7 @@ void Value::AllocateObjectFromOutlinedValue() {
   Varlen *sref = Varlen::Create(length, nullptr);
   char *storage = sref->Get();
   // Copy the value into the allocated out-of-line storage
-  ::memcpy(storage, source, length);
+  PL_MEMCPY(storage, source, length);
   SetObjectValue(sref);
   SetSourceInlined(false);
   SetCleanUp(false);
@@ -243,7 +243,7 @@ Value Value::GetAllocatedValue(ValueType type, const char *value, size_t size,
                                VarlenPool *varlen_pool) {
   Value retval(type);
   char *storage = retval.AllocateValueStorage((int32_t)size, varlen_pool);
-  ::memcpy(storage, value, (int32_t)size);
+  PL_MEMCPY(storage, value, (int32_t)size);
   retval.SetSourceInlined(false);
   retval.SetCleanUp(varlen_pool == nullptr);
   return retval;
@@ -389,7 +389,7 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       }
       break;
     case VALUE_TYPE_DECIMAL: {
-      ::memcpy(retval.m_data, storage, sizeof(TTInt));
+      PL_MEMCPY(retval.m_data, storage, sizeof(TTInt));
       break;
     }
     default:
@@ -559,7 +559,7 @@ const std::string Value::GetInfo() const {
  * Serialize sign and value using radix point (no exponent).
  */
 std::string Value::CreateStringFromDecimal() const {
-  assert(!IsNull());
+  ALWAYS_ASSERT(!IsNull());
   std::ostringstream buffer;
   TTInt scaledValue = GetDecimal();
   if (scaledValue.IsSign()) {
@@ -713,7 +713,7 @@ struct ValueList {
     return (int)(sizeof(ValueList) + length * sizeof(StlFriendlyValue));
   }
 
-  void *operator new(__attribute__((unused)) size_t size, char *placement) {
+  void *operator new(UNUSED_ATTRIBUTE size_t size, char *placement) {
     return placement;
   }
   void operator delete(void *, char *) {}
@@ -781,7 +781,7 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input,
   size_t length = input.ReadShort();
   int trueSize = ValueList::AllocationSizeForLength(length);
   char *storage = AllocateValueStorage(trueSize, varlen_pool);
-  ::memset(storage, 0, trueSize);
+  PL_MEMSET(storage, 0, trueSize);
   ValueList *nvset = new (storage) ValueList(length, elementType);
   nvset->DeserializeValues(input, varlen_pool);
   // TODO: An O(ln(length)) implementation vs. the current O(length)
@@ -793,16 +793,16 @@ void Value::DeserializeIntoANewValueList(SerializeInputBE &input,
 void Value::AllocateANewValueList(size_t length, ValueType elementType) {
   int trueSize = ValueList::AllocationSizeForLength(length);
   char *storage = AllocateValueStorage(trueSize, nullptr);
-  ::memset(storage, 0, trueSize);
+  PL_MEMSET(storage, 0, trueSize);
   new (storage) ValueList(length, elementType);
 }
 
 void Value::SetArrayElements(std::vector<Value> &args) const {
-  assert(m_valueType == VALUE_TYPE_ARRAY);
+  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
   // Assign each of the elements.
   size_t ii = args.size();
-  assert(ii == listOfValues->m_length);
+  ALWAYS_ASSERT(ii == listOfValues->m_length);
   while (ii--) {
     listOfValues->m_values[ii] = args[ii];
   }
@@ -813,16 +813,16 @@ void Value::SetArrayElements(std::vector<Value> &args) const {
 }
 
 int Value::ArrayLength() const {
-  assert(m_valueType == VALUE_TYPE_ARRAY);
+  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
   return static_cast<int>(listOfValues->m_length);
 }
 
 Value Value::ItemAtIndex(int index) const {
-  assert(m_valueType == VALUE_TYPE_ARRAY);
+  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
-  assert(index >= 0);
-  assert(index < (int)listOfValues->m_length);
+  ALWAYS_ASSERT(index >= 0);
+  ALWAYS_ASSERT(index < (int)listOfValues->m_length);
   return listOfValues->m_values[index];
 }
 
@@ -1071,7 +1071,7 @@ int64_t Value::parseTimestampString(const std::string &str) {
   return result;
 }
 
-int WarnIf(int condition, __attribute__((unused)) const char *message) {
+int WarnIf(int condition, UNUSED_ATTRIBUTE const char *message) {
   if (condition) {
     // LogManager::GetThreadLogger(LOGGERID_HOST)->log(LOGLEVEL_WARN, message);
   }

@@ -16,8 +16,8 @@
 #include <cstdint>
 #include <climits>
 #include <limits>
-#include <cassert>
 #include <bitset>
+#include <vector>
 
 #include "backend/common/platform.h"
 
@@ -876,6 +876,26 @@ ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
+
+namespace expression{
+class AbstractExpression;
+}
+
+/**
+ * @brief Generic specification of a projection target:
+ *        < DEST_column_id , expression >
+ */
+typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
+
+typedef std::vector<Target> TargetList;
+
+/**
+ * @brief Generic specification of a direct map:
+ *        < NEW_col_id , <tuple_index (left or right tuple), OLD_col_id>    >
+ */
+typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
+
+typedef std::vector<DirectMap> DirectMapList;
 
 //===--------------------------------------------------------------------===//
 // Asserts

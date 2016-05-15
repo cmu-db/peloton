@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/common/types.h"
+#include "backend/common/macros.h"
 #include "backend/gc/gc_manager.h"
 #include "backend/index/index.h"
 #include "backend/concurrency/transaction_manager_factory.h"
@@ -49,10 +50,11 @@ void GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id,
                                         INVALID_ITEMPOINTER);
-  std::memset(
+
+  // Reset the reserved field space in the header
+  PL_MEMSET(
       tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-      storage::TileGroupHeader::GetReserverdSize());
-  // TODO: set the unused 2 boolean value
+      storage::TileGroupHeader::GetReservedSize());
 }
 
 void GCManager::Running() {
@@ -67,7 +69,7 @@ void GCManager::Running() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
 
-    assert(max_cid != MAX_CID);
+    ALWAYS_ASSERT(max_cid != MAX_CID);
 
     int tuple_counter = 0;
 

@@ -65,7 +65,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformModifyTable(
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformInsert(
     const ModifyTablePlanState *mt_plan_state,
-    __attribute__((unused)) const TransformOptions options) {
+    UNUSED_ATTRIBUTE const TransformOptions options) {
   Oid database_oid = mt_plan_state->database_oid;
   Oid table_oid = mt_plan_state->table_oid;
 

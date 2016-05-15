@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/planner/nested_loop_join_plan.h"
 #include "backend/planner/projection_plan.h"
-#include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/expression/expression_util.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
 
 namespace peloton {
 namespace bridge {

@@ -34,9 +34,9 @@ class ConstantValueExpression : public AbstractExpression {
     this->value = ValueFactory::Clone(value, nullptr);
   }
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
-                 __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused))
+  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+                 UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+                 UNUSED_ATTRIBUTE
                  executor::ExecutorContext *context) const override {
     LOG_TRACE("returning constant value as Value:%s type:%d",
               value.GetInfo().c_str(), (int)this->m_type);

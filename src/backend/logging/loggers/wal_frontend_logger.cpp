@@ -31,6 +31,7 @@
 #include "backend/logging/loggers/wal_backend_logger.h"
 #include "backend/logging/checkpoint_tile_scanner.h"
 #include "backend/logging/logging_util.h"
+#include "backend/logging/checkpoint_manager.h"
 
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
@@ -165,7 +166,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     delimiter_rec.Serialize(output_buffer);
 
     if (!test_mode_) {
-      assert(cur_file_handle.fd != -1);
+      ALWAYS_ASSERT(cur_file_handle.fd != -1);
       if (cur_file_handle.fd != -1) {
         fwrite(delimiter_rec.GetMessage(), sizeof(char),
                delimiter_rec.GetMessageLength(), cur_file_handle.file);
@@ -334,12 +335,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
     if (!reached_end_of_log) {
       switch (record_type) {
         case LOGRECORD_TYPE_TRANSACTION_BEGIN:
-          assert(log_id != INVALID_CID);
+          ALWAYS_ASSERT(log_id != INVALID_CID);
           StartTransactionRecovery(log_id);
           break;
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-          assert(log_id != INVALID_CID);
+          ALWAYS_ASSERT(log_id != INVALID_CID);
 
           // Now directly commit this transaction. This is safe because we
           // reject commit ids that appear
@@ -398,7 +399,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
-      assert(target_table);
+      ALWAYS_ASSERT(target_table);
       LOG_TRACE("SeqScan: database oid %u table oid %u: %s", database_idx,
                table_idx, target_table->GetName().c_str());
 
@@ -412,7 +413,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
 bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
     storage::DataTable *target_table, cid_t start_cid) {
   auto schema = target_table->GetSchema();
-  assert(schema);
+  ALWAYS_ASSERT(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
@@ -466,8 +467,8 @@ bool WriteAheadFrontendLogger::RecoverTableIndexHelper(
 void WriteAheadFrontendLogger::InsertIndexEntry(storage::Tuple *tuple,
                                                 storage::DataTable *table,
                                                 ItemPointer target_location) {
-  assert(tuple);
-  assert(table);
+  ALWAYS_ASSERT(tuple);
+  ALWAYS_ASSERT(table);
   auto index_count = table->GetIndexCount();
   LOG_TRACE("Insert tuple (%u, %u) into %u indexes", target_location.block,
             target_location.offset, index_count);
@@ -541,14 +542,14 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        bool should_increase_tuple_count = true) {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
-  assert(db);
+  ALWAYS_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
   if (!table) {
     delete tuple;
     return;
   }
-  assert(table);
+  ALWAYS_ASSERT(table);
 
   // FIXME Handle the case when tile_group is not created yet.
   // table->GetTileGroupLock().WriteLock();
@@ -577,13 +578,13 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        oid_t table_id, const ItemPointer &delete_loc) {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
-  assert(db);
+  ALWAYS_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
   if (!table) {
     return;
   }
-  assert(table);
+  ALWAYS_ASSERT(table);
 
   // FIXME Handle the case when tile_group is not created yet.
   // acquiring the write lock will lead to deadlock
@@ -608,14 +609,14 @@ void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
                        const ItemPointer &insert_loc, storage::Tuple *tuple) {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(db_id);
-  assert(db);
+  ALWAYS_ASSERT(db);
 
   auto table = db->GetTableWithOid(table_id);
   if (!table) {
     delete tuple;
     return;
   }
-  assert(table);
+  ALWAYS_ASSERT(table);
 
   // FIXME Handle the case when tile_group is not created yet.
   // table->GetTileGroupLock().WriteLock();

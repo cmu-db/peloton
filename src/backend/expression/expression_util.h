@@ -22,15 +22,6 @@ namespace expression {
 
 class ExpressionUtil {
  public:
-  //===--------------------------------------------------------------------===//
-  // Expression Utilities
-  //===--------------------------------------------------------------------===//
-
-  // instantiate a typed expression
-  static AbstractExpression *ExpressionFactory(
-      PlannerDomValue obj, ExpressionType et, ValueType vt,
-      AbstractExpression *lc, AbstractExpression *rc,
-      const std::vector<AbstractExpression *> &arguments);
 
   //===--------------------------------------------------------------------===//
   // Factories
@@ -50,11 +41,6 @@ class ExpressionUtil {
                                              AbstractExpression *second,
                                              AbstractExpression *third,
                                              AbstractExpression *fourth);
-
-  static AbstractExpression *ComparisonFactory(PlannerDomValue obj,
-                                               ExpressionType et,
-                                               AbstractExpression *lc,
-                                               AbstractExpression *rc);
 
   static AbstractExpression *ComparisonFactory(ExpressionType c,
                                                AbstractExpression *lc,
@@ -93,32 +79,8 @@ class ExpressionUtil {
       ValueType vt, const std::vector<AbstractExpression *> &args);
   static AbstractExpression *ParameterValueFactory(ValueType type, int idx);
 
-  static AbstractExpression *ParameterValueFactory(PlannerDomValue obj,
-                                                   ValueType vt,
-                                                   ExpressionType et,
-                                                   AbstractExpression *lc,
-                                                   AbstractExpression *rc);
-
   static AbstractExpression *TupleValueFactory(ValueType type, int tuple_idx,
                                                int value_idx);
-
-  static AbstractExpression *TupleValueFactory(PlannerDomValue obj,
-                                               ValueType vt,
-                                               ExpressionType et,
-                                               AbstractExpression *lc,
-                                               AbstractExpression *rc);
-
-  static AbstractExpression *HashRangeFactory(PlannerDomValue obj);
-
-  static AbstractExpression *SubqueryFactory(
-      ExpressionType subquery_type, ValueType value_type, PlannerDomValue obj,
-      const std::vector<AbstractExpression *> &rgs);
-
-  static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
-                                                  ValueType vt,
-                                                  ExpressionType et,
-                                                  AbstractExpression *lc,
-                                                  AbstractExpression *rc);
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
