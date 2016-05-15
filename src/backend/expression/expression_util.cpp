@@ -45,8 +45,8 @@ namespace expression {
 
 AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
                                AbstractExpression *r) {
-  ALWAYS_ASSERT(l);
-  ALWAYS_ASSERT(r);
+  PL_ASSERT(l);
+  PL_ASSERT(r);
   switch (c) {
     case (EXPRESSION_TYPE_COMPARE_EQUAL):
       return new ComparisonExpression<CmpEq>(c, l, r);
@@ -78,8 +78,8 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
 
 template <typename L, typename R>
 AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
-  ALWAYS_ASSERT(l);
-  ALWAYS_ASSERT(r);
+  PL_ASSERT(l);
+  PL_ASSERT(r);
   switch (c) {
     case (EXPRESSION_TYPE_COMPARE_EQUAL):
       return new InlinedComparisonExpression<CmpEq, L, R>(c, l, r);
@@ -116,7 +116,7 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
 AbstractExpression *ExpressionUtil::ComparisonFactory(ExpressionType c,
                                                       AbstractExpression *lc,
                                                       AbstractExpression *rc) {
-  ALWAYS_ASSERT(lc);
+  PL_ASSERT(lc);
 
   TupleValueExpression *l_tuple = dynamic_cast<TupleValueExpression *>(lc);
 
@@ -470,7 +470,7 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
   if (expr->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE) {
     const TupleValueExpression *tve =
         dynamic_cast<const TupleValueExpression *>(expr);
-    ALWAYS_ASSERT(tve != NULL);
+    PL_ASSERT(tve != NULL);
     columnIds.push_back(tve->GetColumnId());
     return;
   }

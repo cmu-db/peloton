@@ -97,7 +97,7 @@ class GenericArray {
 
   /// corresponds to "bar = new byte[len];" in Java
   void ResetAndExpand(int newLength) {
-    ALWAYS_ASSERT(newLength >= 0);
+    PL_ASSERT(newLength >= 0);
     array_data = boost::shared_array<T>(new T[newLength]);
     PL_MEMSET(array_data.get(), 0, newLength * sizeof(T));
     array_length = newLength;
@@ -106,8 +106,8 @@ class GenericArray {
   /// corresponds to "tmp = new byte[newlen]; System.arraycopy(bar to tmp); bar
   /// = tmp;" in Java
   void CopyAndExpand(int newLength) {
-    ALWAYS_ASSERT(newLength >= 0);
-    ALWAYS_ASSERT(newLength > array_length);
+    PL_ASSERT(newLength >= 0);
+    PL_ASSERT(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
     PL_MEMSET(newData.get(), 0,
              newLength * sizeof(T));  /// makes valgrind happy.
@@ -123,16 +123,16 @@ class GenericArray {
 
   /// helper functions for convenience.
   void Assign(const T *assignedData, int offset, int assignedLength) {
-    ALWAYS_ASSERT(!IsNull());
-    ALWAYS_ASSERT(array_length >= offset + assignedLength);
-    ALWAYS_ASSERT(offset >= 0);
+    PL_ASSERT(!IsNull());
+    PL_ASSERT(array_length >= offset + assignedLength);
+    PL_ASSERT(offset >= 0);
     PL_MEMCPY(array_data.get() + offset, assignedData,
              assignedLength * sizeof(T));
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {
-    ALWAYS_ASSERT(!IsNull());
-    ALWAYS_ASSERT(!tail.IsNull());
+    PL_ASSERT(!IsNull());
+    PL_ASSERT(!tail.IsNull());
     GenericArray<T> concated(this->array_length + tail.array_length);
     concated.Assign(this->array_data.get(), 0, this->array_length);
     concated.Assign(tail.array_data.get(), this->array_length,
@@ -141,14 +141,14 @@ class GenericArray {
   };
 
   const T &operator[](int index) const {
-    ALWAYS_ASSERT(!IsNull());
-    ALWAYS_ASSERT(array_length > index);
+    PL_ASSERT(!IsNull());
+    PL_ASSERT(array_length > index);
     return array_data.get()[index];
   };
 
   T &operator[](int index) {
-    ALWAYS_ASSERT(!IsNull());
-    ALWAYS_ASSERT(array_length > index);
+    PL_ASSERT(!IsNull());
+    PL_ASSERT(array_length > index);
     return array_data.get()[index];
   };
 

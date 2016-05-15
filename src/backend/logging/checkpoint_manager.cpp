@@ -65,7 +65,7 @@ void CheckpointManager::StartRecoveryMode() {
 }
 
 Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {
-  ALWAYS_ASSERT(idx < num_checkpointers_);
+  PL_ASSERT(idx < num_checkpointers_);
   return checkpointers_[idx].get();
 }
 

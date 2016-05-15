@@ -39,7 +39,7 @@ std::vector<Value> PlanTransformer::BuildParams(
                                              postgres_param->ptype);
     }
 
-    ALWAYS_ASSERT(params.size() > 0);
+    PL_ASSERT(params.size() > 0);
   }
 
   LOG_TRACE("Built %lu params ", params.size());
@@ -100,7 +100,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
       project_info.get()) {  // empty predicate, or ignore projInfo, pass thru
     LOG_TRACE("No projections (all pass through)");
 
-    ALWAYS_ASSERT(out_col_list.size() == 0);
+    PL_ASSERT(out_col_list.size() == 0);
   } else if (project_info->GetTargetList().size() >
              0) {  // Have non-trivial projection, add a plan node
     LOG_TRACE(
@@ -120,8 +120,8 @@ void PlanTransformer::GetGenericInfoFromScanState(
   }
 
   else {  // Pure direct map
-    ALWAYS_ASSERT(project_info->GetTargetList().size() == 0);
-    ALWAYS_ASSERT(project_info->GetDirectMapList().size() > 0);
+    PL_ASSERT(project_info->GetTargetList().size() == 0);
+    PL_ASSERT(project_info->GetDirectMapList().size() > 0);
 
     LOG_TRACE("Pure direct map projection.");
 
@@ -129,7 +129,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
         BuildColumnListFromDirectMap(project_info->GetDirectMapList());
     out_col_list = std::move(column_ids);
 
-    // ALWAYS_ASSERT(out_col_list.size() == out_column_count);
+    // PL_ASSERT(out_col_list.size() == out_column_count);
     // TODO: sometimes, these two do not equal due to junk attributes.
   }
 }
@@ -199,12 +199,12 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     oid_t tuple_idx = lfirst_int(item);
     tuple_idxs.push_back(tuple_idx);
   }
-  ALWAYS_ASSERT(col_count == tuple_idxs.size());
+  PL_ASSERT(col_count == tuple_idxs.size());
   foreach (item, pg_pi->in_col_ids) {
     oid_t in_col_id = lfirst_int(item);
     in_col_ids.push_back(in_col_id);
   }
-  ALWAYS_ASSERT(col_count == in_col_ids.size());
+  PL_ASSERT(col_count == in_col_ids.size());
 
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     auto out_col_id = out_col_ids[col_itr];
@@ -291,13 +291,13 @@ const std::vector<oid_t> PlanTransformer::BuildColumnListFromDirectMap(
               return a.first < b.first;
             });
 
-  ALWAYS_ASSERT(dmlist.front().first == 0);
-  ALWAYS_ASSERT(dmlist.back().first == dmlist.size() - 1);
+  PL_ASSERT(dmlist.front().first == 0);
+  PL_ASSERT(dmlist.back().first == dmlist.size() - 1);
 
   std::vector<oid_t> rv;
 
   for (auto map : dmlist) {
-    ALWAYS_ASSERT(map.second.first == 0);
+    PL_ASSERT(map.second.first == 0);
     rv.emplace_back(map.second.second);
   }
 
@@ -364,7 +364,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfoFromTLSkipJunk(
       oid_t output_col_id = static_cast<oid_t>(tle->resno - 1);
       auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
-      ALWAYS_ASSERT(peloton_expr);
+      PL_ASSERT(peloton_expr);
 
       target_list.emplace_back(output_col_id, peloton_expr);
     }

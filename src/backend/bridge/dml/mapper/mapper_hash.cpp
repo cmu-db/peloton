@@ -34,7 +34,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformHash(
   AbstractPlanState *subplan_state = outerAbstractPlanState(hash_state);
   std::unique_ptr<planner::AbstractPlan> plan_node(
       new planner::HashPlan(hashkeys));
-  ALWAYS_ASSERT(subplan_state != nullptr);
+  PL_ASSERT(subplan_state != nullptr);
   plan_node->AddChild(TransformPlan(subplan_state));
 
   return plan_node;

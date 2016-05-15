@@ -141,7 +141,7 @@ class SerializeInput {
     const char *result = current_;
     current_ += length;
     // TODO: Make this a non-optional check?
-    ALWAYS_ASSERT(current_ <= end_);
+    PL_ASSERT(current_ <= end_);
     return result;
   }
 
@@ -150,7 +150,7 @@ class SerializeInput {
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int32_t stringLength = ReadInt();
-    ALWAYS_ASSERT(stringLength >= 0);
+    PL_ASSERT(stringLength >= 0);
     return std::string(
         reinterpret_cast<const char *>(GetRawPointer(stringLength)),
         stringLength);
@@ -159,7 +159,7 @@ class SerializeInput {
   /** Copy a ByteArray from the buffer. */
   inline ByteArray ReadBinaryString() {
     int32_t stringLength = ReadInt();
-    ALWAYS_ASSERT(stringLength >= 0);
+    PL_ASSERT(stringLength >= 0);
     return ByteArray(
         reinterpret_cast<const char *>(GetRawPointer(stringLength)),
         stringLength);
@@ -210,7 +210,7 @@ class SerializeOutput {
    * Position. */
   void Initialize(void *buffer, size_t capacity) {
     buffer_ = reinterpret_cast<char *>(buffer);
-    ALWAYS_ASSERT(position_ <= capacity);
+    PL_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
   void SetPosition(size_t Position) { this->position_ = Position; }
@@ -255,7 +255,7 @@ class SerializeOutput {
   }
 
   inline void WriteEnumInSingleByte(int value) {
-    ALWAYS_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
+    PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
            value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -346,7 +346,7 @@ class SerializeOutput {
     does not affect the current Write Position.  * @return offset +
     length */
   inline size_t WriteBytesAt(size_t offset, const void *value, size_t length) {
-    ALWAYS_ASSERT(offset + length <= position_);
+    PL_ASSERT(offset + length <= position_);
     PL_MEMCPY(buffer_ + offset, value, length);
     return offset + length;
   }
@@ -386,7 +386,7 @@ class SerializeOutput {
     if (minimum_desired > capacity_) {
       Expand(minimum_desired);
     }
-    ALWAYS_ASSERT(capacity_ >= minimum_desired);
+    PL_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.
@@ -529,7 +529,7 @@ class CopySerializeOutput : public SerializeOutput {
   /** Resize this buffer to contain twice the amount desired. */
   virtual void Expand(size_t minimum_desired) {
     size_t next_capacity = (bytes_.Length() + minimum_desired) * 2;
-    ALWAYS_ASSERT(next_capacity <
+    PL_ASSERT(next_capacity <
            static_cast<size_t>(std::numeric_limits<int>::max()));
     bytes_.CopyAndExpand(static_cast<int>(next_capacity));
     Initialize(bytes_.Data(), next_capacity);
@@ -594,14 +594,14 @@ class ExportSerializeInput {
   const void *getRawPointer(size_t length) {
     const void *result = current_;
     current_ += length;
-    ALWAYS_ASSERT(current_ <= end_);
+    PL_ASSERT(current_ <= end_);
     return result;
   }
 
   /** Copy a string from the buffer. */
   inline std::string ReadTextString() {
     int32_t stringLength = ReadInt();
-    ALWAYS_ASSERT(stringLength >= 0);
+    PL_ASSERT(stringLength >= 0);
     return std::string(
         reinterpret_cast<const char *>(getRawPointer(stringLength)),
         stringLength);
@@ -643,7 +643,7 @@ class ExportSerializeOutput {
   ExportSerializeOutput(void *buffer, size_t capacity)
       : buffer_(NULL), position_(0), capacity_(0) {
     buffer_ = reinterpret_cast<char *>(buffer);
-    ALWAYS_ASSERT(position_ <= capacity);
+    PL_ASSERT(position_ <= capacity);
     capacity_ = capacity;
   }
 
@@ -688,7 +688,7 @@ class ExportSerializeOutput {
   }
 
   inline void WriteEnumInSingleByte(int value) {
-    ALWAYS_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
+    PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
            value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
@@ -753,7 +753,7 @@ class ExportSerializeOutput {
     if (minimum_desired > capacity_) {
       // TODO: die
     }
-    ALWAYS_ASSERT(capacity_ >= minimum_desired);
+    PL_ASSERT(capacity_ >= minimum_desired);
   }
 
   // Beginning of the buffer.

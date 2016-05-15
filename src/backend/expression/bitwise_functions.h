@@ -91,7 +91,7 @@ inline Value Value::CallUnary<FUNC_VOLT_BIN>() const {
 
 template <>
 inline Value Value::Call<FUNC_BITAND>(const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const Value &lval = arguments[0];
   const Value &rval = arguments[1];
   if (lval.GetValueType() != VALUE_TYPE_BIGINT ||
@@ -117,7 +117,7 @@ inline Value Value::Call<FUNC_BITAND>(const std::vector<Value> &arguments) {
 
 template <>
 inline Value Value::Call<FUNC_BITOR>(const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const Value &lval = arguments[0];
   const Value &rval = arguments[1];
   if (lval.GetValueType() != VALUE_TYPE_BIGINT ||
@@ -143,7 +143,7 @@ inline Value Value::Call<FUNC_BITOR>(const std::vector<Value> &arguments) {
 
 template <>
 inline Value Value::Call<FUNC_BITXOR>(const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const Value &lval = arguments[0];
   const Value &rval = arguments[1];
   if (lval.GetValueType() != VALUE_TYPE_BIGINT ||
@@ -170,7 +170,7 @@ inline Value Value::Call<FUNC_BITXOR>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_LEFT>(
     const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const Value &lval = arguments[0];
   if (lval.GetValueType() != VALUE_TYPE_BIGINT) {
     throw Exception(
@@ -207,7 +207,7 @@ inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_LEFT>(
 template <>
 inline Value Value::Call<FUNC_VOLT_BIT_SHIFT_RIGHT>(
     const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
   const Value &lval = arguments[0];
   if (lval.GetValueType() != VALUE_TYPE_BIGINT) {
     throw Exception(

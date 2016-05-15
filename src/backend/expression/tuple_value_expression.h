@@ -38,7 +38,7 @@ class TupleValueExpression : public AbstractExpression {
                          UNUSED_ATTRIBUTE
                          executor::ExecutorContext *context) const override {
     if (tuple_idx_ == 0) {
-      ALWAYS_ASSERT(tuple1);
+      PL_ASSERT(tuple1);
       if (!tuple1) {
         throw Exception(
             "TupleValueExpression::"
@@ -47,7 +47,7 @@ class TupleValueExpression : public AbstractExpression {
       }
       return tuple1->GetValue(value_idx_);
     } else {
-      ALWAYS_ASSERT(tuple2);
+      PL_ASSERT(tuple2);
       if (!tuple2) {
         throw Exception(
             "TupleValueExpression::"

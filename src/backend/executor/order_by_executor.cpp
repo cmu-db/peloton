@@ -34,7 +34,7 @@ OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
 OrderByExecutor::~OrderByExecutor() {}
 
 bool OrderByExecutor::DInit() {
-  ALWAYS_ASSERT(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   sort_done_ = false;
   num_tuples_returned_ = 0;
@@ -51,9 +51,9 @@ bool OrderByExecutor::DExecute() {
     return false;
   }
 
-  ALWAYS_ASSERT(sort_done_);
-  ALWAYS_ASSERT(input_schema_.get());
-  ALWAYS_ASSERT(input_tiles_.size() > 0);
+  PL_ASSERT(sort_done_);
+  PL_ASSERT(input_schema_.get());
+  PL_ASSERT(input_tiles_.size() > 0);
 
   // Returned tiles must be newly created physical tiles,
   // which have the same physical schema as input tiles.
@@ -80,22 +80,22 @@ bool OrderByExecutor::DExecute() {
   // Create an owner wrapper of this physical tile
   std::vector<std::shared_ptr<storage::Tile>> singleton({ptile});
   std::unique_ptr<LogicalTile> ltile(LogicalTileFactory::WrapTiles(singleton));
-  ALWAYS_ASSERT(ltile->GetTupleCount() == tile_size);
+  PL_ASSERT(ltile->GetTupleCount() == tile_size);
 
   SetOutput(ltile.release());
 
   num_tuples_returned_ += tile_size;
 
-  ALWAYS_ASSERT(num_tuples_returned_ <= sort_buffer_.size());
+  PL_ASSERT(num_tuples_returned_ <= sort_buffer_.size());
 
   return true;
 }
 
 bool OrderByExecutor::DoSort() {
-  ALWAYS_ASSERT(children_.size() == 1);
-  ALWAYS_ASSERT(children_[0] != nullptr);
-  ALWAYS_ASSERT(!sort_done_);
-  ALWAYS_ASSERT(executor_context_ != nullptr);
+  PL_ASSERT(children_.size() == 1);
+  PL_ASSERT(children_[0] != nullptr);
+  PL_ASSERT(!sort_done_);
+  PL_ASSERT(executor_context_ != nullptr);
 
   // Extract all data from child
   while (children_[0]->Execute()) {
@@ -141,7 +141,7 @@ bool OrderByExecutor::DoSort() {
     }
   }
 
-  ALWAYS_ASSERT(count == sort_buffer_.size());
+  PL_ASSERT(count == sort_buffer_.size());
 
   // Prepare the compare function
   // Note: This is a less-than comparer, NOT an equality comparer.

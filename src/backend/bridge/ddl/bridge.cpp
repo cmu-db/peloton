@@ -290,7 +290,7 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
-  ALWAYS_ASSERT(relation_id);
+  PL_ASSERT(relation_id);
 
   Relation pg_class_rel;
   HeapTuple tuple;

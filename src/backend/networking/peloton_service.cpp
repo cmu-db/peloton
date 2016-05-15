@@ -407,12 +407,11 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
   else {
     // Process the response
     LOG_TRACE("proecess the Query response");
-    ALWAYS_ASSERT(response);
+    PL_ASSERT(response);
 
-    int tile_count = response->tile_count();
-
-    int result_size = response->result_size();
-    ALWAYS_ASSERT(result_size == tile_count);
+    UNUSED_ATTRIBUTE int tile_count = response->tile_count();
+    UNUSED_ATTRIBUTE int result_size = response->result_size();
+    PL_ASSERT(result_size == tile_count);
 
     for (int idx = 0; idx < result_size; idx++) {
       // Get the tile bytes

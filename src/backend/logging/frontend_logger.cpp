@@ -241,7 +241,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       debug_flag = 4;
     }
     // max_collected_commit_id should never decrease
-    // LOG_TRACE("Before ALWAYS_ASSERT");
+    // LOG_TRACE("Before PL_ASSERT");
     if (max_possible_commit_id < max_collected_commit_id) {
       LOG_TRACE(
           "Will abort! max_possible_commit_id: %d, max_collected_commit_id: %d",
@@ -249,7 +249,7 @@ void FrontendLogger::CollectLogRecordsFromBackendLoggers() {
       LOG_TRACE("Had entered Case %d", (int)debug_flag);
       (void)debug_flag;
     }
-    ALWAYS_ASSERT(max_possible_commit_id >= max_collected_commit_id);
+    PL_ASSERT(max_possible_commit_id >= max_collected_commit_id);
     if (max_committed_cid > max_seen_commit_id) {
       max_seen_commit_id = max_committed_cid;
     }

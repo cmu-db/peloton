@@ -98,7 +98,7 @@ void SimpleCheckpoint::DoCheckpoint() {
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
       // Get the target table
       storage::DataTable *target_table = database->GetTable(table_idx);
-      ALWAYS_ASSERT(target_table);
+      PL_ASSERT(target_table);
       LOG_TRACE("SeqScan: database idx %u table idx %u: %s", database_idx,
                table_idx, target_table->GetName().c_str());
       Scan(target_table, database_oid);
@@ -133,7 +133,7 @@ cid_t SimpleCheckpoint::DoRecovery() {
   }
 
   auto size = LoggingUtil::GetLogFileSize(file_handle_);
-  ALWAYS_ASSERT(size > 0);
+  PL_ASSERT(size > 0);
   file_handle_.size = size;
 
   bool should_stop = false;
@@ -219,7 +219,7 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
 void SimpleCheckpoint::Scan(storage::DataTable *target_table,
                             oid_t database_oid) {
   auto schema = target_table->GetSchema();
-  ALWAYS_ASSERT(schema);
+  PL_ASSERT(schema);
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());
   std::iota(column_ids.begin(), column_ids.end(), 0);
@@ -265,7 +265,7 @@ void SimpleCheckpoint::Scan(storage::DataTable *target_table,
         std::shared_ptr<LogRecord> record(logger_->GetTupleRecord(
             LOGRECORD_TYPE_TUPLE_INSERT, INITIAL_TXN_ID, target_table->GetOid(),
             database_oid, location, INVALID_ITEMPOINTER, tuple.get()));
-        ALWAYS_ASSERT(record);
+        PL_ASSERT(record);
         CopySerializeOutput output_buffer;
         record->Serialize(output_buffer);
         LOG_TRACE("Insert a new record for checkpoint (%u, %u)", tile_group_id,
@@ -295,7 +295,7 @@ void SimpleCheckpoint::CreateFile() {
   bool success =
       LoggingUtil::InitFileHandle(file_name.c_str(), file_handle_, "ab");
   if (!success) {
-    ALWAYS_ASSERT(false);
+    PL_ASSERT(false);
     return;
   }
   LOG_TRACE("Created a new checkpoint file: %s", file_name.c_str());
@@ -304,14 +304,14 @@ void SimpleCheckpoint::CreateFile() {
 // Only called when checkpoint has actual contents
 void SimpleCheckpoint::Persist() {
   if (disable_file_access) return;
-  ALWAYS_ASSERT(file_handle_.file);
-  ALWAYS_ASSERT(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
+  PL_ASSERT(file_handle_.file);
+  PL_ASSERT(file_handle_.fd != INVALID_FILE_DESCRIPTOR);
 
   LOG_TRACE("Persisting %lu checkpoint entries", records_.size());
   // write all the record in the queue and free them
   for (auto record : records_) {
-    ALWAYS_ASSERT(record);
-    ALWAYS_ASSERT(record->GetMessageLength() > 0);
+    PL_ASSERT(record);
+    PL_ASSERT(record->GetMessageLength() > 0);
     fwrite(record->GetMessage(), sizeof(char), record->GetMessageLength(),
            file_handle_.file);
     record.reset();

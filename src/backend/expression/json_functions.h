@@ -297,7 +297,7 @@ class JsonDocument {
   }
 
   bool readChar(char &c) {
-    ALWAYS_ASSERT(m_head != NULL && m_tail != NULL);
+    PL_ASSERT(m_head != NULL && m_tail != NULL);
     if (m_head == m_tail) {
       return false;
     }
@@ -326,7 +326,7 @@ class JsonDocument {
 /** implement the 2-argument SQL FIELD function */
 template <>
 inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
 
   const Value &docNVal = arguments[0];
   const Value &pathNVal = arguments[1];
@@ -364,7 +364,7 @@ inline Value Value::Call<FUNC_VOLT_FIELD>(const std::vector<Value> &arguments) {
 template <>
 inline Value Value::Call<FUNC_VOLT_ARRAY_ELEMENT>(
     const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 2);
+  PL_ASSERT(arguments.size() == 2);
 
   const Value &docNVal = arguments[0];
   if (docNVal.IsNull()) {
@@ -472,7 +472,7 @@ inline Value Value::CallUnary<FUNC_VOLT_ARRAY_LENGTH>() const {
 template <>
 inline Value Value::Call<FUNC_VOLT_SET_FIELD>(
     const std::vector<Value> &arguments) {
-  ALWAYS_ASSERT(arguments.size() == 3);
+  PL_ASSERT(arguments.size() == 3);
 
   const Value &docNVal = arguments[0];
   const Value &pathNVal = arguments[1];

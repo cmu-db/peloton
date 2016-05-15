@@ -304,14 +304,14 @@ static bool EndTransaction(concurrency::Transaction *txn) {
       return true;
     } else {
       // transaction aborted or failed
-      ALWAYS_ASSERT(result == Result::RESULT_ABORTED ||
+      PL_ASSERT(result == Result::RESULT_ABORTED ||
              result == Result::RESULT_FAILURE);
       return false;
     }
   }
   // transaction aborted during execution.
   else {
-    ALWAYS_ASSERT(result == Result::RESULT_ABORTED ||
+    PL_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     result = txn_manager.AbortTransaction();
     return false;

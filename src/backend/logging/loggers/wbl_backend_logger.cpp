@@ -97,7 +97,7 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     }
 
     default: {
-      ALWAYS_ASSERT(false);
+      PL_ASSERT(false);
       break;
     }
   }

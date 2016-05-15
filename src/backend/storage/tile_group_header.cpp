@@ -41,7 +41,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   auto &storage_manager = storage::StorageManager::GetInstance();
   data = reinterpret_cast<char *>(
       storage_manager.Allocate(backend_type, header_size));
-  ALWAYS_ASSERT(data != nullptr);
+  PL_ASSERT(data != nullptr);
 
   // zero out the data
   PL_MEMSET(data, 0, header_size);
@@ -219,7 +219,7 @@ oid_t TileGroupHeader::GetActiveTupleCount() {
        tuple_slot_id++) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     if (tuple_txn_id != INVALID_TXN_ID) {
-      ALWAYS_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+      PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
       active_tuple_slots++;
     }
   }

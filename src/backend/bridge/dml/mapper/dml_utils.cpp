@@ -220,8 +220,8 @@ ModifyTablePlanState *DMLUtils::PrepareModifyTableState(
 void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Should be only one sub plan which is a Result
-  ALWAYS_ASSERT(mt_plan_state->mt_nplans == 1);
-  ALWAYS_ASSERT(mt_plan_state->mt_plans != nullptr);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_plans != nullptr);
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
@@ -232,7 +232,7 @@ void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
 
     // We only handle single-constant-tuple for now,
     // i.e., ResultState should have no children/sub plans
-    ALWAYS_ASSERT(outerPlanState(result_ps) == nullptr);
+    PL_ASSERT(outerPlanState(result_ps) == nullptr);
 
     auto child_planstate =
         PrepareResultState(reinterpret_cast<ResultState *>(sub_planstate));
@@ -251,12 +251,12 @@ void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
 void DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Should be only one sub plan which is a SeqScan
-  ALWAYS_ASSERT(mt_plan_state->mt_nplans == 1);
-  ALWAYS_ASSERT(mt_plan_state->mt_plans != nullptr);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_plans != nullptr);
 
   // Get the first sub plan state
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
-  ALWAYS_ASSERT(sub_planstate);
+  PL_ASSERT(sub_planstate);
 
   auto child_tag = nodeTag(sub_planstate->plan);
 
@@ -289,9 +289,9 @@ void DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Grab Database ID and Table ID
   // Input must come from a subplan
-  ALWAYS_ASSERT(mt_plan_state->resultRelInfo);
+  PL_ASSERT(mt_plan_state->resultRelInfo);
   // Maybe relax later. I don't know when they can have >1 subplans.
-  ALWAYS_ASSERT(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
@@ -594,7 +594,7 @@ BitmapHeapScanPlanState *DMLUtils::PrepareBitmapHeapScanState(
   PrepareAbstractScanState(info, bhss_plan_state->ss);
 
   // only support a bitmap index scan at lower level
-  ALWAYS_ASSERT(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
+  PL_ASSERT(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
 
   return info;
 }
@@ -930,7 +930,7 @@ ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
 
     // Deep copy the datum
     // 1 -indexed
-    ALWAYS_ASSERT(orig_key.sk_attno <= relation_tup_desc->natts);
+    PL_ASSERT(orig_key.sk_attno <= relation_tup_desc->natts);
     auto attr = relation_tup_desc->attrs[orig_key.sk_attno - 1];
     scan_key_copy[key_itr].sk_argument =
         datumCopy(orig_key.sk_argument, attr->attlen, attr->attbyval);

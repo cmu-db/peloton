@@ -442,7 +442,7 @@ Datum TupleTransformer::GetDatum(Value value) {
 storage::Tuple *TupleTransformer::GetPelotonTuple(TupleTableSlot *slot,
                                                   const catalog::Schema *schema,
                                                   VarlenPool *pool) {
-  ALWAYS_ASSERT(slot);
+  PL_ASSERT(slot);
 
   TupleDesc tuple_desc = slot->tts_tupleDescriptor;
   unsigned int natts = tuple_desc->natts;
@@ -473,8 +473,8 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(TupleTableSlot *slot,
  */
 TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
                                                    TupleDesc tuple_desc) {
-  ALWAYS_ASSERT(tuple);
-  ALWAYS_ASSERT(tuple_desc);
+  PL_ASSERT(tuple);
+  PL_ASSERT(tuple_desc);
 
   TupleTableSlot *slot = NULL;
   HeapTuple heap_tuple;
@@ -491,7 +491,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
     Value value = tuple->GetValue(att_itr);
     Datum datum = GetDatum(value);
 
-    ALWAYS_ASSERT(tuple_desc->attrs[att_itr]->attbyval == true ||
+    PL_ASSERT(tuple_desc->attrs[att_itr]->attbyval == true ||
            value.GetValueType() == VALUE_TYPE_VARCHAR ||
            value.GetValueType() == VALUE_TYPE_VARBINARY ||
            value.GetValueType() == VALUE_TYPE_DECIMAL ||
@@ -514,10 +514,10 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(AbstractTuple *tuple,
 
   // Clean up
   // (A) Clean up any possible varlena's
-  // ALWAYS_ASSERT(natts == tuple_desc->natts);
+  // PL_ASSERT(natts == tuple_desc->natts);
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     if (tuple_desc->attrs[att_itr]->attlen < 0) {  // should be a varlena
-      ALWAYS_ASSERT(tuple_desc->attrs[att_itr]->attbyval == false);
+      PL_ASSERT(tuple_desc->attrs[att_itr]->attbyval == false);
       if (nulls[att_itr]) continue;
 
       pfree((void *)(datums[att_itr]));

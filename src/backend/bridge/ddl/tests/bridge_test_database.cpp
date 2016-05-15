@@ -53,7 +53,7 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   if (status == false) throw CatalogException("Could not create database");
 
   status = DDLDatabase::DropDatabase(12345);
-  ALWAYS_ASSERT(status);
+  PL_ASSERT(status);
 
   LOG_TRACE(":::::: %s DONE", __func__);
 }

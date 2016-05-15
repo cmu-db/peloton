@@ -91,7 +91,7 @@ bool NetworkAddress::Parse(const std::string& address) {
   // Convert the second part from an integer to a port number
   long int parsed_port = strtol(parts[1].c_str(), NULL, 10);
   if (!(0 < parsed_port && parsed_port < (1 << 16))) return false;
-  port_ = htons(ALWAYS_ASSERT_range_cast<uint16_t>(parsed_port));
+  port_ = htons(static_cast<uint16_t>(parsed_port));
   return true;
 }
 
@@ -155,7 +155,7 @@ sockaddr_in NetworkAddress::Sockaddr() const {
 uint16_t NetworkAddress::GetPort() const { return ntohs(port_); }
 
 void NetworkAddress::SetPort(uint16_t port) {
-  ALWAYS_ASSERT(port != 0);
+  PL_ASSERT(port != 0);
   port_ = htons(port);
 }
 

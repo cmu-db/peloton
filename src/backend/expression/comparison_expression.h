@@ -202,8 +202,8 @@ class ComparisonExpression : public AbstractExpression {
               typeid(*(m_left)).name(), typeid(*(m_right)).name(),
               traceEval(tuple1, tuple2, context));
 
-    ALWAYS_ASSERT(m_left != NULL);
-    ALWAYS_ASSERT(m_right != NULL);
+    PL_ASSERT(m_left != NULL);
+    PL_ASSERT(m_right != NULL);
 
     Value lnv = m_left->Evaluate(tuple1, tuple2, context);
     if (lnv.IsNull()) {

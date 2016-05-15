@@ -122,8 +122,8 @@ void LoadTable() {
     }
 
     ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
-    ALWAYS_ASSERT(tuple_slot_id.block != INVALID_OID);
-    ALWAYS_ASSERT(tuple_slot_id.offset != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
   }
 
