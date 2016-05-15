@@ -69,7 +69,6 @@ static void WriteOutput() {
 static void ValidateMVCC() {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
-  auto protocol = concurrency::TransactionManagerFactory::GetProtocol();
   gc_manager.StopGC();
   LOG_TRACE("Validating MVCC storage");
   int tile_group_count = user_table->GetTileGroupCount();

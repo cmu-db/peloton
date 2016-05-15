@@ -36,7 +36,7 @@ void Usage(FILE *out) {
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to");
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, occn2o and to\n");
   exit(EXIT_FAILURE);
 }
 
@@ -181,6 +181,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_OCC_RB;
         } else if (strcmp(protocol, "sread") == 0) {
           state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
+        } else if (strcmp(protocol, "occn2o") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OCC_N2O;
         } else {
           fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
           exit(EXIT_FAILURE);
