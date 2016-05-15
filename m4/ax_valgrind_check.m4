@@ -114,7 +114,8 @@ VALGRIND_drd_FLAGS ?=
 VALGRIND_sgcheck_FLAGS ?=
 
 # Internal use
-valgrind_tools = memcheck helgrind drd sgcheck
+valgrind_tools = memcheck
+#valgrind_tools = memcheck helgrind drd sgcheck
 valgrind_log_files = $(addprefix test-suite-,$(addsuffix .log,$(valgrind_tools)))
 
 valgrind_memcheck_flags = --tool=memcheck $(VALGRIND_memcheck_FLAGS)

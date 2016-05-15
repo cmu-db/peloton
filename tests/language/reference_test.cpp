@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include <utility>
 #include <sstream>
 #include <iostream>
@@ -63,7 +61,9 @@ B bar() { return B(); }
 // int& bad_r; // error: no initializer
 extern int& ext_r;  // OK
 
-TEST(ReferenceTests, BasicTest) {
+class ReferenceTests : public PelotonTest {};
+
+TEST_F(ReferenceTests, BasicTest) {
   // lvalues
   int n = 1;
   int& r1 = n;          // lvalue reference to the object n

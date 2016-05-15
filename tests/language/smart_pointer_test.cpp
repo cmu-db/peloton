@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include <iostream>
 #include <memory>
 
@@ -29,7 +27,9 @@ struct Foo {
   ~Foo() { LOG_INFO("~Foo..."); }
 };
 
-TEST(SmartPointerTests, UniquePtr) {
+class SmartPointerTests : public PelotonTest {};
+
+TEST_F(SmartPointerTests, UniquePtr) {
   LOG_INFO("Creating new Foo...");
   std::unique_ptr<Foo> up(new Foo());
 
@@ -49,7 +49,7 @@ TEST(SmartPointerTests, UniquePtr) {
   delete fp;
 }
 
-TEST(SmartPointerTests, SharedPtr) {
+TEST_F(SmartPointerTests, SharedPtr) {
   {
     std::shared_ptr<Foo> sh1;
 

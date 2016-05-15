@@ -13,7 +13,7 @@ common_FILES = \
 			   backend/common/varlen.cpp \
 			   backend/common/types.cpp \
 			   backend/common/thread_manager.cpp \
-			   backend/common/memory.cpp
+			   backend/common/allocator.cpp
 
 common_INCLUDES = \
 				  -I$(srcdir)/backend/common    
