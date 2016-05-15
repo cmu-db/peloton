@@ -29,6 +29,7 @@ AC_PROG_YACC
 AC_PROG_LEX
 AM_PATH_PYTHON
 
+# Check for jemalloc
 TS_CHECK_JEMALLOC
 
 ######################################################################

@@ -17,21 +17,16 @@
 #include <execinfo.h>
 #include <unistd.h>
 
-#include "backend/common/macros.h"
-
-# define JEMALLOC_NO_DEMANGLE
-# include <jemalloc/jemalloc.h>
-# define malloc(size) je_malloc(size)
-# define calloc(count, size) je_calloc(count, size)
-# define realloc(ptr, size) je_realloc(ptr, size)
-# define free(ptr) je_free(ptr)
+// We link jemalloc into peloton at build time,
+// and use it as a generic malloc implementation
+#include <jemalloc/jemalloc.h>
 
 namespace peloton {
 
 void *do_allocation(size_t size, bool do_throw){
 
   void *location = malloc(size);
-  if (unlikely_branch(!location && do_throw)) {
+  if (!location && do_throw) {
     throw std::bad_alloc();
   }
 
