@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// memory.cpp
+// allocator.cpp
 //
-// Identification: src/backend/common/memory.cpp
+// Identification: src/backend/common/allocator.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,7 +18,6 @@
 #include <unistd.h>
 
 #include "backend/common/macros.h"
-#include "backend/common/logger.h"
 
 #define JEMALLOC_NO_DEMANGLE
 #include <jemalloc/jemalloc.h>
@@ -26,14 +25,6 @@
 namespace peloton {
 
 void *do_allocation(size_t size, bool do_throw){
-
-  // allocations more than 32MB are suspect
-  if (unlikely_branch(size > (1 << 25))) {
-    LOG_WARN("Warning: Large memory allocation (%lu bytes)", size);
-    void *addrs[128];
-    const size_t naddrs = backtrace(addrs, ARRAY_NELEMS(addrs));
-    backtrace_symbols_fd(addrs, naddrs, STDERR_FILENO);
-  }
 
   void *location = je_malloc(size);
   if (unlikely_branch(!location && do_throw)) {

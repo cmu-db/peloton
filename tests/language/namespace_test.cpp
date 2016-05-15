@@ -12,8 +12,6 @@
 
 #include "harness.h"
 
-#include "gtest/gtest.h"
-
 namespace peloton {
 namespace test {
 
@@ -32,7 +30,9 @@ class vector {
 
 }  // of vec
 
-TEST(NamespaceTests, BasicTest) {
+class NamespaceTests : public PelotonTest {};
+
+TEST_F(NamespaceTests, BasicTest) {
   std::vector<int> v1;  // Standard vector.
   vec::vector<int> v2;  // User defined vector.
 
