@@ -322,6 +322,16 @@ StorageManager::StorageManager()
 
     } break;
 
+    // Check for SSD FS for data
+    case LOGGING_TYPE_SSD_WBL: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    } break;
+
     // Check for HDD FS
     case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);

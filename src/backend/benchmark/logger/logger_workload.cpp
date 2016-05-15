@@ -40,9 +40,6 @@
 
 #include <unistd.h>
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -139,29 +136,83 @@ void StartLogging(std::thread& thread) {
   }
 }
 
+int RemoveDirectory(const char *dir) {
+    int ret = 0;
+    FTS *ftsp = NULL;
+    FTSENT *curr;
+
+    // Cast needed (in C) because fts_open() takes a "char * const *", instead
+    // of a "const char * const *", which is only allowed in C++. fts_open()
+    // does not modify the argument.
+    char *files[] = { (char *) dir, NULL };
+
+    // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected behavior
+    //                in multithreaded programs
+    // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files outside
+    //                of the specified directory
+    // FTS_XDEV     - Don't cross filesystem boundaries
+    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+    if (!ftsp) {
+        fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
+        ret = -1;
+        goto finish;
+    }
+
+    while ((curr = fts_read(ftsp))) {
+        switch (curr->fts_info) {
+        case FTS_NS:
+        case FTS_DNR:
+        case FTS_ERR:
+            break;
+
+        case FTS_DC:
+        case FTS_DOT:
+        case FTS_NSOK:
+            // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT were
+            // passed to fts_open()
+            break;
+
+        case FTS_D:
+            // Do nothing. Need depth-first search, so directories are deleted
+            // in FTS_DP
+            break;
+
+        case FTS_DP:
+        case FTS_F:
+        case FTS_SL:
+        case FTS_SLNONE:
+        case FTS_DEFAULT:
+            if (remove(curr->fts_accpath) < 0) {
+                fprintf(stderr, "%s: Failed to remove: %s\n",
+                        curr->fts_path, strerror(errno));
+                ret = -1;
+            }
+            break;
+        }
+    }
+
+finish:
+    if (ftsp) {
+        fts_close(ftsp);
+    }
+
+    return ret;
+}
+
 void CleanUpLogDirectory() {
 
   // remove wbl log file if it exists
-  boost::filesystem::path wbl_directory_path = state.log_file_dir +
+  std::string wbl_directory_path = state.log_file_dir +
       logging::WriteBehindFrontendLogger::wbl_log_path;
 
   // remove wal log directory (for wal if it exists)
   // for now hardcode for 1 logger
-  boost::filesystem::path wal_directory_path = state.log_file_dir +
+  std::string wal_directory_path = state.log_file_dir +
       logging::WriteAheadFrontendLogger::wal_directory_path;
 
-  try {
-    if(boost::filesystem::exists(wbl_directory_path)) {
-      boost::filesystem::remove_all(wbl_directory_path);
-    }
+  RemoveDirectory(wbl_directory_path.c_str());
 
-    if(boost::filesystem::exists(wal_directory_path)) {
-      boost::filesystem::remove_all(wal_directory_path);
-    }
-  }
-  catch(boost::filesystem::filesystem_error const & e){
-    LOG_ERROR("error : %s", e.what());
-  }
+  RemoveDirectory(wal_directory_path.c_str());
 
 }
 
