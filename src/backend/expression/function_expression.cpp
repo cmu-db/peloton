@@ -55,7 +55,7 @@ inline Value Value::CallUnary<FUNC_VOLT_SQL_ERROR>() const {
 template <>
 inline Value Value::Call<FUNC_VOLT_SQL_ERROR>(
     const std::vector<Value> &arguments) {
-  assert(arguments.size() == 2);
+  ALWAYS_ASSERT(arguments.size() == 2);
   const char *sqlstatecode;
   char msg_format_buffer[1024];
   char state_format_buffer[6];
@@ -98,8 +98,8 @@ inline Value Value::Call<FUNC_VOLT_SQL_ERROR>(
 template <int F>
 class ConstantFunctionExpression : public expression::AbstractExpression {
  public:
-  ConstantFunctionExpression()
-      : expression::AbstractExpression(EXPRESSION_TYPE_FUNCTION){};
+  ConstantFunctionExpression(ValueType result_type)
+      : expression::AbstractExpression(EXPRESSION_TYPE_FUNCTION, result_type) {}
 
   Value Evaluate(const AbstractTuple *, const AbstractTuple *,
                  executor::ExecutorContext *) const {
@@ -112,9 +112,9 @@ class ConstantFunctionExpression : public expression::AbstractExpression {
     return (buffer.str());
   }
 
-    expression::AbstractExpression *Copy() const {
-      return new ConstantFunctionExpression<F>();
-    }
+  expression::AbstractExpression *Copy() const {
+    return new ConstantFunctionExpression<F>(GetValueType());
+  }
 };
 
 /*
@@ -127,7 +127,8 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
 
  public:
   UnaryFunctionExpression(AbstractExpression *child)
-      : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_child(child) {}
+      : AbstractExpression(EXPRESSION_TYPE_FUNCTION, child->GetValueType()),
+        m_child(child) {}
 
   virtual ~UnaryFunctionExpression() { delete m_child; }
 
@@ -135,7 +136,7 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const {
-    assert(m_child);
+    ALWAYS_ASSERT(m_child);
     return (m_child->Evaluate(tuple1, tuple2, context)).CallUnary<F>();
   }
 
@@ -146,7 +147,7 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
   }
 
     expression::AbstractExpression *Copy() const {
-      assert(m_child != nullptr);
+      ALWAYS_ASSERT(m_child != nullptr);
       return new UnaryFunctionExpression<F>(m_child->Copy());
     }
 };
@@ -157,9 +158,10 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
 template <int F>
 class GeneralFunctionExpression : public expression::AbstractExpression {
  public:
-  GeneralFunctionExpression(
+  GeneralFunctionExpression(ValueType result_type,
       const std::vector<expression::AbstractExpression *> &args)
-      : AbstractExpression(EXPRESSION_TYPE_FUNCTION), m_args(args) {}
+      : AbstractExpression(EXPRESSION_TYPE_FUNCTION, result_type),
+        m_args(args) {}
 
   virtual ~GeneralFunctionExpression() {
     size_t i = m_args.size();
@@ -171,7 +173,7 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
 
   virtual bool hasParameter() const {
     for (size_t i = 0; i < m_args.size(); i++) {
-      assert(m_args[i]);
+      ALWAYS_ASSERT(m_args[i]);
       if (m_args[i]->HasParameter()) {
         return true;
       }
@@ -199,14 +201,14 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
     return (buffer.str());
   }
 
-    expression::AbstractExpression *Copy() const {
-      std::vector<expression::AbstractExpression *> args;
-      for (auto arg : m_args) {
-        args.push_back(arg->Copy());
-      }
-
-      return new GeneralFunctionExpression<F>(args);
+  expression::AbstractExpression *Copy() const {
+    std::vector<expression::AbstractExpression *> args;
+    for (auto arg : m_args) {
+      args.push_back(arg->Copy());
     }
+
+    return new GeneralFunctionExpression<F>(GetValueType(), args);
+  }
 
  private:
   const std::vector<AbstractExpression *> &m_args;
@@ -219,7 +221,8 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
   if (nArgs == 0) {
     switch (functionId) {
       case FUNC_CURRENT_TIMESTAMP:
-        ret = new ConstantFunctionExpression<FUNC_CURRENT_TIMESTAMP>();
+        ret = new ConstantFunctionExpression<FUNC_CURRENT_TIMESTAMP>(
+            VALUE_TYPE_BIGINT);
         break;
       default:
         return NULL;
@@ -389,85 +392,104 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
     // with it.
     switch (functionId) {
       case FUNC_BITAND:
-        ret = new GeneralFunctionExpression<FUNC_BITAND>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITAND>(VALUE_TYPE_BIGINT,
+                                                         arguments);
         break;
       case FUNC_BITOR:
-        ret = new GeneralFunctionExpression<FUNC_BITOR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITOR>(VALUE_TYPE_BIGINT,
+                                                        arguments);
         break;
       case FUNC_BITXOR:
-        ret = new GeneralFunctionExpression<FUNC_BITXOR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_BITXOR>(VALUE_TYPE_BIGINT,
+                                                         arguments);
         break;
       case FUNC_CONCAT:
-        ret = new GeneralFunctionExpression<FUNC_CONCAT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_CONCAT>(VALUE_TYPE_VARCHAR,
+                                                         arguments);
         break;
       case FUNC_DECODE:
-        ret = new GeneralFunctionExpression<FUNC_DECODE>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_DECODE>(
+            arguments[0]->GetValueType(), arguments);
         break;
       case FUNC_LEFT:
-        ret = new GeneralFunctionExpression<FUNC_LEFT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_LEFT>(VALUE_TYPE_VARCHAR,
+                                                       arguments);
         break;
       case FUNC_MOD:
-        ret = new GeneralFunctionExpression<FUNC_MOD>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_MOD>(VALUE_TYPE_BIGINT,
+                                                      arguments);
         break;
       case FUNC_OVERLAY_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_OVERLAY_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_OVERLAY_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_POSITION_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_POSITION_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_POSITION_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_POWER:
-        ret = new GeneralFunctionExpression<FUNC_POWER>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_POWER>(VALUE_TYPE_BIGINT,
+                                                        arguments);
         break;
       case FUNC_REPEAT:
-        ret = new GeneralFunctionExpression<FUNC_REPEAT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_REPEAT>(VALUE_TYPE_VARCHAR,
+                                                         arguments);
         break;
       case FUNC_REPLACE:
-        ret = new GeneralFunctionExpression<FUNC_REPLACE>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_REPLACE>(VALUE_TYPE_VARCHAR,
+                                                          arguments);
         break;
       case FUNC_RIGHT:
-        ret = new GeneralFunctionExpression<FUNC_RIGHT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_RIGHT>(VALUE_TYPE_VARCHAR,
+                                                        arguments);
         break;
       case FUNC_SUBSTRING_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_SUBSTRING_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_SUBSTRING_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_TRIM_BOTH_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_TRIM_BOTH_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_TRIM_BOTH_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_TRIM_LEADING_CHAR:
-        ret = new GeneralFunctionExpression<FUNC_TRIM_LEADING_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_TRIM_LEADING_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_TRIM_TRAILING_CHAR:
-        ret =
-            new GeneralFunctionExpression<FUNC_TRIM_TRAILING_CHAR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_TRIM_TRAILING_CHAR>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_VOLT_ARRAY_ELEMENT:
-        ret =
-            new GeneralFunctionExpression<FUNC_VOLT_ARRAY_ELEMENT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_ARRAY_ELEMENT>(
+            arguments[0]->GetValueType(), arguments);
         break;
       case FUNC_VOLT_BIT_SHIFT_LEFT:
-        ret =
-            new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_LEFT>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_LEFT>(
+            VALUE_TYPE_BIGINT, arguments);
         break;
       case FUNC_VOLT_BIT_SHIFT_RIGHT:
         ret = new GeneralFunctionExpression<FUNC_VOLT_BIT_SHIFT_RIGHT>(
-            arguments);
+            VALUE_TYPE_BIGINT, arguments);
         break;
       case FUNC_VOLT_FIELD:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_VOLT_FORMAT_CURRENCY:
         ret = new GeneralFunctionExpression<FUNC_VOLT_FORMAT_CURRENCY>(
-            arguments);
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_VOLT_SET_FIELD:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_SET_FIELD>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_SET_FIELD>(
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       case FUNC_VOLT_SQL_ERROR:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_SQL_ERROR>(arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_SQL_ERROR>(
+            VALUE_TYPE_INVALID, arguments);
         break;
       case FUNC_VOLT_SUBSTRING_CHAR_FROM:
         ret = new GeneralFunctionExpression<FUNC_VOLT_SUBSTRING_CHAR_FROM>(
-            arguments);
+            VALUE_TYPE_VARCHAR, arguments);
         break;
       default:
         return NULL;
@@ -478,7 +500,7 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
   // (with more context?) to generate an exception.
   // But having fallen through to this point indicates that
   // a FunctionExpression was constructed.
-  assert(ret);
+  ALWAYS_ASSERT(ret);
   return ret;
 }
 

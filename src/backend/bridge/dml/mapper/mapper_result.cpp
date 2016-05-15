@@ -28,7 +28,7 @@ namespace bridge {
  */
 const std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformResult(
     const ResultPlanState *result_state) {
-  LOG_INFO("Handle Result");
+  LOG_TRACE("Handle Result");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state = outerAbstractPlanState(result_state);

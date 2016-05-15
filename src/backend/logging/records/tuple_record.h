@@ -34,23 +34,22 @@ class TupleRecord : public LogRecord, Printable {
     data = nullptr;
   }
 
-  TupleRecord(LogRecordType log_record_type, const cid_t cid,
-              oid_t table_oid, ItemPointer insert_location,
-              ItemPointer delete_location, const void *data = nullptr,
-              oid_t _db_oid = INVALID_OID)
+  TupleRecord(LogRecordType log_record_type, const cid_t cid, oid_t table_oid,
+              ItemPointer insert_location, ItemPointer delete_location,
+              const void *data = nullptr, oid_t _db_oid = INVALID_OID)
       : LogRecord(log_record_type, cid),
         table_oid(table_oid),
         insert_location(insert_location),
         delete_location(delete_location),
         data(data),
         db_oid(_db_oid) {
-    assert(cid);
-    assert(table_oid);
+    ALWAYS_ASSERT(cid);
+    ALWAYS_ASSERT(table_oid);
 
     if (db_oid == INVALID_OID) {
       db_oid = bridge::Bridge::GetCurrentDatabaseOid();
     }
-    assert(db_oid);
+    ALWAYS_ASSERT(db_oid);
   }
 
   ~TupleRecord() {
@@ -95,7 +94,7 @@ class TupleRecord : public LogRecord, Printable {
   //===--------------------------------------------------------------------===//
 
   // table id
-  oid_t table_oid;
+  oid_t table_oid = INVALID_OID;
 
   // inserted tuple location
   ItemPointer insert_location;
@@ -104,13 +103,13 @@ class TupleRecord : public LogRecord, Printable {
   ItemPointer delete_location;
 
   // message
-  const void *data;
+  const void *data = nullptr;
 
   // tuple (for deserialize
   storage::Tuple *tuple = nullptr;
 
   // database id
-  oid_t db_oid;
+  oid_t db_oid = DEFAULT_DB_ID;
 };
 
 }  // namespace logging

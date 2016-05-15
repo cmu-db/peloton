@@ -162,7 +162,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -223,7 +223,7 @@ void ExecutorTestsUtil::PopulateTiles(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -287,7 +287,7 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 }
 
 storage::DataTable *ExecutorTestsUtil::CreateTable(
-    int tuples_per_tilegroup_count, bool indexes) {
+    int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
@@ -296,7 +296,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
   bool own_schema = true;
   bool adapt_table = false;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, INVALID_OID, table_schema, table_name,
+      INVALID_OID, table_oid, table_schema, table_name,
       tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {

@@ -19,7 +19,9 @@
 #include <unordered_map>
 #include <memory>
 
+#include "backend/common/macros.h"
 #include "backend/common/types.h"
+#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 
@@ -38,7 +40,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef std::unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
+typedef cuckoohash_map<oid_t, std::shared_ptr<storage::TileGroup>>
     lookup_dir;
 
 class Manager {
@@ -106,8 +108,6 @@ class Manager {
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   lookup_dir locator;
-
-  std::mutex locator_mutex;
 
   // DATABASES
 

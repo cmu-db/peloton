@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <queue>
 #include <atomic>
+
 #include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
@@ -48,7 +49,7 @@ extern thread_local EagerWriteTxnContext *current_txn_ctx;
 //===--------------------------------------------------------------------===//
 class EagerWriteTxnManager : public TransactionManager {
  public:
-  EagerWriteTxnManager() {}
+  EagerWriteTxnManager() : last_epoch_(0) {}
   virtual ~EagerWriteTxnManager() {}
 
   static EagerWriteTxnManager &GetInstance();
@@ -100,6 +101,11 @@ class EagerWriteTxnManager : public TransactionManager {
       std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
       running_txn_map_[txn_id] = txn_ctx;
     }
+
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
     return txn;
   }
 
@@ -118,11 +124,13 @@ class EagerWriteTxnManager : public TransactionManager {
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_--;
-          assert(running_txn_map_[wtid]->wait_for_counter_ >= 0);
+          ALWAYS_ASSERT(running_txn_map_[wtid]->wait_for_counter_ >= 0);
         }
       }
       running_txn_map_.erase(txn_id);
     }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     delete current_txn_ctx;
@@ -130,37 +138,13 @@ class EagerWriteTxnManager : public TransactionManager {
     current_txn_ctx = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    {
-      std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
-      for (auto &it : running_txn_map_) {
-        if (it.second->begin_cid_ < min_running_cid) {
-          min_running_cid = it.second->begin_cid_;
-        }
-      }
-    }
-
-    assert(min_running_cid > 0);
-    return min_running_cid - 1;
-  }
 
  private:
 
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
   // The txn_id could only be the cur_txn's txn id.
-  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
-
-    auto tile_group_header = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetHeader();
-
-    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
-
-    new ((reserved_area + LOCK_OFFSET)) Spinlock();
-    // Hack
-    *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
-  }
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id);
 
   TxnList *GetEwReaderList(
       const storage::TileGroupHeader *const tile_group_header,
@@ -190,7 +174,7 @@ class EagerWriteTxnManager : public TransactionManager {
   void AddReader(storage::TileGroupHeader *tile_group_header,
                  const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
-    LOG_INFO("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
+    LOG_TRACE("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
 
     TxnList *reader = new TxnList(txn_id);
 
@@ -205,7 +189,7 @@ class EagerWriteTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveReader(storage::TileGroupHeader *tile_group_header,
                     const oid_t &tuple_id, txn_id_t txn_id) {
-    LOG_INFO("Remove reader with txn_id = %lu", txn_id);
+    LOG_TRACE("Remove reader with txn_id = %lu", txn_id);
     GetEwReaderLock(tile_group_header, tuple_id);
 
     TxnList *headp = (TxnList *)(
@@ -227,7 +211,7 @@ class EagerWriteTxnManager : public TransactionManager {
 
     ReleaseEwReaderLock(tile_group_header, tuple_id);
     if (find == false) {
-      assert(false);
+      ALWAYS_ASSERT(false);
     }
   }
 
@@ -239,6 +223,8 @@ class EagerWriteTxnManager : public TransactionManager {
   std::unordered_map<txn_id_t, EagerWriteTxnContext *> running_txn_map_;
   static const int LOCK_OFFSET = 0;
   static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
+  cid_t last_epoch_;
+  cid_t last_max_commit_cid_;
 };
 }
 }

@@ -17,15 +17,19 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
+#include "backend/logging/logging_util.h"
+#include "backend/storage/table_factory.h"
+#include "backend/storage/database.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"
-
-#define DEFAULT_RECOVERY_CID 15
+#include "logging/logging_tests_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
 using ::testing::InSequence;
+
+extern LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace test {
@@ -36,209 +40,332 @@ namespace test {
 
 class LoggingTests : public PelotonTest {};
 
-std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
-                                                 int num_rows, bool mutate,
-                                                 bool random) {
-  std::vector<storage::Tuple *> tuples;
-  LOG_INFO("build a vector of %d tuples", num_rows);
+TEST_F(LoggingTests, BasicLoggingTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  // Random values
-  std::srand(std::time(nullptr));
-  const catalog::Schema *schema = table->GetSchema();
-  // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  auto &log_manager = logging::LogManager::GetInstance();
 
-  // Insert tuples into tile_group.
-  const bool allocate = true;
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
-  for (int rowid = 0; rowid < num_rows; rowid++) {
-    int populate_value = rowid;
-    if (mutate) populate_value *= 3;
+  scheduler.Init();
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
 
-    storage::Tuple *tuple = new storage::Tuple(schema, allocate);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.Run();
 
-    // First column is unique in this case
-    tuple->SetValue(0,
-                    ValueFactory::GetIntegerValue(
-                        ExecutorTestsUtil::PopulatedValue(populate_value, 0)),
-                    testing_pool);
-
-    // In case of random, make sure this column has duplicated values
-    tuple->SetValue(
-        1, ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(
-               random ? std::rand() % (num_rows / 3) : populate_value, 1)),
-        testing_pool);
-
-    tuple->SetValue(
-        2, ValueFactory::GetDoubleValue(ExecutorTestsUtil::PopulatedValue(
-               random ? std::rand() : populate_value, 2)),
-        testing_pool);
-
-    // In case of random, make sure this column has duplicated values
-    Value string_value = ValueFactory::GetStringValue(
-        std::to_string(ExecutorTestsUtil::PopulatedValue(
-            random ? std::rand() % (num_rows / 3) : populate_value, 3)));
-    tuple->SetValue(3, string_value, testing_pool);
-    tuples.push_back(tuple);
-  }
-  return tuples;
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(3, results[0]);
+  scheduler.Cleanup();
 }
 
-TEST_F(LoggingTests, BasicInsertTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+TEST_F(LoggingTests, AllCommittedTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
-  EXPECT_EQ(tuples.size(), 1);
-  logging::WriteAheadFrontendLogger fel(true);
-  //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
-  cid_t test_commit_id = 10;
+  auto &log_manager = logging::LogManager::GetInstance();
 
-  Value val0 = tuples[0]->GetValue(0);
-  Value val1 = tuples[0]->GetValue(1);
-  Value val2 = tuples[0]->GetValue(2);
-  Value val3 = tuples[0]->GetValue(3);
-  auto curr_rec = new logging::TupleRecord(
-      LOGRECORD_TYPE_TUPLE_INSERT, test_commit_id, recovery_table->GetOid(),
-      ItemPointer(100, 5), INVALID_ITEMPOINTER, tuples[0], DEFAULT_DB_ID);
-  curr_rec->SetTuple(tuples[0]);
-  fel.InsertTuple(curr_rec);
-  delete curr_rec;
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
-  auto tg_header = recovery_table->GetTileGroupById(100)->GetHeader();
-  EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
-  EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
+  scheduler.Run();
 
-  EXPECT_TRUE(
-      val0.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 0)) == 0);
-  EXPECT_TRUE(
-      val1.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 1)) == 0);
-  EXPECT_TRUE(
-      val2.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 2)) == 0);
-  EXPECT_TRUE(
-      val3.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 3)) == 0);
-
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 1);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(3, results[0]);
+  scheduler.Cleanup();
 }
 
-TEST_F(LoggingTests, BasicUpdateTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+TEST_F(LoggingTests, LaggardTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
-  EXPECT_EQ(tuples.size(), 1);
-  logging::WriteAheadFrontendLogger fel(true);
-  //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
-  cid_t test_commit_id = 10;
+  auto &log_manager = logging::LogManager::GetInstance();
 
-  Value val0 = tuples[0]->GetValue(0);
-  Value val1 = tuples[0]->GetValue(1);
-  Value val2 = tuples[0]->GetValue(2);
-  Value val3 = tuples[0]->GetValue(3);
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
-  auto curr_rec = new logging::TupleRecord(
-      LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id, recovery_table->GetOid(),
-      ItemPointer(100, 5), ItemPointer(100, 4), tuples[0], DEFAULT_DB_ID);
-  curr_rec->SetTuple(tuples[0]);
-  fel.UpdateTuple(curr_rec);
-  delete curr_rec;
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Insert(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
 
-  auto tg_header = recovery_table->GetTileGroupById(100)->GetHeader();
-  EXPECT_TRUE(tg_header->GetBeginCommitId(5) <= test_commit_id);
-  EXPECT_EQ(tg_header->GetEndCommitId(5), MAX_CID);
-  EXPECT_EQ(tg_header->GetEndCommitId(4), test_commit_id);
+  scheduler.Run();
 
-  EXPECT_TRUE(
-      val0.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 0)) == 0);
-  EXPECT_TRUE(
-      val1.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 1)) == 0);
-  EXPECT_TRUE(
-      val2.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 2)) == 0);
-  EXPECT_TRUE(
-      val3.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 3)) == 0);
-
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(3, results[0]);
+  EXPECT_EQ(3, results[1]);
+  scheduler.Cleanup();
 }
 
-/* TODO: Fix this
-TEST_F(LoggingTests, BasicDeleteTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+TEST_F(LoggingTests, FastLoggerTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
-  logging::WriteAheadFrontendLogger fel(true);
+  auto &log_manager = logging::LogManager::GetInstance();
 
-  cid_t test_commit_id = 10;
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
-  auto curr_rec = new logging::TupleRecord(
-      LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id, recovery_table->GetOid(),
-      INVALID_ITEMPOINTER, ItemPointer(100, 4), nullptr, DEFAULT_DB_ID);
-  fel.DeleteTuple(curr_rec);
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Insert(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Insert(5);
+  scheduler.BackendLogger(0, 1).Commit(5);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
 
-  delete curr_rec;
+  scheduler.Run();
 
-  auto tg_header = recovery_table->GetTileGroupById(100)->GetHeader();
-  EXPECT_EQ(tg_header->GetEndCommitId(4), test_commit_id);
-
-  //  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 1);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(3, results[0]);
+  EXPECT_EQ(3, results[1]);
+  scheduler.Cleanup();
 }
-*/
 
-TEST_F(LoggingTests, OutOfOrderCommitTest) {
-  auto recovery_table = ExecutorTestsUtil::CreateTable(1024);
-  auto &manager = catalog::Manager::GetInstance();
-  storage::Database db(DEFAULT_DB_ID);
-  manager.AddDatabase(&db);
-  db.AddTable(recovery_table);
+TEST_F(LoggingTests, BothPreparingTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
-  EXPECT_EQ(tuples.size(), 1);
-  logging::WriteAheadFrontendLogger fel(true);
-  //  auto bel = logging::WriteAheadBackendLogger::GetInstance();
-  cid_t test_commit_id = 10;
+  auto &log_manager = logging::LogManager::GetInstance();
 
-  auto curr_rec = new logging::TupleRecord(
-      LOGRECORD_TYPE_TUPLE_UPDATE, test_commit_id + 1, recovery_table->GetOid(),
-      INVALID_ITEMPOINTER, ItemPointer(100, 5), nullptr, DEFAULT_DB_ID);
-  fel.DeleteTuple(curr_rec);
-  delete curr_rec;
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
 
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Insert(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(5);
+  scheduler.BackendLogger(0, 1).Insert(5);
+  scheduler.BackendLogger(0, 1).Commit(5);
+  // this prepare should still get a may commit of 3
+  scheduler.BackendLogger(0, 1).Prepare();
 
-  curr_rec = new logging::TupleRecord(
-      LOGRECORD_TYPE_TUPLE_INSERT, test_commit_id, recovery_table->GetOid(),
-      ItemPointer(100, 5), INVALID_ITEMPOINTER, tuples[0], DEFAULT_DB_ID);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 1).Begin(6);
+  scheduler.BackendLogger(0, 1).Insert(6);
+  scheduler.BackendLogger(0, 1).Commit(6);
+  // this call should get a may commit of 4
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
 
-  curr_rec->SetTuple(tuples[0]);
-  fel.InsertTuple(curr_rec);
+  scheduler.Run();
 
-  delete curr_rec;
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(3, results[0]);
+  EXPECT_EQ(3, results[1]);
+  EXPECT_EQ(4, results[2]);
+  scheduler.Cleanup();
+}
 
-  auto tg_header = recovery_table->GetTileGroupById(100)->GetHeader();
-  EXPECT_EQ(tg_header->GetEndCommitId(5), test_commit_id + 1);
+TEST_F(LoggingTests, TwoRoundTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
-  EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
+  auto &log_manager = logging::LogManager::GetInstance();
+
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
+
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Insert(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Insert(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(5);
+  scheduler.BackendLogger(0, 1).Insert(5);
+  scheduler.BackendLogger(0, 1).Commit(5);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
+
+  scheduler.Run();
+
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(5, results[1]);
+  scheduler.Cleanup();
+}
+
+TEST_F(LoggingTests, InsertUpdateDeleteTest) {
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(1));
+
+  auto &log_manager = logging::LogManager::GetInstance();
+
+  LoggingScheduler scheduler(2, 1, &log_manager, table.get());
+
+  scheduler.Init();
+  // Logger 0 is always the front end logger
+  // The first txn to commit starts with cid 2
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(2);
+  scheduler.BackendLogger(0, 0).Insert(2);
+  scheduler.BackendLogger(0, 0).Commit(2);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(3);
+  scheduler.BackendLogger(0, 1).Update(3);
+  scheduler.BackendLogger(0, 1).Commit(3);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  // at this point everyone should be updated to 3
+  scheduler.BackendLogger(0, 0).Prepare();
+  scheduler.BackendLogger(0, 0).Begin(4);
+  scheduler.BackendLogger(0, 0).Delete(4);
+  scheduler.BackendLogger(0, 0).Commit(4);
+  scheduler.BackendLogger(0, 1).Prepare();
+  scheduler.BackendLogger(0, 1).Begin(5);
+  scheduler.BackendLogger(0, 1).Delete(5);
+  scheduler.BackendLogger(0, 1).Commit(5);
+  scheduler.FrontendLogger(0).Collect();
+  scheduler.FrontendLogger(0).Flush();
+  scheduler.BackendLogger(0, 0).Done(1);
+  scheduler.BackendLogger(0, 1).Done(1);
+
+  scheduler.Run();
+
+  auto results = scheduler.frontend_threads[0].results;
+  EXPECT_EQ(5, results[1]);
+  scheduler.Cleanup();
+}
+
+TEST_F(LoggingTests, BasicLogManagerTest) {
+  peloton_logging_mode = LOGGING_TYPE_INVALID;
+  auto &log_manager = logging::LogManager::GetInstance();
+  log_manager.DropFrontendLoggers();
+  log_manager.SetLoggingStatus(LOGGING_STATUS_TYPE_INVALID);
+  // just start, write a few records and exit
+  catalog::Schema *table_schema = new catalog::Schema(
+      {ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1),
+       ExecutorTestsUtil::GetColumnInfo(2),
+       ExecutorTestsUtil::GetColumnInfo(3)});
+  std::string table_name("TEST_TABLE");
+
+  // Create table.
+  bool own_schema = true;
+  bool adapt_table = false;
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      12345, 123456, table_schema, table_name, 1, own_schema, adapt_table);
+
+  storage::Database test_db(12345);
+  test_db.AddTable(table);
+  catalog::Manager::GetInstance().AddDatabase(&test_db);
+  concurrency::TransactionManager &txn_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
+  ExecutorTestsUtil::PopulateTable(table, 5, true, false, false);
+  txn_manager.CommitTransaction();
+  peloton_logging_mode = LOGGING_TYPE_NVM_WAL;
+
+  log_manager.SetSyncCommit(true);
+  EXPECT_FALSE(log_manager.ContainsFrontendLogger());
+  log_manager.StartStandbyMode();
+  log_manager.GetFrontendLogger(0)->SetTestMode(true);
+  log_manager.StartRecoveryMode();
+  log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
+  EXPECT_TRUE(log_manager.ContainsFrontendLogger());
+  log_manager.SetGlobalMaxFlushedCommitId(4);
+  concurrency::Transaction test_txn;
+  cid_t commit_id = 5;
+  log_manager.PrepareLogging();
+  log_manager.LogBeginTransaction(commit_id);
+  ItemPointer insert_loc(table->GetTileGroup(1)->GetTileGroupId(), 0);
+  ItemPointer delete_loc(table->GetTileGroup(2)->GetTileGroupId(), 0);
+  ItemPointer update_old(table->GetTileGroup(3)->GetTileGroupId(), 0);
+  ItemPointer update_new(table->GetTileGroup(4)->GetTileGroupId(), 0);
+  log_manager.LogInsert(commit_id, insert_loc);
+  log_manager.LogUpdate(commit_id, update_old, update_new);
+  log_manager.LogInsert(commit_id, delete_loc);
+  log_manager.LogCommitTransaction(commit_id);
+  // since we are doing sync commit we should have reached 5 already
+  EXPECT_EQ(5, log_manager.GetPersistentFlushedCommitId());
+  log_manager.EndLogging();
 }
 
 }  // End test namespace

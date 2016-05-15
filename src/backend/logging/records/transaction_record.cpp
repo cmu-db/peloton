@@ -12,6 +12,7 @@
 
 #include <iostream>
 
+#include "backend/common/macros.h"
 #include "backend/logging/records/transaction_record.h"
 
 namespace peloton {
@@ -40,7 +41,7 @@ bool TransactionRecord::Serialize(CopySerializeOutput &output) {
 
   message_length = output.Size();
   message = new char[message_length];
-  memcpy(message, output.Data(), message_length);
+  PL_MEMCPY(message, output.Data(), message_length);
 
   return status;
 }

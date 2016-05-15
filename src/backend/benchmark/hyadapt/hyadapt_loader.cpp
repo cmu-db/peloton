@@ -19,12 +19,12 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
+#include "backend/common/macros.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/insert_executor.h"
 #include "backend/expression/constant_value_expression.h"
@@ -122,8 +122,8 @@ void LoadTable() {
     }
 
     ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
-    assert(tuple_slot_id.block != INVALID_OID);
-    assert(tuple_slot_id.offset != INVALID_OID);
+    ALWAYS_ASSERT(tuple_slot_id.block != INVALID_OID);
+    ALWAYS_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
   }
 

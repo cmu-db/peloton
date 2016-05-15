@@ -11,9 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/catalog/manager.h"
-#include "backend/planner/index_scan_plan.h"
 #include "backend/index/index.h"
+#include "backend/planner/index_scan_plan.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace bridge {
@@ -64,21 +67,21 @@ PlanTransformer::TransformIndexScan(const IndexScanPlanState *iss_plan_state,
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  assert(table);
+  ALWAYS_ASSERT(table);
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Fail to get index with oid : %u ", iss_plan->indexid);
   };
-  LOG_INFO("Index scan on %s using oid %u, index name: %s",
+  LOG_TRACE("Index scan on %s using oid %u, index name: %s",
            table->GetName().c_str(), iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_TRACE("Scan order: %d", iss_plan->indexorderdir);
-  // assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // ALWAYS_ASSERT(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
 
@@ -132,20 +135,20 @@ static void BuildScanKey(
   ScanKey scan_key = scan_keys;
 
   if (num_runtime_keys > 0) {
-    assert(num_runtime_keys == num_keys);
+    ALWAYS_ASSERT(num_runtime_keys == num_keys);
     BuildRuntimeKey(runtime_keys, num_runtime_keys, index_scan_desc);
   }
 
   for (int key_itr = 0; key_itr < num_keys; key_itr++, scan_key++) {
     // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ISNULL));
-    assert(!(scan_key->sk_flags & SK_ORDER_BY));
-    assert(!(scan_key->sk_flags & SK_UNARY));
-    assert(!(scan_key->sk_flags & SK_ROW_HEADER));
-    assert(!(scan_key->sk_flags & SK_ROW_MEMBER));
-    assert(!(scan_key->sk_flags & SK_ROW_END));
-    assert(!(scan_key->sk_flags & SK_SEARCHNULL));
-    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_ISNULL));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_ORDER_BY));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_UNARY));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_ROW_HEADER));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_ROW_MEMBER));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_ROW_END));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_SEARCHNULL));
+    ALWAYS_ASSERT(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
 
     Oid value_type = InvalidOid;
     Value value;
@@ -198,33 +201,33 @@ static void BuildScanKey(
     LOG_TRACE("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_INFO("key < %s", value.GetInfo().c_str());
+        LOG_TRACE("key < %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_INFO("key <= %s", value.GetInfo().c_str());
+        LOG_TRACE("key <= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
         break;
       case BTEqualStrategyNumber: {
         if (scan_key->sk_flags & SK_SEARCHARRAY) {
-          LOG_INFO("key >= %s", value.GetInfo().c_str());
+          LOG_TRACE("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_IN);
         } else {
-          LOG_INFO("key >= %s", value.GetInfo().c_str());
+          LOG_TRACE("key >= %s", value.GetInfo().c_str());
           index_scan_desc.expr_types.push_back(
               ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
         }
       } break;
       case BTGreaterEqualStrategyNumber:
-        LOG_INFO("key >= %s", value.GetInfo().c_str());
+        LOG_TRACE("key >= %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
         break;
       case BTGreaterStrategyNumber:
-        LOG_INFO("key > %s", value.GetInfo().c_str());
+        LOG_TRACE("key > %s", value.GetInfo().c_str());
         index_scan_desc.expr_types.push_back(
             ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
         break;
@@ -280,17 +283,17 @@ PlanTransformer::TransformIndexOnlyScan(
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-  assert(table);
+  ALWAYS_ASSERT(table);
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(ioss_plan->indexid);
-  LOG_INFO("Index scan on oid %u, index name: %s", ioss_plan->indexid,
+  LOG_TRACE("Index scan on oid %u, index name: %s", ioss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_TRACE("Scan order: %d", ioss_plan->indexorderdir);
-  // assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // ALWAYS_ASSERT(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_TRACE("num of scan keys = %d, num of runtime key = %d",
@@ -353,7 +356,7 @@ PlanTransformer::TransformBitmapHeapScan(
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  assert(table);
+  ALWAYS_ASSERT(table);
   LOG_TRACE("Scan from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Resolve index  */
@@ -362,11 +365,11 @@ PlanTransformer::TransformBitmapHeapScan(
   if (nullptr == index_scan_desc.index) {
     LOG_ERROR("Can't find Index oid %u ", biss_plan->indexid);
   }
-  LOG_INFO("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
+  LOG_TRACE("BitmapIdxmap scan on %s using Index oid %u, index name: %s",
            table->GetName().c_str(), biss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
-  assert(index_scan_desc.index);
+  ALWAYS_ASSERT(index_scan_desc.index);
 
   /* Resolve index order */
   /* Only support forward scan direction */

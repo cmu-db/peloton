@@ -29,7 +29,7 @@ namespace bridge {
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformSeqScan(
     const SeqScanPlanState *ss_plan_state, const TransformOptions options) {
-  assert(nodeTag(ss_plan_state) == T_SeqScanState);
+  ALWAYS_ASSERT(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
   Oid database_oid = ss_plan_state->database_oid;
@@ -39,8 +39,8 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformSeqScan(
   storage::DataTable *target_table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  assert(target_table);
-  LOG_INFO("SeqScan: database oid %u table oid %u: %s", database_oid, table_oid,
+  ALWAYS_ASSERT(target_table);
+  LOG_TRACE("SeqScan: database oid %u table oid %u: %s", database_oid, table_oid,
            target_table->GetName().c_str());
 
   /**

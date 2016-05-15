@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
+#include "harness.h"
 
 namespace peloton {
 namespace test {
@@ -25,12 +25,14 @@ namespace vec {
 template <typename T>
 class vector {
  public:
-  bool operator==(const vector<T>& rhs __attribute__((unused))) { return true; }
+  bool operator==(const vector<T>& rhs UNUSED_ATTRIBUTE) { return true; }
 };
 
 }  // of vec
 
-TEST(NamespaceTests, BasicTest) {
+class NamespaceTests : public PelotonTest {};
+
+TEST_F(NamespaceTests, BasicTest) {
   std::vector<int> v1;  // Standard vector.
   vec::vector<int> v2;  // User defined vector.
 

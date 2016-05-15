@@ -19,6 +19,7 @@
 #include "backend/networking/connection_manager.h"
 #include "backend/networking/peloton_service.h"
 #include "backend/networking/rpc_type.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace networking {
@@ -38,7 +39,7 @@ Connection::Connection(int fd, struct event_base *base, void *arg,
                        NetworkAddress &addr)
 : addr_(addr), close_(false), status_(INIT), base_(base) {
   // we must pass rpc_server when new a connection
-  assert(arg != NULL);
+  ALWAYS_ASSERT(arg != NULL);
   rpc_server_ = (RpcServer *)arg;
 
   // BEV_OPT_THREADSAFE must be specified
@@ -98,7 +99,7 @@ void Connection::Close() {
  *          corresponding RPC method.
  */
 void *Connection::ProcessMessage(void *connection) {
-  assert(connection != NULL);
+  ALWAYS_ASSERT(connection != NULL);
 
   Connection *conn = (Connection *)connection;
 
@@ -145,11 +146,11 @@ void *Connection::ProcessMessage(void *connection) {
 
     // Get the message type
     uint16_t type = 0;
-    memcpy((char *)(&type), buf + HEADERLEN, sizeof(type));
+    PL_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
 
     // Get the hashcode of the rpc method
     uint64_t opcode = 0;
-    memcpy((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
+    PL_MEMCPY((char *)(&opcode), buf + HEADERLEN + TYPELEN, sizeof(opcode));
 
     // Get the rpc method meta info: method descriptor
     RpcMethod *rpc_method = conn->GetRpcServer()->FindMethod(opcode);
@@ -182,20 +183,20 @@ void *Connection::ProcessMessage(void *connection) {
         msg_len = response->ByteSize() + OPCODELEN + TYPELEN;
 
         char send_buf[sizeof(msg_len) + msg_len];
-        assert(sizeof(msg_len) == HEADERLEN);
+        ALWAYS_ASSERT(sizeof(msg_len) == HEADERLEN);
 
         // copy the header into the buf
-        memcpy(send_buf, &msg_len, sizeof(msg_len));
+        PL_MEMCPY(send_buf, &msg_len, sizeof(msg_len));
 
         // copy the type into the buf
         type = MSG_TYPE_REP;
 
-        assert(sizeof(type) == TYPELEN);
-        memcpy(send_buf + HEADERLEN, &type, TYPELEN);
+        ALWAYS_ASSERT(sizeof(type) == TYPELEN);
+        PL_MEMCPY(send_buf + HEADERLEN, &type, TYPELEN);
 
         // copy the opcode into the buf
-        assert(sizeof(opcode) == OPCODELEN);
-        memcpy(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
+        ALWAYS_ASSERT(sizeof(opcode) == OPCODELEN);
+        PL_MEMCPY(send_buf + HEADERLEN + TYPELEN, &opcode, OPCODELEN);
 
         // call protobuf to serialize the request message into sending buf
         response->SerializeToArray(send_buf + HEADERLEN + TYPELEN + OPCODELEN,
@@ -203,7 +204,7 @@ void *Connection::ProcessMessage(void *connection) {
 
         // send data
         // Note: if we use raw socket send api, we should loop send
-        assert(sizeof(send_buf) == HEADERLEN + msg_len);
+        ALWAYS_ASSERT(sizeof(send_buf) == HEADERLEN + msg_len);
         conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
 
         delete message;
@@ -250,12 +251,12 @@ void *Connection::ProcessMessage(void *connection) {
       gettimeofday(&end, NULL);
       useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
 
-      LOG_INFO("server_response_send_number: %lu", server_response_send_number);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_number: %lu", server_response_send_number);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_number * 1000000)/useconds);
 
-      LOG_INFO("server_response_send_bytes: %lu", server_response_send_bytes);
-      LOG_INFO("speed: %f-------------------------------------------------",
+      LOG_TRACE("server_response_send_bytes: %lu", server_response_send_bytes);
+      LOG_TRACE("speed: %f-------------------------------------------------",
                (float)(server_response_send_bytes * 1000000)/useconds);
     }*/
 
@@ -267,10 +268,10 @@ void *Connection::ProcessMessage(void *connection) {
 /*
  * ReadCb is invoked when there is new data coming.
  */
-void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
+void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
                         void *ctx) {
   // TODO: We might use bev in future
-  assert(bev != NULL);
+  ALWAYS_ASSERT(bev != NULL);
 
   Connection *conn = (Connection *)ctx;
 
@@ -298,10 +299,10 @@ void Connection::ReadCb(__attribute__((unused)) struct bufferevent *bev,
 /*
  * If recv close event, we should delete the connection from conn_pool
  */
-void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
+void Connection::EventCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
                          short events, void *ctx) {
   Connection *conn = (Connection *)ctx;
-  assert(conn != NULL && bev != NULL);
+  ALWAYS_ASSERT(conn != NULL && bev != NULL);
 
   if (events & BEV_EVENT_ERROR) {
     LOG_TRACE("Error from client bufferevent: %s",
@@ -336,7 +337,7 @@ void Connection::EventCb(__attribute__((unused)) struct bufferevent *bev,
   }
 }
 
-void Connection::BufferCb(__attribute__((unused)) struct evbuffer *buffer,
+void Connection::BufferCb(UNUSED_ATTRIBUTE struct evbuffer *buffer,
                           const struct evbuffer_cb_info *info, void *arg) {
   struct total_processed *tp = (total_processed *)arg;
   size_t old_n = tp->n;

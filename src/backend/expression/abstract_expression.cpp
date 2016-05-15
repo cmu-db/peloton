@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include <sstream>
-#include <cassert>
-#include <stdexcept>
 
+#include "backend/common/abstract_tuple.h"
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
 #include "backend/common/logger.h"
 #include "backend/common/serializer.h"
 #include "backend/common/types.h"
@@ -24,25 +26,25 @@
 namespace peloton {
 namespace expression {
 
-AbstractExpression::AbstractExpression()
-    : m_left(NULL),
-      m_right(NULL),
-      m_type(EXPRESSION_TYPE_INVALID),
-      m_hasParameter(true) {}
-
-AbstractExpression::AbstractExpression(ExpressionType type)
-    : m_left(NULL), m_right(NULL), m_type(type), m_hasParameter(true) {}
-
-AbstractExpression::AbstractExpression(ExpressionType type,
+AbstractExpression::AbstractExpression(ExpressionType expr_type, ValueType type,
                                        AbstractExpression *left,
                                        AbstractExpression *right)
-    : m_left(left), m_right(right), m_type(type), m_hasParameter(true) {}
+    : m_type(expr_type),
+      m_valueType(type),
+      m_left(left),
+      m_right(right),
+      m_hasParameter(true) {}
+
+AbstractExpression::AbstractExpression(ExpressionType expr_type, ValueType type)
+    : AbstractExpression(expr_type, type, nullptr, nullptr) {}
 
 AbstractExpression::~AbstractExpression() {
-  delete m_left;
-  m_left = nullptr;
-  delete m_right;
-  m_right = nullptr;
+  if (m_left != nullptr) {
+    delete m_left;
+  }
+  if (m_right != nullptr) {
+    delete m_right;
+  }
 }
 
 bool AbstractExpression::HasParameter() const {
@@ -81,7 +83,7 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
            << "right: " << (m_right != NULL ? "\n" + m_right->Debug(info_spacer)
                                             : "<NULL>\n");
   }
-  return (buffer.str());
+  return buffer.str();
 }
 
 //===--------------------------------------------------------------------===//

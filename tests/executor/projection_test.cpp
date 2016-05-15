@@ -75,8 +75,8 @@ TEST_F(ProjectionTests, BasicTest) {
       .WillOnce(Return(source_logical_tile1.release()));
 
   // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   /////////////////////////////////////////////////////////
   // PROJECTION 0
@@ -90,7 +90,7 @@ TEST_F(ProjectionTests, BasicTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map =
+  DirectMap direct_map =
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
@@ -133,8 +133,8 @@ TEST_F(ProjectionTests, TwoColumnTest) {
       .WillOnce(Return(source_logical_tile1.release()));
 
   // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   /////////////////////////////////////////////////////////
   // PROJECTION 3, 1, 3
@@ -150,11 +150,11 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  planner::ProjectInfo::DirectMap map0 =
+  DirectMap map0 =
       std::make_pair(0, std::make_pair(0, 3));
-  planner::ProjectInfo::DirectMap map1 =
+  DirectMap map1 =
       std::make_pair(1, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap map2 =
+  DirectMap map2 =
       std::make_pair(2, std::make_pair(0, 3));
   direct_map_list.push_back(map0);
   direct_map_list.push_back(map1);
@@ -199,8 +199,8 @@ TEST_F(ProjectionTests, BasicTargetTest) {
       .WillOnce(Return(source_logical_tile1.release()));
 
   // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   /////////////////////////////////////////////////////////
   // PROJECTION 0, TARGET 0 + 20
@@ -214,19 +214,21 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map =
+  DirectMap direct_map =
       std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
   // target list
   auto const_val = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(20));
-  auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(0, 0);
+  auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(
+      VALUE_TYPE_INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
+                                                  VALUE_TYPE_INTEGER,
                                                   tuple_value_expr, const_val);
 
-  planner::ProjectInfo::Target target = std::make_pair(1, expr);
+  Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
   std::unique_ptr<const planner::ProjectInfo> project_info(

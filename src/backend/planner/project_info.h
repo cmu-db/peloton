@@ -19,6 +19,7 @@
 #include "backend/storage/tuple.h"
 
 namespace peloton {
+
 namespace planner {
 
 /**
@@ -44,22 +45,6 @@ class ProjectInfo {
   ProjectInfo operator=(ProjectInfo &) = delete;
   ProjectInfo(ProjectInfo &&) = delete;
   ProjectInfo operator=(ProjectInfo &&) = delete;
-
-  /**
-   * @brief Generic specification of a projection target:
-   *        < DEST_column_id , expression >
-   */
-  typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
-
-  typedef std::vector<Target> TargetList;
-
-  /**
-   * @brief Generic specification of a direct map:
-   *        < NEW_col_id , <tuple_index (left or right tuple), OLD_col_id>    >
-   */
-  typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
-
-  typedef std::vector<DirectMap> DirectMapList;
 
   /* Force explicit move to emphasize the transfer of ownership */
   ProjectInfo(TargetList &tl, DirectMapList &dml) = delete;

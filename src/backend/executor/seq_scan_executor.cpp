@@ -27,6 +27,7 @@
 #include "backend/storage/tile.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/common/logger.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace executor {
@@ -77,8 +78,8 @@ bool SeqScanExecutor::DExecute() {
     // FIXME Check all requirements for children_.size() == 0 case.
     LOG_TRACE("Seq Scan executor :: 1 child ");
 
-    assert(target_table_ == nullptr);
-    assert(column_ids_.size() == 0);
+    ALWAYS_ASSERT(target_table_ == nullptr);
+    ALWAYS_ASSERT(column_ids_.size() == 0);
 
     while (children_[0]->Execute()) {
       std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
@@ -109,11 +110,16 @@ bool SeqScanExecutor::DExecute() {
   else if (children_.size() == 0) {
     LOG_TRACE("Seq Scan executor :: 0 child ");
 
-    assert(target_table_ != nullptr);
-    assert(column_ids_.size() > 0);
+    ALWAYS_ASSERT(target_table_ != nullptr);
+    ALWAYS_ASSERT(column_ids_.size() > 0);
 
-    auto &transaction_manager =
+    // Force to use occ txn manager if dirty read is forbidden
+    concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
+
+    // LOG_TRACE("Number of tuples: %f",
+    // target_table_->GetIndex(0)->GetNumberOfTuples());
+
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =

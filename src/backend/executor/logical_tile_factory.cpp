@@ -58,7 +58,7 @@ LogicalTile *LogicalTileFactory::GetTile() { return new LogicalTile(); }
  */
 LogicalTile *LogicalTileFactory::WrapTiles(
     const std::vector<std::shared_ptr<storage::Tile>> &base_tile_refs) {
-  assert(base_tile_refs.size() > 0);
+  ALWAYS_ASSERT(base_tile_refs.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
@@ -97,7 +97,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
-  assert(schemas.size() == tile_group->NumTiles());
+  ALWAYS_ASSERT(schemas.size() == tile_group->NumTiles());
   for (unsigned int i = 0; i < schemas.size(); i++) {
     auto base_tile_ref = tile_group->GetTileReference(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {

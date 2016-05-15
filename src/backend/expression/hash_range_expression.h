@@ -26,49 +26,48 @@ typedef std::pair<int32_t, int32_t> srange_type;
 
 class HashRangeExpression : public AbstractExpression {
  public:
-  HashRangeExpression(int value_idx, srange_type *ranges, int num_ranges)
-      : AbstractExpression(EXPRESSION_TYPE_HASH_RANGE),
-        value_idx(value_idx),
-        ranges(ranges),
-        num_ranges(num_ranges) {
-    LOG_TRACE("HashRangeExpression %d %d", m_type, value_idx);
-    for (int ii = 0; ii < num_ranges; ii++) {
+  HashRangeExpression(int value_idx, std::vector<srange_type> &ranges)
+      : AbstractExpression(EXPRESSION_TYPE_HASH_RANGE, VALUE_TYPE_BOOLEAN),
+        value_idx_(value_idx),
+        ranges_(ranges) {
+    LOG_TRACE("HashRangeExpression %d", value_idx_);
+    for (size_t ii = 0; ii < ranges_.size(); ii++) {
       if (ii > 0) {
-        if (ranges[ii - 1].first >= ranges[ii].first) {
+        if (ranges_[ii - 1].first >= ranges_[ii].first) {
           throw Exception("Ranges overlap or are out of order");
         }
-        if (ranges[ii - 1].second > ranges[ii].first) {
+        if (ranges_[ii - 1].second > ranges_[ii].first) {
           throw Exception("Ranges overlap or are out of order");
         }
       }
-      if (ranges[ii].first > ranges[ii].second) {
+      if (ranges_[ii].first > ranges_[ii].second) {
         throw Exception(
             "Range begin.Is > range end, we don't support spanning Long.MAX to "
             "Long.MIN");
       }
     }
-  };
+  }
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
-                         __attribute__((unused)) const AbstractTuple *tuple2,
-                         __attribute__((unused))
-                         executor::ExecutorContext *context) const {
-    assert(tuple1);
+                         UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+                         UNUSED_ATTRIBUTE
+                         executor::ExecutorContext *context) const override {
+    ALWAYS_ASSERT(tuple1);
     if (!tuple1) {
       throw Exception(
           "TupleValueExpression::"
           "Evaluate:"
           " Couldn't find tuple 1 (possible index scan planning error)");
     }
-    const int32_t hash = tuple1->GetValue(this->value_idx).MurmurHash3();
+    const int32_t hash = tuple1->GetValue(value_idx_).MurmurHash3();
 
-    return binarySearch(hash);
+    return BinarySearch(hash);
   }
 
-  Value binarySearch(const int32_t hash) const {
+  Value BinarySearch(const int32_t hash) const {
     // The binary search blows up on only one range
-    if (num_ranges == 1) {
-      if (hash >= ranges[0].first && hash <= ranges[0].second)
+    if (ranges_.size() == 1) {
+      if (hash >= ranges_[0].first && hash <= ranges_[0].second)
         return Value::GetTrue();
       return Value::GetFalse();
     }
@@ -80,14 +79,14 @@ class HashRangeExpression : public AbstractExpression {
      * Doing a binary search,.Is just a hair easier than std::lower_bound
      */
     int32_t min = 0;
-    int32_t max = num_ranges - 1;
+    int32_t max = ranges_.size() - 1;
     while (min <= max) {
-      assert(min >= 0);
-      assert(max >= 0);
+      ALWAYS_ASSERT(min >= 0);
+      ALWAYS_ASSERT(max >= 0);
       uint32_t mid = (min + max) >> 1;
-      if (ranges[mid].second < hash) {
+      if (ranges_[mid].second < hash) {
         min = mid + 1;
-      } else if (ranges[mid].first > hash) {
+      } else if (ranges_[mid].first > hash) {
         max = mid - 1;
       } else {
         return Value::GetTrue();
@@ -97,34 +96,32 @@ class HashRangeExpression : public AbstractExpression {
     return Value::GetFalse();
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     std::ostringstream buffer;
-    buffer << spacer << "Hash range expression on column[" << this->value_idx
+    buffer << spacer << "Hash range expression on column[" << value_idx_
            << "]\n";
-    buffer << "ranges \n";
-    for (int ii = 0; ii < num_ranges; ii++) {
-      buffer << "start " << ranges[ii].first << " end " << ranges[ii].second
+    buffer << "ranges: \n";
+    for (size_t ii = 0; ii < ranges_.size(); ii++) {
+      buffer << "start " << ranges_[ii].first << " end " << ranges_[ii].second
              << std::endl;
     }
-    return (buffer.str());
+    return buffer.str();
   }
 
-  int GetColumnId() const { return this->value_idx; }
+  int GetColumnId() const { return value_idx_; }
 
-  AbstractExpression *Copy() const {
-    srange_type *copied_ranges = new srange_type[num_ranges];
-    for (int ii = 0; ii < num_ranges; ii++) {
-      copied_ranges[ii].first = ranges[ii].first;
-      copied_ranges[ii].second = ranges[ii].second;
+  AbstractExpression *Copy() const override {
+    std::vector<srange_type> copied_ranges;
+    for (size_t i = 0; i < ranges_.size(); i++) {
+      copied_ranges[i] = ranges_[i];
     }
-    return new HashRangeExpression(value_idx, copied_ranges, num_ranges);
+    return new HashRangeExpression(value_idx_, copied_ranges);
   }
 
  private:
-  const int value_idx;  // which (offset) column of the tuple
-  boost::scoped_array<srange_type> ranges;
-  const int num_ranges;
+  int value_idx_;  // which (offset) column of the tuple
+  std::vector<srange_type> ranges_;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

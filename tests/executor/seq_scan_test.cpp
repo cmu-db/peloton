@@ -126,7 +126,7 @@ storage::DataTable *CreateTable() {
  */
 expression::AbstractExpression *CreatePredicate(
     const std::set<oid_t> &tuple_ids) {
-  assert(tuple_ids.size() >= 1);
+  ALWAYS_ASSERT(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ConstantValueFactory(Value::GetFalse());
@@ -140,8 +140,8 @@ expression::AbstractExpression *CreatePredicate(
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
     tuple_value_expr =
-        even ? expression::ExpressionUtil::TupleValueFactory(0, 0)
-             : expression::ExpressionUtil::TupleValueFactory(0, 3);
+        even ? expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0)
+             : expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_VARCHAR, 0, 3);
 
     // Second, create constant value expression.
     Value constant_value =

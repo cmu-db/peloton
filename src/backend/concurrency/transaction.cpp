@@ -14,6 +14,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/platform.h"
+#include "backend/common/macros.h"
 
 #include <chrono>
 #include <thread>
@@ -30,7 +31,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
-    assert(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
+    ALWAYS_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
            rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
     return;
   } else {
@@ -60,12 +61,10 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     if (type == RW_TYPE_DELETE) {
-      assert(false);
+      ALWAYS_ASSERT(false);
       return;
     }
-    assert(false);
-  } else {
-    assert(false);
+    ALWAYS_ASSERT(false);
   }
 }
 
@@ -78,15 +77,14 @@ void Transaction::RecordInsert(const ItemPointer &location) {
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
     // RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
-    assert(false);
+    ALWAYS_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_INSERT;
     ++insert_count_;
   }
 }
 
-void Transaction::RecordDelete(const ItemPointer &location) {
-
+bool Transaction::RecordDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -98,25 +96,26 @@ void Transaction::RecordDelete(const ItemPointer &location) {
       type = RW_TYPE_DELETE;
       // record write.
       is_written_ = true;
-      return;
+      return false;
     }
     if (type == RW_TYPE_UPDATE) {
       type = RW_TYPE_DELETE;
-      return;
+      return false;
     }
     if (type == RW_TYPE_INSERT) {
       type = RW_TYPE_INS_DEL;
       --insert_count_;
-      return;
+      return true;
     }
     if (type == RW_TYPE_DELETE) {
-      assert(false);
-      return;
+      ALWAYS_ASSERT(false);
+      return false;
     }
-    assert(false);
+    ALWAYS_ASSERT(false);
   } else {
-    assert(false);
+    ALWAYS_ASSERT(false);
   }
+  return false;
 }
 
 const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {

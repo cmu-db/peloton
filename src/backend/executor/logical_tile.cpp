@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <iostream>
 
 #include "backend/catalog/schema.h"
 #include "backend/common/value.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/data_table.h"
@@ -107,7 +107,7 @@ void LogicalTile::SetPositionListsAndVisibility(
  * @return Position list index of newly added list.
  */
 int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
-  assert(position_lists_.size() == 0 ||
+  ALWAYS_ASSERT(position_lists_.size() == 0 ||
          position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
@@ -127,8 +127,8 @@ int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
  * @param tuple_id Id of the specified tuple.
  */
 void LogicalTile::RemoveVisibility(oid_t tuple_id) {
-  assert(tuple_id < total_tuples_);
-  assert(visible_rows_[tuple_id]);
+  ALWAYS_ASSERT(tuple_id < total_tuples_);
+  ALWAYS_ASSERT(visible_rows_[tuple_id]);
 
   visible_rows_[tuple_id] = false;
   visible_tuples_--;
@@ -154,9 +154,9 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
  */
 // TODO: Deprecated. Avoid calling this function if possible.
 Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
-  assert(column_id < schema_.size());
-  assert(tuple_id < total_tuples_);
-  assert(visible_rows_[tuple_id]);
+  ALWAYS_ASSERT(column_id < schema_.size());
+  ALWAYS_ASSERT(tuple_id < total_tuples_);
+  ALWAYS_ASSERT(visible_rows_[tuple_id]);
 
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
@@ -312,7 +312,7 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(
     non_empty_pos_list = left_pos_list;
     SetLeftSource(left_pos_list);
   }
-  assert(non_empty_pos_list != nullptr);
+  ALWAYS_ASSERT(non_empty_pos_list != nullptr);
   output_lists_.push_back(std::vector<oid_t>());
   // reserve one extra pos list for the empty tile
   for (size_t column_itr = 0; column_itr < non_empty_pos_list->size() + 1;
@@ -335,8 +335,8 @@ LogicalTile::PositionListsBuilder::PositionListsBuilder(LogicalTile *left_tile,
   size_t output_tile_column_count =
       left_tile_column_count + right_tile_column_count;
 
-  assert(left_tile_column_count > 0);
-  assert(right_tile_column_count > 0);
+  ALWAYS_ASSERT(left_tile_column_count > 0);
+  ALWAYS_ASSERT(right_tile_column_count > 0);
 
   // Construct position lists for output tile
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
@@ -409,7 +409,7 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   for (auto id : column_ids) {
     auto ret =
         std::find(original_column_ids.begin(), original_column_ids.end(), id);
-    assert(ret != original_column_ids.end());
+    ALWAYS_ASSERT(ret != original_column_ids.end());
     new_schema.push_back(schema_[*ret]);
   }
 
@@ -561,7 +561,7 @@ void LogicalTile::MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      ALWAYS_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -575,7 +575,7 @@ void LogicalTile::MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    assert(new_column_offsets.size() == old_column_ids.size());
+    ALWAYS_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -646,7 +646,7 @@ void LogicalTile::MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      ALWAYS_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;

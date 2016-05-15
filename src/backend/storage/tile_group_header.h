@@ -12,21 +12,20 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/logging/log_manager.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/expression/container_tuple.h"
-
 #include <atomic>
 #include <iostream>
-#include <cassert>
 #include <queue>
+#include <vector>
 #include <cstring>
+
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace storage {
+
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -42,10 +41,8 @@ namespace storage {
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
  *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | IndexCount(4 bytes) | 
- *  | ReservedField (24 bytes)
- *  | InsertCommit (1 byte) | DeleteCommit (1 byte)
+ *  | ReservedField (24 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte)
  *  -----------------------------------------------------------------------------
- *
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
@@ -63,7 +60,7 @@ class TileGroupHeader : public Printable {
     header_size = other.header_size;
 
     // copy over all the data
-    memcpy(data, other.data, header_size);
+    PL_MEMCPY(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
     oid_t val = other.next_tuple_slot;
@@ -161,6 +158,11 @@ class TileGroupHeader : public Printable {
     return *((bool *)(TUPLE_HEADER_LOCATION + delete_commit_offset));
   }
 
+  // used only by occ_rb_txn_manager
+  inline char* GetPrevItempointerField(const oid_t &tuple_slot_id) const {
+    return (char *)(TUPLE_HEADER_LOCATION + prev_pointer_offset);
+  }
+
   // Setters
 
   inline void SetTileGroup(TileGroup *tile_group) {
@@ -222,6 +224,10 @@ class TileGroupHeader : public Printable {
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
+  // Getter for spin lock
+
+  Spinlock &GetHeaderLock() { return tile_header_lock; }
+
   // Sync the contents
   void Sync();
 
@@ -232,7 +238,7 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReserverdSize() {return  reserverd_size;}
+  static inline size_t GetReservedSize() {return  reserverd_size;}
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
@@ -242,12 +248,12 @@ class TileGroupHeader : public Printable {
   // *
   // -----------------------------------------------------------------------------
 
- private:
   // header entry size is the size of the layout described above
   static const size_t reserverd_size = 24;
-  static const size_t header_entry_size =
-      sizeof(txn_id_t) + 2 * sizeof(cid_t) + 2 * sizeof(ItemPointer) + reserverd_size +
-      2 * sizeof(bool);
+  // FIXME: there is no space reserved for index count?
+  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
+                                          2 * sizeof(ItemPointer) + reserverd_size +
+                                          2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
@@ -260,6 +266,7 @@ class TileGroupHeader : public Printable {
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 
+private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

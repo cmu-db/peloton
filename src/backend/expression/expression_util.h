@@ -22,15 +22,6 @@ namespace expression {
 
 class ExpressionUtil {
  public:
-  //===--------------------------------------------------------------------===//
-  // Expression Utilities
-  //===--------------------------------------------------------------------===//
-
-  // instantiate a typed expression
-  static AbstractExpression *ExpressionFactory(
-      PlannerDomValue obj, ExpressionType et, ValueType vt, int vs,
-      AbstractExpression *lc, AbstractExpression *rc,
-      const std::vector<AbstractExpression *> &arguments);
 
   //===--------------------------------------------------------------------===//
   // Factories
@@ -38,22 +29,18 @@ class ExpressionUtil {
 
   // These helper factories are used by ExpressionFactory()
 
-  static AbstractExpression *OperatorFactory(ExpressionType et,
+  static AbstractExpression *OperatorFactory(ExpressionType et, ValueType vt,
                                              AbstractExpression *lc,
                                              AbstractExpression *rc);
 
   // convert the enumerated value type into a concrete c type for the
   //  operator expression templated ctors
   static AbstractExpression *OperatorFactory(ExpressionType et,
+                                             ValueType vt,
                                              AbstractExpression *first,
                                              AbstractExpression *second,
                                              AbstractExpression *third,
                                              AbstractExpression *fourth);
-
-  static AbstractExpression *ComparisonFactory(PlannerDomValue obj,
-                                               ExpressionType et,
-                                               AbstractExpression *lc,
-                                               AbstractExpression *rc);
 
   static AbstractExpression *ComparisonFactory(ExpressionType c,
                                                AbstractExpression *lc,
@@ -88,37 +75,18 @@ class ExpressionUtil {
 
   static AbstractExpression *CastFactory(ValueType vt, AbstractExpression *lc);
 
-  static AbstractExpression *CastFactory(
-      PostgresValueType type = POSTGRES_VALUE_TYPE_INVALID,
-      AbstractExpression *child = nullptr);
-
   static AbstractExpression *VectorFactory(
       ValueType vt, const std::vector<AbstractExpression *> &args);
-  static AbstractExpression *ParameterValueFactory(int idx);
-  static AbstractExpression *ParameterValueFactory(PlannerDomValue obj,
-                                                   ExpressionType et,
-                                                   AbstractExpression *lc,
-                                                   AbstractExpression *rc);
-  static AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
-  static AbstractExpression *TupleValueFactory(PlannerDomValue obj,
-                                               ExpressionType et,
-                                               AbstractExpression *lc,
-                                               AbstractExpression *rc);
+  static AbstractExpression *ParameterValueFactory(ValueType type, int idx);
 
-  static AbstractExpression *HashRangeFactory(PlannerDomValue obj);
-
-  static AbstractExpression *SubqueryFactory(
-      ExpressionType subqueryType, PlannerDomValue obj,
-      const std::vector<AbstractExpression *> &rgs);
-
-  static AbstractExpression *ConstantValueFactory(PlannerDomValue obj,
-                                                  ValueType vt,
-                                                  ExpressionType et,
-                                                  AbstractExpression *lc,
-                                                  AbstractExpression *rc);
+  static AbstractExpression *TupleValueFactory(ValueType type, int tuple_idx,
+                                               int value_idx);
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
+  static AbstractExpression *UDFExpressionFactory(
+      Oid function_id, Oid collation, Oid return_type,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &args);
 };
 
 }  // End expression namespace

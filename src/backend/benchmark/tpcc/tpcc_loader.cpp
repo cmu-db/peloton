@@ -17,7 +17,7 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
+#include <cstring>
 
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
@@ -45,16 +45,16 @@ namespace tpcc {
 // Constants
 /////////////////////////////////////////////////////////
 
-size_t name_length = 32;
-size_t middle_name_length = 2;
-size_t data_length = 64;
-size_t state_length = 16;
-size_t zip_length = 9;
-size_t street_length = 32;
-size_t city_length = 32;
-size_t credit_length = 2;
-size_t phone_length = 32;
-size_t dist_length = 32;
+const size_t name_length = 32;
+const size_t middle_name_length = 2;
+const size_t data_length = 64;
+const size_t state_length = 16;
+const size_t zip_length = 9;
+const size_t street_length = 32;
+const size_t city_length = 32;
+const size_t credit_length = 2;
+const size_t phone_length = 32;
+const size_t dist_length = 32;
 
 double item_min_price = 1.0;
 double item_max_price = 100.0;
@@ -110,6 +110,11 @@ int stock_max_threshold = 20;
 
 double new_order_remote_txns = 0.01;
 
+const int syllable_count = 10;
+const char *syllables[syllable_count] = {"BAR", "OUGHT", "ABLE", "PRI", "PRES",
+                           "ESES", "ANTI", "CALLY", "ATION", "EING"};
+
+NURandConstant nu_rand_const;
 /////////////////////////////////////////////////////////
 // Create the tables
 /////////////////////////////////////////////////////////
@@ -130,27 +135,6 @@ const bool adapt_table = false;
 const bool is_inlined = true;
 const bool unique_index = false;
 const bool allocate = true;
-
-index::IndexMetadata* BuildIndexMetadata(const std::vector<oid_t>& key_attrs,
-                                         const catalog::Schema *tuple_schema,
-                                         std::string index_name,
-                                         oid_t index_oid){
-
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
-
-  index_metadata = new index::IndexMetadata(
-      index_name,
-      index_oid,
-      INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID,
-      tuple_schema, key_schema, unique_index);
-
-  return index_metadata;
-}
 
 void CreateWarehouseTable() {
   /*
@@ -204,17 +188,20 @@ void CreateWarehouseTable() {
   tpcc_database->AddTable(warehouse_table);
 
   // Primary index on W_ID
-  std::vector<oid_t> key_attrs;
-  key_attrs = {0};
+  std::vector<oid_t> key_attrs = {0};
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            warehouse_table->GetSchema(),
-                                                            "warehouse_pkey",
-                                                            warehouse_table_pkey_index_oid);
+  auto tuple_schema = warehouse_table->GetSchema();
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique = true;
+
+  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+      "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-  warehouse_table->AddIndex(pkey_index);
 
+  warehouse_table->AddIndex(pkey_index);
 }
 
 void CreateDistrictTable() {
@@ -275,15 +262,19 @@ void CreateDistrictTable() {
   tpcc_database->AddTable(district_table);
 
   // Primary index on D_ID, D_W_ID
-  std::vector<oid_t> key_attrs;
-  key_attrs = {0, 1};
+  std::vector<oid_t> key_attrs = {0, 1};
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            district_table->GetSchema(),
-                                                            "district_pkey",
-                                                            district_table_pkey_index_oid);
+  auto tuple_schema = district_table->GetSchema();
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique = true;
+
+  index::IndexMetadata* index_metadata = new index::IndexMetadata(
+    "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
   district_table->AddIndex(pkey_index);
 
 }
@@ -328,13 +319,16 @@ void CreateItemTable() {
   tpcc_database->AddTable(item_table);
 
   // Primary index on I_ID
-  std::vector<oid_t> key_attrs;
-  key_attrs = {0};
+  std::vector<oid_t> key_attrs = {0};
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            item_table->GetSchema(),
-                                                            "item_pkey",
-                                                            item_table_pkey_index_oid);
+  auto tuple_schema = item_table->GetSchema();
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique = true;
+
+  index::IndexMetadata* index_metadata = new index::IndexMetadata(
+    "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   item_table->AddIndex(pkey_index);
@@ -431,25 +425,33 @@ void CreateCustomerTable() {
 
   tpcc_database->AddTable(customer_table);
 
-  // Primary index on C_W_ID, C_D_ID, C_ID
+  auto tuple_schema = customer_table->GetSchema();
   std::vector<oid_t> key_attrs;
-  key_attrs = {0, 1, 2};
+  catalog::Schema *key_schema = nullptr;
+  index::IndexMetadata* index_metadata = nullptr;
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            customer_table->GetSchema(),
-                                                            "customer_pkey",
-                                                            customer_table_pkey_index_oid);
+  // Primary index on C_ID, C_D_ID, C_W_ID
+  key_attrs = {0, 1, 2};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  index_metadata = new index::IndexMetadata(
+    "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(pkey_index);
 
+
+
   // Secondary index on C_W_ID, C_D_ID, C_LAST
   key_attrs = {1, 2, 5};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata = BuildIndexMetadata(key_attrs,
-                                      customer_table->GetSchema(),
-                                      "customer_skey",
-                                      customer_table_skey_index_oid);
+  index_metadata = new index::IndexMetadata(
+    "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(skey_index);
@@ -583,13 +585,16 @@ void CreateStockTable() {
   tpcc_database->AddTable(stock_table);
 
   // Primary index on S_I_ID, S_W_ID
-  std::vector<oid_t> key_attrs;
-  key_attrs = {0, 1};
+  std::vector<oid_t> key_attrs = {0, 1};
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            stock_table->GetSchema(),
-                                                            "stock_pkey",
-                                                            stock_table_pkey_index_oid);
+  auto tuple_schema = stock_table->GetSchema();
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique = true;
+
+  index::IndexMetadata* index_metadata = new index::IndexMetadata(
+    "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   stock_table->AddIndex(pkey_index);
@@ -647,25 +652,32 @@ void CreateOrdersTable() {
 
   tpcc_database->AddTable(orders_table);
 
-  // Primary index on O_ID, O_D_ID, O_W_ID
+  auto tuple_schema = customer_table->GetSchema();
   std::vector<oid_t> key_attrs;
-  key_attrs = {0, 2, 3};
+  catalog::Schema *key_schema = nullptr;
+  index::IndexMetadata* index_metadata = nullptr;
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            orders_table->GetSchema(),
-                                                            "orders_pkey",
-                                                            orders_table_pkey_index_oid);
+
+  // Primary index on O_ID, O_D_ID, O_W_ID
+  key_attrs = {0, 2, 3};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  index_metadata = new index::IndexMetadata(
+    "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
   key_attrs = {1, 2, 3};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata =  BuildIndexMetadata(key_attrs,
-                                       orders_table->GetSchema(),
-                                       "orders_skey",
-                                       orders_table_skey_index_oid);
+  index_metadata = new index::IndexMetadata(
+    "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(skey_index);
@@ -707,13 +719,16 @@ void CreateNewOrderTable() {
   tpcc_database->AddTable(new_order_table);
 
   // Primary index on NO_O_ID, NO_D_ID, NO_W_ID
-  std::vector<oid_t> key_attrs;
-  key_attrs = {0, 1, 2};
+  std::vector<oid_t> key_attrs = {0, 1, 2};
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            new_order_table->GetSchema(),
-                                                            "new_order_pkey",
-                                                            new_order_table_pkey_index_oid);
+  auto tuple_schema = new_order_table->GetSchema();
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  bool unique = true;
+
+  index::IndexMetadata* index_metadata = new index::IndexMetadata(
+    "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   new_order_table->AddIndex(pkey_index);
@@ -775,27 +790,34 @@ void CreateOrderLineTable() {
       own_schema,
       adapt_table);
 
+
   tpcc_database->AddTable(order_line_table);
 
-  // Primary index on OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
+  auto tuple_schema = order_line_table->GetSchema();
   std::vector<oid_t> key_attrs;
-  key_attrs = {0, 1, 2, 3};
+  catalog::Schema *key_schema = nullptr;
+  index::IndexMetadata* index_metadata = nullptr;
 
-  index::IndexMetadata* index_metadata = BuildIndexMetadata(key_attrs,
-                                                            order_line_table->GetSchema(),
-                                                            "order_line_pkey",
-                                                            order_line_table_pkey_index_oid);
+  // Primary index on OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
+  key_attrs = {0, 1, 2, 3};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  index_metadata = new index::IndexMetadata(
+    "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
   key_attrs = {0, 1, 2};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata =  BuildIndexMetadata(key_attrs,
-                                       order_line_table->GetSchema(),
-                                       "order_line_skey",
-                                       order_line_table_skey_index_oid);
+  index_metadata = new index::IndexMetadata(
+    "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(skey_index);
@@ -840,6 +862,59 @@ void CreateTPCCDatabase() {
 std::random_device rd;
 std::mt19937 rng(rd());
 
+// Create random NURand constants, appropriate for loading the database.
+NURandConstant::NURandConstant() {
+  c_last = GetRandomInteger(0, 255);
+  c_id = GetRandomInteger(0, 1023);
+  order_line_itme_id = GetRandomInteger(0, 8191);
+}
+
+// A non-uniform random number, as defined by TPC-C 2.1.6. (page 20).
+int GetNURand(int a, int x, int y) {
+  ALWAYS_ASSERT(x <= y);
+  int c = nu_rand_const.c_last;
+
+  if (a == 255) {
+    c = nu_rand_const.c_last;
+  } else if (a == 1023) {
+    c = nu_rand_const.c_id;
+  } else if (a == 8191) {
+    c = nu_rand_const.order_line_itme_id;
+  } else {
+    ALWAYS_ASSERT(false);
+  }
+
+  return (((GetRandomInteger(0, a) | GetRandomInteger(x, y)) + c) % (y - x + 1)) + x;
+}
+
+
+// A last name as defined by TPC-C 4.3.2.3. Not actually random.
+std::string GetLastName(int number) {
+  ALWAYS_ASSERT(number >= 0 && number <= 999);
+
+  int idx1 = number / 100;
+  int idx2 = (number / 10 % 10);
+  int idx3 = number % 10;
+
+  char lastname_cstr[name_length];
+  std::strcpy(lastname_cstr, syllables[idx1]);
+  std::strcat(lastname_cstr, syllables[idx2]);
+  std::strcat(lastname_cstr, syllables[idx3]);
+
+  return std::string(lastname_cstr, name_length);
+}
+
+// A non-uniform random last name, as defined by TPC-C 4.3.2.3.
+// The name will be limited to maxCID
+std::string GetRandomLastName(int max_cid) {
+  int min_cid = 999;
+  if (max_cid - 1 < min_cid) {
+    min_cid = max_cid - 1;
+  }
+
+  return GetLastName(GetNURand(255, 0, min_cid));
+}
+
 std::string GetRandomAlphaNumericString(const size_t string_length) {
   const char alphanumeric[] = "0123456789"
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -851,6 +926,7 @@ std::string GetRandomAlphaNumericString(const size_t string_length) {
   std::string sample(string_length, repeated_char);
   return sample;
 }
+
 
 bool GetRandomBoolean(double ratio) {
   double sample = (double) rand() / RAND_MAX;
@@ -1028,6 +1104,9 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
                                                    const int district_id,
                                                    const int warehouse_id,
                                                    const std::unique_ptr<VarlenPool>& pool) {
+  // Customer id begins from 0
+  ALWAYS_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
+
   auto customer_table_schema = customer_table->GetSchema();
   std::unique_ptr<storage::Tuple> customer_tuple(new storage::Tuple(customer_table_schema, allocate));
 
@@ -1039,10 +1118,20 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   customer_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
   // C_FIRST, C_MIDDLE, C_LAST
   auto c_first = GetRandomAlphaNumericString(name_length);
+
+  std::string c_last;
+
+  // Here our customer id begins from 0
+  if (customer_id <= 999) {
+    c_last = GetLastName(customer_id);
+  } else {
+    c_last = GetRandomLastName(state.customers_per_district);
+  }
+
   auto c_middle = GetRandomAlphaNumericString(middle_name_length);
   customer_tuple->SetValue(3, ValueFactory::GetStringValue(c_first), pool.get());
   customer_tuple->SetValue(4, ValueFactory::GetStringValue(c_middle), pool.get());
-  customer_tuple->SetValue(5, ValueFactory::GetStringValue(c_first), pool.get());
+  customer_tuple->SetValue(5, ValueFactory::GetStringValue(c_last), pool.get());
   // C_STREET_1, C_STREET_2
   auto c_street = GetStreetName();
   customer_tuple->SetValue(6, ValueFactory::GetStringValue(c_street), pool.get());
@@ -1390,6 +1479,16 @@ void LoadTPCCDatabase() {
   LoadItems();
 
   LoadWarehouses();
+
+  LOG_INFO("warehouse count = %lf", warehouse_table->GetNumberOfTuples());
+  LOG_INFO("district count  = %lf", district_table->GetNumberOfTuples());
+  LOG_INFO("item count = %lf", item_table->GetNumberOfTuples());
+  LOG_INFO("customer count = %lf", customer_table->GetNumberOfTuples());
+  LOG_INFO("history count = %lf", history_table->GetNumberOfTuples());
+  LOG_INFO("stock count = %lf", stock_table->GetNumberOfTuples());
+  LOG_INFO("orders count = %lf", orders_table->GetNumberOfTuples());
+  LOG_INFO("new order count = %lf", new_order_table->GetNumberOfTuples());
+  LOG_INFO("order line count = %lf", order_line_table->GetNumberOfTuples());
 
 }
 

@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/common/logger.h"
+#include "backend/planner/abstract_plan.h"
 
 namespace peloton {
 namespace bridge {
@@ -30,7 +32,7 @@ namespace bridge {
  */
 std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformUnique(
     const UniquePlanState *unique_plan_state) {
-  LOG_INFO("Handle Unique");
+  LOG_TRACE("Handle Unique");
 
   // get the underlying plan
   AbstractPlanState *outer_plan_state =

@@ -30,9 +30,9 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
 
   predicate = new expression::ComparisonExpression<expression::CmpEq>(
       EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
@@ -42,21 +42,21 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
 
 std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
   // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   /////////////////////////////////////////////////////////
   // PROJECTION 0
   /////////////////////////////////////////////////////////
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map1 =
+  DirectMap direct_map1 =
       std::make_pair(0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 =
+  DirectMap direct_map2 =
       std::make_pair(1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 =
+  DirectMap direct_map3 =
       std::make_pair(2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 =
+  DirectMap direct_map4 =
       std::make_pair(3, std::make_pair(0, 0));
 
   direct_map_list.push_back(direct_map1);
@@ -77,9 +77,9 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(0, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
 
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
       new expression::ComparisonExpression<expression::CmpEq>(
@@ -88,7 +88,7 @@ JoinTestsUtil::CreateComplicatedJoinPredicate() {
   // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(0, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 1);
   expression::ConstantValueExpression *const_val_1 =
       new expression::ConstantValueExpression(
           ValueFactory::GetDoubleValue(50.0));

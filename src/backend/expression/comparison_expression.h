@@ -18,29 +18,28 @@
 #include "backend/expression/constant_value_expression.h"
 #include "backend/expression/tuple_value_expression.h"
 
-#include <string>
-#include <cassert>
-
 namespace peloton {
 namespace expression {
 
+//===----------------------------------------------------------------------===//
 // Each of these OP classes implements a standard static function interface
-// for a different compa.Ison operator assumed to apply to two non-null-valued
+// for a different comparison operators assumed to apply to two non-null-valued
 // Values.
+//
 // "compare_withoutNull" delegates to an Value method implementing the specific
-// compa.Ison and returns either a true or false boolean Value.
+// comparison and returns either a true or false boolean Value.
+//
 // "implies_true_for_row" returns true if a prior true return from
-// compare_withoutNull
-// applied to a row's prefix column implies a true result for the row
-// compa.Ison.
-// T.Is may require a recheck for strict inequality.
+// compare_withoutNull applied to a row's prefix column implies a true result
+// for the row comparison. This may require a recheck for strict inequality.
+//
 // "implies_false_for_row" returns true if a prior false return from
-// compare_withoutNull
-// applied to a row's prefix column implies a false result for the row
-// compa.Ison.
-// T.Is may require a recheck for strict inequality.
-// "includes_equality" returns true if the compa.Ison is true for (rows of)
+// compare_withoutNull applied to a row's prefix column implies a false result
+// for the row comparison. This may require a recheck for strict inequality.
+//
+// "includes_equality" returns true if the comparison is true for (rows of)
 // equal values.
+//===----------------------------------------------------------------------===//
 
 class CmpEq {
  public:
@@ -48,15 +47,15 @@ class CmpEq {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return false;
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }
@@ -70,15 +69,15 @@ class CmpNe {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return false;
   }
@@ -92,9 +91,9 @@ class CmpLt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpLessThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
@@ -111,9 +110,9 @@ class CmpGt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpGreaterThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(__attribute__((unused))
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
                                           const Value &l,
-                                          __attribute__((unused))
+                                          UNUSED_ATTRIBUTE
                                           const Value &r) {
     return true;
   }
@@ -133,9 +132,9 @@ class CmpLte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }
@@ -152,9 +151,9 @@ class CmpGte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(__attribute__((unused))
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
                                            const Value &l,
-                                           __attribute__((unused))
+                                           UNUSED_ATTRIBUTE
                                            const Value &r) {
     return true;
   }
@@ -194,20 +193,17 @@ class ComparisonExpression : public AbstractExpression {
  public:
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
-      : AbstractExpression(type, left, right) {
-    m_left = left;
-    m_right = right;
-  };
+      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {}
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         const AbstractTuple *tuple2,
-                        executor::ExecutorContext *context) const {
+                        executor::ExecutorContext *context) const override {
     LOG_TRACE("Evaluate %s. left %s, right %s. ret=%s", OP::op_name(),
               typeid(*(m_left)).name(), typeid(*(m_right)).name(),
               traceEval(tuple1, tuple2, context));
 
-    assert(m_left != NULL);
-    assert(m_right != NULL);
+    ALWAYS_ASSERT(m_left != NULL);
+    ALWAYS_ASSERT(m_right != NULL);
 
     Value lnv = m_left->Evaluate(tuple1, tuple2, context);
     if (lnv.IsNull()) {
@@ -244,23 +240,18 @@ class ComparisonExpression : public AbstractExpression {
             : (OP::compare_withoutNull(lnv, rnv).IsTrue() ? "TRUE" : "FALSE"));
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "ComparisonExpression\n");
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     AbstractExpression *copied_left =
         ((m_left == nullptr) ? nullptr : m_left->Copy());
     AbstractExpression *copied_right =
         ((m_right == nullptr) ? nullptr : m_right->Copy());
 
-    return new ComparisonExpression<OP>(AbstractExpression::m_type, copied_left,
-                                        copied_right);
+    return new ComparisonExpression<OP>(m_type, copied_left, copied_right);
   }
-
- private:
-  AbstractExpression *m_left;
-  AbstractExpression *m_right;
 };
 
 template <typename C, typename L, typename R>
@@ -270,7 +261,7 @@ class InlinedComparisonExpression : public ComparisonExpression<C> {
                               AbstractExpression *right)
       : ComparisonExpression<C>(type, left, right) {}
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     AbstractExpression *copied_left =
         ((AbstractExpression::m_left == nullptr)
              ? nullptr
@@ -284,5 +275,5 @@ class InlinedComparisonExpression : public ComparisonExpression<C> {
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

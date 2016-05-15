@@ -88,8 +88,8 @@ void UpdateTuple(storage::DataTable *table) {
   std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   target_list.emplace_back(
       2, expression::ExpressionUtil::ConstantValueFactory(update_val));
   LOG_INFO("%u", target_list.at(0).first);
@@ -108,7 +108,7 @@ void UpdateTuple(storage::DataTable *table) {
 
   // WHERE ATTR_0 < 70
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(70));
@@ -149,7 +149,7 @@ void DeleteTuple(storage::DataTable *table) {
 
   // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(60));
@@ -387,8 +387,9 @@ TEST_F(MutateTests, UpdateTest) {
   auto tuple_cnt = SeqScanCount(table, column_ids, nullptr);
   EXPECT_EQ(tuple_cnt, 10);
 
+  // ATTR = 23.5
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 2);
+      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 2);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetDoubleValue(23.5));

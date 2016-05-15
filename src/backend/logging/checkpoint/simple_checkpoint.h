@@ -12,14 +12,16 @@
 
 #pragma once
 
-#include "backend/logging/checkpoint.h"
-#include "backend/logging/log_record.h"
-#include "backend/executor/seq_scan_executor.h"
-
+#include <memory>
 #include <thread>
+
+#include "backend/logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {
+
+class LogRecord;
+class BackendLogger;
 
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint
@@ -31,14 +33,10 @@ class SimpleCheckpoint : public Checkpoint {
   SimpleCheckpoint &operator=(const SimpleCheckpoint &) = delete;
   SimpleCheckpoint(SimpleCheckpoint &&) = delete;
   SimpleCheckpoint &operator=(SimpleCheckpoint &&) = delete;
-  SimpleCheckpoint();
+  SimpleCheckpoint(bool test_mode);
   ~SimpleCheckpoint();
 
-  static SimpleCheckpoint &GetInstance();
-
   // Inherited functions
-  void Init();
-
   void DoCheckpoint();
 
   cid_t DoRecovery();
@@ -46,14 +44,16 @@ class SimpleCheckpoint : public Checkpoint {
   // Internal functions
   void InsertTuple(cid_t commit_id);
 
-  bool Execute(executor::AbstractExecutor *scan_executor,
-               concurrency::Transaction *txn, storage::DataTable *target_table,
-               oid_t database_oid);
+  void Scan(storage::DataTable *target_table, oid_t database_oid);
 
   // Getters and Setters
   void SetLogger(BackendLogger *logger);
 
   std::vector<std::shared_ptr<LogRecord>> GetRecords();
+
+  inline void SetStartCommitId(cid_t start_commit_id) {
+    start_commit_id_ = start_commit_id;
+  }
 
  private:
   void CreateFile();
@@ -66,24 +66,16 @@ class SimpleCheckpoint : public Checkpoint {
 
   std::vector<std::shared_ptr<LogRecord>> records_;
 
-  FILE *checkpoint_file_ = nullptr;
+  FileHandle file_handle_ = INVALID_FILE_HANDLE;
 
-  int checkpoint_file_fd_ = INVALID_FILE_DESCRIPTOR;
-
-  // Size of the checkpoint file
-  size_t checkpoint_file_size_ = 0;
-
-  // Default checkpoint interval
-  int64_t checkpoint_interval_ = 15;
-
-  BackendLogger *logger_ = nullptr;
+  std::unique_ptr<BackendLogger> logger_;
 
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
   oid_t max_oid_ = 0;
 
   // commit id of current checkpoint
-  cid_t start_commit_id = 0;
+  cid_t start_commit_id_ = 0;
 };
 
 }  // namespace logging

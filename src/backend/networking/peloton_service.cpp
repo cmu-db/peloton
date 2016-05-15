@@ -16,7 +16,7 @@
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/common/serializer.h"
-#include "backend/common/assert.h"
+#include "backend/common/macros.h"
 #include "backend/storage/tile.h"
 #include "backend/storage/tuple.h"
 #include "backend/planner/seq_scan_plan.h"
@@ -32,8 +32,8 @@ namespace networking {
 
 void PelotonService::TransactionInit(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionInitRequest* request,
-     __attribute__((unused)) TransactionInitResponse* response,
+     UNUSED_ATTRIBUTE const TransactionInitRequest* request,
+     UNUSED_ATTRIBUTE TransactionInitResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -48,8 +48,8 @@ void PelotonService::TransactionInit(
 
 void PelotonService::TransactionWork(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionWorkRequest* request,
-     __attribute__((unused)) TransactionWorkResponse* response,
+     UNUSED_ATTRIBUTE const TransactionWorkRequest* request,
+     UNUSED_ATTRIBUTE TransactionWorkResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -64,8 +64,8 @@ void PelotonService::TransactionWork(
 
 void PelotonService::TransactionPrefetch(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionPrefetchResult* request,
-     __attribute__((unused)) TransactionPrefetchAcknowledgement* response,
+     UNUSED_ATTRIBUTE const TransactionPrefetchResult* request,
+     UNUSED_ATTRIBUTE TransactionPrefetchAcknowledgement* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -80,8 +80,8 @@ void PelotonService::TransactionPrefetch(
 
 void PelotonService::TransactionMap(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionMapRequest* request,
-     __attribute__((unused)) TransactionMapResponse* response,
+     UNUSED_ATTRIBUTE const TransactionMapRequest* request,
+     UNUSED_ATTRIBUTE TransactionMapResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -96,8 +96,8 @@ void PelotonService::TransactionMap(
 
 void PelotonService::TransactionReduce(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionReduceRequest* request,
-     __attribute__((unused)) TransactionReduceResponse* response,
+     UNUSED_ATTRIBUTE const TransactionReduceRequest* request,
+     UNUSED_ATTRIBUTE TransactionReduceResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -112,8 +112,8 @@ void PelotonService::TransactionReduce(
 
 void PelotonService::TransactionPrepare(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionPrepareRequest* request,
-     __attribute__((unused)) TransactionPrepareResponse* response,
+     UNUSED_ATTRIBUTE const TransactionPrepareRequest* request,
+     UNUSED_ATTRIBUTE TransactionPrepareResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -128,8 +128,8 @@ void PelotonService::TransactionPrepare(
 
 void PelotonService::TransactionFinish(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionFinishRequest* request,
-     __attribute__((unused)) TransactionFinishResponse* response,
+     UNUSED_ATTRIBUTE const TransactionFinishRequest* request,
+     UNUSED_ATTRIBUTE TransactionFinishResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -144,8 +144,8 @@ void PelotonService::TransactionFinish(
 
 void PelotonService::TransactionRedirect(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionRedirectRequest* request,
-     __attribute__((unused)) TransactionRedirectResponse* response,
+     UNUSED_ATTRIBUTE const TransactionRedirectRequest* request,
+     UNUSED_ATTRIBUTE TransactionRedirectResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -160,8 +160,8 @@ void PelotonService::TransactionRedirect(
 
 void PelotonService::TransactionDebug(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const TransactionDebugRequest* request,
-     __attribute__((unused)) TransactionDebugResponse* response,
+     UNUSED_ATTRIBUTE const TransactionDebugRequest* request,
+     UNUSED_ATTRIBUTE TransactionDebugResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -175,8 +175,8 @@ void PelotonService::TransactionDebug(
 }
 
 void PelotonService::SendData(::google::protobuf::RpcController* controller,
-                              __attribute__((unused)) const SendDataRequest* request,
-                              __attribute__((unused)) SendDataResponse* response,
+                              UNUSED_ATTRIBUTE const SendDataRequest* request,
+                              UNUSED_ATTRIBUTE SendDataResponse* response,
                               ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -190,8 +190,8 @@ void PelotonService::SendData(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::Initialize(::google::protobuf::RpcController* controller,
-                                __attribute__((unused)) const InitializeRequest* request,
-                                __attribute__((unused)) InitializeResponse* response,
+                                UNUSED_ATTRIBUTE const InitializeRequest* request,
+                                UNUSED_ATTRIBUTE InitializeResponse* response,
                                 ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -206,8 +206,8 @@ void PelotonService::Initialize(::google::protobuf::RpcController* controller,
 
 void PelotonService::ShutdownPrepare(
     ::google::protobuf::RpcController* controller,
-     __attribute__((unused)) const ShutdownPrepareRequest* request,
-     __attribute__((unused)) ShutdownPrepareResponse* response,
+     UNUSED_ATTRIBUTE const ShutdownPrepareRequest* request,
+     UNUSED_ATTRIBUTE ShutdownPrepareResponse* response,
      ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -221,8 +221,8 @@ void PelotonService::ShutdownPrepare(
 }
 
 void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
-                              __attribute__((unused)) const ShutdownRequest* request,
-                              __attribute__((unused)) ShutdownResponse* response,
+                              UNUSED_ATTRIBUTE const ShutdownRequest* request,
+                              UNUSED_ATTRIBUTE ShutdownResponse* response,
                               ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -236,8 +236,8 @@ void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
-                               __attribute__((unused)) const HeartbeatRequest* request,
-                               __attribute__((unused)) HeartbeatResponse* response,
+                               UNUSED_ATTRIBUTE const HeartbeatRequest* request,
+                               UNUSED_ATTRIBUTE HeartbeatResponse* response,
                                ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -272,8 +272,8 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
-                                 __attribute__((unused)) const UnevictDataRequest* request,
-                                 __attribute__((unused)) UnevictDataResponse* response,
+                                 UNUSED_ATTRIBUTE const UnevictDataRequest* request,
+                                 UNUSED_ATTRIBUTE UnevictDataResponse* response,
                                  ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -287,8 +287,8 @@ void PelotonService::UnevictData(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
-                              __attribute__((unused)) const TimeSyncRequest* request,
-                              __attribute__((unused)) TimeSyncResponse* response,
+                              UNUSED_ATTRIBUTE const TimeSyncRequest* request,
+                              UNUSED_ATTRIBUTE TimeSyncResponse* response,
                               ::google::protobuf::Closure* done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
@@ -350,7 +350,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
     }
 
     case PLAN_NODE_TYPE_SEQSCAN: {
-      LOG_INFO("SEQSCAN revieved");
+      LOG_TRACE("SEQSCAN revieved");
       std::string plan = request->plan();
       ReferenceSerializeInputBE input(plan.c_str(), plan.size());
       std::shared_ptr<peloton::planner::SeqScanPlan> ss_plan = std::make_shared<
@@ -386,7 +386,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
         response->add_result(output_tiles.Data(), output_tiles.Size());
 
         // Debug
-        LOG_INFO("Tile content is: %s", tile->GetInfo().c_str());
+        LOG_TRACE("Tile content is: %s", tile->GetInfo().c_str());
       }
 
       break;
@@ -406,13 +406,13 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
   // Here is for the client callback for response
   else {
     // Process the response
-    LOG_INFO("proecess the Query response");
-    ASSERT(response);
+    LOG_TRACE("proecess the Query response");
+    ALWAYS_ASSERT(response);
 
     int tile_count = response->tile_count();
 
     int result_size = response->result_size();
-    ASSERT(result_size == tile_count);
+    ALWAYS_ASSERT(result_size == tile_count);
 
     for (int idx = 0; idx < result_size; idx++) {
       // Get the tile bytes
@@ -437,7 +437,7 @@ void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
       tuple.DeserializeWithHeaderFrom(tile_input);
 
       // Debug
-      //LOG_INFO("Recv a tile: %s", tile.GetInfo().c_str());
+      //LOG_TRACE("Recv a tile: %s", tile.GetInfo().c_str());
     }
   }
 }
