@@ -30,12 +30,10 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d :: %lf",
-           state.scale_factor,
+  LOG_INFO("%d :: %lf",
            state.backend_count,
            stat);
 
-  out << state.scale_factor << " ";
   out << state.backend_count << " ";
   out << stat << "\n";
   out.flush();

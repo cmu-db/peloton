@@ -193,10 +193,7 @@ void RunBackend(oid_t thread_id) {
   auto update_ratio = state.update_ratio;
 
   // Set zipfian skew
-  auto zipf_theta = 0.0;
-  if(state.skew_factor == SKEW_FACTOR_HIGH) {
-    zipf_theta = 0.5;
-  }
+  auto zipf_theta = 0.1;
 
   fast_random rng(rand());
   ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1, zipf_theta);

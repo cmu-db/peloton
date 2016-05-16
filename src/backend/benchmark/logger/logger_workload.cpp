@@ -69,12 +69,11 @@ size_t GetLogFileSize();
 
 static void WriteOutput(double value) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %lf %d %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
+  LOG_INFO("%d %d %lf %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
            state.logging_type,
            ycsb::state.update_ratio,
            ycsb::state.backend_count,
            ycsb::state.scale_factor,
-           ycsb::state.skew_factor,
            ycsb::state.duration,
            state.nvm_latency,
            state.pcommit_latency,
@@ -87,7 +86,6 @@ static void WriteOutput(double value) {
   out << ycsb::state.update_ratio << " ";
   out << ycsb::state.scale_factor << " ";
   out << ycsb::state.backend_count << " ";
-  out << ycsb::state.skew_factor << " ";
   out << ycsb::state.duration << " ";
   out << state.nvm_latency << " ";
   out << state.pcommit_latency << " ";
