@@ -103,11 +103,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   }
 
   // Static TPCC parameters
-  state.warehouse_count = 4;                   // 10
-  state.item_count = 10000;                    // 100000
-  state.districts_per_warehouse = 2;           // 10
-  state.customers_per_district = 3000;         // 3000
-  state.new_orders_per_district = 900;         // 900
+  state.warehouse_count = 10;                  // 10
+  state.item_count = 50000;                    // 100000
+  state.districts_per_warehouse = 4;           // 10
+  state.customers_per_district = 300;          // 3000
+  state.new_orders_per_district = 90;          // 900
 
   // Print configuration
   ValidateBackendCount(state);
