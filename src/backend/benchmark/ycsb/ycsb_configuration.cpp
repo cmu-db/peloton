@@ -28,7 +28,6 @@ void Usage(FILE *out) {
           "   -c --column-count      :  # of columns \n"
           "   -d --duration          :  execution duration \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -s --skew              :  Skew factor \n"
           "   -u --update-ratio      :  Fraction of updates \n"
           );
 }
@@ -38,7 +37,6 @@ static struct option opts[] = {
     {"column-count", optional_argument, NULL, 'c'},
     {"duration", optional_argument, NULL, 'd'},
     {"scale-factor", optional_argument, NULL, 'k'},
-    {"skew", optional_argument, NULL, 's'},
     {"update-ratio", optional_argument, NULL, 'u'},
     {NULL, 0, NULL, 0}};
 
@@ -87,15 +85,6 @@ void ValidateDuration(const configuration &state) {
   LOG_INFO("%s : %d", "duration", state.duration);
 }
 
-void ValidateSkewFactor(const configuration &state) {
-  if (state.skew_factor <= 0 || state.skew_factor >= 3) {
-    LOG_ERROR("Invalid skew_factor :: %d", state.skew_factor);
-    exit(EXIT_FAILURE);
-  }
-
-  LOG_INFO("%s : %d", "skew_factor", state.skew_factor);
-}
-
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
@@ -104,12 +93,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
-  state.skew_factor = SKEW_FACTOR_LOW;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hb:c:d:k:s:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "hb:c:d:k:u:", opts, &idx);
 
     if (c == -1) break;
 
@@ -125,9 +113,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'k':
         state.scale_factor = atoi(optarg);
-        break;
-      case 's':
-        state.skew_factor = (SkewFactor)atoi(optarg);
         break;
       case 'u':
         state.update_ratio = atof(optarg);
@@ -152,7 +137,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateDuration(state);
-  ValidateSkewFactor(state);
 
 }
 

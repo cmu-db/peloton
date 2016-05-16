@@ -27,24 +27,24 @@ void Usage(FILE *out) {
           "   -h --help              :  Print help message \n"
           "   -b --backend_count     :  # of backends \n"
           "   -d --duration          :  execution duration \n"
-          "   -k --scale_factor      :  scale factor \n"
+          "   -k --warehouse_count   :  warehouse count \n"
   );
 }
 
 static struct option opts[] = {
     { "backend_count", optional_argument, NULL, 'b'},
     { "duration", optional_argument, NULL, 'd' },
-    { "scale_factor", optional_argument, NULL, 'k' },
+    { "warehouse_count", optional_argument, NULL, 'k' },
     {NULL, 0, NULL, 0}
 };
 
-void ValidateScaleFactor(const configuration &state) {
-  if (state.scale_factor <= 0) {
-    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
+void ValidateWarehouseCount(const configuration &state) {
+  if (state.warehouse_count <= 0) {
+    LOG_ERROR("Invalid warehouse_count :: %d", state.warehouse_count);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
+  LOG_INFO("%s : %d", "warehouse_count", state.warehouse_count);
 }
 
 void ValidateDuration(const configuration &state) {
@@ -68,9 +68,9 @@ void ValidateBackendCount(const configuration &state) {
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
-  state.scale_factor = 1;
   state.duration = 1000;
   state.backend_count = 2;
+  state.warehouse_count = 2;  // 10
 
   // Parse args
   while (1) {
@@ -87,7 +87,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.duration = atoi(optarg);
         break;
       case 'k':
-        state.scale_factor = atoi(optarg);
+        state.warehouse_count = atoi(optarg);
         break;
 
       case 'h':
@@ -103,7 +103,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   }
 
   // Static TPCC parameters
-  state.warehouse_count = 2;                   // 10
   state.item_count = 10000;                    // 100000
   state.districts_per_warehouse = 2;           // 10
   state.customers_per_district = 300;          // 3000
@@ -111,7 +110,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Print configuration
   ValidateBackendCount(state);
-  ValidateScaleFactor(state);
+  ValidateWarehouseCount(state);
   ValidateDuration(state);
 
 }

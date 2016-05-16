@@ -147,9 +147,6 @@ static const oid_t order_line_table_skey_index_oid = 20081; // OL_W_ID, OL_D_ID,
 class configuration {
  public:
 
-  // scale factor
-  int scale_factor;
-
   // num of warehouses
   int warehouse_count;
 
@@ -179,11 +176,11 @@ extern configuration state;
 
 void Usage(FILE *out);
 
-void ValidateScaleFactor(const configuration &state);
-
 void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
+
+void ValidateWarehouseCount(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

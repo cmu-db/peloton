@@ -271,10 +271,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
-  ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
 
   // Default Values
-  tpcc::state.scale_factor = 1;
+  tpcc::state.warehouse_count = 2;  // 10
   tpcc::state.duration = 1000;
   tpcc::state.backend_count = 2;
 
@@ -282,9 +281,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   while (1) {
     int idx = 0;
     // logger - a:e:f:hl:n:p:v:w:y:
-    // ycsb   - b:c:d:k:s:u:
+    // ycsb   - b:c:d:k:u:
     // tpcc   - b:d:k:
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:u:", opts, &idx);
 
     if (c == -1) break;
 
@@ -331,10 +330,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
-        tpcc::state.scale_factor = atoi(optarg);
-        break;
-      case 's':
-        ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
+        tpcc::state.warehouse_count = atoi(optarg);
         break;
       case 'u':
         ycsb::state.update_ratio = atof(optarg);
@@ -373,16 +369,14 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     ycsb::ValidateUpdateRatio(ycsb::state);
     ycsb::ValidateBackendCount(ycsb::state);
     ycsb::ValidateDuration(ycsb::state);
-    ycsb::ValidateSkewFactor(ycsb::state);
   }
   // Print TPCC configuration
   else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
     tpcc::ValidateBackendCount(tpcc::state);
     tpcc::ValidateDuration(tpcc::state);
-    tpcc::ValidateScaleFactor(tpcc::state);
+    tpcc::ValidateWarehouseCount(tpcc::state);
 
     // Static TPCC parameters
-    tpcc::state.warehouse_count = 2;                   // 10
     tpcc::state.item_count = 10000;                    // 100000
     tpcc::state.districts_per_warehouse = 2;           // 10
     tpcc::state.customers_per_district = 300;          // 3000
