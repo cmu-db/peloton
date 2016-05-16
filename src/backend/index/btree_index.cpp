@@ -18,15 +18,6 @@
 namespace peloton {
 namespace index {
 
-struct ValuePairComparator {
-  bool operator() (std::pair<Value, int> i,std::pair<Value, int> j) {
-    if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
-      return i.second < j.second;
-    }
-    return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
-  }
-} comparator;
-
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
@@ -229,7 +220,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
   }
 
   // Have merged all constraints in a single line, sort this line.
-  std::sort(nums.begin(), nums.end(), comparator);
+  std::sort(nums.begin(), nums.end(), ValuePairComparator);
   assert(nums.size() == 0);
 
   // Build intervals.

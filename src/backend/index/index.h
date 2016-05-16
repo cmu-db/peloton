@@ -227,6 +227,15 @@ class Index : public Printable {
   bool IfForwardExpression(ExpressionType e);
 
   bool IfBackwardExpression(ExpressionType e);
+
+
+  bool ValuePairComparator(std::pair<peloton::Value, int> i, std::pair<peloton::Value, int> j) {
+    if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
+      return i.second < j.second;
+    }
+    return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
+  }
+
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
