@@ -49,16 +49,14 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
   // Get varlen pool
   VarlenPool *pool = nullptr;
   if (econtext != nullptr) pool = econtext->GetExecutorContextPool();
-
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
+    
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
-
     dest->SetValue(col_id, value, pool);
   }
-
   // (B) Execute direct map
   for (auto dm : direct_map_list_) {
     auto dest_col_id = dm.first;
@@ -71,7 +69,6 @@ bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
 
     dest->SetValue(dest_col_id, value, pool);
   }
-
   return true;
 }
 
