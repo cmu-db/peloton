@@ -23,7 +23,6 @@
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/common/timer.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 #include "backend/executor/abstract_executor.h"
@@ -113,7 +112,7 @@ double new_order_remote_txns = 0.01;
 
 const int syllable_count = 10;
 const char *syllables[syllable_count] = {"BAR", "OUGHT", "ABLE", "PRI", "PRES",
-    "ESES", "ANTI", "CALLY", "ATION", "EING"};
+                           "ESES", "ANTI", "CALLY", "ATION", "EING"};
 
 NURandConstant nu_rand_const;
 /////////////////////////////////////////////////////////
@@ -271,8 +270,8 @@ void CreateDistrictTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-      "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -328,8 +327,8 @@ void CreateItemTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-      "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   item_table->AddIndex(pkey_index);
@@ -437,8 +436,8 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(pkey_index);
@@ -451,8 +450,8 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(skey_index);
@@ -594,8 +593,8 @@ void CreateStockTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-      "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   stock_table->AddIndex(pkey_index);
@@ -665,8 +664,8 @@ void CreateOrdersTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(pkey_index);
@@ -677,8 +676,8 @@ void CreateOrdersTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(skey_index);
@@ -728,8 +727,8 @@ void CreateNewOrderTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-      "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   new_order_table->AddIndex(pkey_index);
@@ -805,8 +804,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(pkey_index);
@@ -817,8 +816,8 @@ void CreateOrderLineTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-      "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(skey_index);
@@ -1361,139 +1360,125 @@ void LoadItems() {
   txn_manager.CommitTransaction();
 }
 
-void LoadWarehouse(oid_t warehouse_itr) {
+void LoadWarehouses() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   std::unique_ptr<executor::ExecutorContext> context;
 
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
+  // WAREHOUSES
+  for (auto warehouse_itr = 0; warehouse_itr < state.warehouse_count; warehouse_itr++) {
+    std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
 
-  auto txn = txn_manager.BeginTransaction();
-  context.reset(new executor::ExecutorContext(txn));
-
-  auto warehouse_tuple = BuildWarehouseTuple(warehouse_itr, pool);
-  planner::InsertPlan warehouse_node(warehouse_table, std::move(warehouse_tuple));
-  executor::InsertExecutor warehouse_executor(&warehouse_node, context.get());
-  warehouse_executor.Execute();
-
-  txn_manager.CommitTransaction();
-
-  // DISTRICTS
-  for (auto district_itr = 0; district_itr < state.districts_per_warehouse; district_itr++) {
     auto txn = txn_manager.BeginTransaction();
     context.reset(new executor::ExecutorContext(txn));
 
-    auto district_tuple = BuildDistrictTuple(district_itr, warehouse_itr, pool);
-    planner::InsertPlan district_node(district_table, std::move(district_tuple));
-    executor::InsertExecutor district_executor(&district_node, context.get());
-    district_executor.Execute();
+    auto warehouse_tuple = BuildWarehouseTuple(warehouse_itr, pool);
+    planner::InsertPlan warehouse_node(warehouse_table, std::move(warehouse_tuple));
+    executor::InsertExecutor warehouse_executor(&warehouse_node, context.get());
+    warehouse_executor.Execute();
 
     txn_manager.CommitTransaction();
 
-    // CUSTOMERS
-    for (auto customer_itr = 0; customer_itr < state.customers_per_district; customer_itr++) {
+    // DISTRICTS
+    for (auto district_itr = 0; district_itr < state.districts_per_warehouse; district_itr++) {
       auto txn = txn_manager.BeginTransaction();
       context.reset(new executor::ExecutorContext(txn));
 
-      auto customer_tuple = BuildCustomerTuple(customer_itr, district_itr, warehouse_itr, pool);
-      planner::InsertPlan customer_node(customer_table, std::move(customer_tuple));
-      executor::InsertExecutor customer_executor(&customer_node, context.get());
-      customer_executor.Execute();
-
-      // HISTORY
-
-      int history_district_id = district_itr;
-      int history_warehouse_id = warehouse_itr;
-      auto history_tuple = BuildHistoryTuple(customer_itr, district_itr, warehouse_itr,
-                                             history_district_id, history_warehouse_id, pool);
-      planner::InsertPlan history_node(history_table, std::move(history_tuple));
-      executor::InsertExecutor history_executor(&history_node, context.get());
-      history_executor.Execute();
+      auto district_tuple = BuildDistrictTuple(district_itr, warehouse_itr, pool);
+      planner::InsertPlan district_node(district_table, std::move(district_tuple));
+      executor::InsertExecutor district_executor(&district_node, context.get());
+      district_executor.Execute();
 
       txn_manager.CommitTransaction();
 
-    } // END CUSTOMERS
+      // CUSTOMERS
+      for (auto customer_itr = 0; customer_itr < state.customers_per_district; customer_itr++) {
+        auto txn = txn_manager.BeginTransaction();
+        context.reset(new executor::ExecutorContext(txn));
+
+        auto customer_tuple = BuildCustomerTuple(customer_itr, district_itr, warehouse_itr, pool);
+        planner::InsertPlan customer_node(customer_table, std::move(customer_tuple));
+        executor::InsertExecutor customer_executor(&customer_node, context.get());
+        customer_executor.Execute();
+
+        // HISTORY
+
+        int history_district_id = district_itr;
+        int history_warehouse_id = warehouse_itr;
+        auto history_tuple = BuildHistoryTuple(customer_itr, district_itr, warehouse_itr,
+                                               history_district_id, history_warehouse_id, pool);
+        planner::InsertPlan history_node(history_table, std::move(history_tuple));
+        executor::InsertExecutor history_executor(&history_node, context.get());
+        history_executor.Execute();
+
+        txn_manager.CommitTransaction();
+
+      } // END CUSTOMERS
 
 
-    // ORDERS
-    for(auto orders_itr = 0; orders_itr < state.customers_per_district; orders_itr++) {
+      // ORDERS
+      for(auto orders_itr = 0; orders_itr < state.customers_per_district; orders_itr++) {
+        auto txn = txn_manager.BeginTransaction();
+        context.reset(new executor::ExecutorContext(txn));
+
+        // New order ?
+        auto new_order_threshold = state.customers_per_district-new_orders_per_district;
+        bool new_order = (orders_itr > new_order_threshold);
+        auto o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
+
+        auto orders_tuple = BuildOrdersTuple(orders_itr, district_itr, warehouse_itr,
+                                             new_order, o_ol_cnt);
+        planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
+        executor::InsertExecutor orders_executor(&orders_node, context.get());
+        orders_executor.Execute();
+
+        // NEW_ORDER
+        if(new_order){
+          auto new_order_tuple = BuildNewOrderTuple(orders_itr, district_itr, warehouse_itr);
+          planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
+          executor::InsertExecutor new_order_executor(&new_order_node, context.get());
+          new_order_executor.Execute();
+        }
+
+        // ORDER_LINE
+        for (auto order_line_itr = 0; order_line_itr < o_ol_cnt; order_line_itr++) {
+
+          int ol_supply_w_id = warehouse_itr;
+          auto order_line_tuple = BuildOrderLineTuple(orders_itr, district_itr, warehouse_itr,
+                                                      order_line_itr, ol_supply_w_id, new_order, pool);
+          planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
+          executor::InsertExecutor order_line_executor(&order_line_node, context.get());
+          order_line_executor.Execute();
+        }
+
+        txn_manager.CommitTransaction();
+
+      }
+
+    } // END DISTRICTS
+
+    // STOCK
+    for(auto stock_itr = 0; stock_itr < state.item_count; stock_itr++) {
       auto txn = txn_manager.BeginTransaction();
       context.reset(new executor::ExecutorContext(txn));
 
-      // New order ?
-      auto new_order_threshold = state.customers_per_district-new_orders_per_district;
-      bool new_order = (orders_itr > new_order_threshold);
-      auto o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
-
-      auto orders_tuple = BuildOrdersTuple(orders_itr, district_itr, warehouse_itr,
-                                           new_order, o_ol_cnt);
-      planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
-      executor::InsertExecutor orders_executor(&orders_node, context.get());
-      orders_executor.Execute();
-
-      // NEW_ORDER
-      if(new_order){
-        auto new_order_tuple = BuildNewOrderTuple(orders_itr, district_itr, warehouse_itr);
-        planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
-        executor::InsertExecutor new_order_executor(&new_order_node, context.get());
-        new_order_executor.Execute();
-      }
-
-      // ORDER_LINE
-      for (auto order_line_itr = 0; order_line_itr < o_ol_cnt; order_line_itr++) {
-
-        int ol_supply_w_id = warehouse_itr;
-        auto order_line_tuple = BuildOrderLineTuple(orders_itr, district_itr, warehouse_itr,
-                                                    order_line_itr, ol_supply_w_id, new_order, pool);
-        planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
-        executor::InsertExecutor order_line_executor(&order_line_node, context.get());
-        order_line_executor.Execute();
-      }
+      int s_w_id = warehouse_itr;
+      auto stock_tuple = BuildStockTuple(stock_itr, s_w_id, pool);
+      planner::InsertPlan stock_node(stock_table, std::move(stock_tuple));
+      executor::InsertExecutor stock_executor(&stock_node, context.get());
+      stock_executor.Execute();
 
       txn_manager.CommitTransaction();
-
     }
 
-  } // END DISTRICTS
-
-  // STOCK
-  for(auto stock_itr = 0; stock_itr < state.item_count; stock_itr++) {
-    auto txn = txn_manager.BeginTransaction();
-    context.reset(new executor::ExecutorContext(txn));
-
-    int s_w_id = warehouse_itr;
-    auto stock_tuple = BuildStockTuple(stock_itr, s_w_id, pool);
-    planner::InsertPlan stock_node(stock_table, std::move(stock_tuple));
-    executor::InsertExecutor stock_executor(&stock_node, context.get());
-    stock_executor.Execute();
-
-    txn_manager.CommitTransaction();
-  }
+  } // END WAREHOUSES
 
 }
 
 void LoadTPCCDatabase() {
 
-  std::vector<std::thread> thread_group;
-
-  Timer<> timer;
-  timer.Start();
-
   LoadItems();
 
-  // Launch a group of threads
-  for (auto thread_itr = 0; thread_itr < state.warehouse_count; ++thread_itr) {
-    thread_group.push_back(std::move(std::thread(LoadWarehouse, thread_itr)));
-  }
-
-  // Join the threads with the main thread
-  for (auto thread_itr = 0; thread_itr < state.warehouse_count; ++thread_itr) {
-    thread_group[thread_itr].join();
-  }
-
-  timer.Stop();
-
-  auto loading_time = timer.GetDuration();
-  LOG_INFO("loading_time = %lf", loading_time);
+  LoadWarehouses();
 
   LOG_INFO("warehouse count = %lf", warehouse_table->GetNumberOfTuples());
   LOG_INFO("district count  = %lf", district_table->GetNumberOfTuples());
