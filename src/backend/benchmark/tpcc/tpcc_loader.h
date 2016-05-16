@@ -211,6 +211,8 @@ int GetRandomIntegerExcluding(const int lower_bound,
 
 double GetRandomDouble(const double lower_bound, const double upper_bound);
 
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum);
+
 std::string GetStreetName();
 
 std::string GetZipCode();

@@ -963,6 +963,21 @@ double GetRandomDouble(const double lower_bound, const double upper_bound) {
   return sample;
 }
 
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum) {
+  assert(decimal_places > 0);
+  assert(minimum < maximum);
+
+  int multiplier = 1;
+  for ( int i = 0; i < decimal_places; ++i ) {
+    multiplier *= 10;
+  }
+
+  int int_min = (int)(minimum * multiplier + 0.5);
+  int int_max = (int)(maximum * multiplier + 0.5);
+
+  return GetRandomDouble(int_min, int_max) / (double)(multiplier);
+}
+
 std::string GetStreetName() {
   std::vector<std::string> street_names = {
       "5835 Alderson St", "117  Ettwein St", "1400 Fairstead Ln", "1501 Denniston St", "898  Flemington St",
