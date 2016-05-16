@@ -230,12 +230,7 @@ class Index : public Printable {
 
 
   bool ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                           const std::pair<peloton::Value, int> &j) {
-    if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
-      return i.second < j.second;
-    }
-    return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
-  }
+                           const std::pair<peloton::Value, int> &j);
 
   //===--------------------------------------------------------------------===//
   //  Data members

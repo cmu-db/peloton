@@ -163,6 +163,15 @@ bool Index::IfBackwardExpression(ExpressionType e) {
   return false;
 }
 
+
+bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
+                         const std::pair<peloton::Value, int> &j) {
+  if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
+    return i.second < j.second;
+  }
+  return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
+}
+
 bool Index::ConstructLowerBoundTuple(
     storage::Tuple *index_key, const std::vector<peloton::Value> &values,
     const std::vector<oid_t> &key_column_ids,
