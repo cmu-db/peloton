@@ -256,13 +256,10 @@ bool PrepareLogFile() {
                       std::to_string(state.asynchronous_mode));
   }
 
-  Timer<> timer;
   std::thread thread;
 
   // Initializing logging module
   StartLogging(thread);
-
-  timer.Start();
 
   // Build the log
   BuildLog();
@@ -274,8 +271,6 @@ bool PrepareLogFile() {
       thread.join();
     }
   }
-
-  timer.Stop();
 
   // Pick metrics based on benchmark type
   double throughput = 0;
