@@ -13,6 +13,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <string>
 
 #include "backend/catalog/manager.h"
@@ -89,7 +90,7 @@ class BTreeIndex : public Index {
       const std::vector<Value> &values,
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &expr_types,
-      std::map<oid_t, std::pair<Value, Value>> non_leading_columns);
+      std::map<oid_t, std::pair<Value, Value>>& non_leading_columns);
 
  protected:
   MapType container;

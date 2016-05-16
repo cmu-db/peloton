@@ -282,7 +282,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
     }
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
-      ValueType type = values[i].GetValueType();
+      auto type = values[i].GetValueType();
       std::pair<Value, Value> range(Value::GetMaxValue(type), Value::GetMinValue(type));
       std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
       non_leading_columns.insert(key_value);
@@ -341,11 +341,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
   {
     index_lock.ReadLock();
-
-    std::vector<std::unique_ptr<storage::Tuple>> start_keys;
-    std::vector<std::unique_ptr<storage::Tuple>> end_keys;
-    bool all_constraints_are_equal = false;
-
 
     // If it is a special case, we can figure out the range to scan in the index
     if (special_case == true) {
