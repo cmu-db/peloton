@@ -382,11 +382,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     tpcc::ValidateScaleFactor(tpcc::state);
 
     // Static TPCC parameters
-    tpcc::state.warehouse_count = tpcc::state.scale_factor;
-    tpcc::state.item_count = 10 * tpcc::state.warehouse_count;
-    tpcc::state.districts_per_warehouse = 2;
-    tpcc::state.customers_per_district = 30;
-    tpcc::state.new_orders_per_district = 9;
+    tpcc::state.warehouse_count = 4;                   // 10
+    tpcc::state.item_count = 50000;                    // 100000
+    tpcc::state.districts_per_warehouse = 4;           // 10
+    tpcc::state.customers_per_district = 300;          // 3000
+    tpcc::state.new_orders_per_district = 90;          // 900
+
   }
 
 }
