@@ -229,7 +229,8 @@ class Index : public Printable {
   bool IfBackwardExpression(ExpressionType e);
 
 
-  bool ValuePairComparator(std::pair<peloton::Value, int> i, std::pair<peloton::Value, int> j) {
+  bool ValuePairComparator(const std::pair<peloton::Value, int> &i,
+                           const std::pair<peloton::Value, int> &j) {
     if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
       return i.second < j.second;
     }
