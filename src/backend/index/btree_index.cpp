@@ -201,7 +201,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
   // Equal --> > < num
   // > >= --->  > num
   // < <= ----> < num
-  std::vector<std::pair<Value, int>> nums;
+  std::vector<std::pair<peloton::Value, int>> nums;
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     if (key_column_ids[i] != leading_column_id) {
       continue;
