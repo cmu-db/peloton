@@ -48,7 +48,7 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 10000;
 static size_t tile_group = 100;
-static float scalar = 0.99;
+static float scalar = 0.3;
 static size_t iter = 350;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
