@@ -491,7 +491,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 // item2 = 1
 
 // should be no key0
-// key1 item 0 1 1 2
+// key1 item 0 1 2
 // key2 item 1
 // no key3
 // no key4
