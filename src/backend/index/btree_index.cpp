@@ -413,17 +413,19 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
       std::pair<Value, Value> range(Value::GetMaxValue(type), Value::GetMinValue(type));
       std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
       non_leading_columns.insert(key_value);
-      std::cout << "Insert a init kv\t" << non_leading_columns[column_id].first.GetInfo() << "\t" <<
+      std::cout << "Insert a init kv\t" << non_leading_columns[column_id].first.GetInfo().size() << "\t" <<
                               non_leading_columns[column_id].second.GetInfo() << std::endl;
      }
 
     if (IfForwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      std::cout << "min cur " << non_leading_columns[column_id].first.GetInfo() << " compare " << values[i].GetInfo() << std::endl;
+      std::cout << "min cur " << non_leading_columns[column_id].first.GetInfo().size() << " compare " << values[i].GetInfo() << std::endl;
       if (non_leading_columns[column_id].first.Compare(values[i]) == VALUE_COMPARE_GREATERTHAN) {
         std::cout << "Update min " << std::endl;
         non_leading_columns[column_id].first = values[i];
       }
-    } else if (IfBackwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+    }
+    
+    if (IfBackwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       std::cout << "max cur " << non_leading_columns[column_id].second.GetInfo() << " compare " << values[i].GetInfo() << std::endl;
       if (non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
         std::cout << "Update max " << std::endl;
