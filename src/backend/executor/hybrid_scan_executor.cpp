@@ -149,54 +149,6 @@ bool HybridScanExecutor::DInit() {
   return true;
 }
 
-bool HybridScanExecutor::HybridSeqScanUtil() {
-  assert(children_.size() == 0);
-  // LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
-
-  assert(table_ != nullptr);
-  assert(column_ids_.size() > 0);
-
-//  Timer<> timer;
-//  timer.Start();
-  
-  //  concurrency::TransactionManagerFactory::GetInstance();
-  // Retrieve next tile group.
-  while (current_tile_group_offset_ < table_tile_group_count_) {
-    auto tile_group =
-      table_->GetTileGroup(current_tile_group_offset_++);
-    // auto tile_group_header = tile_group->GetHeader();
-
-    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
-
-    // Construct position list by looping through tile group
-    // and applying the predicate.
-    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-
-      ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      // check transaction visibility
-      // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
-      // if the tuple is visible, then perform predicate evaluation.
-      if (predicate_ == nullptr) {
-        item_pointers_.insert(location);
-      } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(
-          tile_group.get(), tuple_id);
-        auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
-          .IsTrue();
-        if (eval == true) {
-          item_pointers_.insert(location);
-        }
-      }
-      // }
-    }
-  }
-  
-//  timer.Stop();
-//  double time_per_transaction = timer.GetDuration();
-//  printf(" %f\n", time_per_transaction);
-  return true;
-}
-
 bool HybridScanExecutor::SeqScanUtil() {
   assert(children_.size() == 0);
   // LOG_INFO("Hybrid executor, Seq Scan :: 0 child");
@@ -215,11 +167,19 @@ bool HybridScanExecutor::SeqScanUtil() {
 
     // Construct position list by looping through tile group
     // and applying the predicate.
+    oid_t upper_bound_block = 0;
+    if (item_pointers_.size() > 0) {
+      auto reverse_iter = item_pointers_.rbegin();
+      upper_bound_block = reverse_iter->block;
+    }
+
     std::vector<oid_t> position_list;
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
 
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      if (type_ == planner::HYBRID) {
+      if (type_ == planner::HYBRID &&
+          item_pointers_.size() > 0 &&
+          location.block <= upper_bound_block) {
         if (item_pointers_.find(location) != item_pointers_.end()) {
           continue;
         }
@@ -318,123 +278,7 @@ bool HybridScanExecutor::DExecute() {
     }
     // Scan seq
     return SeqScanUtil();
-
-//    if (index_done_ == false) {
-//      HybridExecPrimaryIndexLookup();
-//      HybridSeqScanUtil();
-//
-//     // Timer<> timer;
-//     // timer.Start();
-//
-//      std::map<oid_t, std::vector<oid_t>> visible_tuples;
-//      for (auto item : item_pointers_) {
-//        visible_tuples[item.block].push_back(item.offset);
-//      }
-//
-//      for (auto tuples : visible_tuples) {
-//        auto &manager = catalog::Manager::GetInstance();
-//        auto tile_group = manager.GetTileGroup(tuples.first);
-//
-//        std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-//        // Add relevant columns to logical tile
-//        logical_tile->AddColumns(tile_group, full_column_ids_);
-//        logical_tile->AddPositionList(std::move(tuples.second));
-//        if (column_ids_.size() != 0) {
-//          logical_tile->ProjectColumns(full_column_ids_, column_ids_);
-//        }
-//
-//        result_.push_back(logical_tile.release());
-//      }
-//
-//      // timer.Stop();
-//     //  double time_per_transaction = timer.GetDuration();
-//     //  printf(" %f\n", time_per_transaction);
-//    }
-//
-//    assert(index_done_);
-//
-//    while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
-//      if (result_[result_itr_]->GetTupleCount() == 0) {
-//        result_itr_++;
-//        continue;
-//      } else {
-//        SetOutput(result_[result_itr_]);
-//        result_itr_++;
-//         // printf("Construct a logical tile scan\n");
-//        return true;
-//      }
-//    }  // end while
-//    return false;
   }
-
-  return false;
-}
-
-bool HybridScanExecutor::HybridExecPrimaryIndexLookup() {
-  assert(!index_done_);
-
-  std::vector<ItemPointer *> tuple_location_ptrs;
-
-  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
-  
- // Timer<> timer;
- // timer.Start();
-
-  if (0 == key_column_ids_.size()) {
-    index_->ScanAllKeys(tuple_location_ptrs);
-  } else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
-  }
-  
-  //timer.Stop();
-  //double time_per_transaction = timer.GetDuration();
-  //printf(" %f\n", time_per_transaction);
-
-  LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
-  
-  Timer<> timer;
-  timer.Start();
-
-  if (tuple_location_ptrs.size() == 0) {
-    index_done_ = true;
-    timer.Stop();
-    double time_per_transaction = timer.GetDuration();
-    printf(" %f\n", time_per_transaction);
-    return false;
-  }
-
-
-  std::map<oid_t, std::vector<oid_t>> visible_tuples;
-  // for every tuple that is found in the index.
-  for (auto tuple_location_ptr : tuple_location_ptrs) {
-
-    ItemPointer tuple_location = *tuple_location_ptr;
-
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuple_location.block);
-
-    // perform predicate evaluation.
-    if (predicate_ == nullptr) {
-        item_pointers_.insert(tuple_location);
-    } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(
-          tile_group.get(), tuple_location.offset);
-        auto eval =
-          predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-        if (eval == true) {
-          item_pointers_.insert(tuple_location);
-        }
-    }
-  }
-
-  index_done_ = true;
-  timer.Stop();
-  double time_per_transaction = timer.GetDuration();
-  printf(" %f\n", time_per_transaction);
-  LOG_TRACE("Result tiles : %lu", result_.size());
-
-  return true;
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
