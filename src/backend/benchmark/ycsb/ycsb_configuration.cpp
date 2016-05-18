@@ -79,7 +79,7 @@ void ValidateBackendCount(const configuration &state) {
 }
 
 void ValidateDuration(const configuration &state) {
-  if (state.duration <= 0) {
+  if (state.duration < 0) {
     LOG_ERROR("Invalid duration :: %d", state.duration);
     exit(EXIT_FAILURE);
   }
