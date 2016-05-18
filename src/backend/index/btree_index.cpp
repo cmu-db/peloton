@@ -222,7 +222,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               // "expression types"
               // For instance, "5" EXPR_GREATER_THAN "2" is true
               if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-                ItemPointer *location_header = scan_itr->second;
+                ItemPointer location_header = *(scan_itr->second);
                 result.push_back(location_header);
               }
             }
@@ -253,7 +253,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
             // "expression types"
             // For instance, "5" EXPR_GREATER_THAN "2" is true
             if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-              ItemPointer *location_header = scan_itr->second;
+              ItemPointer location_header = *(scan_itr->second);
               result.push_back(location_header);
             }
           }
