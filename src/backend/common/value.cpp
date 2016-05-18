@@ -1134,8 +1134,8 @@ Value Value::GetMaxValue(ValueType type) {
     case VALUE_TYPE_DOUBLE:
       return GetDoubleValue(DBL_MAX);
     case VALUE_TYPE_VARCHAR:
-      // assume the length contraint of varchar is 512 bytes.
-      return GetTempStringValue("\255", 512);
+      // assume the length contraint of varchar is 51200 bytes.
+      return GetTempStringValue("\255", 51200);
     case VALUE_TYPE_DATE:
       return GetIntegerValue(PELOTON_INT32_MAX);
     case VALUE_TYPE_TIMESTAMP:
