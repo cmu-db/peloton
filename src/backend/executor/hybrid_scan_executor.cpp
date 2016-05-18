@@ -231,8 +231,8 @@ bool HybridScanExecutor::SeqScanUtil() {
       SetOutput(logical_tile.release());
       // printf("Construct a logical tile in seq scan\n");
       return true;
-    }
   }
+
 
   return false;
 }
