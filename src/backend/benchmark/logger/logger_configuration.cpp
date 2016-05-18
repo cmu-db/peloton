@@ -377,10 +377,10 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     tpcc::ValidateWarehouseCount(tpcc::state);
 
     // Static TPCC parameters
-    tpcc::state.item_count = 10000;                    // 100000
+    tpcc::state.item_count = 1000;                     // 100000
     tpcc::state.districts_per_warehouse = 2;           // 10
-    tpcc::state.customers_per_district = 300;          // 3000
-    tpcc::state.new_orders_per_district = 90;          // 900
+    tpcc::state.customers_per_district = 30;           // 3000
+    tpcc::state.new_orders_per_district = 9;           // 900
 
   }
 
