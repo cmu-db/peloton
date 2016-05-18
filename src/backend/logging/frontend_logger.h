@@ -119,8 +119,7 @@ class FrontendLogger : public Logger {
   Spinlock backend_loggers_lock;
 
   // period with which it collects log records from backend loggers
-  // (in milliseconds)
-  int64_t wait_timeout;
+  int wait_timeout;
 
   // stats
   size_t fsync_count = 0;
