@@ -50,8 +50,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  std::pair<KeyType, ValueType> entry(index_key,
-                                      new ItemPointer(location));
+  std::pair<KeyType, ValueType> entry(index_key, new ItemPointer(location));
 
   {
     index_lock.WriteLock();
@@ -108,11 +107,9 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-bool BTreeIndex<KeyType, ValueType, KeyComparator,
-                KeyEqualityChecker>::CondInsertEntry(
-    const storage::Tuple *key, const ItemPointer &location,
-    std::function<bool(const ItemPointer &)> predicate) {
-
+bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
+    CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                    std::function<bool(const ItemPointer &)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -122,7 +119,6 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-
       ItemPointer item_pointer = *(entry->second);
 
       if (predicate(item_pointer)) {
@@ -133,8 +129,8 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     }
 
     // Insert the key, val pair
-    container.insert(std::pair<KeyType, ValueType>(
-        index_key, new ItemPointer(location)));
+    container.insert(
+        std::pair<KeyType, ValueType>(index_key, new ItemPointer(location)));
 
     index_lock.Unlock();
   }
@@ -143,21 +139,19 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-  class KeyEqualityChecker>
+          class KeyEqualityChecker>
 void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
-  const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
-  const std::vector<ExpressionType> &expr_types,
-  const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
-
+    const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
+    const std::vector<ExpressionType> &expr_types,
+    const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
   bool special_case = true;
   for (auto key_column_ids_itr = key_column_ids.begin();
-       key_column_ids_itr != key_column_ids.end();
-       key_column_ids_itr++) {
+       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
       special_case = false;
       break;
     }
@@ -170,7 +164,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     // If it is a special case, we can figure out the range to scan in the index
     if (special_case == true) {
-      // Assumption: must have leading column, assume it's first one in key_column_ids.
+      // Assumption: must have leading column, assume it's first one in
+      // key_column_ids.
       assert(key_column_ids.size() > 0);
       oid_t leading_column_id = key_column_ids[0];
       std::vector<std::pair<Value, Value>> intervals;
@@ -183,17 +178,21 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                           non_leading_columns);
 
-      for (auto key_column_id: metadata->GetKeySchema()->GetIndexedColumns()) {
-        if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
-          auto type = metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
-          std::pair<Value, Value> range(Value::GetMinValue(type), Value::GetMaxValue(type));
-          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id, range);
+      for (auto key_column_id : metadata->GetKeySchema()->GetIndexedColumns()) {
+        if (non_leading_columns.find(key_column_id) ==
+            non_leading_columns.end()) {
+          auto type =
+              metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
+          std::pair<Value, Value> range(Value::GetMinValue(type),
+                                        Value::GetMaxValue(type));
+          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id,
+                                                              range);
           non_leading_columns.insert(key_value);
         }
       }
 
       // Search each interval of leading_column.
-      for (const auto& interval : intervals) {
+      for (const auto &interval : intervals) {
         auto scan_begin_itr = container.begin();
         auto scan_end_itr = container.end();
         std::unique_ptr<storage::Tuple> start_key;
@@ -203,15 +202,17 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         LOG_TRACE("%s", "Constructing start/end keys");
 
-        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(), interval.second.GetInfo());
+        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(),
+                  interval.second.GetInfo());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
 
-        for (const auto& k_v : non_leading_columns) {
+        for (const auto &k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          LOG_TRACE("left bound %s\t\t right bound %s", k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
+          LOG_TRACE("left bound %s\t\t right bound %s",
+                    k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
         }
 
         KeyType start_index_key;
@@ -229,8 +230,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
             for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
                  scan_itr++) {
               auto scan_current_key = scan_itr->first;
-              auto tuple =
-                scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+              auto tuple = scan_current_key.GetTupleForComparison(
+                  metadata->GetKeySchema());
 
               // Compare the current key in the scan with "values" based on
               // "expression types"
@@ -240,8 +241,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                 result.push_back(location_header);
               }
             }
-          }
-            break;
+          } break;
 
           case SCAN_DIRECTION_TYPE_INVALID:
           default:
@@ -260,8 +260,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
                scan_itr++) {
             auto scan_current_key = scan_itr->first;
-            auto tuple =
-              scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+            auto tuple = scan_current_key.GetTupleForComparison(
+                metadata->GetKeySchema());
 
             // Compare the current key in the scan with "values" based on
             // "expression types"
@@ -271,8 +271,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               result.push_back(location_header);
             }
           }
-        }
-          break;
+        } break;
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
@@ -287,9 +286,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    std::vector<ItemPointer> &result) {
+void BTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &
+                                                     result) {
   {
     index_lock.ReadLock();
 
@@ -297,7 +296,6 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
 
     // scan all entries
     while (itr != container.end()) {
-
       ItemPointer item_pointer = *(itr->second);
 
       result.push_back(std::move(item_pointer));
@@ -321,7 +319,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-
       ItemPointer item_pointer = *(entry->second);
 
       result.push_back(item_pointer);
@@ -329,17 +326,16 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
 
     index_lock.Unlock();
   }
-
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-  class KeyEqualityChecker>
-void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ConstructIntervals(
-                        oid_t leading_column_id,
-                        const std::vector<Value> &values,
-                        const std::vector<oid_t> &key_column_ids,
-                        const std::vector<ExpressionType> &expr_types,
-                        std::vector<std::pair<Value, Value>>& intervals) {
+          class KeyEqualityChecker>
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
+    ConstructIntervals(oid_t leading_column_id,
+                       const std::vector<Value> &values,
+                       const std::vector<oid_t> &key_column_ids,
+                       const std::vector<ExpressionType> &expr_types,
+                       std::vector<std::pair<Value, Value>> &intervals) {
   // Find all contrains of leading column.
   // Equal --> > < num
   // > >= --->  > num
@@ -378,10 +374,10 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
 
   while (i < nums.size()) {
     if (nums[i].second > 0) {
-      if (i + 1 < nums.size() && nums[i+1].second < 0) {
+      if (i + 1 < nums.size() && nums[i + 1].second < 0) {
         // right value
         intervals.push_back(std::pair<Value, Value>(cur, nums[i].first));
-        cur = nums[i+1].first;
+        cur = nums[i + 1].first;
       } else if (i + 1 == nums.size()) {
         // Last value while right value
         intervals.push_back(std::pair<Value, Value>(cur, nums[i].first));
@@ -393,21 +389,20 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
 
   if (cur.IsNull() == false) {
     intervals.push_back(std::pair<Value, Value>(
-      cur,Value::GetMaxValue(nums[0].first.GetValueType())));
+        cur, Value::GetMaxValue(nums[0].first.GetValueType())));
   }
 
   // Finish invtervals building.
 };
 
 template <typename KeyType, typename ValueType, class KeyComparator,
-  class KeyEqualityChecker>
-void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxMinInColumns(
-  oid_t leading_column_id,
-  const std::vector<Value> &values,
-  const std::vector<oid_t> &key_column_ids,
-  const std::vector<ExpressionType> &expr_types,
-  std::map<oid_t, std::pair<Value, Value>>& non_leading_columns) {
-
+          class KeyEqualityChecker>
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
+    FindMaxMinInColumns(
+        oid_t leading_column_id, const std::vector<Value> &values,
+        const std::vector<oid_t> &key_column_ids,
+        const std::vector<ExpressionType> &expr_types,
+        std::map<oid_t, std::pair<Value, Value>> &non_leading_columns) {
   // find extreme nums on each column.
   LOG_TRACE("FindMinMax leading column %d", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
@@ -418,25 +413,34 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
       auto type = values[i].GetValueType();
-      std::pair<Value, Value> range(Value::GetMaxValue(type), Value::GetMinValue(type));
+      std::pair<Value, Value> range(Value::GetMaxValue(type),
+                                    Value::GetMinValue(type));
       std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
       non_leading_columns.insert(key_value);
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 non_leading_columns[column_id].second.GetInfo());
-     }
+    }
 
-    if (IfForwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      LOG_TRACE("min cur %lu compare with %s", non_leading_columns[column_id].first.GetInfo().size(), values[i].GetInfo());
-      if (non_leading_columns[column_id].first.Compare(values[i]) == VALUE_COMPARE_GREATERTHAN) {
+    if (IfForwardExpression(expr_types[i]) ||
+        expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+      LOG_TRACE("min cur %lu compare with %s",
+                non_leading_columns[column_id].first.GetInfo().size(),
+                values[i].GetInfo());
+      if (non_leading_columns[column_id].first.Compare(values[i]) ==
+          VALUE_COMPARE_GREATERTHAN) {
         LOG_TRACE("Update min");
         non_leading_columns[column_id].first = values[i];
       }
     }
-    
-    if (IfBackwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      LOG_TRACE("max cur %s compare with %s", non_leading_columns[column_id].second.GetInfo(), values[i].GetInfo());
-      if (non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
+
+    if (IfBackwardExpression(expr_types[i]) ||
+        expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+      LOG_TRACE("max cur %s compare with %s",
+                non_leading_columns[column_id].second.GetInfo(),
+                values[i].GetInfo());
+      if (non_leading_columns[column_id].second.Compare(values[i]) ==
+          VALUE_COMPARE_LESSTHAN) {
         LOG_TRACE("Update max");
         non_leading_columns[column_id].second = values[i];
       }
@@ -444,12 +448,16 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
   }
 
   // check if min value is right bound or max value is left bound, if so, update
-  for (const auto& k_v : non_leading_columns) {
-    if (k_v.second.first == Value::GetMaxValue(k_v.second.first.GetValueType())) {
-      non_leading_columns[k_v.first].first = Value::GetMinValue(k_v.second.first.GetValueType());
+  for (const auto &k_v : non_leading_columns) {
+    if (k_v.second.first ==
+        Value::GetMaxValue(k_v.second.first.GetValueType())) {
+      non_leading_columns[k_v.first].first =
+          Value::GetMinValue(k_v.second.first.GetValueType());
     }
-    if (k_v.second.second == Value::GetMinValue(k_v.second.second.GetValueType())) {
-      non_leading_columns[k_v.first].second = Value::GetMaxValue(k_v.second.second.GetValueType());
+    if (k_v.second.second ==
+        Value::GetMinValue(k_v.second.second.GetValueType())) {
+      non_leading_columns[k_v.first].second =
+          Value::GetMaxValue(k_v.second.second.GetValueType());
     }
   }
 };
@@ -463,12 +471,12 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction,
     std::vector<ItemPointer *> &result) {
-
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
-//  oid_t leading_column_id = 0;
-//  auto key_column_ids_itr = std::find(key_column_ids.begin(),
-//                                      key_column_ids.end(), leading_column_id);
+  //  oid_t leading_column_id = 0;
+  //  auto key_column_ids_itr = std::find(key_column_ids.begin(),
+  //                                      key_column_ids.end(),
+  //                                      leading_column_id);
 
   // SPECIAL CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
@@ -479,13 +487,12 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
   bool special_case = true;
   for (auto key_column_ids_itr = key_column_ids.begin();
-            key_column_ids_itr != key_column_ids.end();
-            key_column_ids_itr++) {
+       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE
-        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
+        expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
       special_case = false;
       break;
     }
@@ -498,31 +505,36 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     // If it is a special case, we can figure out the range to scan in the index
     if (special_case == true) {
-      // Assumption: must have leading column, assume it's first one in key_column_ids.
+      // Assumption: must have leading column, assume it's first one in
+      // key_column_ids.
       assert(key_column_ids.size() > 0);
       oid_t leading_column_id = key_column_ids[0];
       std::vector<std::pair<Value, Value>> intervals;
 
       ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
-                          intervals);
+                         intervals);
 
       // For non-leading columns, find the max and min
       std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
       FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                           non_leading_columns);
 
-      for (auto key_column_id: metadata->GetKeySchema()->GetIndexedColumns()) {
-        if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
-          auto type = metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
-          std::pair<Value, Value> range(Value::GetMinValue(type), Value::GetMaxValue(type));
-          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id, range);
+      for (auto key_column_id : metadata->GetKeySchema()->GetIndexedColumns()) {
+        if (non_leading_columns.find(key_column_id) ==
+            non_leading_columns.end()) {
+          auto type =
+              metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
+          std::pair<Value, Value> range(Value::GetMinValue(type),
+                                        Value::GetMaxValue(type));
+          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id,
+                                                              range);
           non_leading_columns.insert(key_value);
         }
       }
 
       assert(intervals.size() != 0);
       // Search each interval of leading_column.
-      for (const auto& interval : intervals) {
+      for (const auto &interval : intervals) {
         auto scan_begin_itr = container.begin();
         auto scan_end_itr = container.end();
         std::unique_ptr<storage::Tuple> start_key;
@@ -532,15 +544,17 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         LOG_TRACE("%s", "Constructing start/end keys");
 
-        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(), interval.second.GetInfo());
+        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(),
+                  interval.second.GetInfo());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
 
-        for (const auto& k_v : non_leading_columns) {
+        for (const auto &k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          LOG_TRACE("left bound %s\t\t right bound %s", k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
+          LOG_TRACE("left bound %s\t\t right bound %s",
+                    k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
         }
 
         KeyType start_index_key;
@@ -558,8 +572,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
             for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
                  scan_itr++) {
               auto scan_current_key = scan_itr->first;
-              auto tuple =
-                scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+              auto tuple = scan_current_key.GetTupleForComparison(
+                  metadata->GetKeySchema());
 
               // Compare the current key in the scan with "values" based on
               // "expression types"
@@ -569,8 +583,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                 result.push_back(location_header);
               }
             }
-          }
-            break;
+          } break;
 
           case SCAN_DIRECTION_TYPE_INVALID:
           default:
@@ -589,8 +602,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
                scan_itr++) {
             auto scan_current_key = scan_itr->first;
-            auto tuple =
-              scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+            auto tuple = scan_current_key.GetTupleForComparison(
+                metadata->GetKeySchema());
 
             // Compare the current key in the scan with "values" based on
             // "expression types"
@@ -600,8 +613,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               result.push_back(location_header);
             }
           }
-        }
-          break;
+        } break;
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
@@ -616,9 +628,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
-void
-BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    std::vector<ItemPointer *> &result) {
+void BTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer *> &
+                                                     result) {
   {
     index_lock.ReadLock();
 
@@ -633,7 +645,6 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
 
     index_lock.Unlock();
   }
-
 }
 
 /**
@@ -678,24 +689,24 @@ template class BTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
 template class BTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
                           IntsEqualityChecker<4>>;
 
-template class BTreeIndex<GenericKey<4>, ItemPointer *,
-                          GenericComparator<4>, GenericEqualityChecker<4>>;
-template class BTreeIndex<GenericKey<8>, ItemPointer *,
-                          GenericComparator<8>, GenericEqualityChecker<8>>;
-template class BTreeIndex<GenericKey<12>, ItemPointer *,
-                          GenericComparator<12>, GenericEqualityChecker<12>>;
-template class BTreeIndex<GenericKey<16>, ItemPointer *,
-                          GenericComparator<16>, GenericEqualityChecker<16>>;
-template class BTreeIndex<GenericKey<24>, ItemPointer *,
-                          GenericComparator<24>, GenericEqualityChecker<24>>;
-template class BTreeIndex<GenericKey<32>, ItemPointer *,
-                          GenericComparator<32>, GenericEqualityChecker<32>>;
-template class BTreeIndex<GenericKey<48>, ItemPointer *,
-                          GenericComparator<48>, GenericEqualityChecker<48>>;
-template class BTreeIndex<GenericKey<64>, ItemPointer *,
-                          GenericComparator<64>, GenericEqualityChecker<64>>;
-template class BTreeIndex<GenericKey<96>, ItemPointer *,
-                          GenericComparator<96>, GenericEqualityChecker<96>>;
+template class BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+                          GenericEqualityChecker<4>>;
+template class BTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+                          GenericEqualityChecker<8>>;
+template class BTreeIndex<GenericKey<12>, ItemPointer *, GenericComparator<12>,
+                          GenericEqualityChecker<12>>;
+template class BTreeIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+                          GenericEqualityChecker<16>>;
+template class BTreeIndex<GenericKey<24>, ItemPointer *, GenericComparator<24>,
+                          GenericEqualityChecker<24>>;
+template class BTreeIndex<GenericKey<32>, ItemPointer *, GenericComparator<32>,
+                          GenericEqualityChecker<32>>;
+template class BTreeIndex<GenericKey<48>, ItemPointer *, GenericComparator<48>,
+                          GenericEqualityChecker<48>>;
+template class BTreeIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+                          GenericEqualityChecker<64>>;
+template class BTreeIndex<GenericKey<96>, ItemPointer *, GenericComparator<96>,
+                          GenericEqualityChecker<96>>;
 template class BTreeIndex<GenericKey<128>, ItemPointer *,
                           GenericComparator<128>, GenericEqualityChecker<128>>;
 template class BTreeIndex<GenericKey<256>, ItemPointer *,
