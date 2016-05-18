@@ -1135,7 +1135,7 @@ Value Value::GetMaxValue(ValueType type) {
       return GetDoubleValue(DBL_MAX);
     case VALUE_TYPE_VARCHAR:
       // assume the length contraint of varchar is 512 bytes.
-      return GetTempStringValue("\127", 512);
+      return GetTempStringValue("\255", 512);
     case VALUE_TYPE_DATE:
       return GetIntegerValue(PELOTON_INT32_MAX);
     case VALUE_TYPE_TIMESTAMP:
@@ -1150,7 +1150,7 @@ Value Value::GetMaxValue(ValueType type) {
     case VALUE_TYPE_ADDRESS:
     case VALUE_TYPE_VARBINARY:
     default: {
-      throw UnknownTypeException((int)type, "Can't get min value for type");
+      throw UnknownTypeException((int)type, "Can't get max value for type");
     }
   }
 }
