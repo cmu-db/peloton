@@ -183,6 +183,15 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                           non_leading_columns);
 
+      for (auto key_column_id: metadata->GetKeySchema()->GetIndexedColumns()) {
+        if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
+          auto type = metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
+          std::pair<Value, Value> range(Value::GetMinValue(type), Value::GetMaxValue(type));
+          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id, range);
+          non_leading_columns.insert(key_value);
+        }
+      }
+
       // Search each interval of leading_column.
       for (const auto& interval : intervals) {
         auto scan_begin_itr = container.begin();
@@ -501,6 +510,16 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
       FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                           non_leading_columns);
+
+      for (auto key_column_id: metadata->GetKeySchema()->GetIndexedColumns()) {
+        if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
+          auto type = metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
+          std::pair<Value, Value> range(Value::GetMinValue(type), Value::GetMaxValue(type));
+          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id, range);
+          non_leading_columns.insert(key_value);
+        }
+      }
+
       assert(intervals.size() != 0);
       // Search each interval of leading_column.
       for (const auto& interval : intervals) {
