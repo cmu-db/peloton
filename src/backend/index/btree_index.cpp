@@ -192,13 +192,21 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
         end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
+        std::cout << "Constructing start/end keys" << std::endl;
+
+        std::cout << "\t\t";
+        std::cout << interval.first.GetInfo() << "\t\t" << interval.second.GetInfo() << std::endl;
+
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
 
         for (const auto& k_v : non_leading_columns) {
+          std::cout << "\t\t";
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
+          std::cout << k_v.second.first.GetInfo() << "\t\t" << k_v.second.second.GetInfo() << std::endl;
         }
+        std::cout << "end " << std::endl;
 
         KeyType start_index_key;
         KeyType end_index_key;
