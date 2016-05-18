@@ -433,6 +433,16 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
       }
     }
   }
+
+  // check if min value is right bound or max value is left bound, if so, update
+  for (const auto& k_v : non_leading_columns) {
+    if (k_v.second.first == Value::GetMaxValue(k_v.second.first.GetValueType())) {
+      k_v.second.first = Value::GetMinValue(k_v.second.first.GetValueType());
+    }
+    if (k_v.second.second == Value::GetMinValue(k_v.second.second.GetValueType())) {
+      k_v.second.second = Value::GetMaxValue(k_v.second.second.GetValueType());
+    }
+  }
 };
 
 ///////////////////////////////////////////////////////////////////////
