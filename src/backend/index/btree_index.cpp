@@ -192,9 +192,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
         end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-        std::cout << "Constructing start/end keys" << std::endl;
+        LOG_TRACE("%s", "Constructing start/end keys");
 
-        std::cout << interval.first.GetInfo() << "\t\t" << interval.second.GetInfo() << std::endl;
+        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(), interval.second.GetInfo());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -202,9 +202,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         for (const auto& k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          std::cout << k_v.second.first.GetInfo() << "\t\t" << k_v.second.second.GetInfo() << std::endl;
+          LOG_TRACE("left bound %s\t\t right bound %s", k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
         }
-        std::cout << "end " << std::endl;
 
         KeyType start_index_key;
         KeyType end_index_key;
@@ -401,7 +400,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
   std::map<oid_t, std::pair<Value, Value>>& non_leading_columns) {
 
   // find extreme nums on each column.
-  std::cout << "FindMinMax\t" << "leading column " << leading_column_id << std::endl;
+  LOG_TRACE("FindMinMax leading column %d", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     oid_t column_id = key_column_ids[i];
     if (column_id == leading_column_id) {
@@ -413,22 +412,23 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::FindMaxM
       std::pair<Value, Value> range(Value::GetMaxValue(type), Value::GetMinValue(type));
       std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
       non_leading_columns.insert(key_value);
-      std::cout << "Insert a init kv\t" << non_leading_columns[column_id].first.GetInfo().size() << "\t" <<
-                              non_leading_columns[column_id].second.GetInfo() << std::endl;
+      LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
+                non_leading_columns[column_id].first.GetInfo().size(),
+                non_leading_columns[column_id].second.GetInfo());
      }
 
     if (IfForwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      std::cout << "min cur " << non_leading_columns[column_id].first.GetInfo().size() << " compare " << values[i].GetInfo() << std::endl;
+      LOG_TRACE("min cur %lu compare with %s", non_leading_columns[column_id].first.GetInfo().size(), values[i].GetInfo());
       if (non_leading_columns[column_id].first.Compare(values[i]) == VALUE_COMPARE_GREATERTHAN) {
-        std::cout << "Update min " << std::endl;
+        LOG_TRACE("Update min");
         non_leading_columns[column_id].first = values[i];
       }
     }
     
     if (IfBackwardExpression(expr_types[i]) || expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      std::cout << "max cur " << non_leading_columns[column_id].second.GetInfo() << " compare " << values[i].GetInfo() << std::endl;
+      LOG_TRACE("max cur %s compare with %s", non_leading_columns[column_id].second.GetInfo(), values[i].GetInfo());
       if (non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
-        std::cout << "Update max " << std::endl;
+        LOG_TRACE("Update max");
         non_leading_columns[column_id].second = values[i];
       }
     }
@@ -511,9 +511,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
         end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-        std::cout << "Constructing start/end keys" << std::endl;
+        LOG_TRACE("%s", "Constructing start/end keys");
 
-        std::cout << interval.first.GetInfo() << "\t\t" << interval.second.GetInfo() << std::endl;
+        LOG_TRACE("left bound %s\t\t right bound %s", interval.first.GetInfo(), interval.second.GetInfo());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -521,9 +521,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         for (const auto& k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          std::cout << k_v.second.first.GetInfo() << "\t\t" << k_v.second.second.GetInfo() << std::endl;
+          LOG_TRACE("left bound %s\t\t right bound %s", k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
         }
-        std::cout << "end " << std::endl;
 
         KeyType start_index_key;
         KeyType end_index_key;
