@@ -83,7 +83,7 @@ class BTreeIndex : public Index {
                       const std::vector<Value> &values,
                       const std::vector<oid_t> &key_column_ids,
                       const std::vector<ExpressionType> &expr_types,
-                      std::vector<std::pair<Value, Value>> intervals);
+                      std::vector<std::pair<Value, Value>>& intervals);
 
   void FindMaxMinInColumns(
       oid_t leading_column_id,

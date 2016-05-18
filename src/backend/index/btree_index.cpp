@@ -194,14 +194,12 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         std::cout << "Constructing start/end keys" << std::endl;
 
-        std::cout << "\t\t";
         std::cout << interval.first.GetInfo() << "\t\t" << interval.second.GetInfo() << std::endl;
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
 
         for (const auto& k_v : non_leading_columns) {
-          std::cout << "\t\t";
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           std::cout << k_v.second.first.GetInfo() << "\t\t" << k_v.second.second.GetInfo() << std::endl;
@@ -333,7 +331,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
                         const std::vector<Value> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
-                        std::vector<std::pair<Value, Value>> intervals) {
+                        std::vector<std::pair<Value, Value>>& intervals) {
   // Find all contrains of leading column.
   // Equal --> > < num
   // > >= --->  > num
@@ -484,7 +482,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
       FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                           non_leading_columns);
-
+      assert(intervals.size() != 0);
       // Search each interval of leading_column.
       for (const auto& interval : intervals) {
         auto scan_begin_itr = container.begin();
@@ -496,14 +494,12 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         std::cout << "Constructing start/end keys" << std::endl;
 
-        std::cout << "\t\t";
         std::cout << interval.first.GetInfo() << "\t\t" << interval.second.GetInfo() << std::endl;
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
 
         for (const auto& k_v : non_leading_columns) {
-          std::cout << "\t\t";
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           std::cout << k_v.second.first.GetInfo() << "\t\t" << k_v.second.second.GetInfo() << std::endl;
