@@ -143,6 +143,135 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
+  class KeyEqualityChecker>
+void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
+  const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
+  const std::vector<ExpressionType> &expr_types,
+  const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
+
+  bool special_case = true;
+  for (auto key_column_ids_itr = key_column_ids.begin();
+       key_column_ids_itr != key_column_ids.end();
+       key_column_ids_itr++) {
+    auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL
+        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN
+        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE
+        || expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+      special_case = false;
+      break;
+    }
+  }
+
+  LOG_TRACE("Special case : %d ", special_case);
+
+  {
+    index_lock.ReadLock();
+
+    // If it is a special case, we can figure out the range to scan in the index
+    if (special_case == true) {
+      // Assumption: must have leading column, assume it's first one in key_column_ids.
+      assert(key_column_ids.size() > 0);
+      oid_t leading_column_id = key_column_ids[0];
+      std::vector<std::pair<Value, Value>> intervals;
+
+      ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
+                         intervals);
+
+      // For non-leading columns, find the max and min
+      std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
+      FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
+                          non_leading_columns);
+
+      // Search each interval of leading_column.
+      for (const auto& interval : intervals) {
+        auto scan_begin_itr = container.begin();
+        auto scan_end_itr = container.end();
+        std::unique_ptr<storage::Tuple> start_key;
+        std::unique_ptr<storage::Tuple> end_key;
+        start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+        end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+
+        start_key->SetValue(leading_column_id, interval.first, GetPool());
+        end_key->SetValue(leading_column_id, interval.second, GetPool());
+
+        for (const auto& k_v : non_leading_columns) {
+          start_key->SetValue(k_v.first, k_v.second.first, GetPool());
+          end_key->SetValue(k_v.first, k_v.second.second, GetPool());
+        }
+
+        KeyType start_index_key;
+        KeyType end_index_key;
+        start_index_key.SetFromKey(start_key.get());
+        end_index_key.SetFromKey(end_key.get());
+
+        scan_begin_itr = container.equal_range(start_index_key).first;
+        scan_end_itr = container.equal_range(end_index_key).second;
+
+        switch (scan_direction) {
+          case SCAN_DIRECTION_TYPE_FORWARD:
+          case SCAN_DIRECTION_TYPE_BACKWARD: {
+            // Scan the index entries in forward direction
+            for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
+                 scan_itr++) {
+              auto scan_current_key = scan_itr->first;
+              auto tuple =
+                scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+              // Compare the current key in the scan with "values" based on
+              // "expression types"
+              // For instance, "5" EXPR_GREATER_THAN "2" is true
+              if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+                ItemPointer *location_header = scan_itr->second;
+                result.push_back(location_header);
+              }
+            }
+          }
+            break;
+
+          case SCAN_DIRECTION_TYPE_INVALID:
+          default:
+            throw Exception("Invalid scan direction \n");
+            break;
+        }
+      }
+
+    } else {
+      auto scan_begin_itr = container.begin();
+
+      switch (scan_direction) {
+        case SCAN_DIRECTION_TYPE_FORWARD:
+        case SCAN_DIRECTION_TYPE_BACKWARD: {
+          // Scan the index entries in forward direction
+          for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
+               scan_itr++) {
+            auto scan_current_key = scan_itr->first;
+            auto tuple =
+              scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+            // Compare the current key in the scan with "values" based on
+            // "expression types"
+            // For instance, "5" EXPR_GREATER_THAN "2" is true
+            if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+              ItemPointer *location_header = scan_itr->second;
+              result.push_back(location_header);
+            }
+          }
+        }
+          break;
+
+        case SCAN_DIRECTION_TYPE_INVALID:
+        default:
+          throw Exception("Invalid scan direction \n");
+          break;
+      }
+    }
+
+    index_lock.Unlock();
+  }
+}
+
+template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
