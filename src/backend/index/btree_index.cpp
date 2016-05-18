@@ -27,11 +27,13 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
       equals(metadata),
       comparator(metadata) {
 
-  LOG_INFO("BTree Index :: %d %d", metadata->is_durable, metadata->backend_type);
-
   // Set persistence mode and backend type
   container.set_persistence_mode(metadata->is_durable);
   container.set_backend_type(metadata->backend_type);
+
+  LOG_TRACE("BTree Index :: %d %d",
+            metadata->is_durable,
+            metadata->backend_type);
 
 }
 
