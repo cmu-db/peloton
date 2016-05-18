@@ -292,8 +292,12 @@ static void drain_pcommit(void) {
   // pause if needed
   pcommit(peloton_pcommit_latency);
 
-  _mm_pcommit();
-  _mm_sfence();
+  // by default, this is zero
+  if(peloton_pcommit_latency == 0) {
+    _mm_pcommit();
+    _mm_sfence();
+  }
+
 }
 
 /*
