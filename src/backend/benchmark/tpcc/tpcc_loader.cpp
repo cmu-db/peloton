@@ -37,6 +37,9 @@
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 
+// Logging mode
+extern LoggingType peloton_logging_mode;
+
 namespace peloton {
 namespace benchmark {
 namespace tpcc {
@@ -197,7 +200,8 @@ void CreateWarehouseTable() {
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique,
+      GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -271,7 +275,8 @@ void CreateDistrictTable() {
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
     "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -328,7 +333,8 @@ void CreateItemTable() {
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
     "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   item_table->AddIndex(pkey_index);
@@ -437,7 +443,8 @@ void CreateCustomerTable() {
 
   index_metadata = new index::IndexMetadata(
     "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(pkey_index);
@@ -451,7 +458,8 @@ void CreateCustomerTable() {
 
   index_metadata = new index::IndexMetadata(
     "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   customer_table->AddIndex(skey_index);
@@ -594,7 +602,8 @@ void CreateStockTable() {
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
     "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   stock_table->AddIndex(pkey_index);
@@ -665,7 +674,8 @@ void CreateOrdersTable() {
 
   index_metadata = new index::IndexMetadata(
     "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(pkey_index);
@@ -677,7 +687,8 @@ void CreateOrdersTable() {
 
   index_metadata = new index::IndexMetadata(
     "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   orders_table->AddIndex(skey_index);
@@ -728,7 +739,8 @@ void CreateNewOrderTable() {
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
     "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   new_order_table->AddIndex(pkey_index);
@@ -805,7 +817,8 @@ void CreateOrderLineTable() {
 
   index_metadata = new index::IndexMetadata(
     "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(pkey_index);
@@ -817,7 +830,8 @@ void CreateOrderLineTable() {
 
   index_metadata = new index::IndexMetadata(
     "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false,
+    GetBackendType(peloton_logging_mode));
 
   index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
   order_line_table->AddIndex(skey_index);

@@ -45,14 +45,27 @@ class IndexMetadata {
   IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
-                const catalog::Schema *key_schema, bool unique_keys)
+                const catalog::Schema *key_schema,
+                bool unique_keys,
+                BackendType backend_type)
       : index_name(index_name),
         index_oid(index_oid),
         method_type(method_type),
         index_type(index_type),
         tuple_schema(tuple_schema),
         key_schema(key_schema),
-        unique_keys(unique_keys) {}
+        unique_keys(unique_keys),
+        backend_type(backend_type) {
+
+    // For BACKEND_TYPE_MM
+    is_durable = false;
+
+    // Set is_durable if needed
+    is_durable = (backend_type == BACKEND_TYPE_NVM ||
+        backend_type == BACKEND_TYPE_SSD ||
+        backend_type == BACKEND_TYPE_HDD);
+
+  }
 
   ~IndexMetadata();
 
@@ -70,6 +83,12 @@ class IndexMetadata {
 
   bool HasUniqueKeys() const { return unique_keys; }
 
+  bool IsDurable() const {
+    return is_durable;
+  }
+
+ public:
+
   std::string index_name;
 
   oid_t index_oid;
@@ -86,6 +105,12 @@ class IndexMetadata {
 
   // unique keys ?
   bool unique_keys;
+
+  // backend type
+  BackendType backend_type;
+
+  // durable ?
+  bool is_durable;
 };
 
 //===--------------------------------------------------------------------===//

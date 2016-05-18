@@ -45,6 +45,9 @@
 #include <cstddef>
 #include <assert.h>
 
+#include "backend/storage/storage_manager.h"
+#include "backend/common/types.h"
+
 // *** Debugging Macros
 
 #ifdef BTREE_DEBUG
@@ -1307,6 +1310,12 @@ private:
     /// Memory allocator.
     allocator_type m_allocator;
 
+    // Backend type
+    peloton::BackendType backend_type = peloton::BACKEND_TYPE_MM;
+
+    /// Persistence mode
+    bool is_durable = false;
+
 public:
     // *** Constructors and Destructor
 
@@ -1364,6 +1373,16 @@ public:
         std::swap(m_stats, from.m_stats);
         std::swap(m_key_less, from.m_key_less);
         std::swap(m_allocator, from.m_allocator);
+    }
+
+    // Set persistence mode
+    void set_persistence_mode(const bool is_durable_) {
+      is_durable = is_durable_;
+    }
+
+    // Set backend type
+    void set_backend_type(const peloton::BackendType backend_type_) {
+      backend_type = backend_type_;
     }
 
 public:
@@ -1467,7 +1486,13 @@ private:
     /// Allocate and initialize a leaf node
     inline leaf_node* allocate_leaf()
     {
-        leaf_node *n = new (leaf_node_allocator().allocate(1)) leaf_node();
+        auto &storage_manager = peloton::storage::StorageManager::GetInstance();
+        leaf_node *n = (leaf_node *)storage_manager.Allocate(backend_type, sizeof(leaf_node));
+
+        if(is_durable){
+          storage_manager.Sync(backend_type, n, sizeof(leaf_node));
+        }
+
         n->initialize();
         m_stats.leaves++;
         return n;
@@ -1476,7 +1501,13 @@ private:
     /// Allocate and initialize an inner node
     inline inner_node* allocate_inner(unsigned short level)
     {
-        inner_node *n = new (inner_node_allocator().allocate(1)) inner_node();
+        auto &storage_manager = peloton::storage::StorageManager::GetInstance();
+        inner_node *n = (inner_node *)storage_manager.Allocate(backend_type, sizeof(inner_node));
+
+        if(is_durable){
+          storage_manager.Sync(backend_type, n, sizeof(inner_node));
+        }
+
         n->initialize(level);
         m_stats.innernodes++;
         return n;

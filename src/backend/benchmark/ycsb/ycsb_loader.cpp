@@ -36,6 +36,9 @@
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 
+// Logging mode
+extern LoggingType peloton_logging_mode;
+
 namespace peloton {
 namespace benchmark {
 namespace ycsb {
@@ -111,7 +114,8 @@ void CreateYCSBDatabase() {
       user_table_pkey_index_oid,
       INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-      tuple_schema, key_schema, unique);
+      tuple_schema, key_schema, unique,
+      GetBackendType(peloton_logging_mode));
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
   user_table->AddIndex(pkey_index);
