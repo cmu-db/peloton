@@ -158,6 +158,16 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
     keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
 
     // INSERT
+    // key0 1 (100, a)   item0
+    // key1 5  (100, b)  item1 2 1 1 0
+    // key2 1 (100, c) item 1
+    // key3 1 (400, d) item 1
+    // key4 1  (500, eeeeee...) item 1
+    // no keyonce (1000, f)
+
+    // item0 = 2
+    // item1 = 6
+    // item2 = 1
     index->InsertEntry(key0.get(), item0);
     index->InsertEntry(key1.get(), item1);
     index->InsertEntry(key1.get(), item2);
@@ -215,11 +225,27 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
                    pool);
 
     // DELETE
+    // key0 1 (100, a)   item0
+    // key1 5  (100, b)  item1 2 1 1 0
+    // key2 1 (100, c) item 1
+    // key3 1 (400, d) item 1
+    // key4 1  (500, eeeeee...) item 1
+    // no keyonce (1000, f)
+
+    // item0 = 2
+    // item1 = 6
+    // item2 = 1
     index->DeleteEntry(key0.get(), item0);
     index->DeleteEntry(key1.get(), item1);
     index->DeleteEntry(key2.get(), item2);
     index->DeleteEntry(key3.get(), item1);
     index->DeleteEntry(key4.get(), item1);
+
+    // should be no key0
+    // key1 item 0 1 1 2
+    // key2 item 1
+    // no key3
+    // no key4
   }
 }
 
@@ -452,6 +478,23 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   delete tuple_schema;
 }
 #endif
+
+// key0 1 (100, a)   item0
+// key1 5  (100, b)  item1 2 1 1 0
+// key2 1 (100, c) item 1
+// key3 1 (400, d) item 1
+// key4 1  (500, eeeeee...) item 1
+// no keyonce (1000, f)
+
+// item0 = 2
+// item1 = 6
+// item2 = 1
+
+// should be no key0
+// key1 item 0 1 1 2
+// key2 item 1
+// no key3
+// no key4
 
 TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
