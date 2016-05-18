@@ -220,7 +220,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Construc
   }
 
   // Have merged all constraints in a single line, sort this line.
-  std::sort(nums.begin(), nums.end(), ValuePairComparator);
+  std::sort(nums.begin(), nums.end(), Index::ValuePairComparator);
   assert(nums.size() == 0);
 
   // Build intervals.
