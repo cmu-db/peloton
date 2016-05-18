@@ -156,11 +156,14 @@ bool HybridScanExecutor::SeqScanUtil() {
   assert(table_ != nullptr);
   assert(column_ids_.size() > 0);
 
+  auto &transaction_manager =
+    concurrency::TransactionManagerFactory::GetInstance();
+
   // Retrieve next tile group.
   while (current_tile_group_offset_ < table_tile_group_count_) {
     auto tile_group =
       table_->GetTileGroup(current_tile_group_offset_++);
-    // auto tile_group_header = tile_group->GetHeader();
+    auto tile_group_header = tile_group->GetHeader();
 
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
@@ -184,35 +187,51 @@ bool HybridScanExecutor::SeqScanUtil() {
           continue;
         }
       }
+
       // check transaction visibility
-      // if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
-      // if the tuple is visible, then perform predicate evaluation.
-      if (predicate_ == nullptr) {
-        position_list.push_back(tuple_id);
-      } else {
-        expression::ContainerTuple<storage::TileGroup> tuple(
-          tile_group.get(), tuple_id);
-        auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
-          .IsTrue();
-        if (eval == true) {
+      if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
+        // if the tuple is visible, then perform predicate evaluation.
+        if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
+        } else {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+            tile_group.get(), tuple_id);
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
+            .IsTrue();
+          if (eval == true) {
+            position_list.push_back(tuple_id);
+          }
         }
+      } else {
+          expression::ContainerTuple<storage::TileGroup> tuple(
+            tile_group.get(), tuple_id);
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
+            .IsTrue();
+          if (eval == true) {
+            position_list.push_back(tuple_id);
+            auto res = transaction_manager.PerformRead(location);
+            if (!res) {
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
+          }
       }
     }
 
-    // Don't return empty tiles
-    if (position_list.size() == 0) {
-      continue;
-    }
+      // Don't return empty tiles
+      if (position_list.size() == 0) {
+        continue;
+      }
 
-    // Construct logical tile.
-    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-    logical_tile->AddColumns(tile_group, column_ids_);
-    logical_tile->AddPositionList(std::move(position_list));
-    LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
-    SetOutput(logical_tile.release());
-    // printf("Construct a logical tile in seq scan\n");
-    return true;
+      // Construct logical tile.
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      logical_tile->AddColumns(tile_group, column_ids_);
+      logical_tile->AddPositionList(std::move(position_list));
+      LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
+      SetOutput(logical_tile.release());
+      // printf("Construct a logical tile in seq scan\n");
+      return true;
+    }
   }
 
   return false;
@@ -297,13 +316,16 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   LOG_INFO("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
+
+  auto &transaction_manager =
+    concurrency::TransactionManagerFactory::GetInstance();
   //Timer<> timer;
   //timer.Start();
   
   //timer.Stop();
   //double time_per_transaction = timer.GetDuration();
   //printf(" %f\n", time_per_transaction);
- 
+
    if (tuple_location_ptrs.size() == 0) {
    // printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
     //timer.Stop();
@@ -314,22 +336,69 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   //std::set<oid_t> oid_ts;
+
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
+
     if (type_ == planner::HYBRID &&
       tuple_location.block >= (block_threshold)) {
-      item_pointers_.insert(tuple_location);
+        item_pointers_.insert(tuple_location);
     //  oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
-    // auto tile_group_header = tile_group.get()->GetHeader();
+    auto tile_group_header = tile_group.get()->GetHeader();
 
-    // perform predicate evaluation.
-    visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+    // perform transaction read
+    size_t chain_length = 0;
+    while (true) {
+
+      ++chain_length;
+
+      if (transaction_manager.IsVisible(tile_group_header,
+                                        tuple_location.offset)) {
+        visible_tuples[tuple_location.block].push_back(tuple_location.offset);
+        auto res = transaction_manager.PerformRead(tuple_location);
+        if (!res) {
+          transaction_manager.SetTransactionResult(RESULT_FAILURE);
+          return res;
+        }
+        break;
+      } else {
+        ItemPointer old_item = tuple_location;
+        cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
+
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+        // there must exist a visible version.
+        assert(tuple_location.IsNull() == false);
+
+        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+
+        // check whether older version is garbage.
+        if (old_end_cid < max_committed_cid) {
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
+                 tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+
+          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
+
+
+            // atomically swap item pointer held in the index bucket.
+            AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
+
+            // currently, let's assume only primary index exists.
+            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+              table_->GetOid(), old_item.block, old_item.offset,
+              max_committed_cid);
+          }
+        }
+
+        tile_group = manager.GetTileGroup(tuple_location.block);
+        tile_group_header = tile_group.get()->GetHeader();
+      }
+    }
   }
 
   /*printf("set size %lu current seq scan off %d, block threshlod %d\n", item_pointers_.size(), current_tile_group_offset_, block_threshold);
