@@ -434,7 +434,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       if (non_leading_columns[column_id].first.Compare(values[i]) ==
           VALUE_COMPARE_GREATERTHAN) {
         LOG_TRACE("Update min");
-        non_leading_columns[column_id].first = values[i];
+        non_leading_columns[column_id].first = ValueFactory::Clone(values[i], nullptr);
       }
     }
 
@@ -446,7 +446,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       if (non_leading_columns[column_id].second.Compare(values[i]) ==
           VALUE_COMPARE_LESSTHAN) {
         LOG_TRACE("Update max");
-        non_leading_columns[column_id].second = values[i];
+        non_leading_columns[column_id].second = ValueFactory::Clone(values[i], nullptr);
       }
     }
   }
