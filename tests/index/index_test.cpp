@@ -226,7 +226,7 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
 
     // DELETE
     // key0 1 (100, a)   item0
-    // key1 5  (100, b)  item1 2 1 1 0
+    // key1 5  (100, b)  item 0 1 2 (0 1 1 1 2)
     // key2 1 (100, c) item 1
     // key3 1 (400, d) item 1
     // key4 1  (500, eeeeee...) item 1
@@ -242,7 +242,7 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
     index->DeleteEntry(key4.get(), item1);
 
     // should be no key0
-    // key1 item 0 1 1 2
+    // key1 item 0 1 2
     // key2 item 1
     // no key3
     // no key4
@@ -491,7 +491,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 // item2 = 1
 
 // should be no key0
-// key1 item 0 1 2
+// key1 item 0 2
 // key2 item 1
 // no key3
 // no key4
@@ -563,6 +563,13 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 0);
+  locations.clear();
+
+  index->Scan(
+      {key2->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
   // REVERSE SCAN
