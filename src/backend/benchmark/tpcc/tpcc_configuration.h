@@ -170,11 +170,16 @@ class configuration {
   int customers_per_district;
 
   int new_orders_per_district;
+
+  // # of transaction
+  int transaction_count;
 };
 
 extern configuration state;
 
 void Usage(FILE *out);
+
+void ParseArguments(int argc, char *argv[], configuration &state);
 
 void ValidateBackendCount(const configuration &state);
 
@@ -182,7 +187,7 @@ void ValidateDuration(const configuration &state);
 
 void ValidateWarehouseCount(const configuration &state);
 
-void ParseArguments(int argc, char *argv[], configuration &state);
+void ValidateTransactionCount(const configuration &state);
 
 }  // namespace tpcc
 }  // namespace benchmark

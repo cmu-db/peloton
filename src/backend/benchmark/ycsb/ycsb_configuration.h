@@ -54,6 +54,9 @@ class configuration {
 
   // latency average
   double latency;
+
+  // # of transaction
+  int transaction_count;
 };
 
 extern configuration state;
@@ -71,6 +74,8 @@ void ValidateUpdateRatio(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
+
+void ValidateTransactionCount(const configuration &state);
 
 }  // namespace ycsb
 }  // namespace benchmark
