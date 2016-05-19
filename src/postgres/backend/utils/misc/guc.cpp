@@ -529,6 +529,10 @@ int64_t peloton_wait_timeout;
 
 int peloton_flush_frequency_micros;
 
+int peloton_server_port;
+
+char *peloton_endpoint_address;
+
 /*
  * This really belongs in pg_shmem.c, but is defined here so that it doesn't
  * need to be duplicated in all the different implementations of pg_shmem.c.
@@ -2838,6 +2842,14 @@ struct config_int ConfigureNamesInt[] = {
      NULL,
      NULL},
 
+    {{ "peloton_server_port", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change the port for the follower to listen on"),
+      gettext_noop("Determines port that this node will listen on for replay.") },
+      &peloton_server_port, 0, 0,
+      INT_MAX,
+      NULL,
+      NULL },
+
     /* End-of-list marker */
     {{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL,
       NULL},
@@ -3533,6 +3545,17 @@ struct config_string ConfigureNamesString[] = {
      check_canonical_path,
      NULL,
      NULL},
+
+	 {{"peloton_endpoint_address", PGC_SIGHUP, LOGGING_WHERE,
+      gettext_noop("Sets the log directory for Peloton."),
+      gettext_noop("Must be specified as an absolute path."),
+      GUC_SUPERUSER_ONLY},
+      &peloton_endpoint_address,
+      NULL,
+      NULL,
+      NULL,
+      NULL},
+
     // TODO: More polishing? May be the verification function?
     {{"cluster_address", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
       gettext_noop("Sets Cluster address for node."), NULL},

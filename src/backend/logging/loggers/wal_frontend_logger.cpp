@@ -92,7 +92,7 @@ void WriteAheadFrontendLogger::InitSelf() {
   InitLogFilesList();
   UpdateMaxDelimiterForRecovery();
   LOG_TRACE("Updated Max Delimiter for Recovery as %d",
-           (int)max_delimiter_for_recovery);
+            (int)max_delimiter_for_recovery);
   cur_file_handle.fd = -1;  // this is a restart or a new start
   max_log_id_file = 0;      // 0 is unused
 }
@@ -135,6 +135,19 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     }
   }
 
+  size_t write_size = 0;
+  size_t rep_array_offset = 0;
+  std::unique_ptr<char> replication_array = nullptr;
+  if (replicating_) {
+    // find the size we need to write out
+    for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
+         global_queue_itr++) {
+      write_size += global_queue[global_queue_itr]->GetSize();
+    }
+    write_size += sizeof(TransactionRecord);
+    replication_array.reset(new char[write_size]);
+  }
+
   // First, write all the record in the queue
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
        global_queue_itr++) {
@@ -145,8 +158,13 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
              cur_file_handle.file);
     }
 
+    if (replicating_) {
+      memcpy(replication_array.get() + rep_array_offset, log_buffer->GetData(),
+             log_buffer->GetSize());
+      rep_array_offset += log_buffer->GetSize();
+    }
     LOG_TRACE("Log buffer get max log id returned %d",
-             (int)log_buffer->GetMaxLogId());
+              (int)log_buffer->GetMaxLogId());
 
     if (log_buffer->GetMaxLogId() > this->max_log_id_file) {
       this->max_log_id_file = log_buffer->GetMaxLogId();
@@ -165,6 +183,17 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
                                     this->max_collected_commit_id);
     delimiter_rec.Serialize(output_buffer);
 
+    if (replicating_) {
+      memcpy(replication_array.get() + rep_array_offset,
+             delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
+      // send the request
+      networking::LogRecordReplayRequest request;
+      request.set_log(replication_array.get(), write_size);
+      request.set_sync_type(networking::ResponseType::SYNC);
+      networking::LogRecordReplayResponse response;
+      replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
+                                         nullptr);
+    }
     if (!test_mode_) {
       PL_ASSERT(cur_file_handle.fd != -1);
       if (cur_file_handle.fd != -1) {
@@ -172,7 +201,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
                delimiter_rec.GetMessageLength(), cur_file_handle.file);
 
         LOG_TRACE("Wrote delimiter to log file with commit_id %ld",
-                 this->max_collected_commit_id);
+                  this->max_collected_commit_id);
 
         // by moving the fflush and sync here, we ensure that this file will
         // have at least 1 delimiter
@@ -235,7 +264,7 @@ void WriteAheadFrontendLogger::DoRecovery() {
   global_max_flushed_id_for_recovery =
       log_manager.GetGlobalMaxFlushedIdForRecovery();
   LOG_TRACE("Got start_commit_id as %d, global max flushed as %d",
-           (int)start_commit_id, (int)global_max_flushed_id_for_recovery);
+            (int)start_commit_id, (int)global_max_flushed_id_for_recovery);
 
   // open first file
   OpenNextLogFile();
@@ -401,7 +430,7 @@ void WriteAheadFrontendLogger::RecoverIndex() {
       storage::DataTable *target_table = database->GetTable(table_idx);
       PL_ASSERT(target_table);
       LOG_TRACE("SeqScan: database oid %u table oid %u: %s", database_idx,
-               table_idx, target_table->GetName().c_str());
+                table_idx, target_table->GetName().c_str());
 
       if (!RecoverTableIndexHelper(target_table, cid)) {
         break;
@@ -786,7 +815,7 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
         continue;
       }
       LOG_TRACE("Got temp_max_delimiter_file as %d",
-               (int)temp_max_delimiter_file);
+                (int)temp_max_delimiter_file);
 
       if (temp_max_log_id_file == 0 || temp_max_log_id_file == UINT64_MAX ||
           temp_max_delimiter_file == 0) {
@@ -796,9 +825,9 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
         temp_max_delimiter_file = extracted_values.second;
 
         LOG_TRACE("ExtractMaxLogId returned %d, write it back in the file!",
-                 (int)temp_max_log_id_file);
+                  (int)temp_max_log_id_file);
         LOG_TRACE("ExtractMaxDelim returned %d, write it back in the file!",
-                 (int)temp_max_delimiter_file);
+                  (int)temp_max_delimiter_file);
 
         ret_val = fseek(fp, 0, SEEK_SET);
         if (ret_val != 0) {
@@ -895,7 +924,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
       cur_log_file_object->SetMaxDelimiter(max_delimiter_file);
 
       LOG_TRACE("MaxDelimiter of the last closed file is %d",
-               (int)max_delimiter_file);
+                (int)max_delimiter_file);
 
       max_log_id_file = 0;     // reset
       max_delimiter_file = 0;  // reset
@@ -905,7 +934,7 @@ void WriteAheadFrontendLogger::CreateNewLogFile(bool close_old_file) {
       cur_file_handle.size = log_stats.st_size;
 
       LOG_TRACE("The log file to be closed has size %d",
-               (int)cur_file_handle.size);
+                (int)cur_file_handle.size);
 
       cur_log_file_object->SetLogFileSize(cur_file_handle.size);
 
@@ -1017,7 +1046,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   }
 
   LOG_TRACE("On startup: MaxLogId of this file is %d",
-           (int)temp_max_log_id_file);
+            (int)temp_max_log_id_file);
 
   // Skip next 8 bytes of max delimiter
   read_size = fread((void *)&temp_max_delimiter_file,
@@ -1030,7 +1059,7 @@ void WriteAheadFrontendLogger::OpenNextLogFile() {
   }
 
   LOG_TRACE("On startup: MaxDelimiter of this file is %d",
-           (int)temp_max_delimiter_file);
+            (int)temp_max_delimiter_file);
 
   struct stat stat_buf;
 
@@ -1062,10 +1091,10 @@ void WriteAheadFrontendLogger::TruncateLog(cid_t truncate_log_id) {
 }
 
 void WriteAheadFrontendLogger::InitLogDirectory() {
-
   // Get log directory
   auto &log_manager = logging::LogManager::GetInstance();
-  peloton_log_directory = log_manager.GetLogDirectoryName() + wal_directory_path;
+  peloton_log_directory =
+      log_manager.GetLogDirectoryName() + wal_directory_path;
 
   auto success =
       LoggingUtil::CreateDirectory(peloton_log_directory.c_str(), 0700);
