@@ -578,9 +578,8 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, locations);
-      EXPECT_EQ(locations.size(), 2 * num_threads);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
-
 
 // REVERSE SCAN
       index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
