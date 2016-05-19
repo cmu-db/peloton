@@ -85,6 +85,10 @@ Value &Value::operator=(const Value &other) {
           Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
           Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
 
+          // TODO: Fix memory leak problem.
+          // If a varchar value having been assigned chars.
+          // = will replace old value without release,
+          // which is memory leak.
           SetObjectValue(new_sref);
         } break;
 
