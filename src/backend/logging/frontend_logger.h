@@ -20,12 +20,19 @@
 #include <map>
 #include <thread>
 
+#include "backend/logging/logging_service.h"
+#include "backend/networking/rpc_controller.h"
+#include "backend/networking/rpc_channel.h"
+#include "backend/networking/logging_service.pb.h"
+
 #include "backend/common/types.h"
 #include "backend/logging/logger.h"
 #include "backend/logging/log_buffer.h"
 #include "backend/logging/buffer_pool.h"
 #include "backend/logging/backend_logger.h"
 #include "backend/logging/checkpoint.h"
+
+extern char *peloton_endpoint_address;
 
 namespace peloton {
 namespace logging {
@@ -132,6 +139,13 @@ class FrontendLogger : public Logger {
   cid_t max_delimiter_for_recovery = 0;
 
   cid_t max_seen_commit_id = 0;
+
+  // variables for replication
+  std::unique_ptr<networking::PelotonLoggingService_Stub> replication_stub_;
+  std::unique_ptr<networking::RpcChannel> channel_;
+  std::unique_ptr<networking::RpcController> controller_;
+
+  bool replicating_ = false;
 
   bool test_mode_ = false;
 

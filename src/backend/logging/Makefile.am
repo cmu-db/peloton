@@ -23,7 +23,8 @@ logging_FILES = \
 			   backend/logging/checkpoint/simple_checkpoint.cpp \
 			   backend/logging/log_file.cpp \
 			   backend/logging/circular_buffer_pool.cpp \
-			   backend/logging/log_buffer.cpp
+			   backend/logging/log_buffer.cpp \
+			   backend/logging/logging_service.cpp
 
 logging_INCLUDES = \
                   -I$(srcdir)/logging

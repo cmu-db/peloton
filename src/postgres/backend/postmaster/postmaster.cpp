@@ -66,6 +66,7 @@
 // TODO: Peloton changes
 #include "backend/networking/rpc_client.h"
 #include "backend/networking/peloton_service.h"
+#include "backend/logging/logging_service.h"
 #include "backend/networking/rpc_server.h"
 #include "backend/networking/abstract_service.pb.h"
 
@@ -552,6 +553,7 @@ HANDLE PostmasterHandle;
 #endif
 
 // TODO: Peloton adds
+extern int peloton_server_port;
 
 //TODO: Peloton adds for rpc test
 //extern uint64_t server_request_recv_number;
@@ -564,10 +566,12 @@ void* Coordinator(__attribute__((unused)) void* arg) {
     google::protobuf::Service* service = NULL;
 
     try {
-        peloton::networking::RpcServer rpc_server(PELOTON_SERVER_PORT);
-        service = new peloton::networking::PelotonService();
-        rpc_server.RegisterService(service);
-        rpc_server.Start();
+    	if (peloton_server_port != 0){
+			peloton::networking::RpcServer rpc_server(peloton_server_port);
+			rpc_server.RegisterService(new peloton::networking::PelotonService());
+			rpc_server.RegisterService(new peloton::logging::LoggingService());
+			rpc_server.Start();
+    	}
     } catch (std::exception& e) {
         std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
         delete service;

@@ -28,6 +28,13 @@ namespace peloton {
 namespace logging {
 
 FrontendLogger::FrontendLogger() {
+  if (peloton_endpoint_address != nullptr) {
+    replicating_ = true;
+    controller_.reset(new networking::RpcController());
+    channel_.reset(new networking::RpcChannel(peloton_endpoint_address));
+    replication_stub_.reset(
+        new networking::PelotonLoggingService_Stub(channel_.get()));
+  }
   logger_type = LOGGER_TYPE_FRONTEND;
 
   // Set wait timeout
