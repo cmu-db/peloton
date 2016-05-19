@@ -202,8 +202,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         printf("%s", "Constructing start/end keys");
 
-        printf("left bound %s\t\t right bound %s", interval.first.GetInfo(),
-                  interval.second.GetInfo());
+        printf("left bound %s\t\t right bound %s", interval.first.GetInfo().c_str(),
+                  interval.second.GetInfo().c_str());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -212,7 +212,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           printf("left bound %s\t\t right bound %s",
-                    k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
+                    k_v.second.first.GetInfo().c_str(), k_v.second.second.GetInfo().c_str());
         }
 
         KeyType start_index_key;
@@ -424,7 +424,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       // delete range;
       printf("Insert a init bounds\tleft size %lu\t right description %s",
                 non_leading_columns[column_id].first.GetInfo().size(),
-                non_leading_columns[column_id].second.GetInfo());
+                non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
     if (IfForwardExpression(expr_types[i]) ||
@@ -442,8 +442,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
     if (IfBackwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       printf("max cur %s compare with %s",
-                non_leading_columns[column_id].second.GetInfo(),
-                values[i].GetInfo());
+                non_leading_columns[column_id].second.GetInfo().c_str(),
+                values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
         printf("Update max");
@@ -547,8 +547,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         printf("%s", "Constructing start/end keys");
 
-        printf("left bound %s\t\t right bound %s", interval.first.GetInfo(),
-                  interval.second.GetInfo());
+        printf("left bound %s\t\t right bound %s", interval.first.GetInfo().c_str(),
+                  interval.second.GetInfo().c_str());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
         end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -557,7 +557,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           printf("left bound %s\t\t right bound %s",
-                    k_v.second.first.GetInfo(), k_v.second.second.GetInfo());
+                    k_v.second.first.GetInfo().c_str(), k_v.second.second.GetInfo().c_str());
         }
 
         KeyType start_index_key;
