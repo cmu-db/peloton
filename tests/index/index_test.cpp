@@ -566,7 +566,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   locations.clear();
 
   index->Scan(
-      {key2->GetValue(0), key1->GetValue(1)}, {0, 1},
+      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
