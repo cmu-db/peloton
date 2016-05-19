@@ -418,8 +418,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
        non_leading_columns.insert(std::pair<oid_t, std::pair<Value, Value>>(
                                          column_id, std::pair<Value, Value>(
-                                          Value::GetMaxValue(type),
-                                          Value::GetMinValue(type))));
+                                         Value::GetNullValue(type),
+                                         Value::GetNullValue(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
@@ -432,10 +432,10 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       LOG_TRACE("min cur %lu compare with %s",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 values[i].GetInfo());
-      if (non_leading_columns[column_id].first.Compare(values[i]) ==
-          VALUE_COMPARE_GREATERTHAN) {
+      if (non_leading_columns[column_id].first.IsNull() ||
+          non_leading_columns[column_id].first.Compare(values[i]) == VALUE_COMPARE_GREATERTHAN) {
         LOG_TRACE("Update min");
-        non_leading_columns[column_id].first = values[i];
+        non_leading_columns[column_id].first = ValueFactory::Clone(values[i], nullptr);
       }
     }
 
@@ -444,23 +444,21 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
       LOG_TRACE("max cur %s compare with %s",
                 non_leading_columns[column_id].second.GetInfo(),
                 values[i].GetInfo());
-      if (non_leading_columns[column_id].second.Compare(values[i]) ==
-          VALUE_COMPARE_LESSTHAN) {
+      if (non_leading_columns[column_id].first.IsNull() ||
+          non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
         LOG_TRACE("Update max");
-        non_leading_columns[column_id].second = values[i];
+        non_leading_columns[column_id].second = ValueFactory::Clone(values[i], nullptr);
       }
     }
   }
 
   // check if min value is right bound or max value is left bound, if so, update
   for (const auto &k_v : non_leading_columns) {
-    if (k_v.second.first ==
-        Value::GetMaxValue(k_v.second.first.GetValueType())) {
+    if (k_v.second.first.IsNull()) {
       non_leading_columns[k_v.first].first =
           Value::GetMinValue(k_v.second.first.GetValueType());
     }
-    if (k_v.second.second ==
-        Value::GetMinValue(k_v.second.second.GetValueType())) {
+    if (k_v.second.second.IsNull()) {
       non_leading_columns[k_v.first].second =
           Value::GetMaxValue(k_v.second.second.GetValueType());
     }

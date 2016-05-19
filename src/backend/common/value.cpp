@@ -85,11 +85,6 @@ Value &Value::operator=(const Value &other) {
           Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
           Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
 
-          Varlen *sref = *reinterpret_cast<Varlen *const *>(m_data);
-          if (sref != NULL) {
-            delete sref;
-          }
-
           SetObjectValue(new_sref);
         } break;
 
