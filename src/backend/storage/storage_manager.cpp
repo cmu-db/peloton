@@ -34,7 +34,14 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
+// Logging mode
 extern LoggingType peloton_logging_mode;
+
+// Flush mode (for NVM WBL)
+extern int peloton_flush_mode;
+
+// PCOMMIT latency (for NVM WBL)
+extern int peloton_pcommit_latency;
 
 // PMEM file size
 size_t peloton_data_file_size = 0;
@@ -245,14 +252,52 @@ static void drain_no_pcommit(void){
   /* caller assumed responsibility for the rest */
 }
 
+// PCOMMIT helpers
+
+#define CPU_FREQ_MHZ (2593)
+
+static inline unsigned long read_tsc(void){
+  unsigned long var;
+  unsigned int hi, lo;
+
+  asm volatile ("rdtsc" : "=a" (lo), "=d" (hi));
+  var = ((unsigned long long int) hi << 32) | lo;
+
+  return var;
+}
+
+static inline void cpu_pause(){
+    __asm__ volatile ("pause" ::: "memory");
+}
+
+static inline void pcommit(unsigned long lat){
+
+  // Special case
+  if(lat == 0)
+    return;
+
+  unsigned long etsc = read_tsc() + (unsigned long)(lat*CPU_FREQ_MHZ/1000);
+  while (read_tsc() < etsc) {
+    cpu_pause();
+  }
+
+}
+
 /*
  * drain_pcommit -- (internal) wait for PM stores to drain, pcommit version
  */
 static void drain_pcommit(void) {
   Func_predrain_fence();
 
-  _mm_pcommit();
-  _mm_sfence();
+  // pause if needed
+  pcommit(peloton_pcommit_latency);
+
+  // by default, this is zero
+  if(peloton_pcommit_latency == 0) {
+    _mm_pcommit();
+    _mm_sfence();
+  }
+
 }
 
 /*
@@ -285,8 +330,9 @@ StorageManager::StorageManager()
     return;
   }
 
-  // Check for instruction availability
-  if(is_cpu_clwb_present()) {
+  // Check for instruction availability and flush mode
+  // (1 -- clflush or 2 -- clwb)
+  if(is_cpu_clwb_present() && peloton_flush_mode == 2) {
     LOG_TRACE("Found clwb \n");
     Func_flush = flush_clwb;
     Func_predrain_fence = predrain_fence_sfence;

@@ -189,6 +189,8 @@ volatile bool run_backends = true;
 // Committed transaction counts
 std::vector<double> transaction_counts;
 
+std::vector<double> durations;
+
 void RunBackend(oid_t thread_id) {
   auto update_ratio = state.update_ratio;
 
@@ -202,12 +204,29 @@ void RunBackend(oid_t thread_id) {
   // Partition the domain across backends
   auto insert_key_offset = state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP;
   auto next_insert_key = insert_key_offset + thread_id + 1;
+  auto transaction_count_per_backend = state.transaction_count / state.backend_count;
+  bool check_transaction_count = (transaction_count_per_backend != 0);
+
+  Timer<> timer;
+
+  // Start timer
+  timer.Reset();
+  timer.Start();
 
   // Run these many transactions
   while (true) {
-    // Check if the backend should stop
-    if (run_backends == false) {
-      break;
+    // Check run_backends
+    if (check_transaction_count == false) {
+      if(run_backends == false) {
+        break;
+      }
+    }
+
+    // Check committed_transaction_count
+    if (check_transaction_count == true) {
+      if(committed_transaction_count == transaction_count_per_backend) {
+        break;
+      }
     }
 
     auto rng_val = rng.next_uniform();
@@ -228,8 +247,14 @@ void RunBackend(oid_t thread_id) {
     }
   }
 
+  // Stop timer
+  timer.Stop();
+
   // Set committed_transaction_count
   transaction_counts[thread_id] = committed_transaction_count;
+
+  // Set duration
+  durations[thread_id] = timer.GetDuration();
 }
 
 void RunWorkload() {
@@ -237,6 +262,8 @@ void RunWorkload() {
   std::vector<std::thread> thread_group;
   oid_t num_threads = state.backend_count;
   transaction_counts.resize(num_threads);
+  durations.resize(num_threads);
+  bool check_transaction_count = (state.transaction_count != 0);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
@@ -246,7 +273,11 @@ void RunWorkload() {
   // Sleep for duration specified by user and then stop the backends
   auto sleep_period = std::chrono::milliseconds(state.duration);
   std::this_thread::sleep_for(sleep_period);
-  run_backends = false;
+
+  // Check if we need to run a specific number of transactions
+  if(check_transaction_count == false) {
+    run_backends = false;
+  }
 
   // Join the threads with the main thread
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
@@ -259,9 +290,23 @@ void RunWorkload() {
     sum_transaction_count += transaction_count;
   }
 
+  // Compute average duration
+  double sum_duration = 0;
+  double avg_duration = 0;
+  for (auto duration : durations) {
+    sum_duration += duration;
+  }
+  avg_duration = sum_duration / num_threads;
+
   // Compute average throughput and latency
-  state.throughput = (sum_transaction_count * 1000)/state.duration;
-  state.latency = state.backend_count/state.throughput;
+  if(check_transaction_count == false) {
+    state.throughput = (sum_transaction_count * 1000)/state.duration;
+    state.latency = state.backend_count/state.throughput;
+  }
+  else {
+    state.throughput = state.transaction_count / avg_duration;
+  }
+
 }
 
 /////////////////////////////////////////////////////////
@@ -302,14 +347,14 @@ static bool EndTransaction(concurrency::Transaction *txn) {
     } else {
       // transaction aborted or failed
       PL_ASSERT(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
+                result == Result::RESULT_FAILURE);
       return false;
     }
   }
   // transaction aborted during execution.
   else {
     PL_ASSERT(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
+              result == Result::RESULT_FAILURE);
     result = txn_manager.AbortTransaction();
     return false;
   }

@@ -64,7 +64,8 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+      key_schema, unique, BACKEND_TYPE_MM);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -108,7 +109,8 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+      key_schema, unique, BACKEND_TYPE_MM);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -122,7 +124,8 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema2->SetIndexedColumns(key_attrs2);
   auto index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);
+      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2,
+      key_schema2, unique2, BACKEND_TYPE_MM);
 
   index::Index *ukey_index = index::IndexFactory::GetInstance(index_metadata2);
 
@@ -169,7 +172,7 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
       need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY : INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, unique);
+      tuple_schema, key_schema, unique, BACKEND_TYPE_MM);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 

@@ -28,6 +28,7 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -d --duration          :  execution duration \n"
           "   -k --warehouse_count   :  warehouse count \n"
+          "   -t --transaction-count :  # of transactions \n"
   );
 }
 
@@ -35,7 +36,8 @@ static struct option opts[] = {
     { "backend_count", optional_argument, NULL, 'b'},
     { "duration", optional_argument, NULL, 'd' },
     { "warehouse_count", optional_argument, NULL, 'k' },
-    {NULL, 0, NULL, 0}
+    { "transaction_count", optional_argument, NULL, 't'},
+    { NULL, 0, NULL, 0}
 };
 
 void ValidateWarehouseCount(const configuration &state) {
@@ -48,7 +50,7 @@ void ValidateWarehouseCount(const configuration &state) {
 }
 
 void ValidateDuration(const configuration &state) {
-  if (state.duration <= 0) {
+  if (state.duration < 0) {
     LOG_ERROR("Invalid duration :: %d", state.duration);
     exit(EXIT_FAILURE);
   }
@@ -65,17 +67,27 @@ void ValidateBackendCount(const configuration &state) {
   LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
+void ValidateTransactionCount(const configuration &state) {
+  if (state.transaction_count < 0) {
+    LOG_ERROR("Invalid transaction_count :: %d", state.transaction_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "transaction_count", state.transaction_count);
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Default Values
   state.duration = 1000;
   state.backend_count = 2;
   state.warehouse_count = 2;  // 10
+  state.transaction_count = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ah:b:d:k:", opts, &idx);
+    int c = getopt_long(argc, argv, "ah:b:d:k:t:", opts, &idx);
 
     if (c == -1) break;
 
@@ -88,6 +100,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'k':
         state.warehouse_count = atoi(optarg);
+        break;
+      case 't':
+        state.transaction_count = atoi(optarg);
         break;
 
       case 'h':
@@ -112,6 +127,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateBackendCount(state);
   ValidateWarehouseCount(state);
   ValidateDuration(state);
+  ValidateTransactionCount(state);
 
 }
 

@@ -108,7 +108,8 @@ void ExecuteTileGroupTest() {
 
     index_metadata = new index::IndexMetadata(
         "primary_index", 123, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema,
+        key_schema, unique, BACKEND_TYPE_MM);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
     table->AddIndex(pkey_index);

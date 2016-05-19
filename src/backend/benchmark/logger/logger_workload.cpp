@@ -245,8 +245,12 @@ bool PrepareLogFile() {
       break;
 
     case ASYNCHRONOUS_TYPE_ASYNC:
-    case ASYNCHRONOUS_TYPE_DISABLED:
       log_manager.SetSyncCommit(false);
+      break;
+
+    case ASYNCHRONOUS_TYPE_DISABLED:
+      // No logging
+      peloton_logging_mode = LOGGING_TYPE_INVALID;
       break;
 
     case ASYNCHRONOUS_TYPE_INVALID:
@@ -333,10 +337,12 @@ void DoRecovery() {
   StartLogging(thread);
 
   // Synchronize and finish recovery
-  if (log_manager.EndLogging()) {
-    thread.join();
-  } else {
-    LOG_ERROR("Failed to terminate logging thread");
+  if(peloton_logging_mode != LOGGING_TYPE_INVALID){
+    if (log_manager.EndLogging()) {
+      thread.join();
+    } else {
+      LOG_ERROR("Failed to terminate logging thread");
+    }
   }
 
   timer.Stop();
