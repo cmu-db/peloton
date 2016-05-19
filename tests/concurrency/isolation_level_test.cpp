@@ -465,7 +465,7 @@ TEST_F(IsolationLevelTest, StressTest) {
     concurrency::TransactionManagerFactory::Configure(
         test_type, ISOLATION_LEVEL_TYPE_FULL);
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(num_key));
+        TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE" , INVALID_OID, next_table_id++, 1234, true));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
     // WARNING: change k to a bigger number to a more stress test

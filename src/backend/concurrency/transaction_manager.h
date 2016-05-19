@@ -92,6 +92,39 @@ class TransactionManager {
 
   virtual void PerformDelete(const ItemPointer &location) = 0;
 
+  /*
+   * Write a virtual function to push deleted and verified (acc to optimistic
+   * concurrency control) tuples into possibly free from all underlying
+   * concurrency implementations of transactions.
+   */
+
+  void RecycleInvalidTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id) {
+    auto& gc_instance = gc::GCManagerFactory::GetInstance();
+
+    auto tile_group =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+
+    gc_instance.RecycleInvalidTupleSlot(
+      tile_group->GetTableId(), tile_group_id, tuple_id);
+  }
+
+  void RecycleOldTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
+                           const cid_t &tuple_end_cid) {
+
+    if(gc::GCManagerFactory::GetGCType() != GC_TYPE_VACUUM) {
+      return;
+    }
+
+    auto& gc_instance = gc::GCManagerFactory::GetInstance();
+
+    auto tile_group =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+
+    gc_instance.RecycleOldTupleSlot(
+      tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
+  }
+
+
 
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified

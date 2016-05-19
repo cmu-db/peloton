@@ -159,9 +159,9 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-    
+
     ItemPointer tuple_location = *tuple_location_ptr;
-    
+
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
@@ -215,9 +215,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // if the tuple is not visible.
       else {
         ItemPointer old_item = tuple_location;
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
-        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+
         // there must exist a visible version.
 
         if(tuple_location.IsNull()) {
@@ -237,6 +238,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
 
           return false;
+        }
+
+        if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          continue;
         }
 
         // check whether older version is garbage.
