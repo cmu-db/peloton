@@ -413,14 +413,15 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
       auto type = values[i].GetValueType();
-      std::pair<Value, Value> *range = new std::pair<Value, Value>(Value::GetMaxValue(type),
-                                                  Value::GetMinValue(type));
-      //std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
-//      non_leading_columns.insert(std::make_pair(column_id, std::make_pair(
-//                                                Value::GetMaxValue(type),
-//                                                Value::GetMinValue(type))));
-      non_leading_columns[column_id] = *range;
-      delete range;
+      //std::pair<Value, Value> *range = new std::pair<Value, Value>(Value::GetMaxValue(type),
+      //                                            Value::GetMinValue(type));
+      // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
+       non_leading_columns.insert(std::pair<oid_t, std::pair<Value, Value>>(
+                                         column_id, std::pair<Value, Value>(
+                                          Value::GetMaxValue(type),
+                                          Value::GetMinValue(type))));
+      //  non_leading_columns[column_id] = *range;
+      // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 non_leading_columns[column_id].second.GetInfo());
