@@ -382,7 +382,8 @@ void LogManager::PrepareRecovery() {
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
       auto table = database->GetTable(table_idx);
       // drop existing tile groups
-      table->DropTileGroups();
+      //FIXME: danger!!!
+      //table->DropTileGroups();
       table->SetNumberOfTuples(0);
     }
   }

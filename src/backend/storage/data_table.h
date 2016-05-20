@@ -240,7 +240,7 @@ class DataTable : public AbstractTable {
   column_map_type GetTileGroupLayout(LayoutType layout_type);
 
   // Drop all tile groups of the table. Used by recovery
-  void DropTileGroups();
+  //void DropTileGroups();
 
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS

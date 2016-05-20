@@ -20,13 +20,13 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
+//#include "backend/common/assert.h"
 #include "backend/gc/gc_manager_factory.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
 #include "backend/benchmark/ycsb/ycsb_workload.h"
-
 
 #define CHECK(x)                                                          \
   do {                                                                    \
@@ -47,6 +47,7 @@
       ::abort();                                                               \
     }                                                                          \
   } while (0)
+
 
 namespace peloton {
 namespace benchmark {

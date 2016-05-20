@@ -9,7 +9,7 @@ benchmark_common_cppflags = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLU
 			            	-I$(srcdir)/backend/benchmark
 
 
-benchmark_common_ldadd = libpeloton.la libpelotonpg.la -lpthread
+benchmark_common_ldadd = libpelotonpg.la libpeloton.la -lpthread
 
 ######################################################################
 # HYADAPT
