@@ -235,15 +235,15 @@ bool RunDelivery(){
     // Construct aggregate executor
     std::vector<oid_t> group_by_columns;
     // Prepare proj info
-    planner::ProjectInfo::DirectMapList direct_map_list = {{0, {1, 0}}};
+    DirectMapList direct_map_list = {{0, {1, 0}}};
     std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                               std::move(direct_map_list)));
     // Set up aggregators
     std::vector<planner::AggregatePlan::AggTerm> agg_terms;
     planner::AggregatePlan::AggTerm sum(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(0, 0));
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0));
       // Should this be the column id of the output tuple or original tuple?
     agg_terms.push_back(sum);
 
@@ -333,8 +333,8 @@ bool RunDelivery(){
       &orders_index_scan_node2, context.get());
 
     // Construct update executor
-    planner::ProjectInfo::TargetList orders_target_list;
-    planner::ProjectInfo::DirectMapList orders_direct_map_list;
+    TargetList orders_target_list;
+    DirectMapList orders_direct_map_list;
 
     size_t orders_column_count = 8;
     for (oid_t col_itr = 0; col_itr < orders_column_count; col_itr++) {
@@ -376,8 +376,8 @@ bool RunDelivery(){
       &order_line_index_scan_node2, context.get());
 
     // Construct update executor
-    planner::ProjectInfo::TargetList order_line_target_list;
-    planner::ProjectInfo::DirectMapList order_line_direct_map_list;
+    TargetList order_line_target_list;
+    DirectMapList order_line_direct_map_list;
 
     size_t order_line_column_count = 10;
     for (oid_t col_itr = 0; col_itr < order_line_column_count; col_itr++) {
@@ -437,8 +437,8 @@ bool RunDelivery(){
     executor::IndexScanExecutor customer_index_scan_executor(&customer_index_scan_node, context.get());
 
     // Construct update executor
-    planner::ProjectInfo::TargetList customer_target_list;
-    planner::ProjectInfo::DirectMapList customer_direct_map_list;
+    TargetList customer_target_list;
+    DirectMapList customer_direct_map_list;
 
     size_t customer_column_count = 21;
     for (oid_t col_itr = 0; col_itr < customer_column_count; col_itr++) {
@@ -451,13 +451,13 @@ bool RunDelivery(){
     // Expressions
     // Tuple value expression
     auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(
-      0, COL_IDX_C_BALANCE);
+      VALUE_TYPE_INTEGER, 0, COL_IDX_C_BALANCE);
     // Constant value expression
     auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
       ol_total);
     // + operator expression
     auto plus_operator_expr = expression::ExpressionUtil::OperatorFactory(
-      EXPRESSION_TYPE_OPERATOR_PLUS, tuple_val_expr, constant_val_expr);
+      EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_INTEGER, tuple_val_expr, constant_val_expr);
 
     customer_target_list.emplace_back(
       COL_IDX_C_BALANCE, plus_operator_expr);

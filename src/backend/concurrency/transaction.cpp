@@ -65,6 +65,8 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     PL_ASSERT(false);
+
+
   }
 }
 
@@ -135,3 +137,4 @@ const std::string Transaction::GetInfo() const {
 
 }  // End concurrency namespace
 }  // End peloton namespace
+

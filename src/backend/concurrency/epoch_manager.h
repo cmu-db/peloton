@@ -162,7 +162,6 @@ class EpochManager {
     }
   }
 
-
   void IncreaseTail() {
     bool expect = true, desired = false;
     if(!queue_tail_gc.compare_exchange_weak(expect, desired)){
@@ -239,3 +238,4 @@ class EpochManagerFactory {
 
 }
 }
+

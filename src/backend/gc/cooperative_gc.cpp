@@ -78,7 +78,7 @@ bool Cooperative_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-    storage::TileGroupHeader::GetReserverdSize());
+    storage::TileGroupHeader::GetReservedSize());
   // TODO: set the unused 2 boolean value
   LOG_INFO("Garbage tuple(%u, %u) in table %u is reset",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
@@ -96,7 +96,7 @@ void Cooperative_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata)
   if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
       true) {
     // if the entry for tuple_metadata.table_id exists.
-    recycle_queue->BlockingPush(tuple_metadata);
+    recycle_queue->Enqueue(tuple_metadata);
   } else {
     // if the entry for tuple_metadata.table_id does not exist.
     recycle_queue.reset(
@@ -104,10 +104,10 @@ void Cooperative_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata)
     bool ret =
       recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
     if (ret == true) {
-      recycle_queue->BlockingPush(tuple_metadata);
+      recycle_queue->Enqueue(tuple_metadata);
     } else {
       recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-      recycle_queue->BlockingPush(tuple_metadata);
+      recycle_queue->Enqueue(tuple_metadata);
     }
   }
 }
@@ -128,7 +128,7 @@ void Cooperative_GCManager::Running() {
     // This step move all garbage from the global reclaim queue to the worker's local queue
     for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
       TupleMetadata tuple_metadata;
-      if (reclaim_queue_.TryPop(tuple_metadata) == false) {
+      if (reclaim_queue_.Dequeue(tuple_metadata) == false) {
         break;
       }
       LOG_INFO("Collect tuple (%u, %u) of table %u into local list",
@@ -190,7 +190,7 @@ void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
-  reclaim_queue_.BlockingPush(tuple_metadata);
+  reclaim_queue_.Enqueue(tuple_metadata);
 
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
@@ -220,7 +220,7 @@ ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
-    if (recycle_queue->TryPop(tuple_metadata) == true) {
+    if (recycle_queue->Dequeue(tuple_metadata) == true) {
       LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
@@ -237,7 +237,7 @@ void Cooperative_GCManager::ClearGarbage() {
   // iterate reclaim queue and reclaim every thing because it's the end of the world now.
   TupleMetadata tuple_metadata;
   int counter = 0;
-  while (reclaim_queue_.TryPop(tuple_metadata) == true) {
+  while (reclaim_queue_.Dequeue(tuple_metadata) == true) {
     // In such case, we assume it's the end of the world and every possible
     // garbage is actually garbage
     AddToRecycleMap(tuple_metadata);

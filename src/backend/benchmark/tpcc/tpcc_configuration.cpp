@@ -51,13 +51,13 @@ void ValidateScaleFactor(const configuration &state) {
   LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
 }
 
-void ValidateDuration(const configuration &state) {
-  if (state.duration <= 0) {
-    LOG_ERROR("Invalid duration :: %d", state.duration);
+void ValidateBackendCount(const configuration &state) {
+  if (state.backend_count <= 0) {
+    LOG_ERROR("Invalid backend_count :: %d", state.backend_count);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "duration", state.duration);
+  LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
 void ValidateWarehouseCount(const configuration &state) {
@@ -66,7 +66,7 @@ void ValidateWarehouseCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "backend_count", state.backend_count);
+  LOG_INFO("%s : %d", "warehouse_count", state.warehouse_count);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -113,12 +113,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     }
   }
 
-  // Static TPCC parameters
-  state.warehouse_count = state.scale_factor;  // 10
-  state.item_count = 10000;                    // 100000
-  state.districts_per_warehouse = 2;           // 10
-  state.customers_per_district = 3000;         // 3000
-  state.new_orders_per_district = 900;         // 900
+  // Static parameters
+  state.item_count = 10 * state.scale_factor;
+  state.districts_per_warehouse = 2;
+  state.customers_per_district = 30;
+  state.new_orders_per_district = 9;
 
   // Print configuration
   ValidateScaleFactor(state);

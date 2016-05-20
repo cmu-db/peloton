@@ -391,8 +391,8 @@ bool RunNewOrder(){
 
   int district_update_value = d_next_o_id.GetInteger() + 1;
 
-  planner::ProjectInfo::TargetList district_target_list;
-  planner::ProjectInfo::DirectMapList district_direct_map_list;
+  TargetList district_target_list;
+  DirectMapList district_direct_map_list;
 
   // Update the last attribute
   for (oid_t col_itr = 0; col_itr < 10; col_itr++) {
@@ -545,8 +545,8 @@ bool RunNewOrder(){
     executor::IndexScanExecutor stock_update_index_scan_executor(&stock_update_index_scan_node,
                                                              context.get());
 
-    planner::ProjectInfo::TargetList stock_target_list;
-    planner::ProjectInfo::DirectMapList stock_direct_map_list;
+    TargetList stock_target_list;
+    DirectMapList stock_direct_map_list;
 
     // Update the last attribute
     for (oid_t col_itr = 0; col_itr < 17; col_itr++) {

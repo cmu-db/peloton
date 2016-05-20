@@ -49,7 +49,7 @@ class LockfreeQueue {
   }
 
   bool IsEmpty() {
-    return queue_.empty();
+    return queue_.is_empty();
   }
 
  private:

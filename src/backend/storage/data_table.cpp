@@ -21,6 +21,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile.h"

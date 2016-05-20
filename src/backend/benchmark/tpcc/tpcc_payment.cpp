@@ -395,8 +395,8 @@ bool RunPayment(){
 
   double warehouse_new_balance = warehouse_list[0][6].GetDouble() + h_amount;
 
-  planner::ProjectInfo::TargetList warehouse_target_list;
-  planner::ProjectInfo::DirectMapList warehouse_direct_map_list;
+  TargetList warehouse_target_list;
+  DirectMapList warehouse_direct_map_list;
 
   // Keep the first 8 columns unchanged
   for (oid_t col_itr = 0; col_itr < 8; ++col_itr) {
@@ -446,8 +446,8 @@ bool RunPayment(){
 
   double district_new_balance = district_list[0][6].GetDouble() + h_amount;
 
-  planner::ProjectInfo::TargetList district_target_list;
-  planner::ProjectInfo::DirectMapList district_direct_map_list;
+  TargetList district_target_list;
+  DirectMapList district_direct_map_list;
 
   // Keep all columns unchanged except for the
   for (oid_t col_itr = 0; col_itr < 11; ++col_itr) {
@@ -527,8 +527,8 @@ bool RunPayment(){
     );
     executor::IndexScanExecutor customer_update_index_scan_executor(&customer_update_index_scan_node, context.get());
 
-    planner::ProjectInfo::TargetList customer_target_list;
-    planner::ProjectInfo::DirectMapList customer_direct_map_list;
+    TargetList customer_target_list;
+    DirectMapList customer_direct_map_list;
 
     // Only update the 17th to 19th and the 21th columns
     for (oid_t col_itr = 0; col_itr < 21; ++col_itr) {
@@ -595,8 +595,8 @@ bool RunPayment(){
 
     executor::IndexScanExecutor customer_update_index_scan_executor(&customer_update_index_scan_node, context.get());
 
-    planner::ProjectInfo::TargetList customer_target_list;
-    planner::ProjectInfo::DirectMapList customer_direct_map_list;
+    TargetList customer_target_list;
+    DirectMapList customer_direct_map_list;
 
     // Only update the 17th to 19th columns
     for (oid_t col_itr = 0; col_itr < 21; ++col_itr) {

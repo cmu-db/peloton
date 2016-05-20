@@ -213,8 +213,8 @@ bool RunStockLevel() {
     order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
   }));
   // Projection
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 0}}}; // ORDER_LINE.OL_I_ID
+  TargetList target_list;
+  DirectMapList direct_map_list = {{0, {0, 0}}}; // ORDER_LINE.OL_I_ID
   std::unique_ptr<const planner::ProjectInfo> projection(
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
@@ -233,8 +233,8 @@ bool RunStockLevel() {
   ////////////// Aggregator //////////////////////
   ////////////////////////////////////////////////
   std::vector<oid_t> group_by_columns;
-  planner::ProjectInfo::DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
-  planner::ProjectInfo::TargetList aggregate_target_list;
+  DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
+  TargetList aggregate_target_list;
 
   std::unique_ptr<const planner::ProjectInfo> aggregate_projection(
       new planner::ProjectInfo(std::move(aggregate_target_list),

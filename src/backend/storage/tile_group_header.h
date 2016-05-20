@@ -12,22 +12,28 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/logging/log_manager.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/expression/container_tuple.h"
+
+
+
+
+
+
 
 #include <atomic>
 #include <iostream>
-#include <cassert>
+
 #include <queue>
 #include <vector>
 #include <cstring>
 
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/macros.h"
+
 namespace peloton {
 namespace storage {
+
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -62,7 +68,7 @@ class TileGroupHeader : public Printable {
     header_size = other.header_size;
 
     // copy over all the data
-    memcpy(data, other.data, header_size);
+    PL_MEMCPY(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
     oid_t val = other.next_tuple_slot;
@@ -89,7 +95,7 @@ class TileGroupHeader : public Printable {
    * Used by logging
    */
   // TODO: rewrite the code!!!
-  bool GetEmptyTupleSlot(const oid_t &tuple_slot_id) {
+  bool FillInEmptyTupleSlot(const oid_t &tuple_slot_id) {
     tile_header_lock.Lock();
     if (tuple_slot_id < num_tuple_slots) {
       if (next_tuple_slot <= tuple_slot_id) {
@@ -226,9 +232,9 @@ class TileGroupHeader : public Printable {
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
-  TileGroup *GetTileGroup() const {
-    return tile_group;
-  }
+  // Getter for spin lock
+
+  Spinlock &GetHeaderLock() { return tile_header_lock; }
 
   // Sync the contents
   void Sync();
@@ -240,7 +246,7 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReserverdSize() {return  reserverd_size;}
+  static inline size_t GetReservedSize() {return  reserverd_size;}
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
@@ -297,3 +303,4 @@ private:
 
 }  // End storage namespace
 }  // End peloton namespace
+

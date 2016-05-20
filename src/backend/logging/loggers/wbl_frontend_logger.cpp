@@ -84,7 +84,12 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 	struct WriteBehindLogRecord record;
 	record.persistent_commit_id = max_collected_commit_id;
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	cid_t new_grant = txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
+	
+  //==========================================================================
+  // DANGER: tmporarily change the source code here!!!
+  //==========================================================================
+  cid_t new_grant = 0;
+  //cid_t new_grant = txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
 	// get current highest dispense commit id
 	record.max_possible_dirty_commit_id = new_grant;
 	if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)){
@@ -101,8 +106,11 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
 	auto &manager = LogManager::GetInstance();
 	manager.FrontendLoggerFlushed();
 
+  //==========================================================================
+  // DANGER: tmporarily change the source code here!!!
+  //==========================================================================
 	//set new grant in txn_manager
-	txn_manager.SetMaxGrantCid(new_grant);
+	//txn_manager.SetMaxGrantCid(new_grant);
 }
 
 //===--------------------------------------------------------------------===//
@@ -148,9 +156,12 @@ void WriteBehindFrontendLogger::DoRecovery() {
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 	txn_manager.SetNextCid(most_recent_log_record.max_possible_dirty_commit_id+1);
 
+  //==========================================================================
+  // DANGER: tmporarily change the source code here!!!
+  //==========================================================================
 	// set the dirty span of the transaction manager
-	txn_manager.SetDirtyRange(std::make_pair(most_recent_log_record.persistent_commit_id,
-			most_recent_log_record.max_possible_dirty_commit_id));
+	// txn_manager.SetDirtyRange(std::make_pair(most_recent_log_record.persistent_commit_id,
+	// 		most_recent_log_record.max_possible_dirty_commit_id));
 
 	// for now assume that the maximum tile group oid and table tile group
 	// membership info are already set

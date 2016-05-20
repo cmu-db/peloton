@@ -123,8 +123,8 @@ UpdatePlans PrepareUpdatePlan() {
   // UPDATE
   /////////////////////////////////////////////////////////
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   // Update the second attribute
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
@@ -180,7 +180,7 @@ bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
   update_plans.index_scan_executor_->SetValues(values);
 
 
-  planner::ProjectInfo::TargetList target_list;
+  TargetList target_list;
   // std::string update_raw_value(ycsb_field_length - 1, 'u');
   int update_raw_value = 2;
   

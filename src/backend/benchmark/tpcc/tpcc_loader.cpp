@@ -17,6 +17,7 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
+#include <cassert>
 #include <cstring>
 
 #include "backend/benchmark/tpcc/tpcc_loader.h"
@@ -201,7 +202,7 @@ void CreateWarehouseTable() {
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-
+  
   warehouse_table->AddIndex(pkey_index);
 }
 
@@ -444,6 +445,7 @@ void CreateCustomerTable() {
   customer_table->AddIndex(pkey_index);
 
 
+  
   // Secondary index on C_W_ID, C_D_ID, C_LAST
   key_attrs = {1, 2, 5};
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
@@ -871,7 +873,7 @@ NURandConstant::NURandConstant() {
 
 // A non-uniform random number, as defined by TPC-C 2.1.6. (page 20).
 int GetNURand(int a, int x, int y) {
-  PL_ASSERT(x <= y);
+  assert(x <= y);
   int c = nu_rand_const.c_last;
 
   if (a == 255) {
@@ -881,7 +883,7 @@ int GetNURand(int a, int x, int y) {
   } else if (a == 8191) {
     c = nu_rand_const.order_line_itme_id;
   } else {
-    PL_ASSERT(false);
+    assert(false);
   }
 
   return (((GetRandomInteger(0, a) | GetRandomInteger(x, y)) + c) % (y - x + 1)) + x;
@@ -890,18 +892,21 @@ int GetNURand(int a, int x, int y) {
 
 // A last name as defined by TPC-C 4.3.2.3. Not actually random.
 std::string GetLastName(int number) {
-  PL_ASSERT(number >= 0 && number <= 999);
+  assert(number >= 0 && number <= 999);
 
-  int idx1 = number / 100;
-  int idx2 = (number / 10 % 10);
-  int idx3 = number % 10;
+  int idx[3];
+  idx[0] = number / 100;
+  idx[1] = (number / 10 % 10);
+  idx[2] = number % 10;
+  auto res = std::string(name_length, '\0');
+  int res_itr = 0;
 
-  char lastname_cstr[name_length];
-  std::strcpy(lastname_cstr, syllables[idx1]);
-  std::strcat(lastname_cstr, syllables[idx2]);
-  std::strcat(lastname_cstr, syllables[idx3]);
-
-  return std::string(lastname_cstr, name_length);
+  for ( int i = 0; i < 3; ++i) {
+    for (const char *c = syllables[idx[i]]; *c != '\0'; ++c) {
+      res[res_itr++] = *c;
+    }
+  }
+  return res;
 }
 
 // A non-uniform random last name, as defined by TPC-C 4.3.2.3.
@@ -1145,7 +1150,7 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
                                                    const int warehouse_id,
                                                    const std::unique_ptr<VarlenPool>& pool) {
   // Customer id begins from 0
-  PL_ASSERT(customer_id >= 0 && customer_id < state.customers_per_district);
+  assert(customer_id >= 0 && customer_id < state.customers_per_district);
 
   auto customer_table_schema = customer_table->GetSchema();
   std::unique_ptr<storage::Tuple> customer_tuple(new storage::Tuple(customer_table_schema, allocate));
@@ -1529,16 +1534,6 @@ void LoadTPCCDatabase() {
   printf("orders count = %u\n", orders_table->GetAllActiveTupleCount());
   printf("new order count = %u\n", new_order_table->GetAllActiveTupleCount());
   printf("order line count = %u\n", order_line_table->GetAllActiveTupleCount());
-
-  LOG_INFO("warehouse count = %lf", warehouse_table->GetNumberOfTuples());
-  LOG_INFO("district count  = %lf", district_table->GetNumberOfTuples());
-  LOG_INFO("item count = %lf", item_table->GetNumberOfTuples());
-  LOG_INFO("customer count = %lf", customer_table->GetNumberOfTuples());
-  LOG_INFO("history count = %lf", history_table->GetNumberOfTuples());
-  LOG_INFO("stock count = %lf", stock_table->GetNumberOfTuples());
-  LOG_INFO("orders count = %lf", orders_table->GetNumberOfTuples());
-  LOG_INFO("new order count = %lf", new_order_table->GetNumberOfTuples());
-  LOG_INFO("order line count = %lf", order_line_table->GetNumberOfTuples());
 
 }
 

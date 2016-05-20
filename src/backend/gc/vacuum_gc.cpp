@@ -45,7 +45,7 @@ bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-    storage::TileGroupHeader::GetReserverdSize());
+    storage::TileGroupHeader::GetReservedSize());
   // TODO: set the unused 2 boolean value
   return true;
 }
@@ -94,11 +94,11 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
       // if the entry for table_id exists.
       if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
         // if the entry for tuple_metadata.table_id exists.
-        recycle_queue->BlockingPush(tuple_metadata);
+        recycle_queue->Enqueue(tuple_metadata);
       } else {
         // if the entry for tuple_metadata.table_id does not exist.
         recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-        recycle_queue->BlockingPush(tuple_metadata);
+        recycle_queue->Enqueue(tuple_metadata);
         recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
       }
 
@@ -123,7 +123,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
     TupleMetadata tuple_metadata;
     // if there's no more tuples in the queue, then break.
-    if (unlink_queue_.TryPop(tuple_metadata) == false) {
+    if (unlink_queue_.Dequeue(tuple_metadata) == false) {
       break;
     }
 
@@ -139,7 +139,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
 
     } else {
       // if a tuple cannot be reclaimed, then add it back to the list.
-      unlink_queue_.BlockingPush(tuple_metadata);
+      unlink_queue_.Enqueue(tuple_metadata);
     }
   }  // end for
 
@@ -163,7 +163,7 @@ void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
-  unlink_queue_.BlockingPush(tuple_metadata);
+  unlink_queue_.Enqueue(tuple_metadata);
   LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -187,11 +187,11 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   // if the entry for table_id exists.
   if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
     // if the entry for tuple_metadata.table_id exists.
-    recycle_queue->BlockingPush(tuple_metadata);
+    recycle_queue->Enqueue(tuple_metadata);
   } else {
     // if the entry for tuple_metadata.table_id does not exist.
     recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-    recycle_queue->BlockingPush(tuple_metadata);
+    recycle_queue->Enqueue(tuple_metadata);
     recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
   }
 
@@ -213,7 +213,7 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
-    if (recycle_queue->TryPop(tuple_metadata) == true) {
+    if (recycle_queue->Dequeue(tuple_metadata) == true) {
       LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,

@@ -1,29 +1,29 @@
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// logger_loader.cpp
-//
-// Identification: src/backend/benchmark/logger/logger_loader.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
+// //===----------------------------------------------------------------------===//
+// //
+// //                         Peloton
+// //
+// // logger_loader.cpp
+// //
+// // Identification: src/backend/benchmark/logger/logger_loader.cpp
+// //
+// // Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// //
+// //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+// #include "backend/benchmark/hyadapt/hyadapt_loader.h"
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <chrono>
-#include <iostream>
-#include <ctime>
+// #include <memory>
+// #include <string>
+// #include <unordered_map>
+// #include <vector>
+// #include <chrono>
+// #include <iostream>
+// #include <ctime>
 
-namespace peloton {
-namespace benchmark {
-namespace hyadapt {
+// namespace peloton {
+// namespace benchmark {
+// namespace hyadapt {
 
-}  // namespace hyadapt
-}  // namespace benchmark
-}  // namespace peloton
+// }  // namespace hyadapt
+// }  // namespace benchmark
+// }  // namespace peloton

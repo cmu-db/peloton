@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/expression/container_tuple.h"
+#include "transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -37,7 +36,7 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      PL_ASSERT(tuple_end_cid == MAX_CID);
+      assert(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
     } else {
@@ -77,5 +76,5 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
   }
 }
 
-}  // End concurrency namespace
+}  // End storage namespace
 }  // End peloton namespace

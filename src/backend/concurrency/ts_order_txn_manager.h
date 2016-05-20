@@ -94,7 +94,7 @@ class TsOrderTxnManager : public TransactionManager {
       const oid_t &tuple_id) {
     char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
     cid_t read_ts = 0;
-    PL_MEMCPY(&read_ts, reserved_field, sizeof(cid_t));
+    memcpy(&read_ts, reserved_field, sizeof(cid_t));
     return read_ts;
   }
 
@@ -103,9 +103,9 @@ class TsOrderTxnManager : public TransactionManager {
       const oid_t &tuple_id, const cid_t &last_read_ts) {
     char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
     cid_t read_ts = 0;
-    PL_MEMCPY(&read_ts, reserved_field, sizeof(cid_t));
+    memcpy(&read_ts, reserved_field, sizeof(cid_t));
     if (last_read_ts > read_ts) {
-      PL_MEMCPY(reserved_field, &last_read_ts, sizeof(cid_t));
+      memcpy(reserved_field, &last_read_ts, sizeof(cid_t));
     }
   }
 

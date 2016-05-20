@@ -224,7 +224,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
  */
 oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                                          const Tuple *tuple) {
-  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
+  auto status = tile_group_header->FillInEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
   if (status == false) return INVALID_OID;
@@ -278,7 +278,7 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
 
 oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id) {
 
-  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
+  auto status = tile_group_header->FillInEmptyTupleSlot(tuple_slot_id);
 
   tile_group_header->GetHeaderLock().Lock();
 
@@ -305,7 +305,7 @@ oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id) {
 
 oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
                                          ItemPointer new_location) {
-  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
+  auto status = tile_group_header->FillInEmptyTupleSlot(tuple_slot_id);
 
   tile_group_header->GetHeaderLock().Lock();
 
@@ -339,7 +339,7 @@ oid_t TileGroup::UpdateTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
 oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
                                            const Tuple *tuple,
                                            cid_t commit_id) {
-  auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
+  auto status = tile_group_header->FillInEmptyTupleSlot(tuple_slot_id);
 
   // No more slots
   if (status == false) return INVALID_OID;

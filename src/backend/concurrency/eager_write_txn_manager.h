@@ -15,7 +15,6 @@
 #include <unordered_set>
 #include <queue>
 #include <atomic>
-
 #include "backend/concurrency/transaction_manager.h"
 
 namespace peloton {
@@ -127,7 +126,7 @@ class EagerWriteTxnManager : public TransactionManager {
       for (auto wtid : current_txn_ctx->wait_list_) {
         if (running_txn_map_.count(wtid) != 0) {
           running_txn_map_[wtid]->wait_for_counter_--;
-          PL_ASSERT(running_txn_map_[wtid]->wait_for_counter_ >= 0);
+          assert(running_txn_map_[wtid]->wait_for_counter_ >= 0);
         }
       }
       running_txn_map_.erase(txn_id);
@@ -147,7 +146,17 @@ class EagerWriteTxnManager : public TransactionManager {
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
   // The txn_id could only be the cur_txn's txn id.
-  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id);
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+    auto tile_group_header = catalog::Manager::GetInstance()
+        .GetTileGroup(tile_group_id)->GetHeader();
+
+    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
+    // Hack
+    *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
+  }
 
   TxnList *GetEwReaderList(
       const storage::TileGroupHeader *const tile_group_header,
@@ -177,7 +186,7 @@ class EagerWriteTxnManager : public TransactionManager {
   void AddReader(storage::TileGroupHeader *tile_group_header,
                  const oid_t &tuple_id) {
     auto txn_id = current_txn->GetTransactionId();
-    LOG_TRACE("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
+    LOG_INFO("Add reader %lu, tuple_id = %u", txn_id, tuple_id);
 
     TxnList *reader = new TxnList(txn_id);
 
@@ -192,7 +201,7 @@ class EagerWriteTxnManager : public TransactionManager {
   // Remove reader from the reader list of a tuple
   void RemoveReader(storage::TileGroupHeader *tile_group_header,
                     const oid_t &tuple_id, txn_id_t txn_id) {
-    LOG_TRACE("Remove reader with txn_id = %lu", txn_id);
+    LOG_INFO("Remove reader with txn_id = %lu", txn_id);
     GetEwReaderLock(tile_group_header, tuple_id);
 
     TxnList *headp = (TxnList *)(
@@ -214,7 +223,7 @@ class EagerWriteTxnManager : public TransactionManager {
 
     ReleaseEwReaderLock(tile_group_header, tuple_id);
     if (find == false) {
-      PL_ASSERT(false);
+      assert(false);
     }
   }
 

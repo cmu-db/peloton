@@ -36,7 +36,7 @@ class UpdateExecutor : public AbstractExecutor {
   }
 
 
-  void SetTargetList(const planner::ProjectInfo::TargetList &target_list) {
+  void SetTargetList(const TargetList &target_list) {
     project_info_->SetTargetList(target_list);
   }
 
