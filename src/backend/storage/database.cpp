@@ -13,6 +13,8 @@
 #include <sstream>
 
 #include "postmaster/peloton.h"
+#include "backend/bridge/ddl/bridge.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
 #include "backend/common/logger.h"
@@ -67,7 +69,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
       }
       table_offset++;
     }
-    assert(table_offset < tables.size());
+    PL_ASSERT(table_offset < tables.size());
 
     // Drop the database
     tables.erase(tables.begin() + table_offset);
@@ -75,7 +77,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 }
 
 storage::DataTable *Database::GetTable(const oid_t table_offset) const {
-  assert(table_offset < tables.size());
+  PL_ASSERT(table_offset < tables.size());
   auto table = tables.at(table_offset);
   return table;
 }
@@ -87,7 +89,7 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 //===--------------------------------------------------------------------===//
 
 void Database::UpdateStats() const {
-  LOG_INFO("Update All Stats in Database(%u)", database_oid);
+  LOG_TRACE("Update All Stats in Database(%u)", database_oid);
   for (oid_t table_offset = 0; table_offset < GetTableCount(); table_offset++) {
     auto table = GetTable(table_offset);
     bridge::Bridge::SetNumberOfTuples(table->GetOid(),
@@ -103,7 +105,7 @@ void Database::UpdateStats() const {
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid) const {
-  LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid,
+  LOG_TRACE("Update table(%u)'s stats in Database(%u)", table_oid,
            database_oid);
 
   auto table = GetTableWithOid(table_oid);

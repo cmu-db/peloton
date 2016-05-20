@@ -25,10 +25,11 @@
 
 
 static void printtup_startup(DestReceiver *self, int operation,
-				 TupleDesc typeinfo);
-static void printtup(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_20(TupleTableSlot *slot, DestReceiver *self);
-static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
+				 TupleDesc typeinfo, BackendContext *backend_state = nullptr);
+static void printtup_20(TupleTableSlot *slot, DestReceiver *self,
+												BackendContext *backend_state = nullptr);
+static void printtup_internal_20(TupleTableSlot *slot, DestReceiver *self,
+																 BackendContext *backend_state = nullptr);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
@@ -122,7 +123,8 @@ SetRemoteDestReceiverParams(DestReceiver *self, Portal portal)
 }
 
 static void
-printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
+								 BackendContext *backend_state)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
@@ -156,9 +158,10 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	/*
 	 * If we are supposed to emit row descriptions, then send the tuple
-	 * descriptor of the tuples.
+	 * descriptor of the tuples. Don't print if we are memcached.
+	 *
 	 */
-	if (myState->sendDescrip)
+	if (myState->sendDescrip && backend_state == nullptr)
 		SendRowDescriptionMessage(typeinfo,
 								  FetchPortalTargetList(portal),
 								  portal->formats);
@@ -299,8 +302,8 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
  *		printtup --- print a tuple in protocol 3.0
  * ----------------
  */
-static void
-printtup(TupleTableSlot *slot, DestReceiver *self)
+void
+printtup(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
@@ -321,10 +324,14 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 
 	/*
 	 * Prepare a DataRow message (note buffer is in per-row context)
+	 *
+	 * Note: do this if we are not memcached
 	 */
+
 	pq_beginmessage(&buf, 'D');
 
 	pq_sendint(&buf, natts, 2);
+
 
 	/*
 	 * send the attributes of this tuple
@@ -357,6 +364,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			char	   *outputstr;
 
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
+			// comma delimit output
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 		}
 		else
@@ -364,14 +372,26 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			/* Binary output */
 			bytea	   *outputbytes;
 
+			// TODO: ignore binary data for memcached for now
 			outputbytes = SendFunctionCall(&thisState->finfo, attr);
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
-						 VARSIZE(outputbytes) - VARHDRSZ);
+									 VARSIZE(outputbytes) - VARHDRSZ);
 		}
 	}
 
-	pq_endmessage(&buf);
+	// flush only if we are not memcached
+	if (backend_state == nullptr) {
+		// otherwise, send string value of message up
+		pq_endmessage(&buf);
+	}
+	else {
+		// copy buf in result
+		backend_state->memcached_result.cursor = buf.cursor;
+		backend_state->memcached_result.data = buf.data;
+		backend_state->memcached_result.len = buf.len;
+		backend_state->memcached_result.maxlen = buf.maxlen;
+	}
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
@@ -383,7 +403,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_20(TupleTableSlot *slot, DestReceiver *self)
+printtup_20(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
@@ -510,7 +530,8 @@ printatt(unsigned attributeId,
  * ----------------
  */
 void
-debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
+debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo,
+						 BackendContext *backend_state)
 {
 	int			natts = typeinfo->natts;
 	Form_pg_attribute *attinfo = typeinfo->attrs;
@@ -529,7 +550,7 @@ debugStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * ----------------
  */
 void
-debugtup(TupleTableSlot *slot, DestReceiver *self)
+debugtup(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	int			natts = typeinfo->natts;
@@ -565,7 +586,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
  * ----------------
  */
 static void
-printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
+printtup_internal_20(TupleTableSlot *slot, DestReceiver *self, BackendContext *backend_state)
 {
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;

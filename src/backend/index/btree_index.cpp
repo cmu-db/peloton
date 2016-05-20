@@ -34,7 +34,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
   // we should not rely on shared_ptr to reclaim memory.
   // this is because the underlying index can split or merge leaf nodes,
   // which invokes data data copy and deletes.
-  // as the underlying index is unaware of shared_ptr, 
+  // as the underlying index is unaware of shared_ptr,
   // memory allocated should be managed carefully by programmers.
   for (auto entry = container.begin(); entry != container.end(); ++entry) {
     delete entry->second;
@@ -122,11 +122,12 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
+
       ItemPointer item_pointer = *(entry->second);
 
       if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
+        index_lock.Unlock();
         return false;
       }
     }
@@ -202,7 +203,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // "expression types"
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-            
+
             ItemPointer item_pointer = *(scan_itr->second);
 
             result.push_back(item_pointer);
@@ -240,7 +241,7 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     while (itr != container.end()) {
 
       ItemPointer item_pointer = *(itr->second);
-      
+
       result.push_back(std::move(item_pointer));
       itr++;
     }
@@ -262,7 +263,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      
+
       ItemPointer item_pointer = *(entry->second);
 
       result.push_back(item_pointer);

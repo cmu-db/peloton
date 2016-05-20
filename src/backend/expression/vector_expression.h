@@ -32,7 +32,7 @@ class VectorExpression : public AbstractExpression {
  public:
   VectorExpression(ValueType elementType,
                    const std::vector<AbstractExpression *> &arguments)
-      : AbstractExpression(EXPRESSION_TYPE_VALUE_VECTOR),
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_VECTOR, VALUE_TYPE_ARRAY),
         arguments(arguments),
         elementType_(elementType) {
     in_list = ValueFactory::GetArrayValueFromSizeAndType(arguments.size(),
@@ -45,7 +45,7 @@ class VectorExpression : public AbstractExpression {
 
   virtual bool HasParameter() const {
     for (auto argument : arguments) {
-      assert(argument);
+      PL_ASSERT(argument);
       if (argument->HasParameter()) {
         return true;
       }
@@ -54,7 +54,7 @@ class VectorExpression : public AbstractExpression {
   }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     std::vector<Value> in_values;
     for (auto argument : arguments) {
       auto in_value = argument->Evaluate(tuple1, tuple2, context);
@@ -65,14 +65,14 @@ class VectorExpression : public AbstractExpression {
     return in_list;
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return spacer + "VectorExpression\n";
   }
 
   // for test
   std::vector<AbstractExpression *> GetArgs() const { return arguments; }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     std::vector<AbstractExpression *> copied_expression;
     for (AbstractExpression *expression : arguments) {
       if (expression == nullptr) {

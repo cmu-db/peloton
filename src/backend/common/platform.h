@@ -32,6 +32,15 @@ inline bool atomic_cas(T *object, T old_value, T new_value) {
 #define COMPILER_MEMORY_FENCE asm volatile("" ::: "memory")
 
 //===--------------------------------------------------------------------===//
+// Alignment
+//===--------------------------------------------------------------------===//
+
+#define CACHELINE_SIZE 64 // XXX: don't assume x86
+
+// some helpers for cacheline alignment
+#define CACHE_ALIGNED __attribute__((aligned(CACHELINE_SIZE)))
+
+//===--------------------------------------------------------------------===//
 // Reader/Writer lock
 //===--------------------------------------------------------------------===//
 

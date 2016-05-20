@@ -20,10 +20,11 @@
 #include "backend/executor/update_executor.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/expression/expression_util.h"
-#include "backend/storage/tile.h"
 #include "executor/mock_executor.h"
 #include "backend/planner/delete_plan.h"
 #include "backend/planner/insert_plan.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace executor {
@@ -194,8 +195,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
 
 std::unique_ptr<const planner::ProjectInfo>
 TransactionTestsUtil::MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);
@@ -230,7 +231,7 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
 
 expression::ComparisonExpression<expression::CmpEq> *
 TransactionTestsUtil::MakePredicate(int id) {
-  auto tup_val_exp = new expression::TupleValueExpression(0, 0);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -322,8 +323,8 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   Value update_val = ValueFactory::GetIntegerValue(value);
 
   // ProjectInfo
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   target_list.emplace_back(
       1, expression::ExpressionUtil::ConstantValueFactory(update_val));
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
@@ -360,8 +361,8 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   Value update_val = ValueFactory::GetIntegerValue(new_value);
 
   // ProjectInfo
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   target_list.emplace_back(
       1, expression::ExpressionUtil::ConstantValueFactory(update_val));
   direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
@@ -375,7 +376,7 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
-  auto tup_val_exp = new expression::TupleValueExpression(0, 1);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -402,7 +403,7 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       new executor::ExecutorContext(transaction));
 
   // Predicate, WHERE `id`>=id1
-  auto tup_val_exp = new expression::TupleValueExpression(0, 0);
+  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
 

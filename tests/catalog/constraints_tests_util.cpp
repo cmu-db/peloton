@@ -116,14 +116,13 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
+void ConstraintsTestsUtil::PopulateTable(UNUSED_ATTRIBUTE
                                          concurrency::Transaction *transaction,
                                          storage::DataTable *table,
                                          int num_rows) {
-  const catalog::Schema *schema = table->GetSchema();
-
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;
@@ -149,8 +148,8 @@ void ConstraintsTestsUtil::PopulateTable(__attribute__((unused))
 
 std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
     const storage::Tuple *tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);

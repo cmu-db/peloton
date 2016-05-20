@@ -13,18 +13,16 @@
 #pragma once
 
 #include <iostream>
-
-#include "backend/common/types.h"
-
 #include <cstdio>
 #include <cstdlib>
-#include <cassert>
 #include <stdexcept>
 #include <execinfo.h>
 #include <errno.h>
 #include <cxxabi.h>
 #include <signal.h>
 #include <memory>
+
+#include "backend/common/types.h"
 
 namespace peloton {
 

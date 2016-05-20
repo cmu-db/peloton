@@ -35,7 +35,7 @@ HashExecutor::HashExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool HashExecutor::DInit() {
-  assert(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   // Initialize executor state
   done_ = false;
@@ -45,7 +45,7 @@ bool HashExecutor::DInit() {
 }
 
 bool HashExecutor::DExecute() {
-  LOG_INFO("Hash Executor");
+  LOG_TRACE("Hash Executor");
 
   if (done_ == false) {
     const planner::HashPlan &node = GetPlanNode<planner::HashPlan>();
@@ -70,7 +70,7 @@ bool HashExecutor::DExecute() {
 
     // Construct a logical tile
     for (auto &hashkey : hashkeys) {
-      assert(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+      PL_ASSERT(hashkey->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
       auto tuple_value =
           reinterpret_cast<const expression::TupleValueExpression *>(
               hashkey.get());

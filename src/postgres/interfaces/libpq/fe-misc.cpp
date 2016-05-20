@@ -56,7 +56,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "mb/pg_wchar.h"
-#include "pg_config_paths.h"
+#include "../port/pg_config_paths.h"
 
 
 static int	pqPutMsgBytes(const void *buf, size_t len, PGconn *conn);

@@ -25,7 +25,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
-#include "pg_config_paths.h"
+#include "../port/pg_config_paths.h"
 
 #ifdef WIN32
 #include "win32.h"

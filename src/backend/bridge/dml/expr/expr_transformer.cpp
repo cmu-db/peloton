@@ -17,6 +17,7 @@
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
 #include "parser/parsetree.h"
+#include "fmgr.h"
 
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
@@ -25,6 +26,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
+#include "backend/common/macros.h"
 #include "backend/common/value_factory.h"
 #include "backend/expression/cast_expression.h"
 #include "backend/expression/abstract_expression.h"
@@ -165,7 +167,7 @@ ExprTransformer::TransformExprList(const ExprState *expr_state) {
   if (nodeTag(expr_state->expr) == T_List) {
     const List *list = reinterpret_cast<const List *>(expr_state);
     ListCell *l;
-    assert(list_length(list) > 0);
+    PL_ASSERT(list_length(list) > 0);
     LOG_TRACE("Expression List of length %d", list_length(list));
 
     foreach (l, list) {
@@ -248,6 +250,8 @@ expression::AbstractExpression *ExprTransformer::TransformConst(
           expression::ExpressionUtil::ConstantValueFactory(tmp_value);
       vec_exprs.push_back(ce);
     }
+    // TODO: The following line is wrong. The first argument should be the
+    //       the element type
     auto rv =
         expression::ExpressionUtil::VectorFactory(VALUE_TYPE_ARRAY, vec_exprs);
     return rv;
@@ -264,12 +268,15 @@ expression::AbstractExpression *ExprTransformer::TransformOp(
   auto op_expr = reinterpret_cast<const OpExpr *>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState *>(es);
 
-  assert(op_expr->opfuncid !=
-         0);  // Hopefully it has been filled in by PG planner
+  auto pg_type = static_cast<PostgresValueType>(op_expr->opresulttype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
+
+  // Hopefully it has been filled in by PG planner
+  PL_ASSERT(op_expr->opfuncid != 0);
 
   auto pg_func_id = op_expr->opfuncid;
 
-  return ReMapPgFunc(pg_func_id, func_state->args);
+  return ReMapPgFunc(pg_func_id, peloton_type, func_state->args);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
@@ -278,10 +285,10 @@ expression::AbstractExpression *ExprTransformer::TransformScalarArrayOp(
 
   auto op_expr = reinterpret_cast<const ScalarArrayOpExpr *>(es->expr);
   // auto sa_state = reinterpret_cast<const ScalarArrayOpExprState*>(es);
-  assert(op_expr->opfuncid !=
+  PL_ASSERT(op_expr->opfuncid !=
          0);  // Hopefully it has been filled in by PG planner
   const List *list = op_expr->args;
-  assert(list_length(list) <= 2);  // Hopefully it has at most two parameters
+  PL_ASSERT(list_length(list) <= 2);  // Hopefully it has at most two parameters
 
   // Extract function arguments (at most two)
   expression::AbstractExpression *lc = nullptr;
@@ -315,8 +322,7 @@ expression::AbstractExpression *ExprTransformer::TransformArray(
   auto array_expr = reinterpret_cast<const ArrayExpr *>(es->expr);
 
   // Can only handle one dimension array now
-  if (array_expr->multidims)
-    LOG_ERROR("Do not support multi-dimension array");
+  if (array_expr->multidims) LOG_ERROR("Do not support multi-dimension array");
 
   std::vector<expression::AbstractExpression *> vals;
   ListCell *arg;
@@ -325,7 +331,7 @@ expression::AbstractExpression *ExprTransformer::TransformArray(
     vals.push_back(TransformExpr(arg_expr));
   }
   PostgresValueType pt =
-    static_cast<PostgresValueType>(array_expr->element_typeid);
+      static_cast<PostgresValueType>(array_expr->element_typeid);
   ValueType vt = PostgresValueTypeToPelotonValueType(pt);
 
   return expression::ExpressionUtil::VectorFactory(vt, vals);
@@ -336,23 +342,52 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
   auto fn_es = reinterpret_cast<const FuncExprState *>(es);
   auto fn_expr = reinterpret_cast<const FuncExpr *>(es->expr);
 
-  assert(fn_expr->xpr.type == T_FuncExpr);
+  PL_ASSERT(fn_expr->xpr.type == T_FuncExpr);
 
   auto pg_func_id = fn_expr->funcid;
   auto rettype = fn_expr->funcresulttype;
 
+  auto pg_type = static_cast<PostgresValueType>(rettype);
+  auto peloton_ret_type = PostgresValueTypeToPelotonValueType(pg_type);
+
   LOG_TRACE("PG Func oid : %u , return type : %u ", pg_func_id, rettype);
   LOG_TRACE("PG funcid in planstate : %u", fn_es->func.fn_oid);
 
-  auto retval = ReMapPgFunc(pg_func_id, fn_es->args);
+  auto retval = ReMapPgFunc(pg_func_id, peloton_ret_type, fn_es->args);
 
-  // FIXME It will generate incorrect results.
   if (!retval) {
-    LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
-    assert(list_length(fn_es->args) > 0);
+    // Check if the function is a UDF function.
+    if (CheckUserDefinedFunction(pg_func_id)) {
+      LOG_TRACE("Validating if it is a UDF Function, Op Function ID: %u",
+                pg_func_id);
 
-    ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
-    return TransformExpr(first_child);
+      auto function_id = fn_expr->funcid;
+      auto collation = fn_es->fcinfo_data.fncollation;
+      //auto args = fn_es->args;
+
+      std::vector<std::unique_ptr<expression::AbstractExpression>> args;
+
+      // Convert arguments to Peloton's expression
+      int i = 0;
+      ListCell *arg;
+      foreach (arg, fn_es->args) {
+        ExprState *argstate = (ExprState *)lfirst(arg);
+        args.emplace_back(TransformExpr(argstate));
+        i++;
+      }
+
+      // Check if the number of arguments are less then maximum allowed.
+      PL_ASSERT(args.size() < EXPRESSION_MAX_ARG_NUM);
+
+      return expression::ExpressionUtil::UDFExpressionFactory(
+          function_id, collation, rettype, args);
+    } else {
+      // FIXME It will generate incorrect results.
+      PL_ASSERT(list_length(fn_es->args) > 0);
+      LOG_ERROR("Unknown function. By-pass it for now. (May be incorrect.");
+      ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
+      return TransformExpr(first_child);
+    }
   }
 
   if (retval->GetExpressionType() == EXPRESSION_TYPE_CAST) {
@@ -361,7 +396,7 @@ expression::AbstractExpression *ExprTransformer::TransformFunc(
     ExprState *first_child = (ExprState *)lfirst(list_head(fn_es->args));
     cast_expr->SetChild(TransformExpr(first_child));
     PostgresValueType type = static_cast<PostgresValueType>(rettype);
-    cast_expr->SetResultType(type);
+    cast_expr->SetResultType(PostgresValueTypeToPelotonValueType(type));
     return cast_expr;
   }
 
@@ -468,10 +503,14 @@ expression::AbstractExpression *ExprTransformer::TransformVar(
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
+  auto pg_type = static_cast<PostgresValueType>(var_expr->vartype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
+
   LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
-  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(peloton_type, tuple_idx,
+                                                       value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
@@ -495,11 +534,14 @@ expression::AbstractExpression *ExprTransformer::TransformVar(const Expr *es) {
 
   oid_t value_idx =
       static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
+  auto pg_type = static_cast<PostgresValueType>(var_expr->vartype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
 
   LOG_TRACE("tuple_idx = %u , value_idx = %u ", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
-  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(peloton_type, tuple_idx,
+                                                       value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformBool(
@@ -513,9 +555,9 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
    * AND and OR can take >=2 arguments,
    * while NOT should take only one.
    */
-  assert(bool_state->args);
-  assert(bool_op != NOT_EXPR || list_length(bool_state->args) == 1);
-  assert(bool_op == NOT_EXPR || list_length(bool_state->args) >= 2);
+  PL_ASSERT(bool_state->args);
+  PL_ASSERT(bool_op != NOT_EXPR || list_length(bool_state->args) == 1);
+  PL_ASSERT(bool_op == NOT_EXPR || list_length(bool_state->args) >= 2);
 
   auto args = bool_state->args;
 
@@ -536,7 +578,7 @@ expression::AbstractExpression *ExprTransformer::TransformBool(
           reinterpret_cast<const ExprState *>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
       return expression::ExpressionUtil::OperatorFactory(
-          EXPRESSION_TYPE_OPERATOR_NOT, child, nullptr);
+          EXPRESSION_TYPE_OPERATOR_NOT, VALUE_TYPE_BOOLEAN, child, nullptr);
     }
 
     default:
@@ -556,15 +598,20 @@ expression::AbstractExpression *ExprTransformer::TransformParam(
     const Expr *expr) {
   auto param_expr = reinterpret_cast<const Param *>(expr);
 
+  auto pg_type = static_cast<PostgresValueType>(param_expr->paramtype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
+
   switch (param_expr->paramkind) {
     case PARAM_EXTERN: {
       LOG_TRACE("Handle EXTREN PARAM");
       return expression::ExpressionUtil::ParameterValueFactory(
+          peloton_type,
           param_expr->paramid - 1);  // 1 indexed
     } break;
     case PARAM_EXEC: {
       LOG_TRACE("Handle EXEC PARAM");
       return expression::ExpressionUtil::ParameterValueFactory(
+          peloton_type,
           param_expr->paramid);  // 1 indexed
     } break;
     // PARAM_SUBLINK,
@@ -583,15 +630,16 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
   auto expr = reinterpret_cast<const RelabelType *>(es->expr);
   auto child_state = state->arg;
 
-  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
+  PL_ASSERT(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child =
       ExprTransformer::TransformExpr(child_state);
 
-  PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
+  auto pg_type = static_cast<PostgresValueType>(expr->resulttype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
 
-  return expression::ExpressionUtil::CastFactory(type, child);
+  return expression::ExpressionUtil::CastFactory(peloton_type, child);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformRelabelType(
@@ -599,33 +647,38 @@ expression::AbstractExpression *ExprTransformer::TransformRelabelType(
   auto expr = reinterpret_cast<const RelabelType *>(es);
   auto child_state = expr->arg;
 
-  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
+  PL_ASSERT(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
   LOG_TRACE("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child =
       ExprTransformer::TransformExpr(child_state);
 
-  PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
+  auto pg_type = static_cast<PostgresValueType>(expr->resulttype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
 
-  return expression::ExpressionUtil::CastFactory(type, child);
+  return expression::ExpressionUtil::CastFactory(peloton_type, child);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformAggRef(
     const ExprState *es) {
-  auto aggref_state = reinterpret_cast<const AggrefExprState *>(es);
+  auto *aggref_state = reinterpret_cast<const AggrefExprState *>(es);
+  auto *aggref = reinterpret_cast<const Aggref *>(aggref_state->xprstate.expr);
 
-  assert(aggref_state->aggno >= 0);
+  PL_ASSERT(aggref_state->aggno >= 0);
 
   int value_idx = aggref_state->aggno;
   int tuple_idx = 1;
+  auto pg_type = static_cast<PostgresValueType>(aggref->aggtype);
+  auto peloton_type = PostgresValueTypeToPelotonValueType(pg_type);
 
   // Raw aggregate values would be passed as the RIGHT tuple
-  return expression::ExpressionUtil::TupleValueFactory(tuple_idx, value_idx);
+  return expression::ExpressionUtil::TupleValueFactory(peloton_type, tuple_idx,
+                                                       value_idx);
 }
 
 expression::AbstractExpression *ExprTransformer::TransformList(
     const ExprState *es, ExpressionType et) {
-  assert(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
+  PL_ASSERT(et == EXPRESSION_TYPE_CONJUNCTION_AND ||
          et == EXPRESSION_TYPE_CONJUNCTION_OR);
 
   const List *list = reinterpret_cast<const List *>(es);
@@ -649,15 +702,15 @@ expression::AbstractExpression *ExprTransformer::TransformList(
  * @brief Helper function: re-map Postgres's builtin function
  * to proper expression type in Peloton
  *
- * @param pg_func_id  PG Function Id used to lookup function in \b
- *fmrg_builtin[]
+ * @param pg_func_id  PG Function Id used to lookup function in fmrg_builtin[]
  * (see Postgres source file 'fmgrtab.cpp')
  * @param args  The argument list in PG ExprState
  * @return            Corresponding expression tree in peloton.
  */
 expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
+                                                             ValueType ret_type,
                                                              List *args) {
-  assert(pg_func_id > 0);
+  PL_ASSERT(pg_func_id > 0);
 
   // Perform lookup
   auto itr = kPgFuncMap.find(pg_func_id);
@@ -667,18 +720,19 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
               pg_func_id);
     return nullptr;
   }
+
   PltFuncMetaInfo func_meta = itr->second;
 
   if (func_meta.exprtype == EXPRESSION_TYPE_CAST) {
     // it is a cast, but we need casted type and the child expr.
     // so we just create an empty cast expr and return it.
-    return expression::ExpressionUtil::CastFactory();
+    return expression::ExpressionUtil::CastFactory(VALUE_TYPE_INVALID, nullptr);
   }
 
   // mperron some string functions have 4 children
-  assert(list_length(args) <=
+  PL_ASSERT(list_length(args) <=
          EXPRESSION_MAX_ARG_NUM);  // Hopefully it has at most three parameters
-  assert(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
+  PL_ASSERT(func_meta.nargs <= EXPRESSION_MAX_ARG_NUM);
 
   // Extract function arguments (at most four)
   expression::AbstractExpression *children[EXPRESSION_MAX_ARG_NUM] = {};
@@ -707,6 +761,8 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO:
     case EXPRESSION_TYPE_COMPARE_LIKE:
     case EXPRESSION_TYPE_COMPARE_NOTLIKE:
+      // These are all boolean expressions
+      PL_ASSERT(ret_type == VALUE_TYPE_BOOLEAN);
       return expression::ExpressionUtil::ComparisonFactory(
           plt_exprtype, children[0], children[1]);
 
@@ -734,9 +790,9 @@ expression::AbstractExpression *ExprTransformer::ReMapPgFunc(Oid pg_func_id,
     case EXPRESSION_TYPE_EXTRACT:
     case EXPRESSION_TYPE_DATE_TO_TIMESTAMP:
     case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS:
-
       return expression::ExpressionUtil::OperatorFactory(
-          plt_exprtype, children[0], children[1], children[2], children[3]);
+          plt_exprtype, ret_type, children[0], children[1], children[2],
+          children[3]);
 
     default:
       LOG_ERROR(

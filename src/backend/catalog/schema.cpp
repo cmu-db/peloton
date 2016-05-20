@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <algorithm>
 #include <sstream>
 
 #include "backend/catalog/schema.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace catalog {
@@ -183,7 +183,7 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
     const std::vector<std::vector<oid_t>> &subsets) {
-  assert(schema_list.size() == subsets.size());
+  PL_ASSERT(schema_list.size() == subsets.size());
 
   std::vector<Column> columns;
   for (unsigned int i = 0; i < schema_list.size(); i++) {

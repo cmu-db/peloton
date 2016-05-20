@@ -12,6 +12,8 @@
 
 #pragma once
 
+#undef NDEBUG
+
 #include <string>
 #include <getopt.h>
 #include <vector>
@@ -101,7 +103,7 @@ void ValidateScaleFactor(const configuration &state);
 
 void ValidateBackendCount(const configuration &state);
 
-void ValidateWarehouseCount(const configuration &state);
+void ValidateBackendCount(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

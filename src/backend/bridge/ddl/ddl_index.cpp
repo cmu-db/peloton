@@ -19,12 +19,16 @@
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/index/index.h"
 #include "backend/index/index_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
 
 #include "nodes/pg_list.h"
+#include "postgres.h"
+#include "c.h"
+#include "nodes/parsenodes.h"
 
 namespace peloton {
 namespace bridge {
@@ -85,7 +89,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
 
   // Get the database oid and table oid
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
-  assert(database_oid);
+  PL_ASSERT(database_oid);
 
   // Get the table location from db
   auto &manager = catalog::Manager::GetInstance();
@@ -139,7 +143,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
   // Record the built index in the table
   data_table->AddIndex(index);
 
-  LOG_INFO("Created index(%u)  %s on %s.", index_oid, index_name.c_str(),
+  LOG_TRACE("Created index(%u)  %s on %s.", index_oid, index_name.c_str(),
            table_name.c_str());
 
   return true;

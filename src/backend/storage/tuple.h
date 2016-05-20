@@ -47,20 +47,20 @@ class Tuple : public AbstractTuple {
   // Setup the tuple given a schema
   inline Tuple(const catalog::Schema *schema)
       : tuple_schema(schema), tuple_data(nullptr), allocated(false) {
-    assert(tuple_schema);
+    PL_ASSERT(tuple_schema);
   }
 
   // Setup the tuple given a schema and location
   inline Tuple(const catalog::Schema *schema, char *data)
       : tuple_schema(schema), tuple_data(data), allocated(false) {
-    assert(tuple_schema);
-    assert(tuple_data);
+    PL_ASSERT(tuple_schema);
+    PL_ASSERT(tuple_data);
   }
 
   // Setup the tuple given a schema and allocate space
   inline Tuple(const catalog::Schema *schema, bool allocate)
       : tuple_schema(schema), tuple_data(nullptr), allocated(allocate) {
-    assert(tuple_schema);
+    PL_ASSERT(tuple_schema);
 
     if (allocated) {
       // initialize heap allocation
@@ -216,8 +216,8 @@ class Tuple : public AbstractTuple {
 
 // Setup the tuple given the specified data location and schema
 inline Tuple::Tuple(char *data, catalog::Schema *schema) {
-  assert(data);
-  assert(schema);
+  PL_ASSERT(data);
+  PL_ASSERT(schema);
 
   tuple_data = data;
   tuple_schema = schema;

@@ -12,16 +12,13 @@
 
 #pragma once
 
-#include <boost/lockfree/queue.hpp>
-
-#include <xmmintrin.h>
+#include "concurrentqueue/blockingconcurrentqueue.h"
 
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Lockfree Queue
-// this is a wrapper of boost lockfree queue.
-// this data structure supports multiple consumers and multiple producers.
+// Supports multiple consumers and multiple producers.
 //===--------------------------------------------------------------------===//
 
 template <typename T>
@@ -32,28 +29,23 @@ class LockfreeQueue {
   LockfreeQueue(const LockfreeQueue&) = delete;             // disable copying
   LockfreeQueue& operator=(const LockfreeQueue&) = delete;  // disable assignment
 
-  // return true if pop is successful.
-  // if queue is empty, then return false.
-  bool TryPop(T& item) {
-    return queue_.pop(item);
+  // Enqueues one item, allocating extra space if necessary
+  void Enqueue(T& item) {
+    queue_.enqueue(item);
   }
 
-  // return true if push is successful.
-  bool TryPush(const T& item) {
-    return queue_.push(item);
+  void Enqueue(const T& item) {
+    queue_.enqueue(item);
   }
 
-
-  void BlockingPop(T& item) {
-    while (queue_.pop(item) == false) {
-      _mm_pause();
-    }
+  // Dequeues one item, returning true if an item was found
+  // or false if the queue appeared empty
+  bool Dequeue(T& item) {
+    return queue_.try_dequeue(item);
   }
 
-  void BlockingPush(const T& item) {
-    while (queue_.push(item) == false) {
-      _mm_pause();
-    }
+  bool Dequeue(const T& item) {
+    return queue_.try_dequeue(item);
   }
 
   bool IsEmpty() {
@@ -61,7 +53,9 @@ class LockfreeQueue {
   }
 
  private:
-  boost::lockfree::queue<T> queue_;
+
+  // Underlying moodycamel's concurrent queue
+  moodycamel::BlockingConcurrentQueue<T> queue_;
 };
 
 }  // namespace peloton

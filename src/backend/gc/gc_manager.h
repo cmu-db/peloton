@@ -16,9 +16,13 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
+<<<<<<< HEAD
 #include "backend/storage/table_factory.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
+=======
+
+>>>>>>> upstream/master
 #include "backend/common/types.h"
 #include "backend/storage/tile_group_factory.h"
 #include "backend/common/lockfree_queue.h"
@@ -39,7 +43,11 @@ namespace gc {
 class GCBuffer {
 public:
   GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
+<<<<<<< HEAD
   virtual ~GCBuffer();
+=======
+  ~GCBuffer();
+>>>>>>> upstream/master
   inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
 private:
   oid_t table_id;
@@ -71,6 +79,7 @@ class GCManager {
   // recycle invalid version
   virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
+<<<<<<< HEAD
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 
 protected:
@@ -80,15 +89,31 @@ protected:
     auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
     LOG_INFO("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
              tuple_metadata.tuple_slot_id);
+=======
+ private:
+  void Running();
+
+  bool ResetTuple(const TupleMetadata &);
+>>>>>>> upstream/master
 
     assert(tile_group != nullptr);
     storage::DataTable *table =
       dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
     assert(table != nullptr);
 
+<<<<<<< HEAD
     // construct the expired version.
     std::unique_ptr<storage::Tuple> expired_tuple(
       new storage::Tuple(table->GetSchema(), true));
+=======
+  void AddToRecycleMap(TupleMetadata tuple_metadata);
+
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
+  volatile bool is_running_;
+  GCType gc_type_;
+>>>>>>> upstream/master
 
     tile_group->CopyTuple(tuple_metadata.tuple_slot_id, expired_tuple.get());
 

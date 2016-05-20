@@ -9,7 +9,7 @@ benchmark_common_cppflags = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLU
 			            	-I$(srcdir)/backend/benchmark
 
 
-benchmark_common_ldadd = libpelotonpg.la libpeloton.la -lpthread
+benchmark_common_ldadd = libpeloton.la libpelotonpg.la -lpthread
 
 ######################################################################
 # HYADAPT
@@ -43,7 +43,7 @@ logger_SOURCES =  \
 
 logger_LDFLAGS =
 logger_CPPFLAGS = $(benchmark_common_cppflags)
-logger_LDADD = $(benchmark_common_ldadd)
+logger_LDADD = $(benchmark_common_ldadd) -lboost_system -lboost_filesystem
 
 ######################################################################
 # YCSB

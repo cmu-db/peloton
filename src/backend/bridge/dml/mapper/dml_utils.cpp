@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
 #include <iostream>
 
 #include "backend/bridge/dml/mapper/dml_utils.h"
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include "postgres.h"
 #include "nodes/execnodes.h"
@@ -194,17 +194,17 @@ ModifyTablePlanState *DMLUtils::PrepareModifyTableState(
 
   switch (info->operation) {
     case CMD_INSERT:
-      LOG_INFO("CMD_INSERT");
+      LOG_TRACE("CMD_INSERT");
       PrepareInsertState(info, mt_plan_state);
       break;
 
     case CMD_UPDATE:
-      LOG_INFO("CMD_UPDATE");
+      LOG_TRACE("CMD_UPDATE");
       PrepareUpdateState(info, mt_plan_state);
       break;
 
     case CMD_DELETE:
-      LOG_INFO("CMD_DELETE");
+      LOG_TRACE("CMD_DELETE");
       PrepareDeleteState(info, mt_plan_state);
       break;
 
@@ -220,8 +220,8 @@ ModifyTablePlanState *DMLUtils::PrepareModifyTableState(
 void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Should be only one sub plan which is a Result
-  assert(mt_plan_state->mt_nplans == 1);
-  assert(mt_plan_state->mt_plans != nullptr);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_plans != nullptr);
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
@@ -232,7 +232,7 @@ void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
 
     // We only handle single-constant-tuple for now,
     // i.e., ResultState should have no children/sub plans
-    assert(outerPlanState(result_ps) == nullptr);
+    PL_ASSERT(outerPlanState(result_ps) == nullptr);
 
     auto child_planstate =
         PrepareResultState(reinterpret_cast<ResultState *>(sub_planstate));
@@ -251,12 +251,12 @@ void DMLUtils::PrepareInsertState(ModifyTablePlanState *info,
 void DMLUtils::PrepareUpdateState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Should be only one sub plan which is a SeqScan
-  assert(mt_plan_state->mt_nplans == 1);
-  assert(mt_plan_state->mt_plans != nullptr);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_plans != nullptr);
 
   // Get the first sub plan state
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
-  assert(sub_planstate);
+  PL_ASSERT(sub_planstate);
 
   auto child_tag = nodeTag(sub_planstate->plan);
 
@@ -289,9 +289,9 @@ void DMLUtils::PrepareDeleteState(ModifyTablePlanState *info,
                                   const ModifyTableState *mt_plan_state) {
   // Grab Database ID and Table ID
   // Input must come from a subplan
-  assert(mt_plan_state->resultRelInfo);
+  PL_ASSERT(mt_plan_state->resultRelInfo);
   // Maybe relax later. I don't know when they can have >1 subplans.
-  assert(mt_plan_state->mt_nplans == 1);
+  PL_ASSERT(mt_plan_state->mt_nplans == 1);
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
@@ -594,7 +594,7 @@ BitmapHeapScanPlanState *DMLUtils::PrepareBitmapHeapScanState(
   PrepareAbstractScanState(info, bhss_plan_state->ss);
 
   // only support a bitmap index scan at lower level
-  assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
+  PL_ASSERT(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState);
 
   return info;
 }
@@ -647,9 +647,9 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
   info->numphases = agg_plan_state->numphases;
 
   /* Target list and qual */
-  LOG_INFO("PrepareAggState : copying targetlist");
+  LOG_TRACE("PrepareAggState : copying targetlist");
   info->ps_targetlist = CopyExprStateList(agg_plan_state->ss.ps.targetlist);
-  LOG_INFO("PrepareAggState : copying qual");
+  LOG_TRACE("PrepareAggState : copying qual");
   info->ps_qual = CopyExprStateList(agg_plan_state->ss.ps.qual);
 
   /* Peraggs */
@@ -658,7 +658,7 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
   info->peragg =
       (AggStatePerAgg)palloc(sizeof(struct AggStatePerAggData) * info->numaggs);
   for (int i = 0; i < info->numaggs; i++) {
-    LOG_INFO("PrepareAggState : copying AggrefState");
+    LOG_TRACE("PrepareAggState : copying AggrefState");
 
     info->peragg[i] = agg_plan_state->peragg[i];  // Shallow copy
     info->peragg[i].aggrefstate = (AggrefExprState *)CopyExprState(
@@ -666,7 +666,7 @@ AggPlanState *DMLUtils::PrepareAggState(const AggState *agg_plan_state) {
 
     info->peragg[i].sortColIdx =
         (AttrNumber *)palloc(sizeof(AttrNumber) * info->peragg[i].numSortCols);
-    ::memcpy(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
+    PL_MEMCPY(info->peragg[i].sortColIdx, agg_plan_state->peragg->sortColIdx,
              sizeof(AttrNumber) * info->peragg[i].numSortCols);
   }
 
@@ -930,7 +930,7 @@ ScanKeyData *CopyScanKey(ScanKeyData *scan_key, int num_keys,
 
     // Deep copy the datum
     // 1 -indexed
-    assert(orig_key.sk_attno <= relation_tup_desc->natts);
+    PL_ASSERT(orig_key.sk_attno <= relation_tup_desc->natts);
     auto attr = relation_tup_desc->attrs[orig_key.sk_attno - 1];
     scan_key_copy[key_itr].sk_argument =
         datumCopy(orig_key.sk_argument, attr->attlen, attr->attbyval);
