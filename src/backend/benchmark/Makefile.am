@@ -29,7 +29,7 @@ hyadapt_LDADD = $(benchmark_common_ldadd)
 # LOGGER
 ######################################################################
 
-#logger_SOURCES =  \
+#logger_SOURCES =  
 #					backend/benchmark/logger/logger.cpp \
 #                    backend/benchmark/logger/logger_configuration.cpp \
 #                    backend/benchmark/logger/logger_workload.cpp \
