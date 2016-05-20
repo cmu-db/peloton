@@ -378,9 +378,6 @@ Result TsOrderTxnManager::CommitTransaction() {
             tile_group_header->GetNextItemPointer(tuple_slot);
 
         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
-        if (cid <= end_commit_id) {
-          printf("cid %lu, eid %lu\n", cid, end_commit_id);
-        }
         assert(cid > end_commit_id);
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
