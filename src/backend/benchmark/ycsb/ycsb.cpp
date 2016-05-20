@@ -27,6 +27,27 @@
 #include "backend/benchmark/ycsb/ycsb_loader.h"
 #include "backend/benchmark/ycsb/ycsb_workload.h"
 
+
+#define CHECK(x)                                                          \
+  do {                                                                    \
+    if (!(x)) {                                                           \
+      ::fprintf(stderr, "CHECK failed: %s at %s:%d in function %s\n", #x, \
+                __FILE__, __LINE__, __PRETTY_FUNCTION__);                 \
+      ::abort();                                                          \
+    }                                                                     \
+  } while (0)
+  
+
+#define CHECK_M(x, message, args...)                                           \
+  do {                                                                         \
+    if (!(x)) {                                                                \
+      ::fprintf(stderr,                                                        \
+                "CHECK failed: %s at %s:%d in function %s\n" message "\n", #x, \
+                __FILE__, __LINE__, __PRETTY_FUNCTION__, ##args);              \
+      ::abort();                                                               \
+    }                                                                          \
+  } while (0)
+
 namespace peloton {
 namespace benchmark {
 namespace ycsb {

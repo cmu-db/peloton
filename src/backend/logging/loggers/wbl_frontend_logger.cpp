@@ -83,7 +83,7 @@ WriteBehindFrontendLogger::~WriteBehindFrontendLogger() {
 void WriteBehindFrontendLogger::FlushLogRecords(void) {
 	struct WriteBehindLogRecord record;
 	record.persistent_commit_id = max_collected_commit_id;
-	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	//auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 	
   //==========================================================================
   // DANGER: tmporarily change the source code here!!!

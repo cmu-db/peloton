@@ -191,7 +191,7 @@ bool RunStockLevel() {
       stock_key_values, runtime_keys);
 
   // Add predicate S_QUANTITY < threshold
-  auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(0, COL_IDX_S_QUANTITY);
+  auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, COL_IDX_S_QUANTITY);
   auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
       ValueFactory::GetIntegerValue(threshold));
   predicate = expression::ExpressionUtil::ComparisonFactory(
@@ -219,8 +219,8 @@ bool RunStockLevel() {
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
   // Predicate left.0 == right.0
-  auto left_table_attr0 = expression::ExpressionUtil::TupleValueFactory(0, 0);
-  auto right_table_attr0 = expression::ExpressionUtil::TupleValueFactory(1, 0);
+  auto left_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
+  auto right_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 1, 0);
   std::unique_ptr<const expression::AbstractExpression> join_predicate( expression::ExpressionUtil::ComparisonFactory(
     EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr0, right_table_attr0));
 
@@ -244,7 +244,7 @@ bool RunStockLevel() {
   bool distinct = true;
   planner::AggregatePlan::AggTerm count_distinct(
       EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(0, 0),
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0),
       distinct);
   agg_terms.push_back(count_distinct);
 
