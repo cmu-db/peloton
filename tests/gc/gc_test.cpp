@@ -106,7 +106,7 @@ int RecycledNum(storage::DataTable *table) {
 
 //
 TEST_F(GCTest, SimpleTest) {
-
+  gc::GCManagerFactory::Configure(GC_TYPE_CO);
   concurrency::EpochManagerFactory::GetInstance().Reset();
   // create a table with only one key
   const int num_key = 1;
@@ -156,6 +156,7 @@ TEST_F(GCTest, SimpleTest) {
 
 
 TEST_F(GCTest, StressTest) {
+  gc::GCManagerFactory::Configure(GC_TYPE_CO);
   concurrency::EpochManagerFactory::GetInstance().Reset();
 
   const int num_key = 256;
