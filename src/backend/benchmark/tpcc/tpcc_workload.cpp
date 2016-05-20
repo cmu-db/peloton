@@ -555,7 +555,7 @@ bool RunNewOrder(){
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
-    LOG_TRACE("getCustomer failed");
+    LOG_ERROR("getCustomer failed");
     return false;
   }
 
@@ -564,6 +564,7 @@ bool RunNewOrder(){
   }
 
   // incrementNextOrderId
+  /*
   LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = ? WHERE D_ID = ? AND D_W_ID = ?");
   // NOTE: why it is different from ycsb update, where all columns ids are in this vector
   std::vector<oid_t> district_update_column_ids = {10}; // D_NEXT_O_ID
@@ -605,6 +606,7 @@ bool RunNewOrder(){
     LOG_TRACE("incrementNextOrderId failed");
     return false;
   }
+  */
 
   LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)");
 
@@ -632,7 +634,6 @@ bool RunNewOrder(){
   executor::InsertExecutor orders_executor(&orders_node, context.get());
   orders_executor.Execute();
 
-
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
 
@@ -646,7 +647,6 @@ bool RunNewOrder(){
   planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
-
 
   for (size_t i = 0; i < i_ids.size(); ++i) {
     int item_id = i_ids.at(i);
@@ -692,7 +692,7 @@ bool RunNewOrder(){
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
-      LOG_TRACE("getStockInfo failed");
+      LOG_ERROR("getStockInfo failed");
       return false;
     }
 
@@ -710,17 +710,19 @@ bool RunNewOrder(){
 
     Value s_data = gsi_lists_values[0][1];
 
-    int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
-    int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
     int s_remote_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][4]);
 
     if (ol_w_id != warehouse_id) {
       s_remote_cnt += 1;
     }
 
+    /*
     LOG_TRACE("updateStock: UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?");
 
     std::vector<oid_t> stock_update_column_ids = {2, 13, 14, 15}; // S_QUANTITY, S_YTD, S_ORDER_CNT, S_REMOTE_CNT
+
+    int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
+    int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
 
     // Create plan node.
     planner::IndexScanPlan stock_update_index_scan_node(stock_table, predicate,
@@ -764,6 +766,7 @@ bool RunNewOrder(){
       LOG_TRACE("updateStock failed");
       return false;
     }
+    */
 
     // the original benchmark requires check constraints.
     // however, we ignored here.
@@ -819,7 +822,7 @@ bool RunNewOrder(){
   } else {
     PL_ASSERT(result == Result::RESULT_ABORTED ||
               result == Result::RESULT_FAILURE);
-    LOG_TRACE("createOrderLine failed");
+    LOG_ERROR("createOrderLine failed");
     return false;
   }
 
