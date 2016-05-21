@@ -82,19 +82,17 @@ class AbstractPlan : public Printable {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   // Each sub-class should implement these functions
-  // After the implementation for each sub-class, we should set these to pure virtual
+  // After the implementation for each sub-class, we should set these to pure
+  // virtual
   //===--------------------------------------------------------------------===//
   virtual bool SerializeTo(SerializeOutput &output) const = 0;
 
-  // TODO: Should every plan has a DeserializeFrom? or is there other elegant way?
+  // TODO: Should every plan has a DeserializeFrom? or is there other elegant
+  // way?
   virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
     PL_ASSERT(&input != nullptr);
     return false;
   }
-
- protected:
-  // only used by its derived classes (when deserialization)
-  AbstractPlan *Parent() {return parent_;}
 
  private:
   // A plan node can have multiple children
