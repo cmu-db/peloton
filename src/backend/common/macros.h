@@ -83,7 +83,10 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #ifdef NDEBUG
-  #define PL_ASSERT(expr) ((void)0)
+  #define PL_ASSERT(expr) \
+    do {                  \
+        (void)sizeof(expr);  \
+    } while (0)
 #else
   #define PL_ASSERT(expr) assert((expr))
 #endif /* NDEBUG */
