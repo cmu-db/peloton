@@ -53,6 +53,8 @@ class LoggingService : public networking::PelotonLoggingService {
   // pool for allocating non-inlined values
   VarlenPool *recovery_pool;
 
+  volatile long replication_sequence_number_ = 1;
+
   // Keep tracking max oid for setting next_oid in manager
   // For active processing after recovery
   oid_t max_oid = 0;

@@ -237,6 +237,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 	  networking::LogRecordReplayRequest request;
 	  request.set_log(replication_array.get(), write_size);
 	  request.set_sync_type(networking::ResponseType::SYNC);
+	  request.set_sequence_number(replication_seq_++);
 	  networking::LogRecordReplayResponse response;
 	  remote_done_ = false;
 	  google::protobuf::Closure * closure = google::protobuf::NewCallback(static_cast<FrontendLogger *>(this), &FrontendLogger::RemoteDone);
@@ -379,7 +380,12 @@ void WriteAheadFrontendLogger::DoRecovery() {
 
         case LOGRECORD_TYPE_TRANSACTION_COMMIT:
           PL_ASSERT(log_id != INVALID_CID);
-          // do nothing here because we only want to replay when the delimiter is hit
+
+          // Now directly commit this transaction. This is safe because we
+          // reject commit ids that appear
+          // after the persistent commit id before coming here (in the switch
+          // case above).
+          CommitTransactionRecovery(log_id);
           break;
 
         case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
@@ -389,15 +395,10 @@ void WriteAheadFrontendLogger::DoRecovery() {
               tuple_record);
           break;
         case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-          // commit all transactions up to this delimeter
-          for(auto it = recovery_txn_table.begin(); it != recovery_txn_table.end(); ){
-        	  if (it->first > log_id){
-        		  break;
-        	  }else{
-        		CommitTransactionRecovery(it->first);
-        		recovery_txn_table.erase(it++);
-        	  }
-          }
+          // Do nothing if we hit the delimiter, because the delimiters help
+          // us only to find
+          // the max persistent commit id, and should be ignored during actual
+          // recovery
           break;
         }
 
