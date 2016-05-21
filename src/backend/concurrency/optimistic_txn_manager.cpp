@@ -149,13 +149,13 @@ void OptimisticTxnManager::YieldOwnership(const oid_t &tile_group_id,
 }
 
 bool OptimisticTxnManager::PerformRead(const ItemPointer &location) {
-  LOG_INFO("PerformRead (%u, %u)\n", location.block, location.offset);
+  LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
   current_txn->RecordRead(location);
   return true;
 }
 
 bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
-  LOG_INFO("PerformInsert (%u, %u)\n", location.block, location.offset);
+  LOG_TRACE("PerformInsert (%u, %u)\n", location.block, location.offset);
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -183,7 +183,7 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
 // the tuple passed into this function is the global version.
 void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("PerformUpdate (%u, %u)->(%u, %u)\n", old_location.block, old_location.offset,
+  LOG_TRACE("PerformUpdate (%u, %u)->(%u, %u)\n", old_location.block, old_location.offset,
              new_location.block, new_location.offset );
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -217,7 +217,7 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
 void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
-  LOG_INFO("PerformUpdate (%u, %u)\n", tile_group_id, tuple_id);
+  LOG_TRACE("PerformUpdate (%u, %u)\n", tile_group_id, tuple_id);
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -239,7 +239,7 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
   auto transaction_id = current_txn->GetTransactionId();
 
-  LOG_INFO("PerformDelete (%u, %u)->(%u, %u)\n", old_location.block, old_location.offset,
+  LOG_TRACE("PerformDelete (%u, %u)->(%u, %u)\n", old_location.block, old_location.offset,
                                                  new_location.block, new_location.offset );
 
   auto tile_group_header = catalog::Manager::GetInstance()
@@ -272,7 +272,7 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("PerformDelete (%u, %u)\n", tile_group_id, tuple_id);
+  LOG_TRACE("PerformDelete (%u, %u)\n", tile_group_id, tuple_id);
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();

@@ -26,7 +26,7 @@ bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
 
   // During the resetting, a table may deconstruct because of the DROP TABLE request
   if (tile_group == nullptr) {
-    LOG_INFO("Garbage tuple(%u, %u) in table %u no longer exists",
+    LOG_TRACE("Garbage tuple(%u, %u) in table %u no longer exists",
              tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
              tuple_metadata.table_id);
     return false;
@@ -57,7 +57,7 @@ void Vacuum_GCManager::Running() {
     std::this_thread::sleep_for(
       std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
-    LOG_INFO("Unlink tuple thread...");
+    LOG_TRACE("Unlink tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
@@ -110,7 +110,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
       break;
     }
   }
-  LOG_INFO("Marked %d tuples as recycled", tuple_counter);
+  LOG_TRACE("Marked %d tuples as recycled", tuple_counter);
 }
 
 void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
@@ -147,7 +147,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
   for(auto& item : garbages){
     reclaim_map_.insert(std::make_pair(safe_max_cid, item));
   }
-  LOG_INFO("Marked %d tuples as garbage", tuple_counter);
+  LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
 }
 
 // called by transaction manager.
@@ -164,7 +164,7 @@ void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
 
   // FIXME: what if the list is full?
   unlink_queue_.Enqueue(tuple_metadata);
-  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
+  LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 }
@@ -195,7 +195,7 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
     recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
   }
 
-  LOG_INFO("Marked tuple(%u, %u) in table %u as possible garbage",
+  LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
 
@@ -214,7 +214,7 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
     if (recycle_queue->Dequeue(tuple_metadata) == true) {
-      LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
@@ -227,7 +227,7 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
 void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
-  LOG_INFO("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
+  LOG_TRACE("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
            tuple_metadata.tuple_slot_id);
 
   assert(tile_group != nullptr);
@@ -253,7 +253,7 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
 
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-        LOG_INFO("Deleting primary index");
+        LOG_TRACE("Deleting primary index");
         // find next version the index bucket should point to.
         auto tile_group_header = tile_group->GetHeader();
         ItemPointer next_version =
@@ -283,7 +283,7 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
 
       } break;
       default: {
-        LOG_INFO("Deleting other index");
+        LOG_TRACE("Deleting other index");
         index->DeleteEntry(key.get(),
                            ItemPointer(tuple_metadata.tile_group_id,
                                        tuple_metadata.tuple_slot_id));

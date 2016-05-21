@@ -74,7 +74,7 @@ class PessimisticTxnManager : public TransactionManager {
 
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
-    LOG_INFO("Begin txn %lu", txn_id);
+    LOG_TRACE("Begin txn %lu", txn_id);
 
 
     return txn;

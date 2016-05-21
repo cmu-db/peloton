@@ -78,7 +78,7 @@ protected:
     return;
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
-    LOG_INFO("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
+    LOG_TRACE("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
              tuple_metadata.tuple_slot_id);
 
     assert(tile_group != nullptr);

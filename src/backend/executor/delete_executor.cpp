@@ -66,7 +66,7 @@ bool DeleteExecutor::DInit() {
  */
 bool DeleteExecutor::DExecute() {
   assert(target_table_);
-  LOG_INFO("In delete executor");
+  LOG_TRACE("In delete executor");
 
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
@@ -96,7 +96,7 @@ bool DeleteExecutor::DExecute() {
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
-    LOG_INFO("Visible Tuple id : %u, Physical Tuple id : %u ",
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==

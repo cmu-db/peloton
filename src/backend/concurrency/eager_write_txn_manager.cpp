@@ -100,7 +100,7 @@ VisibilityType EagerWriteTxnManager::IsVisible(
 }
 
 void EagerWriteTxnManager::RemoveReader() {
-  LOG_INFO("release all reader lock");
+  LOG_TRACE("release all reader lock");
 
   // Remove from the read list of accessed tuples
   auto txn = current_txn;
@@ -125,7 +125,7 @@ void EagerWriteTxnManager::RemoveReader() {
       RemoveReader(tile_group_header, tuple_slot, txn->GetTransactionId());
     }
   }
-  LOG_INFO("release EWreader finish");
+  LOG_TRACE("release EWreader finish");
 }
 
 // check whether the current transaction owns the tuple.
@@ -145,14 +145,14 @@ bool EagerWriteTxnManager::IsOwnable(
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  LOG_INFO("IsOwnable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
+  LOG_TRACE("IsOwnable txnid: %lx end_cid: %lx", tuple_txn_id, tuple_end_cid);
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
 bool EagerWriteTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
-  LOG_INFO("AcquireOwnership");
+  LOG_TRACE("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
 
   // Try to get write lock
@@ -167,7 +167,7 @@ bool EagerWriteTxnManager::AcquireOwnership(
   // Check if we successfully get the write lock
   bool res = (old_tid == INITIAL_TXN_ID);
   if (!res) {
-    LOG_INFO("Fail to acquire write lock. Set txn failure.");
+    LOG_TRACE("Fail to acquire write lock. Set txn failure.");
     ReleaseEwReaderLock(tile_group_header, tuple_id);
     return false;
   }
@@ -189,7 +189,7 @@ bool EagerWriteTxnManager::AcquireOwnership(
       if (running_txn_map_.count(reader_tid) != 0) {
         // Add myself to the wait_for set of reader
         auto reader_ctx = running_txn_map_[reader_tid];
-        LOG_INFO("Add dependency to %lu", reader_tid);
+        LOG_TRACE("Add dependency to %lu", reader_tid);
         if (reader_ctx->wait_list_.insert(current_tid).second == true) {
           // New dependency
           current_txn_ctx->wait_for_counter_++;
@@ -229,7 +229,7 @@ bool EagerWriteTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform read");
+  LOG_TRACE("Perform read");
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -244,7 +244,7 @@ bool EagerWriteTxnManager::PerformRead(const ItemPointer &location) {
   }
 
   if (IsOwner(tile_group_header, tuple_id)) {
-    LOG_INFO("It's already the owner");
+    LOG_TRACE("It's already the owner");
     return true;
   }
 
@@ -255,7 +255,7 @@ bool EagerWriteTxnManager::PerformRead(const ItemPointer &location) {
   if (old_txn_id != INITIAL_TXN_ID) {
     // there is a writer
     // so reader (myself) should be blocked
-    LOG_INFO("Own by others: %lu", old_txn_id);
+    LOG_TRACE("Own by others: %lu", old_txn_id);
     ReleaseEwReaderLock(tile_group_header, tuple_id);
     return false;
   }
@@ -271,7 +271,7 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Perform insert");
+  LOG_TRACE("Perform insert");
 
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
@@ -295,7 +295,7 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
 
 void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
+  LOG_TRACE("Performing Write %u %u", old_location.block, old_location.offset);
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -332,7 +332,7 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Performing Inplace Write %u %u", tile_group_id, tuple_id);
+  LOG_TRACE("Performing Inplace Write %u %u", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -352,7 +352,7 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
 
 void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
                                          const ItemPointer &new_location) {
-  LOG_INFO("Performing Delete %u %u", old_location.block,
+  LOG_TRACE("Performing Delete %u %u", old_location.block,
            old_location.offset);
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -385,7 +385,7 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_INFO("Performing Inplace Delete %u %u", tile_group_id, tuple_id);
+  LOG_TRACE("Performing Inplace Delete %u %u", tile_group_id, tuple_id);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
@@ -408,7 +408,7 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result EagerWriteTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -419,7 +419,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
   if (current_txn->IsReadOnly() == true) {
     // no dependency
     assert(current_txn_ctx->wait_for_counter_ == 0);
-    LOG_INFO("Read Only txn: %lu ", current_txn->GetTransactionId());
+    LOG_TRACE("Read Only txn: %lu ", current_txn->GetTransactionId());
     // is it always true???
     Result ret = current_txn->GetResult();
 
@@ -439,14 +439,14 @@ Result EagerWriteTxnManager::CommitTransaction() {
   }
 
   // Wait for all dependencies to finish
-  LOG_INFO("Start waiting");
-  LOG_INFO("Current wait for counter = %d",
+  LOG_TRACE("Start waiting");
+  LOG_TRACE("Current wait for counter = %d",
            current_txn_ctx->wait_for_counter_ - 0);
   while (current_txn_ctx->wait_for_counter_ != 0) {
     //    std::chrono::microseconds sleep_time(1);
     //    std::this_thread::sleep_for(sleep_time);
   }
-  LOG_INFO("End waiting");
+  LOG_TRACE("End waiting");
 
 
 
@@ -547,7 +547,7 @@ Result EagerWriteTxnManager::CommitTransaction() {
 }
 
 Result EagerWriteTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
@@ -630,7 +630,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
 }
 
 bool EagerWriteTxnManager::CauseDeadLock() {
-  LOG_INFO("Detecting dead lock");
+  LOG_TRACE("Detecting dead lock");
   std::lock_guard<std::mutex> lock(running_txn_map_mutex_);
 
   // Always acquire the running_txn_map_mutex_ before acquiring the per context
@@ -642,7 +642,7 @@ bool EagerWriteTxnManager::CauseDeadLock() {
 
   // init
   for (auto tid : current_txn_ctx->wait_list_) {
-    LOG_INFO("visit %lu", tid);
+    LOG_TRACE("visit %lu", tid);
     traverse.push(tid);
   }
 
@@ -654,7 +654,7 @@ bool EagerWriteTxnManager::CauseDeadLock() {
       continue;
     }
     if (tid == current_tid) {
-      LOG_INFO("Find dead lock");
+      LOG_TRACE("Find dead lock");
       return true;
     }
     for (auto ttid : running_txn_map_[tid]->wait_list_) {

@@ -128,7 +128,7 @@ bool TsOrderTxnManager::AcquireOwnership(
   }
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_INFO("Fail to insert new tuple. Set txn failure.");
+    LOG_TRACE("Fail to insert new tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -202,7 +202,7 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location) {
 
 void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
-  LOG_INFO("Performing Write %u %u", old_location.block, old_location.offset);
+  LOG_TRACE("Performing Write %u %u", old_location.block, old_location.offset);
 
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();
