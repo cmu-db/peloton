@@ -40,7 +40,14 @@ namespace logging {
 // Frontend Logger
 //===--------------------------------------------------------------------===//
 
+
+
 class FrontendLogger : public Logger {
+
+	class RemoteDone : public ::google::protobuf::Closure{
+	public:
+
+	};
  public:
   FrontendLogger();
 
@@ -115,7 +122,13 @@ class FrontendLogger : public Logger {
     backend_loggers_lock.Unlock();
   }
 
+  void RemoteDone(){
+  	remote_done_ = true;
+  }
+
  protected:
+
+
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
 
@@ -147,6 +160,8 @@ class FrontendLogger : public Logger {
   bool replicating_ = false;
 
   bool test_mode_ = false;
+
+  bool remote_done_ = false;
 
   bool is_distinguished_logger = false;
 };

@@ -364,7 +364,6 @@ void LogManager::SetLogDirectoryName(std::string log_directory) {
 
 // XXX change to read configuration file
 std::string LogManager::GetLogDirectoryName(void) {
-  PL_ASSERT(log_directory_name.empty() == false);
   return log_directory_name;
 }
 

@@ -73,6 +73,7 @@ storage::Tuple *ReadTupleRecordBody(catalog::Schema *schema, VarlenPool *pool,
   // We create a tuple based on the message
   storage::Tuple *tuple = new storage::Tuple(schema, true);
   tuple->DeserializeFrom(tuple_body, pool);
+  workingPointer += body_size;
 
   return tuple;
 }
@@ -164,6 +165,9 @@ void LoggingService::LogRecordReplay(
     __attribute__((unused)) const networking::LogRecordReplayRequest *request,
     __attribute__((unused)) networking::LogRecordReplayResponse *response,
     __attribute__((unused))::google::protobuf::Closure *done) {
+  if (request == nullptr){
+	  return;
+  }
   LogManager &manager = LogManager::GetInstance();
   const char *messages = request->log().c_str();
   auto size = request->log().size();
@@ -258,6 +262,7 @@ void LoggingService::LogRecordReplay(
   // observed during the recovery
   manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
 
+  response->set_status(networking::LoggingStatus::REPLAY_COMPLETE);
   LOG_INFO("message len: %lu", request->log().size());
   LOG_INFO("In log record replay service");
 }
