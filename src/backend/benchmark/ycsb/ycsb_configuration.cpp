@@ -10,8 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
+
 #include <iomanip>
 #include <algorithm>
+#include <string.h>
 
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/common/logger.h"
@@ -24,22 +27,34 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : ycsb <options> \n"
           "   -h --help              :  Print help message \n"
-          "   -b --backend-count     :  # of backends \n"
-          "   -c --column-count      :  # of columns \n"
+          "   -k --scale_factor      :  # of tuples \n"
           "   -d --duration          :  execution duration \n"
-          "   -k --scale-factor      :  # of tuples \n"
-          "   -s --skew              :  Skew factor \n"
-          "   -u --update-ratio      :  Fraction of updates \n"
-          );
+          "   -s --snapshot_duration :  snapshot duration \n"
+          "   -c --column_count      :  # of columns \n"
+          "   -u --write_ratio       :  Fraction of updates \n"
+          "   -b --backend_count     :  # of backends \n"
+          "   -z --zipf_theta        :  theta to control skewness \n"
+          "   -m --mix_txn           :  run read/write mix txn \n"
+          "   -p --protocol          :  choose protocol, default OCC\n"
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
+          "   -g --gc_protocal       :  choose gc protocol, default OFF\n"
+          "                             gc protocol could be off, co, va"
+
+  );
+  exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
-    {"backend-count", optional_argument, NULL, 'b'},
-    {"column-count", optional_argument, NULL, 'c'},
+    {"scale_factor", optional_argument, NULL, 'k'},
     {"duration", optional_argument, NULL, 'd'},
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"skew", optional_argument, NULL, 's'},
-    {"update-ratio", optional_argument, NULL, 'u'},
+    {"snapshot_duration", optional_argument, NULL, 's'},
+    {"column_count", optional_argument, NULL, 'c'},
+    {"update_ratio", optional_argument, NULL, 'u'},
+    {"backend_count", optional_argument, NULL, 'b'},
+    {"zipf_theta", optional_argument, NULL, 'z'},
+    {"mix_txn", no_argument, NULL, 'm'},
+    {"protocol", optional_argument, NULL, 'p'},
+    {"gc_protocal", optional_argument, NULL, 'g'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -80,80 +95,133 @@ void ValidateBackendCount(const configuration &state) {
 
 void ValidateDuration(const configuration &state) {
   if (state.duration <= 0) {
-    LOG_ERROR("Invalid duration :: %d", state.duration);
+    LOG_ERROR("Invalid duration :: %lf", state.duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "duration", state.duration);
+  LOG_INFO("%s : %lf", "execution duration", state.duration);
 }
 
-void ValidateSkewFactor(const configuration &state) {
-  if (state.skew_factor <= 0 || state.skew_factor >= 3) {
-    LOG_ERROR("Invalid skew_factor :: %d", state.skew_factor);
+void ValidateSnapshotDuration(const configuration &state) {
+  if (state.snapshot_duration <= 0) {
+    LOG_ERROR("Invalid snapshot_duration :: %lf", state.snapshot_duration);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "skew_factor", state.skew_factor);
+  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
+}
+
+void ValidateZipfTheta(const configuration &state) {
+  if (state.zipf_theta < 0 || state.zipf_theta > 1.0) {
+    LOG_ERROR("Invalid zipf_theta :: %lf", state.zipf_theta);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "zipf_theta", state.zipf_theta);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
-
   // Default Values
   state.scale_factor = 1;
-  state.duration = 1000;
+  state.duration = 10;
+  state.snapshot_duration = 0.1;
   state.column_count = 10;
-  state.update_ratio = 1;
+  state.update_ratio = 0.5;
   state.backend_count = 2;
-  state.skew_factor = SKEW_FACTOR_LOW;
-
+  state.zipf_theta = 0.0;
+  state.run_mix = false;
+  state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
+  state.gc_protocol = GC_TYPE_OFF;
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hb:c:d:k:s:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:p:g:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
-      case 'b':
-        state.backend_count = atoi(optarg);
+      case 'k':
+        state.scale_factor = atoi(optarg);
+        break;
+      case 'd':
+        state.duration = atof(optarg);
+        break;
+      case 's':
+        state.snapshot_duration = atof(optarg);
         break;
       case 'c':
         state.column_count = atoi(optarg);
         break;
-      case 'd':
-        state.duration = atoi(optarg);
-        break;
-      case 'k':
-        state.scale_factor = atoi(optarg);
-        break;
-      case 's':
-        state.skew_factor = (SkewFactor)atoi(optarg);
-        break;
       case 'u':
         state.update_ratio = atof(optarg);
         break;
-
+      case 'b':
+        state.backend_count = atoi(optarg);
+        break;
+      case 'z':
+        state.zipf_theta = atof(optarg);
+        break;
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
         break;
-
+      case 'm':
+        state.run_mix = true;
+        state.update_ratio = 0.0;
+        break;
+      case 'p': {
+        char *protocol = optarg;
+        if (strcmp(protocol, "occ") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
+        } else if (strcmp(protocol, "pcc") == 0) {
+          state.protocol = CONCURRENCY_TYPE_PESSIMISTIC;
+        } else if (strcmp(protocol, "ssi") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SSI;
+        } else if (strcmp(protocol, "to") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO;
+        } else if (strcmp(protocol, "ewrite") == 0) {
+          state.protocol = CONCURRENCY_TYPE_EAGER_WRITE;
+        } else if (strcmp(protocol, "occrb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OCC_RB;
+        } else if (strcmp(protocol, "sread") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
+        } else {
+          fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'g': {
+        char *gc_protocol = optarg;
+        if (strcmp(gc_protocol, "off") == 0) {
+          state.gc_protocol = GC_TYPE_OFF;
+        }else if (strcmp(gc_protocol, "va") == 0) {
+          state.gc_protocol = GC_TYPE_VACUUM;
+        }else if (strcmp(gc_protocol, "co") == 0) {
+          state.gc_protocol = GC_TYPE_CO;
+        }else {
+          fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);
         exit(EXIT_FAILURE);
-        break;
     }
   }
 
   // Print configuration
-  ValidateBackendCount(state);
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
+  ValidateBackendCount(state);
   ValidateDuration(state);
-  ValidateSkewFactor(state);
+  ValidateSnapshotDuration(state);
+  ValidateZipfTheta(state);
 
+  LOG_INFO("%s : %d", "Run mix query", state.run_mix);
 }
 
 }  // namespace ycsb

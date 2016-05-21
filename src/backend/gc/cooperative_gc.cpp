@@ -10,10 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/types.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/gc/gc_manager_factory.h"
-#include "backend/index/index.h"
+#include "backend/gc/cooperative_gc.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
 #include <list>
@@ -28,26 +25,21 @@ GCBuffer::~GCBuffer(){
   if(garbage_tuples.size() != 0) {
     cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
     for (auto garbage : garbage_tuples) {
-      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+      gc::GCManagerFactory::GetInstance().RecycleOldTupleSlot(
         table_id, garbage.block, garbage.offset, garbage_timestamp);
     }
   }
 }
 
-void GCManager::StartGC() {
+
+void Cooperative_GCManager::StartGC() {
   LOG_TRACE("Starting GC");
-  if (this->gc_type_ == GC_TYPE_OFF) {
-    return;
-  }
   this->is_running_ = true;
-  gc_thread_.reset(new std::thread(&GCManager::Running, this));
+  gc_thread_.reset(new std::thread(&Cooperative_GCManager::Running, this));
 }
 
-void GCManager::StopGC() {
+void Cooperative_GCManager::StopGC() {
   LOG_TRACE("Stopping GC");
-  if (this->gc_type_ == GC_TYPE_OFF) {
-    return;
-  }
   this->is_running_ = false;
   this->gc_thread_->join();
   ClearGarbage();
@@ -58,7 +50,7 @@ void GCManager::StopGC() {
 // Since no one will use it any more, keeping track of it is useless.
 // Note that, if we drop a single tile group without dropping the whole table,
 // such assumption is problematic.
-bool GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
+bool Cooperative_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
 
@@ -84,17 +76,17 @@ bool GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
                                         INVALID_ITEMPOINTER);
   tile_group_header->SetNextItemPointer(tuple_metadata.tuple_slot_id,
                                         INVALID_ITEMPOINTER);
-  PL_MEMSET(
-      tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
-      storage::TileGroupHeader::GetReservedSize());
-
+  std::memset(
+    tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
+    storage::TileGroupHeader::GetReservedSize());
+  // TODO: set the unused 2 boolean value
   LOG_TRACE("Garbage tuple(%u, %u) in table %u is reset",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
   return true;
 }
 
-void GCManager::AddToRecycleMap(TupleMetadata tuple_metadata) {
+void Cooperative_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
   // If the tuple being reset no longer exists, just skip it
   if (ResetTuple(tuple_metadata) == false) return;
 
@@ -104,7 +96,7 @@ void GCManager::AddToRecycleMap(TupleMetadata tuple_metadata) {
   if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
       true) {
     // if the entry for tuple_metadata.table_id exists.
-    recycle_queue->Dequeue(tuple_metadata);
+    recycle_queue->Enqueue(tuple_metadata);
   } else {
     // if the entry for tuple_metadata.table_id does not exist.
     recycle_queue.reset(
@@ -112,15 +104,15 @@ void GCManager::AddToRecycleMap(TupleMetadata tuple_metadata) {
     bool ret =
       recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
     if (ret == true) {
-      recycle_queue->Dequeue(tuple_metadata);
+      recycle_queue->Enqueue(tuple_metadata);
     } else {
       recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-      recycle_queue->Dequeue(tuple_metadata);
+      recycle_queue->Enqueue(tuple_metadata);
     }
   }
 }
 
-void GCManager::Running() {
+void Cooperative_GCManager::Running() {
   // Check if we can move anything from the possibly free list to the free list.
 
   // We use a local buffer to store all possible garbage handled by this gc worker
@@ -128,7 +120,7 @@ void GCManager::Running() {
 
   while (true) {
     std::this_thread::sleep_for(
-        std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
+      std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
     LOG_TRACE("reclaim tuple thread...");
 
@@ -188,15 +180,10 @@ void GCManager::Running() {
   }
 }
 
-// called by transaction manager.
-void GCManager::RecycleTupleSlot(const oid_t &table_id,
+void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
                                  const cid_t &tuple_end_cid) {
-  if (this->gc_type_ == GC_TYPE_OFF) {
-    return;
-  }
-
   TupleMetadata tuple_metadata;
   tuple_metadata.table_id = table_id;
   tuple_metadata.tile_group_id = tile_group_id;
@@ -210,13 +197,25 @@ void GCManager::RecycleTupleSlot(const oid_t &table_id,
            tuple_metadata.table_id);
 }
 
+
+void Cooperative_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                              const oid_t &tuple_id){
+
+  TupleMetadata tuple_metadata;
+  tuple_metadata.table_id = table_id;
+  tuple_metadata.tile_group_id = tile_group_id;
+  tuple_metadata.tuple_slot_id = tuple_id;
+  tuple_metadata.tuple_end_cid = START_CID;
+
+  DeleteInvalidTupleFromIndex(tuple_metadata);
+
+  AddToRecycleMap(tuple_metadata);
+}
+
+
 // this function returns a free tuple slot, if one exists
 // called by data_table.
-ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
-  if (this->gc_type_ == GC_TYPE_OFF) {
-    return INVALID_ITEMPOINTER;
-  }
-
+ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
@@ -234,7 +233,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
 // this function can only be called after:
 //    1) All txns have exited
 //    2) The background gc thread has exited
-void GCManager::ClearGarbage() {
+void Cooperative_GCManager::ClearGarbage() {
   // iterate reclaim queue and reclaim every thing because it's the end of the world now.
   TupleMetadata tuple_metadata;
   int counter = 0;
@@ -245,7 +244,7 @@ void GCManager::ClearGarbage() {
     counter++;
   }
 
-  LOG_TRACE("GCManager finally recyle %d tuples", counter);
+  LOG_TRACE("Cooperative_GCManager finally recyle %d tuples", counter);
 }
 
 }  // namespace gc

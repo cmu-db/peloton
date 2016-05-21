@@ -12,8 +12,6 @@
 
 #pragma once
 
-#undef NDEBUG
-
 #include <string>
 #include <getopt.h>
 #include <vector>
@@ -66,18 +64,6 @@ class configuration {
   // num of warehouses
   int warehouse_count;
 
-  // number of backends
-  int backend_count;
-
-  // execution duration (ms)
-  int duration;
-
-  // throughput
-  double throughput;
-
-  // average latency
-  double latency;
-
   // item count
   int item_count;
 
@@ -86,6 +72,25 @@ class configuration {
   int customers_per_district;
 
   int new_orders_per_district;
+
+
+  // execution duration
+  double duration;
+
+  // snapshot duration
+  double snapshot_duration;
+
+  // number of backends
+  int backend_count;
+
+  std::vector<double> snapshot_throughput;
+
+  std::vector<double> snapshot_abort_rate;
+
+  double throughput;
+
+  double abort_rate;
+
 };
 
 extern configuration state;
@@ -96,7 +101,7 @@ void ValidateScaleFactor(const configuration &state);
 
 void ValidateBackendCount(const configuration &state);
 
-void ValidateDuration(const configuration &state);
+void ValidateWarehouseCount(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

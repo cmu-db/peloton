@@ -78,7 +78,7 @@ class SsiTxnManager : public TransactionManager {
 
   static SsiTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
@@ -92,6 +92,9 @@ class SsiTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
 
   virtual bool PerformInsert(const ItemPointer &location);
 
@@ -131,11 +134,11 @@ class SsiTxnManager : public TransactionManager {
   }
 
   virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 UNUSED_ATTRIBUTE) {
+                                 __attribute__((unused))) {
     CleanUp();
   }
 
-  virtual void EndTransaction() { PL_ASSERT(false); }
+  virtual void EndTransaction() { assert(false); }
 
   virtual Result CommitTransaction();
 
@@ -148,9 +151,9 @@ class SsiTxnManager : public TransactionManager {
   std::mutex clean_mutex_;
   // Transaction contexts
   cuckoohash_map<txn_id_t, SsiTxnContext *> txn_table_;
-
+  // Map end commit id to txn context
   cuckoohash_map<cid_t, SsiTxnContext *> end_txn_table_;
-
+  // Current commit id of txn that has been GC-ed
   cid_t gc_cid;
   // SIReadLocks
   typedef std::map<oid_t, std::unique_ptr<SIReadLock>> TupleReadlocks;
@@ -172,8 +175,8 @@ class SsiTxnManager : public TransactionManager {
     auto tile_group_header = catalog::Manager::GetInstance()
         .GetTileGroup(tile_group_id)->GetHeader();
 
-    PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == txn_id);
-    PL_ASSERT(current_txn->GetTransactionId() == txn_id);
+    assert(tile_group_header->GetTransactionId(tuple_id) == txn_id);
+    assert(current_txn->GetTransactionId() == txn_id);
 
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
@@ -246,7 +249,7 @@ class SsiTxnManager : public TransactionManager {
 
     ReleaseReadLock(tile_group_header, tuple_id);
     if (find == false) {
-      PL_ASSERT(false);
+      assert(false);
     }
   }
 

@@ -16,8 +16,11 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
-
+#include "backend/storage/table_factory.h"
+#include "backend/storage/tuple.h"
+#include "backend/index/index.h"
 #include "backend/common/types.h"
+#include "backend/storage/tile_group_factory.h"
 #include "backend/common/lockfree_queue.h"
 #include "backend/common/logger.h"
 #include "libcuckoo/cuckoohash_map.hh"
@@ -36,7 +39,7 @@ namespace gc {
 class GCBuffer {
 public:
   GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
-  ~GCBuffer();
+  virtual ~GCBuffer();
   inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
 private:
   oid_t table_id;
@@ -50,54 +53,66 @@ class GCManager {
   GCManager(GCManager &&) = delete;
   GCManager &operator=(GCManager &&) = delete;
 
-  GCManager(const GCType type)
-      : is_running_(true),
-        gc_type_(type),
-        reclaim_queue_(MAX_QUEUE_LENGTH) {
-    StartGC();
-  }
+  GCManager() {}
 
-  ~GCManager() { StopGC(); }
+  virtual ~GCManager() {};
 
   // Get status of whether GC thread is running or not
-  bool GetStatus() { return this->is_running_; }
+  virtual bool GetStatus() = 0;
 
-  void StartGC();
+  virtual void StartGC() = 0;
 
-  void StopGC();
+  virtual void StopGC() = 0;
 
-  void RecycleTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                        const oid_t &tuple_id, const cid_t &tuple_end_cid);
+  // recycle old version
+  virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                        const oid_t &tuple_id, const cid_t &tuple_end_cid) = 0;
 
-  ItemPointer ReturnFreeSlot(const oid_t &table_id);
+  // recycle invalid version
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
- private:
-  void Running();
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 
-  bool ResetTuple(const TupleMetadata &);
+protected:
+  void DeleteInvalidTupleFromIndex(const TupleMetadata __attribute__((unused))&tuple_metadata) {
+    return;
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
+    LOG_TRACE("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
+             tuple_metadata.tuple_slot_id);
 
- private:
-  //===--------------------------------------------------------------------===//
-  // Private methods
-  //===--------------------------------------------------------------------===//
-  void ClearGarbage();
+    assert(tile_group != nullptr);
+    storage::DataTable *table =
+      dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+    assert(table != nullptr);
 
-  void AddToRecycleMap(TupleMetadata tuple_metadata);
+    // construct the expired version.
+    std::unique_ptr<storage::Tuple> expired_tuple(
+      new storage::Tuple(table->GetSchema(), true));
 
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
-  volatile bool is_running_;
-  GCType gc_type_;
+    tile_group->CopyTuple(tuple_metadata.tuple_slot_id, expired_tuple.get());
 
-  std::unique_ptr<std::thread> gc_thread_;
+    // unlink the version from all the indexes.
+    for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+      auto index = table->GetIndex(idx);
+      auto index_schema = index->GetKeySchema();
+      auto indexed_columns = index_schema->GetIndexedColumns();
 
-  // TODO: use shared pointer to reduce memory copy
-  LockfreeQueue<TupleMetadata> reclaim_queue_;
+      // build key.
+      std::unique_ptr<storage::Tuple> key(
+        new storage::Tuple(table->GetSchema(), true));
+      key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
 
-  // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-      recycle_queue_map_;
+      // todo: if invalid version is insert, still need to remove from primary index
+      if(index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+        continue;
+      }
+
+      index->DeleteEntry(key.get(),
+                         ItemPointer(tuple_metadata.tile_group_id,
+                                     tuple_metadata.tuple_slot_id));
+    }
+  }
 };
 
 }  // namespace gc

@@ -19,6 +19,8 @@ namespace peloton {
 
 namespace test {
 
+static oid_t next_table_id = 0;
+
 //===--------------------------------------------------------------------===//
 // Transaction Tests
 //===--------------------------------------------------------------------===//
@@ -26,13 +28,13 @@ namespace test {
 class MVCCTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI,
-  // CONCURRENCY_TYPE_SPECULATIVE_READ,
-  CONCURRENCY_TYPE_EAGER_WRITE,
-  CONCURRENCY_TYPE_TO,
-  CONCURRENCY_TYPE_OCC_RB
+  CONCURRENCY_TYPE_OPTIMISTIC
+//  CONCURRENCY_TYPE_PESSIMISTIC,
+//  CONCURRENCY_TYPE_SSI,
+//  // CONCURRENCY_TYPE_SPECULATIVE_READ,
+//  CONCURRENCY_TYPE_EAGER_WRITE,
+//  CONCURRENCY_TYPE_TO,
+//  CONCURRENCY_TYPE_OCC_RB
 };
 
 
@@ -148,7 +150,7 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     // read, read, read, read, update, read, read not exist
     // another txn read
     {
@@ -239,7 +241,7 @@ TEST_F(MVCCTest, AbortVersionChainTest) {
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable());
+      TransactionTestsUtil::CreateTable(10, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Update(0, 100);
@@ -275,29 +277,31 @@ TEST_F(MVCCTest, VersionChainTest) {
     const int scale = 20;
     const int num_key = 256;
     srand(15721);
-
     std::unique_ptr<storage::DataTable> table(
-        TransactionTestsUtil::CreateTable(num_key));
+      TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID, next_table_id++, 1234, true));
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-    TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
-    scheduler.SetConcurrent(true);
-    for (int i = 0; i < num_txn; i++) {
-      for (int j = 0; j < scale; j++) {
-        // randomly select two uniq keys
-        int key1 = rand() % num_key;
-        int key2 = rand() % num_key;
-        int delta = rand() % 1000;
-        // Store substracted value
-        scheduler.Txn(i).ReadStore(key1, -delta);
-        scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
-        // Store increased value
-        scheduler.Txn(i).ReadStore(key2, delta);
-        scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+    for (int k = 0; k < 32; k++) {
+      TransactionScheduler scheduler(num_txn, table.get(), &txn_manager);
+      scheduler.SetConcurrent(true);
+      for (int i = 0; i < num_txn; i++) {
+        for (int j = 0; j < scale; j++) {
+          // randomly select two uniq keys
+          int key1 = rand() % num_key;
+          int key2 = rand() % num_key;
+          int delta = rand() % 1000;
+          // Store substracted value
+          scheduler.Txn(i).ReadStore(key1, -delta);
+          scheduler.Txn(i).Update(key1, TXN_STORED_VALUE);
+          // Store increased value
+          scheduler.Txn(i).ReadStore(key2, delta);
+          scheduler.Txn(i).Update(key2, TXN_STORED_VALUE);
+        }
+        scheduler.Txn(i).Commit();
       }
-      scheduler.Txn(i).Commit();
+      scheduler.Run();
     }
-    scheduler.Run();
+
 
     // Read all values
     TransactionScheduler scheduler2(1, table.get(), &txn_manager);

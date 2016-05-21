@@ -15,27 +15,25 @@
 #include <atomic>
 #include <unordered_map>
 #include <list>
-#include <utility>
 
-#include "backend/storage/tile_group_header.h"
+#include "backend/common/platform.h"
+#include "backend/common/types.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/epoch_manager.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_header.h"
 #include "backend/catalog/manager.h"
-#include "backend/common/logger.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/tuple.h"
+#include "backend/gc/gc_manager_factory.h"
+#include "backend/planner/project_info.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 
-class ItemPointer;
-
-namespace storage{
-class DataTable;
-}
-
 namespace concurrency {
-
-class Transaction;
 
 extern thread_local Transaction *current_txn;
 
@@ -46,25 +44,17 @@ class TransactionManager {
   TransactionManager() {
     next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
-    maximum_grant_cid_ = ATOMIC_VAR_INIT(MAX_CID);
   }
 
   virtual ~TransactionManager() {}
 
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
-  cid_t GetNextCommitId() {
-	  cid_t temp_cid = next_cid_++;
-	  // wait if we do not yet have a grant for this commit id
-	  while(temp_cid > maximum_grant_cid_.load());
-	  return temp_cid;
-  }
-
-  cid_t GetCurrentCommitId() { return next_cid_.load(); }
+  cid_t GetNextCommitId() { return next_cid_++; }
 
   bool IsOccupied(const ItemPointer &position);
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
@@ -79,6 +69,14 @@ class TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
+  // This method is used by executor to yield ownership after the acquired
+  // ownership, some of them will not perform update after they acquired the
+  // ownership, leaving the write lock on the tuple unreleased.
+  virtual void YieldOwnership(const oid_t &tile_group_id __attribute__((unused)),
+    const oid_t &tuple_id __attribute__((unused))) {
+    // Do nothing, specific txn manager can choose to implement it
+  }
 
   virtual bool PerformInsert(const ItemPointer &location) = 0;
 
@@ -98,7 +96,7 @@ class TransactionManager {
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified
   virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 UNUSED_ATTRIBUTE) {
+                                 __attribute__((unused))) {
     return;
   }
 
@@ -108,8 +106,6 @@ class TransactionManager {
 
   //for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
-
-  void SetMaxGrantCid(cid_t cid){ maximum_grant_cid_ = cid; }
 
   virtual Transaction *BeginTransaction() = 0;
 
@@ -131,25 +127,9 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
   }
 
-  void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range){
-	  this->dirty_range_ = dirty_range;
-  }
-
- protected:
-
-
-  inline bool CidIsInDirtyRange(cid_t cid){
-	  return ((cid > dirty_range_.first) & (cid <= dirty_range_.second));
-  }
-  // invisible range after failure and recovery;
-  // first value is exclusive, last value is inclusive
-  std::pair<cid_t, cid_t> dirty_range_ = std::make_pair(INVALID_CID, INVALID_CID);
-
-
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
-  std::atomic<cid_t> maximum_grant_cid_;
 
 };
 }  // End storage namespace

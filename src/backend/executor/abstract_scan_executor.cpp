@@ -42,8 +42,10 @@ AbstractScanExecutor::AbstractScanExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool AbstractScanExecutor::DInit() {
-  PL_ASSERT(children_.size() == 0 || children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  assert(children_.size() == 0 || children_.size() == 1);
+  
+  // for caching reason, executor_context_ can be null_ptr when first initialized.
+  //assert(executor_context_);
 
   // Grab data from plan node.
   const planner::AbstractScan &node = GetPlanNode<planner::AbstractScan>();

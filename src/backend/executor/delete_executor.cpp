@@ -42,10 +42,10 @@ DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(executor_context_);
+  assert(children_.size() == 1);
+  assert(executor_context_);
 
-  PL_ASSERT(target_table_ == nullptr);
+  assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child ");
@@ -53,7 +53,7 @@ bool DeleteExecutor::DInit() {
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
-  PL_ASSERT(target_table_);
+  assert(target_table_);
 
   return true;
 }
@@ -65,7 +65,8 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
-  PL_ASSERT(target_table_);
+  assert(target_table_);
+  LOG_TRACE("In delete executor");
 
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
@@ -94,7 +95,6 @@ bool DeleteExecutor::DExecute() {
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
-
 
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
@@ -135,6 +135,7 @@ bool DeleteExecutor::DExecute() {
 
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
           return false;
         }

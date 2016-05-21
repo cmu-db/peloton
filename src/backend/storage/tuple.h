@@ -64,7 +64,12 @@ class Tuple : public AbstractTuple {
 
     if (allocated) {
       // initialize heap allocation
-      tuple_data = new char[tuple_schema->GetLength()]();
+      // NOTE: We round up the size of a tuple to multiple of 4, otherwise
+      // it causes invalid memory read when scanning some index.
+      // This is relevant to the implementation of the BTree index.
+      // When building the index, we always round the KeySize to multiple of 4.
+      auto rounded_length = ((tuple_schema->GetLength() + 3)/4)*4;
+      tuple_data = new char[rounded_length]();
     }
   }
 

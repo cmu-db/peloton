@@ -32,13 +32,6 @@ static const oid_t user_table_pkey_index_oid = 2001;
 
 static const oid_t ycsb_field_length = 100;
 
-enum SkewFactor {
-  SKEW_FACTOR_INVALID = 0,
-
-  SKEW_FACTOR_LOW = 1,
-  SKEW_FACTOR_HIGH = 2
-};
-
 class configuration {
  public:
   // size of the table
@@ -50,27 +43,39 @@ class configuration {
   // update ratio
   double update_ratio;
 
-  // execution duration (in ms)
-  int duration;
+  // execution duration
+  double duration;
+
+  // snapshot duration
+  double snapshot_duration;
+
+  unsigned long transaction_count;
 
   // number of backends
   int backend_count;
 
-  // throughput
+  std::vector<double> snapshot_throughput;
+
+  std::vector<double> snapshot_abort_rate;
+
   double throughput;
 
-  // skew
-  SkewFactor skew_factor;
+  double abort_rate;
 
-  // latency average
-  double latency;
+  // Theta in zipf distribution to control skewness
+  double zipf_theta;
+
+  // Run mix workload or not
+  bool run_mix;
+
+  // protocol type
+  ConcurrencyType protocol;
+  GCType gc_protocol;
 };
 
 extern configuration state;
 
 void Usage(FILE *out);
-
-void ParseArguments(int argc, char *argv[], configuration &state);
 
 void ValidateScaleFactor(const configuration &state);
 
@@ -82,7 +87,9 @@ void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
 
-void ValidateSkewFactor(const configuration &state);
+void ValidateSnapshotDuration(const configuration &state);
+
+void ParseArguments(int argc, char *argv[], configuration &state);
 
 }  // namespace ycsb
 }  // namespace benchmark

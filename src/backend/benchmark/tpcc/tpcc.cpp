@@ -28,16 +28,23 @@ configuration state;
 
 std::ofstream out("outputfile.summary");
 
-static void WriteOutput(double stat) {
+static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d :: %lf",
-           state.scale_factor,
-           state.backend_count,
-           stat);
+  LOG_INFO("%d :: %lf tps, %lf", state.scale_factor, state.throughput, state.abort_rate);
 
-  out << state.scale_factor << " ";
-  out << state.backend_count << " ";
-  out << stat << "\n";
+  out << state.scale_factor << "\n";
+
+  for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
+       ++round_id) {
+    out << "[" << std::setw(3) << std::left
+        << state.snapshot_duration * round_id << " - " << std::setw(3)
+        << std::left << state.snapshot_duration * (round_id + 1)
+        << " s]: " << state.snapshot_throughput[round_id] << " "
+        << state.snapshot_abort_rate[round_id] << "\n";
+  }
+
+  out << state.throughput << " ";
+  out << state.abort_rate << "\n";
   out.flush();
   out.close();
 }
@@ -54,8 +61,7 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
 
-  // Emit throughput
-  WriteOutput(state.throughput);
+  WriteOutput();
 }
 
 }  // namespace tpcc

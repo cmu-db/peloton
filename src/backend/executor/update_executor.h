@@ -29,14 +29,28 @@ class UpdateExecutor : public AbstractExecutor {
   explicit UpdateExecutor(const planner::AbstractPlan *node,
                           ExecutorContext *executor_context);
 
- protected:
-  bool DInit();
+  // for plan/executor caching.
+  // for OLTP queries, most of the member variables in plan/executor can be reused.
+  void SetContext(ExecutorContext *executor_context) {
+    executor_context_ = executor_context;
+  }
 
+
+  void SetTargetList(const TargetList &target_list) {
+    project_info_->SetTargetList(target_list);
+  }
+
+ protected:
+
+  bool DInit();
+  
   bool DExecute();
 
  private:
   storage::DataTable *target_table_ = nullptr;
-  const planner::ProjectInfo *project_info_ = nullptr;
+
+  std::unique_ptr<planner::ProjectInfo> project_info_;
+  
 };
 
 }  // namespace executor

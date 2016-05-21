@@ -13,12 +13,10 @@
 #pragma once
 
 #include "backend/concurrency/transaction_manager.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/rollback_segment.h"
 
 namespace peloton {
-
-namespace storage{
-class RollbackSegmentPool;
-}
 
 namespace concurrency {
 
@@ -39,7 +37,7 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   static OptimisticRbTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
@@ -53,13 +51,16 @@ class OptimisticRbTxnManager : public TransactionManager {
   inline bool IsInserted(
       const storage::TileGroupHeader *const tile_grou_header,
       const oid_t &tuple_id) {
-      PL_ASSERT(IsOwner(tile_grou_header, tuple_id));
+      assert(IsOwner(tile_grou_header, tuple_id));
       return tile_grou_header->GetBeginCommitId(tuple_id) == MAX_CID;
   }
 
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
 
   bool ValidateRead( 
     const storage::TileGroupHeader *const tile_group_header,
@@ -81,13 +82,13 @@ class OptimisticRbTxnManager : public TransactionManager {
    */
   virtual bool PerformRead(const ItemPointer &location);
 
-  virtual void PerformUpdate(const ItemPointer &old_location UNUSED_ATTRIBUTE,
-                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
+  virtual void PerformUpdate(const ItemPointer &old_location __attribute__((unused)),
+                             const ItemPointer &new_location __attribute__((unused))) { assert(false); }
 
-  virtual void PerformDelete(const ItemPointer &old_location  UNUSED_ATTRIBUTE,
-                             const ItemPointer &new_location UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
+  virtual void PerformDelete(const ItemPointer &old_location  __attribute__((unused)),
+                             const ItemPointer &new_location __attribute__((unused))) { assert(false); }
 
-  virtual void PerformUpdate(const ItemPointer &location  UNUSED_ATTRIBUTE) { PL_ASSERT(false); }
+  virtual void PerformUpdate(const ItemPointer &location  __attribute__((unused))) { assert(false); }
 
   /**
    * Interfaces for rollback segment
@@ -110,12 +111,43 @@ class OptimisticRbTxnManager : public TransactionManager {
    * @brief Test if a reader with read timestamp @read_ts should follow on the
    * rb chain started from rb_set
    */
-  bool IsRBVisible(char *rb_seg, cid_t read_ts);
+  inline bool IsRBVisible(char *rb_seg, cid_t read_ts) {
+    // Check if we actually have a rollback segment
+    if (rb_seg == nullptr) {
+      return false;
+    }
+
+    cid_t rb_ts = storage::RollbackSegmentPool::GetTimeStamp(rb_seg);
+
+    return read_ts < rb_ts;
+  }
 
   // Return nullptr if the tuple is not activated to current txn.
   // Otherwise return the evident that current tuple is activated
-  char* GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header,
-                             const oid_t tuple_slot_id);
+  inline char* GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_slot_id) {
+    cid_t txn_begin_cid = current_txn->GetBeginCommitId();
+    cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
+
+    assert(tuple_begin_cid != MAX_CID);
+    // Owner can not call this function
+    assert(IsOwner(tile_group_header, tuple_slot_id) == false);
+
+    RBSegType rb_seg = GetRbSeg(tile_group_header, tuple_slot_id);
+    char *prev_visible;
+    bool master_activated = (txn_begin_cid >= tuple_begin_cid);
+
+    if (master_activated)
+      prev_visible = tile_group_header->GetReservedFieldRef(tuple_slot_id);
+    else
+      prev_visible = nullptr;
+
+    while (IsRBVisible(rb_seg, txn_begin_cid)) {
+      prev_visible = rb_seg;
+      rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
+    }
+
+    return prev_visible;
+  }
 
   virtual void PerformDelete(const ItemPointer &location);
 
@@ -123,9 +155,62 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
-  virtual Transaction *BeginTransaction();
+  virtual Transaction *BeginTransaction() {
+    // Set current transaction
+    txn_id_t txn_id = GetNextTransactionId();
+    cid_t begin_cid = GetNextCommitId();
 
-  virtual void EndTransaction();
+    LOG_TRACE("Beginning transaction %lu", txn_id);
+
+
+    Transaction *txn = new Transaction(txn_id, begin_cid);
+    current_txn = txn;
+
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+    latest_read_timestamp = begin_cid;
+    // Add to running transaction table
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+    // Create current transaction poll
+    current_segment_pool = new storage::RollbackSegmentPool(BACKEND_TYPE_MM);
+
+    return txn;
+  }
+
+  virtual void EndTransaction() {
+
+
+    txn_id_t txn_id = current_txn->GetTransactionId();
+
+    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+
+    auto result = current_txn->GetResult();
+    auto end_cid = current_txn->GetEndCommitId();
+
+    if (result == RESULT_SUCCESS) {
+      // Committed
+      if (current_txn->IsReadOnly()) {
+        // read only txn, just delete the segment pool because it's empty
+        delete current_segment_pool;
+      } else {
+        // It's not read only txn
+        current_segment_pool->SetPoolTimestamp(end_cid);
+        living_pools_[end_cid] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
+      }
+    } else {
+      // Aborted
+      // TODO: Add coperative GC
+      current_segment_pool->MarkedAsGarbage();
+      garbage_pools_[current_txn->GetBeginCommitId()] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
+    }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
+    delete current_txn;
+    current_txn = nullptr;
+    current_segment_pool = nullptr;
+  }
 
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple

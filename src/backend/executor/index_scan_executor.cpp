@@ -55,13 +55,13 @@ bool IndexScanExecutor::DInit() {
 
   if (!status) return false;
 
-  PL_ASSERT(children_.size() == 0);
+  assert(children_.size() == 0);
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
   index_ = node.GetIndex();
-  PL_ASSERT(index_ != nullptr);
+  assert(index_ != nullptr);
 
   result_itr_ = START_OID;
   done_ = false;
@@ -74,7 +74,7 @@ bool IndexScanExecutor::DInit() {
   predicate_ = node.GetPredicate();
 
   if (runtime_keys_.size() != 0) {
-    PL_ASSERT(runtime_keys_.size() == values_.size());
+    assert(runtime_keys_.size() == values_.size());
 
     if (!key_ready_) {
       values_.clear();
@@ -116,8 +116,7 @@ bool IndexScanExecutor::DExecute() {
     }
   }
   // Already performed the index lookup
-  PL_ASSERT(done_);
-
+  assert(done_);
   while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
     if (result_[result_itr_]->GetTupleCount() == 0) {
       result_itr_++;
@@ -129,16 +128,15 @@ bool IndexScanExecutor::DExecute() {
     }
 
   }  // end while
-
   return false;
 }
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
-  PL_ASSERT(!done_);
+  assert(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -154,26 +152,36 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
-  std::vector<ItemPointer> garbage_tuples;
+
+  // The deconstructor of the GC buffer
+  // will automatically register garbage to GC manager
+  gc::GCBuffer garbage_tuples(table_->GetOid());
+
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-    
+
     ItemPointer tuple_location = *tuple_location_ptr;
-    
+
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
 
     size_t chain_length = 0;
-    while (true) {
 
+    cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+
+    while (true) {
       ++chain_length;
 
-      // if the tuple is visible.
-      if (transaction_manager.IsVisible(tile_group_header,
-                                        tuple_location.offset)) {
+      auto visibility = transaction_manager.IsVisible(tile_group_header, tuple_location.offset);
 
-        LOG_TRACE("traverse chain length : %lu", chain_length);
+      // if the tuple is deleted
+      if (visibility == VISIBILITY_DELETED) {
+        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
+        break;
+      }
+      // if the tuple is visible.
+      else if (visibility == VISIBILITY_OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
 
@@ -207,68 +215,63 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       // if the tuple is not visible.
       else {
         ItemPointer old_item = tuple_location;
+        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);
 
-        tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
+
         // there must exist a visible version.
 
-        // FIXME: currently, only speculative read transaction manager **may** see a null version
-        // it's a potential bug
         if(tuple_location.IsNull()) {
+          // FIXME:
+          // For an index scan on a version chain, the result should be one of the following:
+          //    (1) find a visible version
+          //    (2) find a deleted version
+          //    (3) find an aborted version with chain length equal to one
+          if (chain_length == 1) {
+            break;
+          }
+
+          // If we have traversed through the chain and still can not fulfill one of the above conditions,
+          // something wrong must happen.
+          // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
+          // timestamp update. In such case, we just return false and abort the txn.
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          // FIXME: this cause unnecessary abort when we have delete operations
+
           return false;
         }
 
-        // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
-        PL_ASSERT(tuple_location.IsNull() == false);
-
-        cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
+        if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          continue;
+        }
 
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
-          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
+                 || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
-            // currently, let's assume only primary index exists.
-            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-            //     table_->GetOid(), old_item.block, old_item.offset,
-            //     transaction_manager.GetNextCommitId());
-            garbage_tuples.push_back(old_item);
+            garbage_tuples.AddGarbage(old_item);
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
             tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
 
-          } else {
-
-            tile_group = manager.GetTileGroup(tuple_location.block);
-            tile_group_header = tile_group.get()->GetHeader();
+            // Continue the while loop with the new header we get the index head ptr
+            continue;
           }
-
-        } else {
+        }
         tile_group = manager.GetTileGroup(tuple_location.block);
         tile_group_header = tile_group.get()->GetHeader();
-
-        }
-
-
       }
     }
   }
 
-  // Add all garbage tuples to GC manager
-  if(garbage_tuples.size() != 0) {
-    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-    for (auto garbage : garbage_tuples) {
-      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-        table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
-    }
-  }
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -294,11 +297,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 }
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
-  PL_ASSERT(!done_);
+  assert(!done_);
 
   std::vector<ItemPointer> tuple_locations;
 
-  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  assert(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_locations);

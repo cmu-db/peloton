@@ -30,7 +30,7 @@ class TsOrderTxnManager : public TransactionManager {
 
   static TsOrderTxnManager &GetInstance();
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
@@ -44,6 +44,9 @@ class TsOrderTxnManager : public TransactionManager {
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id);
+
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
 
   virtual bool PerformInsert(const ItemPointer &location);
 
@@ -76,8 +79,6 @@ class TsOrderTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
@@ -90,20 +91,27 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) {
     char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
-    cid_t read_ts = 0;
-    PL_MEMCPY(&read_ts, reserved_field, sizeof(cid_t));
-    return read_ts;
+
+    return *((cid_t *)reserved_field);
+  }
+
+  // atomic set max cid
+  void AtomicMax(cid_t* addr, cid_t max) {
+    while(true) {
+      auto old = *addr;
+      if(old > max) {
+        return;
+      }else if ( __sync_bool_compare_and_swap(addr, old, max) ) {
+        return;
+      }
+    }
   }
 
   inline void SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id, const cid_t &last_read_ts) {
     char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
-    cid_t read_ts = 0;
-    PL_MEMCPY(&read_ts, reserved_field, sizeof(cid_t));
-    if (last_read_ts > read_ts) {
-      PL_MEMCPY(reserved_field, &last_read_ts, sizeof(cid_t));
-    }
+    AtomicMax((cid_t *)reserved_field, last_read_ts);
   }
 
 };

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "concurrentqueue/blockingconcurrentqueue.h"
+#include "concurrentqueue/concurrentqueue.h"
 
 namespace peloton {
 
@@ -48,10 +48,14 @@ class LockfreeQueue {
     return queue_.try_dequeue(item);
   }
 
+  bool IsEmpty() {
+    return queue_.size_approx() == 0;
+  }
+
  private:
 
   // Underlying moodycamel's concurrent queue
-  moodycamel::BlockingConcurrentQueue<T> queue_;
+  moodycamel::ConcurrentQueue<T> queue_;
 };
 
 }  // namespace peloton

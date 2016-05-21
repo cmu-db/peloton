@@ -12,8 +12,16 @@
 
 #pragma once
 
+
+
+
+
+
+
+
 #include <atomic>
 #include <iostream>
+
 #include <queue>
 #include <vector>
 #include <cstring>
@@ -71,7 +79,7 @@ class TileGroupHeader : public Printable {
 
   ~TileGroupHeader();
 
-  // this function is only called by DataTable::GetEmptyTupleSlot().
+  // this function is only called by DataTable::FillInEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
     oid_t tuple_slot_id =
         next_tuple_slot.fetch_add(1, std::memory_order_relaxed);
@@ -87,7 +95,7 @@ class TileGroupHeader : public Printable {
    * Used by logging
    */
   // TODO: rewrite the code!!!
-  bool GetEmptyTupleSlot(const oid_t &tuple_slot_id) {
+  bool FillInEmptyTupleSlot(const oid_t &tuple_slot_id) {
     tile_header_lock.Lock();
     if (tuple_slot_id < num_tuple_slots) {
       if (next_tuple_slot <= tuple_slot_id) {
@@ -169,7 +177,7 @@ class TileGroupHeader : public Printable {
     this->tile_group = tile_group;
   }
   inline void SetTransactionId(const oid_t &tuple_slot_id,
-                               const txn_id_t &transaction_id) {
+                               const txn_id_t &transaction_id) const {
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
   }
 
@@ -295,3 +303,4 @@ private:
 
 }  // End storage namespace
 }  // End peloton namespace
+
