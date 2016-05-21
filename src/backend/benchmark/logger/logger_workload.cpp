@@ -336,6 +336,8 @@ void DoRecovery() {
   // Do recovery
   StartLogging(thread);
 
+  timer.Stop();
+  
   // Synchronize and finish recovery
   if(peloton_logging_mode != LOGGING_TYPE_INVALID){
     if (log_manager.EndLogging()) {
@@ -344,8 +346,6 @@ void DoRecovery() {
       LOG_ERROR("Failed to terminate logging thread");
     }
   }
-
-  timer.Stop();
 
   // Recovery time (in ms)
   if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
