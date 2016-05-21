@@ -177,7 +177,7 @@ class TileGroupHeader : public Printable {
     this->tile_group = tile_group;
   }
   inline void SetTransactionId(const oid_t &tuple_slot_id,
-                               const txn_id_t &transaction_id) {
+                               const txn_id_t &transaction_id) const {
     *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
   }
 
