@@ -22,6 +22,8 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tuple.h"
 
+#include "backend/concurrency/transaction_manager_factory.h"
+
 #include <iostream>
 
 namespace peloton {
@@ -93,23 +95,26 @@ void LoggingService::StartTransactionRecovery(cid_t commit_id) {
  */
 void LoggingService::CommitTransactionRecovery(cid_t commit_id) {
   std::vector<TupleRecord *> &tuple_records = recovery_txn_table[commit_id];
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
   for (auto it = tuple_records.begin(); it != tuple_records.end(); it++) {
     TupleRecord *curr = *it;
     switch (curr->GetType()) {
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-        InsertTuple(curr);
+        InsertTuple(curr, txn_manager);
         break;
       case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-        UpdateTuple(curr);
+        UpdateTuple(curr, txn_manager);
         break;
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-        DeleteTuple(curr);
+        DeleteTuple(curr, txn_manager);
         break;
       default:
         continue;
     }
     delete curr;
   }
+  txn_manager.CommitTransaction();
   max_cid = commit_id + 1;
   recovery_txn_table.erase(commit_id);
 }
@@ -131,20 +136,22 @@ extern void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void LoggingService::InsertTuple(TupleRecord *record) {
+void LoggingService::InsertTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
   InsertTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetInsertLocation(), record->GetTuple());
+  txn_manager.PerformInsert(record->GetInsertLocation());
 }
 
 /**
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void LoggingService::DeleteTuple(TupleRecord *record) {
+void LoggingService::DeleteTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
   DeleteTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation());
+  txn_manager.PerformDelete(record->GetDeleteLocation());
 }
 
 /**
@@ -152,11 +159,12 @@ void LoggingService::DeleteTuple(TupleRecord *record) {
  * @param recovery txn
  */
 
-void LoggingService::UpdateTuple(TupleRecord *record) {
+void LoggingService::UpdateTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
   UpdateTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation(), record->GetInsertLocation(),
                     record->GetTuple());
+  txn_manager.PerformUpdate(record->GetDeleteLocation(), record->GetInsertLocation());
 }
 // implements LoggingService ------------------------------------------
 
@@ -260,7 +268,7 @@ void LoggingService::LogRecordReplay(
   }
   // After finishing recovery, set the next oid with maximum oid
   // observed during the recovery
-  manager.UpdateCatalogAndTxnManagers(max_oid, max_cid);
+  manager.UpdateCatalogAndTxnManagers(max_oid, 0);
 
   response->set_status(networking::LoggingStatus::REPLAY_COMPLETE);
   LOG_INFO("message len: %lu", request->log().size());
