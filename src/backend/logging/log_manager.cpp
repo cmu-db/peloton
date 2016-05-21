@@ -401,7 +401,7 @@ void LogManager::DoneRecovery() {
     for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
       auto table = database->GetTable(table_idx);
       if (table->GetTileGroupCount() == 0) {
-        table->AddDefaultTileGroup();
+        //table->AddDefaultTileGroup();
       }
     }
   }

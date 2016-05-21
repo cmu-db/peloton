@@ -68,9 +68,12 @@ class OptimisticTxnManager : public TransactionManager {
 
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
+    //txn_id_t txn_id = 0;
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
+    //Transaction *txn = new Transaction(txn_id, 0);
 
+    //auto eid = EpochManagerFactory::GetInstance().EnterEpoch(0);
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 

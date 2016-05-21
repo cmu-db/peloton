@@ -37,7 +37,7 @@ void Usage(FILE *out) {
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
-          "   -g --gc_protocal       :  choose gc protocol, default OFF\n"
+          "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va"
 
   );
@@ -54,7 +54,7 @@ static struct option opts[] = {
     {"zipf_theta", optional_argument, NULL, 'z'},
     {"mix_txn", no_argument, NULL, 'm'},
     {"protocol", optional_argument, NULL, 'p'},
-    {"gc_protocal", optional_argument, NULL, 'g'},
+    {"gc_protocol", optional_argument, NULL, 'g'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {

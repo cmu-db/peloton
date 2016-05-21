@@ -10,16 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cassert>
+#include <string>
 
 #include "backend/common/exception.h"
-#include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
-#include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
+
+namespace concurrency {
+  class TransactionManagerFactory;
+}
+
 namespace catalog {
 
 Manager &Manager::GetInstance() {
@@ -33,18 +38,21 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
+  //printf("lock hashmap here %d\n", oid);
 
   // drop the catalog reference to the old tile group
-  //locator.erase(oid);
+  // locator.erase(oid);
 
   // add a catalog reference to the tile group
+  // locator[oid] = location;
+
   locator[oid] = location;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
-    LOG_TRACE("Dropping tile group %u", oid);
+    LOG_INFO("Dropping tile group %u", oid);
     // drop the catalog reference to the tile group
     //locator.erase(oid);
     locator[oid] = nullptr;
@@ -52,19 +60,21 @@ void Manager::DropTileGroup(const oid_t oid) {
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  // std::shared_ptr<storage::TileGroup> location;
+  std::shared_ptr<storage::TileGroup> location;
 
   // if (locator.find(oid, location) == false) {
   //   return nullptr;
   // }
   // return location;
-  while (locator[oid] == nullptr);
+
+  while (locator[oid].get() == nullptr)
+    ;
   return locator[oid];
 }
 
 // used for logging test
 void Manager::ClearTileGroup() {
-  //locator.clear();
+  // locator.clear();
 }
 
 //===--------------------------------------------------------------------===//
@@ -98,7 +108,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
       }
       database_offset++;
     }
-    PL_ASSERT(database_offset < databases.size());
+    assert(database_offset < databases.size());
 
     // Drop the database
     databases.erase(databases.begin() + database_offset);
@@ -106,7 +116,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 }
 
 storage::Database *Manager::GetDatabase(const oid_t database_offset) const {
-  PL_ASSERT(database_offset < databases.size());
+  assert(database_offset < databases.size());
   auto database = databases.at(database_offset);
   return database;
 }
