@@ -554,14 +554,11 @@ oid_t DataTable::AddDefaultTileGroup() {
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
-    COMPILER_MEMORY_FENCE;
-
     last_tile_group_ = tile_group;
 
     tile_groups_.push_back(tile_group_id);
     
     tile_group_lock_.Unlock();
-
 
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.

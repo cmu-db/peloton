@@ -60,7 +60,7 @@ void Manager::DropTileGroup(const oid_t oid) {
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  std::shared_ptr<storage::TileGroup> location;
+  // std::shared_ptr<storage::TileGroup> location;
 
   // if (locator.find(oid, location) == false) {
   //   return nullptr;
