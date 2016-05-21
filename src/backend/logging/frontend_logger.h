@@ -163,6 +163,8 @@ class FrontendLogger : public Logger {
 
   bool remote_done_ = false;
 
+  long replication_seq_ = 1;
+
   bool is_distinguished_logger = false;
 };
 

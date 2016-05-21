@@ -116,7 +116,6 @@ void LoggingService::CommitTransactionRecovery(cid_t commit_id) {
   }
   txn_manager.CommitTransaction();
   max_cid = commit_id + 1;
-  recovery_txn_table.erase(commit_id);
 }
 
 extern void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
@@ -176,6 +175,8 @@ void LoggingService::LogRecordReplay(
   if (request == nullptr){
 	  return;
   }
+  long curr_seq = request->sequence_number();
+  while(replication_sequence_number_ != curr_seq);
   LogManager &manager = LogManager::GetInstance();
   const char *messages = request->log().c_str();
   auto size = request->log().size();
@@ -239,28 +240,28 @@ void LoggingService::LogRecordReplay(
         break;
 
       case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-        PL_ASSERT(log_id != INVALID_CID);
+		PL_ASSERT(log_id != INVALID_CID);
+		// do nothing here because we only want to replay when the delimiter is hit
+		break;
 
-        // Now directly commit this transaction. This is safe because we
-        // reject commit ids that appear
-        // after the persistent commit id before coming here (in the switch
-        // case above).
-        CommitTransactionRecovery(log_id);
-        break;
-
-      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-      case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-        recovery_txn_table[tuple_record->GetTransactionId()].push_back(
-            tuple_record);
-        break;
-      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-        // Do nothing if we hit the delimiter, because the delimiters help
-        // us only to find
-        // the max persistent commit id, and should be ignored during actual
-        // recovery
-        break;
-      }
+	  case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+	  case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+	  case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+		recovery_txn_table[tuple_record->GetTransactionId()].push_back(
+			tuple_record);
+		break;
+	  case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+		// commit all transactions up to this delimeter
+		for(auto it = recovery_txn_table.begin(); it != recovery_txn_table.end(); ){
+		  if (it->first > log_id){
+			  break;
+		  }else{
+			CommitTransactionRecovery(it->first);
+			recovery_txn_table.erase(it++);
+		  }
+		}
+		break;
+	  }
 
       default:
         break;
@@ -270,7 +271,8 @@ void LoggingService::LogRecordReplay(
   // observed during the recovery
   manager.UpdateCatalogAndTxnManagers(max_oid, 0);
 
-  response->set_status(networking::LoggingStatus::REPLAY_COMPLETE);
+  response->set_sequence_number(curr_seq);
+  replication_sequence_number_++;
   LOG_INFO("message len: %lu", request->log().size());
   LOG_INFO("In log record replay service");
 }
