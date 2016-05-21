@@ -65,6 +65,12 @@ class MaterializationPlan : public AbstractPlan {
         new MaterializationPlan(old_to_new_cols_, schema_copy, physify_flag_));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.

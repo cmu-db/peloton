@@ -52,6 +52,12 @@ class ResultPlan : public AbstractPlan {
         new ResultPlan(new storage::Tuple(*tuple_), backend_));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   /**
    * @brief A backend is needed to create physical tuple

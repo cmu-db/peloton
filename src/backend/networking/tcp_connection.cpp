@@ -240,7 +240,7 @@ void *Connection::ProcessMessage(void *connection) {
       LOG_TRACE("RpcServer with controller failed:%s ", error.c_str());
     }
 
-    // FIXME: remove the garbage code
+    // TODO: remove the test code
 /*    {
       std::lock_guard < std::mutex > lock(send_mutex);
       server_response_send_number++;

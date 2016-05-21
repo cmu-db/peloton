@@ -18,8 +18,8 @@
 namespace peloton {
 namespace networking {
 
-// FIXME: Please give a description on what is RpcController,
-// what it is used for?
+// RpcController is a derived class.
+// It is used as a parameter required by Protobuf.
 class RpcController : public google::protobuf::RpcController {
  public:
   RpcController() { Reset(); }

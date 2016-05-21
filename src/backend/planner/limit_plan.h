@@ -49,6 +49,12 @@ class LimitPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new LimitPlan(limit_, offset_));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   const size_t limit_;   // as LIMIT in SQL standard
   const size_t offset_;  // as OFFSET in SQL standard

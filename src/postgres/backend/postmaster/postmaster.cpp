@@ -581,38 +581,7 @@ void* Coordinator(__attribute__((unused)) void* arg) {
 
 
 void TestSend() {
-//  try {
-//    for (int i = 0; i < 100; i++) {
-//      peloton::networking::HeartbeatRequest request;
-//      peloton::networking::HeartbeatResponse response;
-//
-//<<<<<<< HEAD
-//      request.set_sender_site(i);
-//      request.set_last_transaction_id(i * 10);
-//
-//      peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
-//
-//      client.Heartbeat(&request, &response);
-//
-//      if (response.has_sender_site() == true) {
-//        std::cout << "sender site: " << response.sender_site() << std::endl;
-//      } else {
-//        std::cout << "No response: sender site" << std::endl;
-//      }
-//
-//      if (response.has_status() == true) {
-//        std::cout << "Status: " << response.status() << std::endl;
-//      } else {
-//        std::cout << "No response: sender status" << std::endl;
-//      }
-//    }
-//
-//  } catch (std::exception &e) {
-//    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-//  } catch (...) {
-//    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
-//  }
-//=======
+
     sleep(2);
 
     try {

@@ -118,6 +118,12 @@ class IndexScanPlan : public AbstractScan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   /** @brief index associated with index scan. */
   index::Index *index_;

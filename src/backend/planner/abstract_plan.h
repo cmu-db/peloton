@@ -19,7 +19,6 @@
 #include <map>
 #include <vector>
 
-#include "backend/common/assert.h"
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/serializer.h"
@@ -82,19 +81,13 @@ class AbstractPlan : public Printable {
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
-  // Each sub-class will have to implement these functions
+  // Each sub-class should implement these functions
   // After the implementation for each sub-class, we should set these to pure virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output) const {
-      ALWAYS_ASSERT(&output != nullptr);
-      return false;
-  }
+  virtual bool SerializeTo(SerializeOutput &output) const = 0;
   virtual bool DeserializeFrom(SerializeInputBE &input) {
     ALWAYS_ASSERT(&input != nullptr);
     return false;
-  }
-  virtual int SerializeSize() {
-      return 0;
   }
 
  protected:

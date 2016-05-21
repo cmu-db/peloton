@@ -42,6 +42,12 @@ class MockPlan : public planner::AbstractPlan {
   std::unique_ptr<planner::AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new MockPlan());
   }
+
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
 };
 
 }  // namespace test

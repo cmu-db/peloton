@@ -55,6 +55,12 @@ class UpdatePlan : public AbstractPlan {
         new UpdatePlan(target_table_, std::move(project_info_->Copy())));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_;

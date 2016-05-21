@@ -44,6 +44,12 @@ class SetOpPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new SetOpPlan(set_op_));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   /** @brief Set Operation of this node */
   SetOpType set_op_;

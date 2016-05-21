@@ -52,6 +52,12 @@ class HashPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new HashPlan(copied_hash_keys));
   }
 
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+	  ALWAYS_ASSERT(&output != nullptr);
+	  throw SerializationException("This class should implement SerializeTo method");}
+
  private:
   std::vector<HashKeyPtrType> hash_keys_;
 };

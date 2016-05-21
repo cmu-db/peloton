@@ -229,7 +229,7 @@ int SeqScanPlan::SerializeSize() {
         size = size + Predicate()->SerializeSize();
     }
     if (Parent()) {
-        size = size + Parent()->SerializeSize();
+        //size = size + Parent()->SerializeSize();
     }
 
     return size;

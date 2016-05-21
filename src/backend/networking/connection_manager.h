@@ -38,10 +38,10 @@ class ConnectionManager {
 
   struct event_base* GetEventBase();
 
-  // FIXME: what's the difference between the two GetConn? what's the relationship
-  // between those Connection* function and their bool counterparts?
+  // Use the string addr to get a connection
   Connection* GetConn(std::string& addr);
 
+  // Use the NetworkAddress addr to get a connection
   Connection* GetConn(NetworkAddress& addr);
   Connection* CreateConn(NetworkAddress& addr);
   Connection* FindConn(NetworkAddress& addr);

@@ -21,7 +21,8 @@
 namespace peloton {
 namespace networking {
 class Connection;
-// FIXME: Could you give some description about the function of a listener?
+
+// Listener wraps TPC listen and calls the callback function when recving a request
 class Listener {
  public:
   // This is the server port
