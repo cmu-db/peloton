@@ -107,7 +107,8 @@ class Manager {
 
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
-  lookup_dir locator;
+  //lookup_dir locator;
+  std::shared_ptr<storage::TileGroup> locator[1024];
 
   // DATABASES
 

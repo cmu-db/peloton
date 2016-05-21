@@ -35,7 +35,7 @@ void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
 
   // drop the catalog reference to the old tile group
-  locator.erase(oid);
+  //locator.erase(oid);
 
   // add a catalog reference to the tile group
   locator[oid] = location;
@@ -46,22 +46,25 @@ void Manager::DropTileGroup(const oid_t oid) {
   {
     LOG_TRACE("Dropping tile group %u", oid);
     // drop the catalog reference to the tile group
-    locator.erase(oid);
+    //locator.erase(oid);
+    locator[oid] = nullptr;
   }
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  std::shared_ptr<storage::TileGroup> location;
+  // std::shared_ptr<storage::TileGroup> location;
 
-  if (locator.find(oid, location) == false) {
-    return nullptr;
-  }
-  return location;
+  // if (locator.find(oid, location) == false) {
+  //   return nullptr;
+  // }
+  // return location;
+  while (locator[oid] == nullptr);
+  return locator[oid];
 }
 
 // used for logging test
 void Manager::ClearTileGroup() {
-  locator.clear();
+  //locator.clear();
 }
 
 //===--------------------------------------------------------------------===//
