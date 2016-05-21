@@ -401,17 +401,20 @@ static const struct config_enum_entry peloton_layout_mode_options[] = {
     {NULL, 0, false}};
 
 /* Possible values for peloton_logging_mode GUC */
-typedef enum LoggingType {
-  LOGGING_TYPE_INVALID, /* No logging */
+enum LoggingType {
+  LOGGING_TYPE_INVALID = 0,
 
-  // NVM
-  LOGGING_TYPE_NVM_WAL,
-  LOGGING_TYPE_NVM_WBL,
+  // Based on write behind logging
+  LOGGING_TYPE_NVM_WBL = 1,
+  LOGGING_TYPE_SSD_WBL = 2,
+  LOGGING_TYPE_HDD_WBL = 3,
 
-  // HDD
-  LOGGING_TYPE_HDD_WAL,
-  LOGGING_TYPE_HDD_WBL
-} LoggingType;
+  // Based on write ahead logging
+  LOGGING_TYPE_NVM_WAL = 4,
+  LOGGING_TYPE_SSD_WAL = 5,
+  LOGGING_TYPE_HDD_WAL = 6,
+
+};
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
   {"invalid", LOGGING_TYPE_INVALID, false},

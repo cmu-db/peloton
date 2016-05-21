@@ -138,13 +138,18 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t write_size = 0;
   size_t rep_array_offset = 0;
   std::unique_ptr<char> replication_array = nullptr;
+  TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
+                                      this->max_collected_commit_id);
+  delimiter_rec.Serialize(output_buffer);
   if (replicating_) {
     // find the size we need to write out
     for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
          global_queue_itr++) {
       write_size += global_queue[global_queue_itr]->GetSize();
     }
-    write_size += sizeof(TransactionRecord);
+    if (max_collected_commit_id != max_flushed_commit_id) {
+      write_size += delimiter_rec.GetMessageLength();
+    }
     replication_array.reset(new char[write_size]);
   }
 
@@ -179,20 +184,13 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
 
   bool flushed = false;
   if (max_collected_commit_id != max_flushed_commit_id) {
-    TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
-                                    this->max_collected_commit_id);
-    delimiter_rec.Serialize(output_buffer);
+
 
     if (replicating_) {
       memcpy(replication_array.get() + rep_array_offset,
              delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
       // send the request
-      networking::LogRecordReplayRequest request;
-      request.set_log(replication_array.get(), write_size);
-      request.set_sync_type(networking::ResponseType::SYNC);
-      networking::LogRecordReplayResponse response;
-      replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
-                                         nullptr);
+      rep_array_offset += delimiter_rec.GetMessageLength();
     }
     if (!test_mode_) {
       PL_ASSERT(cur_file_handle.fd != -1);
@@ -234,6 +232,17 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
         flushed = true;
       }
     }
+  }
+  if (replicating_ && write_size > 0){
+	  networking::LogRecordReplayRequest request;
+	  request.set_log(replication_array.get(), write_size);
+	  request.set_sync_type(networking::ResponseType::SYNC);
+	  networking::LogRecordReplayResponse response;
+	  remote_done_ = false;
+	  google::protobuf::Closure * closure = google::protobuf::NewCallback(static_cast<FrontendLogger *>(this), &FrontendLogger::RemoteDone);
+	  replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
+										 closure);
+	  while(!remote_done_);
   }
 
   /* For now, fflush after every iteration of collecting buffers */

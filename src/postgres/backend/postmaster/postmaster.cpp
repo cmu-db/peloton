@@ -645,7 +645,7 @@ void TestSend() {
 void PostmasterMain(int argc, char *argv[]) {
   int opt;
   int sql_status;
-  int mc_status;
+  int mc_status = STATUS_OK;
   char *userDoption = NULL;
   bool listen_addr_saved = false;
   int i;
@@ -1037,9 +1037,9 @@ void PostmasterMain(int argc, char *argv[]) {
         sql_status =
             StreamServerPort(AF_UNSPEC, NULL, (unsigned short)PostPortNumber,
                              NULL, ListenSocket, MAXLISTEN);
-        mc_status = StreamServerPort(AF_UNSPEC, NULL,
-                                     (unsigned short)MemcachedPortNumber, NULL,
-                                     MemcachedListenSocket, MAXLISTEN);
+//        mc_status = StreamServerPort(AF_UNSPEC, NULL,
+//                                     (unsigned short)MemcachedPortNumber, NULL,
+//                                     MemcachedListenSocket, MAXLISTEN);
       }
 
       else {
@@ -1047,9 +1047,9 @@ void PostmasterMain(int argc, char *argv[]) {
             StreamServerPort(AF_UNSPEC, curhost, (unsigned short)PostPortNumber,
                              NULL, ListenSocket, MAXLISTEN);
 
-        mc_status = StreamServerPort(AF_UNSPEC, curhost,
-                                     (unsigned short)MemcachedPortNumber, NULL,
-                                     MemcachedListenSocket, MAXLISTEN);
+//        mc_status = StreamServerPort(AF_UNSPEC, curhost,
+//                                     (unsigned short)MemcachedPortNumber, NULL,
+//                                     MemcachedListenSocket, MAXLISTEN);
       }
 
       if (sql_status == STATUS_OK && mc_status == STATUS_OK) {
@@ -1123,9 +1123,9 @@ void PostmasterMain(int argc, char *argv[]) {
           StreamServerPort(AF_UNIX, NULL, (unsigned short)PostPortNumber,
                            socketdir, ListenSocket, MAXLISTEN);
 
-      mc_status =
-          StreamServerPort(AF_UNIX, NULL, (unsigned short)MemcachedPortNumber,
-                           socketdir, MemcachedListenSocket, MAXLISTEN);
+//      mc_status =
+//          StreamServerPort(AF_UNIX, NULL, (unsigned short)MemcachedPortNumber,
+//                           socketdir, MemcachedListenSocket, MAXLISTEN);
 
       if (sql_status == STATUS_OK && mc_status == STATUS_OK) {
         success++;
@@ -1156,8 +1156,8 @@ void PostmasterMain(int argc, char *argv[]) {
   /*
    * Check that there is some memcached socket to listen on
    */
-  if (MemcachedListenSocket[0] == PGINVALID_SOCKET)
-    ereport(FATAL, (errmsg("no socket created for memcached listening")));
+//  if (MemcachedListenSocket[0] == PGINVALID_SOCKET)
+//    ereport(FATAL, (errmsg("no socket created for memcached listening")));
 
   /*
    * If no valid TCP ports, write an empty line for listen address,
@@ -1673,12 +1673,12 @@ static int ServerLoop(void) {
         }
 
         // check memcached port as well
-        if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
-          Port *port = ConnCreate(MemcachedListenSocket[i]);
-          if (port) {
-            BackendStartup(port, true);
-          }
-        }
+//        if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
+//          Port *port = ConnCreate(MemcachedListenSocket[i]);
+//          if (port) {
+//            BackendStartup(port, true);
+//          }
+//        }
       }
     }
 
@@ -1810,14 +1810,14 @@ static int initMasks(fd_set *rmask) {
   }
 
   // do the same for memcached sockets
-  for (i = 0; i < MAXLISTEN; i++) {
-    int fd = MemcachedListenSocket[i];
-
-    if (fd == PGINVALID_SOCKET) break;
-    FD_SET(fd, rmask);
-
-    if (fd > maxsock) maxsock = fd;
-  }
+//  for (i = 0; i < MAXLISTEN; i++) {
+//    int fd = MemcachedListenSocket[i];
+//
+//    if (fd == PGINVALID_SOCKET) break;
+//    FD_SET(fd, rmask);
+//
+//    if (fd > maxsock) maxsock = fd;
+//  }
 
   return maxsock + 1;
 }
