@@ -85,6 +85,8 @@ class AbstractPlan : public Printable {
   // After the implementation for each sub-class, we should set these to pure virtual
   //===--------------------------------------------------------------------===//
   virtual bool SerializeTo(SerializeOutput &output) const = 0;
+
+  // TODO: Should every plan has a DeserializeFrom? or is there other elegant way?
   virtual bool DeserializeFrom(SerializeInputBE &input) {
     ALWAYS_ASSERT(&input != nullptr);
     return false;
