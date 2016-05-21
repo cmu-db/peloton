@@ -153,7 +153,8 @@ ItemPointer DataTable::FillInEmptyTupleSlot(const storage::Tuple *tuple,
   // get valid tuple.
   while (true) {
     // get the last tile group.
-    tile_group = GetTileGroup(tile_group_count_ - 1);
+    tile_group = last_tile_group_;
+//    tile_group = GetTileGroup(tile_group_count_ - 1);
 
     tuple_slot = tile_group->InsertTuple(tuple);
 
@@ -549,12 +550,18 @@ oid_t DataTable::AddDefaultTileGroup() {
     LOG_TRACE("Added a tile group ");
 
     tile_group_lock_.WriteLock();
-    tile_groups_.push_back(tile_group_id);
-    tile_group_lock_.Unlock();
-
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+
+    COMPILER_MEMORY_FENCE;
+
+    last_tile_group_ = tile_group;
+
+    tile_groups_.push_back(tile_group_id);
+    
+    tile_group_lock_.Unlock();
+
 
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.
@@ -639,6 +646,7 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
 
   return GetTileGroupById(tile_group_id);
 }
+
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
     const oid_t &tile_group_id) const {
