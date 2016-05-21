@@ -37,14 +37,11 @@ class ProjectionPlan : public AbstractPlan {
                  std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const planner::ProjectInfo *GetProjectInfo()
-      const {
+  inline const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
-  inline const catalog::Schema *GetSchema() const {
-    return schema_.get();
-  }
+  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_PROJECTION;
@@ -70,8 +67,9 @@ class ProjectionPlan : public AbstractPlan {
   // Every class should implement SerializeTo method before using it.
   // The implementation in seq_scan_plan can be referenced
   bool SerializeTo(SerializeOutput &output) const {
-	PL_ASSERT(&output != nullptr);
-	throw SerializationException("This class should implement SerializeTo method");
+    PL_ASSERT(&output != nullptr);
+    throw SerializationException(
+        "This class should implement SerializeTo method");
   }
 
  private:

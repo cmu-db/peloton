@@ -46,9 +46,7 @@ class MaterializationPlan : public AbstractPlan {
     return old_to_new_cols_;
   }
 
-  inline const catalog::Schema *GetSchema() const {
-    return schema_.get();
-  }
+  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
   inline bool GetPhysifyFlag() const { return physify_flag_; }
 
@@ -68,8 +66,9 @@ class MaterializationPlan : public AbstractPlan {
   // Every class should implement SerializeTo method before using it.
   // The implementation in seq_scan_plan can be referenced
   bool SerializeTo(SerializeOutput &output) const {
-	PL_ASSERT(&output != nullptr);
-	throw SerializationException("This class should implement SerializeTo method");
+    PL_ASSERT(&output != nullptr);
+    throw SerializationException(
+        "This class should implement SerializeTo method");
   }
 
  private:
