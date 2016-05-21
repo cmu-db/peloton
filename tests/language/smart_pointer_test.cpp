@@ -36,7 +36,7 @@ TEST_F(SmartPointerTests, UniquePtr) {
   LOG_INFO("About to release Foo...");
   Foo* fp = up.release();
 
-  ALWAYS_ASSERT(up.get() == nullptr);
+  PL_ASSERT(up.get() == nullptr);
   LOG_INFO("Foo is no longer owned by unique_ptr...");
 
   LOG_INFO("Add a new Foo...");

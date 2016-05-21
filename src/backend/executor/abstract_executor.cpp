@@ -29,7 +29,7 @@ void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
 LogicalTile *AbstractExecutor::GetOutput() {
-  // ALWAYS_ASSERT(output.get() != nullptr);
+  // PL_ASSERT(output.get() != nullptr);
   return output.release();
 }
 

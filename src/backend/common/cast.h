@@ -20,9 +20,9 @@ namespace peloton {
 // Cast from signed to unsigned types.
 template <typename DestinationType, typename SourceType>
 DestinationType ALWAYS_ASSERT_range_cast_signed_to_unsigned(SourceType value) {
-  ALWAYS_ASSERT(0 == std::numeric_limits<DestinationType>::min());
-  ALWAYS_ASSERT(0 <= value);
-  ALWAYS_ASSERT(value <= std::numeric_limits<DestinationType>::max());
+  PL_ASSERT(0 == std::numeric_limits<DestinationType>::min());
+  PL_ASSERT(0 <= value);
+  PL_ASSERT(value <= std::numeric_limits<DestinationType>::max());
 
   return static_cast<DestinationType>(value);
 }
@@ -31,8 +31,8 @@ DestinationType ALWAYS_ASSERT_range_cast_signed_to_unsigned(SourceType value) {
 // bound
 template <typename DestinationType, typename SourceType>
 DestinationType ALWAYS_ASSERT_range_cast_unsigned_to_signed(SourceType value) {
-  ALWAYS_ASSERT(0 == std::numeric_limits<SourceType>::min());
-  ALWAYS_ASSERT(value <= std::numeric_limits<DestinationType>::max());
+  PL_ASSERT(0 == std::numeric_limits<SourceType>::min());
+  PL_ASSERT(value <= std::numeric_limits<DestinationType>::max());
 
   return static_cast<DestinationType>(value);
 }
@@ -40,8 +40,8 @@ DestinationType ALWAYS_ASSERT_range_cast_unsigned_to_signed(SourceType value) {
 // Cast between types of the same signs
 template <typename DestinationType, typename SourceType>
 DestinationType ALWAYS_ASSERT_range_cast_same(SourceType value) {
-  ALWAYS_ASSERT(std::numeric_limits<DestinationType>::min() <= value);
-  ALWAYS_ASSERT(value <= std::numeric_limits<DestinationType>::max());
+  PL_ASSERT(std::numeric_limits<DestinationType>::min() <= value);
+  PL_ASSERT(value <= std::numeric_limits<DestinationType>::max());
   return static_cast<DestinationType>(value);
 }
 

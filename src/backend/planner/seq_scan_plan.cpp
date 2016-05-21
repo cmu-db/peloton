@@ -103,7 +103,7 @@ bool SeqScanPlan::SerializeTo(SerializeOutput &output) const {
 
     // Write the total length
     int32_t sz = static_cast<int32_t>(output.Position() - start - sizeof(int));
-    ALWAYS_ASSERT(sz > 0);
+    PL_ASSERT(sz > 0);
     output.WriteIntAt(start, sz);
 
     return true;
@@ -128,8 +128,8 @@ bool SeqScanPlan::DeserializeFrom(SerializeInputBE &input) {
     input.ReadInt();
 
     // Read the type
-    PlanNodeType plan_type = (PlanNodeType)input.ReadEnumInSingleByte();
-    ALWAYS_ASSERT(plan_type == GetPlanNodeType());
+    UNUSED_ATTRIBUTE PlanNodeType plan_type = (PlanNodeType)input.ReadEnumInSingleByte();
+    PL_ASSERT(plan_type == GetPlanNodeType());
 
     // Read database id
     oid_t database_oid = input.ReadInt();

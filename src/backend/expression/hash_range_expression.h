@@ -52,7 +52,7 @@ class HashRangeExpression : public AbstractExpression {
                          UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
                          UNUSED_ATTRIBUTE
                          executor::ExecutorContext *context) const override {
-    ALWAYS_ASSERT(tuple1);
+    PL_ASSERT(tuple1);
     if (!tuple1) {
       throw Exception(
           "TupleValueExpression::"
@@ -81,8 +81,8 @@ class HashRangeExpression : public AbstractExpression {
     int32_t min = 0;
     int32_t max = ranges_.size() - 1;
     while (min <= max) {
-      ALWAYS_ASSERT(min >= 0);
-      ALWAYS_ASSERT(max >= 0);
+      PL_ASSERT(min >= 0);
+      PL_ASSERT(max >= 0);
       uint32_t mid = (min + max) >> 1;
       if (ranges_[mid].second < hash) {
         min = mid + 1;

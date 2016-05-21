@@ -178,9 +178,9 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool *pool) {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
   }
-  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
+  PL_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
          m_valueType == VALUE_TYPE_VARBINARY);
-  ALWAYS_ASSERT(m_sourceInlined);
+  PL_ASSERT(m_sourceInlined);
 
   if (IsNull()) {
     *reinterpret_cast<void **>(m_data) = NULL;
@@ -217,9 +217,9 @@ void Value::AllocateObjectFromOutlinedValue() {
   if (m_valueType == VALUE_TYPE_NULL || m_valueType == VALUE_TYPE_INVALID) {
     return;
   }
-  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
+  PL_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
          m_valueType == VALUE_TYPE_VARBINARY);
-  ALWAYS_ASSERT(!m_sourceInlined);
+  PL_ASSERT(!m_sourceInlined);
 
   if (IsNull()) {
     *reinterpret_cast<void **>(m_data) = NULL;
@@ -559,7 +559,7 @@ const std::string Value::GetInfo() const {
  * Serialize sign and value using radix point (no exponent).
  */
 std::string Value::CreateStringFromDecimal() const {
-  ALWAYS_ASSERT(!IsNull());
+  PL_ASSERT(!IsNull());
   std::ostringstream buffer;
   TTInt scaledValue = GetDecimal();
   if (scaledValue.IsSign()) {
@@ -798,11 +798,11 @@ void Value::AllocateANewValueList(size_t length, ValueType elementType) {
 }
 
 void Value::SetArrayElements(std::vector<Value> &args) const {
-  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
+  PL_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
   // Assign each of the elements.
   size_t ii = args.size();
-  ALWAYS_ASSERT(ii == listOfValues->m_length);
+  PL_ASSERT(ii == listOfValues->m_length);
   while (ii--) {
     listOfValues->m_values[ii] = args[ii];
   }
@@ -813,16 +813,16 @@ void Value::SetArrayElements(std::vector<Value> &args) const {
 }
 
 int Value::ArrayLength() const {
-  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
+  PL_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
   return static_cast<int>(listOfValues->m_length);
 }
 
 Value Value::ItemAtIndex(int index) const {
-  ALWAYS_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
+  PL_ASSERT(m_valueType == VALUE_TYPE_ARRAY);
   ValueList *listOfValues = (ValueList *)GetObjectValue();
-  ALWAYS_ASSERT(index >= 0);
-  ALWAYS_ASSERT(index < (int)listOfValues->m_length);
+  PL_ASSERT(index >= 0);
+  PL_ASSERT(index < (int)listOfValues->m_length);
   return listOfValues->m_values[index];
 }
 

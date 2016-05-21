@@ -89,7 +89,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
 
   // Get the database oid and table oid
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
-  ALWAYS_ASSERT(database_oid);
+  PL_ASSERT(database_oid);
 
   // Get the table location from db
   auto &manager = catalog::Manager::GetInstance();

@@ -32,8 +32,8 @@ Listener::Listener(int port)
   // make libevent support multiple threads (pthread)
   // TODO: put evthread_use_pthreads before event_base_new()?
 
-  ALWAYS_ASSERT(listen_base_ != NULL);
-  ALWAYS_ASSERT(port_ > 0 && port_ < 65535);
+  PL_ASSERT(listen_base_ != NULL);
+  PL_ASSERT(port_ > 0 && port_ < 65535);
 }
 
 Listener::~Listener() {
@@ -100,7 +100,7 @@ void Listener::Run(void *arg) {
 void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             struct sockaddr *address,
                             UNUSED_ATTRIBUTE int socklen, void *ctx) {
-  ALWAYS_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
+  PL_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
   LOG_TRACE("Server: connection received");
 
@@ -121,7 +121,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,
                              UNUSED_ATTRIBUTE void *ctx) {
-  ALWAYS_ASSERT(ctx != NULL);
+  PL_ASSERT(ctx != NULL);
 
   struct event_base *base = evconnlistener_get_base(listener);
 

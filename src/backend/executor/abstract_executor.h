@@ -95,7 +95,7 @@ class AbstractExecutor {
   template <class T>
   inline const T &GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
-    ALWAYS_ASSERT(node);
+    PL_ASSERT(node);
     return *node;
   }
 

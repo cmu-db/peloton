@@ -120,10 +120,9 @@ void ConstraintsTestsUtil::PopulateTable(UNUSED_ATTRIBUTE
                                          concurrency::Transaction *transaction,
                                          storage::DataTable *table,
                                          int num_rows) {
-  const catalog::Schema *schema = table->GetSchema();
-
   // Ensure that the tile group is as expected.
-  ALWAYS_ASSERT(schema->GetColumnCount() == 4);
+  UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   for (int rowid = 0; rowid < num_rows; rowid++) {
     int populate_value = rowid;

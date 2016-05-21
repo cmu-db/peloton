@@ -39,7 +39,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
 
   // Resolve child plan
   AbstractPlanState *subplan_state = outerAbstractPlanState(limit_state);
-  ALWAYS_ASSERT(subplan_state != nullptr);
+  PL_ASSERT(subplan_state != nullptr);
   plan_node->AddChild(TransformPlan(subplan_state));
 
   return plan_node;

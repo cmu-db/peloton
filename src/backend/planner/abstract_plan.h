@@ -57,7 +57,7 @@ class AbstractPlan : public Printable {
 
   const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
-  const AbstractPlan *GetParent () const;
+  const AbstractPlan *GetParent() const;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -87,8 +87,8 @@ class AbstractPlan : public Printable {
   virtual bool SerializeTo(SerializeOutput &output) const = 0;
 
   // TODO: Should every plan has a DeserializeFrom? or is there other elegant way?
-  virtual bool DeserializeFrom(SerializeInputBE &input) {
-    ALWAYS_ASSERT(&input != nullptr);
+  virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
+    PL_ASSERT(&input != nullptr);
     return false;
   }
 

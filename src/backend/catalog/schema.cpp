@@ -183,7 +183,7 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
     const std::vector<std::vector<oid_t>> &subsets) {
-  ALWAYS_ASSERT(schema_list.size() == subsets.size());
+  PL_ASSERT(schema_list.size() == subsets.size());
 
   std::vector<Column> columns;
   for (unsigned int i = 0; i < schema_list.size(); i++) {

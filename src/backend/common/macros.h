@@ -61,7 +61,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #ifdef CHECK_INVARIANTS
-  #define INVARIANT(expr) ALWAYS_ASSERT(expr)
+  #define INVARIANT(expr) PL_ASSERT(expr)
 #else
   #define INVARIANT(expr) ((void)0)
 #endif /* CHECK_INVARIANTS */
@@ -74,7 +74,7 @@ namespace peloton {
 // we'll never return
 #define PL_UNIMPLEMENTED(what) \
   do { \
-    ALWAYS_ASSERT(false); \
+    PL_ASSERT(false); \
     throw ::std::runtime_error(what); \
   } while (0)
 
@@ -83,13 +83,13 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 #ifdef NDEBUG
-  #define ALWAYS_ASSERT(expr) (likely_branch((expr)) ? (void)0 : abort())
+  #define PL_ASSERT(expr) ((void)0)
 #else
-  #define ALWAYS_ASSERT(expr) assert((expr))
+  #define PL_ASSERT(expr) assert((expr))
 #endif /* NDEBUG */
 
 #ifdef CHECK_INVARIANTS
-  #define INVARIANT(expr) ALWAYS_ASSERT(expr)
+  #define INVARIANT(expr) PL_ASSERT(expr)
 #else
   #define INVARIANT(expr) ((void)0)
 #endif /* CHECK_INVARIANTS */

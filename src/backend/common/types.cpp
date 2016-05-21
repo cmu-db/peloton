@@ -278,12 +278,12 @@ int32_t HexCharToInt(char c) {
   else
     retval = c - '0';
 
-  ALWAYS_ASSERT(retval >= 0 && retval < 16);
+  PL_ASSERT(retval >= 0 && retval < 16);
   return retval;
 }
 
 bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
-  ALWAYS_ASSERT(hexString);
+  PL_ASSERT(hexString);
   size_t len = strlen(hexString);
   if ((len % 2) != 0) return false;
   uint32_t i;
@@ -293,7 +293,7 @@ bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
     if ((high == -1) || (low == -1)) return false;
     int32_t result = high * 16 + low;
 
-    ALWAYS_ASSERT(result >= 0 && result < 256);
+    PL_ASSERT(result >= 0 && result < 256);
     bufferdst[i] = static_cast<unsigned char>(result);
   }
   return true;
@@ -366,7 +366,7 @@ BackendType GetBackendType(const LoggingType& logging_type) {
 }
 
 void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value) {
-  ALWAYS_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
+  PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
   int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
   __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);

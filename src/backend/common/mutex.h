@@ -24,31 +24,31 @@ namespace peloton {
 class Mutex {
  public:
   Mutex() {
-    int status = pthread_mutex_init(&mutex_, NULL);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_mutex_init(&mutex_, NULL);
+    PL_ASSERT(status == 0);
   }
 
   ~Mutex() {
-    int status = pthread_mutex_destroy(&mutex_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_mutex_destroy(&mutex_);
+    PL_ASSERT(status == 0);
   }
 
   void Lock() {
-    int status = pthread_mutex_lock(&mutex_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_mutex_lock(&mutex_);
+    PL_ASSERT(status == 0);
   }
 
   // Returns true if the lock is acquired.
   bool TryLock() {
-    int status = pthread_mutex_trylock(&mutex_);
+    UNUSED_ATTRIBUTE int status = pthread_mutex_trylock(&mutex_);
     if (status == 0) return true;
-    ALWAYS_ASSERT(status == EBUSY);
+    PL_ASSERT(status == EBUSY);
     return false;
   }
 
   void UnLock() {
-    int status = pthread_mutex_unlock(&mutex_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_mutex_unlock(&mutex_);
+    PL_ASSERT(status == 0);
   }
 
   pthread_mutex_t* RawMutex() { return &mutex_; }
@@ -82,40 +82,40 @@ class Condition {
  public:
   // mutex is the Mutex that must be locked when using the condition.
   explicit Condition(Mutex* mutex) : mutex_(mutex) {
-    int status = pthread_cond_init(&cond_, NULL);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_cond_init(&cond_, NULL);
+    PL_ASSERT(status == 0);
   }
 
   ~Condition() {
-    int status = pthread_cond_destroy(&cond_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_cond_destroy(&cond_);
+    PL_ASSERT(status == 0);
   }
 
   // Wait for the condition to be signalled. This must be called with the Mutex
   // held.
   // This must be called within a loop. See man pthread_cond_wait for details.
   void Wait() {
-    int status = pthread_cond_wait(&cond_, mutex_->RawMutex());
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_cond_wait(&cond_, mutex_->RawMutex());
+    PL_ASSERT(status == 0);
   }
 
   // Calls timedwait with a relative, instead of an absolute, timeout.
   bool TimedwaitRelative(const struct timespec& relative_time) {
-    ALWAYS_ASSERT(0 <= relative_time.tv_nsec && relative_time.tv_nsec < ONE_S_IN_NS);
+    PL_ASSERT(0 <= relative_time.tv_nsec && relative_time.tv_nsec < ONE_S_IN_NS);
 
     struct timespec absolute;
     // clock_gettime would be more convenient, but that needs librt
     // int status = clock_gettime(CLOCK_REALTIME, &absolute);
     struct timeval tv;
-    int status = gettimeofday(&tv, NULL);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = gettimeofday(&tv, NULL);
+    PL_ASSERT(status == 0);
     absolute.tv_sec = tv.tv_sec + relative_time.tv_sec;
     absolute.tv_nsec = tv.tv_usec * 1000 + relative_time.tv_nsec;
     if (absolute.tv_nsec >= ONE_S_IN_NS) {
       absolute.tv_nsec -= ONE_S_IN_NS;
       absolute.tv_sec += 1;
     }
-    ALWAYS_ASSERT(0 <= absolute.tv_nsec && absolute.tv_nsec < ONE_S_IN_NS);
+    PL_ASSERT(0 <= absolute.tv_nsec && absolute.tv_nsec < ONE_S_IN_NS);
 
     return Timedwait(absolute);
   }
@@ -123,26 +123,26 @@ class Condition {
   // Returns true if the lock is acquired, false otherwise. abstime is the
   // *absolute* time.
   bool Timedwait(const struct timespec& absolute_time) {
-    ALWAYS_ASSERT(0 <= absolute_time.tv_nsec && absolute_time.tv_nsec < ONE_S_IN_NS);
+    PL_ASSERT(0 <= absolute_time.tv_nsec && absolute_time.tv_nsec < ONE_S_IN_NS);
 
-    int status =
+    UNUSED_ATTRIBUTE int status =
         pthread_cond_timedwait(&cond_, mutex_->RawMutex(), &absolute_time);
     if (status == ETIMEDOUT) {
       return false;
     }
-    ALWAYS_ASSERT(status == 0);
+    PL_ASSERT(status == 0);
     return true;
   }
 
   void Signal() {
-    int status = pthread_cond_signal(&cond_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_cond_signal(&cond_);
+    PL_ASSERT(status == 0);
   }
 
   // Wake all threads that are waiting on this condition.
   void Broadcast() {
-    int status = pthread_cond_broadcast(&cond_);
-    ALWAYS_ASSERT(status == 0);
+    UNUSED_ATTRIBUTE int status = pthread_cond_broadcast(&cond_);
+    PL_ASSERT(status == 0);
   }
 
  private:

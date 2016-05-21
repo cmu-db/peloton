@@ -88,12 +88,12 @@ class AbstractExpression : public Printable {
   // After the implementation for each sub-class, we should set it to pure
   // virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output) const {
-    ALWAYS_ASSERT(&output != nullptr);
+  virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
+    PL_ASSERT(&output != nullptr);
     return false;
   }
-  virtual bool DeserializeFrom(SerializeInputBE &input) {
-    ALWAYS_ASSERT(&input != nullptr);
+  virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
+    PL_ASSERT(&input != nullptr);
     return false;
   }
 
