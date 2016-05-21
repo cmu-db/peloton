@@ -36,7 +36,11 @@ void Usage(FILE *out) {
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to");
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
+          "   -g --gc_protocal       :  choose gc protocol, default OFF\n"
+          "                             gc protocol could be off, co, va"
+
+  );
   exit(EXIT_FAILURE);
 }
 
@@ -50,6 +54,7 @@ static struct option opts[] = {
     {"zipf_theta", optional_argument, NULL, 'z'},
     {"mix_txn", no_argument, NULL, 'm'},
     {"protocol", optional_argument, NULL, 'p'},
+    {"gc_protocal", optional_argument, NULL, 'g'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -126,11 +131,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.zipf_theta = 0.0;
   state.run_mix = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
-
+  state.gc_protocol = GC_TYPE_OFF;
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:p:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmk:d:s:c:u:b:z:p:g:", opts, &idx);
 
     if (c == -1) break;
 
@@ -164,8 +169,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         state.run_mix = true;
         state.update_ratio = 0.0;
         break;
-      case 'p':
-      {
+      case 'p': {
         char *protocol = optarg;
         if (strcmp(protocol, "occ") == 0) {
           state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
@@ -183,6 +187,20 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
         } else {
           fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'g': {
+        char *gc_protocol = optarg;
+        if (strcmp(gc_protocol, "off") == 0) {
+          state.gc_protocol = GC_TYPE_OFF;
+        }else if (strcmp(gc_protocol, "va") == 0) {
+          state.gc_protocol = GC_TYPE_VACUUM;
+        }else if (strcmp(gc_protocol, "co") == 0) {
+          state.gc_protocol = GC_TYPE_CO;
+        }else {
+          fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
           exit(EXIT_FAILURE);
         }
         break;
