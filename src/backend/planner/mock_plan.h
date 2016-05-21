@@ -46,8 +46,8 @@ class MockPlan : public planner::AbstractPlan {
   // Every class should implement SerializeTo method before using it.
   // The implementation in seq_scan_plan can be referenced
   bool SerializeTo(SerializeOutput &output) const {
-	  PL_ASSERT(&output != nullptr);
-	  throw SerializationException("This class should implement SerializeTo method");
+	PL_ASSERT(&output != nullptr);
+	throw SerializationException("This class should implement SerializeTo method");
   }
 };
 

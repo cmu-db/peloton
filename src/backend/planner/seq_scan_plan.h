@@ -41,7 +41,7 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {}
 
-  SeqScanPlan():AbstractScan(){}
+  SeqScanPlan() : AbstractScan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
@@ -50,18 +50,14 @@ class SeqScanPlan : public AbstractScan {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo (SerializeOutput &output) const;
+  bool SerializeTo(SerializeOutput &output) const;
   bool DeserializeFrom(SerializeInputBE &input);
-
-  /* For init SerializeOutput */
-  int SerializeSize();
 
   std::unique_ptr<AbstractPlan> Copy() const {
     AbstractPlan *new_plan = new SeqScanPlan(
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
-
 };
 
 }  // namespace planner

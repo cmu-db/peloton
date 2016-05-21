@@ -37,7 +37,7 @@ struct total_processed {
  */
 Connection::Connection(int fd, struct event_base *base, void *arg,
                        NetworkAddress &addr)
-: addr_(addr), close_(false), status_(INIT), base_(base) {
+    : addr_(addr), close_(false), status_(INIT), base_(base) {
   // we must pass rpc_server when new a connection
   PL_ASSERT(arg != NULL);
   rpc_server_ = (RpcServer *)arg;
@@ -172,7 +172,8 @@ void *Connection::ProcessMessage(void *connection) {
         google::protobuf::Message *response = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len - TYPELEN - OPCODELEN);
+        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN,
+                                msg_len - TYPELEN - OPCODELEN);
 
         // Invoke rpc call.
         rpc_method->service_->CallMethod(method, &controller, message, response,
@@ -239,27 +240,6 @@ void *Connection::ProcessMessage(void *connection) {
       std::string error = controller.ErrorText();
       LOG_TRACE("RpcServer with controller failed:%s ", error.c_str());
     }
-
-    // TODO: remove the test code
-/*    {
-      std::lock_guard < std::mutex > lock(send_mutex);
-      server_response_send_number++;
-      server_response_send_bytes += (msg_len + HEADERLEN);
-
-      struct timeval end;
-      long useconds;
-      gettimeofday(&end, NULL);
-      useconds = end.tv_usec - ConnectionManager::GetInstance().start_time_;
-
-      LOG_TRACE("server_response_send_number: %lu", server_response_send_number);
-      LOG_TRACE("speed: %f-------------------------------------------------",
-               (float)(server_response_send_number * 1000000)/useconds);
-
-      LOG_TRACE("server_response_send_bytes: %lu", server_response_send_bytes);
-      LOG_TRACE("speed: %f-------------------------------------------------",
-               (float)(server_response_send_bytes * 1000000)/useconds);
-    }*/
-
   }
 
   return NULL;
@@ -268,8 +248,7 @@ void *Connection::ProcessMessage(void *connection) {
 /*
  * ReadCb is invoked when there is new data coming.
  */
-void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
-                        void *ctx) {
+void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev, void *ctx) {
   // TODO: We might use bev in future
   PL_ASSERT(bev != NULL);
 
@@ -299,8 +278,8 @@ void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
 /*
  * If recv close event, we should delete the connection from conn_pool
  */
-void Connection::EventCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
-                         short events, void *ctx) {
+void Connection::EventCb(UNUSED_ATTRIBUTE struct bufferevent *bev, short events,
+                         void *ctx) {
   Connection *conn = (Connection *)ctx;
   PL_ASSERT(conn != NULL && bev != NULL);
 

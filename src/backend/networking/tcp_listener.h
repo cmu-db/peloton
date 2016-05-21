@@ -22,7 +22,8 @@ namespace peloton {
 namespace networking {
 class Connection;
 
-// Listener wraps TPC listen and calls the callback function when recving a request
+// Listener wraps TCP's listen and calls the callback function when recving a
+// request
 class Listener {
  public:
   // This is the server port
@@ -33,14 +34,10 @@ class Listener {
   int GetPort() const { return port_; }
 
   // The listenner event is in the listen_base_
-  struct event_base* GetEventBase() const {
-    return listen_base_;
-  }
+  struct event_base* GetEventBase() const { return listen_base_; }
 
   // listener is a evconnlistener type which is a libevent type
-  struct evconnlistener* GetListener() const {
-    return listener_;
-  }
+  struct evconnlistener* GetListener() const { return listener_; }
 
   // Begin listening
   void Run(void* arg);
