@@ -49,8 +49,7 @@ class LockfreeQueue {
   }
 
   bool IsEmpty() {
-    return false;
-    //return queue_.is_empty();
+    return queue_.size_approx() == 0;
   }
 
  private:
