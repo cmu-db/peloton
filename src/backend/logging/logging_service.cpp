@@ -101,12 +101,15 @@ void LoggingService::CommitTransactionRecovery(cid_t commit_id) {
     TupleRecord *curr = *it;
     switch (curr->GetType()) {
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
         InsertTuple(curr, txn_manager);
         break;
       case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
         UpdateTuple(curr, txn_manager);
         break;
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
         DeleteTuple(curr, txn_manager);
         break;
       default:
@@ -200,7 +203,9 @@ void LoggingService::LogRecordReplay(
         break;
       }
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:{
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         GetTupleRecordHeader(*tuple_record, workingPointer);
@@ -217,7 +222,8 @@ void LoggingService::LogRecordReplay(
             table->GetSchema(), recovery_pool, workingPointer));
         break;
       }
-      case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:{
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         GetTupleRecordHeader(*tuple_record, workingPointer);
@@ -247,6 +253,9 @@ void LoggingService::LogRecordReplay(
 	  case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
 	  case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
 	  case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+	  case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+	  case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+	  case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
 		recovery_txn_table[tuple_record->GetTransactionId()].push_back(
 			tuple_record);
 		break;

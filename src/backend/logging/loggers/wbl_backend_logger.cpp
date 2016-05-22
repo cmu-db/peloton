@@ -27,6 +27,7 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
 	  SyncDataForCommit();
   }
   log_buffer_lock.Lock();
+  cid_t cur_log_id = record->GetTransactionId();
   switch (record->GetType()) {
     case LOGRECORD_TYPE_TRANSACTION_COMMIT:
       highest_logged_commit_message = record->GetTransactionId();
@@ -56,6 +57,45 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
     default:
       LOG_INFO("Invalid log record type");
       break;
+  }
+
+  if (replicating_){
+	  // here we should be getting LogRecords with data from the log manager
+	  if (!log_buffer_) {
+		  LOG_TRACE("Acquire the first log buffer in backend logger");
+		  this->log_buffer_lock.Unlock();
+		  std::unique_ptr<LogBuffer> new_buff =
+			  std::move(available_buffer_pool_->Get());
+		  this->log_buffer_lock.Lock();
+		  log_buffer_ = std::move(new_buff);
+		}
+	  // set if this is the max log_id seen so far
+	    if (cur_log_id > max_log_id_buffer) {
+	      log_buffer_->SetMaxLogId(cur_log_id);
+	      max_log_id_buffer = cur_log_id;
+	    }
+
+	    if (!log_buffer_->WriteRecord(record)) {
+	      LOG_TRACE("Log buffer is full - Attempt to acquire a new one");
+	      // put back a buffer
+	      max_log_id_buffer = 0;  // reset
+	      persist_buffer_pool_->Put(std::move(log_buffer_));
+	      this->log_buffer_lock.Unlock();
+
+	      // get a new one
+	      std::unique_ptr<LogBuffer> new_buff =
+	          std::move(available_buffer_pool_->Get());
+	      this->log_buffer_lock.Lock();
+	      log_buffer_ = std::move(new_buff);
+
+	      // write to the new log buffer
+	      auto success = log_buffer_->WriteRecord(record);
+	      if (!success) {
+	        LOG_ERROR("Write record to log buffer failed");
+	        this->log_buffer_lock.Unlock();
+	        return;
+	      }
+	    }
   }
 
   log_buffer_lock.Unlock();
@@ -101,12 +141,19 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
       break;
     }
   }
+  LogRecord *tuple_record ;
+  if (replicating_){
+	  tuple_record =
+	        new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
+	                        delete_location, data, db_oid);
+  }else{
 
-  // Don't make use of "data" in case of peloton log records
-  // Build the tuple log record
-  LogRecord *tuple_record =
-      new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
-                      delete_location, nullptr, db_oid);
+	  // Don't make use of "data" in case of peloton log records
+	  // Build the tuple log record
+	  tuple_record =
+		  new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
+						  delete_location, nullptr, db_oid);
+  }
 
   return tuple_record;
 }
