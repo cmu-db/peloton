@@ -417,11 +417,10 @@ enum LoggingType {
 };
 
 static const struct config_enum_entry peloton_logging_mode_options[] = {
-  {"invalid", LOGGING_TYPE_INVALID, false},
-  {"aries", LOGGING_TYPE_NVM_WAL, false},
-  {"peloton", LOGGING_TYPE_NVM_WBL, false},
-  {NULL, 0, false}
-};
+    {"invalid", LOGGING_TYPE_INVALID, false},
+    {"aries", LOGGING_TYPE_NVM_WAL, false},
+    {"peloton", LOGGING_TYPE_NVM_WBL, false},
+    {NULL, 0, false}};
 
 /* Possible values for peloton_gc_mode GUC */
 typedef enum GCType {
@@ -445,6 +444,18 @@ typedef enum CheckpointType {
 static const struct config_enum_entry peloton_checkpoint_mode_options[] = {
     {"invalid", CHECKPOINT_TYPE_INVALID, false},
     {"normal", CHECKPOINT_TYPE_NORMAL, false},
+    {NULL, 0, false}};
+
+typedef enum ReplicationType {
+  ASYNC_REPLICATION,
+  SYNC_REPLICATION,
+  SEMISYNC_REPLICATION
+} ReplicationType;
+
+static const struct config_enum_entry peloton_replication_mode_options[] = {
+    {"sync", SYNC_REPLICATION, false},
+    {"async", ASYNC_REPLICATION, false},
+    {"semisync", SEMISYNC_REPLICATION, false},
     {NULL, 0, false}};
 
 /*
@@ -537,6 +548,8 @@ int peloton_flush_frequency_micros;
 int peloton_server_port;
 
 char *peloton_endpoint_address;
+
+ReplicationType peloton_replication_mode;
 // Flush mode (for NVM WBL)
 int peloton_flush_mode;
 
@@ -948,11 +961,7 @@ struct config_bool ConfigureNamesBool[] = {
       gettext_noop("Shows whether the current user is a superuser."), NULL,
       GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE |
           GUC_DISALLOW_IN_FILE},
-     &session_auth_is_superuser,
-     false,
-     NULL,
-     NULL,
-     NULL},
+     &session_auth_is_superuser, false, NULL, NULL, NULL},
     {{"bonjour", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
       gettext_noop("Enables advertising the server via Bonjour."), NULL},
      &enable_bonjour,
@@ -1755,13 +1764,7 @@ struct config_int ConfigureNamesInt[] = {
       gettext_noop(
           "Sets the time to wait on a lock before checking for deadlock."),
       NULL, GUC_UNIT_MS},
-     &DeadlockTimeout,
-     1000,
-     1,
-     INT_MAX,
-     NULL,
-     NULL,
-     NULL},
+     &DeadlockTimeout, 1000, 1, INT_MAX, NULL, NULL, NULL},
 
     {{"max_standby_archive_delay", PGC_SIGHUP, REPLICATION_STANDBY,
       gettext_noop(
@@ -2224,13 +2227,7 @@ struct config_int ConfigureNamesInt[] = {
           "Waits N seconds on connection startup before authentication."),
       gettext_noop("This allows attaching a debugger to the process."),
       GUC_NOT_IN_SAMPLE | GUC_UNIT_S},
-     &PreAuthDelay,
-     0,
-     0,
-     60,
-     NULL,
-     NULL,
-     NULL},
+     &PreAuthDelay, 0, 0, 60, NULL, NULL, NULL},
 
     {{"wal_keep_segments", PGC_SIGHUP, REPLICATION_SENDING,
       gettext_noop("Sets the number of WAL files held for standby servers."),
@@ -2323,13 +2320,7 @@ struct config_int ConfigureNamesInt[] = {
           "Sets the maximum number of simultaneously running WAL sender "
           "processes."),
       NULL},
-     &max_wal_senders,
-     0,
-     0,
-     MAX_BACKENDS,
-     NULL,
-     NULL,
-     NULL},
+     &max_wal_senders, 0, 0, MAX_BACKENDS, NULL, NULL, NULL},
 
     {/* see max_connections */
      {"max_replication_slots", PGC_POSTMASTER, REPLICATION_SENDING,
@@ -2337,13 +2328,7 @@ struct config_int ConfigureNamesInt[] = {
           "Sets the maximum number of simultaneously defined replication "
           "slots."),
       NULL},
-     &max_replication_slots,
-     0,
-     0,
-     MAX_BACKENDS /* XXX? */,
-     NULL,
-     NULL,
-     NULL},
+     &max_replication_slots, 0, 0, MAX_BACKENDS /* XXX? */, NULL, NULL, NULL},
 
     {{"wal_sender_timeout", PGC_SIGHUP, REPLICATION_SENDING,
       gettext_noop("Sets the maximum time to wait for WAL replication."), NULL,
@@ -2636,38 +2621,23 @@ struct config_int ConfigureNamesInt[] = {
       NULL},
      &autovacuum_freeze_max_age,
      /* see pg_resetxlog if you change the upper-limit value */
-     200000000,
-     100000000,
-     2000000000,
-     NULL,
-     NULL,
-     NULL},
+     200000000, 100000000, 2000000000, NULL, NULL, NULL},
     {/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
      {"autovacuum_multixact_freeze_max_age", PGC_POSTMASTER, AUTOVACUUM,
       gettext_noop(
           "Multixact age at which to autovacuum a table to prevent multixact "
           "wraparound."),
       NULL},
-     &autovacuum_multixact_freeze_max_age,
-     400000000,
-     10000000,
-     2000000000,
-     NULL,
-     NULL,
-     NULL},
+     &autovacuum_multixact_freeze_max_age, 400000000, 10000000, 2000000000,
+     NULL, NULL, NULL},
     {/* see max_connections */
      {"autovacuum_max_workers", PGC_POSTMASTER, AUTOVACUUM,
       gettext_noop(
           "Sets the maximum number of simultaneously running autovacuum worker "
           "processes."),
       NULL},
-     &autovacuum_max_workers,
-     3,
-     1,
-     MAX_BACKENDS,
-     check_autovacuum_max_workers,
-     NULL,
-     NULL},
+     &autovacuum_max_workers, 3, 1, MAX_BACKENDS, check_autovacuum_max_workers,
+     NULL, NULL},
 
     {{"autovacuum_work_mem", PGC_SIGHUP, RESOURCES_MEM,
       gettext_noop(
@@ -2769,13 +2739,8 @@ struct config_int ConfigureNamesInt[] = {
      {"server_version_num", PGC_INTERNAL, PRESET_OPTIONS,
       gettext_noop("Shows the server version as an integer."), NULL,
       GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE},
-     &server_version_num,
-     PG_VERSION_NUM,
-     PG_VERSION_NUM,
-     PG_VERSION_NUM,
-     NULL,
-     NULL,
-     NULL},
+     &server_version_num, PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM, NULL,
+     NULL, NULL},
 
     {{"log_temp_files", PGC_SUSET, LOGGING_WHAT,
       gettext_noop(
@@ -2852,13 +2817,16 @@ struct config_int ConfigureNamesInt[] = {
      NULL,
      NULL},
 
-    {{ "peloton_server_port", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+    {{"peloton_server_port", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
       gettext_noop("Change the port for the follower to listen on"),
-      gettext_noop("Determines port that this node will listen on for replay.") },
-      &peloton_server_port, 0, 0,
-      INT_MAX,
-      NULL,
-      NULL },
+      gettext_noop(
+          "Determines port that this node will listen on for replay.")},
+     &peloton_server_port,
+     0,
+     0,
+     INT_MAX,
+     NULL,
+     NULL},
 
     /* End-of-list marker */
     {{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL,
@@ -3237,43 +3205,28 @@ struct config_string ConfigureNamesString[] = {
      {"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
       gettext_noop("Sets the server (database) character set encoding."), NULL,
       GUC_IS_NAME | GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE},
-     &server_encoding_string,
-     "SQL_ASCII",
-     NULL,
-     NULL,
-     NULL},
+     &server_encoding_string, "SQL_ASCII", NULL, NULL, NULL},
 
     {/* Can't be set in postgresql.conf */
      {"server_version", PGC_INTERNAL, PRESET_OPTIONS,
       gettext_noop("Shows the server version."), NULL,
       GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE},
-     &server_version_string,
-     PG_VERSION,
-     NULL,
-     NULL,
-     NULL},
+     &server_version_string, PG_VERSION, NULL, NULL, NULL},
 
     {/* Not for general use --- used by SET ROLE */
      {"role", PGC_USERSET, UNGROUPED, gettext_noop("Sets the current role."),
       NULL,
       GUC_IS_NAME | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE |
           GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST},
-     &role_string,
-     "none",
-     check_role,
-     assign_role,
-     show_role},
+     &role_string, "none", check_role, assign_role, show_role},
 
     {/* Not for general use --- used by SET SESSION AUTHORIZATION */
      {"session_authorization", PGC_USERSET, UNGROUPED,
       gettext_noop("Sets the session user name."), NULL,
       GUC_IS_NAME | GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL |
           GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_NOT_WHILE_SEC_REST},
-     &session_authorization_string,
-     NULL,
-     check_session_authorization,
-     assign_session_authorization,
-     NULL},
+     &session_authorization_string, NULL, check_session_authorization,
+     assign_session_authorization, NULL},
 
     {{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
       gettext_noop("Sets the destination for server log output."),
@@ -3396,11 +3349,7 @@ struct config_string ConfigureNamesString[] = {
      {"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
       gettext_noop("Sets the server's data directory."), NULL,
       GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE},
-     &data_directory,
-     NULL,
-     NULL,
-     NULL,
-     NULL},
+     &data_directory, NULL, NULL, NULL, NULL},
 
     {{"config_file", PGC_POSTMASTER, FILE_LOCATIONS,
       gettext_noop("Sets the server's main configuration file."), NULL,
@@ -3556,15 +3505,15 @@ struct config_string ConfigureNamesString[] = {
      NULL,
      NULL},
 
-	 {{"peloton_endpoint_address", PGC_SIGHUP, LOGGING_WHERE,
+    {{"peloton_endpoint_address", PGC_SIGHUP, LOGGING_WHERE,
       gettext_noop("Sets the log directory for Peloton."),
       gettext_noop("Must be specified as an absolute path."),
       GUC_SUPERUSER_ONLY},
-      &peloton_endpoint_address,
-      NULL,
-      NULL,
-      NULL,
-      NULL},
+     &peloton_endpoint_address,
+     NULL,
+     NULL,
+     NULL,
+     NULL},
 
     // TODO: More polishing? May be the verification function?
     {{"cluster_address", PGC_POSTMASTER, PELOTON_CLUSTERING_OPTIONS,
@@ -3882,6 +3831,16 @@ struct config_enum ConfigureNamesEnum[] = {
      reinterpret_cast<int *>(&peloton_checkpoint_mode),
      CHECKPOINT_TYPE_INVALID,
      peloton_checkpoint_mode_options,
+     NULL,
+     NULL,
+     NULL},
+
+    {{"peloton_replication_mode", PGC_USERSET, PELOTON_LOGGING_OPTIONS,
+      gettext_noop("Change peloton replication mode"),
+      gettext_noop("This determines the replication mode.")},
+     reinterpret_cast<int *>(&peloton_replication_mode),
+     ASYNC_REPLICATION,
+     peloton_replication_mode_options,
      NULL,
      NULL,
      NULL},

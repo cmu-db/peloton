@@ -24,11 +24,26 @@
 // configuration for testing
 extern int64_t peloton_wait_timeout;
 
+extern ReplicationType peloton_replication_mode;
+
 namespace peloton {
 namespace logging {
 
 FrontendLogger::FrontendLogger() {
+  switch (peloton_replication_mode) {
+    case ReplicationType::SYNC_REPLICATION:
+      replication_mode_ = networking::SYNC;
+      break;
+    case ReplicationType::ASYNC_REPLICATION:
+    default:
+      replication_mode_ = networking::ASYNC;
+      break;
+    case ReplicationType::SEMISYNC_REPLICATION:
+      replication_mode_ = networking::SEMISYNC;
+      break;
+  }
   if (peloton_endpoint_address != nullptr) {
+    remote_done_ = 0;
     replicating_ = true;
     controller_.reset(new networking::RpcController());
     channel_.reset(new networking::RpcChannel(peloton_endpoint_address));

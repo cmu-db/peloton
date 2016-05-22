@@ -43,8 +43,6 @@
 #include "backend/planner/seq_scan_plan.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 
-extern CheckpointType peloton_checkpoint_mode;
-
 int logger_id_counter = 0;
 
 //#define LOG_FILE_SWITCH_LIMIT (1024)
@@ -139,7 +137,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   size_t rep_array_offset = 0;
   std::unique_ptr<char> replication_array = nullptr;
   TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
-                                      this->max_collected_commit_id);
+                                  this->max_collected_commit_id);
   delimiter_rec.Serialize(output_buffer);
   if (replicating_) {
     // find the size we need to write out
@@ -183,15 +181,27 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   bool flushed = false;
-  if (max_collected_commit_id != max_flushed_commit_id) {
-
-
-    if (replicating_) {
+  long rep_seq_number = 0;
+  // send to remote before fsyncing, then wait for the response after fsy
+  if (replicating_ && write_size > 0) {
+    if (max_collected_commit_id != max_flushed_commit_id) {
       memcpy(replication_array.get() + rep_array_offset,
              delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
       // send the request
       rep_array_offset += delimiter_rec.GetMessageLength();
     }
+    networking::LogRecordReplayRequest request;
+    request.set_log(replication_array.get(), write_size);
+    request.set_sync_type(replication_mode_);
+    rep_seq_number = replication_seq_++;
+    request.set_sequence_number(rep_seq_number);
+    networking::LogRecordReplayResponse response;
+    remote_done_ = false;
+    replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
+                                       nullptr);
+  }
+
+  if (max_collected_commit_id != max_flushed_commit_id) {
     if (!test_mode_) {
       PL_ASSERT(cur_file_handle.fd != -1);
       if (cur_file_handle.fd != -1) {
@@ -233,17 +243,12 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
       }
     }
   }
-  if (replicating_ && write_size > 0){
-	  networking::LogRecordReplayRequest request;
-	  request.set_log(replication_array.get(), write_size);
-	  request.set_sync_type(networking::ResponseType::SYNC);
-	  request.set_sequence_number(replication_seq_++);
-	  networking::LogRecordReplayResponse response;
-	  remote_done_ = false;
-	  google::protobuf::Closure * closure = google::protobuf::NewCallback(static_cast<FrontendLogger *>(this), &FrontendLogger::RemoteDone);
-	  replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
-										 closure);
-	  while(!remote_done_);
+  // if replicating and doing sync or semisync wait here
+  if (rep_seq_number > 0 && (replication_mode_ == networking::SYNC ||
+                             replication_mode_ == networking::SEMISYNC)) {
+    // wait for the response with the proper sequence number
+    while (remote_done_.load() < rep_seq_number)
+      ;
   }
 
   /* For now, fflush after every iteration of collecting buffers */

@@ -29,6 +29,12 @@
 namespace peloton {
 namespace logging {
 
+LoggingService::LoggingService() {
+  recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
+  // we will sync manually so turn this off for now
+  LogManager::GetInstance().SetSyncCommit(false);
+}
+
 LogRecordType GetRecordTypeFromBytes(char *&workingPointer) {
   CopySerializeInputBE input(workingPointer, sizeof(char));
   LogRecordType log_record_type = (LogRecordType)(input.ReadEnumInSingleByte());
@@ -138,7 +144,8 @@ extern void UpdateTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void LoggingService::InsertTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
+void LoggingService::InsertTuple(TupleRecord *record,
+                                 concurrency::TransactionManager &txn_manager) {
   InsertTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetInsertLocation(), record->GetTuple());
@@ -149,7 +156,8 @@ void LoggingService::InsertTuple(TupleRecord *record, concurrency::TransactionMa
  * @brief read tuple record from log file and add them tuples to recovery txn
  * @param recovery txn
  */
-void LoggingService::DeleteTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
+void LoggingService::DeleteTuple(TupleRecord *record,
+                                 concurrency::TransactionManager &txn_manager) {
   DeleteTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation());
@@ -161,12 +169,14 @@ void LoggingService::DeleteTuple(TupleRecord *record, concurrency::TransactionMa
  * @param recovery txn
  */
 
-void LoggingService::UpdateTuple(TupleRecord *record, concurrency::TransactionManager &txn_manager) {
+void LoggingService::UpdateTuple(TupleRecord *record,
+                                 concurrency::TransactionManager &txn_manager) {
   UpdateTupleHelper(max_oid, record->GetTransactionId(),
                     record->GetDatabaseOid(), record->GetTableId(),
                     record->GetDeleteLocation(), record->GetInsertLocation(),
                     record->GetTuple());
-  txn_manager.PerformUpdate(record->GetDeleteLocation(), record->GetInsertLocation());
+  txn_manager.PerformUpdate(record->GetDeleteLocation(),
+                            record->GetInsertLocation());
 }
 // implements LoggingService ------------------------------------------
 
@@ -175,14 +185,18 @@ void LoggingService::LogRecordReplay(
     __attribute__((unused)) const networking::LogRecordReplayRequest *request,
     __attribute__((unused)) networking::LogRecordReplayResponse *response,
     __attribute__((unused))::google::protobuf::Closure *done) {
-  if (request == nullptr){
-	  return;
+  LogManager &manager = LogManager::GetInstance();
+  if (request == nullptr) {
+    manager.GetFrontendLogger(0)->RemoteDone(response->sequence_number());
+    return;
   }
   long curr_seq = request->sequence_number();
-  while(replication_sequence_number_ != curr_seq);
-  LogManager &manager = LogManager::GetInstance();
+  while (replication_sequence_number_ != curr_seq)
+    ;
+
   const char *messages = request->log().c_str();
   auto size = request->log().size();
+  bool wait_for_sync = request->sync_type() == networking::SYNC;
   char *workingPointer = (char *)messages;
   // Go over each log record in the log file
   while (workingPointer < messages + size) {
@@ -205,7 +219,7 @@ void LoggingService::LogRecordReplay(
       case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
       case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
       case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
-      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:{
+      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         GetTupleRecordHeader(*tuple_record, workingPointer);
@@ -223,7 +237,7 @@ void LoggingService::LogRecordReplay(
         break;
       }
       case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:{
+      case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
         tuple_record = new TupleRecord(record_type);
         // Check for torn log write
         GetTupleRecordHeader(*tuple_record, workingPointer);
@@ -246,31 +260,37 @@ void LoggingService::LogRecordReplay(
         break;
 
       case LOGRECORD_TYPE_TRANSACTION_COMMIT:
-		PL_ASSERT(log_id != INVALID_CID);
-		// do nothing here because we only want to replay when the delimiter is hit
-		break;
+        PL_ASSERT(log_id != INVALID_CID);
+        // do nothing here because we only want to replay when the delimiter is
+        // hit
+        break;
 
-	  case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
-	  case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
-	  case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
-	  case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
-	  case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
-	  case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
-		recovery_txn_table[tuple_record->GetTransactionId()].push_back(
-			tuple_record);
-		break;
-	  case LOGRECORD_TYPE_ITERATION_DELIMITER: {
-		// commit all transactions up to this delimeter
-		for(auto it = recovery_txn_table.begin(); it != recovery_txn_table.end(); ){
-		  if (it->first > log_id){
-			  break;
-		  }else{
-			CommitTransactionRecovery(it->first);
-			recovery_txn_table.erase(it++);
-		  }
-		}
-		break;
-	  }
+      case LOGRECORD_TYPE_WAL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WAL_TUPLE_DELETE:
+      case LOGRECORD_TYPE_WAL_TUPLE_UPDATE:
+      case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+      case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+      case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
+        recovery_txn_table[tuple_record->GetTransactionId()].push_back(
+            tuple_record);
+        break;
+      case LOGRECORD_TYPE_ITERATION_DELIMITER: {
+        // commit all transactions up to this delimeter
+        for (auto it = recovery_txn_table.begin();
+             it != recovery_txn_table.end();) {
+          if (it->first > log_id) {
+            break;
+          } else {
+            CommitTransactionRecovery(it->first);
+            recovery_txn_table.erase(it++);
+          }
+        }
+        // if we are syncing wait for flush
+        if (wait_for_sync) {
+          LogManager::GetInstance().WaitForFlush(log_id);
+        }
+        break;
+      }
 
       default:
         break;

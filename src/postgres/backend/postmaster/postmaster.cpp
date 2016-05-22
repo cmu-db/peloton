@@ -555,88 +555,86 @@ HANDLE PostmasterHandle;
 // TODO: Peloton adds
 extern int peloton_server_port;
 
-//TODO: Peloton adds for rpc test
-//extern uint64_t server_request_recv_number;
-//extern uint64_t server_request_recv_bytes;
-//extern uint64_t server_response_send_number;
-//extern uint64_t server_response_send_bytes;
+// TODO: Peloton adds for rpc test
+// extern uint64_t server_request_recv_number;
+// extern uint64_t server_request_recv_bytes;
+// extern uint64_t server_response_send_number;
+// extern uint64_t server_response_send_bytes;
 
-void* Coordinator(__attribute__((unused)) void* arg) {
+void *Coordinator(__attribute__((unused)) void *arg) {
+  google::protobuf::Service *service = NULL;
 
-    google::protobuf::Service* service = NULL;
-
-    try {
-    	if (peloton_server_port != 0){
-			peloton::networking::RpcServer rpc_server(peloton_server_port);
-			rpc_server.RegisterService(new peloton::networking::PelotonService());
-			rpc_server.RegisterService(new peloton::logging::LoggingService());
-			rpc_server.Start();
-    	}
-    } catch (std::exception& e) {
-        std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-        delete service;
-    } catch (...) {
-        std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
-        delete service;
+  try {
+    if (peloton_server_port != 0) {
+      peloton::networking::RpcServer rpc_server(peloton_server_port);
+      rpc_server.RegisterService(new peloton::networking::PelotonService());
+      rpc_server.RegisterService(new peloton::logging::LoggingService());
+      rpc_server.Start();
     }
+  } catch (std::exception &e) {
+    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+    delete service;
+  } catch (...) {
+    std::cerr << "UNTRAPPED EXCEPTION " << std::endl;
+    delete service;
+  }
 
-    return NULL;
+  return NULL;
 }
 
-
 void TestSend() {
-//  try {
-//    for (int i = 0; i < 100; i++) {
-//      peloton::networking::HeartbeatRequest request;
-//      peloton::networking::HeartbeatResponse response;
-//
-//<<<<<<< HEAD
-//      request.set_sender_site(i);
-//      request.set_last_transaction_id(i * 10);
-//
-//      peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
-//
-//      client.Heartbeat(&request, &response);
-//
-//      if (response.has_sender_site() == true) {
-//        std::cout << "sender site: " << response.sender_site() << std::endl;
-//      } else {
-//        std::cout << "No response: sender site" << std::endl;
-//      }
-//
-//      if (response.has_status() == true) {
-//        std::cout << "Status: " << response.status() << std::endl;
-//      } else {
-//        std::cout << "No response: sender status" << std::endl;
-//      }
-//    }
-//
-//  } catch (std::exception &e) {
-//    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-//  } catch (...) {
-//    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
-//  }
-//=======
-    sleep(2);
+  //  try {
+  //    for (int i = 0; i < 100; i++) {
+  //      peloton::networking::HeartbeatRequest request;
+  //      peloton::networking::HeartbeatResponse response;
+  //
+  //<<<<<<< HEAD
+  //      request.set_sender_site(i);
+  //      request.set_last_transaction_id(i * 10);
+  //
+  //      peloton::networking::PelotonClient client("tcp://127.0.0.1:9999");
+  //
+  //      client.Heartbeat(&request, &response);
+  //
+  //      if (response.has_sender_site() == true) {
+  //        std::cout << "sender site: " << response.sender_site() << std::endl;
+  //      } else {
+  //        std::cout << "No response: sender site" << std::endl;
+  //      }
+  //
+  //      if (response.has_status() == true) {
+  //        std::cout << "Status: " << response.status() << std::endl;
+  //      } else {
+  //        std::cout << "No response: sender status" << std::endl;
+  //      }
+  //    }
+  //
+  //  } catch (std::exception &e) {
+  //    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+  //  } catch (...) {
+  //    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+  //  }
+  //=======
+  sleep(2);
 
-    try {
-        // it is not necessary to use smart point here
-        auto pclient = std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
+  try {
+    // it is not necessary to use smart point here
+    auto pclient =
+        std::make_shared<peloton::networking::RpcClient>(PELOTON_ENDPOINT_ADDR);
 
-        for (int i = 1; i < 2; i++) {
-//            peloton::networking::HeartbeatRequest request;
-//            request.set_sender_site(i);
-//            request.set_last_transaction_id(i*10);
+    for (int i = 1; i < 2; i++) {
+      //            peloton::networking::HeartbeatRequest request;
+      //            request.set_sender_site(i);
+      //            request.set_last_transaction_id(i*10);
 
-//            pclient->QueryPlan(&request, NULL);
-        }
-
-    } catch (std::exception& e) {
-        std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
-    } catch (...) {
-        std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+      //            pclient->QueryPlan(&request, NULL);
     }
 
+  } catch (std::exception &e) {
+    std::cerr << "STD EXCEPTION : " << e.what() << std::endl;
+  } catch (...) {
+    std::cerr << " UNTRAPPED EXCEPTION " << std::endl;
+  }
 }
 
 /*
@@ -1037,9 +1035,11 @@ void PostmasterMain(int argc, char *argv[]) {
         sql_status =
             StreamServerPort(AF_UNSPEC, NULL, (unsigned short)PostPortNumber,
                              NULL, ListenSocket, MAXLISTEN);
-//        mc_status = StreamServerPort(AF_UNSPEC, NULL,
-//                                     (unsigned short)MemcachedPortNumber, NULL,
-//                                     MemcachedListenSocket, MAXLISTEN);
+        //        mc_status = StreamServerPort(AF_UNSPEC, NULL,
+        //                                     (unsigned
+        //                                     short)MemcachedPortNumber, NULL,
+        //                                     MemcachedListenSocket,
+        //                                     MAXLISTEN);
       }
 
       else {
@@ -1047,9 +1047,11 @@ void PostmasterMain(int argc, char *argv[]) {
             StreamServerPort(AF_UNSPEC, curhost, (unsigned short)PostPortNumber,
                              NULL, ListenSocket, MAXLISTEN);
 
-//        mc_status = StreamServerPort(AF_UNSPEC, curhost,
-//                                     (unsigned short)MemcachedPortNumber, NULL,
-//                                     MemcachedListenSocket, MAXLISTEN);
+        //        mc_status = StreamServerPort(AF_UNSPEC, curhost,
+        //                                     (unsigned
+        //                                     short)MemcachedPortNumber, NULL,
+        //                                     MemcachedListenSocket,
+        //                                     MAXLISTEN);
       }
 
       if (sql_status == STATUS_OK && mc_status == STATUS_OK) {
@@ -1123,9 +1125,10 @@ void PostmasterMain(int argc, char *argv[]) {
           StreamServerPort(AF_UNIX, NULL, (unsigned short)PostPortNumber,
                            socketdir, ListenSocket, MAXLISTEN);
 
-//      mc_status =
-//          StreamServerPort(AF_UNIX, NULL, (unsigned short)MemcachedPortNumber,
-//                           socketdir, MemcachedListenSocket, MAXLISTEN);
+      //      mc_status =
+      //          StreamServerPort(AF_UNIX, NULL, (unsigned
+      //          short)MemcachedPortNumber,
+      //                           socketdir, MemcachedListenSocket, MAXLISTEN);
 
       if (sql_status == STATUS_OK && mc_status == STATUS_OK) {
         success++;
@@ -1156,8 +1159,8 @@ void PostmasterMain(int argc, char *argv[]) {
   /*
    * Check that there is some memcached socket to listen on
    */
-//  if (MemcachedListenSocket[0] == PGINVALID_SOCKET)
-//    ereport(FATAL, (errmsg("no socket created for memcached listening")));
+  //  if (MemcachedListenSocket[0] == PGINVALID_SOCKET)
+  //    ereport(FATAL, (errmsg("no socket created for memcached listening")));
 
   /*
    * If no valid TCP ports, write an empty line for listen address,
@@ -1339,12 +1342,14 @@ void PostmasterMain(int argc, char *argv[]) {
   maybe_start_bgworker();
 
   // Lanch coordinator to recv msg
-//  std::thread coordinator(Coordinator);
-//  coordinator.detach();
+  //  std::thread coordinator(Coordinator);
+  //  coordinator.detach();
 
   pthread_t testThread;
   int ret = pthread_create(&testThread, NULL, Coordinator, NULL);
-      if( -1 == ret ) { printf( "create thread error\n" ); }
+  if (-1 == ret) {
+    printf("create thread error\n");
+  }
   pthread_detach(testThread);
 
   // Lanch test_send to put msg in send_queue.
@@ -1673,12 +1678,12 @@ static int ServerLoop(void) {
         }
 
         // check memcached port as well
-//        if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
-//          Port *port = ConnCreate(MemcachedListenSocket[i]);
-//          if (port) {
-//            BackendStartup(port, true);
-//          }
-//        }
+        //        if (FD_ISSET(MemcachedListenSocket[i], &rmask)) {
+        //          Port *port = ConnCreate(MemcachedListenSocket[i]);
+        //          if (port) {
+        //            BackendStartup(port, true);
+        //          }
+        //        }
       }
     }
 
@@ -1810,14 +1815,14 @@ static int initMasks(fd_set *rmask) {
   }
 
   // do the same for memcached sockets
-//  for (i = 0; i < MAXLISTEN; i++) {
-//    int fd = MemcachedListenSocket[i];
-//
-//    if (fd == PGINVALID_SOCKET) break;
-//    FD_SET(fd, rmask);
-//
-//    if (fd > maxsock) maxsock = fd;
-//  }
+  //  for (i = 0; i < MAXLISTEN; i++) {
+  //    int fd = MemcachedListenSocket[i];
+  //
+  //    if (fd == PGINVALID_SOCKET) break;
+  //    FD_SET(fd, rmask);
+  //
+  //    if (fd > maxsock) maxsock = fd;
+  //  }
 
   return maxsock + 1;
 }
@@ -3631,8 +3636,7 @@ static void LaunchBackendTask(Backend *bn, Port *port, bool is_memcached) {
 
   // save backend variables if we are not memcached
 
-  param =
-      (BackendParameters *)malloc(sizeof(BackendParameters));
+  param = (BackendParameters *)malloc(sizeof(BackendParameters));
 
   save_backend_variables(param, port);
 
@@ -3662,7 +3666,7 @@ static int BackendStartup(Port *port, bool is_memcached) {
    *
    */
 
-  bn = (Backend *) malloc(sizeof(Backend));
+  bn = (Backend *)malloc(sizeof(Backend));
   if (!bn) {
     ereport(LOG, (errcode(ERRCODE_OUT_OF_MEMORY), errmsg("out of memory")));
     return STATUS_ERROR;
@@ -3675,7 +3679,6 @@ static int BackendStartup(Port *port, bool is_memcached) {
    */
   MyCancelKey = PostmasterRandom();
   bn->cancel_key = MyCancelKey;
-
 
   /* Pass down canAcceptConnections state */
   port->canAcceptConnections = canAcceptConnections();
@@ -3693,7 +3696,6 @@ static int BackendStartup(Port *port, bool is_memcached) {
 
   /* Hasn't asked to be notified about any bgworkers yet */
   bn->bgworker_notify = false;
-
 
 #ifdef EXEC_BACKEND
   pid = backend_forkexec(port);
@@ -3910,16 +3912,15 @@ static void BackendInitialize(Port *port, bool is_memcached) {
     status = ProcessStartupPacket(port, false);
 
     /*
-		 * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
-		 * already did any appropriate error reporting.
-		 */
+         * Stop here if it was bad or a cancel packet.  ProcessStartupPacket
+         * already did any appropriate error reporting.
+         */
     if (status != STATUS_OK) proc_exit(0);
   } else {
     // memcached credentials
-   port->database_name =  pstrdup(memcached_dbname.c_str());
-   port->user_name =  pstrdup(memcached_username.c_str());
+    port->database_name = pstrdup(memcached_dbname.c_str());
+    port->user_name = pstrdup(memcached_username.c_str());
   }
-
 
   /*
    * Now that we have the user and database name, we can set the process
