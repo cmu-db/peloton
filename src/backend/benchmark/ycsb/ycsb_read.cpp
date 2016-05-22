@@ -132,73 +132,14 @@ bool RunRead(ReadPlans &read_plans, ZipfDistribution &zipf) {
   auto txn = txn_manager.BeginTransaction();
 
   read_plans.ResetState();
-  
-  // std::unique_ptr<executor::ExecutorContext> context(
-  //     new executor::ExecutorContext(nullptr));
 
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  // std::vector<oid_t> key_column_ids;
-  // std::vector<ExpressionType> expr_types;
-  // key_column_ids.push_back(0);
-  // expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-
-  // Column ids to be added to logical tile after scan.
-  // std::vector<oid_t> column_ids;
-  // oid_t column_count = state.column_count + 1;
-
-  // for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-  //   column_ids.push_back(col_itr);
-  // }
-
-  // std::vector<expression::AbstractExpression *> runtime_keys;
-
-  // auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
-
-    // set up parameter values
   std::vector<Value> values;
 
   auto lookup_key = zipf.GetNextNumber();
 
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-  // planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-  //     ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-  // Create plan node.
-  // auto predicate = nullptr;
-
-  // planner::IndexScanPlan index_scan_node(
-  //     user_table, predicate, column_ids, index_scan_desc);
-  // Run the executor
-  // executor::IndexScanExecutor index_scan_executor(&index_scan_node, context.get());
   read_plans.index_scan_executor_->SetValues(values);
-
-  // executors.push_back(index_scan_executor);
-  // plans.push_back(index_scan_node);
-
-  /////////////////////////////////////////////////////////
-  // MATERIALIZE
-  /////////////////////////////////////////////////////////
-
-  // Create and set up materialization executor
-  // std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  // for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-  //   old_to_new_cols[col_itr] = col_itr;
-  // }
-
-  // std::shared_ptr<const catalog::Schema> output_schema {
-  //   catalog::Schema::CopySchema(user_table->GetSchema())
-  // }
-  // ;
-  // bool physify_flag = true;  // is going to create a physical tile
-  // planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
-  //                                       physify_flag);
-
-  // executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  // mat_executor.AddChild(&index_scan_executor);
 
   /////////////////////////////////////////////////////////
   // EXECUTE

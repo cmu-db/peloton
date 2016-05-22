@@ -79,8 +79,9 @@ namespace ycsb {
 
 MixedPlans PrepareMixedPlan() {
 
-  // std::unique_ptr<executor::ExecutorContext> context(
-  //     new executor::ExecutorContext(nullptr));
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
@@ -116,8 +117,6 @@ MixedPlans PrepareMixedPlan() {
 
   index_scan_executor->Init();
 
-
-
   /////////////////////////////////////////////////////////
   // UPDATE
   /////////////////////////////////////////////////////////
@@ -147,11 +146,9 @@ MixedPlans PrepareMixedPlan() {
   executor::UpdateExecutor *update_executor = 
       new executor::UpdateExecutor(&update_node, nullptr);
 
-  update_executor->AddChild(index_scan_executor);
+  update_executor->AddChild(update_index_scan_executor);
 
   update_executor->Init();
-
-
 
   MixedPlans mixed_plans;
 
@@ -176,7 +173,6 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
   auto txn = txn_manager.BeginTransaction();
 
 
-
   for (int i = 0; i < read_count; i++) {
 
     mixed_plans.index_scan_executor_->ResetState();
@@ -189,17 +185,6 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
     values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
     mixed_plans.index_scan_executor_->SetValues(values);
-
-    // planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    //     ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-    // Create plan node.
-    // auto predicate = nullptr;
-
-    //  planner::IndexScanPlan index_scan_node(
-    //     user_table, predicate, column_ids, index_scan_desc);
-    // // Run the executor
-    // executor::IndexScanExecutor index_scan_executor(&index_scan_node, context.get());
 
     auto ret_result = ExecuteReadTest(mixed_plans.index_scan_executor_);
 
@@ -217,7 +202,7 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
   // INDEX SCAN + PREDICATE
   /////////////////////////////////////////////////////////
 
-   for (int i = 0; i < write_count; i++) {
+  for (int i = 0; i < write_count; i++) {
 
     mixed_plans.update_index_scan_executor_->ResetState();
 
@@ -229,47 +214,6 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
     values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
     mixed_plans.update_index_scan_executor_->SetValues(values);
-
-    // planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    //     ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
-
-    // // Create plan node.
-    // auto predicate = nullptr;
-
-    // planner::IndexScanPlan index_scan_node(
-    //     user_table, predicate, column_ids, index_scan_desc);
-
-    // Run the executor
-    // executor::IndexScanExecutor index_scan_executor(&index_scan_node, context.get());
-
-    /////////////////////////////////////////////////////////
-    // UPDATE
-    /////////////////////////////////////////////////////////
-
-    // TargetList target_list;
-    // DirectMapList direct_map_list;
-
-    // Update the second attribute
-    // for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    //   if (col_itr != 1) {
-    //     direct_map_list.emplace_back(col_itr,
-    //                                  std::pair<oid_t, oid_t>(0, col_itr));
-    //   }
-    // }
-
-    // std::string update_raw_value(ycsb_field_length - 1, 'u');
-    // int update_raw_value = 2;
-    // Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-    // target_list.emplace_back(
-    //     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
-    // std::unique_ptr<const planner::ProjectInfo> project_info(
-    //     new planner::ProjectInfo(std::move(target_list),
-    //                              std::move(direct_map_list)));
-    // planner::UpdatePlan update_node(user_table, std::move(project_info));
-
-    // executor::UpdateExecutor update_executor(&update_node, context.get());
-    // update_executor.AddChild(&index_scan_executor);
 
     TargetList target_list;
     // std::string update_raw_value(ycsb_field_length - 1, 'u');

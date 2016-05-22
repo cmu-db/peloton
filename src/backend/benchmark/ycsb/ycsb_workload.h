@@ -103,15 +103,11 @@ struct MixedPlans {
     index_scan_executor_->SetContext(context);
 
     update_index_scan_executor_->SetContext(context);
-
     update_executor_->SetContext(context);
   }
 
   // in a mixed transaction, an executor is reused for several times.
   // so we must reset the state every time we use it.
-
-  // void ResetState() {
-  // }
 
   void Cleanup() {
     delete index_scan_executor_;
@@ -123,7 +119,6 @@ struct MixedPlans {
     delete update_executor_;
     update_executor_ = nullptr;
   }
-
 };
 
 MixedPlans PrepareMixedPlan();

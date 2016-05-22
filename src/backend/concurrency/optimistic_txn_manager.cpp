@@ -390,7 +390,7 @@ Result OptimisticTxnManager::CommitTransaction() {
         // logging.
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
-        ItemPointer old_version(tile_group_id, tuple_slot);
+        //ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
         // log_manager.LogUpdate(current_txn, end_commit_id, old_version,

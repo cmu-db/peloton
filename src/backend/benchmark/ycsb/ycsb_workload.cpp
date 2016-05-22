@@ -108,16 +108,25 @@ void RunBackend(oid_t thread_id) {
 
 
   // Run these many transactions
-  while (true) {
-    if (is_running == false) {
-      break;
-    }
-
-    if (state.run_mix) {
-      while (RunMixed(mixed_plans, zipf, 12, 2) == false) {
+  if (state.run_mix) {
+    int write_count = 10 * update_ratio;
+    int read_count = 10 - write_count;
+    printf("write_count=%d, read_count=%d\n", write_count, read_count);
+    while (true) {
+      if (is_running == false) {
+        break;
+      }
+      while (RunMixed(mixed_plans, zipf, read_count, write_count) == false) {
         execution_count_ref++;
       }
-    } else {
+      transaction_count_ref++;
+    }
+  } else {
+
+    while (true) {
+      if (is_running == false) {
+        break;
+      }
       auto rng_val = rng.next_uniform();
 
       if (rng_val < update_ratio) {
@@ -129,9 +138,8 @@ void RunBackend(oid_t thread_id) {
           execution_count_ref++;
         }
       }
+      transaction_count_ref++;
     }
-
-    transaction_count_ref++;
   }
 }
 

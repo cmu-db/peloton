@@ -78,9 +78,6 @@ namespace ycsb {
 
 UpdatePlans PrepareUpdatePlan() {
 
-  // std::unique_ptr<executor::ExecutorContext> context(
-  //     new executor::ExecutorContext(nullptr));
-
   /////////////////////////////////////////////////////////
   // INDEX SCAN + PREDICATE
   /////////////////////////////////////////////////////////
@@ -117,8 +114,6 @@ UpdatePlans PrepareUpdatePlan() {
   executor::IndexScanExecutor *index_scan_executor =
       new executor::IndexScanExecutor(&index_scan_node, nullptr);
 
-  //index_scan_executor->Init();
-
   /////////////////////////////////////////////////////////
   // UPDATE
   /////////////////////////////////////////////////////////
@@ -134,12 +129,6 @@ UpdatePlans PrepareUpdatePlan() {
     }
   }
 
-  // std::string update_raw_value(ycsb_field_length - 1, 'u');
-  //int update_raw_value = 2;
-  //Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-  // target_list.emplace_back(
-  //     1, expression::ExpressionUtil::ConstantValueFactory(update_val));
-
   std::unique_ptr<const planner::ProjectInfo> project_info(
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
@@ -153,7 +142,9 @@ UpdatePlans PrepareUpdatePlan() {
   update_executor->Init();
 
   UpdatePlans update_plans;
+
   update_plans.index_scan_executor_ = index_scan_executor;
+  
   update_plans.update_executor_ = update_executor;
 
   return update_plans;
@@ -161,6 +152,7 @@ UpdatePlans PrepareUpdatePlan() {
 
 
 bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
+  
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(nullptr));
 
@@ -190,8 +182,6 @@ bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
       1, expression::ExpressionUtil::ConstantValueFactory(update_val));
 
   update_plans.update_executor_->SetTargetList(target_list);
-
-
 
 
   /////////////////////////////////////////////////////////

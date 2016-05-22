@@ -30,13 +30,12 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-
-
 class Cooperative_GCManager : public GCManager {
 public:
   Cooperative_GCManager()
     : is_running_(true),
-      reclaim_queue_(MAX_QUEUE_LENGTH) {
+      reclaim_queue_(MAX_QUEUE_LENGTH),
+      recycle_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
@@ -84,18 +83,12 @@ private:
 
   std::unique_ptr<std::thread> gc_thread_;
 
-  // TODO: Boost lockfree queue has a bug that will cause valgrind to report mem error
-  // in lockfree/queue.hpp around line 100. Apply this patch
-  // (https://svn.boost.org/trac/boost/attachment/ticket/8395/lockfree.patch)
-  // will fix this problem. In the future consider implementing our own
-  // lock free queue
-
   // TODO: use shared pointer to reduce memory copy
   LockfreeQueue<TupleMetadata> reclaim_queue_;
 
   // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
-  recycle_queue_map_;
+  //cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
+  LockfreeQueue<TupleMetadata> recycle_queue_;
 };
 
 }  // namespace gc

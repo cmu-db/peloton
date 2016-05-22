@@ -167,7 +167,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'm':
         state.run_mix = true;
-        state.update_ratio = 0.0;
         break;
       case 'p': {
         char *protocol = optarg;
