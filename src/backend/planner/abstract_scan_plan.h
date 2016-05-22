@@ -59,7 +59,6 @@ class AbstractScan : public AbstractPlan {
 
  protected:
   // These methods only used by its derived classes (when deserialization)
-  std::vector<oid_t> &ColumnIds() { return column_ids_; }
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
   void SetColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
 
