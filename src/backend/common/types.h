@@ -56,6 +56,12 @@ enum CheckpointType {
   CHECKPOINT_TYPE_NORMAL = 1,
 };
 
+enum ReplicationType {
+  ASYNC_REPLICATION,
+  SYNC_REPLICATION,
+  SEMISYNC_REPLICATION
+};
+
 enum GCType {
   GC_TYPE_OFF = 0,
   GC_TYPE_ON = 1

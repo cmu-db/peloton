@@ -36,10 +36,10 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
   WriteBehindBackendLogger() {
-	  if (peloton_endpoint_address != nullptr) {
-	  	    replicating_ = true;
-	  	}
-	  logging_type = LOGGING_TYPE_NVM_WBL;
+    if (peloton_endpoint_address != nullptr) {
+      replicating_ = true;
+    }
+    logging_type = LOGGING_TYPE_NVM_WBL;
   }
 
   void Log(LogRecord *record);
@@ -54,10 +54,9 @@ class WriteBehindBackendLogger : public BackendLogger {
       std::vector<std::unique_ptr<LogRecord>> &frontend_queue);
 
  private:
+  void SyncDataForCommit();
 
- void SyncDataForCommit();
-
- bool replicating_ = false;
+  bool replicating_ = false;
   std::unordered_set<oid_t> tile_groups_to_sync_;
 };
 

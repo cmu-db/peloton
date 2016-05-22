@@ -31,6 +31,8 @@ class LoggingService : public networking::PelotonLoggingService {
  public:
   // implements LoggingService ------------------------------------------
 
+  LoggingService();
+
   virtual void LogRecordReplay(
       ::google::protobuf::RpcController *controller,
       const networking::LogRecordReplayRequest *request,
@@ -42,11 +44,14 @@ class LoggingService : public networking::PelotonLoggingService {
 
   void CommitTransactionRecovery(cid_t commit_id);
 
-  void InsertTuple(TupleRecord *recovery_txn, concurrency::TransactionManager &txn_manager);
+  void InsertTuple(TupleRecord *recovery_txn,
+                   concurrency::TransactionManager &txn_manager);
 
-  void DeleteTuple(TupleRecord *recovery_txn, concurrency::TransactionManager &txn_manager);
+  void DeleteTuple(TupleRecord *recovery_txn,
+                   concurrency::TransactionManager &txn_manager);
 
-  void UpdateTuple(TupleRecord *recovery_txn, concurrency::TransactionManager &txn_manager);
+  void UpdateTuple(TupleRecord *recovery_txn,
+                   concurrency::TransactionManager &txn_manager);
   // Txn table during recovery
   std::map<txn_id_t, std::vector<TupleRecord *>> recovery_txn_table;
 
