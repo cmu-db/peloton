@@ -29,6 +29,8 @@
 //===--------------------------------------------------------------------===//
 extern LoggingType peloton_logging_mode;
 
+extern char *peloton_endpoint_address;
+
 namespace peloton {
 namespace logging {
 
@@ -60,6 +62,10 @@ class LogManager {
                  unsigned int num_frontend_loggers = 1,
                  LoggerMappingStrategyType logger_mapping_strategy =
                      LOGGER_MAPPING_ROUND_ROBIN) {
+
+    if (peloton_endpoint_address != nullptr) {
+      replicating_ = true;
+    }
     logging_type_ = logging_type;
     test_mode_ = test_mode;
     num_frontend_loggers_ = num_frontend_loggers;
@@ -301,6 +307,8 @@ class LogManager {
 
   // number the fronted loggers who have updated the manager of their max oid and cid
   int update_managers_count = 0;
+
+  bool replicating_ = false;
 
   // max oid after recovery
   oid_t max_oid = 0;

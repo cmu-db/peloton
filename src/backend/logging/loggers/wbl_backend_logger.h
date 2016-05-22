@@ -18,6 +18,8 @@
 
 #include "unordered_set"
 
+extern char *peloton_endpoint_address;
+
 namespace peloton {
 namespace logging {
 
@@ -33,7 +35,12 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
+  WriteBehindBackendLogger() {
+	  if (peloton_endpoint_address != nullptr) {
+	  	    replicating_ = true;
+	  	}
+	  logging_type = LOGGING_TYPE_NVM_WBL;
+  }
 
   void Log(LogRecord *record);
 
@@ -50,6 +57,7 @@ class WriteBehindBackendLogger : public BackendLogger {
 
  void SyncDataForCommit();
 
+ bool replicating_ = false;
   std::unordered_set<oid_t> tile_groups_to_sync_;
 };
 

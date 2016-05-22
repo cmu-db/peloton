@@ -180,21 +180,33 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
     auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
 
     auto logger = this->GetBackendLogger();
+
+    std::unique_ptr<LogRecord> record;
+    std::unique_ptr<storage::Tuple> tuple;
     auto schema = manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
                                           new_tuple_tile_group->GetTableId())
                       ->GetSchema();
     // Can we avoid allocate tuple in head each time?
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    if (IsBasedOnWriteAheadLogging(logging_type_) || replicating_){
+    tuple.reset(new storage::Tuple(schema, true));
     for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
       tuple->SetValue(col,
                       new_tuple_tile_group->GetValue(new_version.offset, col),
                       logger->GetVarlenPool());
     }
-    std::unique_ptr<LogRecord> record(
+    record.reset(
         logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
                                new_tuple_tile_group->GetTableId(),
                                new_tuple_tile_group->GetDatabaseId(),
                                new_version, old_version, tuple.get()));
+    }else{
+    	// if wbl without replication, do not include tuple data
+    	record.reset(
+    	        logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+    	                               new_tuple_tile_group->GetTableId(),
+    	                               new_tuple_tile_group->GetDatabaseId(),
+    	                               new_version, old_version));
+    }
 
     logger->Log(record.get());
   }
@@ -210,7 +222,7 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
     auto tile_group = manager.GetTileGroup(new_location.block);
     std::unique_ptr<LogRecord> record;
     std::unique_ptr<storage::Tuple> tuple;
-    if (IsBasedOnWriteAheadLogging(logging_type_)){
+    if (IsBasedOnWriteAheadLogging(logging_type_) || replicating_){
 		auto schema =
 			manager.GetTableWithOid(tile_group->GetDatabaseId(),
 									tile_group->GetTableId())->GetSchema();
