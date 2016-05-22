@@ -111,18 +111,36 @@ void RunBackend(oid_t thread_id) {
   if (state.run_mix) {
     int write_count = 10 * update_ratio;
     int read_count = 10 - write_count;
-    printf("write_count=%d, read_count=%d\n", write_count, read_count);
+    
+    // backoff
+    uint32_t backoff_shifts = 0;
     while (true) {
       if (is_running == false) {
         break;
       }
       while (RunMixed(mixed_plans, zipf, read_count, write_count) == false) {
         execution_count_ref++;
+        // backoff
+        {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
       }
+      backoff_shifts >>= 1;
+
       transaction_count_ref++;
     }
   } else {
 
+    // backoff
+    uint32_t backoff_shifts = 0;
     while (true) {
       if (is_running == false) {
         break;
@@ -132,10 +150,34 @@ void RunBackend(oid_t thread_id) {
       if (rng_val < update_ratio) {
         while (RunUpdate(update_plans, zipf) == false) {
           execution_count_ref++;
+          // backoff
+          {
+            if (backoff_shifts < 63) {
+              ++backoff_shifts;
+            }
+            uint64_t spins = 1UL << backoff_shifts;
+            spins *= 100;
+            while (spins) {
+              _mm_pause();
+              --spins;
+            }
+          }
         }
       } else {
         while (RunRead(read_plans, zipf) == false) {
           execution_count_ref++;
+          // backoff
+          {
+            if (backoff_shifts < 63) {
+              ++backoff_shifts;
+            }
+            uint64_t spins = 1UL << backoff_shifts;
+            spins *= 100;
+            while (spins) {
+              _mm_pause();
+              --spins;
+            }
+          }
         }
       }
       transaction_count_ref++;
@@ -262,57 +304,9 @@ void RunWorkload() {
 // HARNESS
 /////////////////////////////////////////////////////////
 
-/**
- * Run executors. These executors should be running under @transaction, whenever
- * the @transaction has a non-successful result this function will abort the
- * transaction and return false. If all executors successfully executed, meaning
- * that @transaction has a successful result in the end, the transaction will
- * be committed. Only when this commit succeeds, this function will return true.
- * Notice that the transaction needs to be began before the executor is initialized
- * because it is passed in as part of the executor context.
- */
-// bool ExecuteTest(concurrency::Transaction *transaction, const std::vector<executor::AbstractExecutor *> &executors) {
-//   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-//   for (auto executor : executors) {
-//     bool status = executor->Init();
-//     if (status == false) {
-//       throw Exception("Init failed");
-//     }
-
-//     std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-//     // Run the executor
-//     while (executor->Execute() == true) {
-//       // I don't know why we have to get the output from the executor
-//       std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
-//       result_tiles.emplace_back(result_tile.release());
-//     }
-
-//     if (transaction->GetResult() != Result::RESULT_SUCCESS) {
-//       txn_manager.AbortTransaction();
-//       return false;
-//     }
-//   }
-
-//   assert(transaction->GetResult() == Result::RESULT_SUCCESS);
-
-//   // Finally we commit it
-//   auto result = txn_manager.CommitTransaction();
-
-//   if (result == Result::RESULT_SUCCESS) {
-//     return true;
-//   } else {
-//     return false;
-//   }
-// }
 
 std::vector<std::vector<Value>>
 ExecuteReadTest(executor::AbstractExecutor* executor) {
-  // Run all the executors
-  // bool status = executor->Init();
-  // if (status == false) {
-  //   throw Exception("Init failed");
-  // }
 
   std::vector<std::vector<Value>> logical_tile_values;
 
@@ -344,11 +338,6 @@ ExecuteReadTest(executor::AbstractExecutor* executor) {
 }
 
 void ExecuteUpdateTest(executor::AbstractExecutor* executor) {
-  // Run all the executors
-  // bool status = executor->Init();
-  // if (status == false) {
-  //   throw Exception("Init failed");
-  // }
   
   // Execute stuff
   while (executor->Execute() == true);
