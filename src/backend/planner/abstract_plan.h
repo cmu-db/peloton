@@ -57,7 +57,7 @@ class AbstractPlan : public Printable {
 
   const std::vector<std::unique_ptr<AbstractPlan>> &GetChildren() const;
 
-  const AbstractPlan *GetParent();
+  const AbstractPlan *GetParent() const;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -81,24 +81,18 @@ class AbstractPlan : public Printable {
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
-  // Each sub-class will have to implement these functions
-  // After the implementation for each sub-class, we should set these to pure virtual
+  // Each sub-class should implement these functions
+  // After the implementation for each sub-class, we should set these to pure
+  // virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
-      PL_ASSERT(&output != nullptr);
-      return false;
-  }
+  virtual bool SerializeTo(SerializeOutput &output) const = 0;
+
+  // TODO: Should every plan has a DeserializeFrom? or is there other elegant
+  // way?
   virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
     PL_ASSERT(&input != nullptr);
     return false;
   }
-  virtual int SerializeSize() {
-      return 0;
-  }
-
- protected:
-  // only used by its derived classes (when deserialization)
-  AbstractPlan *Parent() {return parent_;}
 
  private:
   // A plan node can have multiple children

@@ -44,8 +44,8 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &
-          outer_hashkeys)  // outer_hashkeys is added for IN-subquery
+      const std::vector<oid_t> &outer_hashkeys)  // outer_hashkeys is added for
+                                                 // IN-subquery
       : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                          proj_schema) {
     outer_column_ids_ = outer_hashkeys;  // added for IN-subquery
@@ -70,6 +70,14 @@ class HashJoinPlan : public AbstractJoinPlan {
         GetJoinType(), std::move(predicate_copy),
         std::move(GetProjInfo()->Copy()), schema_copy, outer_column_ids_);
     return std::unique_ptr<AbstractPlan>(new_plan);
+  }
+
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+    PL_ASSERT(&output != nullptr);
+    throw SerializationException(
+        "This class should implement SerializeTo method");
   }
 
  private:

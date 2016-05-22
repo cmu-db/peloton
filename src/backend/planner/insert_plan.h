@@ -33,15 +33,14 @@ class InsertPlan : public AbstractPlan {
 
   // This constructor takes in neither a project info nor a tuple
   // It must be used when the input is a logical tile
-  explicit InsertPlan(storage::DataTable *table,
-                      oid_t bulk_insert_count = 1)
-      : target_table_(table),
-        bulk_insert_count(bulk_insert_count) {}
+  explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
+      : target_table_(table), bulk_insert_count(bulk_insert_count) {}
 
   // This constructor takes in a project info
-  explicit InsertPlan(storage::DataTable *table,
-                      std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                      oid_t bulk_insert_count = 1)
+  explicit InsertPlan(
+      storage::DataTable *table,
+      std::unique_ptr<const planner::ProjectInfo> &&project_info,
+      oid_t bulk_insert_count = 1)
       : target_table_(table),
         project_info_(std::move(project_info)),
         bulk_insert_count(bulk_insert_count) {}
@@ -64,17 +63,22 @@ class InsertPlan : public AbstractPlan {
 
   oid_t GetBulkInsertCount() const { return bulk_insert_count; }
 
-  const storage::Tuple *GetTuple() const {
-    return tuple_.get();
-  }
+  const storage::Tuple *GetTuple() const { return tuple_.get(); }
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     // TODO: Fix tuple copy
-    return std::unique_ptr<AbstractPlan>(new InsertPlan(
-        target_table_,
-        std::move(project_info_->Copy())));
+    return std::unique_ptr<AbstractPlan>(
+        new InsertPlan(target_table_, std::move(project_info_->Copy())));
+  }
+
+  // Every class should implement SerializeTo method before using it.
+  // The implementation in seq_scan_plan can be referenced
+  bool SerializeTo(SerializeOutput &output) const {
+    PL_ASSERT(&output != nullptr);
+    throw SerializationException(
+        "This class should implement SerializeTo method");
   }
 
  private:
@@ -89,7 +93,6 @@ class InsertPlan : public AbstractPlan {
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;
-
 };
 
 }  // namespace planner

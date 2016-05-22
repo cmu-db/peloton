@@ -33,13 +33,15 @@ class ConnectionManager {
   // global singleton
   static ConnectionManager& GetInstance(void);
 
-  void ResterRpcServer(RpcServer* server);
+  void RegisterRpcServer(RpcServer* server);
   RpcServer* GetRpcServer();
 
   struct event_base* GetEventBase();
 
+  // Use the string addr to get a connection
   Connection* GetConn(std::string& addr);
 
+  // Use the NetworkAddress addr to get a connection
   Connection* GetConn(NetworkAddress& addr);
   Connection* CreateConn(NetworkAddress& addr);
   Connection* FindConn(NetworkAddress& addr);

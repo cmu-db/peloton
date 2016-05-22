@@ -18,6 +18,8 @@
 namespace peloton {
 namespace networking {
 
+// RpcController is a derived class.
+// It is used as a parameter required by Protobuf.
 class RpcController : public google::protobuf::RpcController {
  public:
   RpcController() { Reset(); }

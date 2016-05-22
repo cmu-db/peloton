@@ -25,6 +25,7 @@
 namespace peloton {
 namespace networking {
 
+// Copied from hstoreservice
 class PelotonService : public AbstractPelotonService {
  public:
 
