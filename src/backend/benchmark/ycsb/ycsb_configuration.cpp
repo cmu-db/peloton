@@ -34,6 +34,7 @@ void Usage(FILE *out) {
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -b --backend_count     :  # of backends \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
+          "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
@@ -52,6 +53,7 @@ static struct option opts[] = {
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
     {"zipf_theta", optional_argument, NULL, 'z'},
+    {"exp_backoff", no_argument, NULL, 'e'},
     {"mix_txn", no_argument, NULL, 'm'},
     {"protocol", optional_argument, NULL, 'p'},
     {"gc_protocol", optional_argument, NULL, 'g'},
@@ -130,6 +132,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.backend_count = 2;
   state.zipf_theta = 0.0;
   state.run_mix = false;
+  state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
   // Parse args
@@ -167,6 +170,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'm':
         state.run_mix = true;
+        break;
+      case 'e':
+        state.run_backoff = true;
         break;
       case 'p': {
         char *protocol = optarg;
@@ -221,6 +227,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateZipfTheta(state);
 
   LOG_INFO("%s : %d", "Run mix query", state.run_mix);
+  LOG_INFO("%s : %d", "Run exponential backoff", state.run_backoff);
 }
 
 }  // namespace ycsb

@@ -68,6 +68,9 @@ class configuration {
   // Run mix workload or not
   bool run_mix;
 
+  // enable exponential backoff
+  bool run_backoff;
+
   // protocol type
   ConcurrencyType protocol;
   GCType gc_protocol;

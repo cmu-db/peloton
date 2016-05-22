@@ -121,7 +121,7 @@ void RunBackend(oid_t thread_id) {
       while (RunMixed(mixed_plans, zipf, read_count, write_count) == false) {
         execution_count_ref++;
         // backoff
-        {
+        if (state.run_backoff) {
           if (backoff_shifts < 63) {
             ++backoff_shifts;
           }
@@ -151,7 +151,7 @@ void RunBackend(oid_t thread_id) {
         while (RunUpdate(update_plans, zipf) == false) {
           execution_count_ref++;
           // backoff
-          {
+          if (state.run_backoff) {
             if (backoff_shifts < 63) {
               ++backoff_shifts;
             }
@@ -167,7 +167,7 @@ void RunBackend(oid_t thread_id) {
         while (RunRead(read_plans, zipf) == false) {
           execution_count_ref++;
           // backoff
-          {
+          if (state.run_backoff) {
             if (backoff_shifts < 63) {
               ++backoff_shifts;
             }
