@@ -33,7 +33,7 @@ LimitExecutor::LimitExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool LimitExecutor::DInit() {
-  assert(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   num_skipped_ = 0;
   num_returned_ = 0;

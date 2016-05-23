@@ -48,7 +48,7 @@ bool SsiTxnManager::IsVisible(
   // unless it is an insertion.
   if (own == true) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
-      assert(tuple_end_cid == MAX_CID);
+      PL_ASSERT(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
       return true;
     } else {
@@ -103,13 +103,13 @@ bool SsiTxnManager::IsOwnable(
 
 bool SsiTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+    const oid_t &tile_group_id UNUSED_ATTRIBUTE, const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
   LOG_TRACE("AcquireOwnership %lu", txn_id);
 
   // jump to abort directly
   if(current_ssi_txn_ctx->is_abort()){
-    assert(current_ssi_txn_ctx->is_abort_ == false);
+    PL_ASSERT(current_ssi_txn_ctx->is_abort_ == false);
     LOG_TRACE("detect conflicts");
     return false;
   }
@@ -183,7 +183,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
 
   // jump to abort directly
   if(current_ssi_txn_ctx->is_abort()){
-    assert(current_ssi_txn_ctx->is_abort_ == false);
+    PL_ASSERT(current_ssi_txn_ctx->is_abort_ == false);
     LOG_TRACE("detect conflicts");
     return false;
   }
@@ -306,9 +306,9 @@ bool SsiTxnManager::PerformInsert(const ItemPointer &location) {
   auto transaction_id = current_txn->GetTransactionId();
 
   // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == INVALID_TXN_ID);
+  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
+  PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
 
@@ -331,7 +331,7 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
                                    ->GetHeader();
 
   // if we can perform update, then we must already locked the older version.
-  assert(tile_group_header->GetTransactionId(old_location.offset) ==
+  PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
   // Set double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -355,7 +355,7 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &location) {
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto transaction_id = current_txn->GetTransactionId();
 
-  assert(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == transaction_id);
 
   // Set MVCC info
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
@@ -503,7 +503,7 @@ Result SsiTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
@@ -516,7 +516,7 @@ Result SsiTxnManager::CommitTransaction() {
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        assert(tile_group_header->GetTransactionId(tuple_slot) ==
+        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
 
         // set the begin commit id to persist insert

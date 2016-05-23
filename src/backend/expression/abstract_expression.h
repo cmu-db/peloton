@@ -15,12 +15,9 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/assert.h"
+#include "backend/common/macros.h"
 #include "backend/common/abstract_tuple.h"
-#include "backend/common/planner_dom_value.h"
 #include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"
@@ -91,12 +88,12 @@ class AbstractExpression : public Printable {
   // After the implementation for each sub-class, we should set it to pure
   // virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output) const {
-    ASSERT(&output != nullptr);
+  virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
+    PL_ASSERT(&output != nullptr);
     return false;
   }
-  virtual bool DeserializeFrom(SerializeInputBE &input) {
-    ASSERT(&input != nullptr);
+  virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
+    PL_ASSERT(&input != nullptr);
     return false;
   }
 

@@ -16,7 +16,6 @@
 #include <vector>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 
@@ -33,6 +32,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
 #include "backend/common/timer.h"
+#include "backend/common/macros.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
@@ -297,8 +297,8 @@ void RunDirectTest() {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression =
@@ -380,7 +380,7 @@ void RunAggregateTest() {
   std::vector<oid_t> group_by_columns;
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  DirectMapList direct_map_list;
   oid_t col_itr = 0;
   oid_t tuple_idx = 1;  // tuple2
   for (col_itr = 0; col_itr < column_count; col_itr++) {
@@ -389,7 +389,7 @@ void RunAggregateTest() {
   }
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up aggregates
@@ -456,7 +456,7 @@ void RunAggregateTest() {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
+  TargetList target_list;
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
@@ -529,8 +529,8 @@ void RunArithmeticTest() {
   // PROJECTION
   /////////////////////////////////////////////////////////
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   // Construct schema of projection
   std::vector<catalog::Column> columns;
@@ -560,7 +560,7 @@ void RunArithmeticTest() {
     }
   }
 
-  planner::ProjectInfo::Target target = std::make_pair(0, sum_expr);
+  Target target = std::make_pair(0, sum_expr);
   target_list.push_back(target);
 
   std::unique_ptr<planner::ProjectInfo> project_info(
@@ -859,8 +859,8 @@ void RunInsertTest() {
 
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   std::vector<oid_t> column_ids;
 
   target_list.clear();
@@ -937,8 +937,8 @@ void RunUpdateTest() {
   // Update
   std::vector<Value> values;
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
@@ -2055,8 +2055,8 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression =

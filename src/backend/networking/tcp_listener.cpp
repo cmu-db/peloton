@@ -13,7 +13,9 @@
 #include "tcp_listener.h"
 #include "tcp_connection.h"
 #include "rpc_type.h"
+
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/thread_manager.h"
 #include "backend/networking/connection_manager.h"
 
@@ -30,8 +32,8 @@ Listener::Listener(int port)
   // make libevent support multiple threads (pthread)
   // TODO: put evthread_use_pthreads before event_base_new()?
 
-  assert(listen_base_ != NULL);
-  assert(port_ > 0 && port_ < 65535);
+  PL_ASSERT(listen_base_ != NULL);
+  PL_ASSERT(port_ > 0 && port_ < 65535);
 }
 
 Listener::~Listener() {
@@ -55,7 +57,7 @@ void Listener::Run(void *arg) {
 
   /* Clear the sockaddr before using it, in case there are extra
    *          * platform-specific fields that can mess us up. */
-  memset(&sin, 0, sizeof(sin));
+  PL_MEMSET(&sin, 0, sizeof(sin));
 
   /* This is an INET address */
   sin.sin_family = AF_INET;
@@ -97,8 +99,8 @@ void Listener::Run(void *arg) {
  */
 void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
                             struct sockaddr *address,
-                            __attribute__((unused)) int socklen, void *ctx) {
-  assert(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
+                            UNUSED_ATTRIBUTE int socklen, void *ctx) {
+  PL_ASSERT(listener != NULL && address != NULL && socklen >= 0 && ctx != NULL);
 
   LOG_TRACE("Server: connection received");
 
@@ -118,8 +120,8 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,
-                             __attribute__((unused)) void *ctx) {
-  assert(ctx != NULL);
+                             UNUSED_ATTRIBUTE void *ctx) {
+  PL_ASSERT(ctx != NULL);
 
   struct event_base *base = evconnlistener_get_base(listener);
 

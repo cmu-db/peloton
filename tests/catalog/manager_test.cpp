@@ -12,6 +12,7 @@
 
 #include "harness.h"
 
+#include "backend/common/macros.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
 #include "backend/storage/tile_group.h"

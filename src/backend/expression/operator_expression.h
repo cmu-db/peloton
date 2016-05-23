@@ -17,7 +17,6 @@
 #include "backend/expression/abstract_expression.h"
 
 #include <string>
-#include <cassert>
 
 namespace peloton {
 namespace expression {
@@ -34,7 +33,7 @@ class OperatorNotExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(GetLeft() != nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
     Value operand = GetLeft()->Evaluate(tuple1, tuple2, context);
     // NOT TRUE.Is FALSE
     if (operand.IsTrue()) {
@@ -65,7 +64,7 @@ class OperatorIsNullExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(GetLeft() != nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
     Value tmp = GetLeft()->Evaluate(tuple1, tuple2, context);
     if (tmp.IsNull()) {
       return Value::GetTrue();
@@ -90,7 +89,7 @@ class OperatorCastExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(GetLeft() != nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
     return GetLeft()->Evaluate(tuple1, tuple2, context).CastAs(GetValueType());
   }
 
@@ -111,7 +110,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(GetLeft() != nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
     Value operand = GetLeft()->Evaluate(tuple1, tuple2, context);
     // NOT TRUE.Is FALSE
     return Value::GetUnaryMinus(operand);
@@ -174,8 +173,8 @@ class OperatorExpression : public AbstractExpression {
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {
-    assert(GetLeft() != nullptr);
-    assert(GetRight() != nullptr);
+    PL_ASSERT(GetLeft() != nullptr);
+    PL_ASSERT(GetRight() != nullptr);
     return oper.op(m_left->Evaluate(tuple1, tuple2, context),
                    m_right->Evaluate(tuple1, tuple2, context));
   }

@@ -63,17 +63,22 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
 
 void WriteBehindBackendLogger::SyncDataForCommit(){
 	auto &manager = catalog::Manager::GetInstance();
+
+  // Sync the tiles in the modified tile groups and their headers
 	for (oid_t tile_group_id : tile_groups_to_sync_){
 		auto tile_group = manager.GetTileGroup(tile_group_id);
 		tile_group->Sync();
 		tile_group->GetHeader()->Sync();
 	}
+
+	// Clear the list of tile groups
+	tile_groups_to_sync_.clear();
 }
 
 LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     LogRecordType log_record_type, txn_id_t txn_id, oid_t table_oid,
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
-    __attribute__((unused)) const void *data) {
+    UNUSED_ATTRIBUTE const void *data) {
   // Figure the log record type
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
@@ -92,7 +97,7 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     }
 
     default: {
-      assert(false);
+      PL_ASSERT(false);
       break;
     }
   }

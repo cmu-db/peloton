@@ -11,10 +11,12 @@
  */
 
 #pragma once
+
 #include <cstddef>
-#include <cassert>
 #include <memory>
+
 #include "backend/logging/log_record.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 namespace logging {
@@ -42,7 +44,7 @@ class LogBuffer {
   inline size_t GetSize() { return size_; }
 
   inline void SetSize(size_t size) {
-    assert(size < capacity_);
+    PL_ASSERT(size < capacity_);
     size_ = size;
   }
 

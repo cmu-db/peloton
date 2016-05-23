@@ -11,20 +11,20 @@
  */
 
 #pragma once
-#include <cassert>
+
 #include <string>
 #include <sys/stat.h>
 
-#include "backend/logging/log_manager.h"
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/logging/backend_logger.h"
+#include "backend/common/types.h"
 #include "backend/common/pool.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/database.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
 
 namespace peloton {
+
+namespace storage{
+class Tuple;
+class DataTable;
+}
+
 namespace logging {
 
 //===--------------------------------------------------------------------===//

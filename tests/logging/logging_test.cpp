@@ -19,6 +19,7 @@
 #include "backend/logging/loggers/wal_frontend_logger.h"
 #include "backend/logging/logging_util.h"
 #include "backend/storage/table_factory.h"
+#include "backend/storage/database.h"
 
 #include "executor/mock_executor.h"
 #include "executor/executor_tests_util.h"

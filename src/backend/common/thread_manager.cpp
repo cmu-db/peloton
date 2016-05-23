@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-
 #include "backend/common/thread_manager.h"
 
 #define NUM_THREAD 10
@@ -186,7 +184,7 @@ void ThreadPool::Invoke() {
     }
 
     // if running here, task_pool must not be empty
-    assert(!task_pool_.empty());
+    PL_ASSERT(!task_pool_.empty());
 
     // Get next task in the queue.
     task = task_pool_.front();
