@@ -16,7 +16,10 @@
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/logger/logger_workload.h"
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/ycsb/ycsb_workload.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/networking/rpc_server.h"
+#include "backend/logging/logging_service.h"
 
 // Logging mode
 extern LoggingType peloton_logging_mode;
@@ -36,12 +39,15 @@ namespace benchmark {
 
 namespace ycsb {
 configuration state;
+void CreateYCSBDatabase();
 }
 namespace tpcc {
 configuration state;
 }
 
 namespace logger {
+
+void StartLogging(std::thread& thread);
 
 // Configuration
 configuration state;
@@ -60,25 +66,69 @@ void RunBenchmark() {
   // WAL
   //===--------------------------------------------------------------------===//
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
-    // Prepare a simple log file
-    PrepareLogFile();
 
-    // Reset data
-    ResetSystem();
 
-    // Do recovery
-    DoRecovery();
+    if (state.replication_port > 0){
 
+
+    	networking::RpcServer *rpc_server = new networking::RpcServer (state.replication_port);
+	    rpc_server->RegisterService(new  logging::LoggingService());
+	    std::thread rpc_thread(&peloton::networking::RpcServer::Start, rpc_server);
+	    rpc_thread.detach();
+	    if (state.remote_endpoint == nullptr){
+	    	std::thread logging_thread;
+			StartLogging(logging_thread);
+			ycsb::CreateYCSBDatabase();
+			while(true);
+	    }else{
+	    	// Prepare a simple log file
+			PrepareLogFile();
+
+	    }
+    }else{
+
+    	// Prepare a simple log file
+		PrepareLogFile();
+
+		// Reset data
+		ResetSystem();
+
+		// Do recovery
+		DoRecovery();
+    }
   }
   //===--------------------------------------------------------------------===//
   // WBL
   //===--------------------------------------------------------------------===//
   else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
-    // Test a simple log process
-    PrepareLogFile();
 
-    // Do recovery
-    DoRecovery();
+
+    if (state.replication_port > 0){
+    	std::thread logging_thread;
+		StartLogging(logging_thread);
+		ycsb::CreateYCSBDatabase();
+
+		networking::RpcServer rpc_server(state.replication_port);
+		rpc_server.RegisterService(new  logging::LoggingService());
+		std::thread rpc_thread(&peloton::networking::RpcServer::Start, &rpc_server);
+		if (state.remote_endpoint == nullptr){
+			std::thread logging_thread;
+			StartLogging(logging_thread);
+			ycsb::CreateYCSBDatabase();
+			while(true);
+		}else{
+			// Prepare a simple log file
+			PrepareLogFile();
+
+		}
+    }else{
+
+        // Test a simple log process
+        PrepareLogFile();
+		// Do recovery
+		DoRecovery();
+    }
+    while(true);
   }
 
 }

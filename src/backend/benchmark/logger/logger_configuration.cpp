@@ -20,6 +20,8 @@
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 
+extern char * peloton_endpoint_address;
+
 namespace peloton {
 namespace benchmark {
 namespace logger {
@@ -37,6 +39,7 @@ void Usage(FILE* out) {
           "   -v --flush-mode        :  Flush mode \n"
           "   -w --commit-interval   :  Group commit interval \n"
           "   -y --benchmark-type    :  Benchmark type \n"
+		  "   -x --replication-port  :  port for follower \n"
   );
 }
 
@@ -50,6 +53,7 @@ static struct option opts[] = {
     {"skew", optional_argument, NULL, 's'},
     {"flush-mode", optional_argument, NULL, 'v'},
     {"commit-interval", optional_argument, NULL, 'w'},
+	{"replication-port", optional_argument, NULL, 'x'},
     {"benchmark-type", optional_argument, NULL, 'y'},
     {NULL, 0, NULL, 0}};
 
@@ -264,6 +268,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
+  state.replication_port = 0;
+  state.remote_endpoint = nullptr;
 
   // Default YCSB Values
   ycsb::state.scale_factor = 1;
@@ -285,7 +291,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // logger - a:e:f:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:t:u:
     // tpcc   - b:d:k:t:
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:u:t:", opts, &idx);
+    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:u:t:x:z:", opts, &idx);
 
     if (c == -1) break;
 
@@ -314,6 +320,14 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'w':
         state.wait_timeout = atoi(optarg);
         break;
+      case 'x':
+	    state.replication_port = atoi(optarg);
+	    break;
+      case 'z':
+		state.remote_endpoint = new char[strlen(optarg)];
+		memcpy(state.remote_endpoint, optarg, strlen(optarg));
+		peloton_endpoint_address = state.remote_endpoint;
+		break;
       case 'y':
         state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
