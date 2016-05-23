@@ -513,6 +513,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
 
   key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
@@ -520,6 +521,29 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key4->SetValue(0, ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+  key4->SetValue(1, ValueFactory::GetStringValue(
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+      pool);
 
   index->ScanKey(key0.get(), locations);
   EXPECT_EQ(locations.size(), 0);
@@ -631,6 +655,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
+  locations.clear();
+
+  index->Scan(
+      {key0->GetValue(0), key0->GetValue(1), key4->GetValue(0), key4->GetValue(1)},
+      {0, 1, 0, 1},
+      {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 
   delete tuple_schema;
