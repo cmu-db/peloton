@@ -273,7 +273,7 @@ struct OrderStatusPlans {
     customer_pindex_scan_executor_->SetContext(context);
     customer_index_scan_executor_->SetContext(context);
     orders_index_scan_executor_->SetContext(context);
-    //order_line_index_scan_executor_->SetContext(context);
+    order_line_index_scan_executor_->SetContext(context);
   }
 
   void Cleanup() {

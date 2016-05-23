@@ -188,8 +188,7 @@ OrderStatusPlans PrepareOrderStatusPlan() {
     orders_skey_index, orders_key_column_ids, orders_expr_types,
     orders_key_values, runtime_keys);
 
-  std::vector<oid_t> orders_column_ids;
-  //std::vector<oid_t> orders_column_ids = {0, 4, 5};
+  std::vector<oid_t> orders_column_ids = {0, 4, 5};
 
   planner::IndexScanPlan orders_index_scan_node(orders_table, nullptr, 
     orders_column_ids, orders_index_scan_desc);
@@ -221,31 +220,30 @@ OrderStatusPlans PrepareOrderStatusPlan() {
   /////////////////////////////////////////////////////////
 
   // Construct index scan executor
-  // std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID};
-  // std::vector<ExpressionType> order_line_expr_types;
+  std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID};
+  std::vector<ExpressionType> order_line_expr_types;
   
-  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   
-  // std::vector<Value> order_line_key_values;
+  std::vector<Value> order_line_key_values;
 
-  // auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
+  auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
   
-  // planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
-  //   order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
-  //   order_line_key_values, runtime_keys);
+  planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
+    order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
+    order_line_key_values, runtime_keys);
 
-  // std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_SUPPLY_W_ID, COL_IDX_OL_I_ID, COL_IDX_OL_QUANTITY, COL_IDX_OL_AMOUNT, COL_IDX_OL_DELIVERY_D};
+  std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_SUPPLY_W_ID, COL_IDX_OL_I_ID, COL_IDX_OL_QUANTITY, COL_IDX_OL_AMOUNT, COL_IDX_OL_DELIVERY_D};
 
-  // planner::IndexScanPlan order_line_index_scan_node(order_line_table, nullptr, 
-  //   order_line_column_ids, order_line_index_scan_desc);
+  planner::IndexScanPlan order_line_index_scan_node(order_line_table, nullptr, 
+    order_line_column_ids, order_line_index_scan_desc);
 
-  // executor::IndexScanExecutor *order_line_index_scan_executor =
-  //     new executor::IndexScanExecutor(&order_line_index_scan_node, nullptr);
+  executor::IndexScanExecutor *order_line_index_scan_executor =
+      new executor::IndexScanExecutor(&order_line_index_scan_node, nullptr);
 
-  // order_line_index_scan_executor->Init();
-
+  order_line_index_scan_executor->Init();
 
   /////////////////////////////////////////////////////////
 
@@ -362,27 +360,27 @@ bool RunOrderStatus(OrderStatusPlans &order_status_plans){
 
   assert(c_id >= 0);
 
-  LOG_INFO("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = %d AND O_D_ID = %d AND O_C_ID = %d ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id", w_id, d_id, c_id);
+  // LOG_INFO("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = %d AND O_D_ID = %d AND O_C_ID = %d ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id", w_id, d_id, c_id);
 
-  // Construct index scan executor
+  // // Construct index scan executor
 
-  order_status_plans.orders_index_scan_executor_->ResetState();
+  // order_status_plans.orders_index_scan_executor_->ResetState();
 
-  std::vector<Value> orders_key_values;
+  // std::vector<Value> orders_key_values;
 
-  orders_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
-  orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
-  orders_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+  // orders_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
+  // orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+  // orders_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
 
-  order_status_plans.orders_index_scan_executor_->SetValues(orders_key_values);
+  // order_status_plans.orders_index_scan_executor_->SetValues(orders_key_values);
 
-  auto orders = ExecuteReadTest(order_status_plans.orders_index_scan_executor_);
+  // auto orders = ExecuteReadTest(order_status_plans.orders_index_scan_executor_);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_INFO("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
   //LOG_INFO("o_id=%d", ValuePeeker::PeekInteger(orders[0][0]));
 
