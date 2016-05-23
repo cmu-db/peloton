@@ -185,6 +185,75 @@ NewOrderPlans PrepareNewOrderPlan();
 
 bool RunNewOrder(NewOrderPlans &new_order_plans);
 
+struct PaymentPlans {
+
+  executor::IndexScanExecutor* customer_pindex_scan_executor_;
+  executor::IndexScanExecutor* customer_index_scan_executor_;
+  executor::IndexScanExecutor* customer_update_bc_index_scan_executor_;
+  executor::UpdateExecutor* customer_update_bc_executor_;
+  executor::IndexScanExecutor* customer_update_gc_index_scan_executor_;
+  executor::UpdateExecutor* customer_update_gc_executor_;
+
+  executor::IndexScanExecutor* warehouse_index_scan_executor_;
+  executor::IndexScanExecutor* warehouse_update_index_scan_executor_;
+  executor::UpdateExecutor* warehouse_update_executor_;
+  
+  executor::IndexScanExecutor* district_index_scan_executor_;
+  executor::IndexScanExecutor* district_update_index_scan_executor_;
+  executor::UpdateExecutor* district_update_executor_;
+
+  void SetContext(executor::ExecutorContext* context) {
+    customer_pindex_scan_executor_->SetContext(context);
+    customer_index_scan_executor_->SetContext(context);
+    customer_update_bc_index_scan_executor_->SetContext(context);
+    customer_update_bc_executor_->SetContext(context);
+    customer_update_gc_index_scan_executor_->SetContext(context);
+    customer_update_gc_executor_->SetContext(context);
+    
+    warehouse_index_scan_executor_->SetContext(context);
+    warehouse_update_index_scan_executor_->SetContext(context);
+    warehouse_update_executor_->SetContext(context);
+
+    district_index_scan_executor_->SetContext(context);
+    district_update_index_scan_executor_->SetContext(context);
+    district_update_executor_->SetContext(context);
+  }
+
+  void Cleanup() {
+    delete customer_pindex_scan_executor_;
+    customer_pindex_scan_executor_ = nullptr;
+    delete customer_index_scan_executor_;
+    customer_index_scan_executor_ = nullptr;
+    delete customer_update_bc_index_scan_executor_;
+    customer_update_bc_index_scan_executor_ = nullptr;
+    delete customer_update_bc_executor_;
+    customer_update_bc_executor_ = nullptr;
+    delete customer_update_gc_index_scan_executor_;
+    customer_update_gc_index_scan_executor_ = nullptr;
+    delete customer_update_gc_executor_;
+    customer_update_gc_executor_ = nullptr;
+    
+    delete warehouse_index_scan_executor_;
+    warehouse_index_scan_executor_ = nullptr;
+    delete warehouse_update_index_scan_executor_;
+    warehouse_update_index_scan_executor_ = nullptr;
+    delete warehouse_update_executor_;
+    warehouse_update_executor_ = nullptr;
+    
+    delete district_index_scan_executor_;
+    district_index_scan_executor_ = nullptr;
+    delete district_update_index_scan_executor_;
+    district_update_index_scan_executor_ = nullptr;
+    delete district_update_executor_;
+    district_update_executor_ = nullptr;
+  }
+
+};
+
+
+PaymentPlans PreparePaymentPlan();
+
+bool RunPayment(PaymentPlans &payment_plans);
 
 
 bool RunStockLevel();
@@ -193,7 +262,6 @@ bool RunDelivery();
 
 bool RunOrderStatus();
 
-bool RunPayment();
 
 
 /////////////////////////////////////////////////////////

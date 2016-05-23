@@ -81,6 +81,8 @@ namespace tpcc {
 
 NewOrderPlans PrepareNewOrderPlan() {
 
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
   /////////////////////////////////////////////////////////
   // PLAN FOR ITEM
   /////////////////////////////////////////////////////////
@@ -92,14 +94,12 @@ NewOrderPlans PrepareNewOrderPlan() {
   
   std::vector<Value> item_key_values;
 
-  std::vector<expression::AbstractExpression *> item_runtime_keys;
-
   auto item_pkey_index = item_table->GetIndexWithOid(
     item_table_pkey_index_oid);
   
   planner::IndexScanPlan::IndexScanDesc item_index_scan_desc(
     item_pkey_index, item_key_column_ids, item_expr_types,
-    item_key_values, item_runtime_keys);
+    item_key_values, runtime_keys);
 
   std::vector<oid_t> item_column_ids = {2, 3, 4}; // I_NAME, I_PRICE, I_DATA
 
@@ -125,14 +125,12 @@ NewOrderPlans PrepareNewOrderPlan() {
 
   std::vector<Value> warehouse_key_values;
 
-  std::vector<expression::AbstractExpression *> warehouse_runtime_keys;
-
   auto warehouse_pkey_index = warehouse_table->GetIndexWithOid(
       warehouse_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc warehouse_index_scan_desc(
       warehouse_pkey_index, warehouse_key_column_ids, warehouse_expr_types,
-      warehouse_key_values, warehouse_runtime_keys);
+      warehouse_key_values, runtime_keys);
 
   std::vector<oid_t> warehouse_column_ids = {7}; // W_TAX
 
@@ -162,14 +160,12 @@ NewOrderPlans PrepareNewOrderPlan() {
   
   std::vector<Value> district_key_values;
 
-  std::vector<expression::AbstractExpression *> district_runtime_keys;
-
   auto district_pkey_index = district_table->GetIndexWithOid(
       district_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc district_index_scan_desc(
       district_pkey_index, district_key_column_ids, district_expr_types,
-      district_key_values, district_runtime_keys);
+      district_key_values, runtime_keys);
 
 
   std::vector<oid_t> district_column_ids = {8, 10}; // D_TAX, D_NEXT_O_ID
@@ -236,15 +232,13 @@ NewOrderPlans PrepareNewOrderPlan() {
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
   std::vector<Value> customer_key_values;
-
-  std::vector<expression::AbstractExpression *> customer_runtime_keys;
   
   auto customer_pkey_index = customer_table->GetIndexWithOid(
       customer_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc customer_index_scan_desc(
       customer_pkey_index, customer_key_column_ids, customer_expr_types,
-      customer_key_values, customer_runtime_keys);
+      customer_key_values, runtime_keys);
 
   std::vector<oid_t> customer_column_ids = {5, 13, 15}; // C_LAST, C_CREDIT, C_DISCOUNT
 
@@ -275,14 +269,12 @@ NewOrderPlans PrepareNewOrderPlan() {
 
   std::vector<Value> stock_key_values;
 
-  std::vector<expression::AbstractExpression *> stock_runtime_keys;
-
   auto stock_pkey_index = stock_table->GetIndexWithOid(
       stock_table_pkey_index_oid);
   
   planner::IndexScanPlan::IndexScanDesc stock_index_scan_desc(
       stock_pkey_index, stock_key_column_ids, stock_expr_types,
-      stock_key_values, stock_runtime_keys);
+      stock_key_values, runtime_keys);
 
   std::vector<oid_t> stock_column_ids;
 
