@@ -16,8 +16,8 @@
 #include <cstdint>
 #include <climits>
 #include <limits>
-#include <cassert>
 #include <bitset>
+#include <vector>
 
 #include "backend/common/platform.h"
 
@@ -34,11 +34,14 @@ enum LoggingType {
 
   // Based on write ahead logging
   LOGGING_TYPE_NVM_WAL = 1,
-  LOGGING_TYPE_HDD_WAL = 2,
+  LOGGING_TYPE_SSD_WAL = 2,
+  LOGGING_TYPE_HDD_WAL = 3,
 
   // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 3,
-  LOGGING_TYPE_HDD_WBL = 4
+  LOGGING_TYPE_NVM_WBL = 4,
+  LOGGING_TYPE_SSD_WBL = 5,
+  LOGGING_TYPE_HDD_WBL = 6
+
 };
 
 enum LoggerMappingStrategyType {
@@ -882,6 +885,26 @@ ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
+
+namespace expression{
+class AbstractExpression;
+}
+
+/**
+ * @brief Generic specification of a projection target:
+ *        < DEST_column_id , expression >
+ */
+typedef std::pair<oid_t, const expression::AbstractExpression *> Target;
+
+typedef std::vector<Target> TargetList;
+
+/**
+ * @brief Generic specification of a direct map:
+ *        < NEW_col_id , <tuple_index (left or right tuple), OLD_col_id>    >
+ */
+typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
+
+typedef std::vector<DirectMap> DirectMapList;
 
 //===--------------------------------------------------------------------===//
 // Asserts

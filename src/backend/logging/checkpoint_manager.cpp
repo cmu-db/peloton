@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/common/macros.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
 #include "backend/logging/checkpoint_manager.h"
 
@@ -64,7 +65,7 @@ void CheckpointManager::StartRecoveryMode() {
 }
 
 Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {
-  assert(idx < num_checkpointers_);
+  PL_ASSERT(idx < num_checkpointers_);
   return checkpointers_[idx].get();
 }
 

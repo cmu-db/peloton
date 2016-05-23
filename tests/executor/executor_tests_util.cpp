@@ -162,7 +162,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   const catalog::Schema *schema = table->GetSchema();
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -223,7 +223,7 @@ void ExecutorTestsUtil::PopulateTiles(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

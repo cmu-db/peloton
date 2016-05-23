@@ -18,8 +18,6 @@
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>
 
-#include <cassert>
-
 namespace peloton {
 namespace networking {
 class Connection;

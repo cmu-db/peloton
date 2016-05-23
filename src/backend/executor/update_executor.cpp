@@ -40,17 +40,17 @@ UpdateExecutor::UpdateExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DInit() {
-  assert(children_.size() == 1);
-  assert(target_table_ == nullptr);
-  assert(project_info_ == nullptr);
+  PL_ASSERT(children_.size() == 1);
+  PL_ASSERT(target_table_ == nullptr);
+  PL_ASSERT(project_info_ == nullptr);
 
   // Grab settings from node
   const planner::UpdatePlan &node = GetPlanNode<planner::UpdatePlan>();
   target_table_ = node.GetTable();
   project_info_ = node.GetProjectInfo();
 
-  assert(target_table_);
-  assert(project_info_);
+  PL_ASSERT(target_table_);
+  PL_ASSERT(project_info_);
 
   return true;
 }
@@ -60,8 +60,8 @@ bool UpdateExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DExecute() {
-  assert(children_.size() == 1);
-  assert(executor_context_);
+  PL_ASSERT(children_.size() == 1);
+  PL_ASSERT(executor_context_);
 
   // We are scanning over a logical tile.
   LOG_TRACE("Update executor :: 1 child ");

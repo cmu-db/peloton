@@ -63,7 +63,7 @@ TileGroup::~TileGroup() {
 }
 
 oid_t TileGroup::GetTileId(const oid_t tile_id) const {
-  assert(tiles[tile_id]);
+  PL_ASSERT(tiles[tile_id]);
   return tiles[tile_id]->GetTileId();
 }
 
@@ -104,16 +104,16 @@ void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
 
     // Get target tile
     auto tile_id = GetTileIdFromColumnId(col_id);
-    assert(tile_id < GetTileCount());
+    PL_ASSERT(tile_id < GetTileCount());
     storage::Tile *tile = GetTile(tile_id);
-    assert(tile);
+    PL_ASSERT(tile);
 
     // Get tile schema
     auto &tile_schema = tile_schemas[tile_id];
 
     // Get a tuple wrapper
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
+    PL_ASSERT(tile_tuple_location);
     storage::Tuple tile_tuple(&tile_schema, tile_tuple_location);
 
     // Write the value to tuple
@@ -140,9 +140,9 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    assert(tile);
+    PL_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
+    PL_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -162,7 +162,7 @@ void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
             tile_group_id, tuple_slot_id, num_tuple_slots);
   auto schema = table->GetSchema();
 
-  assert(tuple->GetColumnCount() == schema->GetColumnCount());
+  PL_ASSERT(tuple->GetColumnCount() == schema->GetColumnCount());
 
   for (oid_t col_id = 0; col_id < schema->GetColumnCount(); ++col_id) {
     tuple->SetValue(col_id, GetValue(tuple_slot_id, col_id), nullptr);
@@ -194,9 +194,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    assert(tile);
+    PL_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
+    PL_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -210,9 +210,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   }
 
   //  // Set MVCC info
-  assert(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
-  assert(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
-  assert(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
+  PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
   return tuple_slot_id;
 }
@@ -248,9 +248,9 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    assert(tile);
+    PL_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
+    PL_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -355,9 +355,9 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
     tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
-    assert(tile);
+    PL_ASSERT(tile);
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
-    assert(tile_tuple_location);
+    PL_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
@@ -385,7 +385,7 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 // the specified tile group column id.
 void TileGroup::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                                     oid_t &tile_column_offset) {
-  assert(column_map.count(column_offset) != 0);
+  PL_ASSERT(column_map.count(column_offset) != 0);
 
   // get the entry in the column map
   auto entry = column_map.at(column_offset);
@@ -406,21 +406,21 @@ oid_t TileGroup::GetTileColumnId(oid_t column_id) {
 }
 
 Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
-  assert(tuple_id < GetNextTupleSlot());
+  PL_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
 Tile *TileGroup::GetTile(const oid_t tile_offset) const {
-  assert(tile_offset < tile_count);
+  PL_ASSERT(tile_offset < tile_count);
   Tile *tile = tiles[tile_offset].get();
   return tile;
 }
 
 std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
-  assert(tile_offset < tile_count);
+  PL_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
 }
 

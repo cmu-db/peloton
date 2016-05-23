@@ -11,9 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/catalog/manager.h"
-#include "backend/planner/index_scan_plan.h"
 #include "backend/index/index.h"
+#include "backend/planner/index_scan_plan.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace bridge {
@@ -64,7 +67,7 @@ PlanTransformer::TransformIndexScan(const IndexScanPlanState *iss_plan_state,
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  assert(table);
+  PL_ASSERT(table);
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
@@ -78,7 +81,7 @@ PlanTransformer::TransformIndexScan(const IndexScanPlanState *iss_plan_state,
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_TRACE("Scan order: %d", iss_plan->indexorderdir);
-  // assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // PL_ASSERT(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
 
@@ -132,20 +135,20 @@ static void BuildScanKey(
   ScanKey scan_key = scan_keys;
 
   if (num_runtime_keys > 0) {
-    assert(num_runtime_keys == num_keys);
+    PL_ASSERT(num_runtime_keys == num_keys);
     BuildRuntimeKey(runtime_keys, num_runtime_keys, index_scan_desc);
   }
 
   for (int key_itr = 0; key_itr < num_keys; key_itr++, scan_key++) {
     // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ISNULL));
-    assert(!(scan_key->sk_flags & SK_ORDER_BY));
-    assert(!(scan_key->sk_flags & SK_UNARY));
-    assert(!(scan_key->sk_flags & SK_ROW_HEADER));
-    assert(!(scan_key->sk_flags & SK_ROW_MEMBER));
-    assert(!(scan_key->sk_flags & SK_ROW_END));
-    assert(!(scan_key->sk_flags & SK_SEARCHNULL));
-    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
+    PL_ASSERT(!(scan_key->sk_flags & SK_ISNULL));
+    PL_ASSERT(!(scan_key->sk_flags & SK_ORDER_BY));
+    PL_ASSERT(!(scan_key->sk_flags & SK_UNARY));
+    PL_ASSERT(!(scan_key->sk_flags & SK_ROW_HEADER));
+    PL_ASSERT(!(scan_key->sk_flags & SK_ROW_MEMBER));
+    PL_ASSERT(!(scan_key->sk_flags & SK_ROW_END));
+    PL_ASSERT(!(scan_key->sk_flags & SK_SEARCHNULL));
+    PL_ASSERT(!(scan_key->sk_flags & SK_SEARCHNOTNULL));
 
     Oid value_type = InvalidOid;
     Value value;
@@ -280,7 +283,7 @@ PlanTransformer::TransformIndexOnlyScan(
 
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
-  assert(table);
+  PL_ASSERT(table);
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(ioss_plan->indexid);
@@ -290,7 +293,7 @@ PlanTransformer::TransformIndexOnlyScan(
   /* Resolve index order */
   /* Only support forward scan direction */
   LOG_TRACE("Scan order: %d", ioss_plan->indexorderdir);
-  // assert(iss_plan->indexorderdir == ForwardScanDirection);
+  // PL_ASSERT(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_TRACE("num of scan keys = %d, num of runtime key = %d",
@@ -353,7 +356,7 @@ PlanTransformer::TransformBitmapHeapScan(
   storage::DataTable *table = static_cast<storage::DataTable *>(
       catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
-  assert(table);
+  PL_ASSERT(table);
   LOG_TRACE("Scan from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Resolve index  */
@@ -366,7 +369,7 @@ PlanTransformer::TransformBitmapHeapScan(
            table->GetName().c_str(), biss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
-  assert(index_scan_desc.index);
+  PL_ASSERT(index_scan_desc.index);
 
   /* Resolve index order */
   /* Only support forward scan direction */

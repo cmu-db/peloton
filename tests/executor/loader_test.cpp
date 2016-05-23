@@ -63,8 +63,8 @@ std::atomic<int> tuple_id;
  */
 std::unique_ptr<const planner::ProjectInfo>
 MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);

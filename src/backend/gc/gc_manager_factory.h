@@ -16,6 +16,7 @@
 
 namespace peloton {
 namespace gc {
+
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
@@ -28,7 +29,10 @@ class GCManagerFactory {
   static GCType GetGCType() { return gc_type_; }
 
  private:
+
+  // GC type
   static GCType gc_type_;
 };
-}
-}
+
+} // namespace gc
+} // namespace peloton

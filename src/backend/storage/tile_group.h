@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <cassert>
 #include <map>
 #include <atomic>
 #include <vector>
