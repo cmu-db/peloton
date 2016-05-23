@@ -713,13 +713,13 @@ bool RunPayment(PaymentPlans &payment_plans){
   // H_C_ID
   history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // H_C_D_ID
-  history_tuple->SetValue(1, ValueFactory::GetTinyIntValue(customer_district_id), nullptr);
+  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_district_id), nullptr);
   // H_C_W_ID
-  history_tuple->SetValue(2, ValueFactory::GetSmallIntValue(customer_warehouse_id), nullptr);
+  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(customer_warehouse_id), nullptr);
   // H_D_ID
-  history_tuple->SetValue(3, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(district_id), nullptr);
   // H_W_ID
-  history_tuple->SetValue(4, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  history_tuple->SetValue(4, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // H_DATE
   history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
   // H_AMOUNT

@@ -559,7 +559,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans){
   std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
 
   // O_ID
-  orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(d_next_o_id.GetInteger()), nullptr);
+  orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
   // O_C_ID
   orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // O_D_ID
@@ -585,7 +585,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans){
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
 
   // NO_O_ID
-  new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(d_next_o_id.GetInteger()), nullptr);
+  new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
   // NO_D_ID
   new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // NO_W_ID
@@ -690,7 +690,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans){
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
-    order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(d_next_o_id.GetInteger()), nullptr);
+    order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
     // OL_D_ID
     order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
     // OL_W_ID

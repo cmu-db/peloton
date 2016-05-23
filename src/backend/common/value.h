@@ -935,7 +935,6 @@ class Value {
     return GetObjectValueWithoutNull();
   }
 
-public:
   // Getters
   const int8_t &GetTinyInt() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_TINYINT);
