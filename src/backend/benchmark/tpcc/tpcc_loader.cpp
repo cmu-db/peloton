@@ -121,7 +121,182 @@ NURandConstant nu_rand_const;
 // Create the tables
 /////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////
+// TABLES
+/////////////////////////////////////////////////////////
+
+/*
+   CREATE TABLE WAREHOUSE (
+   0 W_ID SMALLINT DEFAULT '0' NOT NULL,
+   1 W_NAME VARCHAR(16) DEFAULT NULL,
+   2 W_STREET_1 VARCHAR(32) DEFAULT NULL,
+   3 W_STREET_2 VARCHAR(32) DEFAULT NULL,
+   4 W_CITY VARCHAR(32) DEFAULT NULL,
+   5 W_STATE VARCHAR(2) DEFAULT NULL,
+   6 W_ZIP VARCHAR(9) DEFAULT NULL,
+   7 W_TAX FLOAT DEFAULT NULL,
+   8 W_YTD FLOAT DEFAULT NULL,
+   CONSTRAINT W_PK_ARRAY PRIMARY KEY (W_ID)
+   );
+   INDEXES:
+   0 W_ID
+ */
+
+/*
+   CREATE TABLE DISTRICT (
+   0 D_ID TINYINT DEFAULT '0' NOT NULL,
+   1 D_W_ID SMALLINT DEFAULT '0' NOT NULL REFERENCES WAREHOUSE (W_ID),
+   2 D_NAME VARCHAR(16) DEFAULT NULL,
+   3 D_STREET_1 VARCHAR(32) DEFAULT NULL,
+   4 D_STREET_2 VARCHAR(32) DEFAULT NULL,
+   5 D_CITY VARCHAR(32) DEFAULT NULL,
+   6 D_STATE VARCHAR(2) DEFAULT NULL,
+   7 D_ZIP VARCHAR(9) DEFAULT NULL,
+   8 D_TAX FLOAT DEFAULT NULL,
+   9 D_YTD FLOAT DEFAULT NULL,
+   10 D_NEXT_O_ID INT DEFAULT NULL,
+   PRIMARY KEY (D_W_ID,D_ID)
+   );
+   INDEXES:
+   0, 1 D_ID, D_W_ID
+ */
+
+/*
+   CREATE TABLE ITEM (
+   0 I_ID INTEGER DEFAULT '0' NOT NULL,
+   1 I_IM_ID INTEGER DEFAULT NULL,
+   2 I_NAME VARCHAR(32) DEFAULT NULL,
+   3 I_PRICE FLOAT DEFAULT NULL,
+   4 I_DATA VARCHAR(64) DEFAULT NULL,
+   CONSTRAINT I_PK_ARRAY PRIMARY KEY (I_ID)
+   );
+   INDEXES:
+   0 I_ID
+ */
+/*
+     CREATE TABLE CUSTOMER (
+     0  C_ID INTEGER DEFAULT '0' NOT NULL,
+     1  C_D_ID TINYINT DEFAULT '0' NOT NULL,
+     2  C_W_ID SMALLINT DEFAULT '0' NOT NULL,
+     3  C_FIRST VARCHAR(32) DEFAULT NULL,
+     4  C_MIDDLE VARCHAR(2) DEFAULT NULL,
+     5  C_LAST VARCHAR(32) DEFAULT NULL,
+     6  C_STREET_1 VARCHAR(32) DEFAULT NULL,
+     7  C_STREET_2 VARCHAR(32) DEFAULT NULL,
+     8  C_CITY VARCHAR(32) DEFAULT NULL,
+     9  C_STATE VARCHAR(2) DEFAULT NULL,
+     10 C_ZIP VARCHAR(9) DEFAULT NULL,
+     11 C_PHONE VARCHAR(32) DEFAULT NULL,
+     12 C_SINCE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+     13 C_CREDIT VARCHAR(2) DEFAULT NULL,
+     14 C_CREDIT_LIM FLOAT DEFAULT NULL,
+     15 C_DISCOUNT FLOAT DEFAULT NULL,
+     16 C_BALANCE FLOAT DEFAULT NULL,
+     17 C_YTD_PAYMENT FLOAT DEFAULT NULL,
+     18 C_PAYMENT_CNT INTEGER DEFAULT NULL,
+     19 C_DELIVERY_CNT INTEGER DEFAULT NULL,
+     20 C_DATA VARCHAR(500),
+     PRIMARY KEY (C_W_ID,C_D_ID,C_ID),
+     UNIQUE (C_W_ID,C_D_ID,C_LAST,C_FIRST),
+     CONSTRAINT C_FKEY_D FOREIGN KEY (C_D_ID, C_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
+     );
+     CREATE INDEX IDX_CUSTOMER ON CUSTOMER (C_W_ID,C_D_ID,C_LAST);
+     INDEXES:
+     0, 1, 2 C_ID, C_W_ID, C_D_ID
+     1, 2, 5 C_W_ID, C_D_ID, C_LAST
+ */
+/*
+    CREATE TABLE HISTORY (
+    0 H_C_ID INTEGER DEFAULT NULL,
+    1 H_C_D_ID TINYINT DEFAULT NULL,
+    2 H_C_W_ID SMALLINT DEFAULT NULL,
+    3 H_D_ID TINYINT DEFAULT NULL,
+    4 H_W_ID SMALLINT DEFAULT '0' NOT NULL,
+    5 H_DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    6 H_AMOUNT FLOAT DEFAULT NULL,
+    7 H_DATA VARCHAR(32) DEFAULT NULL,
+    CONSTRAINT H_FKEY_C FOREIGN KEY (H_C_ID, H_C_D_ID, H_C_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID),
+    CONSTRAINT H_FKEY_D FOREIGN KEY (H_D_ID, H_W_ID) REFERENCES DISTRICT (D_ID, D_W_ID)
+    );
+ */
+/*
+   CREATE TABLE STOCK (
+   0  S_I_ID INTEGER DEFAULT '0' NOT NULL REFERENCES ITEM (I_ID),
+   1  S_W_ID SMALLINT DEFAULT '0 ' NOT NULL REFERENCES WAREHOUSE (W_ID),
+   2  S_QUANTITY INTEGER DEFAULT '0' NOT NULL,
+   3  S_DIST_01 VARCHAR(32) DEFAULT NULL,
+   4  S_DIST_02 VARCHAR(32) DEFAULT NULL,
+   5  S_DIST_03 VARCHAR(32) DEFAULT NULL,
+   6  S_DIST_04 VARCHAR(32) DEFAULT NULL,
+   7  S_DIST_05 VARCHAR(32) DEFAULT NULL,
+   8  S_DIST_06 VARCHAR(32) DEFAULT NULL,
+   9  S_DIST_07 VARCHAR(32) DEFAULT NULL,
+   10 S_DIST_08 VARCHAR(32) DEFAULT NULL,
+   11 S_DIST_09 VARCHAR(32) DEFAULT NULL,
+   12 S_DIST_10 VARCHAR(32) DEFAULT NULL,
+   13 S_YTD INTEGER DEFAULT NULL,
+   14 S_ORDER_CNT INTEGER DEFAULT NULL,
+   15 S_REMOTE_CNT INTEGER DEFAULT NULL,
+   16 S_DATA VARCHAR(64) DEFAULT NULL,
+   PRIMARY KEY (S_W_ID,S_I_ID)
+   );
+   INDEXES:
+   0, 1 S_I_ID, S_W_ID
+ */
+/*
+   CREATE TABLE ORDERS (
+   0 O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 O_C_ID INTEGER DEFAULT NULL,
+   2 O_D_ID TINYINT DEFAULT '0' NOT NULL,
+   3 O_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   4 O_ENTRY_D TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+   5 O_CARRIER_ID INTEGER DEFAULT NULL,
+   6 O_OL_CNT INTEGER DEFAULT NULL,
+   7 O_ALL_LOCAL INTEGER DEFAULT NULL,
+   PRIMARY KEY (O_W_ID,O_D_ID,O_ID),
+   UNIQUE (O_W_ID,O_D_ID,O_C_ID,O_ID),
+   CONSTRAINT O_FKEY_C FOREIGN KEY (O_C_ID, O_D_ID, O_W_ID) REFERENCES CUSTOMER (C_ID, C_D_ID, C_W_ID)
+   );
+   CREATE INDEX IDX_ORDERS ON ORDERS (O_W_ID,O_D_ID,O_C_ID);
+   INDEXES:
+   0, 2, 3 O_ID, O_D_ID, O_W_ID
+   1, 2, 3 O_C_ID, O_D_ID, O_W_ID
+ */
+/*
+   CREATE TABLE NEW_ORDER (
+   0 NO_O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 NO_D_ID TINYINT DEFAULT '0' NOT NULL,
+   2 NO_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   CONSTRAINT NO_PK_TREE PRIMARY KEY (NO_D_ID,NO_W_ID,NO_O_ID),
+   CONSTRAINT NO_FKEY_O FOREIGN KEY (NO_O_ID, NO_D_ID, NO_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID)
+   );
+   INDEXES:
+   0, 1, 2 NO_O_ID, NO_D_ID, NO_W_ID
+ */
+/*
+   CREATE TABLE ORDER_LINE (
+   0 OL_O_ID INTEGER DEFAULT '0' NOT NULL,
+   1 OL_D_ID TINYINT DEFAULT '0' NOT NULL,
+   2 OL_W_ID SMALLINT DEFAULT '0' NOT NULL,
+   3 OL_NUMBER INTEGER DEFAULT '0' NOT NULL,
+   4 OL_I_ID INTEGER DEFAULT NULL,
+   5 OL_SUPPLY_W_ID SMALLINT DEFAULT NULL,
+   6 OL_DELIVERY_D TIMESTAMP DEFAULT NULL,
+   7 OL_QUANTITY INTEGER DEFAULT NULL,
+   8 OL_AMOUNT FLOAT DEFAULT NULL,
+   9 OL_DIST_INFO VARCHAR(32) DEFAULT NULL,
+   PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER),
+   CONSTRAINT OL_FKEY_O FOREIGN KEY (OL_O_ID, OL_D_ID, OL_W_ID) REFERENCES ORDERS (O_ID, O_D_ID, O_W_ID),
+   CONSTRAINT OL_FKEY_S FOREIGN KEY (OL_I_ID, OL_SUPPLY_W_ID) REFERENCES STOCK (S_I_ID, S_W_ID)
+   );
+   CREATE INDEX IDX_ORDER_LINE_TREE ON ORDER_LINE (OL_W_ID,OL_D_ID,OL_O_ID);
+   INDEXES:
+   0, 1, 2, 3 OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER
+   0, 1, 2 OL_O_ID, OL_D_ID, OL_W_ID
+ */
+
 storage::Database* tpcc_database;
+
 storage::DataTable* warehouse_table;
 storage::DataTable* district_table;
 storage::DataTable* item_table;
@@ -157,7 +332,7 @@ void CreateWarehouseTable() {
   // Create schema first
   std::vector<catalog::Column> warehouse_columns;
 
-  auto w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "W_ID", is_inlined);
+  auto w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "W_ID", is_inlined);
   warehouse_columns.push_back(w_id_column);
   auto w_name_column = catalog::Column(VALUE_TYPE_VARCHAR, warehouse_name_length, "W_NAME", is_inlined);
   warehouse_columns.push_back(w_name_column);
@@ -227,9 +402,9 @@ void CreateDistrictTable() {
   // Create schema first
   std::vector<catalog::Column> district_columns;
 
-  auto d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "D_ID", is_inlined);
+  auto d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_ID", is_inlined);
   district_columns.push_back(d_id_column);
-  auto d_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "D_W_ID", is_inlined);
+  auto d_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D_W_ID", is_inlined);
   district_columns.push_back(d_w_id_column);
   auto d_name_column = catalog::Column(VALUE_TYPE_VARCHAR, district_name_length, "D_NAME", is_inlined);
   district_columns.push_back(d_name_column);
@@ -373,9 +548,9 @@ void CreateCustomerTable() {
 
   auto c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_ID", is_inlined);
   customer_columns.push_back(c_id_column);
-  auto c_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C_D_ID", is_inlined);
+  auto c_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_D_ID", is_inlined);
   customer_columns.push_back(c_d_id_column);
-  auto c_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "C_W_ID", is_inlined);
+  auto c_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C_W_ID", is_inlined);
   customer_columns.push_back(c_w_id_column);
   auto c_first_name_column = catalog::Column(VALUE_TYPE_VARCHAR, name_length, "C_FIRST", is_inlined);
   customer_columns.push_back(c_first_name_column);
@@ -481,13 +656,13 @@ void CreateHistoryTable() {
 
   auto h_c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_ID", is_inlined);
   history_columns.push_back(h_c_id_column);
-  auto h_c_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "H_C_D_ID", is_inlined);
+  auto h_c_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_D_ID", is_inlined);
   history_columns.push_back(h_c_d_id_column);
-  auto h_c_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "H_C_W_ID", is_inlined);
+  auto h_c_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_C_W_ID", is_inlined);
   history_columns.push_back(h_c_w_id_column);
-  auto h_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "H_D_ID", is_inlined);
+  auto h_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_D_ID", is_inlined);
   history_columns.push_back(h_d_id_column);
-  auto h_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "H_W_ID", is_inlined);
+  auto h_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "H_W_ID", is_inlined);
   history_columns.push_back(h_w_id_column);
   auto h_date_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "H_DATE", is_inlined);
   history_columns.push_back(h_date_column);
@@ -540,7 +715,7 @@ void CreateStockTable() {
 
   auto s_i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_I_ID", is_inlined);
   stock_columns.push_back(s_i_id_column);
-  auto s_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "S_W_ID", is_inlined);
+  auto s_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_W_ID", is_inlined);
   stock_columns.push_back(s_w_id_column);
   auto s_quantity_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "S_QUANTITY", is_inlined);
   stock_columns.push_back(s_quantity_column);
@@ -628,9 +803,9 @@ void CreateOrdersTable() {
   orders_columns.push_back(o_id_column);
   auto o_c_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_C_ID", is_inlined);
   orders_columns.push_back(o_c_id_column);
-  auto o_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "O_D_ID", is_inlined);
+  auto o_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_D_ID", is_inlined);
   orders_columns.push_back(o_d_id_column);
-  auto o_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "O_W_ID", is_inlined);
+  auto o_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "O_W_ID", is_inlined);
   orders_columns.push_back(o_w_id_column);
   auto o_entry_d_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "O_ENTRY_D", is_inlined);
   orders_columns.push_back(o_entry_d_column);
@@ -702,9 +877,9 @@ void CreateNewOrderTable() {
 
   auto no_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_O_ID", is_inlined);
   new_order_columns.push_back(no_o_id_column);
-  auto no_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "NO_D_ID", is_inlined);
+  auto no_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_D_ID", is_inlined);
   new_order_columns.push_back(no_d_id_column);
-  auto no_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "NO_W_ID", is_inlined);
+  auto no_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "NO_W_ID", is_inlined);
   new_order_columns.push_back(no_w_id_column);
 
   catalog::Schema *table_schema = new catalog::Schema(new_order_columns);
@@ -762,15 +937,15 @@ void CreateOrderLineTable() {
 
   auto ol_o_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_O_ID", is_inlined);
   order_line_columns.push_back(ol_o_id_column);
-  auto ol_d_id_column = catalog::Column(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "OL_D_ID", is_inlined);
+  auto ol_d_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_D_ID", is_inlined);
   order_line_columns.push_back(ol_d_id_column);
-  auto ol_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "OL_W_ID", is_inlined);
+  auto ol_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_W_ID", is_inlined);
   order_line_columns.push_back(ol_w_id_column);
   auto ol_number_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_NUMBER", is_inlined);
   order_line_columns.push_back(ol_number_column);
   auto ol_i_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_I_ID", is_inlined);
   order_line_columns.push_back(ol_i_id_column);
-  auto ol_supply_w_id_column = catalog::Column(VALUE_TYPE_SMALLINT, GetTypeSize(VALUE_TYPE_SMALLINT), "OL_SUPPLY_W_ID", is_inlined);
+  auto ol_supply_w_id_column = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "OL_SUPPLY_W_ID", is_inlined);
   order_line_columns.push_back(ol_supply_w_id_column);
   auto ol_delivery_d_column = catalog::Column(VALUE_TYPE_TIMESTAMP, GetTypeSize(VALUE_TYPE_TIMESTAMP), "OL_DELIVERY_D", is_inlined);
   order_line_columns.push_back(ol_delivery_d_column);
@@ -1081,7 +1256,7 @@ std::unique_ptr<storage::Tuple> BuildWarehouseTuple(const int warehouse_id,
   std::unique_ptr<storage::Tuple> warehouse_tuple(new storage::Tuple(warehouse_table_schema, allocate));
 
   // W_ID
-  warehouse_tuple->SetValue(0, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  warehouse_tuple->SetValue(0, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // W_NAME
   auto w_name = GetRandomAlphaNumericString(warehouse_name_length);
   warehouse_tuple->SetValue(1, ValueFactory::GetStringValue(w_name), pool.get());
@@ -1114,9 +1289,9 @@ std::unique_ptr<storage::Tuple> BuildDistrictTuple(const int district_id,
   std::unique_ptr<storage::Tuple> district_tuple(new storage::Tuple(district_table_schema, allocate));
 
   // D_ID
-  district_tuple->SetValue(0, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  district_tuple->SetValue(0, ValueFactory::GetIntegerValue(district_id), nullptr);
   // D_W_ID
-  district_tuple->SetValue(1, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  district_tuple->SetValue(1, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // D_NAME
   auto d_name = GetRandomAlphaNumericString(district_name_length);
   district_tuple->SetValue(2, ValueFactory::GetStringValue(d_name), pool.get());
@@ -1158,9 +1333,9 @@ std::unique_ptr<storage::Tuple> BuildCustomerTuple(const int customer_id,
   // C_ID
   customer_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // C_D_ID
-  customer_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  customer_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // C_W_ID
-  customer_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  customer_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // C_FIRST, C_MIDDLE, C_LAST
   auto c_first = GetRandomAlphaNumericString(name_length);
 
@@ -1232,13 +1407,13 @@ std::unique_ptr<storage::Tuple> BuildHistoryTuple(const int customer_id,
   // H_C_ID
   history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
   // H_C_D_ID
-  history_tuple->SetValue(1, ValueFactory::GetTinyIntValue(district_id), nullptr);
+  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // H_C_W_ID
-  history_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // H_D_ID
-  history_tuple->SetValue(3, ValueFactory::GetTinyIntValue(history_district_id), nullptr);
+  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(history_district_id), nullptr);
   // H_W_ID
-  history_tuple->SetValue(4, ValueFactory::GetSmallIntValue(history_warehouse_id), nullptr);
+  history_tuple->SetValue(4, ValueFactory::GetIntegerValue(history_warehouse_id), nullptr);
   // H_DATE
   auto h_date = GetTimeStamp();
   history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date) , nullptr);
@@ -1267,7 +1442,7 @@ std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
   // O_D_ID
   orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
   // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // O_ENTRY_D
   auto o_entry_d = GetTimeStamp();
   orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(o_entry_d) , nullptr);
@@ -1296,7 +1471,7 @@ std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
   // NO_D_ID
   new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
 
   return new_order_tuple;
 }
@@ -1316,14 +1491,14 @@ std::unique_ptr<storage::Tuple> BuildOrderLineTuple(const int orders_id,
   // OL_D_ID
   order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
   // OL_W_ID
-  order_line_tuple->SetValue(2, ValueFactory::GetSmallIntValue(warehouse_id), nullptr);
+  order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
   // OL_NUMBER
   order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(order_line_id), nullptr);
   // OL_I_ID
   auto ol_i_id = GetRandomInteger(0, state.item_count);
   order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(ol_i_id), nullptr);
   // OL_SUPPLY_W_ID
-  order_line_tuple->SetValue(5, ValueFactory::GetSmallIntValue(ol_supply_w_id), nullptr);
+  order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_supply_w_id), nullptr);
   // OL_DELIVERY_D
   int64_t ol_delivery_d = GetTimeStamp();
   if(new_order == true) {
@@ -1354,7 +1529,7 @@ std::unique_ptr<storage::Tuple> BuildStockTuple(const int stock_id,
   // S_I_ID
   stock_tuple->SetValue(0, ValueFactory::GetIntegerValue(stock_id), nullptr);
   // S_W_ID
-  stock_tuple->SetValue(1, ValueFactory::GetSmallIntValue(s_w_id), nullptr);
+  stock_tuple->SetValue(1, ValueFactory::GetIntegerValue(s_w_id), nullptr);
   // S_QUANTITY
   auto s_quantity = GetRandomInteger(stock_min_quantity, stock_max_quantity);
   stock_tuple->SetValue(2, ValueFactory::GetIntegerValue(s_quantity), nullptr);
@@ -1525,15 +1700,16 @@ void LoadTPCCDatabase() {
 
   LoadWarehouses();
   
-  printf("warehouse count = %u\n", warehouse_table->GetAllActiveTupleCount());
-  printf("district count  = %u\n", district_table->GetAllActiveTupleCount());
-  printf("item count = %u\n", item_table->GetAllActiveTupleCount());
-  printf("customer count = %u\n", customer_table->GetAllActiveTupleCount());
-  printf("history count = %u\n", history_table->GetAllActiveTupleCount());
-  printf("stock count = %u\n", stock_table->GetAllActiveTupleCount());
-  printf("orders count = %u\n", orders_table->GetAllActiveTupleCount());
-  printf("new order count = %u\n", new_order_table->GetAllActiveTupleCount());
-  printf("order line count = %u\n", order_line_table->GetAllActiveTupleCount());
+  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("warehouse count = %u", warehouse_table->GetAllActiveTupleCount());
+  LOG_INFO("district count  = %u", district_table->GetAllActiveTupleCount());
+  LOG_INFO("item count = %u", item_table->GetAllActiveTupleCount());
+  LOG_INFO("customer count = %u", customer_table->GetAllActiveTupleCount());
+  LOG_INFO("history count = %u", history_table->GetAllActiveTupleCount());
+  LOG_INFO("stock count = %u", stock_table->GetAllActiveTupleCount());
+  LOG_INFO("orders count = %u", orders_table->GetAllActiveTupleCount());
+  LOG_INFO("new order count = %u", new_order_table->GetAllActiveTupleCount());
+  LOG_INFO("order line count = %u", order_line_table->GetAllActiveTupleCount());
 
 }
 

@@ -57,6 +57,10 @@ class IndexScanExecutor : public AbstractScanExecutor {
     values_ = values;
   }
 
+  void SetColumnIds(const std::vector<oid_t> &column_ids) {
+    column_ids_ = column_ids;
+  }
+
  protected:
   bool DInit();
 

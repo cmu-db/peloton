@@ -98,17 +98,15 @@ void RunBackend(oid_t thread_id) {
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
-  fast_random rng(rand());
   ZipfDistribution zipf(state.scale_factor * 1000 - 1,
                         state.zipf_theta);
-
-  ReadPlans read_plans = PrepareReadPlan();
-  UpdatePlans update_plans = PrepareUpdatePlan();
-  MixedPlans mixed_plans = PrepareMixedPlan();
 
 
   // Run these many transactions
   if (state.run_mix) {
+
+    MixedPlans mixed_plans = PrepareMixedPlan();
+    
     int write_count = 10 * update_ratio;
     int read_count = 10 - write_count;
     
@@ -139,6 +137,9 @@ void RunBackend(oid_t thread_id) {
     }
   } else {
 
+    fast_random rng(rand());
+    ReadPlans read_plans = PrepareReadPlan();
+    UpdatePlans update_plans = PrepareUpdatePlan();
     // backoff
     uint32_t backoff_shifts = 0;
     while (true) {
@@ -299,6 +300,7 @@ void RunWorkload() {
   delete[] commit_counts;
   commit_counts = nullptr;
 }
+
 
 /////////////////////////////////////////////////////////
 // HARNESS

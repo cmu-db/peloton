@@ -12,9 +12,14 @@
 
 #pragma once
 
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "backend/benchmark/benchmark_common.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/executor/abstract_executor.h"
+#include "backend/storage/data_table.h"
+#include "backend/executor/update_executor.h"
+#include "backend/executor/index_scan_executor.h"
+#include "backend/executor/insert_executor.h"
 
 namespace peloton {
 
@@ -115,6 +120,73 @@ void RunWorkload();
 // TRANSACTION TYPES
 /////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////
+struct NewOrderPlans {
+
+  executor::IndexScanExecutor* item_index_scan_executor_;
+  executor::IndexScanExecutor* warehouse_index_scan_executor_;
+  executor::IndexScanExecutor* district_index_scan_executor_;
+  executor::IndexScanExecutor* district_update_index_scan_executor_;
+  executor::UpdateExecutor* district_update_executor_;
+  executor::IndexScanExecutor* customer_index_scan_executor_;
+  executor::IndexScanExecutor* stock_index_scan_executor_;
+  executor::IndexScanExecutor* stock_update_index_scan_executor_;
+  executor::UpdateExecutor* stock_update_executor_;
+
+
+  void SetContext(executor::ExecutorContext* context) {
+    item_index_scan_executor_->SetContext(context);
+    
+    warehouse_index_scan_executor_->SetContext(context);
+    
+    district_index_scan_executor_->SetContext(context);
+    district_update_index_scan_executor_->SetContext(context);
+    district_update_executor_->SetContext(context);
+    
+    customer_index_scan_executor_->SetContext(context);
+    
+    stock_index_scan_executor_->SetContext(context);
+    stock_update_index_scan_executor_->SetContext(context);
+    stock_update_executor_->SetContext(context);
+  }
+
+  void Cleanup() {
+    delete item_index_scan_executor_;
+    item_index_scan_executor_ = nullptr;
+
+    delete warehouse_index_scan_executor_;
+    warehouse_index_scan_executor_ = nullptr;
+
+    delete district_index_scan_executor_;
+    district_index_scan_executor_ = nullptr;
+
+    delete district_update_index_scan_executor_;
+    district_update_index_scan_executor_ = nullptr;
+
+    delete district_update_executor_;
+    district_update_executor_ = nullptr;
+
+    delete customer_index_scan_executor_;
+    customer_index_scan_executor_ = nullptr;
+
+    delete stock_index_scan_executor_;
+    stock_index_scan_executor_ = nullptr;
+
+    delete stock_update_index_scan_executor_;
+    stock_update_index_scan_executor_ = nullptr;
+
+    delete stock_update_executor_;
+    stock_update_executor_ = nullptr;
+  }
+
+};
+
+NewOrderPlans PrepareNewOrderPlan();
+
+bool RunNewOrder(NewOrderPlans &new_order_plans);
+
+
+
 bool RunStockLevel();
 
 bool RunDelivery();
@@ -123,9 +195,8 @@ bool RunOrderStatus();
 
 bool RunPayment();
 
-// void PrepareNewOrderPlans();
 
-bool RunNewOrder();
+/////////////////////////////////////////////////////////
 
 std::vector<std::vector<Value>>
 ExecuteReadTest(executor::AbstractExecutor* executor);
