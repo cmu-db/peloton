@@ -107,6 +107,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 }
 
 void StartLogging(std::thread& thread) {
+  //PrepareLogFile();
   auto& log_manager = logging::LogManager::GetInstance();
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
