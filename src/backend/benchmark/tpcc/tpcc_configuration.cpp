@@ -13,6 +13,7 @@
 
 #include <iomanip>
 #include <algorithm>
+#include <string.h>
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/common/logger.h"
@@ -26,20 +27,29 @@ void Usage(FILE *out) {
           "Command line options : tpcc <options> \n"
           "   -h --help              :  Print help message \n"
           "   -k --scale_factor      :  scale factor \n"
-          "   -w --warehouse_count   :  # of warehouses \n"
           "   -d --duration          :  execution duration \n"
           "   -s --snapshot_duration :  snapshot duration \n"
-          "   -b --backend_count     :  # of backends \n");
+          "   -b --backend_count     :  # of backends \n"
+          "   -w --warehouse_count   :  # of warehouses \n"
+          "   -e --exp_backoff       :  enable exponential backoff \n"
+          "   -p --protocol          :  choose protocol, default OCC\n"
+          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
+          "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
+          "                             gc protocol could be off, co, va"
+  );
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
   { "scale_factor", optional_argument, NULL, 'k' },
-  { "warehouse_count", optional_argument, NULL, 'w' },
   { "duration", optional_argument, NULL, 'd' },
   { "snapshot_duration", optional_argument, NULL, 's' },
   { "backend_count", optional_argument, NULL, 'b'},
-  {NULL, 0, NULL, 0}
+  { "warehouse_count", optional_argument, NULL, 'w' },
+  { "exp_backoff", no_argument, NULL, 'e'},
+  { "protocol", optional_argument, NULL, 'p'},
+  { "gc_protocol", optional_argument, NULL, 'g'},
+  { NULL, 0, NULL, 0 }
 };
 
 void ValidateScaleFactor(const configuration &state) {
@@ -60,6 +70,24 @@ void ValidateBackendCount(const configuration &state) {
   LOG_INFO("%s : %d", "backend_count", state.backend_count);
 }
 
+void ValidateDuration(const configuration &state) {
+  if (state.duration <= 0) {
+    LOG_ERROR("Invalid duration :: %lf", state.duration);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "execution duration", state.duration);
+}
+
+void ValidateSnapshotDuration(const configuration &state) {
+  if (state.snapshot_duration <= 0) {
+    LOG_ERROR("Invalid snapshot_duration :: %lf", state.snapshot_duration);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
+}
+
 void ValidateWarehouseCount(const configuration &state) {
   if (state.warehouse_count <= 0) {
     LOG_ERROR("Invalid warehouse_count :: %d", state.warehouse_count);
@@ -70,13 +98,15 @@ void ValidateWarehouseCount(const configuration &state) {
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
-
   // Default Values
   state.scale_factor = 1;
-  state.warehouse_count = 1;
   state.duration = 10;
   state.snapshot_duration = 0.1;
   state.backend_count = 1;
+  state.warehouse_count = 1;
+  state.run_backoff = false;
+  state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
+  state.gc_protocol = GC_TYPE_OFF;
 
   // Parse args
   while (1) {
@@ -101,6 +131,45 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'b':
         state.backend_count = atoi(optarg);
         break;
+      case 'e':
+        state.run_backoff = true;
+        break;
+      case 'p': {
+        char *protocol = optarg;
+        if (strcmp(protocol, "occ") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
+        } else if (strcmp(protocol, "pcc") == 0) {
+          state.protocol = CONCURRENCY_TYPE_PESSIMISTIC;
+        } else if (strcmp(protocol, "ssi") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SSI;
+        } else if (strcmp(protocol, "to") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO;
+        } else if (strcmp(protocol, "ewrite") == 0) {
+          state.protocol = CONCURRENCY_TYPE_EAGER_WRITE;
+        } else if (strcmp(protocol, "occrb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OCC_RB;
+        } else if (strcmp(protocol, "sread") == 0) {
+          state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
+        } else {
+          fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'g': {
+        char *gc_protocol = optarg;
+        if (strcmp(gc_protocol, "off") == 0) {
+          state.gc_protocol = GC_TYPE_OFF;
+        }else if (strcmp(gc_protocol, "va") == 0) {
+          state.gc_protocol = GC_TYPE_VACUUM;
+        }else if (strcmp(gc_protocol, "co") == 0) {
+          state.gc_protocol = GC_TYPE_CO;
+        }else {
+          fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
       case 'h':
         Usage(stderr);
         exit(EXIT_FAILURE);
@@ -121,8 +190,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Print configuration
   ValidateScaleFactor(state);
+  ValidateDuration(state);
+  ValidateSnapshotDuration(state);
   ValidateWarehouseCount(state);
   ValidateBackendCount(state);
+  
+  LOG_INFO("%s : %d", "Run exponential backoff", state.run_backoff);
 
 }
 

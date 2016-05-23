@@ -30,12 +30,12 @@ void Usage(FILE *out) {
           "   -k --scale_factor      :  # of tuples \n"
           "   -d --duration          :  execution duration \n"
           "   -s --snapshot_duration :  snapshot duration \n"
+          "   -b --backend_count     :  # of backends \n"
           "   -c --column_count      :  # of columns \n"
           "   -u --write_ratio       :  Fraction of updates \n"
-          "   -b --backend_count     :  # of backends \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
-          "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
+          "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
@@ -164,10 +164,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'z':
         state.zipf_theta = atof(optarg);
         break;
-      case 'h':
-        Usage(stderr);
-        exit(EXIT_FAILURE);
-        break;
       case 'm':
         state.run_mix = true;
         break;
@@ -210,6 +206,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         }
         break;
       }
+      case 'h':
+        Usage(stderr);
+        exit(EXIT_FAILURE);
+        break;
       default:
         fprintf(stderr, "\nUnknown option: -%c-\n", c);
         Usage(stderr);

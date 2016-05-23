@@ -73,7 +73,6 @@ class configuration {
 
   int new_orders_per_district;
 
-
   // execution duration
   double duration;
 
@@ -91,6 +90,15 @@ class configuration {
 
   double abort_rate;
 
+  // enable exponential backoff
+  bool run_backoff;
+
+  // protocol type
+  ConcurrencyType protocol;
+
+  // gc protocol type
+  GCType gc_protocol;
+
 };
 
 extern configuration state;
@@ -98,6 +106,10 @@ extern configuration state;
 void Usage(FILE *out);
 
 void ValidateScaleFactor(const configuration &state);
+
+void ValidateDuration(const configuration &state);
+
+void ValidateSnapshotDuration(const configuration &state);
 
 void ValidateBackendCount(const configuration &state);
 

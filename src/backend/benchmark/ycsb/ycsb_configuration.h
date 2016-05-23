@@ -73,7 +73,10 @@ class configuration {
 
   // protocol type
   ConcurrencyType protocol;
+
+  // gc protocol type
   GCType gc_protocol;
+  
 };
 
 extern configuration state;
