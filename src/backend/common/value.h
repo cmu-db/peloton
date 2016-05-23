@@ -2044,8 +2044,16 @@ class Value {
     const char *right =
         reinterpret_cast<const char *>(rhs.GetObjectValueWithoutNull());
 
+    if (leftLength != rightLength) {
+      if (leftLength > rightLength) {
+        return VALUE_COMPARE_GREATERTHAN;
+      } else {
+        return VALUE_COMPARE_LESSTHAN;
+      }
+    }
+
     const int result =
-        ::strncmp(left, right, std::min(leftLength, rightLength));
+      ::strncmp(left, right, std::min(leftLength, rightLength));
     if (result == 0 && leftLength != rightLength) {
       if (leftLength > rightLength) {
         return VALUE_COMPARE_GREATERTHAN;
@@ -2512,6 +2520,12 @@ class Value {
 
   static Value GetTempStringValue(const char *value, size_t size) {
     return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, nullptr);
+  }
+
+  static Value GetMaxTempStringValue(size_t size) {
+    Value retval(VALUE_TYPE_VARCHAR);
+    retval.SetObjectLength(size);
+    return retval;
   }
 
   static Value GetTempBinaryValue(const unsigned char *value, size_t size) {
