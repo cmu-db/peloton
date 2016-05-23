@@ -521,7 +521,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
-  key4->SetValue(0, ValueFactory::GetIntegerValue(500 * scale_itr), pool);
+  key4->SetValue(0, ValueFactory::GetIntegerValue(500), pool);
   key4->SetValue(1, ValueFactory::GetStringValue(
     "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
