@@ -97,6 +97,12 @@ class Value;
 #define DECIMAL_MIN -9999999
 #define DECIMAL_MAX 9999999
 
+
+#define PELOTON_INT8_MAX -(INT8_NULL + 1)
+#define PELOTON_INT16_MAX -(INT16_NULL + 1)
+#define PELOTON_INT32_MAX -(INT32_NULL + 1)
+#define PELOTON_INT64_MAX -(INT64_NULL + 1)
+
 /// Float/Double less than these values are NULL
 #define FLOAT_NULL -3.4e+38f
 #define DOUBLE_NULL -1.7E+308

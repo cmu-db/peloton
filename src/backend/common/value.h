@@ -394,6 +394,8 @@ class Value {
 
   // Get min value
   static Value GetMinValue(ValueType);
+  // Get max value for given type.
+  static Value GetMaxValue(ValueType type);
 
   int GetIntegerForTestsOnly() { return GetInteger(); }
 
@@ -2042,8 +2044,16 @@ class Value {
     const char *right =
         reinterpret_cast<const char *>(rhs.GetObjectValueWithoutNull());
 
+    if (leftLength != rightLength) {
+      if (leftLength > rightLength) {
+        return VALUE_COMPARE_GREATERTHAN;
+      } else {
+        return VALUE_COMPARE_LESSTHAN;
+      }
+    }
+
     const int result =
-        ::strncmp(left, right, std::min(leftLength, rightLength));
+      ::strncmp(left, right, std::min(leftLength, rightLength));
     if (result == 0 && leftLength != rightLength) {
       if (leftLength > rightLength) {
         return VALUE_COMPARE_GREATERTHAN;
@@ -2512,6 +2522,12 @@ class Value {
     return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, nullptr);
   }
 
+  static Value GetMaxTempStringValue() {
+    Value retval(VALUE_TYPE_VARCHAR);
+    retval.SetObjectLength(INT_MAX);
+    return retval;
+  }
+
   static Value GetTempBinaryValue(const unsigned char *value, size_t size) {
     return GetAllocatedValue(VALUE_TYPE_VARBINARY,
                              reinterpret_cast<const char *>(value), size,
@@ -2824,6 +2840,20 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
+      if (GetObjectLengthWithoutNull() == INT_MAX) {
+        LOG_INFO("Variable length with INT_MAX");
+        int32_t objLength = GetObjectLengthWithoutNull();
+
+        const int8_t lengthLength = GetObjectLengthLength();
+        const int32_t zeroLength = 0;
+        const int32_t minLength = lengthLength + zeroLength;
+        Varlen *sref = Varlen::Create(minLength, varlen_pool);
+        char *copy = sref->Get();
+        SetObjectLengthToLocation(objLength, copy);
+        *reinterpret_cast<Varlen **>(storage) = sref;
+        break;
+      }
+
       // Potentially non-inlined type requires special handling
       if (isInlined) {
         InlineCopyyObject(storage, maxLength, isInBytes);
