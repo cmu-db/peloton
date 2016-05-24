@@ -142,8 +142,9 @@ void *Connection::ProcessMessage(void *connection) {
     char buf[msg_len + HEADERLEN];
 
     // Get the data
-    conn->GetReadData(buf, sizeof(buf));
+    int ret = conn->GetReadData(buf, sizeof(buf));
 
+    PL_ASSERT(ret == (int)sizeof(buf));
     // Get the message type
     uint16_t type = 0;
     PL_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
@@ -219,7 +220,7 @@ void *Connection::ProcessMessage(void *connection) {
         google::protobuf::Message *message = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len);
 
         // Invoke rpc call. request is null
         rpc_method->service_->CallMethod(method, &controller, NULL, message,
@@ -283,16 +284,17 @@ void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev,
    */
 
   /* prepaere workers_thread to send and recv data */
-  std::function<void()> worker_conn =
-      std::bind(&Connection::ProcessMessage, conn);
-
-  /*
-   * Add workers to thread pool to send and recv data
-   * Note: after AddTask, ReadCb will return and another
-   * request on this connection can be processed while
-   * the former is still being processed
-   */
-  ThreadPool::GetInstance().AddTask(worker_conn);
+  Connection::ProcessMessage(conn);
+//  std::function<void()> worker_conn =
+//      std::bind(&Connection::ProcessMessage, conn);
+//
+//  /*
+//   * Add workers to thread pool to send and recv data
+//   * Note: after AddTask, ReadCb will return and another
+//   * request on this connection can be processed while
+//   * the former is still being processed
+//   */
+//  ThreadPool::GetInstance().AddTask(worker_conn);
 }
 
 /*
@@ -378,8 +380,14 @@ int Connection::GetReadData(char *buffer, int len) {
    *       bufferevent_lock(bev_);
    *       bufferevent_unlock(bev_);
    */
+
+  int remaining_len = len;
+  do{
   struct evbuffer *input = bufferevent_get_input(bev_);
-  return evbuffer_remove(input, buffer, len);
+  remaining_len -= evbuffer_remove(input, buffer, len);
+
+  }while(remaining_len > 0);
+  return len;
 }
 
 /*
