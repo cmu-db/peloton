@@ -128,7 +128,6 @@ void RunBenchmark() {
 		// Do recovery
 		DoRecovery();
     }
-    while(true);
   }
 
 }
