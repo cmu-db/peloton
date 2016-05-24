@@ -121,6 +121,11 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       memcpy(replication_array.get() + rep_array_offset, log_buffer->GetData(),
              log_buffer->GetSize());
       rep_array_offset += log_buffer->GetSize();
+
+      // return empty buffer
+      auto backend_logger = log_buffer->GetBackendLogger();
+      log_buffer->ResetData();
+      backend_logger->GrantEmptyBuffer(std::move(log_buffer));
     }
 
     if (max_collected_commit_id != max_flushed_commit_id) {
