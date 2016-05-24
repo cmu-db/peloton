@@ -27,7 +27,7 @@ namespace expression {
 SubqueryExpression::SubqueryExpression(
     ExpressionType subqueryType, ValueType result_type, int subqueryId,
     const std::vector<int> &paramIdxs, const std::vector<int> &otherParamIdxs,
-    __attribute__((unused)) const std::vector<AbstractExpression *>& tveParams)
+    UNUSED_ATTRIBUTE const std::vector<AbstractExpression *>& tveParams)
     : AbstractExpression(subqueryType, result_type),
       m_subqueryId(subqueryId),
       m_paramIdxs(paramIdxs),
@@ -36,9 +36,9 @@ SubqueryExpression::SubqueryExpression(
 }
 
 Value SubqueryExpression::Evaluate(
-    __attribute__((unused)) const AbstractTuple *tuple1,
-    __attribute__((unused)) const AbstractTuple *tuple2,
-    __attribute__((unused)) executor::ExecutorContext *exeContext) const {
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+    UNUSED_ATTRIBUTE executor::ExecutorContext *exeContext) const {
   // TODO: Get the subquery context
 
   // Get the subquery context with the last Evaluation result and parameters
@@ -79,7 +79,7 @@ if (m_tveParams.Get() != NULL) {
 // since the last invocation.
 if (hasPriorResult) {
   std::vector<Value> &lastParams = context->accessLastParams();
-  assert(lastParams.size() == m_otherParamIdxs.size());
+  PL_ASSERT(lastParams.size() == m_otherParamIdxs.size());
   for (size_t i = 0; i < lastParams.size(); ++i) {
     Value &prevParam = parameterContainer[m_otherParamIdxs[i]];
     if (lastParams[i].compare(prevParam) != VALUE_COMPARE_EQUAL) {

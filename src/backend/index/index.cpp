@@ -49,6 +49,23 @@ bool Index::Compare(const AbstractTuple &index_key,
 
   oid_t key_column_itr = -1;
   // Go over each attribute in the list of comparison columns
+  // The key_columns_ids, as the name shows, saves the key column ids that
+  // have values and expression needs to be compared.
+
+  // Example:
+  // 1.
+  //    key_column_ids { 0 }
+  //    expr_types { == }
+  //    values    { 5 }
+  // basically it's saying get the tuple whose 0 column, which is the key column,
+  //  equals to 5
+  //
+  // 2.
+  //   key_column_ids {0, 1}
+  //   expr_types { > , >= }
+  //  values  {5, 10}
+  // it's saysing col[0] > 5 && col[1] >= 10, where 0 and 1 are key columns.
+
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
 
@@ -128,6 +145,31 @@ bool Index::Compare(const AbstractTuple &index_key,
   }
 
   return true;
+}
+
+bool Index::IfForwardExpression(ExpressionType e) {
+  if (e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
+      e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) {
+      return true;
+  }
+  return false;
+}
+
+bool Index::IfBackwardExpression(ExpressionType e) {
+  if (e == EXPRESSION_TYPE_COMPARE_LESSTHAN||
+      e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) {
+    return true;
+  }
+  return false;
+}
+
+
+bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
+                         const std::pair<peloton::Value, int> &j) {
+  if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
+    return i.second < j.second;
+  }
+  return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
 }
 
 bool Index::ConstructLowerBoundTuple(

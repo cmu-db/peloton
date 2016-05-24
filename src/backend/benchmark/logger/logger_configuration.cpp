@@ -217,6 +217,15 @@ static void ValidateLogFileDir(
       }
     } break;
 
+    // Log file on SSD
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_SSD_WBL: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        state.log_file_dir = SSD_DIR;
+      }
+    } break;
+
     // Log file on HDD
     case LOGGING_TYPE_HDD_WAL:
     case LOGGING_TYPE_HDD_WBL: {

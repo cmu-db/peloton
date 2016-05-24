@@ -31,12 +31,12 @@ HashJoinExecutor::HashJoinExecutor(const planner::AbstractPlan *node,
     : AbstractJoinExecutor(node, executor_context) {}
 
 bool HashJoinExecutor::DInit() {
-  assert(children_.size() == 2);
+  PL_ASSERT(children_.size() == 2);
 
   auto status = AbstractJoinExecutor::DInit();
   if (status == false) return status;
 
-  assert(children_[1]->GetRawNode()->GetPlanNodeType() == PLAN_NODE_TYPE_HASH);
+  PL_ASSERT(children_[1]->GetRawNode()->GetPlanNodeType() == PLAN_NODE_TYPE_HASH);
 
   hash_executor_ = reinterpret_cast<HashExecutor *>(children_[1]);
 

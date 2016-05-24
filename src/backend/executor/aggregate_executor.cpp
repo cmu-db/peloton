@@ -44,7 +44,7 @@ AggregateExecutor::~AggregateExecutor() {
  * @return true on success, false otherwise.
  */
 bool AggregateExecutor::DInit() {
-  assert(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   LOG_TRACE("Aggregate executor :: 1 child ");
 
@@ -55,7 +55,7 @@ bool AggregateExecutor::DInit() {
   auto output_table_schema =
       const_cast<catalog::Schema *>(node.GetOutputSchema());
 
-  assert(output_table_schema->GetColumnCount() >= 1);
+  PL_ASSERT(output_table_schema->GetColumnCount() >= 1);
 
   // clean up result
   result_itr = START_OID;
@@ -153,7 +153,7 @@ bool AggregateExecutor::DExecute() {
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
       auto location = output_table->InsertTuple(tuple.get());
-      assert(location.block != INVALID_OID);
+      PL_ASSERT(location.block != INVALID_OID);
 
       auto &manager = catalog::Manager::GetInstance();
       auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();

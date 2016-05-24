@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"

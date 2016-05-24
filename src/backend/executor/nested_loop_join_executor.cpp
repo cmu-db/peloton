@@ -44,11 +44,11 @@ bool NestedLoopJoinExecutor::DInit() {
     return status;
   }
 
-  assert(right_result_tiles_.empty());
+  PL_ASSERT(right_result_tiles_.empty());
   right_child_done_ = false;
   right_result_itr_ = 0;
 
-  assert(left_result_tiles_.empty());
+  PL_ASSERT(left_result_tiles_.empty());
 
   return true;
 }
@@ -97,7 +97,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     if (left_child_done_ == true) {
       LOG_TRACE("Advance the left buffer iterator.");
 
-      assert(!right_result_tiles_.empty());
+      PL_ASSERT(!right_result_tiles_.empty());
       left_result_itr_++;
 
       if (left_result_itr_ >= left_result_tiles_.size()) {
@@ -130,7 +130,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         return BuildOuterJoinOutput();
       }
 
-      assert(left_result_itr_ == 0);
+      PL_ASSERT(left_result_itr_ == 0);
 
       // Right child is finished, no more tiles
       if (children_[1]->Execute() == false) {

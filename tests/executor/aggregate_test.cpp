@@ -69,10 +69,10 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   std::vector<oid_t> group_by_columns = {0, 1, 2, 3};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {
+  DirectMapList direct_map_list = {
       {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates (empty)
@@ -167,11 +167,11 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 0}},
+  DirectMapList direct_map_list = {{0, {0, 0}},
                                                          {1, {1, 0}}};
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
@@ -271,11 +271,11 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {
+  DirectMapList direct_map_list = {
       {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
@@ -380,10 +380,10 @@ TEST_F(AggregateTests, HashDistinctTest) {
   std::vector<oid_t> group_by_columns = {0, 1, 2, 3};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {
+  DirectMapList direct_map_list = {
       {0, {0, 3}}, {1, {0, 0}}, {2, {0, 1}}, {3, {0, 2}}};
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates (empty)
@@ -470,11 +470,11 @@ TEST_F(AggregateTests, HashSumGroupByTest) {
   std::vector<oid_t> group_by_columns = {1};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {{0, {0, 1}},
+  DirectMapList direct_map_list = {{0, {0, 1}},
                                                          {1, {1, 0}}};
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
@@ -562,11 +562,11 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   std::vector<oid_t> group_by_columns = {0};
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {
+  DirectMapList direct_map_list = {
       {0, {0, 0}}, {1, {1, 0}}, {2, {1, 1}}};
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates
@@ -672,11 +672,11 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   std::vector<oid_t> group_by_columns;
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list = {
+  DirectMapList direct_map_list = {
       {0, {1, 0}}, {1, {1, 1}}, {2, {1, 2}}};
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up unique aggregates

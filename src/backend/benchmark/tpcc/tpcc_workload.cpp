@@ -17,7 +17,6 @@
 #include <chrono>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 #include <random>
@@ -335,7 +334,7 @@ bool RunNewOrder(){
     }
 
     if (gii_lists_values.size() != 1) {
-      assert(false);
+      PL_ASSERT(false);
     }
 
   }
@@ -380,7 +379,7 @@ bool RunNewOrder(){
   }
 
   if (gwtr_lists_values.size() != 1) {
-    assert(false);
+    PL_ASSERT(false);
   }
 
   auto w_tax = gwtr_lists_values[0][0];
@@ -427,7 +426,7 @@ bool RunNewOrder(){
   }
 
   if (gd_lists_values.size() != 1) {
-    assert(false);
+    PL_ASSERT(false);
   }
 
   auto d_tax = gd_lists_values[0][0];
@@ -499,8 +498,8 @@ bool RunNewOrder(){
 
   int district_update_value = ValuePeeker::PeekAsInteger(d_next_o_id) + 1;
 
-  planner::ProjectInfo::TargetList district_target_list;
-  planner::ProjectInfo::DirectMapList district_direct_map_list;
+  TargetList district_target_list;
+  DirectMapList district_direct_map_list;
 
   // Update the last attribute
   for (oid_t col_itr = 0; col_itr < 10; col_itr++) {
@@ -616,7 +615,7 @@ bool RunNewOrder(){
     }
 
     if (gsi_lists_values.size() != 1) {
-      assert(false);
+      PL_ASSERT(false);
     }
 
     int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
@@ -650,8 +649,8 @@ bool RunNewOrder(){
     executor::IndexScanExecutor stock_update_index_scan_executor(&stock_update_index_scan_node,
                                                                  context.get());
 
-    planner::ProjectInfo::TargetList stock_target_list;
-    planner::ProjectInfo::DirectMapList stock_direct_map_list;
+    TargetList stock_target_list;
+    DirectMapList stock_direct_map_list;
 
     // Update the last attribute
     for (oid_t col_itr = 0; col_itr < 17; col_itr++) {
@@ -718,7 +717,7 @@ bool RunNewOrder(){
   }
 
   // transaction passed execution.
-  assert(txn->GetResult() == Result::RESULT_SUCCESS);
+  PL_ASSERT(txn->GetResult() == Result::RESULT_SUCCESS);
 
   auto result = txn_manager.CommitTransaction();
 
@@ -728,7 +727,7 @@ bool RunNewOrder(){
 
     return true;
   } else {
-    assert(result == Result::RESULT_ABORTED ||
+    PL_ASSERT(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
     return false;
   }

@@ -12,7 +12,6 @@
 
 #include "backend/bridge/ddl/configuration.h"
 
-#include <cassert>
 #include "postgres.h"
 #include "utils/guc_tables.h"
 

@@ -42,21 +42,21 @@ expression::AbstractExpression *JoinTestsUtil::CreateJoinPredicate() {
 
 std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
   // Create the plan node
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   /////////////////////////////////////////////////////////
   // PROJECTION 0
   /////////////////////////////////////////////////////////
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map1 =
+  DirectMap direct_map1 =
       std::make_pair(0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 =
+  DirectMap direct_map2 =
       std::make_pair(1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 =
+  DirectMap direct_map3 =
       std::make_pair(2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 =
+  DirectMap direct_map4 =
       std::make_pair(3, std::make_pair(0, 0));
 
   direct_map_list.push_back(direct_map1);

@@ -32,17 +32,6 @@
 #include "utils/syscache.h"
 #include "utils/rel.h"
 
-//#include <sys/types.h>
-//#include <unistd.h>
-//#include <cassert>
-
-// TODO :: Scrubbing header files
-
-//#include "backend/bridge/ddl/ddl_table.h"
-//#include "backend/storage/database.h"
-
-//#include "utils/syscache.h"
-
 namespace peloton {
 namespace bridge {
 

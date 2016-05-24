@@ -24,6 +24,7 @@
 #include "backend/logging/loggers/wbl_frontend_logger.h"
 #include "backend/logging/loggers/wbl_backend_logger.h"
 #include "backend/logging/logging_util.h"
+#include "backend/logging/log_manager.h"
 
 #define POSSIBLY_DIRTY_GRANT_SIZE 10000000; // ten million seems reasonable
 
@@ -161,7 +162,7 @@ std::string WriteBehindFrontendLogger::GetLogFileName(void) {
   return log_manager.GetLogFileName();
 }
 
-void WriteBehindFrontendLogger::SetLoggerID(__attribute__((unused)) int id) {
+void WriteBehindFrontendLogger::SetLoggerID(UNUSED_ATTRIBUTE int id) {
   // do nothing
 }
 

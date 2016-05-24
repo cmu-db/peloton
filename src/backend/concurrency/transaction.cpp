@@ -14,6 +14,7 @@
 
 #include "backend/common/logger.h"
 #include "backend/common/platform.h"
+#include "backend/common/macros.h"
 
 #include <chrono>
 #include <thread>
@@ -30,7 +31,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
   if (rw_set_.find(tile_group_id) != rw_set_.end() &&
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
-    assert(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
+    PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
            rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
     return;
   } else {
@@ -60,10 +61,10 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       return;
     }
     if (type == RW_TYPE_DELETE) {
-      assert(false);
+      PL_ASSERT(false);
       return;
     }
-    assert(false);
+    PL_ASSERT(false);
   }
 }
 
@@ -76,7 +77,7 @@ void Transaction::RecordInsert(const ItemPointer &location) {
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
     // RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
-    assert(false);
+    PL_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_INSERT;
     ++insert_count_;
@@ -107,12 +108,12 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
       return true;
     }
     if (type == RW_TYPE_DELETE) {
-      assert(false);
+      PL_ASSERT(false);
       return false;
     }
-    assert(false);
+    PL_ASSERT(false);
   } else {
-    assert(false);
+    PL_ASSERT(false);
   }
   return false;
 }

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/common/logger.h"
 #include "backend/planner/limit_plan.h"
 
 namespace peloton {
@@ -38,7 +39,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformLimit(
 
   // Resolve child plan
   AbstractPlanState *subplan_state = outerAbstractPlanState(limit_state);
-  assert(subplan_state != nullptr);
+  PL_ASSERT(subplan_state != nullptr);
   plan_node->AddChild(TransformPlan(subplan_state));
 
   return plan_node;

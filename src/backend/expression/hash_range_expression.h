@@ -49,10 +49,10 @@ class HashRangeExpression : public AbstractExpression {
   }
 
   virtual Value Evaluate(const AbstractTuple *tuple1,
-                         __attribute__((unused)) const AbstractTuple *tuple2,
-                         __attribute__((unused))
+                         UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+                         UNUSED_ATTRIBUTE
                          executor::ExecutorContext *context) const override {
-    assert(tuple1);
+    PL_ASSERT(tuple1);
     if (!tuple1) {
       throw Exception(
           "TupleValueExpression::"
@@ -81,8 +81,8 @@ class HashRangeExpression : public AbstractExpression {
     int32_t min = 0;
     int32_t max = ranges_.size() - 1;
     while (min <= max) {
-      assert(min >= 0);
-      assert(max >= 0);
+      PL_ASSERT(min >= 0);
+      PL_ASSERT(max >= 0);
       uint32_t mid = (min + max) >> 1;
       if (ranges_[mid].second < hash) {
         min = mid + 1;

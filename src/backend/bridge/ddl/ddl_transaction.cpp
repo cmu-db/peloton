@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
-#include <cassert>
 
 #include "backend/bridge/ddl/ddl_transaction.h"
 #include "backend/common/logger.h"

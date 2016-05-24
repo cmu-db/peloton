@@ -104,7 +104,7 @@ Datum copy_text(PG_FUNCTION_ARGS) {
   /*
    * VARDATA is a pointer to the data region of the struct.
    */
-  memcpy((void *)VARDATA(new_t), /* destination */
+  PL_MEMCPY((void *)VARDATA(new_t), /* destination */
          (void *)VARDATA(t),     /* source */
          VARSIZE(t) - VARHDRSZ); /* how many bytes */
   PG_RETURN_TEXT_P(new_t);
@@ -119,8 +119,8 @@ Datum concat_text(PG_FUNCTION_ARGS) {
   text *new_text = (text *)palloc(new_text_size);
 
   SET_VARSIZE(new_text, new_text_size);
-  memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
-  memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ), VARDATA(arg2),
+  PL_MEMCPY(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
+  PL_MEMCPY(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ), VARDATA(arg2),
          VARSIZE(arg2) - VARHDRSZ);
   PG_RETURN_TEXT_P(new_text);
 }

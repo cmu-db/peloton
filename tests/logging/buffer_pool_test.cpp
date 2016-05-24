@@ -36,7 +36,7 @@ void EnqueueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
 void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
   for (unsigned int i = 0; i < count; i++) {
     auto buf = std::move(buffer_pool->Get());
-    assert(buf);
+    PL_ASSERT(buf);
     EXPECT_EQ(buf->GetSize(), i);
   }
 }
@@ -108,7 +108,7 @@ TEST_F(BufferPoolTests, LogBufferBasicTest) {
   logging::LogBuffer log_buffer(0);
   size_t total_length = 0;
   for (auto record : records) {
-    assert(record.GetTuple()->GetSchema());
+    PL_ASSERT(record.GetTuple()->GetSchema());
     CopySerializeOutput output_buffer;
     record.Serialize(output_buffer);
     size_t len = record.GetMessageLength();
@@ -145,7 +145,7 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
 
   logging::LogBuffer log_buffer(0);
   size_t total_length = 0;
-  assert(record.GetTuple()->GetSchema());
+  PL_ASSERT(record.GetTuple()->GetSchema());
   CopySerializeOutput output_buffer;
   record.Serialize(output_buffer);
   size_t len = record.GetMessageLength();
