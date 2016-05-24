@@ -37,6 +37,8 @@ extern configuration state;
 // PREPARE LOG FILE
 //===--------------------------------------------------------------------===//
 
+bool SetupLoggingOnFollower();
+
 bool PrepareLogFile();
 
 //===--------------------------------------------------------------------===//

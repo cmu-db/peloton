@@ -49,7 +49,6 @@ enum AsynchronousType {
   ASYNCHRONOUS_TYPE_DISABLED = 3  // logging disabled
 };
 
-
 class configuration {
  public:
   // experiment type
@@ -72,7 +71,7 @@ class configuration {
 
   int replication_port;
 
-  char * remote_endpoint;
+  char *remote_endpoint;
 
   // clflush or clwb
   int flush_mode;
@@ -85,7 +84,6 @@ class configuration {
 
   // asynchronous_mode
   AsynchronousType asynchronous_mode;
-
 };
 
 void Usage(FILE *out);

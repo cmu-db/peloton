@@ -70,16 +70,10 @@ size_t GetLogFileSize();
 static void WriteOutput(double value) {
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%d %d %lf %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
-           state.logging_type,
-           ycsb::state.update_ratio,
-           ycsb::state.backend_count,
-           ycsb::state.scale_factor,
-           ycsb::state.duration,
-           state.nvm_latency,
-           state.pcommit_latency,
-           state.flush_mode,
-           state.asynchronous_mode,
-           value);
+           state.logging_type, ycsb::state.update_ratio,
+           ycsb::state.backend_count, ycsb::state.scale_factor,
+           ycsb::state.duration, state.nvm_latency, state.pcommit_latency,
+           state.flush_mode, state.asynchronous_mode, value);
 
   out << state.benchmark_type << " ";
   out << state.logging_type << " ";
@@ -107,7 +101,7 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
 }
 
 void StartLogging(std::thread& thread) {
-  //PrepareLogFile();
+  // PrepareLogFile();
   auto& log_manager = logging::LogManager::GetInstance();
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
@@ -135,98 +129,145 @@ void StartLogging(std::thread& thread) {
   }
 }
 
-int RemoveDirectory(const char *dir) {
-    int ret = 0;
-    FTS *ftsp = NULL;
-    FTSENT *curr;
+int RemoveDirectory(const char* dir) {
+  int ret = 0;
+  FTS* ftsp = NULL;
+  FTSENT* curr;
 
-    // Cast needed (in C) because fts_open() takes a "char * const *", instead
-    // of a "const char * const *", which is only allowed in C++. fts_open()
-    // does not modify the argument.
-    char *files[] = { (char *) dir, NULL };
+  // Cast needed (in C) because fts_open() takes a "char * const *", instead
+  // of a "const char * const *", which is only allowed in C++. fts_open()
+  // does not modify the argument.
+  char* files[] = {(char*)dir, NULL};
 
-    // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected behavior
-    //                in multithreaded programs
-    // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files outside
-    //                of the specified directory
-    // FTS_XDEV     - Don't cross filesystem boundaries
-    ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
-    if (!ftsp) {
-        fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
-        ret = -1;
-        goto finish;
-    }
+  // FTS_NOCHDIR  - Avoid changing cwd, which could cause unexpected behavior
+  //                in multithreaded programs
+  // FTS_PHYSICAL - Don't follow symlinks. Prevents deletion of files outside
+  //                of the specified directory
+  // FTS_XDEV     - Don't cross filesystem boundaries
+  ftsp = fts_open(files, FTS_NOCHDIR | FTS_PHYSICAL | FTS_XDEV, NULL);
+  if (!ftsp) {
+    fprintf(stderr, "%s: fts_open failed: %s\n", dir, strerror(errno));
+    ret = -1;
+    goto finish;
+  }
 
-    while ((curr = fts_read(ftsp))) {
-        switch (curr->fts_info) {
-        case FTS_NS:
-        case FTS_DNR:
-        case FTS_ERR:
-            break;
+  while ((curr = fts_read(ftsp))) {
+    switch (curr->fts_info) {
+      case FTS_NS:
+      case FTS_DNR:
+      case FTS_ERR:
+        break;
 
-        case FTS_DC:
-        case FTS_DOT:
-        case FTS_NSOK:
-            // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT were
-            // passed to fts_open()
-            break;
+      case FTS_DC:
+      case FTS_DOT:
+      case FTS_NSOK:
+        // Not reached unless FTS_LOGICAL, FTS_SEEDOT, or FTS_NOSTAT were
+        // passed to fts_open()
+        break;
 
-        case FTS_D:
-            // Do nothing. Need depth-first search, so directories are deleted
-            // in FTS_DP
-            break;
+      case FTS_D:
+        // Do nothing. Need depth-first search, so directories are deleted
+        // in FTS_DP
+        break;
 
-        case FTS_DP:
-        case FTS_F:
-        case FTS_SL:
-        case FTS_SLNONE:
-        case FTS_DEFAULT:
-            if (remove(curr->fts_accpath) < 0) {
-                fprintf(stderr, "%s: Failed to remove: %s\n",
-                        curr->fts_path, strerror(errno));
-                ret = -1;
-            }
-            break;
+      case FTS_DP:
+      case FTS_F:
+      case FTS_SL:
+      case FTS_SLNONE:
+      case FTS_DEFAULT:
+        if (remove(curr->fts_accpath) < 0) {
+          fprintf(stderr, "%s: Failed to remove: %s\n", curr->fts_path,
+                  strerror(errno));
+          ret = -1;
         }
+        break;
     }
+  }
 
 finish:
-    if (ftsp) {
-        fts_close(ftsp);
-    }
+  if (ftsp) {
+    fts_close(ftsp);
+  }
 
-    return ret;
+  return ret;
 }
 
 void CleanUpLogDirectory() {
-
   // remove wbl log file if it exists
-  std::string wbl_directory_path = state.log_file_dir +
-      logging::WriteBehindFrontendLogger::wbl_log_path;
+  std::string wbl_directory_path =
+      state.log_file_dir + logging::WriteBehindFrontendLogger::wbl_log_path;
 
   // remove wal log directory (for wal if it exists)
   // for now hardcode for 1 logger
-  std::string wal_directory_path = state.log_file_dir +
+  std::string wal_directory_path =
+      state.log_file_dir +
       logging::WriteAheadFrontendLogger::wal_directory_path;
 
   RemoveDirectory(wbl_directory_path.c_str());
 
   RemoveDirectory(wal_directory_path.c_str());
-
 }
 
-/**
- * @brief writing a simple log file
- */
-bool PrepareLogFile() {
-
+bool SetupLoggingOnFollower() {
   // Clean up log directory
   CleanUpLogDirectory();
 
   // start a thread for logging
   auto& log_manager = logging::LogManager::GetInstance();
   log_manager.SetLogDirectoryName(state.log_file_dir);
-  log_manager.SetLogFileName(state.log_file_dir + "/" + logging::WriteBehindFrontendLogger::wbl_log_path);
+  log_manager.SetLogFileName(state.log_file_dir + "/" +
+                             logging::WriteBehindFrontendLogger::wbl_log_path);
+
+  if (log_manager.ContainsFrontendLogger() == true) {
+    LOG_ERROR("another logging thread is running now");
+    return false;
+  }
+
+  // Get an instance of the storage manager to force posix_fallocate
+  // to be invoked before we begin benchmarking
+  auto& storage_manager = storage::StorageManager::GetInstance();
+  auto tmp = storage_manager.Allocate(BACKEND_TYPE_MM, 1024);
+  storage_manager.Release(BACKEND_TYPE_MM, tmp);
+
+  // Pick sync commit mode
+  switch (state.asynchronous_mode) {
+    case ASYNCHRONOUS_TYPE_SYNC:
+      log_manager.SetSyncCommit(true);
+      break;
+
+    case ASYNCHRONOUS_TYPE_ASYNC:
+      log_manager.SetSyncCommit(false);
+      break;
+
+    case ASYNCHRONOUS_TYPE_DISABLED:
+      // No logging
+      peloton_logging_mode = LOGGING_TYPE_INVALID;
+      break;
+
+    case ASYNCHRONOUS_TYPE_INVALID:
+      throw Exception("Invalid asynchronous mode : " +
+                      std::to_string(state.asynchronous_mode));
+  }
+
+  std::thread thread;
+
+  // Initializing logging module
+  StartLogging(thread);
+  return true;
+}
+
+/**
+ * @brief writing a simple log file
+ */
+bool PrepareLogFile() {
+  // Clean up log directory
+  CleanUpLogDirectory();
+
+  // start a thread for logging
+  auto& log_manager = logging::LogManager::GetInstance();
+  log_manager.SetLogDirectoryName(state.log_file_dir);
+  log_manager.SetLogFileName(state.log_file_dir + "/" +
+                             logging::WriteBehindFrontendLogger::wbl_log_path);
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
@@ -278,11 +319,10 @@ bool PrepareLogFile() {
   // Pick metrics based on benchmark type
   double throughput = 0;
   double latency = 0;
-  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     throughput = ycsb::state.throughput;
     latency = ycsb::state.latency;
-  }
-  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     throughput = tpcc::state.throughput;
     latency = tpcc::state.latency;
   }
@@ -306,20 +346,17 @@ void ResetSystem() {
   txn_manager.ResetStates();
 
   // Reset database (only needed for WAL not WBL)
-  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::CreateYCSBDatabase();
-  }
-  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     tpcc::CreateTPCCDatabase();
   }
-
 }
 
 /**
  * @brief recover the database and check the tuples
  */
 void DoRecovery() {
-
   //===--------------------------------------------------------------------===//
   // RECOVERY
   //===--------------------------------------------------------------------===//
@@ -338,9 +375,9 @@ void DoRecovery() {
   StartLogging(thread);
 
   timer.Stop();
-  
+
   // Synchronize and finish recovery
-  if(peloton_logging_mode != LOGGING_TYPE_INVALID){
+  if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     if (log_manager.EndLogging()) {
       thread.join();
     } else {
@@ -352,7 +389,6 @@ void DoRecovery() {
   if (state.experiment_type == EXPERIMENT_TYPE_RECOVERY) {
     WriteOutput(timer.GetDuration());
   }
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -360,22 +396,19 @@ void DoRecovery() {
 //===--------------------------------------------------------------------===//
 
 void BuildLog() {
-
-  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::CreateYCSBDatabase();
 
     ycsb::LoadYCSBDatabase();
 
     ycsb::RunWorkload();
-  }
-  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+  } else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     tpcc::CreateTPCCDatabase();
 
     tpcc::LoadTPCCDatabase();
 
     tpcc::RunWorkload();
   }
-
 }
 
 }  // namespace logger
