@@ -195,6 +195,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     request.set_sync_type(replication_mode_);
     rep_seq_number = replication_seq_++;
     request.set_sequence_number(rep_seq_number);
+    assert(request.sequence_number() != 0);
     networking::LogRecordReplayResponse response;
     remote_done_ = false;
     replication_stub_->LogRecordReplay(controller_.get(), &request, &response,

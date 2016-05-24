@@ -33,6 +33,7 @@ LoggingService::LoggingService() {
   recovery_pool = new VarlenPool(BACKEND_TYPE_MM);
   // we will sync manually so turn this off for now
   LogManager::GetInstance().SetSyncCommit(false);
+  replication_sequence_number_.store(1);
 }
 
 LogRecordType GetRecordTypeFromBytes(char *&workingPointer) {
@@ -191,7 +192,7 @@ void LoggingService::LogRecordReplay(
     return;
   }
   long curr_seq = request->sequence_number();
-  while (replication_sequence_number_ != curr_seq)
+  while (replication_sequence_number_.load() != curr_seq)
     ;
 
   const char *messages = request->log().c_str();
