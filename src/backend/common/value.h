@@ -2522,9 +2522,9 @@ class Value {
     return GetAllocatedValue(VALUE_TYPE_VARCHAR, value, size, nullptr);
   }
 
-  static Value GetMaxTempStringValue(size_t size) {
+  static Value GetMaxTempStringValue() {
     Value retval(VALUE_TYPE_VARCHAR);
-    retval.SetObjectLength(size);
+    retval.SetObjectLength(INT_MAX);
     return retval;
   }
 
