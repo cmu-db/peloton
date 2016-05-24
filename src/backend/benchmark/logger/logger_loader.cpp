@@ -22,8 +22,6 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
-
-}  // namespace hyadapt
+namespace hyadapt {}  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton
