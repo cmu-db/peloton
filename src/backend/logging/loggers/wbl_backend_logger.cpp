@@ -41,17 +41,20 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
       }
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetInsertLocation().block);
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       tile_groups_to_sync_.insert(
@@ -64,6 +67,8 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
   }
 
   if (replicating_) {
+    // Enqueue the serialized log record into the queue
+    record->Serialize(output_buffer);
     // here we should be getting LogRecords with data from the log manager
     if (!log_buffer_) {
       LOG_TRACE("Acquire the first log buffer in backend logger");
@@ -124,33 +129,54 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
     UNUSED_ATTRIBUTE const void *data) {
   // Figure the log record type
-  switch (log_record_type) {
-    case LOGRECORD_TYPE_TUPLE_INSERT: {
-      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_INSERT;
-      break;
-    }
-
-    case LOGRECORD_TYPE_TUPLE_DELETE: {
-      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_DELETE;
-      break;
-    }
-
-    case LOGRECORD_TYPE_TUPLE_UPDATE: {
-      log_record_type = LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
-      break;
-    }
-
-    default: {
-      PL_ASSERT(false);
-      break;
-    }
-  }
   LogRecord *tuple_record;
   if (replicating_) {
+    switch (log_record_type) {
+      case LOGRECORD_TYPE_TUPLE_INSERT: {
+        log_record_type = LOGRECORD_TYPE_WAL_TUPLE_INSERT;
+        break;
+      }
+
+      case LOGRECORD_TYPE_TUPLE_DELETE: {
+        log_record_type = LOGRECORD_TYPE_WAL_TUPLE_DELETE;
+        break;
+      }
+
+      case LOGRECORD_TYPE_TUPLE_UPDATE: {
+        log_record_type = LOGRECORD_TYPE_WAL_TUPLE_UPDATE;
+        break;
+      }
+
+      default: {
+        PL_ASSERT(false);
+        break;
+      }
+    }
     tuple_record =
         new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
                         delete_location, data, db_oid);
   } else {
+    switch (log_record_type) {
+      case LOGRECORD_TYPE_TUPLE_INSERT: {
+        log_record_type = LOGRECORD_TYPE_WBL_TUPLE_INSERT;
+        break;
+      }
+
+      case LOGRECORD_TYPE_TUPLE_DELETE: {
+        log_record_type = LOGRECORD_TYPE_WBL_TUPLE_DELETE;
+        break;
+      }
+
+      case LOGRECORD_TYPE_TUPLE_UPDATE: {
+        log_record_type = LOGRECORD_TYPE_WBL_TUPLE_UPDATE;
+        break;
+      }
+
+      default: {
+        PL_ASSERT(false);
+        break;
+      }
+    }
     // Don't make use of "data" in case of peloton log records
     // Build the tuple log record
     tuple_record =

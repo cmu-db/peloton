@@ -73,6 +73,8 @@ class configuration {
 
   char *remote_endpoint;
 
+  ReplicationType replication_mode;
+
   // clflush or clwb
   int flush_mode;
 

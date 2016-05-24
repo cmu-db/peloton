@@ -105,6 +105,7 @@ void RunBenchmark() {
       rpc_server.RegisterService(new logging::LoggingService());
       std::thread rpc_thread(&peloton::networking::RpcServer::Start,
                              &rpc_server);
+      rpc_thread.detach();
       if (state.remote_endpoint == nullptr) {
         SetupLoggingOnFollower();
         ycsb::CreateYCSBDatabase();

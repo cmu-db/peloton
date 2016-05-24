@@ -288,7 +288,10 @@ void LoggingService::LogRecordReplay(
         }
         // if we are syncing wait for flush
         if (wait_for_sync) {
-          LogManager::GetInstance().WaitForFlush(log_id);
+          LogManager::GetInstance().WaitForFlush(
+              concurrency::TransactionManagerFactory::GetInstance()
+                  .GetCurrentCommitId() -
+              1);
         }
         break;
       }
