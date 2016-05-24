@@ -111,6 +111,10 @@ class SpeculativeReadTxnManager : public TransactionManager {
     current_txn = txn;
     spec_txn_context.SetBeginCid(begin_cid);
 
+    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+    assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
+    running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
+
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
     return txn;
@@ -119,6 +123,14 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual void EndTransaction() {
     if (current_txn->GetEndCommitId() == MAX_CID) {
       current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+    }
+
+    txn_id_t txn_id = current_txn->GetTransactionId();
+
+    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+    bool ret = running_txn_buckets_[bucket_id].erase(txn_id);
+    if (ret == false) {
+      assert(false);
     }
 
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
@@ -154,7 +166,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
       }
       context->inner_dep_set_lock_.Unlock();
     });
-
     if (changeable == false || ret == false) {
       return false;
     }
