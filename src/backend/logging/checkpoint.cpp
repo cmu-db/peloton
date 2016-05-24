@@ -10,9 +10,17 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/common/pool.h"
 #include "backend/logging/checkpoint.h"
 #include "backend/logging/logging_util.h"
 #include "backend/logging/checkpoint/simple_checkpoint.h"
+#include "backend/logging/log_manager.h"
+#include "backend/logging/checkpoint_manager.h"
+#include "backend/logging/backend_logger.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/database.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tuple.h"
 
 namespace peloton {
 namespace logging {

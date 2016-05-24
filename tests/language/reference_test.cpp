@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include <utility>
 #include <sstream>
 #include <iostream>
@@ -31,7 +29,7 @@ struct S {
   const std::pair<int, int>& mp;  // reference member
 
   friend std::ostream& operator<<(std::ostream& output,
-                                  const S& s __attribute__((unused))) {
+                                  const S& s UNUSED_ATTRIBUTE) {
     output << "S \n";
     return output;
   }
@@ -41,7 +39,7 @@ void foo(int) {}
 
 struct A {
   friend std::ostream& operator<<(std::ostream& output,
-                                  const A& a __attribute__((unused))) {
+                                  const A& a UNUSED_ATTRIBUTE) {
     output << "A \n";
     return output;
   }
@@ -52,7 +50,7 @@ struct B : A {
   operator int&() { return n; };
 
   friend std::ostream& operator<<(std::ostream& output,
-                                  const B& b __attribute__((unused))) {
+                                  const B& b UNUSED_ATTRIBUTE) {
     output << "B \n";
     return output;
   }
@@ -63,7 +61,9 @@ B bar() { return B(); }
 // int& bad_r; // error: no initializer
 extern int& ext_r;  // OK
 
-TEST(ReferenceTests, BasicTest) {
+class ReferenceTests : public PelotonTest {};
+
+TEST_F(ReferenceTests, BasicTest) {
   // lvalues
   int n = 1;
   int& r1 = n;          // lvalue reference to the object n

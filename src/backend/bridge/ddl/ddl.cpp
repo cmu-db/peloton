@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-#include <iostream>
-
 #include "backend/bridge/ddl/ddl_table.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_index.h"
@@ -40,7 +37,7 @@ namespace bridge {
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree) {
-  assert(parsetree != nullptr);
+  PL_ASSERT(parsetree != nullptr);
 
   LOG_TRACE("Process Utility");
 

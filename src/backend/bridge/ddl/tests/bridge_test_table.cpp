@@ -59,11 +59,11 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  assert(db);
+  PL_ASSERT(db);
 
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
-  assert(columns.size() > 0);
+  PL_ASSERT(columns.size() > 0);
 
   // Table name and oid
   std::string table_name = "test_table_basic_columns";

@@ -26,6 +26,7 @@
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/exception.h"
 #include "backend/storage/storage_manager.h"
 
@@ -103,7 +104,7 @@ int is_cpu_genuine_intel(void) {
     unsigned cpuinfo[3];
   } vendor;
 
-  memset(&vendor, 0, sizeof (vendor));
+  PL_MEMSET(&vendor, 0, sizeof (vendor));
 
   cpuid(0x0, 0x0, cpuinfo);
 
@@ -316,6 +317,16 @@ StorageManager::StorageManager()
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    } break;
+
+    // Check for SSD FS for data
+    case LOGGING_TYPE_SSD_WBL: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
         found_file_system = true;
       }
 

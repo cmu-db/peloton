@@ -22,11 +22,11 @@
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
 #include "backend/logging/loggers/wal_frontend_logger.h"
-#include "backend/storage/table_factory.h"
 #include "backend/logging/log_manager.h"
-#include "backend/index/index.h"
-
 #include "backend/logging/logging_util.h"
+#include "backend/index/index.h"
+#include "backend/storage/database.h"
+#include "backend/storage/table_factory.h"
 
 #include "logging/logging_tests_util.h"
 
@@ -58,7 +58,7 @@ std::vector<storage::Tuple *> BuildLoggingTuples(storage::DataTable *table,
   std::srand(std::time(nullptr));
   const catalog::Schema *schema = table->GetSchema();
   // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
+  PL_ASSERT(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;

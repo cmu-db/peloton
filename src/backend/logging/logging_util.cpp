@@ -10,10 +10,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/logging_util.h"
 #include <sys/stat.h>
 #include <dirent.h>
 #include <cstring>
+
+#include "backend/catalog/manager.h"
+#include "backend/logging/logging_util.h"
+#include "backend/storage/database.h"
 
 namespace peloton {
 namespace logging {
@@ -23,7 +26,7 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   // First, flush
-  assert(file_handle.fd != -1);
+  PL_ASSERT(file_handle.fd != -1);
   if (file_handle.fd == -1) return;
   int ret = fflush(file_handle.file);
   if (ret != 0) {
@@ -242,14 +245,14 @@ storage::DataTable *LoggingUtil::GetTable(TupleRecord &tuple_record) {
   if (!db) {
     return nullptr;
   }
-  assert(db);
+  PL_ASSERT(db);
 
   LOG_TRACE("Table ID for this tuple: %d", (int)tuple_record.GetTableId());
   auto table = db->GetTableWithOid(tuple_record.GetTableId());
   if (!table) {
     return nullptr;
   }
-  assert(table);
+  PL_ASSERT(table);
 
   return table;
 }

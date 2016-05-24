@@ -11,7 +11,6 @@
  */
 
 #include <atomic>
-#include <cassert>
 #include <xmmintrin.h>
 
 #include "backend/logging/circular_buffer_pool.h"
@@ -25,7 +24,7 @@ namespace logging {
 //===--------------------------------------------------------------------===//
 CircularBufferPool::CircularBufferPool()
     : head_(ATOMIC_VAR_INIT(0)), tail_(ATOMIC_VAR_INIT(0)) {
-  memset(buffers_, 0, BUFFER_POOL_SIZE * sizeof(std::unique_ptr<LogBuffer>));
+  PL_MEMSET(buffers_, 0, BUFFER_POOL_SIZE * sizeof(std::unique_ptr<LogBuffer>));
 }
 
 CircularBufferPool::~CircularBufferPool() {
@@ -55,7 +54,7 @@ std::unique_ptr<LogBuffer> CircularBufferPool::Get() {
   }
   LOG_TRACE("CircularBufferPool::Get - current_idx: %u", current_idx);
   std::unique_ptr<LogBuffer> buff = std::move(buffers_[current_idx]);
-  memset(buffers_ + current_idx, 0, sizeof(std::unique_ptr<LogBuffer>));
+  PL_MEMSET(buffers_ + current_idx, 0, sizeof(std::unique_ptr<LogBuffer>));
   return buff;
 }
 

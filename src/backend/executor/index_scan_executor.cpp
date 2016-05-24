@@ -55,13 +55,13 @@ bool IndexScanExecutor::DInit() {
 
   if (!status) return false;
 
-  assert(children_.size() == 0);
+  PL_ASSERT(children_.size() == 0);
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
   index_ = node.GetIndex();
-  assert(index_ != nullptr);
+  PL_ASSERT(index_ != nullptr);
 
   result_itr_ = START_OID;
   done_ = false;
@@ -74,7 +74,7 @@ bool IndexScanExecutor::DInit() {
   predicate_ = node.GetPredicate();
 
   if (runtime_keys_.size() != 0) {
-    assert(runtime_keys_.size() == values_.size());
+    PL_ASSERT(runtime_keys_.size() == values_.size());
 
     if (!key_ready_) {
       values_.clear();
@@ -116,7 +116,7 @@ bool IndexScanExecutor::DExecute() {
     }
   }
   // Already performed the index lookup
-  assert(done_);
+  PL_ASSERT(done_);
 
   while (result_itr_ < result_.size()) {  // Avoid returning empty tiles
     if (result_[result_itr_]->GetTupleCount() == 0) {
@@ -134,11 +134,11 @@ bool IndexScanExecutor::DExecute() {
 }
 
 bool IndexScanExecutor::ExecPrimaryIndexLookup() {
-  assert(!done_);
+  PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
@@ -221,13 +221,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
 
         // FIXME: Is this always true? what if we have a deleted tuple? --jiexi
-        assert(tuple_location.IsNull() == false);
+        PL_ASSERT(tuple_location.IsNull() == false);
 
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
         // check whether older version is garbage.
         if (old_end_cid <= max_committed_cid) {
-          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
@@ -294,11 +294,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 }
 
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
-  assert(!done_);
+  PL_ASSERT(!done_);
 
   std::vector<ItemPointer> tuple_locations;
 
-  assert(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_locations);

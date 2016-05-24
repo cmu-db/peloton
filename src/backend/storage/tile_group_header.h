@@ -12,22 +12,20 @@
 
 #pragma once
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/logging/log_manager.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/expression/container_tuple.h"
-
 #include <atomic>
 #include <iostream>
-#include <cassert>
 #include <queue>
 #include <vector>
 #include <cstring>
 
+#include "backend/common/printable.h"
+#include "backend/common/types.h"
+#include "backend/common/macros.h"
+
 namespace peloton {
 namespace storage {
+
+class TileGroup;
 
 //===--------------------------------------------------------------------===//
 // Tile Group Header
@@ -62,7 +60,7 @@ class TileGroupHeader : public Printable {
     header_size = other.header_size;
 
     // copy over all the data
-    memcpy(data, other.data, header_size);
+    PL_MEMCPY(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
     oid_t val = other.next_tuple_slot;
@@ -240,7 +238,7 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReserverdSize() {return  reserverd_size;}
+  static inline size_t GetReservedSize() {return  reserverd_size;}
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |

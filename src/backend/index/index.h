@@ -214,6 +214,9 @@ class Index : public Printable {
 
   // Get the memory footprint
   virtual size_t GetMemoryFootprint() = 0;
+  
+  bool static ValuePairComparator(const std::pair<peloton::Value, int> &i,
+                           const std::pair<peloton::Value, int> &j);
 
  protected:
   Index(IndexMetadata *schema);
@@ -223,6 +226,10 @@ class Index : public Printable {
                                 const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
+
+  bool IfForwardExpression(ExpressionType e);
+
+  bool IfBackwardExpression(ExpressionType e);
 
   //===--------------------------------------------------------------------===//
   //  Data members

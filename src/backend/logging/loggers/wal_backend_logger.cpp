@@ -52,7 +52,7 @@ LogRecord *WriteAheadBackendLogger::GetTupleRecord(
     }
 
     default: {
-      assert(false);
+      PL_ASSERT(false);
       break;
     }
   }

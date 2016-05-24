@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <cassert>
 #include <functional>
 #include <vector>
 
 #include "backend/common/types.h"
 #include "backend/common/value.h"
+#include "backend/common/macros.h"
 #include "backend/common/exception.h"
 #include "backend/common/abstract_tuple.h"
 #include "backend/storage/tile_group.h"
@@ -52,7 +52,7 @@ class ContainerTuple : public AbstractTuple {
 
   /** @brief Get the value at the given column id. */
   Value GetValue(oid_t column_id) const override {
-    assert(container_ != nullptr);
+    PL_ASSERT(container_ != nullptr);
 
     return container_->GetValue(tuple_id_, column_id);
   }
@@ -169,8 +169,8 @@ class ContainerTuple<std::vector<Value>> : public AbstractTuple {
 
   /** @brief Get the value at the given column id. */
   Value GetValue(oid_t column_id) const override {
-    assert(container_ != nullptr);
-    assert(column_id < container_->size());
+    PL_ASSERT(container_ != nullptr);
+    PL_ASSERT(column_id < container_->size());
 
     return (*container_)[column_id];
   }
@@ -197,7 +197,7 @@ class ContainerTuple<std::vector<Value>> : public AbstractTuple {
    */
   bool EqualsNoSchemaCheck(
       const ContainerTuple<std::vector<Value>> &other) const {
-    assert(container_->size() == other.container_->size());
+    PL_ASSERT(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       const Value lhs = GetValue(column_itr);

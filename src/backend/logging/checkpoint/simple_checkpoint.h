@@ -12,15 +12,16 @@
 
 #pragma once
 
-#include "backend/logging/checkpoint.h"
-#include "backend/logging/log_record.h"
-#include "backend/executor/seq_scan_executor.h"
 #include <memory>
-
 #include <thread>
+
+#include "backend/logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {
+
+class LogRecord;
+class BackendLogger;
 
 //===--------------------------------------------------------------------===//
 // Simple Checkpoint

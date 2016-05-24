@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include <iostream>
 #include <cmath>
 #include <typeinfo>
@@ -44,7 +42,9 @@ auto get_fun(int arg) -> double (*)(double) {
   }
 }
 
-TEST(AutoTests, BasicTest) {
+class AutoTests : public PelotonTest {};
+
+TEST_F(AutoTests, BasicTest) {
   auto a = 1 + 2;
   LOG_INFO("type of a: %s", typeid(a).name());
   auto b = add(1, 1.2);

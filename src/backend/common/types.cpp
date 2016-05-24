@@ -14,6 +14,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/common/value_factory.h"
+#include "backend/common/macros.h"
 
 #include <sstream>
 #include <cstring>
@@ -277,12 +278,12 @@ int32_t HexCharToInt(char c) {
   else
     retval = c - '0';
 
-  assert(retval >= 0 && retval < 16);
+  PL_ASSERT(retval >= 0 && retval < 16);
   return retval;
 }
 
 bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
-  assert(hexString);
+  PL_ASSERT(hexString);
   size_t len = strlen(hexString);
   if ((len % 2) != 0) return false;
   uint32_t i;
@@ -292,7 +293,7 @@ bool HexDecodeToBinary(unsigned char* bufferdst, const char* hexString) {
     if ((high == -1) || (low == -1)) return false;
     int32_t result = high * 16 + low;
 
-    assert(result >= 0 && result < 256);
+    PL_ASSERT(result >= 0 && result < 256);
     bufferdst[i] = static_cast<unsigned char>(result);
   }
   return true;
@@ -303,6 +304,7 @@ bool IsBasedOnWriteAheadLogging(const LoggingType& logging_type) {
 
   switch (logging_type) {
     case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
     case LOGGING_TYPE_HDD_WAL:
       status = true;
       break;
@@ -320,6 +322,7 @@ bool IsBasedOnWriteBehindLogging(const LoggingType& logging_type) {
 
   switch (logging_type) {
     case LOGGING_TYPE_NVM_WBL:
+    case LOGGING_TYPE_SSD_WBL:
     case LOGGING_TYPE_HDD_WBL:
       status = true;
       break;
@@ -341,8 +344,18 @@ BackendType GetBackendType(const LoggingType& logging_type) {
       backend_type = BACKEND_TYPE_NVM;
       break;
 
+    case LOGGING_TYPE_SSD_WBL:
+      backend_type = BACKEND_TYPE_SSD;
+      break;
+
     case LOGGING_TYPE_HDD_WBL:
       backend_type = BACKEND_TYPE_HDD;
+      break;
+
+    case LOGGING_TYPE_NVM_WAL:
+    case LOGGING_TYPE_SSD_WAL:
+    case LOGGING_TYPE_HDD_WAL:
+      backend_type = BACKEND_TYPE_MM;
       break;
 
     default:
@@ -353,7 +366,7 @@ BackendType GetBackendType(const LoggingType& logging_type) {
 }
 
 void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value) {
-  assert(sizeof(ItemPointer) == sizeof(int64_t));
+  PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
   int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);
   __sync_bool_compare_and_swap(cast_src_ptr, *cast_src_ptr, *cast_value_ptr);
@@ -946,6 +959,8 @@ std::string LoggingTypeToString(LoggingType type) {
     // WAL Based
     case LOGGING_TYPE_NVM_WAL:
       return "NVM_WAL";
+    case LOGGING_TYPE_SSD_WAL:
+      return "SSD_WAL";
     case LOGGING_TYPE_HDD_WAL:
       return "HDD_WAL";
 
@@ -953,6 +968,8 @@ std::string LoggingTypeToString(LoggingType type) {
 
     case LOGGING_TYPE_NVM_WBL:
       return "NVM_WBL";
+    case LOGGING_TYPE_SSD_WBL:
+      return "SSD_WBL";
     case LOGGING_TYPE_HDD_WBL:
       return "HDD_WBL";
 
