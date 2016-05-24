@@ -142,9 +142,7 @@ void *Connection::ProcessMessage(void *connection) {
     char buf[msg_len + HEADERLEN];
 
     // Get the data
-    int ret = conn->GetReadData(buf, sizeof(buf));
-
-    PL_ASSERT(ret == (int)sizeof(buf));
+    conn->GetReadData(buf, sizeof(buf));
     // Get the message type
     uint16_t type = 0;
     PL_MEMCPY((char *)(&type), buf + HEADERLEN, sizeof(type));
