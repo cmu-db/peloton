@@ -306,8 +306,6 @@ void LoggingService::LogRecordReplay(
 
   response->set_sequence_number(curr_seq);
   replication_sequence_number_++;
-  LOG_INFO("message len: %lu", request->log().size());
-  LOG_INFO("In log record replay service");
 }
 
 }  // namespace networking
