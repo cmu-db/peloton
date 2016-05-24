@@ -122,20 +122,26 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
              log_buffer->GetSize());
       rep_array_offset += log_buffer->GetSize();
     }
-    global_queue.clear();
-    memcpy(replication_array.get() + rep_array_offset,
-           delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
-    // send the request
-    rep_array_offset += delimiter_rec.GetMessageLength();
+
+    if (max_collected_commit_id != max_flushed_commit_id) {
+      PL_ASSERT(rep_array_offset + delimiter_rec.GetMessageLength() ==
+                write_size);
+      memcpy(replication_array.get() + rep_array_offset,
+             delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
+      // send the request
+      rep_array_offset += delimiter_rec.GetMessageLength();
+    }
 
     networking::LogRecordReplayRequest request;
     request.set_log(replication_array.get(), write_size);
     curr_seq_num = replication_seq_++;
     request.set_sync_type(replication_mode_);
-    request.set_sequence_number(replication_seq_);
+    request.set_sequence_number(curr_seq_num);
     networking::LogRecordReplayResponse response;
     replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
                                        nullptr);
+
+    global_queue.clear();
   }
 
   // for now fsync every time because the cost is relatively low

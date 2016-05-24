@@ -22,6 +22,8 @@
 
 extern char* peloton_endpoint_address;
 
+extern ReplicationType peloton_replication_mode;
+
 namespace peloton {
 namespace benchmark {
 namespace logger {
@@ -46,6 +48,7 @@ static struct option opts[] = {
     {"asynchronous_mode", optional_argument, NULL, 'a'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"data-file-size", optional_argument, NULL, 'f'},
+    {"replication-type", optional_argument, NULL, 'g'},
     {"logging-type", optional_argument, NULL, 'l'},
     {"nvm-latency", optional_argument, NULL, 'n'},
     {"pcommit-latency", optional_argument, NULL, 'p'},
@@ -54,6 +57,7 @@ static struct option opts[] = {
     {"commit-interval", optional_argument, NULL, 'w'},
     {"replication-port", optional_argument, NULL, 'x'},
     {"benchmark-type", optional_argument, NULL, 'y'},
+    {"remote-endpoint", optional_argument, NULL, 'z'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
@@ -263,6 +267,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
   state.replication_port = 0;
   state.remote_endpoint = nullptr;
+  state.replication_mode = SYNC_REPLICATION;
 
   // Default YCSB Values
   ycsb::state.scale_factor = 1;
@@ -284,8 +289,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // logger - a:e:f:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:t:u:
     // tpcc   - b:d:k:t:
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:u:t:x:z:", opts,
-                        &idx);
+    int c = getopt_long(argc, argv, "a:e:f:g:hl:n:p:v:w:y:b:c:d:k:u:t:x:z:",
+                        opts, &idx);
 
     if (c == -1) break;
 
@@ -299,6 +304,22 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'f':
         state.data_file_size = atoi(optarg);
         break;
+      case 'g': {
+        int mode = atoi(optarg);
+        switch (mode) {
+          case 1:
+            state.replication_mode = ASYNC_REPLICATION;
+            break;
+          case 2:
+            state.replication_mode = SEMISYNC_REPLICATION;
+            break;
+          case 3:
+          default:
+            state.replication_mode = SYNC_REPLICATION;
+            break;
+        }
+        break;
+      }
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
         break;
@@ -363,6 +384,8 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
     }
   }
+
+  peloton_replication_mode = state.replication_mode;
 
   // Print Logger configuration
   ValidateLoggingType(state);

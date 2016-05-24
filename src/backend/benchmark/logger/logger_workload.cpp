@@ -253,6 +253,7 @@ bool SetupLoggingOnFollower() {
 
   // Initializing logging module
   StartLogging(thread);
+  thread.detach();
   return true;
 }
 
