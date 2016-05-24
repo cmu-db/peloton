@@ -18,6 +18,9 @@
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 #include "backend/benchmark/tpcc/tpcc_workload.h"
 
+#include "backend/gc/gc_manager_factory.h"
+#include "backend/concurrency/transaction_manager_factory.h"
+
 #include "backend/common/logger.h"
 
 namespace peloton {
@@ -51,6 +54,8 @@ static void WriteOutput() {
 
 // Main Entry Point
 void RunBenchmark() {
+  gc::GCManagerFactory::Configure(state.gc_protocol);
+  concurrency::TransactionManagerFactory::Configure(state.protocol);
 
   // Create the database
   CreateTPCCDatabase();

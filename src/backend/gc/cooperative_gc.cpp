@@ -90,29 +90,28 @@ void Cooperative_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata)
   // If the tuple being reset no longer exists, just skip it
   if (ResetTuple(tuple_metadata) == false) return;
 
-  // auto recycle_queue = recycle_queue_map_[tuple_metadata.table_id];
-  recycle_queue_.Enqueue(tuple_metadata);
+  //recycle_queue_.Enqueue(tuple_metadata);
 
   // Add to the recycle map
-  // std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-  // // if the entry for table_id exists.
-  // if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
-  //     true) {
-  //   // if the entry for tuple_metadata.table_id exists.
-  //   recycle_queue->Enqueue(tuple_metadata);
-  // } else {
-  //   // if the entry for tuple_metadata.table_id does not exist.
-  //   recycle_queue.reset(
-  //     new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-  //   bool ret =
-  //     recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
-  //   if (ret == true) {
-  //     recycle_queue->Enqueue(tuple_metadata);
-  //   } else {
-  //     recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
-  //     recycle_queue->Enqueue(tuple_metadata);
-  //   }
-  // }
+  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  // if the entry for table_id exists.
+  if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) ==
+      true) {
+    // if the entry for tuple_metadata.table_id exists.
+    recycle_queue->Enqueue(tuple_metadata);
+  } else {
+    // if the entry for tuple_metadata.table_id does not exist.
+    recycle_queue.reset(
+      new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+    bool ret =
+      recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
+    if (ret == true) {
+      recycle_queue->Enqueue(tuple_metadata);
+    } else {
+      recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue);
+      recycle_queue->Enqueue(tuple_metadata);
+    }
+  }
 }
 
 void Cooperative_GCManager::Running() {
@@ -218,22 +217,21 @@ void Cooperative_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id, const
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
-ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id __attribute__((unused))) {
+ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id) {
+  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
   // if there exists recycle_queue
-  // if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
-  //   auto recycle_queue = recycle_queue_map_.at(table_id);
-  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-  //if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
+  if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;
-    if (recycle_queue_.Dequeue(tuple_metadata) == true) {
+    if (recycle_queue->Dequeue(tuple_metadata) == true) {
       LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
     }
-  //}
+  }
   return ItemPointer();
 }
+
 
 // this function can only be called after:
 //    1) All txns have exited

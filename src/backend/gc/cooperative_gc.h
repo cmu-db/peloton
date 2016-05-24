@@ -34,8 +34,7 @@ class Cooperative_GCManager : public GCManager {
 public:
   Cooperative_GCManager()
     : is_running_(true),
-      reclaim_queue_(MAX_QUEUE_LENGTH),
-      recycle_queue_(MAX_QUEUE_LENGTH) {
+      reclaim_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
@@ -87,8 +86,8 @@ private:
   LockfreeQueue<TupleMetadata> reclaim_queue_;
 
   // TODO: use shared pointer to reduce memory copy
-  //cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
-  LockfreeQueue<TupleMetadata> recycle_queue_;
+  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
+  //LockfreeQueue<TupleMetadata> recycle_queue_;
 };
 
 }  // namespace gc

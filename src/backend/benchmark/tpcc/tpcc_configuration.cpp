@@ -111,7 +111,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ah:k:w:d:s:b:", opts, &idx);
+    int c = getopt_long(argc, argv, "ah:k:w:d:s:b:p:g:", opts, &idx);
 
     if (c == -1) break;
 
