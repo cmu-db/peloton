@@ -87,7 +87,10 @@ inline std::vector<std::string> splitExcluding(const std::string& input,
     }
 
     // Push the substring [last, next) on to splits
-    splits.push_back(input.substr(last, next - last));
+    std::string substr = input.substr(last, next - last);
+    if (substr.size() > 0){
+    	splits.push_back(substr);
+    }
     last = next + 1;
   }
 
