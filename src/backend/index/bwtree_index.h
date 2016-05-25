@@ -27,21 +27,21 @@ namespace peloton {
 namespace index {
 
 /**
- * BW tree-based index implementation.
+ * BwTree-based index implementation.
  *
  * @see Index
  */
 template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker>
-class BWTreeIndex : public Index {
+class BwTreeIndex : public Index {
   friend class IndexFactory;
 
-  typedef BWTree<KeyType, ValueType, KeyComparator, KeyEqualityChecker> MapType;
+  typedef BwTree<KeyType, ValueType, KeyComparator, KeyEqualityChecker> MapType;
 
  public:
-  BWTreeIndex(IndexMetadata *metadata);
+  BwTreeIndex(IndexMetadata *metadata);
 
-  ~BWTreeIndex();
+  ~BwTreeIndex();
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
@@ -87,8 +87,6 @@ class BWTreeIndex : public Index {
   KeyEqualityChecker equals;
   KeyComparator comparator;
 
-  // synch helper
-  RWLock index_lock;
 };
 
 }  // End index namespace

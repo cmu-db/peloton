@@ -2,9 +2,9 @@
 //
 //                         PelotonDB
 //
-// BWTree.h
+// BwTree.h
 //
-// Identification: src/backend/index/BWTree.h
+// Identification: src/backend/index/BwTree.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -1788,7 +1788,7 @@ class BwTree {
     /*
      * GetNextNodeID() - Return the NodeID of its right sibling
      */
-    inline const NodeID GetNextNodeID() {
+    inline NodeID GetNextNodeID() {
       if(is_leaf == true) {
         return GetLogicalLeafNode()->next_node_id;
       } else {
@@ -4482,7 +4482,7 @@ before_switch:
                                         delete_node_p,
                                         parent_snapshot_p->node_p);
         if(ret == true) {
-          bwt_printf("Index term delete delta installed, ID = %lu; ABORT\n",
+          bwt_printf("Index term delete delta installed, ID = %lu\n",
                      parent_snapshot_p->node_id);
 
           // Update in parent snapshot
@@ -5704,7 +5704,7 @@ before_switch:
                 std::vector<ValueType> &value_list) {
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
 
-    Context context{&search_key};
+    Context context{search_key};
 
     Traverse(&context, true);
 
@@ -6703,7 +6703,7 @@ before_switch:
         std::string opcode;
         std::cin >> opcode;
 
-        // If read EOF then resume BWTree execution
+        // If read EOF then resume BwTree execution
         if (!std::cin) {
           return;
         }
