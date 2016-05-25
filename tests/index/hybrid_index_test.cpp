@@ -210,8 +210,6 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t column_count
   // Generate sequence
   for (oid_t column_id = 0; column_id < column_count; column_id++)
     hyadapt_column_ids.push_back(column_id);
-
-  // std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
 }
 
 
@@ -235,48 +233,7 @@ void CreateIndexScanTwoPredicates(const int lower, const int higher,
 
 }
 
-void ExecuteTestNoTime(executor::AbstractExecutor *executor) {
-  size_t tuple_counts = 0;
-  bool status = false;
-
-  status = executor->Init();
-  if (status == false) throw Exception("Init failed");
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  Value lower_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar);
-  Value higher_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar +
-                                                       tile_group * tuples_per_tile_group * (1.0 - scalar));
-
-  while (executor->Execute() == true) {
-      std::unique_ptr<executor::LogicalTile> result_tile(
-        executor->GetOutput());
-      tuple_counts += result_tile->GetTupleCount();
-
-      for (auto iter = result_tile->begin(); iter != result_tile->end(); iter++) {
-        oid_t tuple_id = *iter;
-        // Get key value of tuple
-        Value key_value= result_tile->GetValue(tuple_id, 0);
-        auto lower_result = key_value.Compare(lower_bound);
-        auto higher_result = key_value.Compare(higher_bound);
-        EXPECT_TRUE(lower_result == VALUE_COMPARE_EQUAL ||
-                       lower_result == VALUE_COMPARE_GREATERTHAN);
-       EXPECT_TRUE(higher_result == VALUE_COMPARE_EQUAL ||
-                       higher_result == VALUE_COMPARE_LESSTHAN);
-      }
-
-      result_tiles.emplace_back(result_tile.release());
-  }
-
-  // Execute stuff
-  executor->Execute();
-
-  EXPECT_EQ(tuple_counts,
-            tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * scalar));
-}
-
-void ExecuteTest(executor::AbstractExecutor *executor) {
+void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
   Timer<> timer;
 
   size_t tuple_counts = 0;
@@ -316,14 +273,16 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
   executor->Execute();
 
   timer.Stop();
-  double time_per_transaction = timer.GetDuration();
-  LOG_INFO("%f", time_per_transaction);
+  if (print_time) {
+    double time_per_transaction = timer.GetDuration();
+    LOG_INFO("%f", time_per_transaction);
+  }
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
               (tile_group * tuples_per_tile_group * scalar));
 }
 
-void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor) {
+void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor, bool print_time) {
   Timer<> timer;
 
   size_t tuple_counts = 0;
@@ -337,7 +296,7 @@ void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor) {
 
   Value lower_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar);
   Value higher_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar +
-                                                     tile_group * tuples_per_tile_group * (1.0 - scalar));
+                                                     tile_group * tuples_per_tile_group * 0.3);
 
   while (executor->Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(
@@ -363,11 +322,13 @@ void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor) {
   executor->Execute();
 
   timer.Stop();
-//  double time_per_transaction = timer.GetDuration();
-//  LOG_INFO("%f", time_per_transaction);
+  if (print_time) {
+    double time_per_transaction = timer.GetDuration();
+    LOG_INFO("%f", time_per_transaction);
+  }
+
   EXPECT_EQ(tuple_counts,
-            tile_group * tuples_per_tile_group -
-            (tile_group * tuples_per_tile_group * 2 * scalar));
+            tile_group * tuples_per_tile_group * 0.3);
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -396,7 +357,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTest(&Hybrid_scan_executor, false);
 
   txn_manager.CommitTransaction();
 }
@@ -440,7 +401,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
   
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTest(&Hybrid_scan_executor, false);
 
   txn_manager.CommitTransaction();
 }
@@ -487,7 +448,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
-  ExecuteTest(&Hybrid_scan_executor);
+  ExecuteTest(&Hybrid_scan_executor, false);
 
   txn_manager.CommitTransaction();
 }
@@ -645,7 +606,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table.get());
 
   for (size_t i = 0; i < iter; i++) {
-    LaunchHybridScanTwoPredicates(hyadapt_table);
+    LaunchHybridScanTwoPredicates(hyadapt_table, false);
   }
 
   index_builder.join();
