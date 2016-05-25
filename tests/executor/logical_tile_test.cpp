@@ -95,7 +95,7 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
 
-  assert(tile_schemas.size() == 2);
+  PL_ASSERT(tile_schemas.size() == 2);
   catalog::Schema *schema1 = &tile_schemas[0];
   catalog::Schema *schema2 = &tile_schemas[1];
   oid_t column_count = schema2->GetColumnCount();

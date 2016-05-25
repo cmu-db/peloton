@@ -18,8 +18,7 @@
 #include <iostream>
 #include <atomic>
 
-#undef NDEBUG
-
+#include "backend/common/macros.h"
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 

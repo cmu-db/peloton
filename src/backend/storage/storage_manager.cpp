@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         Peloton
+//                         PelotonDB
 //
 // storage_manager.cpp
 //
 // Identification: src/backend/storage/storage_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,12 +19,14 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <cpuid.h>
 
 #include <string>
 #include <iostream>
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/common/exception.h"
 #include "backend/storage/storage_manager.h"
 
@@ -40,18 +42,231 @@ size_t peloton_data_file_size = 0;
 namespace peloton {
 namespace storage {
 
+//===--------------------------------------------------------------------===//
+// INSTRUCTIONS
+//===--------------------------------------------------------------------===//
+
+// Source : https://github.com/pmem/nvml/blob/master/src/libpmem/pmem.c
+
 // 64B cache line size
-#define ALIGN 64
+#define FLUSH_ALIGN ((uintptr_t)64)
 
-static inline void pmem_flush_cache(void *addr, size_t len) {
-  uintptr_t uptr = (uintptr_t) addr & ~(ALIGN - 1);
-  uintptr_t end = (uintptr_t) addr + len;
+#define EAX_IDX 0
+#define EBX_IDX 1
+#define ECX_IDX 2
+#define EDX_IDX 3
 
-  // loop through 64B-aligned chunks covering the given range
-  for (; uptr < end; uptr += ALIGN) {
-    __builtin_ia32_clflush((void *)uptr);
+#ifndef bit_CLFLUSH
+#define bit_CLFLUSH (1 << 23)
+#endif
+
+#ifndef bit_PCOMMIT
+#define bit_PCOMMIT (1 << 22)
+#endif
+
+#ifndef bit_CLFLUSHOPT
+#define bit_CLFLUSHOPT  (1 << 23)
+#endif
+
+#ifndef bit_CLWB
+#define bit_CLWB  (1 << 24)
+#endif
+
+/*
+ * The x86 memory instructions are new enough that the compiler
+ * intrinsic functions are not always available.  The intrinsic
+ * functions are defined here in terms of asm statements for now.
+ */
+#define _mm_clflushopt(addr)\
+    asm volatile(".byte 0x66; clflush %0" : "+m" (*(volatile char *)addr));
+#define _mm_clwb(addr)\
+    asm volatile(".byte 0x66; xsaveopt %0" : "+m" (*(volatile char *)addr));
+#define _mm_pcommit()\
+    asm volatile(".byte 0x66, 0x0f, 0xae, 0xf8");
+
+//===--------------------------------------------------------------------===//
+// CPU CHECK
+//===--------------------------------------------------------------------===//
+
+static inline void cpuid(unsigned func, unsigned subfunc, unsigned cpuinfo[4]){
+  __cpuid_count(func, subfunc, cpuinfo[EAX_IDX], cpuinfo[EBX_IDX],
+                cpuinfo[ECX_IDX], cpuinfo[EDX_IDX]);
+}
+
+/*
+ * is_cpu_genuine_intel -- checks for genuine Intel CPU
+ */
+int is_cpu_genuine_intel(void) {
+  unsigned cpuinfo[4] = { 0 };
+
+  union {
+    char name[0x20];
+    unsigned cpuinfo[3];
+  } vendor;
+
+  PL_MEMSET(&vendor, 0, sizeof (vendor));
+
+  cpuid(0x0, 0x0, cpuinfo);
+
+  vendor.cpuinfo[0] = cpuinfo[EBX_IDX];
+  vendor.cpuinfo[1] = cpuinfo[EDX_IDX];
+  vendor.cpuinfo[2] = cpuinfo[ECX_IDX];
+
+  return (strncmp(vendor.name, "GenuineIntel",
+                  sizeof (vendor.name))) == 0;
+}
+
+//===--------------------------------------------------------------------===//
+// INSTRUCTION CHECKS
+//===--------------------------------------------------------------------===//
+
+/*
+ * is_cpu_clflush_present -- checks if CLFLUSH instruction is supported
+ */
+int is_cpu_clflush_present(void){
+  unsigned cpuinfo[4] = { 0 };
+
+  cpuid(0x1, 0x0, cpuinfo);
+
+  int ret = (cpuinfo[EDX_IDX] & bit_CLFLUSH) != 0;
+
+  return ret;
+}
+
+/*
+ * is_cpu_clwb_present -- checks if CLWB instruction is supported
+ */
+int is_cpu_clwb_present(void){
+  unsigned cpuinfo[4] = { 0 };
+
+  if (!is_cpu_genuine_intel())
+    return 0;
+
+  cpuid(0x7, 0x0, cpuinfo);
+
+  int ret = (cpuinfo[EBX_IDX] & bit_CLWB) != 0;
+
+  return ret;
+}
+
+/*
+ * is_cpu_pcommit_present -- checks if PCOMMIT instruction is supported
+ */
+int is_cpu_pcommit_present(void){
+  unsigned cpuinfo[4] = { 0 };
+
+  if (!is_cpu_genuine_intel())
+    return 0;
+
+  cpuid(0x7, 0x0, cpuinfo);
+
+  int ret = (cpuinfo[EBX_IDX] & bit_PCOMMIT) != 0;
+
+  return ret;
+}
+
+//===--------------------------------------------------------------------===//
+// FLUSH FUNCTIONS
+//===--------------------------------------------------------------------===//
+
+/*
+ * flush_clflush -- (internal) flush the CPU cache, using clflush
+ */
+static inline void flush_clflush(const void *addr, size_t len){
+  uintptr_t uptr;
+
+  // Loop through cache-line-size (typically 64B) aligned chunks
+  // covering the given range.
+  for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
+      uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN)
+    _mm_clflush((char *)uptr);
+}
+
+// flush_clwb -- (internal) flush the CPU cache, using clwb
+static inline void flush_clwb(const void *addr, size_t len) {
+  uintptr_t uptr;
+
+  // Loop through cache-line-size (typically 64B) aligned chunks
+  // covering the given range.
+  for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
+      uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN) {
+    _mm_clwb((char *)uptr);
   }
 }
+
+/*
+ * pmem_flush() calls through Func_flush to do the work.  Although
+ * initialized to flush_clflush(), once the existence of the clflushopt
+ * feature is confirmed by pmem_init() at library initialization time,
+ * Func_flush is set to flush_clflushopt().  That's the most common case
+ * on modern hardware that supports persistent memory.
+ */
+static void (*Func_flush)(const void *, size_t) = flush_clflush;
+
+//===--------------------------------------------------------------------===//
+// PREDRAIN FUNCTIONS
+//===--------------------------------------------------------------------===//
+
+/*
+ * predrain_fence_empty -- (internal) issue the pre-drain fence instruction
+ */
+static void predrain_fence_empty(void) {
+  /* nothing to do (because CLFLUSH did it for us) */
+}
+
+/*
+ * predrain_fence_sfence -- (internal) issue the pre-drain fence instruction
+ */
+static void predrain_fence_sfence(void) {
+
+  _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
+}
+
+/*
+ * pmem_drain() calls through Func_predrain_fence to do the fence.  Although
+ * initialized to predrain_fence_empty(), once the existence of the CLWB or
+ * CLFLUSHOPT feature is confirmed by pmem_init() at library initialization
+ * time, Func_predrain_fence is set to predrain_fence_sfence().  That's the
+ * most common case on modern hardware that supports persistent memory.
+ */
+static void (*Func_predrain_fence)(void) = predrain_fence_empty;
+
+//===--------------------------------------------------------------------===//
+// DRAIN FUNCTIONS
+//===--------------------------------------------------------------------===//
+
+/*
+ * drain_no_pcommit -- (internal) wait for PM stores to drain, empty version
+ */
+static void drain_no_pcommit(void){
+
+  Func_predrain_fence();
+
+  /* caller assumed responsibility for the rest */
+}
+
+/*
+ * drain_pcommit -- (internal) wait for PM stores to drain, pcommit version
+ */
+static void drain_pcommit(void) {
+  Func_predrain_fence();
+
+  _mm_pcommit();
+  _mm_sfence();
+}
+
+/*
+ * pmem_drain() calls through Func_drain to do the work.  Although
+ * initialized to drain_no_pcommit(), once the existence of the pcommit
+ * feature is confirmed by pmem_init() at library initialization time,
+ * Func_drain is set to drain_pcommit().  That's the most common case
+ * on modern hardware that supports persistent memory.
+ */
+static void (*Func_drain)(void) = drain_no_pcommit;
+
+//===--------------------------------------------------------------------===//
+// STORAGE MANAGER
+//===--------------------------------------------------------------------===//
 
 #define DATA_FILE_LEN 1024 * 1024 * UINT64_C(512)  // 512 MB
 #define DATA_FILE_NAME "peloton.pmem"
@@ -63,13 +278,26 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-    : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
+: data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
     return;
   }
 
+  // Check for instruction availability
+  if(is_cpu_clwb_present()) {
+    LOG_TRACE("Found clwb \n");
+    Func_flush = flush_clwb;
+    Func_predrain_fence = predrain_fence_sfence;
+  }
+
+  if (is_cpu_pcommit_present()) {
+    LOG_TRACE("Found pcommit \n");
+    Func_drain = drain_pcommit;
+  }
+
+  // Rest of this stuff is needed only for Write Behind Logging
   int data_fd;
   std::string data_file_name;
   struct stat data_stat;
@@ -85,8 +313,7 @@ StorageManager::StorageManager()
 
   switch (peloton_logging_mode) {
     // Check for NVM FS for data
-    case LOGGING_TYPE_NVM_NVM:
-    case LOGGING_TYPE_NVM_HDD: {
+    case LOGGING_TYPE_NVM_WBL: {
       int status = stat(NVM_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(NVM_DIR) + std::string(DATA_FILE_NAME);
@@ -95,9 +322,18 @@ StorageManager::StorageManager()
 
     } break;
 
+    // Check for SSD FS for data
+    case LOGGING_TYPE_SSD_WBL: {
+      int status = stat(SSD_DIR, &data_stat);
+      if (status == 0 && S_ISDIR(data_stat.st_mode)) {
+        data_file_name = std::string(SSD_DIR) + std::string(DATA_FILE_NAME);
+        found_file_system = true;
+      }
+
+    } break;
+
     // Check for HDD FS
-    case LOGGING_TYPE_HDD_NVM:
-    case LOGGING_TYPE_HDD_HDD: {
+    case LOGGING_TYPE_HDD_WBL: {
       int status = stat(HDD_DIR, &data_stat);
       if (status == 0 && S_ISDIR(data_stat.st_mode)) {
         data_file_name = std::string(HDD_DIR) + std::string(DATA_FILE_NAME);
@@ -121,11 +357,12 @@ StorageManager::StorageManager()
     }
   }
 
-  // TODO:
   LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
-  if ((data_fd = open(data_file_name.c_str(), O_CREAT | O_RDWR, 0666)) < 0) {
+  if ((data_fd = open(data_file_name.c_str(), 
+                      O_CREAT | O_TRUNC | O_RDWR,
+                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
     perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
@@ -148,8 +385,11 @@ StorageManager::StorageManager()
 }
 
 StorageManager::~StorageManager() {
+
+  LOG_TRACE("Allocation count : %ld \n", allocation_count);
+
   // Check if we need a PMEM pool
-  if (peloton_logging_mode != LOGGING_TYPE_NVM_NVM) return;
+  if (peloton_logging_mode != LOGGING_TYPE_NVM_WBL) return;
 
   // sync and unmap the data file
   if (data_file_address != nullptr) {
@@ -169,40 +409,60 @@ StorageManager::~StorageManager() {
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
+  // Update allocation count
+  allocation_count++;
+
   switch (type) {
-    case BACKEND_TYPE_MM: {
+    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_NVM:{
       return ::operator new(size);
     } break;
 
-    case BACKEND_TYPE_NVM:
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       {
-        std::lock_guard<std::mutex> pmem_lock(pmem_mutex);
+        size_t cache_data_file_offset = 0;
 
-        if (data_file_offset >= data_file_len) return nullptr;
+        // Lock the file
+        data_file_spinlock.Lock();
 
-        void *address =
-            reinterpret_cast<char *>(data_file_address) + data_file_offset;
+        // Check if within bounds
+        if (data_file_offset < data_file_len) {
+          cache_data_file_offset = data_file_offset;
 
-        // offset by requested size
-        data_file_offset += size;
-        return address;
+          // Offset by the requested size
+          data_file_offset += size;
+
+          // Unlock the file
+          data_file_spinlock.Unlock();
+
+          void *address = reinterpret_cast<char*>(data_file_address) + cache_data_file_offset;
+          return address;
+        }
+
+        data_file_spinlock.Unlock();
+        throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
+                        " length : " + std::to_string(data_file_len));
+
+        return nullptr;
       }
     } break;
 
     case BACKEND_TYPE_INVALID:
-    default: { return nullptr; }
+    default: {
+      throw Exception("invalid backend: " + std::to_string(data_file_len));
+      return nullptr;
+    }
   }
 }
 
 void StorageManager::Release(BackendType type, void *address) {
   switch (type) {
-    case BACKEND_TYPE_MM: {
+    case BACKEND_TYPE_MM:
+    case BACKEND_TYPE_NVM:{
       ::operator delete(address);
     } break;
 
-    case BACKEND_TYPE_NVM:
     case BACKEND_TYPE_SSD:
     case BACKEND_TYPE_HDD: {
       // Nothing to do here
@@ -224,8 +484,8 @@ void StorageManager::Sync(BackendType type, void *address, size_t length) {
 
     case BACKEND_TYPE_NVM: {
       // flush writes to NVM
-      pmem_flush_cache(address, length);
-      __builtin_ia32_sfence();
+      Func_flush(address, length);
+      Func_drain();
       clflush_count++;
     } break;
 

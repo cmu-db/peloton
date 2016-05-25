@@ -166,8 +166,11 @@ static Datum postquel_get_single_result(TupleTableSlot *slot,
 						   MemoryContext resultcontext);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
-static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
-static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
+// added dummy memcached state
+static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
+																BackendContext *backend_state = nullptr);
+static void sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self,
+																BackendContext *backend_state = nullptr);
 static void sqlfunction_shutdown(DestReceiver *self);
 static void sqlfunction_destroy(DestReceiver *self);
 
@@ -1893,7 +1896,8 @@ CreateSQLFunctionDestReceiver(void)
  * sqlfunction_startup --- executor startup
  */
 static void
-sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
+sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo,
+										BackendContext *backend_state)
 {
 	/* no-op */
 }
@@ -1902,7 +1906,8 @@ sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * sqlfunction_receive --- receive one tuple
  */
 static void
-sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self)
+sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self,
+										BackendContext *backend_state)
 {
 	DR_sqlfunction *myState = (DR_sqlfunction *) self;
 

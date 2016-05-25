@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
-#include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -24,6 +24,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "access/htup.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
@@ -52,7 +53,7 @@ namespace bridge {
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
 HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
@@ -76,7 +77,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id) {
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
 HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
@@ -110,7 +111,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name) {
  * @return Tuple if valid relation_id, otherwise null
  */
 char *Bridge::GetRelationName(Oid relation_id) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   HeapTuple tuple;
   Form_pg_class pg_class;
   char *relation_name;
@@ -133,7 +134,7 @@ char *Bridge::GetRelationName(Oid relation_id) {
  * @return relation id, if relation is valid, 0 otherewise
  */
 Oid Bridge::GetRelationOid(const char *relation_name) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   Oid relation_oid = InvalidOid;
   HeapTuple tuple;
 
@@ -158,7 +159,7 @@ Oid Bridge::GetRelationOid(const char *relation_name) {
  * @return num_atts if valid relation_id, otherwise -1
  */
 int Bridge::GetNumberOfAttributes(Oid relation_id) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   HeapTuple tuple;
   Form_pg_class pg_class;
   int num_atts = -1;
@@ -183,7 +184,7 @@ int Bridge::GetNumberOfAttributes(Oid relation_id) {
  * @return num_tuples if valid relation_id, otherwise -1
  */
 float Bridge::GetNumberOfTuples(Oid relation_id) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   HeapTuple tuple;
   Form_pg_class pg_class;
   float num_tuples;
@@ -212,7 +213,7 @@ Oid Bridge::GetCurrentDatabaseOid(void) { return MyDatabaseId; }
  * @return true or false depending on whether table exists or not.
  */
 bool Bridge::RelationExists(const char *relation_name) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   HeapTuple tuple;
 
   tuple = GetPGClassTupleForRelationName(relation_name);
@@ -231,7 +232,7 @@ bool Bridge::RelationExists(const char *relation_name) {
  * @brief Print all tables in *current* database using catalog table pg_class
  */
 void Bridge::GetTableList(bool catalog_only) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   Relation pg_class_rel;
   HeapScanDesc scan;
   HeapTuple tuple;
@@ -259,7 +260,7 @@ void Bridge::GetTableList(bool catalog_only) {
  * @brief Print all databases using catalog table pg_database
  */
 void Bridge::GetDatabaseList(void) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
+  LOG_TRACE("Do not use bridge function(%s) in Peloton !!! ", __func__);
   Relation pg_database_rel;
   HeapScanDesc scan;
   HeapTuple tup;
@@ -289,7 +290,7 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
-  assert(relation_id);
+  PL_ASSERT(relation_id);
 
   Relation pg_class_rel;
   HeapTuple tuple;

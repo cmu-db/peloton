@@ -51,7 +51,7 @@ class LogRecord {
  public:
   LogRecord(LogRecordType log_record_type, cid_t cid)
       : log_record_type(log_record_type), cid(cid) {
-    assert(log_record_type != LOGRECORD_TYPE_INVALID);
+    PL_ASSERT(log_record_type != LOGRECORD_TYPE_INVALID);
   }
 
   virtual ~LogRecord() {}

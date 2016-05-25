@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gtest/gtest.h"
-
 #include <iostream>
 #include <cstring>
 
@@ -72,7 +70,9 @@ class RuleOfThree {
   char* cstring;
 };
 
-TEST(RuleTests, RuleOfThreeTest) {
+class RuleTests : public PelotonTest {};
+
+TEST_F(RuleTests, RuleOfThreeTest) {
   RuleOfThree a("foo");
 
   RuleOfThree b(a);
@@ -146,7 +146,7 @@ class RuleOfFive {
   char* cstring;
 };
 
-TEST(RuleTests, RuleOfFiveTest) {
+TEST_F(RuleTests, RuleOfFiveTest) {
   RuleOfFive a("foo");
 
   RuleOfFive b(std::move(a));

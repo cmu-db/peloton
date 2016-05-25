@@ -13,6 +13,7 @@
 #include <cstring>
 
 #include "backend/common/pool.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 
@@ -118,7 +119,7 @@ void *VarlenPool::Allocate(std::size_t size) {
 // Allocate a continous block of memory of the specified size conveniently
 // initialized to 0s
 void *VarlenPool::AllocateZeroes(std::size_t size) {
-  return ::memset(Allocate(size), 0, size);
+  return PL_MEMSET(Allocate(size), 0, size);
 }
 
 void VarlenPool::Purge() {

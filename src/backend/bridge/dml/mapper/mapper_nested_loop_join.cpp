@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/planner/nested_loop_join_plan.h"
 #include "backend/planner/projection_plan.h"
-#include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/expression/expression_util.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
 
 namespace peloton {
 namespace bridge {
@@ -61,9 +63,9 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
   project_info.reset(BuildProjectInfo(nl_plan_state->ps_ProjInfo));
 
   if (project_info.get() != nullptr) {
-    LOG_INFO("%s", project_info.get()->Debug().c_str());
+    LOG_TRACE("%s", project_info.get()->Debug().c_str());
   } else {
-    LOG_INFO("empty projection info");
+    LOG_TRACE("empty projection info");
   }
 
   std::unique_ptr<planner::AbstractPlan> result;
@@ -75,14 +77,14 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
                       project_info.get()->isNonTrivial());
   if (non_trivial) {
     // we have non-trivial projection
-    LOG_INFO("We have non-trivial projection");
+    LOG_TRACE("We have non-trivial projection");
 
     result = std::unique_ptr<planner::AbstractPlan>(
         new planner::ProjectionPlan(std::move(project_info), project_schema));
     // set project_info to nullptr
     project_info.reset();
   } else {
-    LOG_INFO("We have direct mapping projection");
+    LOG_TRACE("We have direct mapping projection");
   }
 
   std::unique_ptr<planner::NestedLoopJoinPlan> plan_node(
@@ -105,7 +107,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformNestLoop(
     result.reset(plan_node.release());
   }
 
-  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d",
+  LOG_TRACE("Finishing mapping Nested loop join, JoinType: %d",
            nl_plan_state->jointype);
 
   return result;

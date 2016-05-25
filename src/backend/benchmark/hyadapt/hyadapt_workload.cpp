@@ -10,15 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
-
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <iostream>
 #include <ctime>
-#include <cassert>
 #include <thread>
 #include <algorithm>
 
@@ -35,6 +32,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/logger.h"
 #include "backend/common/timer.h"
+#include "backend/common/macros.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
@@ -90,7 +88,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(0, 0);
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
 
   // Second, create constant value expression.
   Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
@@ -115,8 +113,8 @@ static void WriteOutput(double duration) {
   // Convert to ms
   duration *= 1000;
 
-  LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %lf %lf %lf %d %d %d %d %lf %lf %d %lf %d :: %lf ms",
+  LOG_TRACE("----------------------------------------------------------");
+  LOG_TRACE("%d %d %lf %lf %lf %d %d %d %d %lf %lf %d %lf %d :: %lf ms",
            state.layout_mode, state.operator_type,
            state.projectivity, state.selectivity,
            state.write_ratio, state.scale_factor,
@@ -299,8 +297,8 @@ void RunDirectTest() {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression =
@@ -382,7 +380,7 @@ void RunAggregateTest() {
   std::vector<oid_t> group_by_columns;
 
   // 2) Set up project info
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  DirectMapList direct_map_list;
   oid_t col_itr = 0;
   oid_t tuple_idx = 1;  // tuple2
   for (col_itr = 0; col_itr < column_count; col_itr++) {
@@ -391,7 +389,7 @@ void RunAggregateTest() {
   }
 
   std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(planner::ProjectInfo::TargetList(),
+      new planner::ProjectInfo(TargetList(),
                                std::move(direct_map_list)));
 
   // 3) Set up aggregates
@@ -399,7 +397,8 @@ void RunAggregateTest() {
   for (auto column_id : column_ids) {
     planner::AggregatePlan::AggTerm max_column_agg(
         EXPRESSION_TYPE_AGGREGATE_MAX,
-        expression::ExpressionUtil::TupleValueFactory(0, column_id), false);
+        expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0,
+                                                      column_id), false);
     agg_terms.push_back(max_column_agg);
   }
 
@@ -457,7 +456,7 @@ void RunAggregateTest() {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
+  TargetList target_list;
   direct_map_list.clear();
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
@@ -530,8 +529,8 @@ void RunArithmeticTest() {
   // PROJECTION
   /////////////////////////////////////////////////////////
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   // Construct schema of projection
   std::vector<catalog::Column> columns;
@@ -550,17 +549,18 @@ void RunArithmeticTest() {
 
   for (oid_t col_itr = 0; col_itr < projection_column_count; col_itr++) {
     auto hyadapt_colum_id = hyadapt_column_ids[col_itr];
-    auto column_expr =
-        expression::ExpressionUtil::TupleValueFactory(0, hyadapt_colum_id);
+    auto column_expr = expression::ExpressionUtil::TupleValueFactory(
+        VALUE_TYPE_INTEGER, 0, hyadapt_colum_id);
     if (sum_expr == nullptr)
       sum_expr = column_expr;
     else {
       sum_expr = expression::ExpressionUtil::OperatorFactory(
-          EXPRESSION_TYPE_OPERATOR_PLUS, sum_expr, column_expr);
+          EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_INTEGER, sum_expr,
+          column_expr);
     }
   }
 
-  planner::ProjectInfo::Target target = std::make_pair(0, sum_expr);
+  Target target = std::make_pair(0, sum_expr);
   target_list.push_back(target);
 
   std::unique_ptr<planner::ProjectInfo> project_info(
@@ -859,8 +859,8 @@ void RunInsertTest() {
 
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
   std::vector<oid_t> column_ids;
 
   target_list.clear();
@@ -937,8 +937,8 @@ void RunUpdateTest() {
   // Update
   std::vector<Value> values;
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     direct_map_list.emplace_back(col_itr, std::pair<oid_t, oid_t>(0, col_itr));
@@ -1449,7 +1449,7 @@ void RunAdaptExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("----------------------------------------- \n");
+      LOG_TRACE("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1629,7 +1629,7 @@ void RunReorgExperiment() {
         state.reorg = true;
       }
 
-      LOG_INFO("----------------------------------------- \n");
+      LOG_TRACE("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1696,7 +1696,7 @@ void RunDistributionExperiment() {
       state.layout_mode = layout_mode;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("----------------------------------------- \n");
+      LOG_TRACE("----------------------------------------- \n");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;
@@ -1830,7 +1830,7 @@ void RunVersionExperiment() {
   for (auto version_chain_length : version_chain_lengths) {
     oid_t starting_tuple_offset = version_chain_length - 1;
     oid_t prev_tuple_offset = starting_tuple_offset;
-    LOG_INFO("Offset : %u", starting_tuple_offset);
+    LOG_TRACE("Offset : %u", starting_tuple_offset);
 
     auto prev_item_pointer = header->GetNextItemPointer(starting_tuple_offset);
     while (prev_item_pointer.block != INVALID_OID) {
@@ -1889,7 +1889,7 @@ void RunHyriseExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("----------------------------------------- \n");
+      LOG_TRACE("----------------------------------------- \n");
 
       state.projectivity = hyrise_projectivities[0];
       peloton_projectivity = state.projectivity;
@@ -2055,8 +2055,8 @@ void RunConcurrentTest(oid_t thread_id, oid_t num_threads, double scan_ratio) {
   std::vector<Value> values;
   Value insert_val = ValueFactory::GetIntegerValue(++hyadapt_tuple_counter);
 
-  planner::ProjectInfo::TargetList target_list;
-  planner::ProjectInfo::DirectMapList direct_map_list;
+  TargetList target_list;
+  DirectMapList direct_map_list;
 
   for (auto col_id = 0; col_id <= state.column_count; col_id++) {
     auto expression =
@@ -2098,7 +2098,7 @@ void RunConcurrencyExperiment() {
 
   // Go over all scan ratios
   for (auto scan_ratio : scan_ratios) {
-    LOG_INFO("SCAN RATIO : %lf \n\n", scan_ratio);
+    LOG_TRACE("SCAN RATIO : %lf \n\n", scan_ratio);
 
     // Go over all layouts
     for (auto layout : layouts) {
@@ -2106,7 +2106,7 @@ void RunConcurrencyExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("LAYOUT : %d", layout);
+      LOG_TRACE("LAYOUT : %d", layout);
 
       // Go over all scale factors
       for (auto num_threads : num_threads_list) {
@@ -2142,8 +2142,8 @@ void RunConcurrencyExperiment() {
 
         LOG_INFO("Inserted Tile Group Count : %lu", diff_tg_count);
 
-        LOG_INFO("Scan count  : %u", scan_ctr);
-        LOG_INFO("Insert count  : %u", insert_ctr);
+        LOG_TRACE("Scan count  : %u", scan_ctr);
+        LOG_TRACE("Insert count  : %u", insert_ctr);
       }
     }
   }

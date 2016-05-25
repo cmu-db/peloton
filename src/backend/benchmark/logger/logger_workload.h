@@ -37,7 +37,7 @@ extern configuration state;
 // PREPARE LOG FILE
 //===--------------------------------------------------------------------===//
 
-bool PrepareLogFile(std::string file_name);
+bool PrepareLogFile();
 
 //===--------------------------------------------------------------------===//
 // CHECK RECOVERY
@@ -45,7 +45,7 @@ bool PrepareLogFile(std::string file_name);
 
 void ResetSystem(void);
 
-void DoRecovery(std::string file_name);
+void DoRecovery();
 
 //===--------------------------------------------------------------------===//
 // WRITING LOG RECORD

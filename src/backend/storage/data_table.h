@@ -17,11 +17,7 @@
 #include <map>
 #include <mutex>
 
-#include "backend/brain/sample.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
-#include "backend/common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -55,7 +51,21 @@ namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
-namespace index { class Index; }
+namespace brain{
+class Sample;
+}
+
+namespace catalog{
+class ForeignKey;
+}
+
+namespace index {
+class Index;
+}
+
+namespace logging {
+class LogManager;
+}
 
 namespace storage {
 
@@ -79,6 +89,7 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
+  friend class logging::LogManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;
@@ -110,7 +121,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // coerce into adding a new tile group with a tile group id
-  oid_t AddTileGroupWithOid(const oid_t &tile_group_id);
+  void AddTileGroupWithOidForRecovery(const oid_t &tile_group_id);
 
   // add a tile group to table
   void AddTileGroup(const std::shared_ptr<TileGroup> &tile_group);
@@ -208,6 +219,8 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
+  RWLock &GetTileGroupLock() { return tile_group_lock_; }
+
  protected:
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
@@ -226,6 +239,9 @@ class DataTable : public AbstractTable {
 
   // get a partitioning with given layout type
   column_map_type GetTileGroupLayout(LayoutType layout_type);
+
+  // Drop all tile groups of the table. Used by recovery
+  void DropTileGroups();
 
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
@@ -255,7 +271,7 @@ class DataTable : public AbstractTable {
   std::vector<oid_t> tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
-  
+
   // tile group mutex
   // TODO: don't know why need this mutex --Yingjun
   std::mutex tile_group_mutex_;

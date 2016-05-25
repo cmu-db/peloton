@@ -42,10 +42,10 @@ DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DInit() {
-  assert(children_.size() == 1);
-  assert(executor_context_);
+  PL_ASSERT(children_.size() == 1);
+  PL_ASSERT(executor_context_);
 
-  assert(target_table_ == nullptr);
+  PL_ASSERT(target_table_ == nullptr);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child ");
@@ -53,7 +53,7 @@ bool DeleteExecutor::DInit() {
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
-  assert(target_table_);
+  PL_ASSERT(target_table_);
 
   return true;
 }
@@ -65,7 +65,7 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
-  assert(target_table_);
+  PL_ASSERT(target_table_);
 
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
@@ -96,7 +96,7 @@ bool DeleteExecutor::DExecute() {
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
 
-    LOG_TRACE("Visible Tuple id : %lu, Physical Tuple id : %lu ",
+    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
@@ -115,24 +115,31 @@ bool DeleteExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
-      // if it is the latest version and not locked by other threads, then
-      // insert a new version.
-      std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
 
-      // Make a copy of the original tuple and allocate a new tuple
-      expression::ContainerTuple<storage::TileGroup> old_tuple(
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        // If we are using rollback segment, what we need to do is flip the delete
+        // flag in the master copy.
+        transaction_manager.PerformDelete(old_location);
+
+      } else {
+        // if it is the latest version and not locked by other threads, then
+        // insert a new version.
+        std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
+
+        // Make a copy of the original tuple and allocate a new tuple
+        expression::ContainerTuple<storage::TileGroup> old_tuple(
           tile_group, physical_tuple_id);
 
-      // finally insert updated tuple into the table
-      ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
+        // finally insert updated tuple into the table
+        ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
 
-      if (new_location.IsNull() == true) {
-        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-        return false;
+        if (new_location.IsNull() == true) {
+          LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+          transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+          return false;
+        }
+        transaction_manager.PerformDelete(old_location, new_location);
       }
-      transaction_manager.PerformDelete(old_location, new_location);
-      
       executor_context_->num_processed += 1;  // deleted one
 
     } else {

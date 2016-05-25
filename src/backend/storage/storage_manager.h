@@ -15,6 +15,7 @@
 #include <mutex>
 
 #include "backend/common/types.h"
+#include "backend/common/platform.h"
 
 namespace peloton {
 namespace storage {
@@ -42,23 +43,29 @@ class StorageManager {
 
   size_t GetClflushCount() const { return clflush_count; }
 
+  size_t GetAllocationCount() const {
+    return allocation_count;
+  }
+
  private:
-  // pmem file address
+  // data file address
   void *data_file_address;
 
-  // pmem file synch mutex
-  std::mutex pmem_mutex;
+  // data file lock
+  Spinlock data_file_spinlock;
 
-  // pmem file len
+  // data file len
   size_t data_file_len;
 
-  // pmem offset
+  // data offset
   size_t data_file_offset;
 
   // stats
   size_t msync_count = 0;
 
   size_t clflush_count = 0;
+
+  size_t allocation_count = 0;
 };
 
 }  // End storage namespace

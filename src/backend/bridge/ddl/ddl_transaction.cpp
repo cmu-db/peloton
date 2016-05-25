@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <iostream>
-#include <cassert>
 
 #include "backend/bridge/ddl/ddl_transaction.h"
 #include "backend/common/logger.h"
@@ -36,22 +35,22 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt *stmt) {
   switch (stmt->kind) {
     case TRANS_STMT_BEGIN:
     case TRANS_STMT_START: {
-      LOG_INFO("BEGIN");
+      LOG_TRACE("BEGIN");
       txn_manager.BeginTransaction();
     } break;
 
     case TRANS_STMT_COMMIT: {
-      LOG_INFO("COMMIT");
+      LOG_TRACE("COMMIT");
       txn_manager.CommitTransaction();
     } break;
 
     case TRANS_STMT_ROLLBACK: {
-      LOG_INFO("ROLLBACK");
+      LOG_TRACE("ROLLBACK");
       txn_manager.AbortTransaction();
     } break;
 
     default: {
-      LOG_WARN("unrecognized node type: %d", (int)nodeTag(stmt));
+      LOG_TRACE("unrecognized node type: %d", (int)nodeTag(stmt));
     } break;
   }
 

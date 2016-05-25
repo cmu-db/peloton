@@ -18,5 +18,5 @@
 
 #include "backend/common/logger.h"
 
-#include <cassert>
+#include <cALWAYS_ASSERT>
 #include <iostream>

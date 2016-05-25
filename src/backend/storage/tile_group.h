@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <cassert>
 #include <map>
 #include <atomic>
 #include <vector>
 #include <mutex>
 #include <memory>
+#include <backend/planner/project_info.h>
 
 #include "backend/common/types.h"
 #include "backend/common/printable.h"
@@ -31,6 +31,10 @@ class Manager;
 class Schema;
 }
 
+namespace planner {
+class ProjectInfo;
+}
+
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -42,6 +46,7 @@ class Tile;
 class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
+class RollbackSegment;
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
@@ -72,6 +77,8 @@ class TileGroup : public Printable {
   //===--------------------------------------------------------------------===//
   // Operations
   //===--------------------------------------------------------------------===//
+
+  void ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id);
 
   // copy tuple in place.
   void CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id);
@@ -109,6 +116,7 @@ class TileGroup : public Printable {
 
   // this function is called only when building tile groups for aggregation
   // operations.
+  // FIXME: GC has recycled some of the tuples, so this count is not accurate
   oid_t GetActiveTupleCount() const;
 
   oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }

@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include "backend/benchmark/tpcc/tpcc_configuration.h"
 #include "backend/benchmark/tpcc/tpcc_loader.h"
@@ -29,13 +30,16 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d :: %lf tps",
+  LOG_INFO("%d %d :: %lf",
            state.scale_factor,
+           state.backend_count,
            stat);
 
   out << state.scale_factor << " ";
+  out << state.backend_count << " ";
   out << stat << "\n";
   out.flush();
+  out.close();
 }
 
 // Main Entry Point
@@ -48,9 +52,10 @@ void RunBenchmark() {
   LoadTPCCDatabase();
 
   // Run the workload
-  auto stat = RunWorkload();
+  RunWorkload();
 
-  WriteOutput(stat);
+  // Emit throughput
+  WriteOutput(state.throughput);
 }
 
 }  // namespace tpcc

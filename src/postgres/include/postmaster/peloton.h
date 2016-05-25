@@ -47,6 +47,12 @@ typedef struct peloton_status {
     m_result_slots = nullptr;
   }
 
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  //===--------------------------------------------------------------------===//
+  bool SerializeTo(peloton::SerializeOutput &output);
+  bool DeserializeFrom(peloton::SerializeInputBE &input);
+
 } peloton_status;
 
 extern bool logging_on;
@@ -69,7 +75,8 @@ extern void peloton_dml(const PlanState *planstate,
                         bool sendTuples,
                         DestReceiver *dest,
                         TupleDesc tuple_desc,
-                        const char *prepStmtName);
+                        const char *prepStmtName,
+                        BackendContext *backend_state);
 
 #endif   /* PELOTON_H */
 

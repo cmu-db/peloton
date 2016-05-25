@@ -15,8 +15,8 @@
 
 #include "backend/benchmark/logger/logger_configuration.h"
 #include "backend/benchmark/logger/logger_workload.h"
-
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "backend/benchmark/tpcc/tpcc_configuration.h"
 
 // Logging mode
 extern LoggingType peloton_logging_mode;
@@ -29,22 +29,20 @@ namespace peloton {
 namespace benchmark {
 
 namespace ycsb {
-
 configuration state;
-
+}
+namespace tpcc {
+configuration state;
 }
 
 namespace logger {
-
-std::string wal_log_file_name = "wal.log";
-
-std::string wbl_log_file_name = "wbl.log";
 
 // Configuration
 configuration state;
 
 // Main Entry Point
 void RunBenchmark() {
+
   // First, set the global peloton logging mode and pmem file size
   peloton_logging_mode = state.logging_type;
   peloton_data_file_size = state.data_file_size;
@@ -55,13 +53,13 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
     // Prepare a simple log file
-    PrepareLogFile(wal_log_file_name);
+    PrepareLogFile();
 
     // Reset data
     ResetSystem();
 
     // Do recovery
-    DoRecovery(wal_log_file_name);
+    DoRecovery();
 
   }
   //===--------------------------------------------------------------------===//
@@ -69,21 +67,12 @@ void RunBenchmark() {
   //===--------------------------------------------------------------------===//
   else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
     // Test a simple log process
-    PrepareLogFile(wbl_log_file_name);
+    PrepareLogFile();
 
     // Do recovery
-    DoRecovery(wbl_log_file_name);
-
+    DoRecovery();
   }
-  //===--------------------------------------------------------------------===//
-  // None
-  //===--------------------------------------------------------------------===//
-  else if (state.logging_type == LOGGING_TYPE_INVALID) {
-    // Test a simple log process
-    PrepareLogFile(wbl_log_file_name);
 
-    // No recovery
-  }
 }
 
 }  // namespace logger

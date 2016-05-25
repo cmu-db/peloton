@@ -44,11 +44,11 @@ bool NestedLoopJoinExecutor::DInit() {
     return status;
   }
 
-  assert(right_result_tiles_.empty());
+  PL_ASSERT(right_result_tiles_.empty());
   right_child_done_ = false;
   right_result_itr_ = 0;
 
-  assert(left_result_tiles_.empty());
+  PL_ASSERT(left_result_tiles_.empty());
 
   return true;
 }
@@ -57,9 +57,24 @@ bool NestedLoopJoinExecutor::DInit() {
  * @brief Creates logical tiles from the two input logical tiles after applying
  * join predicate.
  * @return true on success, false otherwise.
+ *
+ * ExecutorContext is set when executing IN+NestLoop. For example:
+ * select * from Foo1 where age IN (select id from Foo2 where name='mike');
+ * Here:
+ * "select id from Foo2 where name='mike'" is transformed as left child.
+ * "select * from Foo1 where age " is the right child.
+ * "IN" is transformed as a execute context, in NestLoop
+ * We put the results of left child in executor_context using NestLoop, and the
+ * right child can execute using this context. Otherwise, the right child can't
+ * execute. And there is no predicate_ for IN+NestLoop
+ *
+ * For now, we only set this context for IN operator. Normally, the right child
+ * has a complete query that can execute without the context, and we use predicate_
+ * to join the left and right result.
+ *
  */
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_INFO("********** Nested Loop %s Join executor :: 2 children ",
+  LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
            GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit
@@ -82,7 +97,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     if (left_child_done_ == true) {
       LOG_TRACE("Advance the left buffer iterator.");
 
-      assert(!right_result_tiles_.empty());
+      PL_ASSERT(!right_result_tiles_.empty());
       left_result_itr_++;
 
       if (left_result_itr_ >= left_result_tiles_.size()) {
@@ -115,7 +130,7 @@ bool NestedLoopJoinExecutor::DExecute() {
         return BuildOuterJoinOutput();
       }
 
-      assert(left_result_itr_ == 0);
+      PL_ASSERT(left_result_itr_ == 0);
 
       // Right child is finished, no more tiles
       if (children_[1]->Execute() == false) {

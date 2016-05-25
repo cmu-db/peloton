@@ -112,9 +112,9 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Drop the table
   status = DDLTable::DropTable(pktable_oid);
-  assert(status);
+  PL_ASSERT(status);
 
-  LOG_INFO(":::::: %s DONE", __func__);
+  LOG_TRACE(":::::: %s DONE", __func__);
 }
 
 }  // End bridge namespace

@@ -158,6 +158,16 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
     keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
 
     // INSERT
+    // key0 1 (100, a)   item0
+    // key1 5  (100, b)  item1 2 1 1 0
+    // key2 1 (100, c) item 1
+    // key3 1 (400, d) item 1
+    // key4 1  (500, eeeeee...) item 1
+    // no keyonce (1000, f)
+
+    // item0 = 2
+    // item1 = 6
+    // item2 = 1
     index->InsertEntry(key0.get(), item0);
     index->InsertEntry(key1.get(), item1);
     index->InsertEntry(key1.get(), item2);
@@ -215,11 +225,27 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
                    pool);
 
     // DELETE
+    // key0 1 (100, a)   item0
+    // key1 5  (100, b)  item 0 1 2 (0 1 1 1 2)
+    // key2 1 (100, c) item 1
+    // key3 1 (400, d) item 1
+    // key4 1  (500, eeeeee...) item 1
+    // no keyonce (1000, f)
+
+    // item0 = 2
+    // item1 = 6
+    // item2 = 1
     index->DeleteEntry(key0.get(), item0);
     index->DeleteEntry(key1.get(), item1);
     index->DeleteEntry(key2.get(), item2);
     index->DeleteEntry(key3.get(), item1);
     index->DeleteEntry(key4.get(), item1);
+
+    // should be no key0
+    // key1 item 0 1 2
+    // key2 item 1
+    // no key3
+    // no key4
   }
 }
 
@@ -453,6 +479,23 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 }
 #endif
 
+// key0 1 (100, a)   item0
+// key1 5  (100, b)  item1 2 1 1 0
+// key2 1 (100, c) item 1
+// key3 1 (400, d) item 1
+// key4 1  (500, eeeeee...) item 1
+// no keyonce (1000, f)
+
+// item0 = 2
+// item1 = 6
+// item2 = 1
+
+// should be no key0
+// key1 item 0 2
+// key2 item 1
+// no key3
+// no key4
+
 TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
   std::vector<ItemPointer> locations;
@@ -470,6 +513,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
+  std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema, true));
 
   key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
@@ -477,6 +521,29 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   key1->SetValue(1, ValueFactory::GetStringValue("b"), pool);
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
+  key4->SetValue(0, ValueFactory::GetIntegerValue(500), pool);
+  key4->SetValue(1, ValueFactory::GetStringValue(
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+      pool);
 
   index->ScanKey(key0.get(), locations);
   EXPECT_EQ(locations.size(), 0);
@@ -522,7 +589,32 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   EXPECT_EQ(locations.size(), 0);
   locations.clear();
 
-  // REVERSE SCAN
+  index->Scan(
+      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
+  locations.clear();
+
+  index->Scan(
+      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0), key2->GetValue(1)},
+      {0, 1, 0, 1},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
+  locations.clear();
+
+  index->Scan(
+      {key0->GetValue(0), key0->GetValue(1), key4->GetValue(0), key4->GetValue(1)},
+      {0, 1, 0, 1},
+      {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+        EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  EXPECT_EQ(locations.size(), 3 * num_threads);
+  locations.clear();
+
+// REVERSE SCAN
       index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
                   SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 3 * num_threads);
@@ -547,6 +639,31 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 0);
+  locations.clear();
+
+  index->Scan(
+      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
+  locations.clear();
+
+  index->Scan(
+      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0), key2->GetValue(1)},
+      {0, 1, 0, 1},
+      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  EXPECT_EQ(locations.size(), 2 * num_threads);
+  locations.clear();
+
+  index->Scan(
+      {key0->GetValue(0), key0->GetValue(1), key4->GetValue(0), key4->GetValue(1)},
+      {0, 1, 0, 1},
+      {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 
   delete tuple_schema;
