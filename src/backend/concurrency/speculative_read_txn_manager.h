@@ -26,7 +26,7 @@ struct SpecTxnContext {
         is_cascading_abort_(false) {}
 
   void SetBeginCid(const cid_t &begin_cid) {
-    assert(begin_cid_ == MAX_CID);
+    PL_ASSERT(begin_cid_ == MAX_CID);
     begin_cid_ = begin_cid;
   }
 
@@ -108,41 +108,24 @@ class SpeculativeReadTxnManager : public TransactionManager {
     current_txn = txn;
     spec_txn_context.SetBeginCid(begin_cid);
 
-    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
-    assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
-    running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
     return txn;
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
-    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
-    bool ret = running_txn_buckets_[bucket_id].erase(txn_id);
-    if (ret == false) {
-      assert(false);
+    if (current_txn->GetEndCommitId() == MAX_CID) {
+      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
     }
+
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
     spec_txn_context.Clear();
 
     delete current_txn;
     current_txn = nullptr;
   }
 
-  virtual cid_t GetMaxCommittedCid() {
-    cid_t min_running_cid = MAX_CID;
-    for (size_t i = 0; i < RUNNING_TXN_BUCKET_NUM; ++i) {
-      {
-        auto iter = running_txn_buckets_[i].lock_table();
-        for (auto &it : iter) {
-          if (it.second->begin_cid_ < min_running_cid) {
-            min_running_cid = it.second->begin_cid_;
-          }
-        }
-      }
-    }
-    assert(min_running_cid > 0 && min_running_cid != MAX_CID);
-    return min_running_cid - 1;
-  }
 
   // is it because this dependency has been registered before?
   // or the dst txn does not exist?
@@ -160,7 +143,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
             dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext * context) {
       context->inner_dep_set_lock_.Lock();
       if (context->inner_dep_set_changeable_ == true) {
-        assert(context->inner_dep_set_.find(src_txn_id) ==
+        PL_ASSERT(context->inner_dep_set_.find(src_txn_id) ==
                context->inner_dep_set_.end());
         context->inner_dep_set_.insert(src_txn_id);
       } else {
@@ -196,7 +179,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
           .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        assert(context->outer_dep_count_ > 0);
+        PL_ASSERT(context->outer_dep_count_ > 0);
         context->outer_dep_count_--;
       });
     }
@@ -211,7 +194,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
       running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
           .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        assert(context->outer_dep_count_ > 0);
+        PL_ASSERT(context->outer_dep_count_ > 0);
         context->is_cascading_abort_ = true;
       });
     }

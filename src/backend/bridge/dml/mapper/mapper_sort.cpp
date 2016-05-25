@@ -30,7 +30,7 @@ std::unique_ptr<planner::AbstractPlan> PlanTransformer::TransformSort(
   std::vector<oid_t> output_col_ids;
 
   for (int i = 0; i < numCols; i++) {
-    LOG_INFO("Sort col idx : %u , reverse : %u", sortColIdx[i],
+    LOG_TRACE("Sort col idx : %u , reverse : %u", sortColIdx[i],
              reverse_flags[i]);
     sort_keys.push_back(
         static_cast<oid_t>(AttrNumberGetAttrOffset(sortColIdx[i])));

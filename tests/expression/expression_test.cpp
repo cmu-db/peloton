@@ -44,7 +44,7 @@ class ExpressionTest : public PelotonTest {};
    unique fields.
 
    3. Using this utilities, the test defines several expressions (in
-   std::queue) formats and asserts on the expected result.
+   std::queue) formats and PL_ASSERTs on the expected result.
 
  */
 
@@ -178,7 +178,7 @@ TEST_F(ExpressionTest, SimpleFilter) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(20));
@@ -222,7 +222,7 @@ TEST_F(ExpressionTest, SimpleFilterCopyTest) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(20));
@@ -271,7 +271,7 @@ TEST_F(ExpressionTest, SimpleInFilter) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp1 =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(15));
@@ -326,7 +326,7 @@ TEST_F(ExpressionTest, SimpleInFilterCopyTest) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp1 =
       new expression::ConstantValueExpression(
           ValueFactory::GetIntegerValue(15));
@@ -386,7 +386,7 @@ TEST_F(ExpressionTest, SimpleCase) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp_1 =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(1));
   expression::ConstantValueExpression *const_val_exp_2 =
@@ -406,6 +406,7 @@ TEST_F(ExpressionTest, SimpleCase) {
   expression::CaseExpression *case_expression = new expression::CaseExpression(
       VALUE_TYPE_INTEGER, clauses,
       expression::CaseExpression::AbstractExprPtr(const_val_exp_3));
+
   // TUPLE
 
   std::vector<catalog::Column> columns;
@@ -447,7 +448,7 @@ TEST_F(ExpressionTest, SimpleCaseCopyTest) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::ConstantValueExpression *const_val_exp_1 =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(1));
   expression::ConstantValueExpression *const_val_exp_2 =
@@ -511,9 +512,9 @@ TEST_F(ExpressionTest, UnaryMinus) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp_int =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::TupleValueExpression *tup_val_exp_double =
-      new expression::TupleValueExpression(0, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 1);
 
   // TUPLE
   expression::OperatorUnaryMinusExpression *unary_minus_int =
@@ -554,9 +555,9 @@ TEST_F(ExpressionTest, UnaryMinusCopyTest) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp_int =
-      new expression::TupleValueExpression(0, 0);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   expression::TupleValueExpression *tup_val_exp_double =
-      new expression::TupleValueExpression(0, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_DOUBLE, 0, 1);
 
   // TUPLE
   expression::OperatorUnaryMinusExpression *o_unary_minus_int =

@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#undef NDEBUG
-
 #include <iomanip>
 #include <algorithm>
 
@@ -23,7 +21,7 @@ namespace benchmark {
 namespace hyadapt {
 
 void Usage() {
-  LOG_INFO("Command line options : hyadapt <options>"
+  LOG_TRACE("Command line options : hyadapt <options>"
           "   -h --help              :  Print help message"
           "   -o --operator-type     :  Operator type"
           "   -k --scale-factor      :  # of tuples"
@@ -69,16 +67,16 @@ static void ValidateOperator(const configuration &state) {
   } else {
     switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        LOG_INFO("%s : DIRECT", "operator_type ");
+        LOG_TRACE("%s : DIRECT", "operator_type ");
         break;
       case OPERATOR_TYPE_AGGREGATE:
-        LOG_INFO("%s : AGGREGATE", "operator_type ");
+        LOG_TRACE("%s : AGGREGATE", "operator_type ");
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        LOG_INFO("%s : ARITHMETIC", "operator_type ");
+        LOG_TRACE("%s : ARITHMETIC", "operator_type ");
         break;
       case OPERATOR_TYPE_JOIN:
-        LOG_INFO("%s : JOIN", "operator_type ");
+        LOG_TRACE("%s : JOIN", "operator_type ");
         break;
       default:
         break;
@@ -92,7 +90,7 @@ static void ValidateScaleFactor(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
+  LOG_TRACE("%s : %d", "scale_factor", state.scale_factor);
 }
 
 static void ValidateLayout(const configuration &state) {
@@ -102,13 +100,13 @@ static void ValidateLayout(const configuration &state) {
   } else {
     switch (state.layout_mode) {
       case LAYOUT_ROW:
-        LOG_INFO("%s : ROW", "layout ");
+        LOG_TRACE("%s : ROW", "layout ");
         break;
       case LAYOUT_COLUMN:
-        LOG_INFO("%s : COLUMN", "layout ");
+        LOG_TRACE("%s : COLUMN", "layout ");
         break;
       case LAYOUT_HYBRID:
-        LOG_INFO("%s : HYBRID", "layout ");
+        LOG_TRACE("%s : HYBRID", "layout ");
         break;
       default:
         break;
@@ -122,7 +120,7 @@ static void ValidateProjectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "projectivity", state.projectivity);
+  LOG_TRACE("%s : %lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
@@ -131,7 +129,7 @@ static void ValidateSelectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "selectivity", state.selectivity);
+  LOG_TRACE("%s : %lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
@@ -140,7 +138,7 @@ static void ValidateExperiment(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "experiment_type", state.experiment_type);
+  LOG_TRACE("%s : %d", "experiment_type", state.experiment_type);
 }
 
 static void ValidateColumnCount(const configuration &state) {
@@ -149,7 +147,7 @@ static void ValidateColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "column_count", state.column_count);
+  LOG_TRACE("%s : %d", "column_count", state.column_count);
 }
 
 static void ValidateWriteRatio(const configuration &state) {
@@ -158,7 +156,7 @@ static void ValidateWriteRatio(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "write_ratio", state.write_ratio);
+  LOG_TRACE("%s : %lf", "write_ratio", state.write_ratio);
 }
 
 static void ValidateTuplesPerTileGroup(const configuration &state) {
@@ -167,7 +165,7 @@ static void ValidateTuplesPerTileGroup(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
+  LOG_TRACE("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
 }
 
 int orig_scale_factor;
@@ -258,7 +256,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     ValidateWriteRatio(state);
     ValidateTuplesPerTileGroup(state);
 
-    LOG_INFO("%s : %lu", "transactions", state.transactions);
+    LOG_TRACE("%s : %lu", "transactions", state.transactions);
   } else {
     ValidateExperiment(state);
   }

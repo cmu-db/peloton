@@ -76,6 +76,7 @@ class ExprTransformer {
 
   /* Utilities */
   static expression::AbstractExpression *ReMapPgFunc(Oid pg_func_id,
+                                                     ValueType ret_type,
                                                      List *args);
 };
 

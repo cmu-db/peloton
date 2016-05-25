@@ -12,6 +12,7 @@
 
 #include "backend/common/varlen.h"
 #include "backend/common/pool.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 
@@ -32,7 +33,7 @@ Varlen *Varlen::Clone(const Varlen &src, VarlenPool *data_pool) {
   Varlen *rv = Create(src.varlen_size - sizeof(Varlen *), data_pool);
 
   // copy the meat (excluding back pointer)
-  ::memcpy(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen *)));
+  PL_MEMCPY(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen *)));
 
   return rv;
 }

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
@@ -98,7 +99,7 @@ bool DDLDatabase::CreateDatabase(oid_t database_oid) {
     return false;
   }
 
-  LOG_INFO("Create database (%u)", database_oid);
+  LOG_TRACE("Create database (%u)", database_oid);
   return true;
 }
 
@@ -111,7 +112,7 @@ bool DDLDatabase::DropDatabase(oid_t database_oid) {
   auto &manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 
-  LOG_INFO("Dropped database with oid : %u", database_oid);
+  LOG_TRACE("Dropped database with oid : %u", database_oid);
   return true;
 }
 

@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#undef NDEBUG
+
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 
 #include "backend/common/logger.h"
-
 #include "backend/benchmark/ycsb/ycsb_configuration.h"
 #include "backend/benchmark/ycsb/ycsb_loader.h"
 #include "backend/benchmark/ycsb/ycsb_workload.h"
@@ -26,31 +26,25 @@ namespace ycsb {
 
 configuration state;
 
-std::ofstream out("outputfile.summary", std::ofstream::out);
+std::ofstream out("outputfile.summary");
 
-static void WriteOutput() {
+static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d :: %lf tps, %lf", state.update_ratio, state.scale_factor,
-           state.column_count, state.throughput, state.abort_rate);
+  LOG_INFO("%lf %d %d %d %d :: %lf",
+           state.update_ratio,
+           state.scale_factor,
+           state.backend_count,
+           state.skew_factor,
+           state.column_count,
+           stat);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
-  out << state.column_count << "\n";
-
-  for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
-       ++round_id) {
-
-    out << "[" << std::setw(3) << std::left
-        << state.snapshot_duration * round_id << " - " << std::setw(3)
-        << std::left << state.snapshot_duration * (round_id + 1)
-        << " s]: " << state.snapshot_throughput[round_id] << " "
-        << state.snapshot_abort_rate[round_id] << "\n";
-  }
-
-  out << state.throughput << " ";
-  out << state.abort_rate << "\n";
+  out << state.backend_count << " ";
+  out << state.skew_factor << " ";
+  out << state.column_count << " ";
+  out << stat << "\n";
   out.flush();
-  out.close();
 }
 
 // Main Entry Point
@@ -64,7 +58,8 @@ void RunBenchmark() {
   // Run the workload
   RunWorkload();
 
-  WriteOutput();
+  // Emit throughput
+  WriteOutput(state.throughput);
 }
 
 }  // namespace ycsb
@@ -72,8 +67,8 @@ void RunBenchmark() {
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-  peloton::benchmark::ycsb::ParseArguments(argc, argv,
-                                           peloton::benchmark::ycsb::state);
+  peloton::benchmark::ycsb::ParseArguments(
+      argc, argv, peloton::benchmark::ycsb::state);
 
   peloton::benchmark::ycsb::RunBenchmark();
 

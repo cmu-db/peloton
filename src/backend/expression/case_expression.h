@@ -12,10 +12,12 @@
 
 #pragma once
 
+#include "backend/expression/abstract_expression.h"
+
 #include <utility>
 #include <memory>
 #include <vector>
-#include "backend/expression/abstract_expression.h"
+
 #include "backend/expression/expression_util.h"
 
 namespace peloton {
@@ -26,15 +28,15 @@ class CaseExpression : public AbstractExpression {
   // the first part is condition, and the second part is expression
   typedef std::unique_ptr<AbstractExpression> AbstractExprPtr;
   typedef std::pair<AbstractExprPtr, AbstractExprPtr> WhenClause;
-  CaseExpression(ValueType vt, std::vector<WhenClause> &t_clauses,
+
+  CaseExpression(ValueType vt, std::vector<WhenClause> &clauses,
                  AbstractExprPtr default_clause)
-      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR),
-        clauses_(std::move(t_clauses)),
-        default_expression_(std::move(default_clause)),
-        case_type_(vt) {}
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_CASE_EXPR, vt),
+        clauses_(std::move(clauses)),
+        default_expression_(std::move(default_clause)) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const {
+                 executor::ExecutorContext *context) const override {
     for (auto &clause : clauses_) {
       auto condition = clause.first->Evaluate(tuple1, tuple2, context);
       if (condition.IsTrue())
@@ -43,11 +45,11 @@ class CaseExpression : public AbstractExpression {
     return default_expression_->Evaluate(tuple1, tuple2, context);
   }
 
-  std::string DebugInfo(const std::string &spacer) const {
+  std::string DebugInfo(const std::string &spacer) const override {
     return spacer + "CaseExpression";
   }
 
-  AbstractExpression *Copy() const {
+  AbstractExpression *Copy() const override {
     std::vector<WhenClause> copied_clauses;
     for (auto &clause : clauses_) {
       copied_clauses.push_back(
@@ -55,7 +57,7 @@ class CaseExpression : public AbstractExpression {
                      AbstractExprPtr(clause.second->Copy())));
     }
     // default result has no condition.
-    return new CaseExpression(case_type_, copied_clauses,
+    return new CaseExpression(GetValueType(), copied_clauses,
                               AbstractExprPtr(default_expression_->Copy()));
   }
 
@@ -65,9 +67,7 @@ class CaseExpression : public AbstractExpression {
 
   // Fallback case result expression
   AbstractExprPtr default_expression_;
-
-  ValueType case_type_;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

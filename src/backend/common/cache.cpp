@@ -10,9 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-
 #include "backend/common/cache.h"
+#include "backend/common/macros.h"
 #include "backend/planner/abstract_plan.h"
 
 namespace peloton {
@@ -62,8 +61,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key &key) {
 template <class Key, class Value>
 typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     const Entry &entry) {
-  assert(list_.size() == map_.size());
-  assert(list_.size() <= this->capacity_);
+  PL_ASSERT(list_.size() == map_.size());
+  PL_ASSERT(list_.size() <= this->capacity_);
 
   auto map_itr = map_.find(entry.first);
   auto cache_itr = iterator(map_itr);
@@ -88,7 +87,7 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     list_.push_front(entry.first);
     auto ret =
         map_.emplace(entry.first, std::make_pair(entry.second, list_.begin()));
-    assert(ret.second); /* should not fail */
+    PL_ASSERT(ret.second); /* should not fail */
     cache_itr = iterator(ret.first);
     while (map_.size() > this->capacity_) {
       auto deleted = list_.back();
@@ -99,8 +98,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     list_.splice(list_.begin(), list_, map_itr->second.second);
     map_itr->second = std::make_pair(entry.second, list_.begin());
   }
-  assert(list_.size() == map_.size());
-  assert(list_.size() <= capacity_);
+  PL_ASSERT(list_.size() == map_.size());
+  PL_ASSERT(list_.size() <= capacity_);
   return cache_itr;
 }
 
@@ -111,7 +110,7 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
  */
 template <class Key, class Value>
 typename Cache<Key, Value>::size_type Cache<Key, Value>::size() const {
-  assert(map_.size() == list_.size());
+  PL_ASSERT(map_.size() == list_.size());
   return map_.size();
 }
 

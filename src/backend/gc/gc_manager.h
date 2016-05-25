@@ -15,6 +15,7 @@
 #include <thread>
 #include <unordered_map>
 #include <map>
+#include <vector>
 
 #include "backend/common/types.h"
 #include "backend/common/lockfree_queue.h"
@@ -32,6 +33,15 @@ namespace gc {
 #define MAX_QUEUE_LENGTH 100000
 
 #define GC_PERIOD_MILLISECONDS 100
+class GCBuffer {
+public:
+  GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
+  ~GCBuffer();
+  inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
+private:
+  oid_t table_id;
+  std::vector<ItemPointer> garbage_tuples;
+};
 
 class GCManager {
  public:
@@ -63,11 +73,17 @@ class GCManager {
 
  private:
   void Running();
-  //void DeleteTupleFromIndexes(const TupleMetadata &);
 
-  void ResetTuple(const TupleMetadata &);
+  bool ResetTuple(const TupleMetadata &);
 
  private:
+  //===--------------------------------------------------------------------===//
+  // Private methods
+  //===--------------------------------------------------------------------===//
+  void ClearGarbage();
+
+  void AddToRecycleMap(TupleMetadata tuple_metadata);
+
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

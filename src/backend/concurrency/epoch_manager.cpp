@@ -16,7 +16,7 @@
 namespace peloton {
 namespace concurrency {
 
-  volatile cid_t EpochManager::curr_epoch_ = 1;
+//  volatile cid_t EpochManager::curr_epoch_ = 1;
 
 }
 }

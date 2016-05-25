@@ -32,7 +32,7 @@ class WorkerThreadPool {
 
   void InstantiatePool(const size_t &pool_size) {
     pool_size_ = pool_size;
-    assert(pool_size_ != 0);
+    ALWAYS_ASSERT(pool_size_ != 0);
     for (size_t i = 0; i < pool_size_; ++i) {
       // add thread to thread pool.
       thread_pool_.create_thread(

@@ -44,7 +44,7 @@ AggregateExecutor::~AggregateExecutor() {
  * @return true on success, false otherwise.
  */
 bool AggregateExecutor::DInit() {
-  assert(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   LOG_TRACE("Aggregate executor :: 1 child ");
 
@@ -55,7 +55,7 @@ bool AggregateExecutor::DInit() {
   auto output_table_schema =
       const_cast<catalog::Schema *>(node.GetOutputSchema());
 
-  assert(output_table_schema->GetColumnCount() >= 1);
+  PL_ASSERT(output_table_schema->GetColumnCount() >= 1);
 
   // clean up result
   result_itr = START_OID;
@@ -107,17 +107,17 @@ bool AggregateExecutor::DExecute() {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_INFO("Use HashAggregator");
+          LOG_TRACE("Use HashAggregator");
           aggregator.reset(new HashAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORTED:
-          LOG_INFO("Use SortedAggregator");
+          LOG_TRACE("Use SortedAggregator");
           aggregator.reset(new SortedAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
-          LOG_INFO("Use PlainAggregator");
+          LOG_TRACE("Use PlainAggregator");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));
           break;
@@ -127,7 +127,7 @@ bool AggregateExecutor::DExecute() {
       }
     }
 
-    LOG_INFO("Looping over tile..");
+    LOG_TRACE("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
       std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
@@ -140,20 +140,20 @@ bool AggregateExecutor::DExecute() {
     LOG_TRACE("Finished processing logical tile");
   }
 
-  LOG_INFO("Finalizing..");
+  LOG_TRACE("Finalizing..");
   if (!aggregator.get() || !aggregator->Finalize()) {
     // If there's no tuples in the table and only if no group-by in the query,
     // we should return a NULL tuple
     // this is required by SQL
     if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
-      LOG_INFO(
+      LOG_TRACE(
           "No tuples received and no group-by. Should insert a NULL tuple "
           "here.");
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(output_table->GetSchema(), true));
       tuple->SetAllNulls();
       auto location = output_table->InsertTuple(tuple.get());
-      assert(location.block != INVALID_OID);
+      PL_ASSERT(location.block != INVALID_OID);
 
       auto &manager = catalog::Manager::GetInstance();
       auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
@@ -182,7 +182,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   done = true;
-  LOG_INFO("Result tiles : %lu ", result.size());
+  LOG_TRACE("Result tiles : %lu ", result.size());
 
   SetOutput(result[result_itr]);
   result_itr++;

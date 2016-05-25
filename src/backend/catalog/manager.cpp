@@ -10,21 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cassert>
-#include <string>
 
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 #include "backend/storage/data_table.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
 namespace peloton {
-
-namespace concurrency {
-  class TransactionManagerFactory;
-}
-
 namespace catalog {
 
 Manager &Manager::GetInstance() {
@@ -39,22 +34,18 @@ Manager &Manager::GetInstance() {
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
 
-  {
-    std::lock_guard<std::mutex> lock(locator_mutex);
+  // drop the catalog reference to the old tile group
+  locator.erase(oid);
 
-    // drop the catalog reference to the old tile group
-    locator.erase(oid);
-
-    // add a catalog reference to the tile group
-    locator[oid] = location;
-  }
+  // add a catalog reference to the tile group
+  locator[oid] = location;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
     LOG_TRACE("Dropping tile group %u", oid);
-    std::lock_guard<std::mutex> lock(locator_mutex);
+    // std::lock_guard<std::mutex> lock(locator_mutex);
     // drop the catalog reference to the tile group
     locator.erase(oid);
   }
@@ -63,23 +54,14 @@ void Manager::DropTileGroup(const oid_t oid) {
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
-  {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-    // Check if the tile group exists in the lookup directory
-    if (locator.find(oid) != locator.end()) {
-      location = locator.at(oid);
-    }
-  }
+  locator.find(oid, location);
 
   return location;
 }
 
 // used for logging test
 void Manager::ClearTileGroup() {
-  {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-    locator.clear();
-  }
+  locator.clear();
 }
 
 //===--------------------------------------------------------------------===//
@@ -113,7 +95,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
       }
       database_offset++;
     }
-    assert(database_offset < databases.size());
+    PL_ASSERT(database_offset < databases.size());
 
     // Drop the database
     databases.erase(databases.begin() + database_offset);
@@ -121,7 +103,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 }
 
 storage::Database *Manager::GetDatabase(const oid_t database_offset) const {
-  assert(database_offset < databases.size());
+  PL_ASSERT(database_offset < databases.size());
   auto database = databases.at(database_offset);
   return database;
 }

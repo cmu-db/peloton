@@ -12,11 +12,11 @@
 
 #include "backend/executor/materialization_executor.h"
 
-#include <cassert>
 #include <memory>
 #include <utility>
 
 #include "backend/common/logger.h"
+#include "backend/common/macros.h"
 #include "backend/planner/materialization_plan.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -54,7 +54,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DInit() {
-  assert(children_.size() == 1);
+  PL_ASSERT(children_.size() == 1);
 
   return true;
 }
@@ -169,7 +169,7 @@ void MaterializeRowAtAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      PL_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -183,7 +183,7 @@ void MaterializeRowAtAtATime(
       new_column_lengths.push_back(new_column_length);
     }
 
-    assert(new_column_offsets.size() == old_column_ids.size());
+    PL_ASSERT(new_column_offsets.size() == old_column_ids.size());
 
     ///////////////////////////
     // EACH TUPLE
@@ -206,8 +206,8 @@ void MaterializeRowAtAtATime(
             base_tuple_id, old_column_offsets[col_itr],
             old_column_types[col_itr], old_is_inlineds[col_itr]);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id,
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %lu ", new_tuple_id,
                   new_column_offsets[col_itr]);
 
         dest_tile->SetValueFast(
@@ -255,7 +255,7 @@ void MaterializeColumnAtATime(
 
       // Old to new column mapping
       auto it = old_to_new_cols.find(old_col_id);
-      assert(it != old_to_new_cols.end());
+      PL_ASSERT(it != old_to_new_cols.end());
 
       // Get new column information
       oid_t new_column_id = it->second;
@@ -280,8 +280,8 @@ void MaterializeColumnAtATime(
         auto value = old_tile->GetValueFast(base_tuple_id, old_column_offset,
                                             old_column_type, old_is_inlined);
 
-        LOG_TRACE("Old Tuple : %lu Column : %lu ", old_tuple_id, old_col_id);
-        LOG_TRACE("New Tuple : %lu Column : %lu ", new_tuple_id, new_column_id);
+        LOG_TRACE("Old Tuple : %u Column : %u ", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u ", new_tuple_id, new_column_id);
 
         dest_tile->SetValueFast(value, new_tuple_id, new_column_offset,
                                 new_is_inlined, new_column_length);
@@ -319,7 +319,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
 
   // Create a default identity mapping node if we did not get one
   if (node == nullptr) {
-    assert(source_tile_schema.get());
+    PL_ASSERT(source_tile_schema.get());
     output_schema = source_tile_schema.get();
 
     old_to_new_cols = BuildIdentityMapping(output_schema);

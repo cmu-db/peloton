@@ -17,22 +17,29 @@
 namespace peloton {
 namespace expression {
 
-ParameterValueExpression::ParameterValueExpression(int value_idx)
-    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER),
-      m_valueIdx(value_idx),
-      m_paramValue() {
+ParameterValueExpression::ParameterValueExpression(ValueType type,
+                                                   int value_idx)
+    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER, type),
+      value_idx_(value_idx),
+      param_value_() {
   LOG_TRACE("ParameterValueExpression %d", value_idx);
 };
 
-Value ParameterValueExpression::Evaluate(
-    __attribute__((unused)) const AbstractTuple *tuple1,
-    __attribute__((unused)) const AbstractTuple *tuple2,
-    executor::ExecutorContext *context) const {
-  auto params = context->GetParams();
-  assert(m_valueIdx < params.size());
+ParameterValueExpression::ParameterValueExpression(oid_t value_idx,
+                                                   Value param_value)
+    : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER,
+                         param_value.GetValueType()),
+      value_idx_(value_idx),
+      param_value_(param_value) {}
 
-  return params[m_valueIdx];
+Value ParameterValueExpression::Evaluate(
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+    UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+    executor::ExecutorContext *context) const {
+  auto& params = context->GetParams();
+  PL_ASSERT(value_idx_ < params.size());
+  return params[value_idx_];
 }
 
-}  // End expression namespace
-}  // End peloton namespace
+}  // namespace expression
+}  // namespace peloton

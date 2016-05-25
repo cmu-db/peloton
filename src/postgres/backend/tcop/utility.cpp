@@ -948,7 +948,6 @@ peloton_ProcessUtility(Node *parsetree,
 
   // TODO: Peloton Changes
   peloton_ddl(parsetree);
-
 }
 
 /*
