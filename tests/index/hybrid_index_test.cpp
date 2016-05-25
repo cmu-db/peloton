@@ -46,10 +46,10 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 10000;
-static size_t tile_group = 100;
+static size_t tuples_per_tile_group = 100;
+static size_t tile_group = 10;
 static float scalar = 0.4;
-static size_t iter = 350;
+static size_t iter = 10;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
   oid_t column_count = projectivity * columncount;
@@ -525,7 +525,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
   }
 }
 
-/*
+
 TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
@@ -577,7 +577,7 @@ TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   }
 
   index_builder.join();
-}*/
+}
 
 TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
