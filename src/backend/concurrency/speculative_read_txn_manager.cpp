@@ -317,41 +317,41 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
   //*****************************************************
   // we can optimize read-only transaction.
-  if (current_txn->IsReadOnly() == true) {
-    // generate transaction id.
-    cid_t end_commit_id = current_txn->GetBeginCommitId();
-    current_txn->SetEndCommitId(end_commit_id);
-    // validate read set.
-    for (auto &tile_group_entry : rw_set) {
-      oid_t tile_group_id = tile_group_entry.first;
-      auto tile_group = manager.GetTileGroup(tile_group_id);
-      auto tile_group_header = tile_group->GetHeader();
-      for (auto &tuple_entry : tile_group_entry.second) {
-        auto tuple_slot = tuple_entry.first;
-        if (tuple_entry.second == RW_TYPE_READ) {
-            if (tile_group_header->GetBeginCommitId(tuple_slot) <= end_commit_id &&
-              tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
-              // the version is not owned by other txns and is still visible.
-              continue;
-            } else {
-              // the version I read is no longer visible.
-              AbortTransaction();
-            }
-        } else {
-          assert(tuple_entry.second == RW_TYPE_INS_DEL);
-        }
-      }
-    }
-    // its possible that some reads are still dependent on previous txns.
-    if (IsCommittable() == false) {
-      return AbortTransaction();
-    }
-    // we don't really need NotifyCommit(), as we do not have writes.
-    // is it always true???
-    Result ret = current_txn->GetResult();
-    EndTransaction();
-    return ret;
-  }
+  // if (current_txn->IsReadOnly() == true) {
+  //   // generate transaction id.
+  //   cid_t end_commit_id = current_txn->GetBeginCommitId();
+  //   current_txn->SetEndCommitId(end_commit_id);
+  //   // validate read set.
+  //   for (auto &tile_group_entry : rw_set) {
+  //     oid_t tile_group_id = tile_group_entry.first;
+  //     auto tile_group = manager.GetTileGroup(tile_group_id);
+  //     auto tile_group_header = tile_group->GetHeader();
+  //     for (auto &tuple_entry : tile_group_entry.second) {
+  //       auto tuple_slot = tuple_entry.first;
+  //       if (tuple_entry.second == RW_TYPE_READ) {
+  //           if (tile_group_header->GetBeginCommitId(tuple_slot) <= end_commit_id &&
+  //             tile_group_header->GetEndCommitId(tuple_slot) >= end_commit_id) {
+  //             // the version is not owned by other txns and is still visible.
+  //             continue;
+  //           } else {
+  //             // the version I read is no longer visible.
+  //             AbortTransaction();
+  //           }
+  //       } else {
+  //         assert(tuple_entry.second == RW_TYPE_INS_DEL);
+  //       }
+  //     }
+  //   }
+  //   // its possible that some reads are still dependent on previous txns.
+  //   if (IsCommittable() == false) {
+  //     return AbortTransaction();
+  //   }
+  //   // we don't really need NotifyCommit(), as we do not have writes.
+  //   // is it always true???
+  //   Result ret = current_txn->GetResult();
+  //   EndTransaction();
+  //   return ret;
+  // }
   //*****************************************************
 
   // generate transaction id.
