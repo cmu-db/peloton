@@ -54,11 +54,11 @@ static struct option opts[] = {
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
-    LOG_ERROR("Invalid scale_factor :: %d", state.scale_factor);
+    LOG_ERROR("Invalid scale_factor :: %lf", state.scale_factor);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
+  LOG_INFO("%s : %lf", "scale_factor", state.scale_factor);
 }
 
 void ValidateBackendCount(const configuration &state) {
@@ -117,7 +117,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
     switch (c) {
       case 'k':
-        state.scale_factor = atoi(optarg);
+        state.scale_factor = atof(optarg);
         break;
       case 'w':
         state.warehouse_count = atoi(optarg);
@@ -183,10 +183,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   }
 
   // Static parameters
-  state.item_count = 10 * state.scale_factor;
-  state.districts_per_warehouse = 2;
-  state.customers_per_district = 30;
-  state.new_orders_per_district = 9;
+  state.item_count = 100000 * state.scale_factor;
+  state.districts_per_warehouse = 10;
+  state.customers_per_district = 3000 * state.scale_factor;
+  state.new_orders_per_district = 900 * state.scale_factor;
 
   // Print configuration
   ValidateScaleFactor(state);

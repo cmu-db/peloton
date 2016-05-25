@@ -87,7 +87,7 @@ private:
 
   // TODO: use shared pointer to reduce memory copy
   cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
-  //LockfreeQueue<TupleMetadata> recycle_queue_;
+  //std::unordered_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
 };
 
 }  // namespace gc

@@ -33,7 +33,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d :: %lf tps, %lf", state.scale_factor, state.throughput, state.abort_rate);
+  LOG_INFO("%lf :: %lf tps, %lf", state.scale_factor, state.throughput, state.abort_rate);
 
   out << state.scale_factor << "\n";
 

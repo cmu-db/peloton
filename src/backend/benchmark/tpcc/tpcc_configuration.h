@@ -59,7 +59,7 @@ class configuration {
  public:
 
   // scale factor
-  int scale_factor;
+  double scale_factor;
 
   // num of warehouses
   int warehouse_count;
