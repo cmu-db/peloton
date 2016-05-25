@@ -226,14 +226,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
 
         // check whether older version is garbage.
-<<<<<<< HEAD
-        if (old_end_cid < max_committed_cid) {
-          assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
-                   tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
-=======
+
         if (old_end_cid <= max_committed_cid) {
-          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
->>>>>>> cmu-db/master
+          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
+                      tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
 
