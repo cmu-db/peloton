@@ -48,7 +48,7 @@ static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 10000;
 static size_t tile_group = 100;
-static float scalar = 0.3;
+static float scalar = 0.4;
 static size_t iter = 350;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool indexes) {
@@ -273,7 +273,7 @@ void ExecuteTestNoTime(executor::AbstractExecutor *executor) {
 
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * scalar));
+              (tile_group * tuples_per_tile_group * 2 * scalar));
 }
 
 void ExecuteTest(executor::AbstractExecutor *executor) {
@@ -323,15 +323,57 @@ void ExecuteTest(executor::AbstractExecutor *executor) {
               (tile_group * tuples_per_tile_group * scalar));
 }
 
+void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor) {
+  Timer<> timer;
+
+  size_t tuple_counts = 0;
+  timer.Start();
+  bool status = false;
+
+  status = executor->Init();
+  if (status == false) throw Exception("Init failed");
+
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
+
+  Value lower_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar);
+  Value higher_bound = ValueFactory::GetIntegerValue(tile_group * tuples_per_tile_group * scalar +
+                                                     tile_group * tuples_per_tile_group * (1.0 - scalar));
+
+  while (executor->Execute() == true) {
+    std::unique_ptr<executor::LogicalTile> result_tile(
+      executor->GetOutput());
+    tuple_counts += result_tile->GetTupleCount();
+
+    for (auto iter = result_tile->begin(); iter != result_tile->end(); iter++) {
+      oid_t tuple_id = *iter;
+      // Get key value of tuple
+      Value key_value= result_tile->GetValue(tuple_id, 0);
+      auto lower_result = key_value.Compare(lower_bound);
+      auto higher_result = key_value.Compare(higher_bound);
+      EXPECT_TRUE(lower_result == VALUE_COMPARE_EQUAL ||
+                  lower_result == VALUE_COMPARE_GREATERTHAN);
+      EXPECT_TRUE(higher_result == VALUE_COMPARE_EQUAL ||
+                  higher_result == VALUE_COMPARE_LESSTHAN);
+    }
+
+    result_tiles.emplace_back(result_tile.release());
+  }
+
+  // Execute stuff
+  executor->Execute();
+
+  timer.Stop();
+//  double time_per_transaction = timer.GetDuration();
+//  LOG_INFO("%f", time_per_transaction);
+  EXPECT_EQ(tuple_counts,
+            tile_group * tuples_per_tile_group -
+            (tile_group * tuples_per_tile_group * scalar));
+}
+
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
-// const int lower_bound = 30;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // SEQ SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
 
   std::unique_ptr<executor::ExecutorContext> context(
     new executor::ExecutorContext(txn));
@@ -349,8 +391,6 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
-//  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
-//                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
 
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate, column_ids);
 
@@ -380,12 +420,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  // key_column_ids.push_back(0);
   CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
-//  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
-//                               tile_group * tuples_per_tile_group * (scalar + 0.3),
-//                               expr_types,
-//                               values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
     index, key_column_ids, expr_types, values, runtime_keys);
@@ -432,19 +467,12 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
- // key_column_ids.push_back(0);
-   CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
-//  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
-//                               tile_group * tuples_per_tile_group * (scalar + 0.3),
-//                               expr_types,
-//                                values);
+  CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       nullptr, key_column_ids, expr_types, values, runtime_keys);
 
-   expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
-//  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
-//                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
+  expression::AbstractExpression *predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
 
   planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
                                            index_scan_desc);
@@ -464,12 +492,62 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction();
 }
 
+void LaunchHybridScanTwoPredicates(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+  std::vector<oid_t> column_ids;
+  std::vector<oid_t> column_ids_second;
+  oid_t column_count = projectivity * columncount;
+  std::vector<oid_t> hyadapt_column_ids;
+
+  GenerateSequence(hyadapt_column_ids, column_count);
+
+  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
+    column_ids.push_back(hyadapt_column_ids[col_itr]);
+    column_ids_second.push_back(hyadapt_column_ids[col_itr]);
+  }
+
+  auto index = hyadapt_table->GetIndex(0);
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  key_column_ids.push_back(0);
+  CreateIndexScanTwoPredicates(tile_group * tuples_per_tile_group * scalar,
+                               tile_group * tuples_per_tile_group * (scalar + 0.3),
+                               expr_types,
+                                values);
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+    nullptr, key_column_ids, expr_types, values, runtime_keys);
+
+  auto predicate = CreateTwoPredicate(tile_group * tuples_per_tile_group * scalar,
+                                      tile_group * tuples_per_tile_group * (scalar + 0.3));
+
+  planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(), predicate, column_ids_second,
+                                           index_scan_desc);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<executor::ExecutorContext> context(
+    new executor::ExecutorContext(txn));
+
+
+  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
+
+  ExecuteTestTwoPredicates(&Hybrid_scan_executor);
+
+  txn_manager.CommitTransaction();
+}
+
 
 void BuildIndex(index::Index *index, storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
-  // std::cout << "start_tile_group_count " << start_tile_group_count << " total count " << table_tile_group_count << std::endl;
   while (start_tile_group_count < table_tile_group_count) {
     auto tile_group =
       table->GetTileGroup(start_tile_group_count++);
@@ -482,7 +560,6 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
 
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
-    // printf("finsih index %d\n", start_tile_group_count);
     index->IncreamentIndexedTileGroupOff();
   }
 }
@@ -506,7 +583,7 @@ TEST_F(HybridIndexTests, IndexScanTest) {
     LaunchIndexScan(hyadapt_table);
 }
 
-TEST_F(HybridIndexTests, HybridScanTest) {
+TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
   LoadTable(hyadapt_table);
@@ -535,6 +612,40 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 
   for (size_t i = 0; i < iter; i++) {
     LaunchHybridScan(hyadapt_table);
+  }
+
+  index_builder.join();
+}
+
+TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
+  std::unique_ptr<storage::DataTable> hyadapt_table;
+  CreateTable(hyadapt_table, false);
+  LoadTable(hyadapt_table);
+
+  std::vector<oid_t> key_attrs;
+
+  auto tuple_schema = hyadapt_table->GetSchema();
+  catalog::Schema *key_schema;
+  index::IndexMetadata *index_metadata;
+  bool unique;
+
+  key_attrs = {0};
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+
+  unique = true;
+
+  index_metadata = new index::IndexMetadata(
+    "primary_index", 123, INDEX_TYPE_BTREE,
+    INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+
+  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  hyadapt_table->AddIndex(pkey_index);
+
+  std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table.get());
+
+  for (size_t i = 0; i < iter; i++) {
+    LaunchHybridScanTwoPredicates(hyadapt_table);
   }
 
   index_builder.join();
