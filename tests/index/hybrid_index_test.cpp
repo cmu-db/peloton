@@ -273,7 +273,7 @@ void ExecuteTestNoTime(executor::AbstractExecutor *executor) {
 
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
-              (tile_group * tuples_per_tile_group * 2 * scalar));
+              (tile_group * tuples_per_tile_group * scalar));
 }
 
 void ExecuteTest(executor::AbstractExecutor *executor) {
@@ -367,7 +367,7 @@ void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor) {
 //  LOG_INFO("%f", time_per_transaction);
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
-            (tile_group * tuples_per_tile_group * scalar));
+            (tile_group * tuples_per_tile_group * 2 * scalar));
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
