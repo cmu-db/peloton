@@ -328,7 +328,7 @@ void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor, bool print_t
   }
 
   EXPECT_EQ(tuple_counts,
-            tile_group * tuples_per_tile_group * 0.3);
+            tile_group * tuples_per_tile_group * 0.3 + 1);
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
@@ -499,7 +499,7 @@ void LaunchHybridScanTwoPredicates(std::unique_ptr<storage::DataTable>& hyadapt_
 
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan, context.get());
 
-  ExecuteTestTwoPredicates(&Hybrid_scan_executor);
+  ExecuteTestTwoPredicates(&Hybrid_scan_executor, false);
 
   txn_manager.CommitTransaction();
 }
@@ -525,6 +525,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
   }
 }
 
+/*
 TEST_F(HybridIndexTests, SeqScanTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
   CreateTable(hyadapt_table, false);
@@ -576,7 +577,7 @@ TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   }
 
   index_builder.join();
-}
+}*/
 
 TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   std::unique_ptr<storage::DataTable> hyadapt_table;
@@ -606,7 +607,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   std::thread index_builder = std::thread(BuildIndex, pkey_index, hyadapt_table.get());
 
   for (size_t i = 0; i < iter; i++) {
-    LaunchHybridScanTwoPredicates(hyadapt_table, false);
+    LaunchHybridScanTwoPredicates(hyadapt_table);
   }
 
   index_builder.join();
