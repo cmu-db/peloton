@@ -47,6 +47,7 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 static void ValidateMVCC_OldToNew(storage::DataTable *table) {
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
+
   gc_manager.StopGC();
   LOG_INFO("Validating MVCC storage");
   int tile_group_count = table->GetTileGroupCount();
@@ -138,7 +139,7 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
         EXPECT_TRUE(tile_group_header->GetNextItemPointer(tuple_slot).IsNull()) << "Invalid tuple must not have next item pointer";
       }
     }
-    LOG_INFO("[OK] oldest-to-newest version chain validated");
+    LOG_INFO("[OK] version chain validated");
   }
 
   gc_manager.StartGC();

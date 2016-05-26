@@ -149,7 +149,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   if (tuple_location_ptrs.size() == 0) return false;
 
   auto &transaction_manager =
-      concurrency::TransactionManagerFactory::GetInstance();
+    concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
@@ -180,7 +180,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
         break;
       }
-      // if the tuple is visible.
+        // if the tuple is visible.
       else if (visibility == VISIBILITY_OK) {
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
                  tuple_location.offset);
@@ -196,12 +196,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           }
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(
-              tile_group.get(), tuple_location.offset);
+            tile_group.get(), tuple_location.offset);
           auto eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+            predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             visible_tuples[tuple_location.block]
-                .push_back(tuple_location.offset);
+              .push_back(tuple_location.offset);
 
             auto res = transaction_manager.PerformRead(tuple_location);
             if (!res) {
@@ -212,8 +212,17 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         }
         break;
       }
-      // if the tuple is not visible.
+        // if the tuple is not visible.
       else {
+
+        // Break for new to old
+        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O
+          && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
+          && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
+          // See an invisible version that not belongs to any one in a new to old version chain
+          break;
+        }
+
         ItemPointer old_item = tuple_location;
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         cid_t old_end_cid = tile_group_header->GetEndCommitId(old_item.offset);

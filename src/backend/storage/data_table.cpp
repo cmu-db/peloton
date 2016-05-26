@@ -234,8 +234,15 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   return location;
 }
 
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **itemptr_ptr) {
   // First, do integrity checks and claim a slot
+  ItemPointer *temp_ptr = nullptr;
+
+  // Upper layer don't want to know infomation about index
+  if (itemptr_ptr == nullptr) {
+    itemptr_ptr = &temp_ptr;
+  }
+
   ItemPointer location = FillInEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_WARN("Failed to get tuple slot.");
@@ -245,7 +252,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   // Index checks and updates
-  if (InsertInIndexes(tuple, location) == false) {
+  if (InsertInIndexes(tuple, location, itemptr_ptr) == false) {
     LOG_WARN("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
@@ -275,7 +282,10 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  *primary/unique).
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
-                                ItemPointer location) {
+                                ItemPointer location,ItemPointer ** itempointer_ptr) {
+  *itempointer_ptr = nullptr;
+  ItemPointer *temp_ptr = nullptr;
+
   int index_count = GetIndexCount();
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -294,12 +304,19 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+        // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->CondInsertEntry(key.get(), location, fn, itempointer_ptr) == false) {
+          return false;
+        }
+      } break;
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // TODO: get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
-        if (index->CondInsertEntry(key.get(), location, fn) == false) {
+        if (index->CondInsertEntry(key.get(), location, fn, &temp_ptr) == false) {
           return false;
         }
 
@@ -335,13 +352,15 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
     std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
     key->SetFromTuple(tuple, indexed_columns, index->GetPool());
 
+    ItemPointer *itempointer_ptr = nullptr;
+
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
         break;
       case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
-        if (index->CondInsertEntry(key.get(), location, fn) == false) {
+        if (index->CondInsertEntry(key.get(), location, fn, &itempointer_ptr) == false) {
           return false;
         }
       } break;
