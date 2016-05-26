@@ -1147,7 +1147,6 @@ Value Value::GetMaxValue(ValueType type) {
       return GetDecimalValue(DECIMAL_MAX);
     case VALUE_TYPE_BOOLEAN:
       return GetTrue();
-
     case VALUE_TYPE_INVALID:
     case VALUE_TYPE_NULL:
     case VALUE_TYPE_ADDRESS:

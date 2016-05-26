@@ -209,7 +209,8 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     }
   }
 
-  //  // Set MVCC info
+
+  // Set MVCC info
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);

@@ -25,7 +25,8 @@ BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
     : Index(metadata),
       container(KeyComparator(metadata)),
       equals(metadata),
-      comparator(metadata) {}
+      comparator(metadata),
+      indexed_tile_group_offset_(-1) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
@@ -144,10 +145,25 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
+  // Check if we have leading (leftmost) column equality
+  // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
+  //  oid_t leading_column_id = 0;
+  //  auto key_column_ids_itr = std::find(key_column_ids.begin(),
+  //                                      key_column_ids.end(),
+  //                                      leading_column_id);
+
+  // SPECIAL CASE : leading column id is one of the key column ids
+  // and is involved in a equality constraint
+  // Currently special case only includes EXPRESSION_TYPE_COMPARE_EQUAL
+  // There are two more types, one is aligned, another is not aligned.
+  // Aligned example: A > 0, B >= 15, c > 4
+  // Not Aligned example: A >= 15, B < 30
+
   bool special_case = true;
   for (auto key_column_ids_itr = key_column_ids.begin();
        key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+
     if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
         expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
         expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
@@ -200,7 +216,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
         end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-        LOG_TRACE("%s\n", "Constructing start/end key\n");
+        LOG_TRACE("%s", "Constructing start/end keys\n");
 
         LOG_TRACE("left bound %s\t\t right bound %s\n", interval.first.GetInfo().c_str(),
                   interval.second.GetInfo().c_str());
@@ -492,6 +508,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   for (auto key_column_ids_itr = key_column_ids.begin();
        key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+
     if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
         expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
         expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||

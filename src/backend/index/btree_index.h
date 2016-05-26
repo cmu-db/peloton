@@ -98,6 +98,9 @@ class BTreeIndex : public Index {
 
   // synch helper
   RWLock index_lock;
+
+  std::atomic<int> indexed_tile_group_offset_;
+
 };
 
 }  // End index namespace
