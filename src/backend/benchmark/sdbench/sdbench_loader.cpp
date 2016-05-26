@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// hyadapt_loader.cpp
+// sdbench_loader.cpp
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_loader.cpp
+// Identification: src/backend/benchmark/sdbench/sdbench_loader.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+#include "backend/benchmark/sdbench/sdbench_loader.h"
 
 #include <memory>
 #include <string>
@@ -37,9 +37,9 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace sdbench {
 
-std::unique_ptr<storage::DataTable> hyadapt_table;
+std::unique_ptr<storage::DataTable> sdbench_table;
 
 void CreateTable() {
   const oid_t col_count = state.column_count + 1;
@@ -66,7 +66,7 @@ void CreateTable() {
 
   bool own_schema = true;
   bool adapt_table = true;
-  hyadapt_table.reset(storage::TableFactory::GetDataTable(
+  sdbench_table.reset(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup, own_schema, adapt_table));
 
@@ -74,7 +74,7 @@ void CreateTable() {
   if (indexes == true) {
     std::vector<oid_t> key_attrs;
 
-    auto tuple_schema = hyadapt_table->GetSchema();
+    auto tuple_schema = sdbench_table->GetSchema();
     catalog::Schema *key_schema;
     index::IndexMetadata *index_metadata;
     bool unique;
@@ -90,7 +90,7 @@ void CreateTable() {
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-    hyadapt_table->AddIndex(pkey_index);
+    sdbench_table->AddIndex(pkey_index);
   }
 }
 
@@ -98,7 +98,7 @@ void LoadTable() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
 
-  auto table_schema = hyadapt_table->GetSchema();
+  auto table_schema = sdbench_table->GetSchema();
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -121,7 +121,7 @@ void LoadTable() {
       tuple.SetValue(col_itr, value, pool.get());
     }
 
-    ItemPointer tuple_slot_id = hyadapt_table->InsertTuple(&tuple);
+    ItemPointer tuple_slot_id = sdbench_table->InsertTuple(&tuple);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
@@ -139,6 +139,6 @@ void CreateAndLoadTable(LayoutType layout_type) {
   LoadTable();
 }
 
-}  // namespace hyadapt
+}  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton

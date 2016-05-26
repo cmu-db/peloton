@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hyadapt.cpp
+// sdbench.cpp
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt.cpp
+// Identification: src/backend/benchmark/sdbench/sdbench.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,13 +13,13 @@
 #include <iostream>
 #include <fstream>
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/benchmark/sdbench/sdbench_configuration.h"
 #include "backend/common/logger.h"
-#include "backend/benchmark/hyadapt/hyadapt_workload.h"
+#include "backend/benchmark/sdbench/sdbench_workload.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace sdbench {
 
 configuration state;
 
@@ -74,48 +74,8 @@ void RunBenchmark() {
         RunOperatorExperiment();
         break;
 
-      case EXPERIMENT_TYPE_VERTICAL:
-        RunVerticalExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_SUBSET:
-        RunSubsetExperiment();
-        break;
-
       case EXPERIMENT_TYPE_ADAPT:
         RunAdaptExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_WEIGHT:
-        RunWeightExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_REORG:
-        RunReorgExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_DISTRIBUTION:
-        RunDistributionExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_JOIN:
-        RunJoinExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_INSERT:
-        RunInsertExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_VERSION:
-        RunVersionExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_HYRISE:
-        RunHyriseExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_CONCURRENCY:
-        RunConcurrencyExperiment();
         break;
 
       default:
@@ -125,15 +85,15 @@ void RunBenchmark() {
   }
 }
 
-}  // namespace hyadapt
+}  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-  peloton::benchmark::hyadapt::ParseArguments(
-      argc, argv, peloton::benchmark::hyadapt::state);
+  peloton::benchmark::sdbench::ParseArguments(
+      argc, argv, peloton::benchmark::sdbench::state);
 
-  peloton::benchmark::hyadapt::RunBenchmark();
+  peloton::benchmark::sdbench::RunBenchmark();
 
   return 0;
 }
