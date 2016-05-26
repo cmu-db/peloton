@@ -829,7 +829,7 @@ void CreateOrdersTable() {
 
   tpcc_database->AddTable(orders_table);
 
-  auto tuple_schema = customer_table->GetSchema();
+  auto tuple_schema = orders_table->GetSchema();
   std::vector<oid_t> key_attrs;
   catalog::Schema *key_schema = nullptr;
   index::IndexMetadata* index_metadata = nullptr;
