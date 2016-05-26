@@ -103,7 +103,7 @@ bool RunStockLevel(const size_t &thread_id) {
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
 
-  LOG_INFO("getOId: SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?");
+  LOG_TRACE("getOId: SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?");
 
   // Construct index scan executor
   std::vector<oid_t> district_column_ids = {COL_IDX_D_NEXT_O_ID};
@@ -141,7 +141,7 @@ bool RunStockLevel(const size_t &thread_id) {
 
   Value o_id = districts[0][0];
 
-  LOG_INFO("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
+  LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
 
   //////////////////////////////////////////////////////////////////
   ///////////// Construct left table index scan ////////////////////
