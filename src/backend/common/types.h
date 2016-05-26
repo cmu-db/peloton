@@ -820,10 +820,10 @@ struct ItemPointer {
     }
   }
 
-  bool operator==(const ItemPointer& rhs) const
-  { return (block == rhs.block
-            && offset == rhs.offset);
-  }
+//  bool operator==(const ItemPointer& rhs) const
+//  { return (block == rhs.block
+//            && offset == rhs.offset);
+//  }
 
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
