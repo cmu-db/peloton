@@ -12,6 +12,7 @@ concurrency_FILES = \
     backend/concurrency/speculative_read_txn_manager.cpp \
     backend/concurrency/ts_order_txn_manager.cpp \
     backend/concurrency/optimistic_rb_txn_manager.cpp \
+    backend/concurrency/optimistic_n2o_txn_manager.cpp \
     backend/concurrency/transaction_manager.cpp \
     backend/concurrency/transaction.cpp \
     backend/concurrency/transaction_manager_factory.cpp \

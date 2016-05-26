@@ -374,7 +374,8 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
   CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
   CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
-  CONCURRENCY_TYPE_OCC_RB = 6             // optimistic + rollback segment
+  CONCURRENCY_TYPE_OCC_RB = 6,            // optimistic + rollback segment
+  CONCURRENCY_TYPE_OCC_N2O = 7            // optimisitic with new to old version chain
 };
 
 enum IsolationLevelType {
@@ -859,7 +860,7 @@ bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
 BackendType GetBackendType(const LoggingType &logging_type);
 
-void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
+bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers
