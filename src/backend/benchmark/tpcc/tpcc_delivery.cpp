@@ -118,7 +118,7 @@ bool RunDelivery(){
 
     // Construct index scan executor
     std::vector<oid_t> new_order_column_ids = {COL_IDX_NO_O_ID};
-    std::vector<oid_t> new_order_key_column_ids = {COL_IDX_NO_D_ID, COL_IDX_O_W_ID, COL_IDX_NO_O_ID};
+    std::vector<oid_t> new_order_key_column_ids = {COL_IDX_NO_D_ID, COL_IDX_NO_W_ID, COL_IDX_NO_O_ID};
     std::vector<ExpressionType> new_order_expr_types;
     std::vector<Value> new_order_key_values;
     std::vector<expression::AbstractExpression *> runtime_keys;
