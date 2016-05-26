@@ -94,7 +94,7 @@ static void PinToCore(size_t core) {
 }
 
 
-size_t GenerateWarehouseId(const size_t thread_id) {
+size_t GenerateWarehouseId(const size_t &thread_id) {
   if (state.run_affinity) {
     if (state.warehouse_count <= state.backend_count) {
       return thread_id % state.warehouse_count;
