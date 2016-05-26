@@ -216,6 +216,9 @@ class DataTable : public AbstractTable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // try to insert into the indices
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+
   RWLock &GetTileGroupLock() { return tile_group_lock_; }
 
  protected:
@@ -244,8 +247,7 @@ class DataTable : public AbstractTable {
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
 
-  // try to insert into the indices
-  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
                                 ItemPointer location);

@@ -218,6 +218,15 @@ class Index : public Printable {
   bool static ValuePairComparator(const std::pair<peloton::Value, int> &i,
                            const std::pair<peloton::Value, int> &j);
 
+  // Get the indexed tile group offset
+  virtual int GetIndexedTileGroupOff() {
+    return -1;
+  }
+
+  virtual void IncreamentIndexedTileGroupOff() {
+    return;
+  }
+
  protected:
   Index(IndexMetadata *schema);
 
@@ -227,11 +236,11 @@ class Index : public Printable {
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
 
+
   bool IfForwardExpression(ExpressionType e);
 
   bool IfBackwardExpression(ExpressionType e);
 
-  //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
