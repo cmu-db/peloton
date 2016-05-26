@@ -246,8 +246,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           continue;
         }
 
-        // check whether older version is garbage.
+
+        /////////////////////////////////////////////////////////
+        // COOPERATIVE GC
+        /////////////////////////////////////////////////////////
+
         if (old_end_cid <= max_committed_cid) {
+          // if the older version is a garbage.
           assert(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID
                  || tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
 
@@ -256,8 +261,51 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
+            ////////////// delete from secondary indexes ///////////
+            // its ok to use any tile group, as it will not change the table pointed to.
+            storage::DataTable *table = 
+              dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
+            assert(table != nullptr);
+
+            size_t index_count = table->GetIndexCount();
+            if (index_count != 1) {
+              // if index count is larger than 1, then it means that 
+              // there exists secondary indexes.
+              assert(index_count != 0);
+
+              auto old_tile_group = manager.GetTileGroup(old_item.block);
+              
+              // construct the expired version.
+              std::unique_ptr<storage::Tuple> expired_tuple(
+                new storage::Tuple(table->GetSchema(), true));
+              tile_group->CopyTuple(old_item.offset, expired_tuple.get());
+
+              for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
+                auto index = table->GetIndex(idx);
+                if (index->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+                  // if it's not primary key, then it must be a secondary index.
+                  auto index_schema = index->GetKeySchema();
+                  auto indexed_columns = index_schema->GetIndexedColumns();
+
+                  // build key.
+                  std::unique_ptr<storage::Tuple> key(
+                    new storage::Tuple(table->GetSchema(), true));
+                  key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
+
+                  LOG_TRACE("Deleting from secondary index");
+                  index->DeleteEntry(key.get(), old_item);
+                }
+              }
+            }
+
+
+
+            /////////////////////////////////////////////////////////
+
+
             garbage_tuples.AddGarbage(old_item);
 
+            // reset the prev item pointer for the current version.
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
             tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
