@@ -147,7 +147,7 @@ expression::AbstractExpression *CreatePredicate(const int lower_bound) {
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr =
-    expression::ExpressionUtil::TupleValueFactory(0, 0);
+    expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
 
   // Second, create constant value expression.
   Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
@@ -169,7 +169,7 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound, const 
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
-    expression::ExpressionUtil::TupleValueFactory(0, 0);
+    expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
 
   // Second, create constant value expression.
   Value constant_value_left = ValueFactory::GetIntegerValue(lower_bound);
@@ -184,7 +184,7 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound, const 
       constant_value_expr_left);
 
   expression::AbstractExpression *tuple_value_expr_right =
-    expression::ExpressionUtil::TupleValueFactory(0, 0);
+    expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
   
   Value constant_value_right = ValueFactory::GetIntegerValue(higher_bound);
 
