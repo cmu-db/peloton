@@ -17,6 +17,8 @@
 #include "backend/executor/abstract_scan_executor.h"
 #include "backend/planner/hybrid_scan_plan.h"
 
+#include <set>
+
 namespace peloton {
 namespace executor {
 
