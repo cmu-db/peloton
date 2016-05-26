@@ -61,7 +61,7 @@ bool BWTreeIndex<KeyType, ValueType, KeyComparator,
                  KeyEqualityChecker>::CondInsertEntry(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
     UNUSED_ATTRIBUTE const ItemPointer &location,
-    UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate
+    UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
     UNUSED_ATTRIBUTE ItemPointer **itemptr_ptr ) {
   return false;
 }

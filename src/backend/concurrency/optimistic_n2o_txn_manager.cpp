@@ -310,7 +310,7 @@ void OptimisticN2OTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result OptimisticN2OTxnManager::CommitTransaction() {
-  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -378,11 +378,11 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
             continue;
           }
         }
-        LOG_INFO("transaction id=%lu",
+        LOG_TRACE("transaction id=%lu",
                   tile_group_header->GetTransactionId(tuple_slot));
-        LOG_INFO("begin commit id=%lu",
+        LOG_TRACE("begin commit id=%lu",
                   tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_INFO("end commit id=%lu",
+        LOG_TRACE("end commit id=%lu",
                   tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         return AbortTransaction();
@@ -391,8 +391,8 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
   }
   //////////////////////////////////////////////////////////
 
-  auto &log_manager = logging::LogManager::GetInstance();
-  log_manager.LogBeginTransaction(end_commit_id);
+  // auto &log_manager = logging::LogManager::GetInstance();
+  // log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -407,8 +407,8 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
         ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
-        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-                              new_version);
+        // log_manager.LogUpdate(current_txn, end_commit_id, old_version,
+        //                      new_version);
 
         // we must guarantee that, at any time point, AT LEAST ONE version is
         // visible.
@@ -436,7 +436,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
         ItemPointer delete_location(tile_group_id, tuple_slot);
 
         // logging.
-        log_manager.LogDelete(end_commit_id, delete_location);
+        // log_manager.LogDelete(end_commit_id, delete_location);
 
         // we do not change begin cid for old tuple.
         auto new_tile_group_header =
@@ -461,7 +461,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
-        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        // log_manager.LogInsert(current_txn, end_commit_id, insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -484,7 +484,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
       }
     }
   }
-  log_manager.LogCommitTransaction(end_commit_id);
+  // log_manager.LogCommitTransaction(end_commit_id);
 
   EndTransaction();
 
@@ -492,7 +492,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
 }
 
 Result OptimisticN2OTxnManager::AbortTransaction() {
-  LOG_INFO("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
