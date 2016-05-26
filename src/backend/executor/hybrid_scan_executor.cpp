@@ -367,9 +367,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
             // currently, let's assume only primary index exists.
-//            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-//              table_->GetOid(), old_item.block, old_item.offset,
-//              max_committed_cid);
+            //gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+            //  table_->GetOid(), old_item.block, old_item.offset,
+            //  max_committed_cid);
           }
         }
 
