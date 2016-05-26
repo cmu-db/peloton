@@ -93,9 +93,6 @@ bool HybridScanExecutor::DInit() {
     int offset = index_->GetIndexedTileGroupOff();
     indexed_tile_offset_ = (offset == -1) ? INVALID_OID : (oid_t)offset;
 
-    //printf("Current indexed_tile_offset %d, table tile group count %d\n",
-    //         indexed_tile_offset_, table_tile_group_count_);
-
     if (indexed_tile_offset_ == INVALID_OID) {
       current_tile_group_offset_ = START_OID;
     } else {
@@ -217,7 +214,6 @@ bool HybridScanExecutor::SeqScanUtil() {
           }
       }
     }
-
       // Don't return empty tiles
       if (position_list.size() == 0) {
         continue;
@@ -229,7 +225,6 @@ bool HybridScanExecutor::SeqScanUtil() {
       logical_tile->AddPositionList(std::move(position_list));
       LOG_INFO("Hybrid executor, Seq Scan :: Got a logical tile");
       SetOutput(logical_tile.release());
-      // printf("Construct a logical tile in seq scan\n");
       return true;
   }
 
@@ -248,8 +243,6 @@ bool HybridScanExecutor::IndexScanUtil() {
     } else {
       SetOutput(result_[result_itr_]);
       result_itr_++;
-      // printf("Construct a logical tile in index scan\n");
-
       return true;
     }
   }  // end while
@@ -266,11 +259,10 @@ bool HybridScanExecutor::DExecute() {
       if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
         auto status = ExecPrimaryIndexLookup();
         if (status == false) return false;
+      } else {
+          return false;
       }
-//      else {
-//        auto status = ExecSecondaryIndexLookup();
-//        if (status == false) return false;
-//      }
+
     }
 
     return IndexScanUtil();
@@ -286,10 +278,7 @@ bool HybridScanExecutor::DExecute() {
       } else {
         ExecPrimaryIndexLookup();
       }
-      /*timer.Stop();
-      double time_per_transaction = timer.GetDuration();
-      printf(" %f\n", time_per_transaction);
-      */
+
     }
 
     if (IndexScanUtil() == true) {
@@ -306,8 +295,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
-  // Timer<> timer;
-  // timer.Start();
+
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
@@ -319,18 +307,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   auto &transaction_manager =
     concurrency::TransactionManagerFactory::GetInstance();
-  //Timer<> timer;
-  //timer.Start();
-  
-  //timer.Stop();
-  //double time_per_transaction = timer.GetDuration();
-  //printf(" %f\n", time_per_transaction);
 
    if (tuple_location_ptrs.size() == 0) {
-   // printf("set size %lu current seq scan off %d\n", item_pointers_.size(), current_tile_group_offset_);
-    //timer.Stop();
-    //double time_per_transaction = timer.GetDuration();
-    //printf(" %f\n", time_per_transaction);
     index_done_ = true;
     return false;
   }
@@ -389,9 +367,9 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
             // currently, let's assume only primary index exists.
-            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-              table_->GetOid(), old_item.block, old_item.offset,
-              max_committed_cid);
+//            gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+//              table_->GetOid(), old_item.block, old_item.offset,
+//              max_committed_cid);
           }
         }
 
@@ -400,15 +378,6 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
       }
     }
   }
-
-  /*printf("set size %lu current seq scan off %d, block threshlod %d\n", item_pointers_.size(), current_tile_group_offset_, block_threshold);
-  for (auto t : oid_ts) {
-    std::cout << "block  " << t  << std::endl;
-  }*/
-
-   //timer.Stop();
-   //double time_per_transaction = timer.GetDuration();
-   //printf(" %f\n", time_per_transaction);
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {

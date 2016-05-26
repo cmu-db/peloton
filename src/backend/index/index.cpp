@@ -183,7 +183,7 @@ bool Index::ConstructLowerBoundTuple(
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
     auto key_column_itr =
-        std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
+      std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
     bool placeholder = false;
     Value value;
 
@@ -191,10 +191,12 @@ bool Index::ConstructLowerBoundTuple(
     if (key_column_itr != key_column_ids.end()) {
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
       // Equality constraint
-      if (IfConstructLowerBound(expr_types[offset])) {
+      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
         placeholder = true;
         value = values[offset];
-      } else { // Not all expressions / constraints are equal
+      }
+        // Not all expressions / constraints are equal
+      else {
         all_constraints_equal = false;
       }
     }
