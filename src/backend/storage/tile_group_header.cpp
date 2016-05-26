@@ -212,6 +212,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
 // this function is called only when building tile groups for aggregation
 // operations.
+// TODO: check whether we need this function.
 oid_t TileGroupHeader::GetActiveTupleCount() {
   oid_t active_tuple_slots = 0;
 
@@ -226,6 +227,26 @@ oid_t TileGroupHeader::GetActiveTupleCount() {
 
   return active_tuple_slots;
 }
+
+// this function is used to count the number of alive tuples.
+oid_t TileGroupHeader::GetCurrentTupleCount() {
+  oid_t active_tuple_slots = 0;
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  size_t next_cid = transaction_manager.GetNextCommitId();
+
+  for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+       tuple_slot_id++) {
+    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
+    if (tuple_txn_id == INITIAL_TXN_ID && next_cid > GetBeginCommitId(tuple_slot_id) && next_cid < GetEndCommitId(tuple_slot_id)) {
+      active_tuple_slots++;
+    }
+  }
+
+  return active_tuple_slots;
+}
+
 
 }  // End storage namespace
 }  // End peloton namespace

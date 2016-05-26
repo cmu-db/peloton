@@ -577,7 +577,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
   executor::InsertExecutor orders_executor(&orders_node, context.get());
-  // orders_executor.Execute();
+  orders_executor.Execute();
 
   
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
@@ -592,7 +592,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
-  // new_order_executor.Execute();
+  new_order_executor.Execute();
 
 
   for (size_t i = 0; i < i_ids.size(); ++i) {
@@ -712,7 +712,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
     planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
-    // order_line_executor.Execute();
+    order_line_executor.Execute();
 
   }
 

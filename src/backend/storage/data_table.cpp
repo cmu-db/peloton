@@ -16,7 +16,7 @@
 #include "backend/brain/clusterer.h"
 #include "backend/storage/data_table.h"
 
-#include "../benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
 #include "backend/storage/database.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
@@ -564,29 +564,26 @@ oid_t DataTable::AddDefaultTileGroup() {
   assert(tile_group.get());
   tile_group_id = tile_group->GetTileGroupId();
 
-  LOG_TRACE("Trying to add a tile group ");
-  {
-    LOG_TRACE("Added a tile group ");
+  LOG_TRACE("Added a tile group ");
 
-    tile_group_lock_.WriteLock();
+  tile_group_lock_.WriteLock();
 
-    // add tile group metadata in locator
-    catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+  // add tile group metadata in locator
+  catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
 
-    last_tile_group_ = tile_group;
+  last_tile_group_ = tile_group;
 
-    tile_groups_.push_back(tile_group_id);
-    
-    tile_group_lock_.Unlock();
+  tile_groups_.push_back(tile_group_id);
+  
+  tile_group_lock_.Unlock();
 
-    // we must guarantee that the compiler always add tile group before adding
-    // tile_group_count_.
-    COMPILER_MEMORY_FENCE;
+  // we must guarantee that the compiler always add tile group before adding
+  // tile_group_count_.
+  COMPILER_MEMORY_FENCE;
 
-    tile_group_count_++;
+  tile_group_count_++;
 
-    LOG_TRACE("Recording tile group : %u ", tile_group_id);
-  }
+  LOG_TRACE("Recording tile group : %u ", tile_group_id);
 
   return tile_group_id;
 }
@@ -671,12 +668,12 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 }
 
 
-oid_t DataTable::GetAllActiveTupleCount() {
+oid_t DataTable::GetAllCurrentTupleCount() {
   oid_t count = 0;
   for (auto tile_group_id : tile_groups_) {
     auto tile_group = GetTileGroupById(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
-    count += tile_group_header->GetActiveTupleCount();
+    count += tile_group_header->GetCurrentTupleCount();
   }
   return count;
 }
