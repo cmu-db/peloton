@@ -120,10 +120,9 @@ void RunBackend(oid_t thread_id) {
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
 
-  NewOrderPlans new_order_plans = PrepareNewOrderPlan();
+  //NewOrderPlans new_order_plans = PrepareNewOrderPlan();
   //PaymentPlans payment_plans = PreparePaymentPlan();
-  //OrderStatusPlans order_status_plans = PrepareOrderStatusPlan();
-
+  
   // backoff
   uint32_t backoff_shifts = 0;
   while (true) {
@@ -132,21 +131,21 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    while (RunNewOrder(new_order_plans, thread_id) == false) {
-      execution_count_ref++;
-      // backoff
-      if (state.run_backoff) {
-        if (backoff_shifts < 63) {
-          ++backoff_shifts;
-        }
-        uint64_t spins = 1UL << backoff_shifts;
-        spins *= 100;
-        while (spins) {
-          _mm_pause();
-          --spins;
-        }
-      }
-    }
+    // while (RunNewOrder(new_order_plans, thread_id) == false) {
+    //   execution_count_ref++;
+    //   // backoff
+    //   if (state.run_backoff) {
+    //     if (backoff_shifts < 63) {
+    //       ++backoff_shifts;
+    //     }
+    //     uint64_t spins = 1UL << backoff_shifts;
+    //     spins *= 100;
+    //     while (spins) {
+    //       _mm_pause();
+    //       --spins;
+    //     }
+    //   }
+    // }
 
     // while (RunPayment(payment_plans) == false) {
     //   execution_count_ref++;
@@ -164,21 +163,21 @@ void RunBackend(oid_t thread_id) {
     //   }
     // }
 
-    // while (RunOrderStatus(order_status_plans) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
+    while (RunOrderStatus(thread_id) == false) {
+      execution_count_ref++;
+      // backoff
+      if (state.run_backoff) {
+        if (backoff_shifts < 63) {
+          ++backoff_shifts;
+        }
+        uint64_t spins = 1UL << backoff_shifts;
+        spins *= 100;
+        while (spins) {
+          _mm_pause();
+          --spins;
+        }
+      }
+    }
     
     // auto rng_val = generator.GetSample();
     

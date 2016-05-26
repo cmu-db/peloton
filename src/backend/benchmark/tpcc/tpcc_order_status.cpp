@@ -145,6 +145,8 @@ bool RunOrderStatus(const size_t &thread_id){
 
     executor::IndexScanExecutor customer_index_scan_executor(&customer_index_scan_node, context.get());
 
+    customer_index_scan_executor.Init();
+
     auto result = ExecuteReadTest(&customer_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -194,6 +196,8 @@ bool RunOrderStatus(const size_t &thread_id){
     executor::OrderByExecutor customer_order_by_executor(&customer_order_by_node, context.get());
 
     customer_order_by_executor.AddChild(&customer_index_scan_executor);
+
+    customer_order_by_executor.Init();
 
     auto result = ExecuteReadTest(&customer_order_by_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
@@ -292,6 +296,8 @@ bool RunOrderStatus(const size_t &thread_id){
       predicate, order_line_column_ids, order_line_index_scan_desc);
 
     executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
+
+    order_line_index_scan_executor.Init();
 
     ExecuteReadTest(&order_line_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {

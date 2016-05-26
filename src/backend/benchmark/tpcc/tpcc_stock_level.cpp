@@ -130,6 +130,8 @@ bool RunStockLevel(const size_t &thread_id) {
   );
   executor::IndexScanExecutor district_index_scan_executor(&district_index_scan_node, context.get());
 
+  district_index_scan_executor.Init();
+
   auto districts = ExecuteReadTest(&district_index_scan_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
@@ -261,6 +263,8 @@ bool RunStockLevel(const size_t &thread_id) {
 
   executor::AggregateExecutor count_distinct_executor(&count_distinct_node, context.get());
   count_distinct_executor.AddChild(&join_executor);
+
+  count_distinct_executor.Init();
 
   auto count_result = ExecuteReadTest(&count_distinct_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
