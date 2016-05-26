@@ -27,7 +27,8 @@ executor_FILES = \
 		 backend/executor/aggregator.cpp \
 		 backend/executor/aggregate_executor.cpp \
 		 backend/executor/append_executor.cpp	\
-		 backend/executor/projection_executor.cpp
+		 backend/executor/projection_executor.cpp   \
+		 backend/executor/hybrid_scan_executor.cpp
 
 
 executor_INCLUDES = \
