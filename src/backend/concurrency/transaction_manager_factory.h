@@ -19,7 +19,7 @@
 #include "backend/concurrency/ts_order_txn_manager.h"
 #include "backend/concurrency/ssi_txn_manager.h"
 #include "backend/concurrency/optimistic_rb_txn_manager.h"
-#include "optimistic_n2o_txn_manager.h"
+#include "backend/concurrency/optimistic_n2o_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {

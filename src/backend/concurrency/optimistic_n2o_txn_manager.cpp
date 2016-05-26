@@ -203,7 +203,7 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
 
   // Set the index header in an atomic way.
-  // We do it atomically because we don't want any one to see a half-down pointer
+  // We do it atomically because we don't want any one to see a half-done pointer.
   // In case of contention, no one can update this pointer when we are updating it
   // because we are holding the write lock. This update should success in its first trial.
 //  fprintf(stderr, "update pointer: %p\n", head_ptr);
