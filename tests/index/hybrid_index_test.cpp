@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Rui Wang on 16-4-30.
+//                         Peloton
 //
+// hybrid_scan_test.cpp
+//
+// Identification: tests/executor/hybrid_scan_test.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 #include "harness.h"
