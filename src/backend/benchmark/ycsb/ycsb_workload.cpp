@@ -82,13 +82,6 @@ volatile bool is_running = true;
 oid_t *abort_counts;
 oid_t *commit_counts;
 
-// Helper function to pin current thread to a specific core
-static void PinToCore(size_t core) {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
 
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
@@ -110,8 +103,6 @@ void RunBackend(oid_t thread_id) {
     
     int write_count = operation_count * update_ratio;
     int read_count = operation_count - write_count;
-    
-    printf("write count=%d, read count=%d\n", write_count, read_count);
 
     // backoff
     uint32_t backoff_shifts = 0;

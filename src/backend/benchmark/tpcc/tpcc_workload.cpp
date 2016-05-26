@@ -85,15 +85,6 @@ oid_t *abort_counts;
 oid_t *commit_counts;
 
 
-// Helper function to pin current thread to a specific core
-static void PinToCore(size_t core) {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
-
-
 size_t GenerateWarehouseId(const size_t &thread_id) {
   if (state.run_affinity) {
     if (state.warehouse_count <= state.backend_count) {
