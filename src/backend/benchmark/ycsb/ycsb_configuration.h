@@ -40,6 +40,9 @@ class configuration {
   // column count
   int column_count;
 
+  // operation count
+  int operation_count;
+
   // update ratio
   double update_ratio;
 
@@ -86,6 +89,8 @@ void Usage(FILE *out);
 void ValidateScaleFactor(const configuration &state);
 
 void ValidateColumnCount(const configuration &state);
+
+void ValidateOperationCount(const configuration &state);
 
 void ValidateUpdateRatio(const configuration &state);
 

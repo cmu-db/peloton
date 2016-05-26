@@ -71,7 +71,6 @@ public:
 
 private:
   void Running();
-  //void DeleteTupleFromIndexes(const TupleMetadata &);
 
   bool ResetTuple(const TupleMetadata &);
 
