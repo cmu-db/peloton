@@ -151,6 +151,13 @@ bool RunDelivery(const size_t &thread_id){
     executor::LimitExecutor limit_executor(&limit_node, context.get());
     limit_executor.AddChild(&new_order_index_scan_executor);
 
+    // Manually Init
+    bool status = false;
+    status = limit_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
+
     auto new_order_ids = ExecuteReadTest(&limit_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -192,6 +199,12 @@ bool RunDelivery(const size_t &thread_id){
     // Create the executors
     executor::IndexScanExecutor orders_index_scan_executor(
       &orders_index_scan_node, context.get());
+
+    // Manuallt init
+    status = orders_index_scan_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
 
     auto orders_ids = ExecuteReadTest(&orders_index_scan_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
@@ -264,6 +277,12 @@ bool RunDelivery(const size_t &thread_id){
     executor::AggregateExecutor sum_executor(&sum_node, context.get());
     sum_executor.AddChild(&order_line_index_scan_executor);
 
+    // Manuallt init
+    status = sum_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
+
     auto sum_result = ExecuteReadTest(&sum_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -312,6 +331,12 @@ bool RunDelivery(const size_t &thread_id){
     executor::DeleteExecutor new_order_delete_executor(&new_order_delete_node, context.get());
     new_order_delete_executor.AddChild(&new_order_index_scan_executor2);
 
+    // Manuallt init
+    status = new_order_delete_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
+
     ExecuteDeleteTest(&new_order_delete_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -359,6 +384,12 @@ bool RunDelivery(const size_t &thread_id){
       context.get());
     orders_update_executor.AddChild(&orders_index_scan_executor2);
 
+    // Manuallt init
+    status = orders_update_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
+
     ExecuteUpdateTest(&orders_update_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -401,6 +432,12 @@ bool RunDelivery(const size_t &thread_id){
     executor::UpdateExecutor order_line_update_executor(&order_line_update_node,
       context.get());
     order_line_update_executor.AddChild(&order_line_index_scan_executor2);
+
+    // Manuallt init
+    status = order_line_update_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
 
     ExecuteUpdateTest(&order_line_update_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
@@ -470,6 +507,12 @@ bool RunDelivery(const size_t &thread_id){
     executor::UpdateExecutor customer_update_executor(&customer_update_node,
       context.get());
     customer_update_executor.AddChild(&customer_index_scan_executor);
+
+    // Manuallt init
+    status = customer_update_executor.Init();
+    if (status == false) {
+      throw Exception("Init failed");
+    }
 
     ExecuteUpdateTest(&customer_update_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
