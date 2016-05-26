@@ -181,9 +181,6 @@ struct NewOrderPlans {
 
 };
 
-NewOrderPlans PrepareNewOrderPlan();
-
-bool RunNewOrder(NewOrderPlans &new_order_plans);
 
 struct PaymentPlans {
 
@@ -250,50 +247,57 @@ struct PaymentPlans {
 
 };
 
+// struct OrderStatusPlans {
+
+//   executor::IndexScanExecutor* customer_pindex_scan_executor_;
+//   executor::IndexScanExecutor* customer_index_scan_executor_;
+//   executor::IndexScanExecutor* orders_index_scan_executor_;
+//   executor::IndexScanExecutor* order_line_index_scan_executor_;
+  
+
+//   void SetContext(executor::ExecutorContext* context) {
+//     customer_pindex_scan_executor_->SetContext(context);
+//     customer_index_scan_executor_->SetContext(context);
+//     orders_index_scan_executor_->SetContext(context);
+//     order_line_index_scan_executor_->SetContext(context);
+//   }
+
+//   void Cleanup() {
+//     delete customer_pindex_scan_executor_;
+//     customer_pindex_scan_executor_ = nullptr;
+
+//     delete customer_index_scan_executor_;
+//     customer_index_scan_executor_ = nullptr;
+
+//     delete orders_index_scan_executor_;
+//     orders_index_scan_executor_ = nullptr;
+
+//     delete order_line_index_scan_executor_;
+//     order_line_index_scan_executor_ = nullptr;
+//   }
+// };
+
+
+
+NewOrderPlans PrepareNewOrderPlan();
 
 PaymentPlans PreparePaymentPlan();
 
+// OrderStatusPlans PrepareOrderStatusPlan();
+
+size_t GenerateWarehouseId(const size_t thread_id);
+
+bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id);
+
 bool RunPayment(PaymentPlans &payment_plans);
-
-
-bool RunStockLevel();
 
 bool RunDelivery();
 
 
-struct OrderStatusPlans {
+bool RunOrderStatus();
 
-  executor::IndexScanExecutor* customer_pindex_scan_executor_;
-  executor::IndexScanExecutor* customer_index_scan_executor_;
-  executor::IndexScanExecutor* orders_index_scan_executor_;
-  executor::IndexScanExecutor* order_line_index_scan_executor_;
-  
+bool RunStockLevel();
 
-  void SetContext(executor::ExecutorContext* context) {
-    customer_pindex_scan_executor_->SetContext(context);
-    customer_index_scan_executor_->SetContext(context);
-    orders_index_scan_executor_->SetContext(context);
-    order_line_index_scan_executor_->SetContext(context);
-  }
-
-  void Cleanup() {
-    delete customer_pindex_scan_executor_;
-    customer_pindex_scan_executor_ = nullptr;
-
-    delete customer_index_scan_executor_;
-    customer_index_scan_executor_ = nullptr;
-
-    delete orders_index_scan_executor_;
-    orders_index_scan_executor_ = nullptr;
-
-    delete order_line_index_scan_executor_;
-    order_line_index_scan_executor_ = nullptr;
-  }
-};
-
-OrderStatusPlans PrepareOrderStatusPlan();
-
-bool RunOrderStatus(OrderStatusPlans &order_status_plans);
 
 
 

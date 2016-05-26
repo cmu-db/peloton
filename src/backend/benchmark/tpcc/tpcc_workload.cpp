@@ -93,6 +93,24 @@ static void PinToCore(size_t core) {
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 }
 
+
+size_t GenerateWarehouseId(const size_t thread_id) {
+  if (state.run_affinity) {
+    if (state.warehouse_count <= state.backend_count) {
+      return thread_id % state.warehouse_count;
+    } else {
+      int warehouse_per_partition = state.warehouse_count / state.backend_count;
+      int start_warehouse = warehouse_per_partition * thread_id;
+      int end_warehouse = ((int)thread_id == state.warehouse_count - 1) ? 
+        (state.warehouse_count - 1) : warehouse_per_partition * (thread_id + 1);
+      return GetRandomInteger(start_warehouse, end_warehouse);
+    }
+  } else {
+    return GetRandomInteger(0, state.warehouse_count - 1);
+  }
+}
+
+
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
@@ -114,7 +132,7 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    while (RunNewOrder(new_order_plans) == false) {
+    while (RunNewOrder(new_order_plans, thread_id) == false) {
       execution_count_ref++;
       // backoff
       if (state.run_backoff) {

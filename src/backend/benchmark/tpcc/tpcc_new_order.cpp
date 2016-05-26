@@ -349,7 +349,7 @@ NewOrderPlans PrepareNewOrderPlan() {
 
 
 
-bool RunNewOrder(NewOrderPlans &new_order_plans){
+bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   /*
      "NEW_ORDER": {
      "getWarehouseTaxRate": "SELECT W_TAX FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -370,8 +370,20 @@ bool RunNewOrder(NewOrderPlans &new_order_plans){
   /////////////////////////////////////////////////////////
   // PREPARE ARGUMENTS
   /////////////////////////////////////////////////////////
-
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  // int warehouse_id = 0;
+  // if (state.run_affinity) {
+  //   if (state.warehouse_count <= state.backend_count) {
+  //     warehouse_id = thread_id % state.warehouse_count;
+  //   } else {
+  //     int warehouse_per_partition = state.warehouse_count / state.backend_count;
+  //     int start_warehouse = warehouse_per_partition * thread_id;
+  //     int end_warehouse = (thread_id == state.warehouse_count - 1) ? 
+  //       (state.warehouse_count - 1) : warehouse_per_partition * (thread_id + 1); 
+  //   }
+  // } else {
+  //   warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  // }
+  int warehouse_id = GenerateWarehouseId(thread_id);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);

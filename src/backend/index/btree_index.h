@@ -84,15 +84,8 @@ class BTreeIndex : public Index {
   KeyEqualityChecker equals;
   KeyComparator comparator;
 
-  class DummyLock {
-  public:
-    void Lock() {}
-    void Unlock() {}
-  };
-
   // synch helper
-  // Spinlock index_lock;
-  DummyLock index_lock;
+  Spinlock index_lock;
 };
 
 }  // End index namespace

@@ -32,6 +32,7 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -w --warehouse_count   :  # of warehouses \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
+          "   -a --affinity          :  enable client affinity \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
@@ -47,6 +48,7 @@ static struct option opts[] = {
   { "backend_count", optional_argument, NULL, 'b'},
   { "warehouse_count", optional_argument, NULL, 'w' },
   { "exp_backoff", no_argument, NULL, 'e'},
+  { "affinity", no_argument, NULL, 'a'},
   { "protocol", optional_argument, NULL, 'p'},
   { "gc_protocol", optional_argument, NULL, 'g'},
   { NULL, 0, NULL, 0 }
@@ -104,6 +106,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.snapshot_duration = 0.1;
   state.backend_count = 1;
   state.warehouse_count = 1;
+  state.run_affinity = false;
   state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
@@ -111,7 +114,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ah:k:w:d:s:b:p:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "aeh:k:w:d:s:b:p:g:", opts, &idx);
 
     if (c == -1) break;
 
@@ -130,6 +133,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'b':
         state.backend_count = atoi(optarg);
+        break;
+      case 'a':
+        state.run_affinity = true;
         break;
       case 'e':
         state.run_backoff = true;
@@ -195,6 +201,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateWarehouseCount(state);
   ValidateBackendCount(state);
   
+  LOG_INFO("%s : %d", "Run client affinity", state.run_affinity);
   LOG_INFO("%s : %d", "Run exponential backoff", state.run_backoff);
 
 }
