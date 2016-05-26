@@ -163,7 +163,7 @@ void RunBackend(oid_t thread_id) {
     //   }
     // }
 
-    while (RunOrderStatus(thread_id) == false) {
+    while (RunStockLevel(thread_id) == false) {
       execution_count_ref++;
       // backoff
       if (state.run_backoff) {

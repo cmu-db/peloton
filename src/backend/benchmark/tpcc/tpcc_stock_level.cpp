@@ -98,7 +98,6 @@ bool RunStockLevel(const size_t &thread_id) {
     new executor::ExecutorContext(txn));
 
   // Prepare random data
-  //int w_id = GetRandomInteger(0, state.warehouse_count - 1);
   int w_id = GenerateWarehouseId(thread_id);
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
@@ -143,9 +142,9 @@ bool RunStockLevel(const size_t &thread_id) {
 
   LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
 
-  //////////////////////////////////////////////////////////////////
-  ///////////// Construct left table index scan ////////////////////
-  //////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
+  /////////// Construct left table index scan ////////////////////
+  ////////////////////////////////////////////////////////////////
   std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
   std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID, COL_IDX_OL_O_ID};
   std::vector<ExpressionType> order_line_expr_types;
@@ -207,6 +206,8 @@ bool RunStockLevel(const size_t &thread_id) {
   executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node,
                                                             context.get());
 
+  //stock_index_scan_executor.Init();
+
   ////////////////////////////////////////////////
   ////////////// Join ////////////////////////////
   ////////////////////////////////////////////////
@@ -231,6 +232,7 @@ bool RunStockLevel(const size_t &thread_id) {
   planner::NestedLoopJoinPlan join_plan(JOIN_TYPE_INNER, std::move(join_predicate), std::move(projection), join_schema);
   executor::NestedLoopJoinExecutor join_executor(&join_plan, context.get());
   join_executor.AddChild(&order_line_index_scan_executor);
+  join_executor.AddChild(&stock_index_scan_executor);
 
   ////////////////////////////////////////////////
   ////////////// Aggregator //////////////////////
@@ -265,7 +267,7 @@ bool RunStockLevel(const size_t &thread_id) {
   count_distinct_executor.AddChild(&join_executor);
 
   count_distinct_executor.Init();
-
+  
   auto count_result = ExecuteReadTest(&count_distinct_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();

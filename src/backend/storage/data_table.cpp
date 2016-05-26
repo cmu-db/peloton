@@ -57,7 +57,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
-  LOG_INFO("Data table %u created", table_oid);
+  LOG_TRACE("Data table %u created", table_oid);
 
   // Create a tile group.
   AddDefaultTileGroup();
@@ -86,7 +86,7 @@ DataTable::~DataTable() {
     delete foreign_key;
   }
   // AbstractTable cleans up the schema
-  LOG_INFO("Data table %u destroyed", table_oid);
+  LOG_TRACE("Data table %u destroyed", table_oid);
 
 }
 
@@ -387,7 +387,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
+        LOG_TRACE("BEGIN checking referred table");
         auto key_attrs = foreign_key->GetFKColumnOffsets();
 
         std::unique_ptr<catalog::Schema> foreign_key_schema(
@@ -397,7 +397,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
         //FIXME: what is the 3rd arg should be?
         key->SetFromTuple(tuple, key_attrs, index->GetPool());
 
-        LOG_INFO("check key: %s", key->GetInfo().c_str());
+        LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
         std::vector<ItemPointer> locations;
         index->ScanKey(key.get(), locations);
