@@ -114,7 +114,7 @@ bool RunDelivery(const size_t &thread_id){
   // TODO: cache the plan nodes. How Peloton support prepared statments?
 
   for (int d_id = 0; d_id < state.districts_per_warehouse; ++d_id) {
-    LOG_INFO("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
+    LOG_TRACE("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
 
     // Construct index scan executor
     std::vector<oid_t> new_order_column_ids = {COL_IDX_NO_O_ID};
@@ -127,7 +127,7 @@ bool RunDelivery(const size_t &thread_id){
     new_order_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);    
+    new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);
     new_order_key_values.push_back(ValueFactory::GetIntegerValue(-1));
 
     // Get the index
@@ -170,7 +170,7 @@ bool RunDelivery(const size_t &thread_id){
     // result: NO_O_ID
     auto no_o_id = new_order_ids[0][0];
 
-    LOG_INFO("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
+    LOG_TRACE("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
 
     std::vector<oid_t> orders_column_ids = {COL_IDX_O_C_ID};
     std::vector<oid_t> orders_key_column_ids = {COL_IDX_O_ID, COL_IDX_O_D_ID, COL_IDX_O_W_ID};
@@ -200,7 +200,7 @@ bool RunDelivery(const size_t &thread_id){
     executor::IndexScanExecutor orders_index_scan_executor(
       &orders_index_scan_node, context.get());
 
-    // Manuallt init
+    // Manually init
     status = orders_index_scan_executor.Init();
     if (status == false) {
       throw Exception("Init failed");
@@ -218,7 +218,7 @@ bool RunDelivery(const size_t &thread_id){
     // Result: O_C_ID
     auto c_id = orders_ids[0][0];
 
-    LOG_INFO("sumOLAmount: SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
+    LOG_TRACE("sumOLAmount: SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
 
     // Construct index scan executor
     std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_AMOUNT};
@@ -294,7 +294,7 @@ bool RunDelivery(const size_t &thread_id){
 
     auto ol_total = sum_result[0][0];
 
-    LOG_INFO("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
+    LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 
     // Construct index scan executor
     std::vector<oid_t> new_order_column_ids2 = {0};
@@ -306,7 +306,7 @@ bool RunDelivery(const size_t &thread_id){
     new_order_key_values2.push_back(ValueFactory::GetTinyIntValue(d_id));
     new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values2.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-    new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);    
+    new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values2.push_back(no_o_id);
 
     // Get the index
@@ -343,7 +343,7 @@ bool RunDelivery(const size_t &thread_id){
       return false;
     }
 
-    LOG_INFO("updateOrders: UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
+    LOG_TRACE("updateOrders: UPDATE ORDERS SET O_CARRIER_ID = ? WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
 
     // Construct index scan executor
     std::vector<oid_t> orders_column_ids2 = {COL_IDX_O_CARRIER_ID};
@@ -376,7 +376,7 @@ bool RunDelivery(const size_t &thread_id){
         orders_update_val));
 
     std::unique_ptr<const planner::ProjectInfo> orders_project_info(
-      new planner::ProjectInfo(std::move(orders_target_list), 
+      new planner::ProjectInfo(std::move(orders_target_list),
                                std::move(orders_direct_map_list)));
     planner::UpdatePlan orders_update_node(orders_table, std::move(orders_project_info));
 
@@ -396,7 +396,7 @@ bool RunDelivery(const size_t &thread_id){
       return false;
     }
 
-    LOG_INFO("updateOrderLine: UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
+    LOG_TRACE("updateOrderLine: UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
 
     // Construct index scan executor
     std::vector<oid_t> order_line_column_ids2 = {COL_IDX_OL_DELIVERY_D};
@@ -425,7 +425,7 @@ bool RunDelivery(const size_t &thread_id){
         order_line_update_val));
 
     std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
-      new planner::ProjectInfo(std::move(order_line_target_list), 
+      new planner::ProjectInfo(std::move(order_line_target_list),
                                std::move(order_line_direct_map_list)));
     planner::UpdatePlan order_line_update_node(order_line_table, std::move(order_line_project_info));
 
@@ -443,9 +443,9 @@ bool RunDelivery(const size_t &thread_id){
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
       return false;
-    }    
+    }
 
-    LOG_INFO("updateCustomer: UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?");
+    LOG_TRACE("updateCustomer: UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?");
 
     // Construct index scan executor
     std::vector<oid_t> customer_column_ids = {COL_IDX_C_BALANCE};
