@@ -124,7 +124,7 @@ bool RunDelivery(const size_t &thread_id){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    new_order_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     new_order_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
     new_order_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHAN);    
@@ -180,7 +180,7 @@ bool RunDelivery(const size_t &thread_id){
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_key_values.push_back(no_o_id);
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    orders_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     orders_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
@@ -229,7 +229,7 @@ bool RunDelivery(const size_t &thread_id){
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(no_o_id);
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
@@ -246,7 +246,7 @@ bool RunDelivery(const size_t &thread_id){
     executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
 
     // Construct aggregate executor
-    std::vector<oid_t> group_by_columns;
+    std::vector<oid_t> group_by_columns = {};
     // Prepare proj info
     DirectMapList direct_map_list = {{0, {1, 0}}};
     std::unique_ptr<const planner::ProjectInfo> proj_info(
@@ -256,7 +256,7 @@ bool RunDelivery(const size_t &thread_id){
     std::vector<planner::AggregatePlan::AggTerm> agg_terms;
     planner::AggregatePlan::AggTerm sum(
       EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0));
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_DOUBLE, 0, 0));
       // Should this be the column id of the output tuple or original tuple?
     agg_terms.push_back(sum);
 
