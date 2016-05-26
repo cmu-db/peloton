@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hyadapt_configuration.cpp
+// sdbench_configuration.cpp
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_configuration.cpp
+// Identification: src/backend/benchmark/sdbench/sdbench_configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,15 +13,15 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/benchmark/sdbench/sdbench_configuration.h"
 #include "backend/common/logger.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace sdbench {
 
 void Usage() {
-  LOG_TRACE("Command line options : hyadapt <options>"
+  LOG_TRACE("Command line options : sdbench <options>"
           "   -h --help              :  Print help message"
           "   -o --operator-type     :  Operator type"
           "   -k --scale-factor      :  # of tuples"
@@ -188,14 +188,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.column_count = 100;
   state.write_ratio = 0.0;
 
-  state.access_num_groups = 1;
-  state.subset_ratio = 1.0;
-  state.subset_experiment_type = SUBSET_TYPE_INVALID;
-
   state.adapt = false;
-  state.theta = 0.0;
-  state.reorg = false;
-  state.distribution = false;
 
   // Parse args
   while (1) {
@@ -265,6 +258,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   orig_scale_factor = state.scale_factor;
 }
 
-}  // namespace hyadapt
+}  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton

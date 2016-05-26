@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hyadapt_configuration.h
+// sdbench_configuration.h
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_configuration.h
+// Identification: src/backend/benchmark/sdbench/sdbench_configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,7 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace sdbench {
 
 enum OperatorType {
   OPERATOR_TYPE_INVALID = 0, /* invalid */
@@ -42,33 +42,8 @@ enum ExperimentType {
   EXPERIMENT_TYPE_PROJECTIVITY = 1,
   EXPERIMENT_TYPE_SELECTIVITY = 2,
   EXPERIMENT_TYPE_OPERATOR = 3,
-  EXPERIMENT_TYPE_VERTICAL = 4,
-  EXPERIMENT_TYPE_SUBSET = 5,
   EXPERIMENT_TYPE_ADAPT = 6,
-  EXPERIMENT_TYPE_WEIGHT = 7,
-  EXPERIMENT_TYPE_REORG = 8,
-  EXPERIMENT_TYPE_DISTRIBUTION = 9,
-  EXPERIMENT_TYPE_JOIN = 10,
-  EXPERIMENT_TYPE_INSERT = 11,
-  EXPERIMENT_TYPE_VERSION = 12,
-  EXPERIMENT_TYPE_HYRISE = 13,
-  EXPERIMENT_TYPE_CONCURRENCY = 14
 
-};
-
-enum SubsetType {
-  SUBSET_TYPE_INVALID = 0,
-
-  SUBSET_TYPE_SINGLE_GROUP = 1,
-  SUBSET_TYPE_MULTIPLE_GROUP = 2
-
-};
-
-enum AdaptType {
-  ADAPT_TYPE_INVALID = 0,
-
-  ADAPT_TYPE_STATIC = 1,
-  ADAPT_TYPE_DYNAMIC = 2
 };
 
 extern int orig_scale_factor;
@@ -101,25 +76,9 @@ class configuration {
   // # of times to run operator
   unsigned long transactions;
 
-  int access_num_groups;
-
-  double subset_ratio;
-
-  SubsetType subset_experiment_type;
-
   bool adapt;
 
   bool fsm;
-
-  double theta;
-
-  int split_point;
-
-  double sample_weight;
-
-  bool reorg;
-
-  bool distribution;
 };
 
 void Usage(FILE *out);
@@ -128,6 +87,6 @@ void ParseArguments(int argc, char *argv[], configuration &state);
 
 void GenerateSequence(oid_t column_count);
 
-}  // namespace hyadapt
+}  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton

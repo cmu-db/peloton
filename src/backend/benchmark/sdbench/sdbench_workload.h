@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hyadapt_workload.h
+// sdbench_workload.h
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_workload.h
+// Identification: src/backend/benchmark/sdbench/sdbench_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "backend/benchmark/sdbench/sdbench_configuration.h"
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
+namespace sdbench {
 
 extern configuration state;
 
@@ -30,36 +30,14 @@ void RunArithmeticTest();
 
 void RunJoinTest();
 
-void RunSubsetTest(SubsetType subset_test_type, double fraction);
-
 void RunProjectivityExperiment();
 
 void RunSelectivityExperiment();
 
 void RunOperatorExperiment();
 
-void RunVerticalExperiment();
-
-void RunSubsetExperiment();
-
 void RunAdaptExperiment();
 
-void RunWeightExperiment();
-
-void RunReorgExperiment();
-
-void RunDistributionExperiment();
-
-void RunJoinExperiment();
-
-void RunInsertExperiment();
-
-void RunVersionExperiment();
-
-void RunHyriseExperiment();
-
-void RunConcurrencyExperiment();
-
-}  // namespace hyadapt
+}  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton
