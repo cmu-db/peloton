@@ -18,10 +18,9 @@
 #include <limits>
 #include <bitset>
 #include <vector>
+#include <functional>
 
 #include "backend/common/platform.h"
-#include <boost/functional/hash.hpp>
-
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -819,11 +818,6 @@ struct ItemPointer {
       return offset < rhs.offset;
     }
   }
-
-//  bool operator==(const ItemPointer& rhs) const
-//  { return (block == rhs.block
-//            && offset == rhs.offset);
-//  }
 
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 

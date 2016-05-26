@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Rui Wang on 16-4-29.
+//                         Peloton
 //
+// hybrid_scan_executor.cpp
+//
+// Identification: src/backend/executor/hybrid_scan_executor.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "hybrid_scan_executor.h"
 
