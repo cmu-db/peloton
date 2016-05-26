@@ -262,8 +262,8 @@ bool RunDelivery(const size_t &thread_id){
 
     predicate = nullptr;
 
-    auto orders_table_schema = orders_table->GetSchema();
-    std::vector<catalog::Column> columns = {orders_table_schema->GetColumn(COL_IDX_OL_AMOUNT)};
+    auto order_line_table_schema = order_line_table->GetSchema();
+    std::vector<catalog::Column> columns = {order_line_table_schema->GetColumn(COL_IDX_OL_AMOUNT)};
 
     std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(columns));
