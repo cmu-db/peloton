@@ -84,7 +84,7 @@ namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
-bool RunStockLevel() {
+bool RunStockLevel(const size_t &thread_id) {
   /*
      "STOCK_LEVEL": {
      "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
@@ -98,7 +98,8 @@ bool RunStockLevel() {
     new executor::ExecutorContext(txn));
 
   // Prepare random data
-  int w_id = GetRandomInteger(0, state.warehouse_count - 1);
+  //int w_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int w_id = GenerateWarehouseId(thread_id);
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
 

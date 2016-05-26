@@ -93,6 +93,9 @@ class configuration {
   // enable exponential backoff
   bool run_backoff;
 
+  // enable client affinity
+  bool run_affinity;
+
   // protocol type
   ConcurrencyType protocol;
 

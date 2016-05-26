@@ -87,7 +87,7 @@ namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
-bool RunDelivery(){
+bool RunDelivery(const size_t &thread_id){
   /*
    "DELIVERY": {
    "getNewOrder": "SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1", #
@@ -107,7 +107,7 @@ bool RunDelivery(){
       new executor::ExecutorContext(txn));
 
 
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int warehouse_id = GenerateWarehouseId(thread_id);
   int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
   int64_t ol_delivery_d = time(0);
 

@@ -369,7 +369,7 @@ PaymentPlans PreparePaymentPlan() {
 
 }
 
-bool RunPayment(PaymentPlans &payment_plans){
+bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
   /*
      "PAYMENT": {
      "getWarehouse": "SELECT W_NAME, W_STREET_1, W_STREET_2, W_CITY, W_STATE, W_ZIP FROM WAREHOUSE WHERE W_ID = ?", # w_id
@@ -389,8 +389,7 @@ bool RunPayment(PaymentPlans &payment_plans){
   /////////////////////////////////////////////////////////
   // PREPARE ARGUMENTS
   /////////////////////////////////////////////////////////
-
-  int warehouse_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int warehouse_id = GenerateWarehouseId(thread_id);
   int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int customer_warehouse_id;
   int customer_district_id;
