@@ -42,7 +42,8 @@ bin_PROGRAMS = \
 			   hyadapt \
 			   logger \
 			   ycsb \
-			   tpcc
+			   tpcc \
+			   sdbench
 
 lib_LTLIBRARIES += libpeloton.la
 lib_LTLIBRARIES += libpelotonpg.la

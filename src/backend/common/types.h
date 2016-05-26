@@ -18,6 +18,7 @@
 #include <limits>
 #include <bitset>
 #include <vector>
+#include <functional>
 
 #include "backend/common/platform.h"
 
@@ -94,6 +95,8 @@ class Value;
 #define PELOTON_INT16_MIN INT16_NULL + 1
 #define PELOTON_INT32_MIN INT32_NULL + 1
 #define PELOTON_INT64_MIN INT64_NULL + 1
+
+
 #define DECIMAL_MIN -9999999
 #define DECIMAL_MAX 9999999
 
@@ -790,6 +793,7 @@ typedef std::bitset<max_col_count> ColBitmap;
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
+
 // logical physical location
 struct ItemPointer {
   // block
@@ -805,9 +809,25 @@ struct ItemPointer {
   bool IsNull() const { 
     return (block == INVALID_OID && offset == INVALID_OID);
   }
+
+  bool operator<(const ItemPointer& rhs) const
+  {
+    if (block != rhs.block) {
+      return block < rhs.block;
+    } else {
+      return offset < rhs.offset;
+    }
+  }
+
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
+
+struct ItemPointerHasher {
+ size_t operator() (const ItemPointer &item) const {
+    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset); 
+ }
+};
 
 //===--------------------------------------------------------------------===//
 // File Handle
