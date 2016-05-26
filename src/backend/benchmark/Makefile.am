@@ -25,6 +25,21 @@ hyadapt_LDFLAGS =
 hyadapt_CPPFLAGS = $(benchmark_common_cppflags)
 hyadapt_LDADD = $(benchmark_common_ldadd)
 
+
+######################################################################
+# Self-driving Benchmark
+######################################################################
+
+sdbench_SOURCES =  \
+					backend/benchmark/hyadapt/sdbench.cpp \
+                    backend/benchmark/hyadapt/sdbench_configuration.cpp \
+                    backend/benchmark/hyadapt/sdbench_workload.cpp \
+                    backend/benchmark/hyadapt/sdbench_loader.cpp
+
+sdbench_LDFLAGS =
+sdbench_CPPFLAGS = $(benchmark_common_cppflags)
+sdbench_LDADD = $(benchmark_common_ldadd)
+
 ######################################################################
 # LOGGER
 ######################################################################
