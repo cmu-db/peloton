@@ -83,7 +83,7 @@ namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
-bool RunOrderStatus(){
+bool RunOrderStatus(const size_t &thread_id){
   /*
     "ORDER_STATUS": {
     "getCustomerByCustomerId": "SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?", # w_id, d_id, c_id
@@ -100,7 +100,8 @@ bool RunOrderStatus(){
     new executor::ExecutorContext(txn));
 
   // Generate w_id, d_id, c_id, c_last
-  int w_id = GetRandomInteger(0, state.warehouse_count - 1);
+  //int w_id = GetRandomInteger(0, state.warehouse_count - 1);
+  int w_id = GenerateWarehouseId(thread_id);
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
 
   int c_id = -1;

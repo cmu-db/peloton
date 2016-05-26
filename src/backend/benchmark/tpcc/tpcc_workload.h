@@ -260,9 +260,9 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id);
 bool RunDelivery(const size_t &thread_id);
 
 
-bool RunOrderStatus();
+bool RunOrderStatus(const size_t &thread_id);
 
-bool RunStockLevel();
+bool RunStockLevel(const size_t &thread_id);
 
 
 
