@@ -32,6 +32,7 @@ void Usage(FILE *out) {
           "   -s --snapshot_duration :  snapshot duration \n"
           "   -b --backend_count     :  # of backends \n"
           "   -c --column_count      :  # of columns \n"
+          "   -l --update_col_count  :  # of updated columns \n"
           "   -o --operation_count   :  # of operations \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
@@ -50,6 +51,7 @@ static struct option opts[] = {
     {"duration", optional_argument, NULL, 'd'},
     {"snapshot_duration", optional_argument, NULL, 's'},
     {"column_count", optional_argument, NULL, 'c'},
+    {"update_col_count", optional_argument, NULL, 'c'},
     {"operation_count", optional_argument, NULL, 'o'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
@@ -76,6 +78,15 @@ void ValidateColumnCount(const configuration &state) {
   }
 
   LOG_INFO("%s : %d", "column_count", state.column_count);
+}
+
+void ValidateUpdateColumnCount(const configuration &state) {
+  if (state.update_column_count <= 0 || state.update_column_count > state.column_count) {
+    LOG_ERROR("Invalid update_column_count :: %d", state.update_column_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "update_column_count", state.update_column_count);
 }
 
 void ValidateOperationCount(const configuration &state) {
@@ -138,6 +149,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.duration = 10;
   state.snapshot_duration = 0.1;
   state.column_count = 10;
+  state.update_column_count = 1;
   state.operation_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -149,7 +161,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmek:d:s:c:o:u:b:z:p:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:o:u:b:z:p:g:", opts, &idx);
 
     if (c == -1) break;
 
@@ -168,6 +180,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'c':
         state.column_count = atoi(optarg);
+        break;
+      case 'l':
+        state.update_column_count = atoi(optarg);
         break;
       case 'u':
         state.update_ratio = atof(optarg);
@@ -236,6 +251,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Print configuration
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
+  ValidateUpdateColumnCount(state);
   ValidateOperationCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);

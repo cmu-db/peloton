@@ -40,6 +40,9 @@ class configuration {
   // column count
   int column_count;
 
+  // update column count
+  int update_column_count;
+
   // operation count
   int operation_count;
 
@@ -89,6 +92,8 @@ void Usage(FILE *out);
 void ValidateScaleFactor(const configuration &state);
 
 void ValidateColumnCount(const configuration &state);
+
+void ValidateUpdateColumnCount(const configuration &state);
 
 void ValidateOperationCount(const configuration &state);
 
