@@ -88,7 +88,17 @@ class BTreeIndex : public Index {
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &expr_types,
       std::map<oid_t, std::pair<Value, Value>> &non_leading_columns);
+  
+  // Get the indexed tile group offset
+  virtual int GetIndexedTileGroupOff() {
+    return indexed_tile_group_offset_.load();
+  }
 
+  virtual void IncreamentIndexedTileGroupOff() {
+    indexed_tile_group_offset_++;
+    return;
+  }
+  
  protected:
   MapType container;
 
