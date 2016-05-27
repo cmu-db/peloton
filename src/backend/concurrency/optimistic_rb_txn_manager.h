@@ -233,7 +233,7 @@ class OptimisticRbTxnManager : public TransactionManager {
 
  private:
   static const size_t lock_offset = 0;
-  static const size_t rb_seg_offset  = lock_offset + sizeof(oid_t);
+  static const size_t rb_seg_offset  = lock_offset + 8;
   static const size_t delete_flag_offset = rb_seg_offset + sizeof(char*);
   cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
   // TODO: add cooperative GC
