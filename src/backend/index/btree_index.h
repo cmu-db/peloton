@@ -38,6 +38,12 @@ class BTreeIndex : public Index {
   // Define the container type
   typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
 
+  class Dummylock {
+  public:
+    void Lock() {}
+    void Unlock() {}
+  };
+
  public:
   BTreeIndex(IndexMetadata *metadata);
 
@@ -86,7 +92,8 @@ class BTreeIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  Spinlock index_lock;
+  // Spinlock index_lock;
+  Dummylock index_lock;
 };
 
 }  // End index namespace
