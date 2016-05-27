@@ -132,7 +132,7 @@ MixedPlans PrepareMixedPlan() {
   TargetList target_list;
   DirectMapList direct_map_list;
 
-  // Update the second attribute
+  // update multiple attributes
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     if (col_itr < begin_column_count || col_itr > end_column_count) {
       direct_map_list.emplace_back(col_itr,

@@ -234,46 +234,63 @@ bool RunStockLevel(const size_t &thread_id) {
   join_executor.AddChild(&order_line_index_scan_executor);
   join_executor.AddChild(&stock_index_scan_executor);
 
-  ////////////////////////////////////////////////
-  ////////////// Aggregator //////////////////////
-  ////////////////////////////////////////////////
-  std::vector<oid_t> group_by_columns;
-  DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
-  TargetList aggregate_target_list;
+  // current implementation of aggregation is too costly. workaround.
+  join_executor.Init();
 
-  std::unique_ptr<const planner::ProjectInfo> aggregate_projection(
-      new planner::ProjectInfo(std::move(aggregate_target_list),
-                               std::move(aggregate_direct_map_list)));
-
-  std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  bool distinct = true;
-  planner::AggregatePlan::AggTerm count_distinct(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0),
-      distinct);
-  agg_terms.push_back(count_distinct);
-
-  // The schema is the same as the join operator
-  std::shared_ptr<const catalog::Schema> aggregate_schema(new catalog::Schema({
-    order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
-  }));
-
-  planner::AggregatePlan count_distinct_node(
-    std::move(aggregate_projection), nullptr, std::move(agg_terms),
-    std::move(group_by_columns), aggregate_schema,
-    AGGREGATE_TYPE_PLAIN);
-
-  executor::AggregateExecutor count_distinct_executor(&count_distinct_node, context.get());
-  count_distinct_executor.AddChild(&join_executor);
-
-  count_distinct_executor.Init();
-  
-  auto count_result = ExecuteReadTest(&count_distinct_executor);
+  auto join_result = ExecuteReadTest(&join_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
     return false;
   }
-  assert(count_result.size() == 1);
+  LOG_TRACE("join result size=%lu", join_result.size());
+  
+  std::unordered_set<int> distinct_items;
+  for (size_t i = 0; i < join_result.size(); ++i) {
+    int join_value = ValuePeeker::PeekAsInteger(join_result[i][0]);
+    distinct_items.insert(join_value);
+  }
+  LOG_TRACE("number of distinct items=%lu", distinct_items.size());
+
+  ////////////////////////////////////////////////
+  ////////////// Aggregator //////////////////////
+  ////////////////////////////////////////////////
+  // std::vector<oid_t> group_by_columns;
+  // DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
+  // TargetList aggregate_target_list;
+
+  // std::unique_ptr<const planner::ProjectInfo> aggregate_projection(
+  //     new planner::ProjectInfo(std::move(aggregate_target_list),
+  //                              std::move(aggregate_direct_map_list)));
+
+  // std::vector<planner::AggregatePlan::AggTerm> agg_terms;
+  // bool distinct = true;
+  // planner::AggregatePlan::AggTerm count_distinct(
+  //     EXPRESSION_TYPE_AGGREGATE_COUNT,
+  //     expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0),
+  //     distinct);
+  // agg_terms.push_back(count_distinct);
+
+  // // The schema is the same as the join operator
+  // std::shared_ptr<const catalog::Schema> aggregate_schema(new catalog::Schema({
+  //   order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
+  // }));
+
+  // planner::AggregatePlan count_distinct_node(
+  //   std::move(aggregate_projection), nullptr, std::move(agg_terms),
+  //   std::move(group_by_columns), aggregate_schema,
+  //   AGGREGATE_TYPE_PLAIN);
+
+  // executor::AggregateExecutor count_distinct_executor(&count_distinct_node, context.get());
+  // count_distinct_executor.AddChild(&join_executor);
+
+  // count_distinct_executor.Init();
+  
+  // auto count_result = ExecuteReadTest(&count_distinct_executor);
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
+  // assert(count_result.size() == 1);
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
