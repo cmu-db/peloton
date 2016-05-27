@@ -148,8 +148,9 @@ bool Index::ConstructLowerBoundTuple(
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
+    auto col_id = GetMetadata()->GetKeySchema()->GetIndexedColumns()[column_itr];
     auto key_column_itr =
-        std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
+        std::find(key_column_ids.begin(), key_column_ids.end(), col_id);
     bool placeholder = false;
     Value value;
 

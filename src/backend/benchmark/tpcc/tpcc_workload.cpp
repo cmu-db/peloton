@@ -169,6 +169,22 @@ void RunBackend(oid_t thread_id) {
     //     }
     //   }
     // }
+
+    // while (RunDelivery(thread_id) == false) {
+    //   execution_count_ref++;
+    //   // backoff
+    //   if (state.run_backoff) {
+    //     if (backoff_shifts < 63) {
+    //       ++backoff_shifts;
+    //     }
+    //     uint64_t spins = 1UL << backoff_shifts;
+    //     spins *= 100;
+    //     while (spins) {
+    //       _mm_pause();
+    //       --spins;
+    //     }
+    //   }
+    // }
     
     // auto rng_val = generator.GetSample();
     

@@ -143,7 +143,7 @@ class Schema : public Printable {
     indexed_columns_ = indexed_columns;
   }
 
-  inline std::vector<oid_t> GetIndexedColumns() const {
+  inline const std::vector<oid_t> &GetIndexedColumns() const {
     return indexed_columns_;
   }
 
