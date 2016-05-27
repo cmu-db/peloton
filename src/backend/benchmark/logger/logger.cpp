@@ -24,6 +24,8 @@
 // Logging mode
 extern LoggingType peloton_logging_mode;
 
+extern CheckpointType peloton_checkpoint_mode;
+
 extern size_t peloton_data_file_size;
 
 extern int64_t peloton_wait_timeout;

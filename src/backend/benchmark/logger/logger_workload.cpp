@@ -37,12 +37,15 @@
 #include "backend/benchmark/tpcc/tpcc_loader.h"
 
 #include "backend/logging/loggers/wbl_frontend_logger.h"
+#include "backend/logging/checkpoint_manager.h"
 
 #include <unistd.h>
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
+
+extern CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
 namespace benchmark {
@@ -100,16 +103,51 @@ std::string GetFilePath(std::string directory_path, std::string file_name) {
   return file_path;
 }
 
-void StartLogging(std::thread& thread) {
+void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
   // PrepareLogFile();
   auto& log_manager = logging::LogManager::GetInstance();
+
+  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    auto& checkpoint_manager =
+        peloton::logging::CheckpointManager::GetInstance();
+
+    // launch checkpoint thread
+    if (!checkpoint_manager.IsInCheckpointingMode()) {
+      // Wait for standby mode
+      auto local_thread =
+          std::thread(&peloton::logging::CheckpointManager::StartStandbyMode,
+                      &checkpoint_manager);
+      checkpoint_thread.swap(local_thread);
+      checkpoint_manager.WaitForModeTransition(
+          peloton::CHECKPOINT_STATUS_STANDBY, true);
+
+      // Clean up table tile state before recovery from checkpoint
+      log_manager.PrepareRecovery();
+
+      // Do any recovery
+      checkpoint_manager.StartRecoveryMode();
+
+      // Wait for standby mode
+      checkpoint_manager.WaitForModeTransition(
+          peloton::CHECKPOINT_STATUS_DONE_RECOVERY, true);
+    }
+
+    // start checkpointing mode after recovery
+    if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+      if (!checkpoint_manager.IsInCheckpointingMode()) {
+        // Now, enter CHECKPOINTING mode
+        checkpoint_manager.SetCheckpointStatus(
+            peloton::CHECKPOINT_STATUS_CHECKPOINTING);
+      }
+    }
+  }
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {
       // Wait for standby mode
       auto local_thread = std::thread(
           &peloton::logging::LogManager::StartStandbyMode, &log_manager);
-      thread.swap(local_thread);
+      log_thread.swap(local_thread);
       log_manager.WaitForModeTransition(peloton::LOGGING_STATUS_TYPE_STANDBY,
                                         true);
 
@@ -193,6 +231,7 @@ finish:
 }
 
 void CleanUpLogDirectory() {
+  chdir(state.log_file_dir.c_str());
   // remove wbl log file if it exists
   std::string wbl_directory_path =
       state.log_file_dir + logging::WriteBehindFrontendLogger::wbl_log_path;
@@ -203,9 +242,13 @@ void CleanUpLogDirectory() {
       state.log_file_dir +
       logging::WriteAheadFrontendLogger::wal_directory_path;
 
+  std::string checkpoint_dir_path = state.log_file_dir + "pl_checkpoint";
+
   RemoveDirectory(wbl_directory_path.c_str());
 
   RemoveDirectory(wal_directory_path.c_str());
+
+  RemoveDirectory(checkpoint_dir_path.c_str());
 }
 
 bool SetupLoggingOnFollower() {
@@ -249,11 +292,13 @@ bool SetupLoggingOnFollower() {
                       std::to_string(state.asynchronous_mode));
   }
 
-  std::thread thread;
+  std::thread logging_thread;
+  std::thread cp_thread;
 
   // Initializing logging module
-  StartLogging(thread);
-  thread.detach();
+  StartLogging(logging_thread, cp_thread);
+  logging_thread.detach();
+  cp_thread.detach();
   return true;
 }
 
@@ -269,6 +314,8 @@ bool PrepareLogFile() {
   log_manager.SetLogDirectoryName(state.log_file_dir);
   log_manager.SetLogFileName(state.log_file_dir + "/" +
                              logging::WriteBehindFrontendLogger::wbl_log_path);
+
+  auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
 
   if (log_manager.ContainsFrontendLogger() == true) {
     LOG_ERROR("another logging thread is running now");
@@ -301,19 +348,27 @@ bool PrepareLogFile() {
                       std::to_string(state.asynchronous_mode));
   }
 
-  std::thread thread;
+  std::thread logging_thread;
+  std::thread checkpoint_thread;
 
   // Initializing logging module
-  StartLogging(thread);
+  StartLogging(logging_thread, checkpoint_thread);
 
   // Build the log
   BuildLog();
 
   // Stop frontend logger if in a valid logging mode
+  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
+    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
+    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+    checkpoint_thread.join();
+  }
+  // Stop frontend logger if in a valid logging mode
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     //  Wait for the mode transition :: LOGGING -> TERMINATE -> SLEEP
     if (log_manager.EndLogging()) {
-      thread.join();
+      logging_thread.join();
     }
   }
 
@@ -369,11 +424,12 @@ void DoRecovery() {
 
   Timer<std::milli> timer;
   std::thread thread;
+  std::thread cp_thread;
 
   timer.Start();
 
   // Do recovery
-  StartLogging(thread);
+  StartLogging(thread, cp_thread);
 
   timer.Stop();
 
@@ -384,6 +440,13 @@ void DoRecovery() {
     } else {
       LOG_ERROR("Failed to terminate logging thread");
     }
+  }
+  auto& checkpoint_manager = logging::CheckpointManager::GetInstance();
+  // Synchronize and finish recovery
+  if (peloton_checkpoint_mode != CHECKPOINT_TYPE_INVALID) {
+    checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
+    checkpoint_manager.WaitForModeTransition(CHECKPOINT_STATUS_INVALID, true);
+    cp_thread.join();
   }
 
   // Recovery time (in ms)

@@ -57,6 +57,9 @@ class configuration {
   // logging type
   LoggingType logging_type;
 
+  // checkpoint type
+  CheckpointType checkpoint_type;
+
   // log file dir
   std::string log_file_dir;
 
