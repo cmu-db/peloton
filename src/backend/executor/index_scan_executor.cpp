@@ -249,16 +249,20 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           return false;
         }
 
+
         if(gc::GCManagerFactory::GetGCType() != GC_TYPE_CO){
+          // if it is vacuum GC or no GC.
           tile_group = manager.GetTileGroup(tuple_location.block);
           tile_group_header = tile_group.get()->GetHeader();
           continue;
         }
 
-
         /////////////////////////////////////////////////////////
         // COOPERATIVE GC
         /////////////////////////////////////////////////////////
+
+        // it must be cooperative GC.
+        assert(gc::GCManagerFactory::GetGCType() == GC_TYPE_CO);
 
         if (old_end_cid <= max_committed_cid) {
           // if the older version is a garbage.

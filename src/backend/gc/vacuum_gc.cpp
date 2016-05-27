@@ -89,18 +89,22 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
     if (garbage_ts < max_cid) {
       ResetTuple(tuple_metadata);
 
+      assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
+      recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
+
       // Add to the recycle map
-      std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+      //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+
       // if the entry for table_id exists.
-      if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
-        // if the entry for tuple_metadata.table_id exists.
-        recycle_queue->Enqueue(tuple_metadata);
-      } else {
-        // if the entry for tuple_metadata.table_id does not exist.
-        recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-        recycle_queue->Enqueue(tuple_metadata);
-        recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
-      }
+      // if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
+      //   // if the entry for tuple_metadata.table_id exists.
+      //   recycle_queue->Enqueue(tuple_metadata);
+      // } else {
+      //   // if the entry for tuple_metadata.table_id does not exist.
+      //   recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      //   recycle_queue->Enqueue(tuple_metadata);
+      //   recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
+      // }
 
       // Remove from the original map
       garbage = reclaim_map_.erase(garbage);
@@ -110,7 +114,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
       break;
     }
   }
-  LOG_TRACE("Marked %d tuples as recycled", tuple_counter);
+  LOG_INFO("Marked %d tuples as recycled", tuple_counter);
 }
 
 void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
@@ -182,18 +186,22 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   DeleteInvalidTupleFromIndex(tuple_metadata);
   ResetTuple(tuple_metadata);
 
+  assert(recycle_queue_map_.count(table_id) != 0);
+  recycle_queue_map_[table_id]->Enqueue(tuple_metadata);
+
+
   // Add to the recycle map
-  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
   // if the entry for table_id exists.
-  if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
-    // if the entry for tuple_metadata.table_id exists.
-    recycle_queue->Enqueue(tuple_metadata);
-  } else {
-    // if the entry for tuple_metadata.table_id does not exist.
-    recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-    recycle_queue->Enqueue(tuple_metadata);
-    recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
-  }
+  // if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
+  //   // if the entry for tuple_metadata.table_id exists.
+  //   recycle_queue->Enqueue(tuple_metadata);
+  // } else {
+  //   // if the entry for tuple_metadata.table_id does not exist.
+  //   recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+  //   recycle_queue->Enqueue(tuple_metadata);
+  //   recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
+  // }
 
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
@@ -205,21 +213,23 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
-  if (this->gc_type_ == GC_TYPE_OFF) {
-    return INVALID_ITEMPOINTER;
-  }
 
-  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  assert(recycle_queue_map_.count(table_id) != 0);
+  TupleMetadata tuple_metadata;
+  auto recycle_queue = recycle_queue_map_[table_id];
+
+
+  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
   // if there exists recycle_queue
-  if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
-    TupleMetadata tuple_metadata;
+  //if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
+    //TupleMetadata tuple_metadata;
     if (recycle_queue->Dequeue(tuple_metadata) == true) {
       LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
                tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
     }
-  }
+  //}
   return INVALID_ITEMPOINTER;
 }
 
