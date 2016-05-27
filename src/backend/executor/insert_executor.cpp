@@ -153,7 +153,7 @@ bool InsertExecutor::DExecute() {
       // Carry out insertion
       ItemPointer *itemptr_ptr = nullptr;
       ItemPointer location = target_table->InsertTuple(tuple, &itemptr_ptr);
-      LOG_TRACE("Inserted into location: %lu, %lu", location.block,
+      LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
 
       if (location.block == INVALID_OID) {
