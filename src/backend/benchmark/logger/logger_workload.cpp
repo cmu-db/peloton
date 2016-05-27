@@ -231,7 +231,9 @@ finish:
 }
 
 void CleanUpLogDirectory() {
-  chdir(state.log_file_dir.c_str());
+  if(chdir(state.log_file_dir.c_str())){
+	  LOG_ERROR("Could not change directory");
+  }
   // remove wbl log file if it exists
   std::string wbl_directory_path =
       state.log_file_dir + logging::WriteBehindFrontendLogger::wbl_log_path;
