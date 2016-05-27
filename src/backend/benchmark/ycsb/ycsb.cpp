@@ -225,13 +225,17 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Validate MVCC storage
-  ValidateMVCC();
+  if (state.protocol != occrb && state.protocol != occn2o) {
+    ValidateMVCC();
+  }
 
   // Run the workload
   RunWorkload();
 
   // Validate MVCC storage
-  ValidateMVCC();
+  if (state.protocol != occrb && state.protocol != occn2o) {
+    ValidateMVCC();
+  }
 
   WriteOutput();
 }
