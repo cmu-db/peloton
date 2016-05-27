@@ -141,7 +141,7 @@ void FrontendLogger::MainLoop(void) {
       log_manager.NotifyRecoveryDone();
 
       // Now wait until the other frontend loggers also complete their recovery
-      log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_LOGGING, true);
+      log_manager.WaitForModeTransition(LOGGING_STATUS_TYPE_RECOVERY, false);
 
       break;
     }

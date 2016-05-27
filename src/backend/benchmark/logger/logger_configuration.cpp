@@ -24,6 +24,8 @@ extern char* peloton_endpoint_address;
 
 extern ReplicationType peloton_replication_mode;
 
+extern CheckpointType peloton_checkpoint_mode;
+
 namespace peloton {
 namespace benchmark {
 namespace logger {
@@ -268,6 +270,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.replication_port = 0;
   state.remote_endpoint = nullptr;
   state.replication_mode = SYNC_REPLICATION;
+  state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
 
   // Default YCSB Values
   ycsb::state.scale_factor = 1;
@@ -286,10 +289,10 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   // Parse args
   while (1) {
     int idx = 0;
-    // logger - a:e:f:hl:n:p:v:w:y:
+    // logger - a:e:f:g:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:t:u:
     // tpcc   - b:d:k:t:
-    int c = getopt_long(argc, argv, "a:e:f:g:hl:n:p:v:w:y:b:c:d:k:u:t:x:z:",
+    int c = getopt_long(argc, argv, "a:e:f:g:hil:n:p:v:w:y:b:c:d:k:u:t:x:z:",
                         opts, &idx);
 
     if (c == -1) break;
@@ -320,6 +323,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         }
         break;
       }
+      case 'i':
+        state.checkpoint_type = CHECKPOINT_TYPE_NORMAL;
+        break;
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
         break;
@@ -385,6 +391,12 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     }
   }
 
+  if (state.checkpoint_type == CHECKPOINT_TYPE_NORMAL &&
+      (state.logging_type == LOGGING_TYPE_NVM_WAL ||
+       state.logging_type == LOGGING_TYPE_SSD_WAL ||
+       state.logging_type == LOGGING_TYPE_HDD_WAL)) {
+    peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
+  }
   peloton_replication_mode = state.replication_mode;
 
   // Print Logger configuration
