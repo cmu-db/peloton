@@ -143,8 +143,7 @@ void RunBackend(oid_t thread_id) {
           }
         }
        }
-     } 
-     else if (rng_val <= 0.08) {
+     } else if (rng_val <= 0.08) {
        while (RunDelivery(thread_id) == false) {
          execution_count_ref++;
         // backoff
@@ -160,8 +159,7 @@ void RunBackend(oid_t thread_id) {
           }
         }
        }
-     } 
-     else if (rng_val <= 0.12) {
+     } else if (rng_val <= 0.12) {
        while (RunOrderStatus(thread_id) == false) {
          execution_count_ref++;
         // backoff

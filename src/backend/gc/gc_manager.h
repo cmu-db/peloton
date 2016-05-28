@@ -100,7 +100,7 @@ protected:
 
       // build key.
       std::unique_ptr<storage::Tuple> key(
-        new storage::Tuple(table->GetSchema(), true));
+        new storage::Tuple(index_schema, true));
       key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
 
       // todo: if invalid version is insert, still need to remove from primary index

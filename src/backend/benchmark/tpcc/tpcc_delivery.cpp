@@ -109,7 +109,7 @@ bool RunDelivery(const size_t &thread_id){
 
   int warehouse_id = GenerateWarehouseId(thread_id);
   int o_carrier_id = GetRandomInteger(orders_min_carrier_id, orders_max_carrier_id);
-  int64_t ol_delivery_d = time(0);
+  //int64_t ol_delivery_d = time(0);
 
   // TODO: cache the plan nodes. How Peloton support prepared statments?
 
@@ -219,12 +219,12 @@ bool RunDelivery(const size_t &thread_id){
     assert(orders_ids.size() == 1);
     assert(orders_ids[0].size() == 1);
 
-    // Result: O_C_ID
+    //Result: O_C_ID
     auto c_id = orders_ids[0][0];
 
     LOG_TRACE("sumOLAmount: SELECT SUM(OL_AMOUNT) FROM ORDER_LINE WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
 
-    // Construct index scan executor
+    //Construct index scan executor
     std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_AMOUNT};
     std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_O_ID, COL_IDX_OL_D_ID, COL_IDX_OL_W_ID};
     std::vector<ExpressionType> order_line_expr_types;
@@ -309,7 +309,7 @@ bool RunDelivery(const size_t &thread_id){
       throw Exception("Init failed");
     }
 
-    ExecuteDeleteTest(&new_order_delete_executor);
+    //ExecuteDeleteTest(&new_order_delete_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
       return false;
@@ -371,51 +371,51 @@ bool RunDelivery(const size_t &thread_id){
     LOG_TRACE("updateOrderLine: UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
 
     // Construct index scan executor
-    std::vector<oid_t> order_line_column_ids2 = {COL_IDX_OL_DELIVERY_D};
+    // std::vector<oid_t> order_line_column_ids2 = {COL_IDX_OL_DELIVERY_D};
 
-    predicate = nullptr;
-    planner::IndexScanPlan order_line_index_scan_node2(order_line_table, predicate, order_line_column_ids2, order_line_index_scan_desc);
-    executor::IndexScanExecutor order_line_index_scan_executor2(
-      &order_line_index_scan_node2, context.get());
+    // predicate = nullptr;
+    // planner::IndexScanPlan order_line_index_scan_node2(order_line_table, predicate, order_line_column_ids2, order_line_index_scan_desc);
+    // executor::IndexScanExecutor order_line_index_scan_executor2(
+    //   &order_line_index_scan_node2, context.get());
 
-    // Construct update executor
-    TargetList order_line_target_list;
-    DirectMapList order_line_direct_map_list;
+    // // Construct update executor
+    // TargetList order_line_target_list;
+    // DirectMapList order_line_direct_map_list;
 
-    size_t order_line_column_count = 10;
-    for (oid_t col_itr = 0; col_itr < order_line_column_count; col_itr++) {
-      // Skip OL_DELIVERY_D
-      if (col_itr != COL_IDX_OL_DELIVERY_D)
-        order_line_direct_map_list.emplace_back(col_itr,
-          std::make_pair(0, col_itr));
-    }
+    // size_t order_line_column_count = 10;
+    // for (oid_t col_itr = 0; col_itr < order_line_column_count; col_itr++) {
+    //   // Skip OL_DELIVERY_D
+    //   if (col_itr != COL_IDX_OL_DELIVERY_D)
+    //     order_line_direct_map_list.emplace_back(col_itr,
+    //       std::make_pair(0, col_itr));
+    // }
 
-    Value order_line_update_val = ValueFactory::GetTimestampValue(
-      ol_delivery_d);
-    order_line_target_list.emplace_back(
-      COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(
-        order_line_update_val));
+    // Value order_line_update_val = ValueFactory::GetTimestampValue(
+    //   ol_delivery_d);
+    // order_line_target_list.emplace_back(
+    //   COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(
+    //     order_line_update_val));
 
-    std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
-      new planner::ProjectInfo(std::move(order_line_target_list),
-                               std::move(order_line_direct_map_list)));
-    planner::UpdatePlan order_line_update_node(order_line_table, std::move(order_line_project_info));
+    // std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
+    //   new planner::ProjectInfo(std::move(order_line_target_list),
+    //                            std::move(order_line_direct_map_list)));
+    // planner::UpdatePlan order_line_update_node(order_line_table, std::move(order_line_project_info));
 
-    executor::UpdateExecutor order_line_update_executor(&order_line_update_node,
-      context.get());
-    order_line_update_executor.AddChild(&order_line_index_scan_executor2);
+    // executor::UpdateExecutor order_line_update_executor(&order_line_update_node,
+    //   context.get());
+    // order_line_update_executor.AddChild(&order_line_index_scan_executor2);
 
-    // Manuallt init
-    status = order_line_update_executor.Init();
-    if (status == false) {
-      throw Exception("Init failed");
-    }
+    // // Manuallt init
+    // order_line_update_executor.Init();
+    // // if (status == false) {
+    // //   throw Exception("Init failed");
+    // // }
 
-    ExecuteUpdateTest(&order_line_update_executor);
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
-      return false;
-    }
+    // ExecuteUpdateTest(&order_line_update_executor);
+    // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    //   txn_manager.AbortTransaction();
+    //   return false;
+    // }
 
     LOG_TRACE("updateCustomer: UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?");
 
