@@ -64,6 +64,7 @@ public:
   void RegisterTable(oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+      LOG_TRACE("register table %d to garbage collector", (int)table_id);
       std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
       recycle_queue_map_[table_id] = recycle_queue;
     }
@@ -71,7 +72,6 @@ public:
 
 private:
   void Running();
-  //void DeleteTupleFromIndexes(const TupleMetadata &);
 
   bool ResetTuple(const TupleMetadata &);
 

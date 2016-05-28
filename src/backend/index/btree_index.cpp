@@ -153,7 +153,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const ScanDirectionType &scan_direction, std::vector<ItemPointer> &result) {
   KeyType index_key;
 
-  // Check if we have leading (leftmost) column equality
+  // Checkif we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   oid_t leading_column_id = 0;
   auto key_column_ids_itr = std::find(key_column_ids.begin(),
@@ -287,7 +287,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const ScanDirectionType &scan_direction,
     std::vector<ItemPointer *> &result) {
   KeyType index_key;
-
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   oid_t leading_column_id = 0;

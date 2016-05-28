@@ -121,6 +121,8 @@ class TileGroupHeader : public Printable {
 
   oid_t GetActiveTupleCount();
 
+  oid_t GetCurrentTupleCount();
+
   //===--------------------------------------------------------------------===//
   // MVCC utilities
   //===--------------------------------------------------------------------===//

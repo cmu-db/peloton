@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include <cmath>
 #include <cstdint>
+#include <thread>
 
 namespace peloton {
 namespace benchmark {
@@ -112,6 +114,9 @@ class ZipfDistribution {
   double zeta_2_theta;
   fast_random rand_generator;
 };
+
+
+void PinToCore(size_t core);
 
 }  // namespace benchmark
 }  // namespace peloton

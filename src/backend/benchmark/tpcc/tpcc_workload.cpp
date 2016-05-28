@@ -85,15 +85,6 @@ oid_t *abort_counts;
 oid_t *commit_counts;
 
 
-// Helper function to pin current thread to a specific core
-static void PinToCore(size_t core) {
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(core, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-}
-
-
 size_t GenerateWarehouseId(const size_t &thread_id) {
   if (state.run_affinity) {
     if (state.warehouse_count <= state.backend_count) {
@@ -114,14 +105,14 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
-  //UniformGenerator generator;
+  UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
 
-  //NewOrderPlans new_order_plans = PrepareNewOrderPlan();
-  //PaymentPlans payment_plans = PreparePaymentPlan();
+  NewOrderPlans new_order_plans = PrepareNewOrderPlan();
+  PaymentPlans payment_plans = PreparePaymentPlan();
   
   // backoff
   uint32_t backoff_shifts = 0;
@@ -131,77 +122,29 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    // while (RunNewOrder(new_order_plans, thread_id) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
-
-    // while (RunPayment(payment_plans) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
-
-    while (RunDelivery(thread_id) == false) {
-      execution_count_ref++;
-      // backoff
-      if (state.run_backoff) {
-        if (backoff_shifts < 63) {
-          ++backoff_shifts;
-        }
-        uint64_t spins = 1UL << backoff_shifts;
-        spins *= 100;
-        while (spins) {
-          _mm_pause();
-          --spins;
-        }
-      }
-    }
+     auto rng_val = generator.GetSample();
     
-    // auto rng_val = generator.GetSample();
-    
-    // if (rng_val <= 0.04) {
-    //   while (RunStockLevel() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.08) {
-    //   while (RunDelivery() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.12) {
-    //   while (RunOrderStatus() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.55) {
-    //   while (RunPayment() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else {
-    //   while (RunNewOrder() == false) {
-    //     execution_count_ref++;
-    //   }
-    // }
+     if (rng_val <= 0.04) {
+       while (RunStockLevel(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.08) {
+       while (RunDelivery(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.12) {
+       while (RunOrderStatus(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.55) {
+       while (RunPayment(payment_plans, thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else {
+       while (RunNewOrder(new_order_plans, thread_id) == false) {
+         execution_count_ref++;
+       }
+     }
 
     backoff_shifts >>= 1;
     transaction_count_ref++;
@@ -326,15 +269,15 @@ void RunWorkload() {
 
 
   LOG_INFO("============TABLE SIZES==========");
-  LOG_INFO("warehouse count = %u", warehouse_table->GetAllActiveTupleCount());
-  LOG_INFO("district count  = %u", district_table->GetAllActiveTupleCount());
-  LOG_INFO("item count = %u", item_table->GetAllActiveTupleCount());
-  LOG_INFO("customer count = %u", customer_table->GetAllActiveTupleCount());
-  LOG_INFO("history count = %u", history_table->GetAllActiveTupleCount());
-  LOG_INFO("stock count = %u", stock_table->GetAllActiveTupleCount());
-  LOG_INFO("orders count = %u", orders_table->GetAllActiveTupleCount());
-  LOG_INFO("new order count = %u", new_order_table->GetAllActiveTupleCount());
-  LOG_INFO("order line count = %u", order_line_table->GetAllActiveTupleCount());
+  LOG_INFO("warehouse count = %u", warehouse_table->GetAllCurrentTupleCount());
+  LOG_INFO("district count  = %u", district_table->GetAllCurrentTupleCount());
+  LOG_INFO("item count = %u", item_table->GetAllCurrentTupleCount());
+  LOG_INFO("customer count = %u", customer_table->GetAllCurrentTupleCount());
+  LOG_INFO("history count = %u", history_table->GetAllCurrentTupleCount());
+  LOG_INFO("stock count = %u", stock_table->GetAllCurrentTupleCount());
+  LOG_INFO("orders count = %u", orders_table->GetAllCurrentTupleCount());
+  LOG_INFO("new order count = %u", new_order_table->GetAllCurrentTupleCount());
+  LOG_INFO("order line count = %u", order_line_table->GetAllCurrentTupleCount());
 }
 
 

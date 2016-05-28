@@ -103,6 +103,8 @@ MixedPlans PrepareMixedPlan() {
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
   oid_t column_count = state.column_count + 1;
+  oid_t begin_column_count = 1;
+  oid_t end_column_count = begin_column_count + state.update_column_count - 1;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
     column_ids.push_back(col_itr);
@@ -130,9 +132,9 @@ MixedPlans PrepareMixedPlan() {
   TargetList target_list;
   DirectMapList direct_map_list;
 
-  // Update the second attribute
+  // update multiple attributes
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    if (col_itr != 1) {
+    if (col_itr < begin_column_count || col_itr > end_column_count) {
       direct_map_list.emplace_back(col_itr,
                                    std::pair<oid_t, oid_t>(0, col_itr));
     }
@@ -173,6 +175,10 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
   auto txn = txn_manager.BeginTransaction();
 
 
+  /////////////////////////////////////////////////////////
+  // PERFORM READ
+  /////////////////////////////////////////////////////////
+
   for (int i = 0; i < read_count; i++) {
 
     mixed_plans.index_scan_executor_->ResetState();
@@ -199,7 +205,7 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
   }
 
   /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
+  // PERFORM UPDATE
   /////////////////////////////////////////////////////////
 
   for (int i = 0; i < write_count; i++) {
@@ -216,13 +222,19 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
     mixed_plans.update_index_scan_executor_->SetValues(values);
 
     TargetList target_list;
-    // std::string update_raw_value(ycsb_field_length - 1, 'u');
-    int update_raw_value = 2;
-  
-    Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
 
-    target_list.emplace_back(
-        1, expression::ExpressionUtil::ConstantValueFactory(update_val));
+
+    oid_t begin_column_count = 1;
+    oid_t end_column_count = begin_column_count + state.update_column_count - 1;
+
+    for (oid_t col_itr = begin_column_count; col_itr <= end_column_count; ++col_itr) {
+      int update_raw_value = col_itr;
+  
+      Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
+
+      target_list.emplace_back(
+          col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+    }
 
     mixed_plans.update_executor_->SetTargetList(target_list);
 

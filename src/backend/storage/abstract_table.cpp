@@ -38,6 +38,10 @@ AbstractTable::AbstractTable(oid_t database_oid, oid_t table_oid,
     auto *gc_manager = dynamic_cast<gc::Cooperative_GCManager*>(&gc::GCManagerFactory::GetInstance());
     assert(gc_manager != nullptr);
     gc_manager->RegisterTable(table_oid);
+  } else if (gc::GCManagerFactory::GetGCType() == GC_TYPE_VACUUM) {
+    auto *gc_manager = dynamic_cast<gc::Vacuum_GCManager*>(&gc::GCManagerFactory::GetInstance());
+    assert(gc_manager != nullptr);
+    gc_manager->RegisterTable(table_oid);
   }
 }
 

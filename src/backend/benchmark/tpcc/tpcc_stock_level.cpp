@@ -98,12 +98,11 @@ bool RunStockLevel(const size_t &thread_id) {
     new executor::ExecutorContext(txn));
 
   // Prepare random data
-  //int w_id = GetRandomInteger(0, state.warehouse_count - 1);
   int w_id = GenerateWarehouseId(thread_id);
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
   int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
 
-  LOG_INFO("getOId: SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?");
+  LOG_TRACE("getOId: SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?");
 
   // Construct index scan executor
   std::vector<oid_t> district_column_ids = {COL_IDX_D_NEXT_O_ID};
@@ -141,11 +140,11 @@ bool RunStockLevel(const size_t &thread_id) {
 
   Value o_id = districts[0][0];
 
-  LOG_INFO("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
+  LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
 
-  //////////////////////////////////////////////////////////////////
-  ///////////// Construct left table index scan ////////////////////
-  //////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////
+  /////////// Construct left table index scan ////////////////////
+  ////////////////////////////////////////////////////////////////
   std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
   std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID, COL_IDX_OL_O_ID};
   std::vector<ExpressionType> order_line_expr_types;
@@ -207,6 +206,8 @@ bool RunStockLevel(const size_t &thread_id) {
   executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node,
                                                             context.get());
 
+  //stock_index_scan_executor.Init();
+
   ////////////////////////////////////////////////
   ////////////// Join ////////////////////////////
   ////////////////////////////////////////////////
@@ -231,47 +232,65 @@ bool RunStockLevel(const size_t &thread_id) {
   planner::NestedLoopJoinPlan join_plan(JOIN_TYPE_INNER, std::move(join_predicate), std::move(projection), join_schema);
   executor::NestedLoopJoinExecutor join_executor(&join_plan, context.get());
   join_executor.AddChild(&order_line_index_scan_executor);
+  join_executor.AddChild(&stock_index_scan_executor);
 
-  ////////////////////////////////////////////////
-  ////////////// Aggregator //////////////////////
-  ////////////////////////////////////////////////
-  std::vector<oid_t> group_by_columns;
-  DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
-  TargetList aggregate_target_list;
+  // current implementation of aggregation is too costly. workaround.
+  join_executor.Init();
 
-  std::unique_ptr<const planner::ProjectInfo> aggregate_projection(
-      new planner::ProjectInfo(std::move(aggregate_target_list),
-                               std::move(aggregate_direct_map_list)));
-
-  std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-  bool distinct = true;
-  planner::AggregatePlan::AggTerm count_distinct(
-      EXPRESSION_TYPE_AGGREGATE_COUNT,
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0),
-      distinct);
-  agg_terms.push_back(count_distinct);
-
-  // The schema is the same as the join operator
-  std::shared_ptr<const catalog::Schema> aggregate_schema(new catalog::Schema({
-    order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
-  }));
-
-  planner::AggregatePlan count_distinct_node(
-    std::move(aggregate_projection), nullptr, std::move(agg_terms),
-    std::move(group_by_columns), aggregate_schema,
-    AGGREGATE_TYPE_PLAIN);
-
-  executor::AggregateExecutor count_distinct_executor(&count_distinct_node, context.get());
-  count_distinct_executor.AddChild(&join_executor);
-
-  count_distinct_executor.Init();
-
-  auto count_result = ExecuteReadTest(&count_distinct_executor);
+  auto join_result = ExecuteReadTest(&join_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
     return false;
   }
-  assert(count_result.size() == 1);
+  LOG_TRACE("join result size=%lu", join_result.size());
+  
+  std::unordered_set<int> distinct_items;
+  for (size_t i = 0; i < join_result.size(); ++i) {
+    int join_value = ValuePeeker::PeekAsInteger(join_result[i][0]);
+    distinct_items.insert(join_value);
+  }
+  LOG_TRACE("number of distinct items=%lu", distinct_items.size());
+
+  ////////////////////////////////////////////////
+  ////////////// Aggregator //////////////////////
+  ////////////////////////////////////////////////
+  // std::vector<oid_t> group_by_columns;
+  // DirectMapList aggregate_direct_map_list = {{0, {1, 0}}};
+  // TargetList aggregate_target_list;
+
+  // std::unique_ptr<const planner::ProjectInfo> aggregate_projection(
+  //     new planner::ProjectInfo(std::move(aggregate_target_list),
+  //                              std::move(aggregate_direct_map_list)));
+
+  // std::vector<planner::AggregatePlan::AggTerm> agg_terms;
+  // bool distinct = true;
+  // planner::AggregatePlan::AggTerm count_distinct(
+  //     EXPRESSION_TYPE_AGGREGATE_COUNT,
+  //     expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0),
+  //     distinct);
+  // agg_terms.push_back(count_distinct);
+
+  // // The schema is the same as the join operator
+  // std::shared_ptr<const catalog::Schema> aggregate_schema(new catalog::Schema({
+  //   order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
+  // }));
+
+  // planner::AggregatePlan count_distinct_node(
+  //   std::move(aggregate_projection), nullptr, std::move(agg_terms),
+  //   std::move(group_by_columns), aggregate_schema,
+  //   AGGREGATE_TYPE_PLAIN);
+
+  // executor::AggregateExecutor count_distinct_executor(&count_distinct_node, context.get());
+  // count_distinct_executor.AddChild(&join_executor);
+
+  // count_distinct_executor.Init();
+  
+  // auto count_result = ExecuteReadTest(&count_distinct_executor);
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
+  // assert(count_result.size() == 1);
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
