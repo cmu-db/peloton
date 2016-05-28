@@ -51,9 +51,9 @@ static const oid_t orders_table_skey_index_oid = 20071; // O_W_ID, O_D_ID, O_C_I
 static const oid_t new_order_table_oid = 1008;
 static const oid_t new_order_table_pkey_index_oid = 20080; // NO_D_ID, NO_W_ID, NO_O_ID
 
-static const oid_t order_line_table_oid = 1008;
-static const oid_t order_line_table_pkey_index_oid = 20080; // OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER
-static const oid_t order_line_table_skey_index_oid = 20081; // OL_W_ID, OL_D_ID, OL_O_ID
+static const oid_t order_line_table_oid = 1009;
+static const oid_t order_line_table_pkey_index_oid = 20090; // OL_W_ID, OL_D_ID, OL_O_ID, OL_NUMBER
+static const oid_t order_line_table_skey_index_oid = 20091; // OL_W_ID, OL_D_ID, OL_O_ID
 
 class configuration {
  public:
