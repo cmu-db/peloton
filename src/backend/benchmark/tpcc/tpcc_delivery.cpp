@@ -371,51 +371,50 @@ bool RunDelivery(const size_t &thread_id){
     LOG_TRACE("updateOrderLine: UPDATE ORDER_LINE SET OL_DELIVERY_D = ? WHERE OL_O_ID = ? AND OL_D_ID = ? AND OL_W_ID = ?");
 
     // Construct index scan executor
-    // std::vector<oid_t> order_line_column_ids2 = {COL_IDX_OL_DELIVERY_D};
+    std::vector<oid_t> order_line_column_ids2 = {COL_IDX_OL_DELIVERY_D};
 
-    // predicate = nullptr;
-    // planner::IndexScanPlan order_line_index_scan_node2(order_line_table, predicate, order_line_column_ids2, order_line_index_scan_desc);
-    // executor::IndexScanExecutor order_line_index_scan_executor2(
-    //   &order_line_index_scan_node2, context.get());
+    predicate = nullptr;
+    planner::IndexScanPlan order_line_index_scan_node2(order_line_table, predicate, order_line_column_ids2, order_line_index_scan_desc);
+    executor::IndexScanExecutor order_line_index_scan_executor2(
+     &order_line_index_scan_node2, context.get());
 
-    // // Construct update executor
-    // TargetList order_line_target_list;
-    // DirectMapList order_line_direct_map_list;
+    // Construct update executor
+    TargetList order_line_target_list;
+    DirectMapList order_line_direct_map_list;
 
-    // size_t order_line_column_count = 10;
-    // for (oid_t col_itr = 0; col_itr < order_line_column_count; col_itr++) {
-    //   // Skip OL_DELIVERY_D
-    //   if (col_itr != COL_IDX_OL_DELIVERY_D)
-    //     order_line_direct_map_list.emplace_back(col_itr,
-    //       std::make_pair(0, col_itr));
-    // }
+    size_t order_line_column_count = 10;
+    for (oid_t col_itr = 0; col_itr < order_line_column_count; col_itr++) {
+     // Skip OL_DELIVERY_D
+     if (col_itr != COL_IDX_OL_DELIVERY_D)
+       order_line_direct_map_list.emplace_back(col_itr,
+         std::make_pair(0, col_itr));
+    }
 
-    // Value order_line_update_val = ValueFactory::GetTimestampValue(
-    //   ol_delivery_d);
-    // order_line_target_list.emplace_back(
-    //   COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(
-    //     order_line_update_val));
+    Value order_line_update_val = ValueFactory::GetTimestampValue(0);
+    order_line_target_list.emplace_back(
+     COL_IDX_OL_DELIVERY_D, expression::ExpressionUtil::ConstantValueFactory(
+       order_line_update_val));
 
-    // std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
-    //   new planner::ProjectInfo(std::move(order_line_target_list),
-    //                            std::move(order_line_direct_map_list)));
-    // planner::UpdatePlan order_line_update_node(order_line_table, std::move(order_line_project_info));
+    std::unique_ptr<const planner::ProjectInfo> order_line_project_info(
+     new planner::ProjectInfo(std::move(order_line_target_list),
+                              std::move(order_line_direct_map_list)));
+    planner::UpdatePlan order_line_update_node(order_line_table, std::move(order_line_project_info));
 
-    // executor::UpdateExecutor order_line_update_executor(&order_line_update_node,
-    //   context.get());
-    // order_line_update_executor.AddChild(&order_line_index_scan_executor2);
+    executor::UpdateExecutor order_line_update_executor(&order_line_update_node,
+     context.get());
+    order_line_update_executor.AddChild(&order_line_index_scan_executor2);
 
-    // // Manuallt init
-    // order_line_update_executor.Init();
-    // // if (status == false) {
-    // //   throw Exception("Init failed");
-    // // }
+    // Manuallt init
+    status = order_line_update_executor.Init();
+    if (status == false) {
+     throw Exception("Init failed");
+    }
 
-    // ExecuteUpdateTest(&order_line_update_executor);
-    // if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    //   txn_manager.AbortTransaction();
-    //   return false;
-    // }
+    ExecuteUpdateTest(&order_line_update_executor);
+    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+     txn_manager.AbortTransaction();
+     return false;
+    }
 
     LOG_TRACE("updateCustomer: UPDATE CUSTOMER SET C_BALANCE = C_BALANCE + ? WHERE C_ID = ? AND C_D_ID = ? AND C_W_ID = ?");
 
