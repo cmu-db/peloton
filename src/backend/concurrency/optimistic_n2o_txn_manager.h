@@ -24,7 +24,7 @@ namespace concurrency {
 
 class OptimisticN2OTxnManager : public TransactionManager {
 public:
-  OptimisticN2OTxnManager() : last_epoch_(0) {}
+  OptimisticN2OTxnManager() {}
 
   virtual ~OptimisticN2OTxnManager() {}
 
@@ -72,17 +72,17 @@ public:
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
 
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
+    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+    txn->SetEpochId(eid);
+
+    current_txn = txn;
 
     return txn;
   }
 
   virtual void EndTransaction() {
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
+    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
@@ -106,10 +106,6 @@ public:
     *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id))) = item_ptr;
   }
 
-private:
-  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
-  cid_t last_epoch_;
-  cid_t last_max_commit_cid_;
 };
 }
 }
