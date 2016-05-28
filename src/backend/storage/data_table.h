@@ -128,7 +128,7 @@ class DataTable : public AbstractTable {
   // Get a tile group with given layout
   TileGroup *GetTileGroupWithLayout(const column_map_type &partitioning);
 
-  oid_t GetAllActiveTupleCount();
+  oid_t GetAllCurrentTupleCount();
 
   //===--------------------------------------------------------------------===//
   // INDEX

@@ -50,7 +50,8 @@ hyadapt_LDADD = $(benchmark_common_ldadd)
 ######################################################################
 
 ycsb_SOURCES =  \
-					backend/benchmark/ycsb/ycsb.cpp \
+                         backend/benchmark/benchmark_common.cpp \
+				backend/benchmark/ycsb/ycsb.cpp \
                     backend/benchmark/ycsb/ycsb_configuration.cpp \
                     backend/benchmark/ycsb/ycsb_workload.cpp \
                     backend/benchmark/ycsb/ycsb_loader.cpp \
@@ -67,7 +68,8 @@ ycsb_LDADD = $(benchmark_common_ldadd)
 ######################################################################
 
 tpcc_SOURCES =  \
-					backend/benchmark/tpcc/tpcc.cpp \
+                         backend/benchmark/benchmark_common.cpp \
+				backend/benchmark/tpcc/tpcc.cpp \
                     backend/benchmark/tpcc/tpcc_configuration.cpp \
                     backend/benchmark/tpcc/tpcc_workload.cpp \
                     backend/benchmark/tpcc/tpcc_loader.cpp \

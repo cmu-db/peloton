@@ -43,14 +43,16 @@ public:
   virtual void RecycleOldTupleSlot(const oid_t __attribute__((unused))&table_id,
                                    const oid_t __attribute__((unused))&tile_group_id,
                                    const oid_t __attribute__((unused))&tuple_id,
-                                   const cid_t __attribute__((unused))&tuple_end_cid) {};
+                                   const cid_t __attribute__((unused))&tuple_end_cid) {}
 
   // recycle invalid version
   virtual void RecycleInvalidTupleSlot(const oid_t __attribute__((unused))&table_id,
                                        const oid_t __attribute__((unused))&tile_group_id,
-                                       const oid_t __attribute__((unused))&tuple_id) {};
+                                       const oid_t __attribute__((unused))&tuple_id) {}
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t __attribute__((unused))&table_id) {return INVALID_ITEMPOINTER;};
+  virtual ItemPointer ReturnFreeSlot(const oid_t __attribute__((unused))&table_id) {
+    return INVALID_ITEMPOINTER;
+  }
 };
 
 }  // namespace gc

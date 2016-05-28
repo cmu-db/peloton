@@ -93,10 +93,10 @@ void Cooperative_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata)
   //recycle_queue_.Enqueue(tuple_metadata);
 
   // Add to the recycle map
-  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
   // if the entry for table_id exists.
 
-  assert(recycle_queue_map_.count(tuple_metadata.table_id != 0));
+  assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
   recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
 }
 
@@ -215,7 +215,7 @@ ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id) {
     return ItemPointer(tuple_metadata.tile_group_id,
                        tuple_metadata.tuple_slot_id);
   }
-  return ItemPointer();
+  return INVALID_ITEMPOINTER;
 }
 
 

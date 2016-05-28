@@ -225,13 +225,17 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Validate MVCC storage
-  ValidateMVCC();
+  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
+    ValidateMVCC();
+  }
 
   // Run the workload
   RunWorkload();
 
   // Validate MVCC storage
-  ValidateMVCC();
+  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
+    ValidateMVCC();
+  }
 
   WriteOutput();
 }

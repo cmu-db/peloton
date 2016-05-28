@@ -48,6 +48,15 @@ public:
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
+  void RegisterTable(oid_t table_id) {
+    // Insert a new entry for the table
+    if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
+      LOG_TRACE("register table %d to garbage collector", (int)table_id);
+      std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      recycle_queue_map_[table_id] = recycle_queue;
+    }
+  }
+
 private:
   void ClearGarbage();
 
@@ -66,7 +75,6 @@ private:
   // Data members
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
-  GCType gc_type_;
 
   std::unique_ptr<std::thread> gc_thread_;
 
@@ -81,7 +89,8 @@ private:
 
   // TODO: use shared pointer to reduce memory copy
   // table_id -> queue
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
+  //cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
+  std::unordered_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
 };
 }
 }

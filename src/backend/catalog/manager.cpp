@@ -38,7 +38,7 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
-  //printf("lock hashmap here %d\n", oid);
+    LOG_TRACE("create tile group %d\n", oid);
 
   // drop the catalog reference to the old tile group
   // locator.erase(oid);
@@ -52,7 +52,7 @@ void Manager::AddTileGroup(
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   {
-    LOG_INFO("Dropping tile group %u", oid);
+    LOG_TRACE("Dropping tile group %u", oid);
     // drop the catalog reference to the tile group
     //locator.erase(oid);
     locator[oid] = nullptr;

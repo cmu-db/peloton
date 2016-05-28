@@ -115,7 +115,7 @@ bool RunOrderStatus(const size_t &thread_id){
 
   // Run queries
   if (c_id != -1) {
-    LOG_INFO("getCustomerByCustomerId: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?  # w_id, d_id, c_id");
+    LOG_TRACE("getCustomerByCustomerId: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_ID = ?  # w_id, d_id, c_id");
     // Construct index scan executor
     std::vector<oid_t> customer_column_ids = 
       {COL_IDX_C_ID, COL_IDX_C_FIRST, COL_IDX_C_MIDDLE, 
@@ -156,7 +156,7 @@ bool RunOrderStatus(const size_t &thread_id){
     assert(result.size() > 0);
     assert(result[0].size() > 0);
   } else {
-    LOG_INFO("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
+    LOG_TRACE("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
     // Construct index scan executor
     std::vector<oid_t> customer_column_ids = 
       {COL_IDX_C_ID, COL_IDX_C_FIRST, COL_IDX_C_MIDDLE, 
@@ -186,6 +186,8 @@ bool RunOrderStatus(const size_t &thread_id){
 
     executor::IndexScanExecutor customer_index_scan_executor(&customer_index_scan_node, context.get());
 
+    customer_index_scan_executor.Init();
+
     // Construct order by executor
     std::vector<oid_t> sort_keys = {1};
     std::vector<bool> descend_flags = {false};
@@ -198,7 +200,7 @@ bool RunOrderStatus(const size_t &thread_id){
     customer_order_by_executor.AddChild(&customer_index_scan_executor);
 
     customer_order_by_executor.Init();
-
+    
     auto result = ExecuteReadTest(&customer_order_by_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
@@ -215,7 +217,7 @@ bool RunOrderStatus(const size_t &thread_id){
 
   assert(c_id >= 0);
 
-  LOG_INFO("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id");
+  LOG_TRACE("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id");
 
   // Construct index scan executor
   std::vector<oid_t> orders_column_ids = {COL_IDX_O_ID
@@ -263,6 +265,8 @@ bool RunOrderStatus(const size_t &thread_id){
   executor::LimitExecutor limit_executor(&limit_node, context.get());
   limit_executor.AddChild(&orders_order_by_executor);
 
+  orders_order_by_executor.Init();
+
   auto orders = ExecuteReadTest(&orders_order_by_executor);
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     txn_manager.AbortTransaction();
@@ -270,7 +274,7 @@ bool RunOrderStatus(const size_t &thread_id){
   }
 
   if (orders.size() != 0) {
-    LOG_INFO("getOrderLines: SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?, # w_id, d_id, o_id");
+    LOG_TRACE("getOrderLines: SELECT OL_SUPPLY_W_ID, OL_I_ID, OL_QUANTITY, OL_AMOUNT, OL_DELIVERY_D FROM ORDER_LINE WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID = ?, # w_id, d_id, o_id");
     
     // Construct index scan executor
     std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_SUPPLY_W_ID, COL_IDX_OL_I_ID, COL_IDX_OL_QUANTITY, COL_IDX_OL_AMOUNT, COL_IDX_OL_DELIVERY_D};
