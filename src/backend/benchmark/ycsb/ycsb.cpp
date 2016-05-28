@@ -20,7 +20,6 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
-//#include "backend/common/assert.h"
 #include "backend/gc/gc_manager_factory.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
