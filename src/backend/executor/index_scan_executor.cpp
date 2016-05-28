@@ -106,6 +106,7 @@ bool IndexScanExecutor::DInit() {
 bool IndexScanExecutor::DExecute() {
   LOG_TRACE("Index Scan executor :: 0 child");
 
+
   if (!done_) {
     if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
       auto status = ExecPrimaryIndexLookup();

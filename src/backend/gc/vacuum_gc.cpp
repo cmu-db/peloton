@@ -114,7 +114,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
       break;
     }
   }
-  LOG_INFO("Marked %d tuples as recycled", tuple_counter);
+  LOG_TRACE("Marked %d tuples as recycled", tuple_counter);
 }
 
 void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
@@ -235,10 +235,11 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
 
 // delete a tuple from all its indexes it belongs to.
 void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
   LOG_TRACE("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
            tuple_metadata.tuple_slot_id);
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
 
   assert(tile_group != nullptr);
   storage::DataTable *table =
@@ -264,6 +265,12 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
     switch (index->GetIndexType()) {
       case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
         LOG_TRACE("Deleting primary index");
+
+        // Do nothing for new to old version chain here
+        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
+          continue;
+        }
+
         // find next version the index bucket should point to.
         auto tile_group_header = tile_group->GetHeader();
         ItemPointer next_version =

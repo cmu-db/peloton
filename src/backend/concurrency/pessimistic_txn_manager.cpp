@@ -415,7 +415,6 @@ Result PessimisticTxnManager::CommitTransaction() {
               pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
                   pessimistic_released_rdlock[tile_group_id].end()) {
             ReleaseReadLock(tile_group_header, tuple_slot);
-            pessimistic_released_rdlock[tile_group_id].insert(tuple_slot);
           }
         } else {
           assert(tuple_entry.second == RW_TYPE_INS_DEL);
@@ -450,7 +449,6 @@ Result PessimisticTxnManager::CommitTransaction() {
             pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
                 pessimistic_released_rdlock[tile_group_id].end()) {
           ReleaseReadLock(tile_group_header, tuple_slot);
-          pessimistic_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
@@ -560,7 +558,6 @@ Result PessimisticTxnManager::AbortTransaction() {
             pessimistic_released_rdlock[tile_group_id].find(tuple_slot) ==
                 pessimistic_released_rdlock[tile_group_id].end()) {
           ReleaseReadLock(tile_group_header, tuple_slot);
-          pessimistic_released_rdlock[tile_group_id].insert(tuple_slot);
         }
       } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         ItemPointer new_version =
