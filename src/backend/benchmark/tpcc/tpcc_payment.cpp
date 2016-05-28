@@ -458,7 +458,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
     // Check if aborted
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_INFO("abort transaction");
+      LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction();
       return false;
     }
@@ -488,7 +488,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
     // Check if aborted
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_INFO("abort transaction");
+      LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction();
       return false;
     }
@@ -520,7 +520,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -548,7 +548,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -582,7 +582,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check if aborted
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -613,7 +613,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check the result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -698,7 +698,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check the result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -734,7 +734,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
 
   // Check result
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_INFO("abort transaction");
+    LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
   }

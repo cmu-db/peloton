@@ -32,8 +32,7 @@ AbstractTable::AbstractTable(oid_t database_oid, oid_t table_oid,
       table_name(table_name),
       schema(schema),
       own_schema_(own_schema) {
-
-  // Register GC if using cooperative GC manager
+  // Register GC if using cooperative GC or vacuum GC
   if (gc::GCManagerFactory::GetGCType() == GC_TYPE_CO) {
     auto *gc_manager = dynamic_cast<gc::Cooperative_GCManager*>(&gc::GCManagerFactory::GetInstance());
     assert(gc_manager != nullptr);

@@ -303,7 +303,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
                   // build key.
                   std::unique_ptr<storage::Tuple> key(
-                    new storage::Tuple(table->GetSchema(), true));
+                    new storage::Tuple(index_schema, true));
                   key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
 
                   LOG_TRACE("Deleting from secondary index");

@@ -122,27 +122,92 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-     auto rng_val = generator.GetSample();
+    //auto rng_val = generator.GetSample();
+    fast_random rng(rand());
     
+    auto rng_val = rng.next_uniform();
+
      if (rng_val <= 0.04) {
        while (RunStockLevel(thread_id) == false) {
          execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
        }
-     } else if (rng_val <= 0.08) {
+     } 
+     else if (rng_val <= 0.08) {
        while (RunDelivery(thread_id) == false) {
          execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
        }
-     } else if (rng_val <= 0.12) {
+     } 
+     else if (rng_val <= 0.12) {
        while (RunOrderStatus(thread_id) == false) {
          execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
        }
      } else if (rng_val <= 0.55) {
        while (RunPayment(payment_plans, thread_id) == false) {
          execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
        }
      } else {
        while (RunNewOrder(new_order_plans, thread_id) == false) {
          execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
        }
      }
 
