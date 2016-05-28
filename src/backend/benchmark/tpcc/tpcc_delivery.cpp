@@ -115,7 +115,6 @@ bool RunDelivery(const size_t &thread_id){
 
   for (int d_id = 0; d_id < state.districts_per_warehouse; ++d_id) {
     LOG_TRACE("getNewOrder: SELECT NO_O_ID FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID > -1 LIMIT 1");
-
     // Construct index scan executor
     std::vector<oid_t> new_order_column_ids = {COL_IDX_NO_O_ID};
     std::vector<oid_t> new_order_key_column_ids = {COL_IDX_NO_D_ID, COL_IDX_NO_W_ID, COL_IDX_NO_O_ID};
@@ -162,6 +161,11 @@ bool RunDelivery(const size_t &thread_id){
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
       return false;
+    }
+
+    if (new_order_ids.size() == 0) {
+      // TODO:  No orders for this district: skip it. Note: This must be reported if > 1%
+      continue;
     }
 
     assert(new_order_ids.size() == 1);
@@ -245,54 +249,22 @@ bool RunDelivery(const size_t &thread_id){
 
     executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
 
-    // Construct aggregate executor
-    std::vector<oid_t> group_by_columns = {};
-    // Prepare proj info
-    DirectMapList direct_map_list = {{0, {1, 0}}};
-    std::unique_ptr<const planner::ProjectInfo> proj_info(
-      new planner::ProjectInfo(TargetList(),
-                              std::move(direct_map_list)));
-    // Set up aggregators
-    std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-    planner::AggregatePlan::AggTerm sum(
-      EXPRESSION_TYPE_AGGREGATE_SUM,
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_DOUBLE, 0, 0));
-      // Should this be the column id of the output tuple or original tuple?
-    agg_terms.push_back(sum);
-
-    predicate = nullptr;
-
-    auto order_line_table_schema = order_line_table->GetSchema();
-    std::vector<catalog::Column> columns = {order_line_table_schema->GetColumn(COL_IDX_OL_AMOUNT)};
-
-    std::shared_ptr<const catalog::Schema> output_table_schema(
-      new catalog::Schema(columns));
-
-    // Create the aggregate plan
-    planner::AggregatePlan sum_node(
-      std::move(proj_info), predicate, std::move(agg_terms),
-      std::move(group_by_columns), output_table_schema,
-      AGGREGATE_TYPE_PLAIN);
-
-    executor::AggregateExecutor sum_executor(&sum_node, context.get());
-    sum_executor.AddChild(&order_line_index_scan_executor);
-
-    // Manuallt init
-    status = sum_executor.Init();
+    // Manually init
+    status = order_line_index_scan_executor.Init();
     if (status == false) {
       throw Exception("Init failed");
     }
 
-    auto sum_result = ExecuteReadTest(&sum_executor);
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
-      return false;
+    auto order_line_index_scan_res = ExecuteReadTest(&order_line_index_scan_executor);
+    double sum_res = 0.0;
+
+    // Workaround: Externanl sum
+    for (auto v : order_line_index_scan_res) {
+      assert(v.size() == 1);
+      sum_res += ValuePeeker::PeekDouble(v[0]);
     }
 
-    assert(sum_result.size() == 1);
-    assert(sum_result[0].size() == 1);
-
-    auto ol_total = sum_result[0][0];
+    auto ol_total = ValueFactory::GetDoubleValue(sum_res);
 
     LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 

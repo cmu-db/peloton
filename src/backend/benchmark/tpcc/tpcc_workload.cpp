@@ -105,14 +105,14 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
-  //UniformGenerator generator;
+  UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
 
 
-  //NewOrderPlans new_order_plans = PrepareNewOrderPlan();
-  //PaymentPlans payment_plans = PreparePaymentPlan();
+  NewOrderPlans new_order_plans = PrepareNewOrderPlan();
+  PaymentPlans payment_plans = PreparePaymentPlan();
   
   // backoff
   uint32_t backoff_shifts = 0;
@@ -122,93 +122,29 @@ void RunBackend(oid_t thread_id) {
       break;
     }
 
-    // while (RunNewOrder(new_order_plans, thread_id) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
-
-    // while (RunPayment(payment_plans) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
-
-    while (RunStockLevel(thread_id) == false) {
-      execution_count_ref++;
-      // backoff
-      if (state.run_backoff) {
-        if (backoff_shifts < 63) {
-          ++backoff_shifts;
-        }
-        uint64_t spins = 1UL << backoff_shifts;
-        spins *= 100;
-        while (spins) {
-          _mm_pause();
-          --spins;
-        }
-      }
-    }
-
-    // while (RunDelivery(thread_id) == false) {
-    //   execution_count_ref++;
-    //   // backoff
-    //   if (state.run_backoff) {
-    //     if (backoff_shifts < 63) {
-    //       ++backoff_shifts;
-    //     }
-    //     uint64_t spins = 1UL << backoff_shifts;
-    //     spins *= 100;
-    //     while (spins) {
-    //       _mm_pause();
-    //       --spins;
-    //     }
-    //   }
-    // }
+     auto rng_val = generator.GetSample();
     
-    // auto rng_val = generator.GetSample();
-    
-    // if (rng_val <= 0.04) {
-    //   while (RunStockLevel() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.08) {
-    //   while (RunDelivery() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.12) {
-    //   while (RunOrderStatus() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else if (rng_val <= 0.55) {
-    //   while (RunPayment() == false) {
-    //     execution_count_ref++;
-    //   }
-    // } else {
-    //   while (RunNewOrder() == false) {
-    //     execution_count_ref++;
-    //   }
-    // }
+     if (rng_val <= 0.04) {
+       while (RunStockLevel(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.08) {
+       while (RunDelivery(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.12) {
+       while (RunOrderStatus(thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else if (rng_val <= 0.55) {
+       while (RunPayment(payment_plans, thread_id) == false) {
+         execution_count_ref++;
+       }
+     } else {
+       while (RunNewOrder(new_order_plans, thread_id) == false) {
+         execution_count_ref++;
+       }
+     }
 
     backoff_shifts >>= 1;
     transaction_count_ref++;
