@@ -84,7 +84,7 @@ void CreateYCSBDatabase() {
   std::string table_name("USERTABLE");
 
   user_table = storage::TableFactory::GetDataTable(
-      ycsb_database_oid, user_table_oid, table_schema, table_name, 1000,
+      ycsb_database_oid, user_table_oid, table_schema, table_name, DEFAULT_TUPLES_PER_TILEGROUP,
       own_schema, adapt_table);
 
   ycsb_database->AddTable(user_table);

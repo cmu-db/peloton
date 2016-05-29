@@ -134,7 +134,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
     if (tuple_metadata.tuple_end_cid < max_cid) {
       // Now that we know we need to recycle tuple, we need to delete all
       // tuples from the indexes to which it belongs as well.
-      DeleteTupleFromIndexes(tuple_metadata);
+      //DeleteTupleFromIndexes(tuple_metadata);
 
       // Add to the garbage map
       // reclaim_map_.insert(std::make_pair(getnextcid(), tuple_metadata));
@@ -183,11 +183,11 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_slot_id = tuple_id;
   tuple_metadata.tuple_end_cid = START_CID;
 
-  DeleteInvalidTupleFromIndex(tuple_metadata);
-  ResetTuple(tuple_metadata);
+  // DeleteInvalidTupleFromIndex(tuple_metadata);
+  // ResetTuple(tuple_metadata);
 
-  assert(recycle_queue_map_.count(table_id) != 0);
-  recycle_queue_map_[table_id]->Enqueue(tuple_metadata);
+  // assert(recycle_queue_map_.count(table_id) != 0);
+  // recycle_queue_map_[table_id]->Enqueue(tuple_metadata);
 
 
   // Add to the recycle map
@@ -259,7 +259,7 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
 
     // build key.
     std::unique_ptr<storage::Tuple> key(
-      new storage::Tuple(table->GetSchema(), true));
+      new storage::Tuple(index_schema, true));
     key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
 
     switch (index->GetIndexType()) {
@@ -279,6 +279,7 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
         auto next_tile_group_header = manager.GetTileGroup(next_version.block)->GetHeader();
         auto next_begin_cid = next_tile_group_header->GetBeginCommitId(next_version.offset);
         assert(next_version.IsNull() == false);
+
         assert(next_begin_cid != MAX_CID);
 
         std::vector<ItemPointer *> item_pointer_containers;
