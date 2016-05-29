@@ -141,4 +141,12 @@ class Spinlock {
   std::atomic<LockState> spin_lock_state;
 };
 
+class SpinlockGuard {
+private:
+  Spinlock *lock_ptr;
+public:
+  SpinlockGuard(Spinlock *lp) :lock_ptr(lp) {lock_ptr->Lock();}
+  ~SpinlockGuard() {lock_ptr->Unlock();}
+};
+
 }  // End peloton namespace
