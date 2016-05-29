@@ -192,7 +192,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_WARN("Index constraint violated when inserting secondary index");
     return INVALID_ITEMPOINTER;
   }
 
@@ -218,7 +218,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_WARN("Index constraint violated when inserting secondary index");
     return INVALID_ITEMPOINTER;
   }
 

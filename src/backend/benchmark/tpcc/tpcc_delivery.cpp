@@ -309,7 +309,7 @@ bool RunDelivery(const size_t &thread_id){
       throw Exception("Init failed");
     }
 
-    //ExecuteDeleteTest(&new_order_delete_executor);
+    ExecuteDeleteTest(&new_order_delete_executor);
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       txn_manager.AbortTransaction();
       return false;

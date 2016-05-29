@@ -105,7 +105,7 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
-  UniformGenerator generator;
+  // UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
