@@ -579,6 +579,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   executor::InsertExecutor orders_executor(&orders_node, context.get());
   orders_executor.Execute();
 
+  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    LOG_TRACE("abort transaction");
+    txn_manager.AbortTransaction();
+    return false;
+  }
   
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
@@ -594,6 +599,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
 
+  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    LOG_TRACE("abort transaction");
+    txn_manager.AbortTransaction();
+    return false;
+  }
 
   for (size_t i = 0; i < i_ids.size(); ++i) {
     int item_id = i_ids.at(i);
@@ -684,8 +694,6 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     // brand_generic = 'G'
         
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
@@ -714,6 +722,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
     order_line_executor.Execute();
 
+    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+      LOG_TRACE("abort transaction");
+      txn_manager.AbortTransaction();
+      return false;
+    }
   }
 
   // transaction passed execution.
