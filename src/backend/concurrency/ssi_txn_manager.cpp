@@ -344,7 +344,7 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
   current_txn->RecordUpdate(old_location);
 
   InitTupleReserved(transaction_id, new_location.block, new_location.offset);
-  return true;
+  return;
 }
 
 void SsiTxnManager::PerformUpdate(const ItemPointer &location) {
@@ -392,7 +392,7 @@ void SsiTxnManager::PerformDelete(const ItemPointer &old_location,
   // Add the old tuple into the delete set
   current_txn->RecordDelete(old_location);
   InitTupleReserved(transaction_id, new_location.block, new_location.offset);
-  return true;
+  return;
 }
 
 void SsiTxnManager::PerformDelete(const ItemPointer &location) {
