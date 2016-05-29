@@ -66,6 +66,19 @@ class PessimisticTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
+  // init reserved area of a tuple
+  // creator txnid | lock (for read list) | read list head
+  // The txn_id could only be the cur_txn's txn id.
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+    auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetHeader();
+
+    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+    new ((reserved_area)) Spinlock();
+  }
+
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();

@@ -105,7 +105,7 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
-  UniformGenerator generator;
+  // UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
@@ -129,6 +129,7 @@ void RunBackend(oid_t thread_id) {
 
      if (rng_val <= 0.04) {
        while (RunStockLevel(thread_id) == false) {
+         std::cout << "stocklevel" << std::endl;
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -145,6 +146,7 @@ void RunBackend(oid_t thread_id) {
        }
      } else if (rng_val <= 0.08) {
        while (RunDelivery(thread_id) == false) {
+         std::cout << "delivery" << std::endl;
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -161,6 +163,7 @@ void RunBackend(oid_t thread_id) {
        }
      } else if (rng_val <= 0.12) {
        while (RunOrderStatus(thread_id) == false) {
+         std::cout << "orderstatus" << std::endl;
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -177,6 +180,7 @@ void RunBackend(oid_t thread_id) {
        }
      } else if (rng_val <= 0.55) {
        while (RunPayment(payment_plans, thread_id) == false) {
+         std::cout << "payment" << std::endl;
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -193,6 +197,7 @@ void RunBackend(oid_t thread_id) {
        }
      } else {
        while (RunNewOrder(new_order_plans, thread_id) == false) {
+         std::cout << "neworder" << std::endl;
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
