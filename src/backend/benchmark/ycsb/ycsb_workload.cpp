@@ -87,7 +87,7 @@ void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
   auto update_ratio = state.update_ratio;
-  auto operation_count = state.operation_count;
+  //auto operation_count = state.operation_count;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
@@ -95,14 +95,15 @@ void RunBackend(oid_t thread_id) {
   ZipfDistribution zipf(state.scale_factor * 1000 - 1,
                         state.zipf_theta);
 
+  fast_random rng(rand());
 
   // Run these many transactions
   if (state.run_mix) {
 
     MixedPlans mixed_plans = PrepareMixedPlan();
     
-    int write_count = operation_count * update_ratio;
-    int read_count = operation_count - write_count;
+    //int write_count = operation_count * update_ratio;
+    //int read_count = operation_count - write_count;
 
     // backoff
     uint32_t backoff_shifts = 0;
@@ -110,7 +111,7 @@ void RunBackend(oid_t thread_id) {
       if (is_running == false) {
         break;
       }
-      while (RunMixed(mixed_plans, zipf, read_count, write_count) == false) {
+      while (RunMixed(mixed_plans, zipf, fast_random) == false) {
         execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -131,7 +132,6 @@ void RunBackend(oid_t thread_id) {
     }
   } else {
 
-    fast_random rng(rand());
     ReadPlans read_plans = PrepareReadPlan();
     UpdatePlans update_plans = PrepareUpdatePlan();
     // backoff
