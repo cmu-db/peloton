@@ -19,6 +19,7 @@
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
+#include "backend/common/macros.h"
 
 namespace peloton {
 
@@ -30,6 +31,15 @@ namespace catalog { class Schema; }
 namespace storage { class Tuple; }
 
 namespace index {
+
+class RBItemPointer {
+public:
+  RBItemPointer(const ItemPointer &loc, const cid_t &ts):
+    location(loc),
+    timestamp(ts) {}
+  ItemPointer location;
+  cid_t timestamp;
+};
 
 //===--------------------------------------------------------------------===//
 // IndexMetadata
@@ -160,6 +170,66 @@ class Index : public Printable {
 
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
+
+  // For RB
+  virtual bool InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                           UNUSED_ATTRIBUTE const ItemPointer &location,
+                           UNUSED_ATTRIBUTE RBItemPointer **result)
+  {
+    assert(false);
+    return false;
+  }
+
+  virtual bool CondInsertEntry(
+      UNUSED_ATTRIBUTE const storage::Tuple *key, 
+      UNUSED_ATTRIBUTE const ItemPointer &location,
+      UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
+      UNUSED_ATTRIBUTE RBItemPointer **rb_itempointer_ptr)
+  {
+    assert(false);
+    return false;
+  }
+
+  virtual void Scan(UNUSED_ATTRIBUTE const std::vector<Value> &values,
+                    UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
+                    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &exprs,
+                    UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
+                    UNUSED_ATTRIBUTE std::vector<RBItemPointer> &)
+  {
+    assert(false);
+  }
+
+  // scan the entire index, working like a sort
+  virtual void ScanAllKeys(UNUSED_ATTRIBUTE std::vector<RBItemPointer> &)
+  {
+    assert(false);
+  }
+
+  virtual void ScanKey(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                       UNUSED_ATTRIBUTE std::vector<RBItemPointer> &)
+  {
+    assert(false);
+  }
+
+  virtual void Scan(UNUSED_ATTRIBUTE const std::vector<Value> &values,
+                    UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
+                    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &exprs,
+                    UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
+                    UNUSED_ATTRIBUTE std::vector<RBItemPointer *> &result)
+  {
+    assert(false);
+  }
+
+  virtual void ScanAllKeys(UNUSED_ATTRIBUTE std::vector<RBItemPointer *> &result)
+  {
+    assert(false);
+  }
+
+  virtual void ScanKey(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                       UNUSED_ATTRIBUTE std::vector<RBItemPointer *> &result)
+  {
+    assert(false);
+  }
 
   //===--------------------------------------------------------------------===//
   // STATS

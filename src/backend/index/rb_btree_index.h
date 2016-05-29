@@ -25,15 +25,6 @@
 namespace peloton {
 namespace index {
 
-class RBItemPointer {
-public:
-  RBItemPointer(const ItemPointer &loc, const cid_t &ts):
-    location(loc),
-    timestamp(ts) {}
-  ItemPointer location;
-  cid_t timestamp;
-};
-
 /**
  * STX B+tree-based index implementation.
  *
@@ -68,6 +59,10 @@ class RBBTreeIndex : public Index {
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
                        std::function<bool(const ItemPointer &)> predicate,
                        ItemPointer **itempointer_ptr);
+
+  bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                       std::function<bool(const ItemPointer &)> predicate,
+                       RBItemPointer **rb_itempointer_ptr);
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,

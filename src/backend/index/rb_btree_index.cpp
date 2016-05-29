@@ -70,6 +70,45 @@ bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::CondInsertEntry(
+    const storage::Tuple *key, const ItemPointer &location,
+    std::function<bool(const ItemPointer &)> predicate,
+    RBItemPointer **rb_itempointer_ptr) {
+
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  *rb_itempointer_ptr = nullptr;
+
+  {
+    index_lock.Lock();
+
+    // find the <key, location> pair
+    auto entries = container.equal_range(index_key);
+    for (auto entry = entries.first; entry != entries.second; ++entry) {
+
+      RBItemPointer rb_item_pointer = *(entry->second);
+
+      if (predicate(rb_item_pointer.location)) {
+        // this key is already visible or dirty in the index
+        index_lock.Unlock();
+        return false;
+      }
+    }
+
+    // Insert the key, val pair
+    *rb_itempointer_ptr = new RBItemPointer(location, MAX_CID);
+    container.insert(std::pair<KeyType, ValueType>(
+        index_key, *rb_itempointer_ptr));
+
+    index_lock.Unlock();
+  }
+  return true;
+}
+
+template <typename KeyType, typename ValueType, class KeyComparator,
+          class KeyEqualityChecker>
+bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key,
                                                  const ItemPointer &location) {
   KeyType index_key;
@@ -444,7 +483,7 @@ template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 std::string RBBTreeIndex<KeyType, ValueType, KeyComparator,
                        KeyEqualityChecker>::GetTypeName() const {
-  return "RB-Btree";
+  return "RBBtree";
 }
 
 // Explicit template instantiation

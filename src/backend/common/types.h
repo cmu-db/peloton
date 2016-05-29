@@ -814,6 +814,10 @@ struct ItemPointer {
   bool IsNull() const { 
     return (block == INVALID_OID && offset == INVALID_OID);
   }
+
+  bool operator==(const ItemPointer &other) const {
+    return this->block == other.block && this->offset == other.offset;
+  }
 } __attribute__((__aligned__(8))) __attribute__((__packed__));
 
 extern ItemPointer INVALID_ITEMPOINTER;
@@ -939,3 +943,14 @@ typedef std::vector<DirectMap> DirectMapList;
 #endif
 
 }  // End peloton namespace
+
+// peloton::ItemPointer hasher
+namespace std {
+  template <>
+  struct hash<peloton::ItemPointer>
+  {
+    std::size_t operator()(const peloton::ItemPointer &item_pointer) const {
+      return ((uint64_t)(item_pointer.block) << 32) | item_pointer.offset;
+    }
+  };
+}

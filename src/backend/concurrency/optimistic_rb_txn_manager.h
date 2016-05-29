@@ -15,6 +15,8 @@
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/rollback_segment.h"
+#include "backend/storage/data_table.h"
+#include "backend/index/rb_btree_index.h"
 
 namespace peloton {
 
@@ -23,6 +25,7 @@ namespace concurrency {
 // Each transaction has a RollbackSegmentPool
 extern thread_local storage::RollbackSegmentPool *current_segment_pool;
 extern thread_local cid_t latest_read_timestamp;
+extern thread_local std::unordered_map<ItemPointer, index::RBItemPointer *> updated_index_entries;
 //===--------------------------------------------------------------------===//
 // optimistic concurrency control with rollback segment
 //===--------------------------------------------------------------------===//
@@ -199,6 +202,7 @@ class OptimisticRbTxnManager : public TransactionManager {
 
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
+    updated_index_entries.clear();
     delete current_txn;
     current_txn = nullptr;
     current_segment_pool = nullptr;
@@ -207,10 +211,12 @@ class OptimisticRbTxnManager : public TransactionManager {
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
   // has deleted the tuple
-  // next_seg_pointer (8 bytes) | delete_flag (1 bytes)
+  // next_seg_pointer (8 bytes) | sindex entry ptr |
+  // | delete_flag (1 bytes)
   void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
     SetRbSeg(tile_group_header, tuple_id, nullptr);
+    SetSIndexPtr(tile_group_header, tuple_id, nullptr);
     *(reinterpret_cast<bool*>(reserved_area + delete_flag_offset)) = false;
   }
 
@@ -224,7 +230,8 @@ class OptimisticRbTxnManager : public TransactionManager {
 
  private:
   static const size_t rb_seg_offset = 0;
-  static const size_t delete_flag_offset = rb_seg_offset + sizeof(char*);
+  static const size_t sindex_ptr = rb_seg_offset + sizeof(char *);
+  static const size_t delete_flag_offset = sindex_ptr + sizeof(char *);
   // TODO: add cooperative GC
   // The RB segment pool that is activlely being used
   cuckoohash_map<cid_t, std::shared_ptr<storage::RollbackSegmentPool>> living_pools_;
@@ -235,6 +242,12 @@ class OptimisticRbTxnManager : public TransactionManager {
                        const RBSegType seg_ptr) {
     const char **rb_seg_ptr = (const char **)(tile_group_header->GetReservedFieldRef(tuple_id) + rb_seg_offset);
     *rb_seg_ptr = seg_ptr;
+  }
+
+  inline void SetSIndexPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id,
+                          index::RBItemPointer *ptr) {
+    index::RBItemPointer **index_ptr = (index::RBItemPointer **)(tile_group_header->GetReservedFieldRef(tuple_id) + sindex_ptr);
+    *index_ptr = ptr;
   }
 
   inline bool GetDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
@@ -248,6 +261,9 @@ class OptimisticRbTxnManager : public TransactionManager {
   inline void ClearDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     *(reinterpret_cast<bool*>(tile_group_header->GetReservedFieldRef(tuple_id) + delete_flag_offset)) = false;
   }
+
+  bool RBInsertVersion(storage::DataTable *target_table,
+        const ItemPointer &location, const storage::Tuple *tuple);
 };
 }
 }
