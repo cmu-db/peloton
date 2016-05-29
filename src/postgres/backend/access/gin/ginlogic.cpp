@@ -168,7 +168,7 @@ shimTriConsistentFn(GinScanKey key)
 	nmaybe = 0;
 	for (i = 0; i < key->nentries; i++)
 	{
-		if (key->entryRes[i] == GIN_MAYBE)
+		if (static_cast<int>(key->entryRes[i]) == GIN_MAYBE)
 		{
 			if (nmaybe >= MAX_MAYBE_ENTRIES)
 				return GIN_MAYBE;
