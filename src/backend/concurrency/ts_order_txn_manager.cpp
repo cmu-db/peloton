@@ -27,8 +27,20 @@ namespace peloton {
 namespace concurrency {
 
 
-// atomic set max cid
-void TsOrderTxnManager::AtomicMax(char* addr, cid_t last_read_ts) {
+cid_t TsOrderTxnManager::GetLastReaderCid(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
+  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+
+  return *((cid_t *)addr);
+}
+
+
+void TsOrderTxnManager::SetLastReaderCid(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id, const cid_t &last_read_ts) {
+  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+  
   while(true) {
     auto old = *((cid_t*)addr);
     if(old > last_read_ts) {
@@ -38,38 +50,6 @@ void TsOrderTxnManager::AtomicMax(char* addr, cid_t last_read_ts) {
     }
   }
 }
-
-void TsOrderTxnManager::SetLastReaderCid(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id, const cid_t &last_read_ts) {
-  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
-  AtomicMax(addr, last_read_ts);
-}
-
-
-// cid_t TsOrderTxnManager::GetLastReaderCid(
-//     const storage::TileGroupHeader *const tile_group_header,
-//     const oid_t &tuple_id) {
-//   char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
-
-//   return *((cid_t *)addr);
-// }
-
-
-// void TsOrderTxnManager::SetLastReaderCid(
-//     const storage::TileGroupHeader *const tile_group_header,
-//     const oid_t &tuple_id, const cid_t &last_read_ts) {
-//   char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
-  
-//   while(true) {
-//     auto old = *((cid_t*)addr);
-//     if(old > last_read_ts) {
-//       return;
-//     }else if ( __sync_bool_compare_and_swap(addr, old, last_read_ts) ) {
-//       return;
-//     }
-//   }
-// }
 
 
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
