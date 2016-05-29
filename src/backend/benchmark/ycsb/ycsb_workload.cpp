@@ -111,7 +111,10 @@ void RunBackend(oid_t thread_id) {
       if (is_running == false) {
         break;
       }
-      while (RunMixed(mixed_plans, zipf, fast_random) == false) {
+      while (RunMixed(mixed_plans, zipf, rng) == false) {
+        if (is_running == false) {
+          break;
+        }
         execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -144,6 +147,9 @@ void RunBackend(oid_t thread_id) {
 
       if (rng_val < update_ratio) {
         while (RunUpdate(update_plans, zipf) == false) {
+          if (is_running == false) {
+            break;
+          }
           execution_count_ref++;
           // backoff
           if (state.run_backoff) {
@@ -160,6 +166,9 @@ void RunBackend(oid_t thread_id) {
         }
       } else {
         while (RunRead(read_plans, zipf) == false) {
+          if (is_running == false) {
+            break;
+          }
           execution_count_ref++;
           // backoff
           if (state.run_backoff) {
