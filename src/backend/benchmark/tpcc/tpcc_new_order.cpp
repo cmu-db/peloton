@@ -545,7 +545,6 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   ExecuteUpdateTest(new_order_plans.district_update_executor_);
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    std::cout << "Increment failed" << std::endl;
     LOG_TRACE("abort transaction");
     txn_manager.AbortTransaction();
     return false;
@@ -557,13 +556,6 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
 
   std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
-
-  std::cerr << "CreateOrder: "
-            << " thread_id = " << thread_id
-            << " o_id = " << ValuePeeker::PeekAsInteger(d_next_o_id)
-            << " o_w_id = " << warehouse_id
-            << " o_d_id = " << district_id
-            << std::endl;
 
   // O_ID
   orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
@@ -702,15 +694,6 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     // brand_generic = 'G'
         
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-    std::cout << "CreateOrderLine: "
-              << " ol_w_id = " << warehouse_id
-              << " ol_d_id = " << district_id
-              << " ol_o_id = " << ValuePeeker::PeekAsInteger(d_next_o_id)
-              << " ol_number = " << i
-              << std::endl;
-
-
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
