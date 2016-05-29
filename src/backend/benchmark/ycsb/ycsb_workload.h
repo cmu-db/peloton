@@ -123,7 +123,7 @@ struct MixedPlans {
 
 MixedPlans PrepareMixedPlan();
 
-bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, int write_count);
+bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng);
 
 
 /////////////////////////////////////////////////////////

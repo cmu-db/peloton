@@ -163,7 +163,7 @@ MixedPlans PrepareMixedPlan() {
   return mixed_plans;
 }
   
-bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, int write_count) {
+bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng) {
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(nullptr));
@@ -175,81 +175,77 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, int read_count, i
   auto txn = txn_manager.BeginTransaction();
 
 
-  /////////////////////////////////////////////////////////
-  // PERFORM READ
-  /////////////////////////////////////////////////////////
 
-  for (int i = 0; i < read_count; i++) {
+  for (int i = 0; i < state.operation_count; i++) {
 
-    mixed_plans.index_scan_executor_->ResetState();
+    auto rng_val = rng.next_uniform();
 
-    // set up parameter values
-    std::vector<Value> values;
+    if (rng_val < state.update_ratio) {
+      /////////////////////////////////////////////////////////
+      // PERFORM UPDATE
+      /////////////////////////////////////////////////////////
 
-    auto lookup_key = zipf.GetNextNumber();
+      mixed_plans.update_index_scan_executor_->ResetState();
 
-    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+      // set up parameter values
+      std::vector<Value> values;
 
-    mixed_plans.index_scan_executor_->SetValues(values);
+      auto lookup_key = zipf.GetNextNumber();
 
-    auto ret_result = ExecuteReadTest(mixed_plans.index_scan_executor_);
+      values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
-      return false;
+      mixed_plans.update_index_scan_executor_->SetValues(values);
+
+      TargetList target_list;
+
+      oid_t begin_column_count = 1;
+      oid_t end_column_count = begin_column_count + state.update_column_count - 1;
+
+      for (oid_t col_itr = begin_column_count; col_itr <= end_column_count; ++col_itr) {
+        int update_raw_value = col_itr;
+    
+        Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
+
+        target_list.emplace_back(
+            col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
+      }
+
+      mixed_plans.update_executor_->SetTargetList(target_list);
+
+      ExecuteUpdateTest(mixed_plans.update_executor_);
+
+      if (txn->GetResult() != Result::RESULT_SUCCESS) {
+        txn_manager.AbortTransaction();
+        return false;
+      }
+
+    } else {
+      /////////////////////////////////////////////////////////
+      // PERFORM READ
+      /////////////////////////////////////////////////////////
+
+      mixed_plans.index_scan_executor_->ResetState();
+
+      // set up parameter values
+      std::vector<Value> values;
+
+      auto lookup_key = zipf.GetNextNumber();
+
+      values.push_back(ValueFactory::GetIntegerValue(lookup_key));
+
+      mixed_plans.index_scan_executor_->SetValues(values);
+
+      auto ret_result = ExecuteReadTest(mixed_plans.index_scan_executor_);
+
+      if (txn->GetResult() != Result::RESULT_SUCCESS) {
+        txn_manager.AbortTransaction();
+        return false;
+      }
+
+      if (ret_result.size() != 1) {
+        assert(false);
+      }
     }
-
-    if (ret_result.size() != 1) {
-      assert(false);
-    }
-  }
-
-  /////////////////////////////////////////////////////////
-  // PERFORM UPDATE
-  /////////////////////////////////////////////////////////
-
-  for (int i = 0; i < write_count; i++) {
-
-    mixed_plans.update_index_scan_executor_->ResetState();
-
-    // set up parameter values
-    std::vector<Value> values;
-
-    auto lookup_key = zipf.GetNextNumber();
-
-    values.push_back(ValueFactory::GetIntegerValue(lookup_key));
-
-    mixed_plans.update_index_scan_executor_->SetValues(values);
-
-    TargetList target_list;
-
-
-    oid_t begin_column_count = 1;
-    oid_t end_column_count = begin_column_count + state.update_column_count - 1;
-
-    for (oid_t col_itr = begin_column_count; col_itr <= end_column_count; ++col_itr) {
-      int update_raw_value = col_itr;
-  
-      Value update_val = ValueFactory::GetIntegerValue(update_raw_value);
-
-      target_list.emplace_back(
-          col_itr, expression::ExpressionUtil::ConstantValueFactory(update_val));
-    }
-
-    mixed_plans.update_executor_->SetTargetList(target_list);
-
-
-    /////////////////////////////////////////////////////////
-    // EXECUTE
-    /////////////////////////////////////////////////////////
-
-    ExecuteUpdateTest(mixed_plans.update_executor_);
-
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      txn_manager.AbortTransaction();
-      return false;
-    }
-
   }
 
   // transaction passed execution.
