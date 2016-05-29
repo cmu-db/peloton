@@ -87,7 +87,7 @@ class TsOrderTxnManager : public TransactionManager {
 
 
  private:
-  inline cid_t GetLastReaderCid(
+  cid_t GetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) {
     char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
@@ -96,23 +96,26 @@ class TsOrderTxnManager : public TransactionManager {
   }
 
   // atomic set max cid
-  void AtomicMax(cid_t* addr, cid_t max) {
-    while(true) {
-      auto old = *addr;
-      if(old > max) {
-        return;
-      }else if ( __sync_bool_compare_and_swap(addr, old, max) ) {
-        return;
-      }
-    }
-  }
+  void AtomicMax(char* addr, cid_t last_read_ts);
 
-  inline void SetLastReaderCid(
+  void SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &last_read_ts) {
-    char *reserved_field = tile_group_header->GetReservedFieldRef(tuple_id);
-    AtomicMax((cid_t *)reserved_field, last_read_ts);
-  }
+      const oid_t &tuple_id, const cid_t &last_read_ts);
+
+//   void SetLastReaderCid(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id, const cid_t &last_read_ts) {
+//   char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+  
+//   while(true) {
+//     auto old = *((cid_t*)addr);
+//     if(old > last_read_ts) {
+//       return;
+//     }else if ( __sync_bool_compare_and_swap(addr, old, last_read_ts) ) {
+//       return;
+//     }
+//   }
+// }
 
 };
 }

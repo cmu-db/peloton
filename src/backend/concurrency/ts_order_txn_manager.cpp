@@ -26,6 +26,52 @@
 namespace peloton {
 namespace concurrency {
 
+
+// atomic set max cid
+void TsOrderTxnManager::AtomicMax(char* addr, cid_t last_read_ts) {
+  while(true) {
+    auto old = *((cid_t*)addr);
+    if(old > last_read_ts) {
+      return;
+    }else if ( __sync_bool_compare_and_swap((cid_t*)addr, old, last_read_ts) ) {
+      return;
+    }
+  }
+}
+
+void TsOrderTxnManager::SetLastReaderCid(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id, const cid_t &last_read_ts) {
+  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+  AtomicMax(addr, last_read_ts);
+}
+
+
+// cid_t TsOrderTxnManager::GetLastReaderCid(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id) {
+//   char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+
+//   return *((cid_t *)addr);
+// }
+
+
+// void TsOrderTxnManager::SetLastReaderCid(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id, const cid_t &last_read_ts) {
+//   char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+  
+//   while(true) {
+//     auto old = *((cid_t*)addr);
+//     if(old > last_read_ts) {
+//       return;
+//     }else if ( __sync_bool_compare_and_swap(addr, old, last_read_ts) ) {
+//       return;
+//     }
+//   }
+// }
+
+
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
   static TsOrderTxnManager txn_manager;
   return txn_manager;
@@ -121,11 +167,11 @@ bool TsOrderTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   // change timestamp
-  cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  // cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
-  if (last_reader_cid > current_txn->GetBeginCommitId()) {
-    return false;
-  }
+  // if (last_reader_cid > current_txn->GetBeginCommitId()) {
+  //   return false;
+  // }
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -133,12 +179,12 @@ bool TsOrderTxnManager::AcquireOwnership(
     return false;
   }
 
-  last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  // last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
-  if (last_reader_cid > current_txn->GetBeginCommitId()) {
-    tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
-    return false;
-  }
+  // if (last_reader_cid > current_txn->GetBeginCommitId()) {
+  //   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
+  //   return false;
+  // }
   return true;
 }
 
@@ -563,7 +609,7 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         // GC recycle
         RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
-        
+
       }
     }
   }
