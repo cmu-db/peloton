@@ -19,6 +19,7 @@
 #include "backend/index/index_key.h"
 #include "backend/index/bwtree_index.h"
 #include "backend/index/btree_index.h"
+#include "backend/index/rb_btree_index.h"
 
 namespace peloton {
 namespace index {
@@ -190,6 +191,62 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
                              GenericEqualityChecker<512>>(metadata);
     } else {
       return new BWTreeIndex<TupleKey, ItemPointer *,
+                             TupleKeyComparator, TupleKeyEqualityChecker>(
+          metadata);
+    }
+  }
+
+  if (index_type == INDEX_TYPE_RBBTREE) {
+    if (key_size <= 4) {
+      return new RBBTreeIndex<GenericKey<4>, RBItemPointer *,
+                             GenericComparator<4>, GenericEqualityChecker<4>>(
+          metadata);
+    } else if (key_size <= 8) {
+      return new RBBTreeIndex<GenericKey<8>, RBItemPointer *,
+                             GenericComparator<8>, GenericEqualityChecker<8>>(
+          metadata);
+    } else if (key_size <= 12) {
+      return new RBBTreeIndex<GenericKey<12>, RBItemPointer *,
+                             GenericComparator<12>, GenericEqualityChecker<12>>(
+          metadata);
+    } else if (key_size <= 16) {
+      return new RBBTreeIndex<GenericKey<16>, RBItemPointer *,
+                             GenericComparator<16>, GenericEqualityChecker<16>>(
+          metadata);
+    } else if (key_size <= 24) {
+      return new RBBTreeIndex<GenericKey<24>, RBItemPointer *,
+                             GenericComparator<24>, GenericEqualityChecker<24>>(
+          metadata);
+    } else if (key_size <= 32) {
+      return new RBBTreeIndex<GenericKey<32>, RBItemPointer *,
+                             GenericComparator<32>, GenericEqualityChecker<32>>(
+          metadata);
+    } else if (key_size <= 48) {
+      return new RBBTreeIndex<GenericKey<48>, RBItemPointer *,
+                             GenericComparator<48>, GenericEqualityChecker<48>>(
+          metadata);
+    } else if (key_size <= 64) {
+      return new RBBTreeIndex<GenericKey<64>, RBItemPointer *,
+                             GenericComparator<64>, GenericEqualityChecker<64>>(
+          metadata);
+    } else if (key_size <= 96) {
+      return new RBBTreeIndex<GenericKey<96>, RBItemPointer *,
+                             GenericComparator<96>, GenericEqualityChecker<96>>(
+          metadata);
+    } else if (key_size <= 128) {
+      return new RBBTreeIndex<GenericKey<128>, RBItemPointer *,
+                             GenericComparator<128>,
+                             GenericEqualityChecker<128>>(metadata);
+    } else if (key_size <= 256) {
+      return new RBBTreeIndex<GenericKey<256>, RBItemPointer *,
+                             GenericComparator<256>,
+                             GenericEqualityChecker<256>>(metadata);
+    } else if (key_size <= 512) {
+      return new RBBTreeIndex<GenericKey<512>, RBItemPointer *,
+                             GenericComparator<512>,
+                             GenericEqualityChecker<512>>(metadata);
+    } else {
+      return new RBBTreeIndex<TupleKey, RBItemPointer *,
                              TupleKeyComparator, TupleKeyEqualityChecker>(
           metadata);
     }

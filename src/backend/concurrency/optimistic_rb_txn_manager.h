@@ -170,8 +170,6 @@ class OptimisticRbTxnManager : public TransactionManager {
     txn->SetEpochId(eid);
 
     latest_read_timestamp = begin_cid;
-    // Add to running transaction table
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM][txn_id] = begin_cid;
     // Create current transaction poll
     current_segment_pool = new storage::RollbackSegmentPool(BACKEND_TYPE_MM);
 
@@ -179,12 +177,6 @@ class OptimisticRbTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-
-
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
-    running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
-
     auto result = current_txn->GetResult();
     auto end_cid = current_txn->GetEndCommitId();
 
@@ -215,10 +207,9 @@ class OptimisticRbTxnManager : public TransactionManager {
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
   // has deleted the tuple
-  // Spinlock (8 bytes) | next_seg_pointer (8 bytes) | delete_flag (1 bytes)
+  // next_seg_pointer (8 bytes) | delete_flag (1 bytes)
   void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
-    new (reserved_area + lock_offset) Spinlock();
     SetRbSeg(tile_group_header, tuple_id, nullptr);
     *(reinterpret_cast<bool*>(reserved_area + delete_flag_offset)) = false;
   }
@@ -232,10 +223,8 @@ class OptimisticRbTxnManager : public TransactionManager {
   }
 
  private:
-  static const size_t lock_offset = 0;
-  static const size_t rb_seg_offset  = lock_offset + 8;
+  static const size_t rb_seg_offset = 0;
   static const size_t delete_flag_offset = rb_seg_offset + sizeof(char*);
-  cuckoohash_map<txn_id_t, cid_t> running_txn_buckets_[RUNNING_TXN_BUCKET_NUM];
   // TODO: add cooperative GC
   // The RB segment pool that is activlely being used
   cuckoohash_map<cid_t, std::shared_ptr<storage::RollbackSegmentPool>> living_pools_;
@@ -258,18 +247,6 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   inline void ClearDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     *(reinterpret_cast<bool*>(tile_group_header->GetReservedFieldRef(tuple_id) + delete_flag_offset)) = false;
-  }
-
-  // Lock a tuple
-  inline void LockTuple(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + lock_offset);
-    lock->Lock();
-  }
-
-  // Unlock a tuple
-  inline void UnlockTuple(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    auto lock = (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + lock_offset);
-    lock->Unlock();
   }
 };
 }
