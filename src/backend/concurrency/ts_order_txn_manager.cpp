@@ -147,11 +147,11 @@ bool TsOrderTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   // change timestamp
-  // cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
-  // if (last_reader_cid > current_txn->GetBeginCommitId()) {
-  //   return false;
-  // }
+  if (last_reader_cid > current_txn->GetBeginCommitId()) {
+    return false;
+  }
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
     LOG_TRACE("Fail to insert new tuple. Set txn failure.");
@@ -159,12 +159,12 @@ bool TsOrderTxnManager::AcquireOwnership(
     return false;
   }
 
-  // last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
-  // if (last_reader_cid > current_txn->GetBeginCommitId()) {
-  //   tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
-  //   return false;
-  // }
+  if (last_reader_cid > current_txn->GetBeginCommitId()) {
+    tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
+    return false;
+  }
   return true;
 }
 
