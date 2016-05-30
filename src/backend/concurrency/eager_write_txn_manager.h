@@ -190,12 +190,10 @@ class EagerWriteTxnManager : public TransactionManager {
 
     TxnList *reader = new TxnList(txn_id);
 
-    // GetEwReaderLock(tile_group_header, tuple_id);
     TxnList *headp = (TxnList *)(
         tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
     reader->next = headp->next;
     headp->next = reader;
-    // ReleaseEwReaderLock(tile_group_header, tuple_id);
   }
 
   // Remove reader from the reader list of a tuple
@@ -234,7 +232,7 @@ class EagerWriteTxnManager : public TransactionManager {
   std::mutex running_txn_map_mutex_;
   std::unordered_map<txn_id_t, EagerWriteTxnContext *> running_txn_map_;
   static const int LOCK_OFFSET = 0;
-  static const int LIST_OFFSET = (LOCK_OFFSET + sizeof(txn_id_t));
+  static const int LIST_OFFSET = (LOCK_OFFSET + 8);
   cid_t last_epoch_;
   cid_t last_max_commit_cid_;
 };
