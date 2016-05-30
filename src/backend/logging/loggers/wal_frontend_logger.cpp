@@ -156,7 +156,7 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
        global_queue_itr++) {
     auto &log_buffer = global_queue[global_queue_itr];
 
-    if (!test_mode_) {
+    if (!test_mode_ && !no_write_) {
       fwrite(log_buffer->GetData(), sizeof(char), log_buffer->GetSize(),
              cur_file_handle.file);
     }
@@ -206,17 +206,19 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     if (!test_mode_) {
       PL_ASSERT(cur_file_handle.fd != -1);
       if (cur_file_handle.fd != -1) {
-        fwrite(delimiter_rec.GetMessage(), sizeof(char),
-               delimiter_rec.GetMessageLength(), cur_file_handle.file);
-
+        if (!no_write_) {
+          fwrite(delimiter_rec.GetMessage(), sizeof(char),
+                 delimiter_rec.GetMessageLength(), cur_file_handle.file);
+        }
         LOG_TRACE("Wrote delimiter to log file with commit_id %ld",
                   this->max_collected_commit_id);
 
         // by moving the fflush and sync here, we ensure that this file will
         // have at least 1 delimiter
         if (Clock::now() > last_flush + flush_frequency) {
-          LoggingUtil::FFlushFsync(cur_file_handle);
-
+          if (!no_write_) {
+            LoggingUtil::FFlushFsync(cur_file_handle);
+          }
           last_flush = Clock::now();
           if (this->max_collected_commit_id > max_flushed_commit_id) {
             max_flushed_commit_id = this->max_collected_commit_id;
@@ -852,19 +854,20 @@ void WriteAheadFrontendLogger::InitLogFilesList() {
           fclose(fp);
           continue;
         }
-        ret_val = fwrite((void *)&(temp_max_log_id_file),
-                         sizeof(temp_max_log_id_file), 1, fp);
-
+        if (!no_write_) {
+          ret_val = fwrite((void *)&(temp_max_log_id_file),
+                           sizeof(temp_max_log_id_file), 1, fp);
+        }
         if (ret_val <= 0) {
           LOG_ERROR("Could not write Max Log ID to file header: %s",
                     strerror(errno));
           fclose(fp);
           continue;
         }
-
-        ret_val = fwrite((void *)&(temp_max_delimiter_file),
-                         sizeof(temp_max_delimiter_file), 1, fp);
-
+        if (!no_write_) {
+          ret_val = fwrite((void *)&(temp_max_delimiter_file),
+                           sizeof(temp_max_delimiter_file), 1, fp);
+        }
         if (ret_val <= 0) {
           LOG_ERROR("Could not write Max Delimiter to file header: %s",
                     strerror(errno));

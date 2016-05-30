@@ -126,6 +126,8 @@ class FrontendLogger : public Logger {
     }
   }
 
+  void SetNoWrite(bool no_write) { no_write_ = no_write; }
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -158,6 +160,8 @@ class FrontendLogger : public Logger {
   bool replicating_ = false;
 
   networking::ResponseType replication_mode_;
+
+  bool no_write_ = false;
 
   bool test_mode_ = false;
 

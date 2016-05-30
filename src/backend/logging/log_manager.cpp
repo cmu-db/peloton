@@ -317,6 +317,7 @@ void LogManager::InitFrontendLoggers() {
     for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
       std::unique_ptr<FrontendLogger> frontend_logger(
           FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
+      frontend_logger->SetNoWrite(no_write_);
 
       if (frontend_logger.get() != nullptr) {
         frontend_loggers.push_back(std::move(frontend_logger));
