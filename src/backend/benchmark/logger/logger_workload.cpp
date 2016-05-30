@@ -231,8 +231,8 @@ finish:
 }
 
 void CleanUpLogDirectory() {
-  if(chdir(state.log_file_dir.c_str())){
-	  LOG_ERROR("Could not change directory");
+  if (chdir(state.log_file_dir.c_str())) {
+    LOG_ERROR("Could not change directory");
   }
   // remove wbl log file if it exists
   std::string wbl_directory_path =
@@ -287,6 +287,9 @@ bool SetupLoggingOnFollower() {
     case ASYNCHRONOUS_TYPE_DISABLED:
       // No logging
       peloton_logging_mode = LOGGING_TYPE_INVALID;
+      break;
+    case ASYNCHRONOUS_TYPE_NO_WRITE:
+      log_manager.SetNoWrite(true);
       break;
 
     case ASYNCHRONOUS_TYPE_INVALID:
@@ -343,6 +346,9 @@ bool PrepareLogFile() {
     case ASYNCHRONOUS_TYPE_DISABLED:
       // No logging
       peloton_logging_mode = LOGGING_TYPE_INVALID;
+      break;
+    case ASYNCHRONOUS_TYPE_NO_WRITE:
+      log_manager.SetNoWrite(true);
       break;
 
     case ASYNCHRONOUS_TYPE_INVALID:

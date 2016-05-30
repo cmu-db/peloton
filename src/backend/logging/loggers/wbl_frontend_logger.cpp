@@ -88,10 +88,11 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
   // get current highest dispense commit id
   record.max_possible_dirty_commit_id = new_grant;
-  if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)) {
-    LOG_ERROR("Unable to write log record");
+  if (!no_write_) {
+    if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)) {
+      LOG_ERROR("Unable to write log record");
+    }
   }
-
   long curr_seq_num = 0;
   size_t global_queue_size = global_queue.size();
   if (replicating_ && global_queue_size > 0) {

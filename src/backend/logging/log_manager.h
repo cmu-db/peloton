@@ -240,6 +240,8 @@ class LogManager {
     log_buffer_capacity_ = log_buffer_capacity;
   }
 
+  inline void SetNoWrite(bool no_write) { no_write_ = no_write; }
+
  private:
   LogManager();
   ~LogManager();
@@ -311,6 +313,8 @@ class LogManager {
   int update_managers_count = 0;
 
   bool replicating_ = false;
+
+  bool no_write_ = false;
 
   // max oid after recovery
   oid_t max_oid = 0;
