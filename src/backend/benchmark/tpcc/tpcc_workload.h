@@ -18,6 +18,7 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/storage/data_table.h"
 #include "backend/executor/update_executor.h"
+#include "backend/executor/delete_executor.h"
 #include "backend/executor/index_scan_executor.h"
 #include "backend/executor/insert_executor.h"
 
@@ -250,6 +251,8 @@ struct PaymentPlans {
 struct DeliveryPlans {
 
   executor::IndexScanExecutor* new_order_index_scan_executor_;
+  executor::IndexScanExecutor* new_order_delete_index_scan_executor_;
+  executor::DeleteExecutor* new_order_delete_executor_;
   
   executor::IndexScanExecutor* orders_index_scan_executor_;
   executor::IndexScanExecutor* orders_update_index_scan_executor_;
@@ -264,6 +267,8 @@ struct DeliveryPlans {
 
   void SetContext(executor::ExecutorContext* context) {
     new_order_index_scan_executor_->SetContext(context);
+    new_order_delete_index_scan_executor_->SetContext(context);
+    new_order_delete_executor_->SetContext(context);
 
     orders_index_scan_executor_->SetContext(context);
     orders_update_index_scan_executor_->SetContext(context);
@@ -280,6 +285,10 @@ struct DeliveryPlans {
   void Cleanup() {
     delete new_order_index_scan_executor_;
     new_order_index_scan_executor_ = nullptr;
+    delete new_order_delete_index_scan_executor_;
+    new_order_delete_index_scan_executor_ = nullptr;
+    delete new_order_delete_executor_;
+    new_order_delete_executor_ = nullptr;
     
     delete orders_index_scan_executor_;
     orders_index_scan_executor_ = nullptr;

@@ -123,6 +123,40 @@ DeliveryPlans PrepareDeliveryPlan() {
   new_order_index_scan_executor->Init();
 
 
+  // Construct index scan executor
+  std::vector<oid_t> new_order_delete_column_ids = {0};
+
+  std::vector<ExpressionType> new_order_delete_expr_types;
+  
+  new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  new_order_delete_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+
+  std::vector<Value> new_order_delete_key_values;
+
+  planner::IndexScanPlan::IndexScanDesc new_order_delete_idex_scan_desc(
+    new_order_pkey_index, new_order_key_column_ids, new_order_delete_expr_types,
+    new_order_delete_key_values, runtime_keys);
+
+  // Create index scan plan node
+  planner::IndexScanPlan new_order_delete_idex_scan_node(new_order_table,
+    nullptr, new_order_delete_column_ids, new_order_delete_idex_scan_desc);
+
+  // Create executors
+  executor::IndexScanExecutor *new_order_delete_index_scan_executor =
+      new executor::IndexScanExecutor(&new_order_delete_idex_scan_node, nullptr);
+
+  // Construct delete executor
+  planner::DeletePlan new_order_delete_node(new_order_table, false);
+
+  executor::DeleteExecutor *new_order_delete_executor =
+      new executor::DeleteExecutor(&new_order_delete_node, nullptr);
+
+  new_order_delete_executor->AddChild(new_order_delete_index_scan_executor);
+
+  new_order_delete_executor->Init();
+
+
   /////////////////////////////////////////////////////////
   // PLAN FOR ORDERS
   /////////////////////////////////////////////////////////
@@ -313,6 +347,8 @@ DeliveryPlans PrepareDeliveryPlan() {
   DeliveryPlans delivery_plans;
 
   delivery_plans.new_order_index_scan_executor_ = new_order_index_scan_executor;
+  delivery_plans.new_order_delete_index_scan_executor_ = new_order_delete_index_scan_executor;
+  delivery_plans.new_order_delete_executor_ = new_order_delete_executor;
 
   delivery_plans.orders_index_scan_executor_ = orders_index_scan_executor;
   delivery_plans.orders_update_index_scan_executor_ = orders_update_index_scan_executor;
@@ -478,47 +514,22 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id){
 
     LOG_TRACE("deleteNewOrder: DELETE FROM NEW_ORDER WHERE NO_D_ID = ? AND NO_W_ID = ? AND NO_O_ID = ?");
 
-    // Construct index scan executor
-    std::vector<oid_t> new_order_column_ids2 = {0};
-    std::vector<oid_t> new_order_key_column_ids2 = {COL_IDX_NO_D_ID, COL_IDX_NO_W_ID, COL_IDX_NO_O_ID};
-    std::vector<ExpressionType> new_order_expr_types2;
-    std::vector<Value> new_order_key_values2;
+    delivery_plans.new_order_delete_index_scan_executor_->ResetState();
 
-    new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values2.push_back(ValueFactory::GetTinyIntValue(d_id));
-    new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values2.push_back(ValueFactory::GetIntegerValue(warehouse_id));
-    new_order_expr_types2.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    new_order_key_values2.push_back(no_o_id);
+    std::vector<Value> new_order_delete_key_values;
 
-    // Get the index
-    auto new_order_pkey_index2 = new_order_table->GetIndexWithOid(new_order_table_pkey_index_oid);
-    planner::IndexScanPlan::IndexScanDesc new_order_idex_scan_desc2(
-      new_order_pkey_index2, new_order_key_column_ids2, new_order_expr_types2,
-      new_order_key_values2, runtime_keys);
+    new_order_delete_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    new_order_delete_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+    new_order_delete_key_values.push_back(no_o_id);
 
-    // Create index scan plan node
-    planner::IndexScanPlan new_order_idex_scan_node2(new_order_table,
-      nullptr, new_order_column_ids2, new_order_idex_scan_desc2);
+    delivery_plans.new_order_delete_index_scan_executor_->SetValues(new_order_delete_key_values);
 
-    // Create executors
-    executor::IndexScanExecutor new_order_index_scan_executor2(
-      &new_order_idex_scan_node2, context.get());
-
-    // Construct delete executor
-    bool truncate = false;
-    planner::DeletePlan new_order_delete_node(new_order_table, truncate);
-    executor::DeleteExecutor new_order_delete_executor(&new_order_delete_node, context.get());
-    new_order_delete_executor.AddChild(&new_order_index_scan_executor2);
-
-    // Manuallt init
-    bool status = new_order_delete_executor.Init();
-    if (status == false) {
-      throw Exception("Init failed");
-    }
-
-    ExecuteDeleteTest(&new_order_delete_executor);
+    // Execute the query
+    ExecuteDeleteTest(delivery_plans.new_order_delete_executor_);
+    
+    // Check if aborted
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
+      LOG_TRACE("abort transaction");
       txn_manager.AbortTransaction();
       return false;
     }
