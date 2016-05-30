@@ -518,7 +518,7 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id){
 
     std::vector<Value> new_order_delete_key_values;
 
-    new_order_delete_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    new_order_delete_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     new_order_delete_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
     new_order_delete_key_values.push_back(no_o_id);
 
@@ -592,7 +592,7 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id){
     std::vector<Value> customer_key_values;
 
     customer_key_values.push_back(c_id);
-    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
     delivery_plans.customer_index_scan_executor_->SetValues(customer_key_values);
