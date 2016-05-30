@@ -242,6 +242,8 @@ class LogManager {
 
   inline void SetNoWrite(bool no_write) { no_write_ = no_write; }
 
+  inline bool GetNoWrite() const { return no_write_; }
+
  private:
   LogManager();
   ~LogManager();
