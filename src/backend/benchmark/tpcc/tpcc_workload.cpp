@@ -113,6 +113,7 @@ void RunBackend(oid_t thread_id) {
 
   NewOrderPlans new_order_plans = PrepareNewOrderPlan();
   PaymentPlans payment_plans = PreparePaymentPlan();
+  DeliveryPlans delivery_plans = PrepareDeliveryPlan();
   
   // backoff
   uint32_t backoff_shifts = 0;
@@ -147,7 +148,7 @@ void RunBackend(oid_t thread_id) {
         }
        }
      } else if (rng_val <= 0.08) {
-       while (RunDelivery(thread_id) == false) {
+       while (RunOrderStatus(thread_id) == false) {
           if (is_running == false) {
             break;
           }
@@ -166,7 +167,7 @@ void RunBackend(oid_t thread_id) {
         }
        }
      } else if (rng_val <= 0.12) {
-       while (RunOrderStatus(thread_id) == false) {
+       while (RunDelivery(delivery_plans, thread_id) == false) {
           if (is_running == false) {
             break;
           }

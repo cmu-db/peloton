@@ -36,6 +36,12 @@ class DeleteExecutor : public AbstractExecutor {
 
   ~DeleteExecutor() {}
 
+  // for plan/executor caching.
+  // for OLTP queries, most of the member variables in plan/executor can be reused.
+  void SetContext(ExecutorContext *executor_context) {
+    executor_context_ = executor_context;
+  }
+
  protected:
   bool DInit();
 

@@ -628,7 +628,7 @@ Result EagerWriteTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
         // GC recycle
-        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
