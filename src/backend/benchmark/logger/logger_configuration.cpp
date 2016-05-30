@@ -122,6 +122,8 @@ std::string AsynchronousTypeToString(AsynchronousType type) {
       return "ASYNC";
     case ASYNCHRONOUS_TYPE_DISABLED:
       return "DISABLED";
+    case ASYNCHRONOUS_TYPE_NO_WRITE:
+      return "NO_WRITE";
 
     default:
       LOG_ERROR("Invalid asynchronous_mode :: %d", type);
@@ -180,7 +182,7 @@ static void ValidateFlushMode(const configuration& state) {
 
 static void ValidateAsynchronousMode(const configuration& state) {
   if (state.asynchronous_mode <= ASYNCHRONOUS_TYPE_INVALID ||
-      state.asynchronous_mode > ASYNCHRONOUS_TYPE_DISABLED) {
+      state.asynchronous_mode > ASYNCHRONOUS_TYPE_NO_WRITE) {
     LOG_ERROR("Invalid asynchronous_mode :: %d", state.asynchronous_mode);
     exit(EXIT_FAILURE);
   }
