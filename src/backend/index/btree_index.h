@@ -92,7 +92,7 @@ class BTreeIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  // Spinlock index_lock;
+  //Spinlock index_lock;
   Dummylock index_lock;
 };
 
