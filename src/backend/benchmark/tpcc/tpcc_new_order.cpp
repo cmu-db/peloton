@@ -580,9 +580,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   orders_executor.Execute();
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
+    LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
     txn_manager.AbortTransaction();
     return false;
+  } else {
+    LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
   }
   
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
@@ -600,7 +602,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   new_order_executor.Execute();
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
+    LOG_TRACE("abort transaction when inserting new order table");
     txn_manager.AbortTransaction();
     return false;
   }
@@ -723,7 +725,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     order_line_executor.Execute();
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_TRACE("abort transaction");
+      LOG_TRACE("abort transaction when inserting order line table");
       txn_manager.AbortTransaction();
       return false;
     }
@@ -736,12 +738,15 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   if (result == Result::RESULT_SUCCESS) {
     // transaction passed commitment.
+    LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
     return true;
     
   } else {
     // transaction failed commitment.
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
+    LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    return true;
     return false;
   }
 }

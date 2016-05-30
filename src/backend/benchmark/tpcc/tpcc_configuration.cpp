@@ -190,7 +190,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Static parameters
   state.item_count = 100000 * state.scale_factor;
-  state.districts_per_warehouse = 10;
+  state.districts_per_warehouse = 2;
   state.customers_per_district = 3000 * state.scale_factor;
   state.new_orders_per_district = 900 * state.scale_factor;
 
