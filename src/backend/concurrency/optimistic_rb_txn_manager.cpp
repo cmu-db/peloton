@@ -21,10 +21,12 @@
 #include "backend/common/logger.h"
 
 namespace peloton {
+
 namespace concurrency {
 
 thread_local storage::RollbackSegmentPool *current_segment_pool;
 thread_local cid_t latest_read_timestamp = INVALID_CID;
+thread_local std::unordered_map<ItemPointer, index::RBItemPointer *> updated_index_entries;
 
 OptimisticRbTxnManager &OptimisticRbTxnManager::GetInstance() {
   static OptimisticRbTxnManager txn_manager;
@@ -168,7 +170,72 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
   return true;
 }
 
-void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg) {
+/**
+ * @brief Insert a tuple into secondary index. Notice that we only support at
+ *  most one secondary index now for rollback segment.
+ *
+ * @param target_table Table of the version
+ * @param location Location of the updated tuple
+ * @param tuple New tuple
+ */
+bool OptimisticRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
+  const ItemPointer &location, const storage::Tuple *tuple) {
+  // Index checks and updates
+
+  int index_count = target_table->GetIndexCount();
+
+  std::function<bool(const ItemPointer &)> fn =
+      std::bind(&concurrency::TransactionManager::IsOccupied,
+                this, std::placeholders::_1);
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
+  // What does the above mean? - RX
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = target_table->GetIndex(index_itr);
+
+    // Skip PK index
+    if (index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+      continue;
+    }
+
+    // Get RBBtree index
+    assert(index->GetTypeName() == "RBBtree");
+
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+
+    index::RBItemPointer *rb_itempointer_ptr = nullptr;
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+        break;
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->CondInsertEntry(key.get(), location, fn, &rb_itempointer_ptr) == false) {
+          return false;
+        }
+        // Record into the updated index entry set, used when commit
+        updated_index_entries.emplace(location, rb_itempointer_ptr);
+        break;
+      }
+
+      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      default:
+        index->InsertEntry(key.get(), location, &rb_itempointer_ptr);
+        updated_index_entries.emplace(location, rb_itempointer_ptr);
+        // Record into the updated index entry set, used when commit
+        break;
+    }
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
+  }
+  return true;
+}
+
+void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, 
+  char *new_rb_seg) {
 
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
@@ -375,8 +442,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
   }
   //////////////////////////////////////////////////////////
 
-//  auto &log_manager = logging::LogManager::GetInstance();
-//  log_manager.LogBeginTransaction(end_commit_id);
+  // auto &log_manager = logging::LogManager::GetInstance();
+  // log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -385,14 +452,9 @@ Result OptimisticRbTxnManager::CommitTransaction() {
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_UPDATE) {
-//        // logging.
-//        ItemPointer new_version =
-//          tile_group_header->GetNextItemPointer(tuple_slot);
-//        ItemPointer old_version(tile_group_id, tuple_slot);
-//
-//        // logging.
-//        log_manager.LogUpdate(current_txn, end_commit_id, old_version,
-//                              new_version);
+        // // logging.
+        // log_manager.LogUpdate(current_txn, end_commit_id, old_version,
+        //                       new_version);
 
         // First set the timestamp of the updated master copy
         // Since we have the rollback segment, it's safe to do so
@@ -408,12 +470,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-//        ItemPointer new_version =
-//          tile_group_header->GetNextItemPointer(tuple_slot);
-//        ItemPointer delete_location(tile_group_id, tuple_slot);
-//
-//        // logging.
-//        log_manager.LogDelete(end_commit_id, delete_location);
+        // // logging.
+        // log_manager.LogDelete(end_commit_id, delete_location);
 
         // we do not change begin cid for master copy
         // First set the timestamp of the master copy
@@ -442,7 +500,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
                current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         // ItemPointer insert_location(tile_group_id, tuple_slot);
-//        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        // log_manager.LogInsert(current_txn, end_commit_id, insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -457,8 +515,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
       }
     }
   }
-//  log_manager.LogCommitTransaction(end_commit_id);
-
+  // log_manager.LogCommitTransaction(end_commit_id);
   current_txn->SetEndCommitId(end_commit_id);
   EndTransaction();
 

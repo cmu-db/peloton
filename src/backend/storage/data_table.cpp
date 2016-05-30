@@ -29,6 +29,8 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 
+#include "backend/concurrency/optimistic_rb_txn_manager.h"
+
 //===--------------------------------------------------------------------===//
 // Configuration Variables
 //===--------------------------------------------------------------------===//
