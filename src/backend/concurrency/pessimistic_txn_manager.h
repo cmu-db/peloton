@@ -118,7 +118,7 @@ class PessimisticTxnManager : public TransactionManager {
  private:
 
  static const int LOCK_OFFSET = 0;
- static const int COUNTER_OFFSET = (LOCK_OFFSET + sizeof(Spinlock));
+ static const int COUNTER_OFFSET = (LOCK_OFFSET + 8);
 //#define READ_COUNT_MASK 0xFF
 //#define TXNID_MASK 0x00FFFFFFFFFFFFFF
 //  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {

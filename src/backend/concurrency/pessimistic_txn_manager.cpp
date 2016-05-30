@@ -135,17 +135,18 @@ bool PessimisticTxnManager::AcquireOwnership(
 
   // Mark the tuple as released
   pessimistic_released_rdlock[tile_group_id].insert(tuple_id);
+  auto current_txn_id = current_txn->GetTransactionId();
 
   // Acquire write lock
   bool res = false;
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
   {
-    SpinlockGuard(GetSpinlockField(tile_group_header, tuple_id));
-    auto current_txn_id = current_txn->GetTransactionId();
     if (*(GetReaderCountField(tile_group_header, tuple_id)) == 0) {
       res = tile_group_header->SetAtomicTransactionId(
         tuple_id, current_txn_id);
     }
   }
+  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
   if (res) {
     return true;
@@ -164,7 +165,6 @@ bool PessimisticTxnManager::AcquireOwnership(
 // will release the write lock anyway.
 void PessimisticTxnManager::YieldOwnership(const oid_t &tile_group_id,
   const oid_t &tuple_id) {
-
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
   assert(IsOwner(tile_group_header, tuple_id));
@@ -184,11 +184,14 @@ void PessimisticTxnManager::ReleaseReadLock(
 
   // No writer
   // Decrease read count
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
   {
-    SpinlockGuard(GetSpinlockField(tile_group_header, tuple_id));
     int *cnt_ptr = GetReaderCountField(tile_group_header, tuple_id);
+    assert(*cnt_ptr > 0);
     *cnt_ptr = *cnt_ptr - 1;
   }
+  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+
 }
 
 bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
@@ -215,8 +218,9 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
 
   // Try to acquire read lock.
   // No one is holding the write lock
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
   {
-    SpinlockGuard(GetSpinlockField(tile_group_header, tuple_id));
+    COMPILER_MEMORY_FENCE;
 
     auto old_txn_id = tile_group_header->GetTransactionId(tuple_id);
     if (old_txn_id == INITIAL_TXN_ID) {
@@ -226,9 +230,12 @@ bool PessimisticTxnManager::PerformRead(const ItemPointer &location) {
       LOG_TRACE("Current read count is %d", *cnt_ptr);
       *cnt_ptr = *cnt_ptr + 1;
     } else {
+      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
       return false;
     }
   }
+  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+
   current_txn->RecordRead(location);
 
   return true;
