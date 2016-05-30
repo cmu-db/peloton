@@ -24,7 +24,12 @@ namespace logging {
 void WriteBehindBackendLogger::Log(LogRecord *record) {
   // if we are committing, sync all data before taking the lock
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-    SyncDataForCommit();
+    auto &log_manager = LogManager::GetInstance();
+    auto no_write = log_manager.GetNoWrite();
+
+    if(no_write == false) {
+      SyncDataForCommit();
+    }
   }
   log_buffer_lock.Lock();
   cid_t cur_log_id = record->GetTransactionId();
