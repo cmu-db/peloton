@@ -453,7 +453,7 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id){
     // result: NO_O_ID
     auto no_o_id = new_order_ids[0][0];
 
-    LOG_INFO("no_o_id = %d", ValuePeeker::PeekInteger(no_o_id));
+    LOG_TRACE("no_o_id = %d", ValuePeeker::PeekInteger(no_o_id));
 
     LOG_TRACE("getCId: SELECT O_C_ID FROM ORDERS WHERE O_ID = ? AND O_D_ID = ? AND O_W_ID = ?");
 
@@ -631,7 +631,7 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id){
   auto result = txn_manager.CommitTransaction();
 
   if (result == Result::RESULT_SUCCESS) {
-    LOG_INFO("commit successfully");
+    LOG_TRACE("commit successfully");
     return true;
   } else {
     assert(result == Result::RESULT_ABORTED || 
