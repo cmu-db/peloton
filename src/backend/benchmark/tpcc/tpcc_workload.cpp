@@ -92,8 +92,8 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
     } else {
       int warehouse_per_partition = state.warehouse_count / state.backend_count;
       int start_warehouse = warehouse_per_partition * thread_id;
-      int end_warehouse = ((int)thread_id == state.warehouse_count - 1) ? 
-        (state.warehouse_count - 1) : warehouse_per_partition * (thread_id + 1);
+      int end_warehouse = ((int)thread_id != (state.backend_count - 1)) ? 
+        start_warehouse + warehouse_per_partition - 1 : state.warehouse_count - 1;
       return GetRandomInteger(start_warehouse, end_warehouse);
     }
   } else {

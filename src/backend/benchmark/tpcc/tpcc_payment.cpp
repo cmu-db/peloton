@@ -494,6 +494,7 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
     }
 
     if (customer_list.size() < 1) {
+      LOG_INFO("C_W_ID=%d, C_D_ID=%d", warehouse_id, district_id);
       assert(false);
     }
 

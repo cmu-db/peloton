@@ -457,6 +457,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   }
 
   if (gwtr_lists_values.size() != 1) {
+    LOG_INFO("warehouse_id=%d", warehouse_id);
     assert(false);
   }
 
