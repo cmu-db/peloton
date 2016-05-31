@@ -36,7 +36,7 @@ void Usage(FILE *out) {
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
-          "                             gc protocol could be off, co, va"
+          "                             gc protocol could be off, co, va\n"
   );
   exit(EXIT_FAILURE);
 }
@@ -190,7 +190,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   // Static parameters
   state.item_count = 100000 * state.scale_factor;
-  state.districts_per_warehouse = 2;
+  state.districts_per_warehouse = 10;
   state.customers_per_district = 3000 * state.scale_factor;
   state.new_orders_per_district = 900 * state.scale_factor;
 
