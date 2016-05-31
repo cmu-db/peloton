@@ -312,8 +312,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
               }
             }
 
-
-
             /////////////////////////////////////////////////////////
 
 

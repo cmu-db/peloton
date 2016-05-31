@@ -64,7 +64,10 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       PL_ASSERT(false);
       return;
     }
-    PL_ASSERT(false);
+    // as an optimization, it is possible that a tuple is recorded as update without been recorded as read before.
+    type = RW_TYPE_UPDATE;
+    // record write.
+    is_written_ = true;
 
 
   }

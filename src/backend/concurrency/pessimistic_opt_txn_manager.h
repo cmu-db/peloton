@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// pessimistic_txn_manager.h
+// pessimistic_opt_txn_manager.h
 //
-// Identification: src/backend/concurrency/pessimistic_txn_manager.h
+// Identification: src/backend/concurrency/pessimistic_opt_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,17 +18,17 @@ namespace peloton {
 namespace concurrency {
 
 extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
-    pessimistic_released_rdlock;
+    pessimistic_opt_released_rdlock;
 
 //===--------------------------------------------------------------------===//
 // pessimistic concurrency control
 //===--------------------------------------------------------------------===//
-class PessimisticTxnManager : public TransactionManager {
+class PessimisticOptTxnManager : public TransactionManager {
  public:
-  PessimisticTxnManager(){}
-  virtual ~PessimisticTxnManager() {}
+  PessimisticOptTxnManager(){}
+  virtual ~PessimisticOptTxnManager() {}
 
-  static PessimisticTxnManager &GetInstance();
+  static PessimisticOptTxnManager &GetInstance();
 
   virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
@@ -100,7 +100,17 @@ class PessimisticTxnManager : public TransactionManager {
     delete current_txn;
     current_txn = nullptr;
 
-    pessimistic_released_rdlock.clear();
+    pessimistic_opt_released_rdlock.clear();
+  }
+
+  inline Spinlock *GetSpinlockField(const storage::TileGroupHeader *const tile_group_header,
+                                    const oid_t &tuple_id) {
+    return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  }
+
+  inline int* GetReaderCountField(const storage::TileGroupHeader *const tile_group_header,
+                                  const oid_t &tuple_id) {
+    return (int *)(tile_group_header->GetReservedFieldRef(tuple_id) + COUNTER_OFFSET);
   }
 
  private:
@@ -119,16 +129,6 @@ class PessimisticTxnManager : public TransactionManager {
 
   void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
-
-  inline Spinlock *GetSpinlockField(const storage::TileGroupHeader *const tile_group_header,
-                                    const oid_t &tuple_id) {
-    return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
-  }
-
-  inline int* GetReaderCountField(const storage::TileGroupHeader *const tile_group_header,
-                                  const oid_t &tuple_id) {
-    return (int *)(tile_group_header->GetReservedFieldRef(tuple_id) + COUNTER_OFFSET);
-  }
 
 };
 }
