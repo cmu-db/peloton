@@ -91,6 +91,7 @@ class Transaction : public Printable {
   bool RecordDelete(const ItemPointer &);
 
   const std::map<oid_t, std::map<oid_t, RWType>> &GetRWSet();
+  //const std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> &GetRWSet();
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -123,6 +124,7 @@ class Transaction : public Printable {
   size_t epoch_id_;
 
   std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
+  //std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
