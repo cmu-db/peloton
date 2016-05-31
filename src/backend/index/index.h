@@ -19,6 +19,7 @@
 
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
+#include "backend/logging/log_manager.h"
 
 namespace peloton {
 
@@ -60,10 +61,11 @@ class IndexMetadata {
     // For BACKEND_TYPE_MM
     is_durable = false;
 
+    auto &log_manager = logging::LogManager::GetInstance();
     // Set is_durable if needed
-    is_durable = (backend_type == BACKEND_TYPE_NVM ||
+    is_durable = ((backend_type == BACKEND_TYPE_NVM ||
         backend_type == BACKEND_TYPE_SSD ||
-        backend_type == BACKEND_TYPE_HDD);
+        backend_type == BACKEND_TYPE_HDD )&& !log_manager.GetNoWrite());
 
   }
 
