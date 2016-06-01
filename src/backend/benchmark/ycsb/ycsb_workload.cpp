@@ -324,6 +324,7 @@ ExecuteReadTest(executor::AbstractExecutor* executor) {
       break;
 
     auto column_count = result_tile->GetColumnCount();
+    LOG_TRACE("result column count = %d\n", (int)column_count);
 
     for (oid_t tuple_id : *result_tile) {
       expression::ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
