@@ -70,6 +70,46 @@ bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
+                KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key,
+                                                 const RBItemPointer &rb_location) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  {
+    index_lock.Lock();
+
+    // Delete the < key, location > pair
+    bool try_again = true;
+    while (try_again == true) {
+      // Unset try again
+      try_again = false;
+
+      // Lookup matching entries
+      auto entries = container.equal_range(index_key);
+      for (auto iterator = entries.first; iterator != entries.second;
+           iterator++) {
+        RBItemPointer value = *(iterator->second);
+
+        if (value == rb_location) {
+          delete iterator->second;
+          iterator->second = nullptr;
+          container.erase(iterator);
+          // Set try again
+          try_again = true;
+          break;
+        }
+      }
+    }
+
+    index_lock.Unlock();
+  }
+
+  return true;
+}
+
+template <typename KeyType, typename ValueType, class KeyComparator,
+          class KeyEqualityChecker>
+bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
     const storage::Tuple *key, const ItemPointer &location,
     std::function<bool(const ItemPointer &)> predicate,
