@@ -155,7 +155,7 @@ bool PessimisticOptTxnManager::AcquireOwnership(
     const oid_t &tile_group_id, const oid_t &tuple_id) {
   LOG_TRACE("AcquireOwnership");
   assert(IsOwner(tile_group_header, tuple_id) == false);
-  assert(tile_group_header->GetEndCommitId() == MAX_CID);
+  assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
   // First release read lock that is acquired before, the executor will always
   // read the tuple before calling AcquireOwnership().
   // However, it is possible that the previous read did not acquire a lock.
@@ -265,8 +265,8 @@ bool PessimisticOptTxnManager::PerformRead(const ItemPointer &location) {
     // OPTIMIZATION HERE!
     // if we read an older version, then no lock need to be acquired.
     // in this case, we even do not need to insert the version into the rw_set.
-    assert(tile_group_header->GetTransactionId() != INVALID_TXN_ID);
-    assert(tile_group_header->GetTransactionId() != current_txn->GetTransactionId());
+    assert(tile_group_header->GetTransactionId(tuple_id) != INVALID_TXN_ID);
+    assert(tile_group_header->GetTransactionId(tuple_id) != current_txn->GetTransactionId());
   }
 
   return true;
