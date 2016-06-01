@@ -87,6 +87,15 @@ class TsOrderTxnManager : public TransactionManager {
 
 
  private:
+
+  static const int LOCK_OFFSET = 0;
+  static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
+
+
+  Spinlock *GetSpinlockField(
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t &tuple_id);
+
   cid_t GetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);

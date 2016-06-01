@@ -27,29 +27,46 @@ namespace peloton {
 namespace concurrency {
 
 
+Spinlock *TsOrderTxnManager::GetSpinlockField(
+    const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
+  return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+}
+
 cid_t TsOrderTxnManager::GetLastReaderCid(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
-
-  return *((cid_t *)addr);
+  return *(cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
 }
-
 
 void TsOrderTxnManager::SetLastReaderCid(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, const cid_t &last_read_ts) {
-  char *addr = tile_group_header->GetReservedFieldRef(tuple_id);
+  cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
   
-  while(true) {
-    auto old = *((cid_t*)addr);
-    if(old > last_read_ts) {
-      return;
-    }else if ( __sync_bool_compare_and_swap((cid_t*)addr, old, last_read_ts) ) {
-      return;
-    }
+  if (*ts_ptr < last_read_ts) {
+    *ts_ptr = last_read_ts;
   }
+
+  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 }
+
+
+// void TsOrderTxnManager::SetLastReaderCid(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id, const cid_t &last_read_ts) {
+//   char *addr = (tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+  
+//   while(true) {
+//     auto old = *((cid_t*)addr);
+//     if(old > last_read_ts) {
+//       return;
+//     }else if ( __sync_bool_compare_and_swap((cid_t*)addr, old, last_read_ts) ) {
+//       return;
+//     }
+//   }
+// }
 
 
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
