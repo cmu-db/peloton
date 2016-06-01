@@ -38,6 +38,7 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
     if (tuple_begin_cid == MAX_CID && tuple_end_cid != INVALID_CID) {
       assert(tuple_end_cid == MAX_CID);
       // the only version that is visible is the newly inserted one.
+      LOG_TRACE("the version is newly inserted and is owned by myself");
       return true;
     } else {
       // the older version is not visible.
@@ -55,11 +56,13 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
           return false;
         } else {
           // dirty update or insert is visible
+          LOG_TRACE("the version is dirty update or insert and is visible");
           return true;
         }
       } else {
         // the older version may be visible.
         if (activated && !invalidated) {
+          LOG_TRACE("the older version is visible");
           return true;
         } else {
           return false;
@@ -68,6 +71,7 @@ bool TransactionManager::IsOccupied(const ItemPointer &position) {
     } else {
       // if the tuple is not owned by any transaction.
       if (activated && !invalidated) {
+        LOG_TRACE("the tuple is not owned by any transaction and is visible: begin_cid = %lu, end_cid = %lu", tuple_begin_cid, tuple_end_cid);
         return true;
       } else {
         return false;

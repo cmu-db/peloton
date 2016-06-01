@@ -64,7 +64,10 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
       PL_ASSERT(false);
       return;
     }
-    PL_ASSERT(false);
+    // as an optimization, it is possible that a tuple is recorded as update without been recorded as read before.
+    type = RW_TYPE_UPDATE;
+    // record write.
+    is_written_ = true;
 
 
   }
@@ -120,6 +123,7 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   return false;
 }
 
+//const std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> &Transaction::GetRWSet() {
 const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
   return rw_set_;
 }

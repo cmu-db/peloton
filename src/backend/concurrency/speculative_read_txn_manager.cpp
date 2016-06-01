@@ -25,6 +25,126 @@ namespace concurrency {
 
 thread_local SpecTxnContext spec_txn_context;
 
+Transaction *SpeculativeReadTxnManager::BeginTransaction() {
+  txn_id_t txn_id = GetNextTransactionId();
+  cid_t begin_cid = GetNextCommitId();
+  Transaction *txn = new Transaction(txn_id, begin_cid);
+  current_txn = txn;
+  spec_txn_context.SetBeginCid(begin_cid);
+
+  cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+  assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
+  running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
+
+  auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
+  txn->SetEpochId(eid);
+  return txn;
+}
+
+void SpeculativeReadTxnManager::EndTransaction() {
+  if (current_txn->GetEndCommitId() == MAX_CID) {
+    current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
+  }
+
+  txn_id_t txn_id = current_txn->GetTransactionId();
+
+  cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
+  bool ret = running_txn_buckets_[bucket_id].erase(txn_id);
+  if (ret == false) {
+    assert(false);
+  }
+
+  EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
+
+  spec_txn_context.Clear();
+
+  delete current_txn;
+  current_txn = nullptr;
+}
+
+
+// is it because this dependency has been registered before?
+// or the dst txn does not exist?
+bool SpeculativeReadTxnManager::RegisterDependency(const txn_id_t &dst_txn_id) {
+  txn_id_t src_txn_id = current_txn->GetTransactionId();
+  // if this dependency has been registered before, then return.
+  if (spec_txn_context.outer_dep_set_.find(dst_txn_id) !=
+      spec_txn_context.outer_dep_set_.end()) {
+    return true;
+  }
+
+  bool changeable = true;
+  bool ret =
+      running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
+          dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext * context) {
+    context->inner_dep_set_lock_.Lock();
+    if (context->inner_dep_set_changeable_ == true) {
+      assert(context->inner_dep_set_.find(src_txn_id) ==
+             context->inner_dep_set_.end());
+      context->inner_dep_set_.insert(src_txn_id);
+    } else {
+      changeable = false;
+    }
+    context->inner_dep_set_lock_.Unlock();
+  });
+  if (changeable == false || ret == false) {
+    return false;
+  }
+  spec_txn_context.outer_dep_set_.insert(dst_txn_id);
+  spec_txn_context.outer_dep_count_++;
+  return true;
+}
+
+bool SpeculativeReadTxnManager::IsCommittable() {
+  // TODO: This is a workaround. Currently, speculative read contains certain unknown bugs that can cause deadlock.
+  // We directly abort the transaction if it cannot get notified after certain amount of time.
+  size_t counter = 0;
+  while (true) {
+    if (spec_txn_context.outer_dep_count_ == 0) {
+      return true;
+    }
+    if (spec_txn_context.is_cascading_abort_ == true) {
+      return false;
+    }
+    _mm_pause();
+    ++counter;
+    if(counter > 1000000) {
+      return false;
+    }
+  }
+}
+
+void SpeculativeReadTxnManager::NotifyCommit() {
+  // some other transactions may also modify my inner dep set.
+  // so lock first.
+  spec_txn_context.inner_dep_set_lock_.Lock();
+  for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+    running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+        .update_fn(child_txn_id, [](SpecTxnContext * context) {
+      assert(context->outer_dep_count_ > 0);
+      context->outer_dep_count_--;
+    });
+  }
+  spec_txn_context.inner_dep_set_changeable_ = false;
+  spec_txn_context.inner_dep_set_lock_.Unlock();
+}
+
+void SpeculativeReadTxnManager::NotifyAbort() {
+  // some other transactions may also modify my inner dep set.
+  // so lock first.
+  spec_txn_context.inner_dep_set_lock_.Lock();
+  for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
+    running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
+        .update_fn(child_txn_id, [](SpecTxnContext * context) {
+      assert(context->outer_dep_count_ > 0);
+      context->is_cascading_abort_ = true;
+    });
+  }
+  spec_txn_context.inner_dep_set_changeable_ = false;
+  spec_txn_context.inner_dep_set_lock_.Unlock();
+}
+
+
 SpeculativeReadTxnManager &SpeculativeReadTxnManager::GetInstance() {
   static SpeculativeReadTxnManager txn_manager;
   return txn_manager;
@@ -420,6 +540,10 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // GC recycle.
+        RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         // we do not change begin cid for old tuple.
         tile_group_header->SetEndCommitId(tuple_slot, end_commit_id);
@@ -437,6 +561,9 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // GC recycle.
+        RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -506,6 +633,9 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // GC recycle
+        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         ItemPointer new_version =
@@ -525,6 +655,10 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // GC recycle
+        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -532,6 +666,10 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+        // GC recycle
+        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -539,6 +677,10 @@ Result SpeculativeReadTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+        // GC recycle
+        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+        
       }
     }
   }

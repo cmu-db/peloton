@@ -26,6 +26,49 @@
 namespace peloton {
 namespace concurrency {
 
+
+Spinlock *TsOrderTxnManager::GetSpinlockField(
+    const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
+  return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+}
+
+cid_t TsOrderTxnManager::GetLastReaderCid(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id) {
+  return *(cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+}
+
+void TsOrderTxnManager::SetLastReaderCid(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id, const cid_t &last_read_ts) {
+  cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
+  
+  if (*ts_ptr < last_read_ts) {
+    *ts_ptr = last_read_ts;
+  }
+
+  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+}
+
+
+// void TsOrderTxnManager::SetLastReaderCid(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id, const cid_t &last_read_ts) {
+//   char *addr = (tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+  
+//   while(true) {
+//     auto old = *((cid_t*)addr);
+//     if(old > last_read_ts) {
+//       return;
+//     }else if ( __sync_bool_compare_and_swap((cid_t*)addr, old, last_read_ts) ) {
+//       return;
+//     }
+//   }
+// }
+
+
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
   static TsOrderTxnManager txn_manager;
   return txn_manager;
@@ -394,6 +437,10 @@ Result TsOrderTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // GC recycle.
+        RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
@@ -415,6 +462,10 @@ Result TsOrderTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
+        // GC recycle.
+        RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
@@ -425,6 +476,7 @@ Result TsOrderTxnManager::CommitTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
+
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         assert(tile_group_header->GetTransactionId(tuple_slot) ==
                current_txn->GetTransactionId());
@@ -494,6 +546,9 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // GC recycle
+        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
@@ -527,6 +582,9 @@ Result TsOrderTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        // GC recycle
+        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -534,6 +592,10 @@ Result TsOrderTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+        // GC recycle
+        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -541,6 +603,10 @@ Result TsOrderTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+
+        // GC recycle
+        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+
       }
     }
   }

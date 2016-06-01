@@ -14,6 +14,7 @@
 
 #include "backend/concurrency/optimistic_txn_manager.h"
 #include "backend/concurrency/pessimistic_txn_manager.h"
+#include "backend/concurrency/pessimistic_opt_txn_manager.h"
 #include "backend/concurrency/speculative_read_txn_manager.h"
 #include "backend/concurrency/eager_write_txn_manager.h"
 #include "backend/concurrency/ts_order_txn_manager.h"
@@ -31,6 +32,8 @@ class TransactionManagerFactory {
        return OptimisticTxnManager::GetInstance();
      case CONCURRENCY_TYPE_PESSIMISTIC:
        return PessimisticTxnManager::GetInstance();
+     case CONCURRENCY_TYPE_PESSIMISTIC_OPT:
+       return PessimisticOptTxnManager::GetInstance();
      case CONCURRENCY_TYPE_SPECULATIVE_READ:
        return SpeculativeReadTxnManager::GetInstance();
      case CONCURRENCY_TYPE_EAGER_WRITE:

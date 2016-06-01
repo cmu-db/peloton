@@ -92,8 +92,8 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
     } else {
       int warehouse_per_partition = state.warehouse_count / state.backend_count;
       int start_warehouse = warehouse_per_partition * thread_id;
-      int end_warehouse = ((int)thread_id == state.warehouse_count - 1) ? 
-        (state.warehouse_count - 1) : warehouse_per_partition * (thread_id + 1);
+      int end_warehouse = ((int)thread_id != (state.backend_count - 1)) ? 
+        start_warehouse + warehouse_per_partition - 1 : state.warehouse_count - 1;
       return GetRandomInteger(start_warehouse, end_warehouse);
     }
   } else {
@@ -105,7 +105,7 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
 void RunBackend(oid_t thread_id) {
   PinToCore(thread_id);
 
-  UniformGenerator generator;
+  // UniformGenerator generator;
 
   oid_t &execution_count_ref = abort_counts[thread_id];
   oid_t &transaction_count_ref = commit_counts[thread_id];
@@ -113,6 +113,7 @@ void RunBackend(oid_t thread_id) {
 
   NewOrderPlans new_order_plans = PrepareNewOrderPlan();
   PaymentPlans payment_plans = PreparePaymentPlan();
+  DeliveryPlans delivery_plans = PrepareDeliveryPlan();
   
   // backoff
   uint32_t backoff_shifts = 0;
@@ -129,6 +130,9 @@ void RunBackend(oid_t thread_id) {
 
      if (rng_val <= 0.04) {
        while (RunStockLevel(thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -144,7 +148,10 @@ void RunBackend(oid_t thread_id) {
         }
        }
      } else if (rng_val <= 0.08) {
-       while (RunDelivery(thread_id) == false) {
+       while (RunOrderStatus(thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -160,7 +167,10 @@ void RunBackend(oid_t thread_id) {
         }
        }
      } else if (rng_val <= 0.12) {
-       while (RunOrderStatus(thread_id) == false) {
+       while (RunDelivery(delivery_plans, thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -177,6 +187,9 @@ void RunBackend(oid_t thread_id) {
        }
      } else if (rng_val <= 0.55) {
        while (RunPayment(payment_plans, thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {
@@ -193,6 +206,9 @@ void RunBackend(oid_t thread_id) {
        }
      } else {
        while (RunNewOrder(new_order_plans, thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
          execution_count_ref++;
         // backoff
         if (state.run_backoff) {

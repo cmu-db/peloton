@@ -104,117 +104,20 @@ class SpeculativeReadTxnManager : public TransactionManager {
 
   virtual void PerformDelete(const ItemPointer &location);
 
-  virtual Transaction *BeginTransaction() {
-    txn_id_t txn_id = GetNextTransactionId();
-    cid_t begin_cid = GetNextCommitId();
-    Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
-    spec_txn_context.SetBeginCid(begin_cid);
+  virtual Transaction *BeginTransaction();
 
-    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
-    assert(running_txn_buckets_[bucket_id].contains(txn_id) == false);
-    running_txn_buckets_[bucket_id][txn_id] = &spec_txn_context;
-
-    auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
-    txn->SetEpochId(eid);
-    return txn;
-  }
-
-  virtual void EndTransaction() {
-    if (current_txn->GetEndCommitId() == MAX_CID) {
-      current_txn->SetEndCommitId(current_txn->GetBeginCommitId());
-    }
-
-    txn_id_t txn_id = current_txn->GetTransactionId();
-
-    cid_t bucket_id = txn_id % RUNNING_TXN_BUCKET_NUM;
-    bool ret = running_txn_buckets_[bucket_id].erase(txn_id);
-    if (ret == false) {
-      assert(false);
-    }
-
-    EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
-
-    spec_txn_context.Clear();
-
-    delete current_txn;
-    current_txn = nullptr;
-  }
+  virtual void EndTransaction();
 
 
   // is it because this dependency has been registered before?
   // or the dst txn does not exist?
-  bool RegisterDependency(const txn_id_t &dst_txn_id) {
-    txn_id_t src_txn_id = current_txn->GetTransactionId();
-    // if this dependency has been registered before, then return.
-    if (spec_txn_context.outer_dep_set_.find(dst_txn_id) !=
-        spec_txn_context.outer_dep_set_.end()) {
-      return true;
-    }
+  bool RegisterDependency(const txn_id_t &dst_txn_id);
 
-    bool changeable = true;
-    bool ret =
-        running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
-            dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext * context) {
-      context->inner_dep_set_lock_.Lock();
-      if (context->inner_dep_set_changeable_ == true) {
-        assert(context->inner_dep_set_.find(src_txn_id) ==
-               context->inner_dep_set_.end());
-        context->inner_dep_set_.insert(src_txn_id);
-      } else {
-        changeable = false;
-      }
-      context->inner_dep_set_lock_.Unlock();
-    });
-    if (changeable == false || ret == false) {
-      return false;
-    }
-    spec_txn_context.outer_dep_set_.insert(dst_txn_id);
-    spec_txn_context.outer_dep_count_++;
-    return true;
-  }
+  bool IsCommittable();
 
-  bool IsCommittable() {
-    while (true) {
-      if (spec_txn_context.outer_dep_count_ == 0) {
-        return true;
-      }
-      if (spec_txn_context.is_cascading_abort_ == true) {
-        return false;
-      }
-      _mm_pause();
-    }
-  }
+  void NotifyCommit();
 
-  void NotifyCommit() {
-    // some other transactions may also modify my inner dep set.
-    // so lock first.
-    spec_txn_context.inner_dep_set_lock_.Lock();
-    for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-          .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        assert(context->outer_dep_count_ > 0);
-        context->outer_dep_count_--;
-      });
-    }
-    spec_txn_context.inner_dep_set_changeable_ = false;
-    spec_txn_context.inner_dep_set_lock_.Unlock();
-  }
-
-  void NotifyAbort() {
-    // some other transactions may also modify my inner dep set.
-    // so lock first.
-    spec_txn_context.inner_dep_set_lock_.Lock();
-    for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-          .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        assert(context->outer_dep_count_ > 0);
-        context->is_cascading_abort_ = true;
-      });
-    }
-    spec_txn_context.inner_dep_set_changeable_ = false;
-    spec_txn_context.inner_dep_set_lock_.Unlock();
-  }
+  void NotifyAbort();
 
   virtual Result CommitTransaction();
 

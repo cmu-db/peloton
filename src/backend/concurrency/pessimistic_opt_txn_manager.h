@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// ts_order_txn_manager.h
+// pessimistic_opt_txn_manager.h
 //
-// Identification: src/backend/concurrency/ts_order_txn_manager.h
+// Identification: src/backend/concurrency/pessimistic_opt_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,22 +13,22 @@
 #pragma once
 
 #include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/tile_group.h"
 
 namespace peloton {
 namespace concurrency {
 
-//===--------------------------------------------------------------------===//
-// timestamp ordering
-//===--------------------------------------------------------------------===//
+extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
+    pessimistic_opt_released_rdlock;
 
-class TsOrderTxnManager : public TransactionManager {
+//===--------------------------------------------------------------------===//
+// pessimistic concurrency control
+//===--------------------------------------------------------------------===//
+class PessimisticOptTxnManager : public TransactionManager {
  public:
-  TsOrderTxnManager() {}
+  PessimisticOptTxnManager(){}
+  virtual ~PessimisticOptTxnManager() {}
 
-  virtual ~TsOrderTxnManager() {}
-
-  static TsOrderTxnManager &GetInstance();
+  static PessimisticOptTxnManager &GetInstance();
 
   virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
@@ -66,6 +66,20 @@ class TsOrderTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
+  // init reserved area of a tuple
+  // creator txnid | lock (for read list) | read list head
+  // The txn_id could only be the cur_txn's txn id.
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+    auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetHeader();
+
+    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
+    *(int *)(reserved_area + COUNTER_OFFSET) = 0;
+  }
+
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
@@ -74,35 +88,47 @@ class TsOrderTxnManager : public TransactionManager {
 
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
+    LOG_TRACE("Begin txn %lu", txn_id);
 
     return txn;
   }
 
   virtual void EndTransaction() {
+
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
+
+    pessimistic_opt_released_rdlock.clear();
   }
 
+  inline Spinlock *GetSpinlockField(const storage::TileGroupHeader *const tile_group_header,
+                                    const oid_t &tuple_id) {
+    return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  }
+
+  inline int* GetReaderCountField(const storage::TileGroupHeader *const tile_group_header,
+                                  const oid_t &tuple_id) {
+    return (int *)(tile_group_header->GetReservedFieldRef(tuple_id) + COUNTER_OFFSET);
+  }
 
  private:
 
-  static const int LOCK_OFFSET = 0;
-  static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
+ static const int LOCK_OFFSET = 0;
+ static const int COUNTER_OFFSET = (LOCK_OFFSET + 8);
+//#define READ_COUNT_MASK 0xFF
+//#define TXNID_MASK 0x00FFFFFFFFFFFFFF
+//  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
+//    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
+//  }
+//  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
+//  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
+//    return (txn_id >> 56) & READ_COUNT_MASK;
+//  }
 
-
-  Spinlock *GetSpinlockField(
-      const storage::TileGroupHeader *const tile_group_header, 
-      const oid_t &tuple_id);
-
-  cid_t GetLastReaderCid(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id);
-
-  void SetLastReaderCid(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &last_read_ts);
+  void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id);
 
 };
 }

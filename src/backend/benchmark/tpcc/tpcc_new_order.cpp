@@ -457,6 +457,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   }
 
   if (gwtr_lists_values.size() != 1) {
+    LOG_INFO("warehouse_id=%d", warehouse_id);
     assert(false);
   }
 
@@ -579,6 +580,13 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   executor::InsertExecutor orders_executor(&orders_node, context.get());
   orders_executor.Execute();
 
+  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    txn_manager.AbortTransaction();
+    return false;
+  } else {
+    LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+  }
   
   LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
   std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
@@ -594,6 +602,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
   new_order_executor.Execute();
 
+  if (txn->GetResult() != Result::RESULT_SUCCESS) {
+    LOG_TRACE("abort transaction when inserting new order table");
+    txn_manager.AbortTransaction();
+    return false;
+  }
 
   for (size_t i = 0; i < i_ids.size(); ++i) {
     int item_id = i_ids.at(i);
@@ -684,8 +697,6 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     // brand_generic = 'G'
         
     LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-
     std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
     // OL_O_ID
@@ -714,6 +725,11 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
     order_line_executor.Execute();
 
+    if (txn->GetResult() != Result::RESULT_SUCCESS) {
+      LOG_TRACE("abort transaction when inserting order line table");
+      txn_manager.AbortTransaction();
+      return false;
+    }
   }
 
   // transaction passed execution.
@@ -723,12 +739,15 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   if (result == Result::RESULT_SUCCESS) {
     // transaction passed commitment.
+    LOG_TRACE("commit txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
     return true;
     
   } else {
     // transaction failed commitment.
     assert(result == Result::RESULT_ABORTED ||
            result == Result::RESULT_FAILURE);
+    LOG_TRACE("abort txn, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+    return true;
     return false;
   }
 }

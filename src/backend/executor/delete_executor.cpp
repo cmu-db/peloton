@@ -43,8 +43,6 @@ DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
  */
 bool DeleteExecutor::DInit() {
   assert(children_.size() == 1);
-  assert(executor_context_);
-
   assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
@@ -53,6 +51,7 @@ bool DeleteExecutor::DInit() {
   // Grab data from plan node.
   const planner::DeletePlan &node = GetPlanNode<planner::DeletePlan>();
   target_table_ = node.GetTable();
+
   assert(target_table_);
 
   return true;

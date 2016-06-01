@@ -117,7 +117,7 @@ bool OptimisticRbTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_ERROR("Fail to acquire tuple. Set txn failure.");
+    LOG_TRACE("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }

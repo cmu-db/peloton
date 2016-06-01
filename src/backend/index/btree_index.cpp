@@ -131,6 +131,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
       if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
+        LOG_TRACE("predicate fails, abort transaction");
         return false;
       }
     }

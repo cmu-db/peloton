@@ -33,13 +33,14 @@ void Usage(FILE *out) {
           "   -b --backend_count     :  # of backends \n"
           "   -c --column_count      :  # of columns \n"
           "   -l --update_col_count  :  # of updated columns \n"
+          "   -r --read_col_count    :  # of read columns \n"
           "   -o --operation_count   :  # of operations \n"
           "   -u --write_ratio       :  Fraction of updates \n"
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, occn2o, and to\n"
+          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, and to\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va\n"
   );
@@ -51,7 +52,8 @@ static struct option opts[] = {
     {"duration", optional_argument, NULL, 'd'},
     {"snapshot_duration", optional_argument, NULL, 's'},
     {"column_count", optional_argument, NULL, 'c'},
-    {"update_col_count", optional_argument, NULL, 'c'},
+    {"update_col_count", optional_argument, NULL, 'l'},
+    {"read_col_count", optional_argument, NULL, 'r'},
     {"operation_count", optional_argument, NULL, 'o'},
     {"update_ratio", optional_argument, NULL, 'u'},
     {"backend_count", optional_argument, NULL, 'b'},
@@ -87,6 +89,15 @@ void ValidateUpdateColumnCount(const configuration &state) {
   }
 
   LOG_INFO("%s : %d", "update_column_count", state.update_column_count);
+}
+
+void ValidateReadColumnCount(const configuration &state) {
+  if (state.read_column_count <= 0 || state.read_column_count > state.column_count) {
+    LOG_ERROR("Invalid read_column_count :: %d", state.read_column_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "read_column_count", state.read_column_count);
 }
 
 void ValidateOperationCount(const configuration &state) {
@@ -150,6 +161,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.snapshot_duration = 0.1;
   state.column_count = 10;
   state.update_column_count = 1;
+  state.read_column_count = 1;
   state.operation_count = 10;
   state.update_ratio = 0.5;
   state.backend_count = 2;
@@ -161,7 +173,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:o:u:b:z:p:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:", opts, &idx);
 
     if (c == -1) break;
 
@@ -183,6 +195,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'l':
         state.update_column_count = atoi(optarg);
+        break;
+      case 'r':
+        state.read_column_count = atoi(optarg);
         break;
       case 'u':
         state.update_ratio = atof(optarg);
@@ -217,6 +232,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
         } else if (strcmp(protocol, "occn2o") == 0) {
           state.protocol = CONCURRENCY_TYPE_OCC_N2O;
+        } else if (strcmp(protocol, "pccopt") == 0) {
+          state.protocol = CONCURRENCY_TYPE_PESSIMISTIC_OPT;
         } else {
           fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
           exit(EXIT_FAILURE);
@@ -252,6 +269,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateScaleFactor(state);
   ValidateColumnCount(state);
   ValidateUpdateColumnCount(state);
+  ValidateReadColumnCount(state);
   ValidateOperationCount(state);
   ValidateUpdateRatio(state);
   ValidateBackendCount(state);

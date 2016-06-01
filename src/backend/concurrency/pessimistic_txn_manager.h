@@ -66,6 +66,20 @@ class PessimisticTxnManager : public TransactionManager {
 
   virtual Result AbortTransaction();
 
+  // init reserved area of a tuple
+  // creator txnid | lock (for read list) | read list head
+  // The txn_id could only be the cur_txn's txn id.
+  void InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
+
+    auto tile_group_header = catalog::Manager::GetInstance()
+      .GetTileGroup(tile_group_id)->GetHeader();
+
+    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
+    *(int *)(reserved_area + COUNTER_OFFSET) = 0;
+  }
+
   virtual Transaction *BeginTransaction() {
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
@@ -76,12 +90,10 @@ class PessimisticTxnManager : public TransactionManager {
     txn->SetEpochId(eid);
     LOG_TRACE("Begin txn %lu", txn_id);
 
-
     return txn;
   }
 
   virtual void EndTransaction() {
-
 
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
@@ -92,18 +104,31 @@ class PessimisticTxnManager : public TransactionManager {
   }
 
  private:
-#define READ_COUNT_MASK 0xFF
-#define TXNID_MASK 0x00FFFFFFFFFFFFFF
-  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
-    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
-  }
-  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
-  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
-    return (txn_id >> 56) & READ_COUNT_MASK;
-  }
+
+ static const int LOCK_OFFSET = 0;
+ static const int COUNTER_OFFSET = (LOCK_OFFSET + 8);
+//#define READ_COUNT_MASK 0xFF
+//#define TXNID_MASK 0x00FFFFFFFFFFFFFF
+//  inline txn_id_t PACK_TXNID(txn_id_t txn_id, int read_count) {
+//    return ((long)(read_count & READ_COUNT_MASK) << 56) | (txn_id & TXNID_MASK);
+//  }
+//  inline txn_id_t EXTRACT_TXNID(txn_id_t txn_id) { return txn_id & TXNID_MASK; }
+//  inline txn_id_t EXTRACT_READ_COUNT(txn_id_t txn_id) {
+//    return (txn_id >> 56) & READ_COUNT_MASK;
+//  }
 
   void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
+
+  inline Spinlock *GetSpinlockField(const storage::TileGroupHeader *const tile_group_header,
+                                    const oid_t &tuple_id) {
+    return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
+  }
+
+  inline int* GetReaderCountField(const storage::TileGroupHeader *const tile_group_header,
+                                  const oid_t &tuple_id) {
+    return (int *)(tile_group_header->GetReservedFieldRef(tuple_id) + COUNTER_OFFSET);
+  }
 
 };
 }

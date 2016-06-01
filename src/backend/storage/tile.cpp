@@ -130,7 +130,9 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
     RBSegType rb_seg = txn_manager->GetRbSeg(tile_group_header, tuple_offset);
 
     // Traverse the RB chain, stop when invisible
+    int traverse_length = 0;
     while (txn_manager->IsRBVisible(rb_seg, read_ts) == true) {
+      ++traverse_length;
       auto rb_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
       for (size_t col_idx = 0; col_idx < rb_col_count; col_idx++) {
         auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, col_idx)->col_id;
@@ -142,7 +144,9 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
 
       rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
     }
-
+    if (traverse_length > 1) {
+      LOG_INFO("traverse length=%d, column_id=%u", traverse_length, column_id);
+    }
     return value;
   }
   // ROLLBACK SEGMENT

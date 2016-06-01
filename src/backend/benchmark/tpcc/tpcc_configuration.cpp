@@ -36,7 +36,7 @@ void Usage(FILE *out) {
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
-          "                             gc protocol could be off, co, va"
+          "                             gc protocol could be off, co, va\n"
   );
   exit(EXIT_FAILURE);
 }
