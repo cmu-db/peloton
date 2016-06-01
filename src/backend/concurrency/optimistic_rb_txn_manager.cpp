@@ -218,14 +218,27 @@ bool OptimisticRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
           return false;
         }
         // Record into the updated index entry set, used when commit
-        updated_index_entries.emplace(location, rb_itempointer_ptr);
+        auto itr = updated_index_entries.find(location);
+        if (itr != updated_index_entries.end()) {
+          index->DeleteEntry(key.get(), *rb_itempointer_ptr);
+          itr->second = rb_itempointer_ptr;
+        } else {
+          updated_index_entries.emplace(location, rb_itempointer_ptr);
+        }
+        
         break;
       }
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
         index->InsertEntry(key.get(), location, &rb_itempointer_ptr);
-        updated_index_entries.emplace(location, rb_itempointer_ptr);
+        auto itr = updated_index_entries.find(location);
+        if (itr != updated_index_entries.end()) {
+          index->DeleteEntry(key.get(), *rb_itempointer_ptr);
+          itr->second = rb_itempointer_ptr;
+        } else {
+          updated_index_entries.emplace(location, rb_itempointer_ptr);
+        }
         // Record into the updated index entry set, used when commit
         break;
     }
@@ -442,6 +455,16 @@ Result OptimisticRbTxnManager::CommitTransaction() {
   }
   //////////////////////////////////////////////////////////
 
+  for (auto itr = updated_index_entries.begin(); itr != updated_index_entries.end(); itr++) {
+    auto location = itr->first;
+    oid_t tile_group_id = location.block;
+    oid_t tuple_id = location.offset;
+    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    index::RBItemPointer *old_index_ptr = GetSIndexPtr(tile_group_header, tuple_id);
+    old_index_ptr->timestamp = end_commit_id;
+    SetSIndexPtr(tile_group_header, tuple_id, itr->second);
+  }
+
   // auto &log_manager = logging::LogManager::GetInstance();
   // log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
@@ -527,6 +550,12 @@ Result OptimisticRbTxnManager::AbortTransaction() {
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
+
+  // Delete from secondary index here, currently the workaround is just to 
+  // invalidate the index entry
+  for (auto itr = updated_index_entries.begin(); itr != updated_index_entries.end(); itr++) {
+    itr->second->timestamp = 0;
+  }
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
