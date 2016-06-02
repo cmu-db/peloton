@@ -5,14 +5,14 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/logging/logger.h
  *
  *-------------------------------------------------------------------------
  */
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-#include "backend/logging/log_file.h"
+#include "common/types.h"
+#include "common/logger.h"
+#include "logging/log_file.h"
 
 namespace peloton {
 namespace logging {

@@ -4,7 +4,7 @@
 //
 // bridge_test_database.cpp
 //
-// Identification: src/backend/bridge/ddl/tests/bridge_test_database.cpp
+// Identification: src/bridge/ddl/tests/bridge_test_database.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #include "bridge_test.h"
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/ddl/ddl.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/common/exception.h"
-#include "backend/common/macros.h"
+#include "bridge/ddl/bridge.h"
+#include "bridge/ddl/ddl.h"
+#include "bridge/ddl/ddl_database.h"
+#include "common/exception.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace bridge {

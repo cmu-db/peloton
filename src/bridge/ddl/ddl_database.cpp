@@ -4,17 +4,17 @@
 //
 // ddl_database.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_database.cpp
+// Identification: src/bridge/ddl/ddl_database.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/common/logger.h"
-#include "backend/storage/database.h"
-#include "backend/catalog/manager.h"
+#include "bridge/ddl/bridge.h"
+#include "bridge/ddl/ddl_database.h"
+#include "common/logger.h"
+#include "storage/database.h"
+#include "catalog/manager.h"
 
 #include "postmaster/peloton.h"
 #include "nodes/parsenodes.h"

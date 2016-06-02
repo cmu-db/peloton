@@ -4,7 +4,7 @@
 //
 // data_table.h
 //
-// Identification: src/backend/storage/data_table.h
+// Identification: src/storage/data_table.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 #include <map>
 #include <mutex>
 
-#include "backend/storage/abstract_table.h"
+#include "storage/abstract_table.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

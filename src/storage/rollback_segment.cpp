@@ -4,15 +4,15 @@
 //
 // rollback_segment.cpp
 //
-// Identification: src/backend/storage/rollback_segment.cpp
+// Identification: src/storage/rollback_segment.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/rollback_segment.h"
-#include "backend/logging/log_manager.h"
-#include "backend/planner/project_info.h"
+#include "storage/rollback_segment.h"
+#include "logging/log_manager.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 namespace storage {

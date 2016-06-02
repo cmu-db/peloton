@@ -4,16 +4,16 @@
 //
 // raw_database_info.cpp
 //
-// Identification: src/backend/bridge/ddl/raw_database_info.cpp
+// Identification: src/bridge/ddl/raw_database_info.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/raw_database_info.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/bridge/ddl/format_transformer.h"
-#include "backend/common/exception.h"
+#include "bridge/ddl/raw_database_info.h"
+#include "bridge/ddl/ddl_database.h"
+#include "bridge/ddl/format_transformer.h"
+#include "common/exception.h"
 
 #include "catalog/pg_class.h"
 #include "access/heapam.h"

@@ -4,15 +4,15 @@
 //
 // mapper_sort.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_sort.cpp
+// Identification: src/bridge/dml/mapper/mapper_sort.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/planner/order_by_plan.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/ddl/schema_transformer.h"
+#include "planner/order_by_plan.h"
 
 namespace peloton {
 namespace bridge {

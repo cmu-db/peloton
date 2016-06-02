@@ -4,7 +4,7 @@
 //
 // transaction_manager_factory.h
 //
-// Identification: src/backend/concurrency/transaction_manager_factory.h
+// Identification: src/concurrency/transaction_manager_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

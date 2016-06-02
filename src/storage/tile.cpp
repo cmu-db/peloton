@@ -4,7 +4,7 @@
 //
 // tile.cpp
 //
-// Identification: src/backend/storage/tile.cpp
+// Identification: src/storage/tile.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,20 +13,20 @@
 #include <cstdio>
 #include <sstream>
 
-#include "backend/catalog/schema.h"
-#include "backend/common/exception.h"
-#include "backend/common/pool.h"
-#include "backend/common/serializer.h"
-#include "backend/common/types.h"
-#include "backend/common/macros.h"
-#include "backend/storage/tuple_iterator.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/storage_manager.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/rollback_segment.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/concurrency/optimistic_rb_txn_manager.h"
+#include "catalog/schema.h"
+#include "common/exception.h"
+#include "common/pool.h"
+#include "common/serializer.h"
+#include "common/types.h"
+#include "common/macros.h"
+#include "storage/tuple_iterator.h"
+#include "storage/tuple.h"
+#include "storage/storage_manager.h"
+#include "storage/tile.h"
+#include "storage/tile_group_header.h"
+#include "storage/rollback_segment.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/optimistic_rb_txn_manager.h"
 
 namespace peloton {
 namespace storage {

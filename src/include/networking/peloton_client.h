@@ -4,17 +4,17 @@
 //
 // peloton_client.h
 //
-// Identification: src/backend/networking/peloton_client.h
+// Identification: src/networking/peloton_client.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/networking/rpc_channel.h"
-#include "backend/networking/rpc_controller.h"
-#include "backend/networking/abstract_service.pb.h"
-#include "backend/networking/peloton_endpoint.h"
+#include "common/logger.h"
+#include "networking/rpc_channel.h"
+#include "networking/rpc_controller.h"
+#include "networking/abstract_service.pb.h"
+#include "networking/peloton_endpoint.h"
 
 #include <google/protobuf/stubs/common.h>
 

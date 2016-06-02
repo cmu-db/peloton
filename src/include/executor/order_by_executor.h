@@ -4,7 +4,7 @@
 //
 // order_by_executor.h
 //
-// Identification: src/backend/executor/order_by_executor.h
+// Identification: src/executor/order_by_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/storage/tuple.h"
+#include "common/types.h"
+#include "executor/abstract_executor.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 

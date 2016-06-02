@@ -4,7 +4,7 @@
 //
 // executors.h
 //
-// Identification: src/backend/executor/executors.h
+// Identification: src/executor/executors.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,19 +14,19 @@
 
 // This is just for convenience
 
-#include "backend/executor/aggregate_executor.h"
-#include "backend/executor/limit_executor.h"
-#include "backend/executor/materialization_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/executor/index_scan_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/executor/delete_executor.h"
-#include "backend/executor/update_executor.h"
-#include "backend/executor/nested_loop_join_executor.h"
-#include "backend/executor/merge_join_executor.h"
-#include "backend/executor/hash_join_executor.h"
-#include "backend/executor/hash_executor.h"
-#include "backend/executor/order_by_executor.h"
-#include "backend/executor/hash_set_op_executor.h"
-#include "backend/executor/append_executor.h"
-#include "backend/executor/projection_executor.h"
+#include "executor/aggregate_executor.h"
+#include "executor/limit_executor.h"
+#include "executor/materialization_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/index_scan_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/delete_executor.h"
+#include "executor/update_executor.h"
+#include "executor/nested_loop_join_executor.h"
+#include "executor/merge_join_executor.h"
+#include "executor/hash_join_executor.h"
+#include "executor/hash_executor.h"
+#include "executor/order_by_executor.h"
+#include "executor/hash_set_op_executor.h"
+#include "executor/append_executor.h"
+#include "executor/projection_executor.h"

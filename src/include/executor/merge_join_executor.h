@@ -4,7 +4,7 @@
 //
 // merge_join_executor.h
 //
-// Identification: src/backend/executor/merge_join_executor.h
+// Identification: src/executor/merge_join_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <vector>
 
-#include "backend/executor/abstract_join_executor.h"
-#include "backend/planner/merge_join_plan.h"
+#include "executor/abstract_join_executor.h"
+#include "planner/merge_join_plan.h"
 
 namespace peloton {
 namespace executor {

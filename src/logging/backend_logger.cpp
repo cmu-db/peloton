@@ -4,18 +4,18 @@
 //
 // backend_logger.cpp
 //
-// Identification: src/backend/logging/backend_logger.cpp
+// Identification: src/logging/backend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/logging/backend_logger.h"
-#include "backend/logging/loggers/wal_backend_logger.h"
-#include "backend/logging/loggers/wbl_backend_logger.h"
-#include "backend/logging/log_record.h"
-#include "backend/logging/log_manager.h"
+#include "common/logger.h"
+#include "logging/backend_logger.h"
+#include "logging/loggers/wal_backend_logger.h"
+#include "logging/loggers/wbl_backend_logger.h"
+#include "logging/log_record.h"
+#include "logging/log_manager.h"
 
 namespace peloton {
 namespace logging {

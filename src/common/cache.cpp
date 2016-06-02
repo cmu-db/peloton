@@ -4,15 +4,15 @@
 //
 // cache.cpp
 //
-// Identification: src/backend/common/cache.cpp
+// Identification: src/common/cache.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/cache.h"
-#include "backend/common/macros.h"
-#include "backend/planner/abstract_plan.h"
+#include "common/cache.h"
+#include "common/macros.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 

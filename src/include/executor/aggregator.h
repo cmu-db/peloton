@@ -4,7 +4,7 @@
 //
 // aggregator.h
 //
-// Identification: src/backend/executor/aggregator.h
+// Identification: src/executor/aggregator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,10 +15,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "backend/common/value_factory.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/aggregate_plan.h"
-#include "backend/expression/container_tuple.h"
+#include "common/value_factory.h"
+#include "executor/abstract_executor.h"
+#include "planner/aggregate_plan.h"
+#include "expression/container_tuple.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate

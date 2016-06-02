@@ -4,7 +4,7 @@
 //
 // bootstrap.h
 //
-// Identification: src/backend/bridge/ddl/bootstrap.h
+// Identification: src/bridge/ddl/bootstrap.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "backend/catalog/schema.h"
+#include "catalog/schema.h"
 #include "postgres.h"
 #include "c.h"
 #include "raw_database_info.h"

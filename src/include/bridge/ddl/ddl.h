@@ -4,7 +4,7 @@
 //
 // ddl.h
 //
-// Identification: src/backend/bridge/ddl/ddl.h
+// Identification: src/bridge/ddl/ddl.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

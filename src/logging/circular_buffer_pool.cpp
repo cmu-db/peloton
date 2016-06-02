@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/circular_buffer_pool.cpp
+ * /peloton/src/logging/circular_buffer_pool.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -13,8 +13,8 @@
 #include <atomic>
 #include <xmmintrin.h>
 
-#include "backend/logging/circular_buffer_pool.h"
-#include "backend/common/logger.h"
+#include "logging/circular_buffer_pool.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace logging {

@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/checkpoint/simple_checkpoint.h
+ * /peloton/src/logging/checkpoint/simple_checkpoint.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <memory>
 #include <thread>
 
-#include "backend/logging/checkpoint.h"
+#include "logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {

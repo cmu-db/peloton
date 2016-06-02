@@ -4,7 +4,7 @@
 //
 // rpc_type.h
 //
-// Identification: src/backend/networking/rpc_type.h
+// Identification: src/networking/rpc_type.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

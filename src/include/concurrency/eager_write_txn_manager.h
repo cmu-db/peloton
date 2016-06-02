@@ -4,7 +4,7 @@
 //
 // eager_write_txn_manager.h
 //
-// Identification: src/backend/concurrency/eager_write_txn_manager.h
+// Identification: src/concurrency/eager_write_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 #include <queue>
 #include <atomic>
 
-#include "backend/concurrency/transaction_manager.h"
+#include "concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {

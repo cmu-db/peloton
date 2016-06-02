@@ -4,7 +4,7 @@
 //
 // pg_func_map.h
 //
-// Identification: src/backend/bridge/dml/expr/pg_func_map.h
+// Identification: src/bridge/dml/expr/pg_func_map.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <unordered_map>
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 #include "postgres/include/postgres_ext.h"
 

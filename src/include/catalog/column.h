@@ -4,7 +4,7 @@
 //
 // column.h
 //
-// Identification: src/backend/catalog/column.h
+// Identification: src/catalog/column.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/printable.h"
-#include "backend/catalog/constraint.h"
+#include "common/printable.h"
+#include "catalog/constraint.h"
 
 namespace peloton {
 namespace catalog {

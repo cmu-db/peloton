@@ -4,7 +4,7 @@
 //
 // bridge_test_helper.cpp
 //
-// Identification: src/backend/bridge/ddl/tests/bridge_test_helper.cpp
+// Identification: src/bridge/ddl/tests/bridge_test_helper.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,15 +12,15 @@
 
 #include "bridge_test.h"
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/ddl/ddl.h"
-#include "backend/bridge/ddl/ddl_table.h"
-#include "backend/bridge/ddl/ddl_index.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/common/exception.h"
-#include "backend/storage/database.h"
-#include "backend/index/index.h"
+#include "bridge/ddl/bridge.h"
+#include "bridge/ddl/ddl.h"
+#include "bridge/ddl/ddl_table.h"
+#include "bridge/ddl/ddl_index.h"
+#include "catalog/manager.h"
+#include "catalog/foreign_key.h"
+#include "common/exception.h"
+#include "storage/database.h"
+#include "index/index.h"
 
 #include "tcop/tcopprot.h"
 #include "parser/parse_utilcmd.h"

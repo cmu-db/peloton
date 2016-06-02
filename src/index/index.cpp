@@ -4,19 +4,19 @@
 //
 // index.cpp
 //
-// Identification: src/backend/index/index.cpp
+// Identification: src/index/index.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/index/index.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/pool.h"
-#include "backend/catalog/schema.h"
-#include "backend/catalog/manager.h"
-#include "backend/storage/tuple.h"
+#include "index/index.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/pool.h"
+#include "catalog/schema.h"
+#include "catalog/manager.h"
+#include "storage/tuple.h"
 
 #include <iostream>
 

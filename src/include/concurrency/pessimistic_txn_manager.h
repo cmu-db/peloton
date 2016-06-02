@@ -4,7 +4,7 @@
 //
 // pessimistic_txn_manager.h
 //
-// Identification: src/backend/concurrency/pessimistic_txn_manager.h
+// Identification: src/concurrency/pessimistic_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction_manager.h"
+#include "concurrency/transaction_manager.h"
 
 namespace peloton {
 namespace concurrency {

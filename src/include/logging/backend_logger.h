@@ -4,7 +4,7 @@
 //
 // backend_logger.h
 //
-// Identification: src/backend/logging/backend_logger.h
+// Identification: src/logging/backend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,13 +16,13 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "backend/common/types.h"
-#include "backend/logging/logger.h"
-#include "backend/logging/log_record.h"
-#include "backend/logging/log_buffer.h"
-#include "backend/common/platform.h"
-#include "backend/common/pool.h"
-#include "backend/logging/circular_buffer_pool.h"
+#include "common/types.h"
+#include "logging/logger.h"
+#include "logging/log_record.h"
+#include "logging/log_buffer.h"
+#include "common/platform.h"
+#include "common/pool.h"
+#include "logging/circular_buffer_pool.h"
 
 namespace peloton {
 namespace logging {

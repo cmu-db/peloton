@@ -4,7 +4,7 @@
 //
 // wbl_frontend_logger.h
 //
-// Identification: src/backend/logging/loggers/wbl_frontend_logger.h
+// Identification: src/logging/loggers/wbl_frontend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,10 +14,10 @@
 
 #include <set>
 
-#include "backend/logging/frontend_logger.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/records/log_record_pool.h"
+#include "logging/frontend_logger.h"
+#include "logging/records/transaction_record.h"
+#include "logging/records/tuple_record.h"
+#include "logging/records/log_record_pool.h"
 
 namespace peloton {
 

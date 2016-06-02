@@ -4,18 +4,18 @@
 //
 // mapper_hash_join.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_hash_join.cpp
+// Identification: src/bridge/dml/mapper/mapper_hash_join.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
-#include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/planner/hash_join_plan.h"
-#include "backend/planner/projection_plan.h"
-#include "backend/expression/expression_util.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/expr/expr_transformer.h"
+#include "bridge/ddl/schema_transformer.h"
+#include "planner/hash_join_plan.h"
+#include "planner/projection_plan.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace bridge {

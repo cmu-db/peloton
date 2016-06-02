@@ -5,22 +5,22 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/checkpoint.cpp
+ * /peloton/src/logging/checkpoint.cpp
  *
  *-------------------------------------------------------------------------
  */
 
-#include "backend/common/pool.h"
-#include "backend/logging/checkpoint.h"
-#include "backend/logging/logging_util.h"
-#include "backend/logging/checkpoint/simple_checkpoint.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/logging/backend_logger.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/database.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
+#include "common/pool.h"
+#include "logging/checkpoint.h"
+#include "logging/logging_util.h"
+#include "logging/checkpoint/simple_checkpoint.h"
+#include "logging/log_manager.h"
+#include "logging/checkpoint_manager.h"
+#include "logging/backend_logger.h"
+#include "storage/tile.h"
+#include "storage/database.h"
+#include "storage/tile_group.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace logging {

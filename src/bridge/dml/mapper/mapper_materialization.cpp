@@ -4,14 +4,14 @@
 //
 // mapper_materialization.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_materialization.cpp
+// Identification: src/bridge/dml/mapper/mapper_materialization.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/materialization_plan.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "planner/materialization_plan.h"
 
 namespace peloton {
 namespace bridge {

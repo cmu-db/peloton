@@ -4,25 +4,25 @@
 //
 // tile_group.cpp
 //
-// Identification: src/backend/storage/tile_group.cpp
+// Identification: src/storage/tile_group.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/tile_group.h"
+#include "storage/tile_group.h"
 
 #include <numeric>
 
-#include "backend/common/platform.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/logger.h"
-#include "backend/common/types.h"
-#include "backend/storage/abstract_table.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/rollback_segment.h"
+#include "common/platform.h"
+#include "catalog/manager.h"
+#include "common/logger.h"
+#include "common/types.h"
+#include "storage/abstract_table.h"
+#include "storage/tile.h"
+#include "storage/tuple.h"
+#include "storage/tile_group_header.h"
+#include "storage/rollback_segment.h"
 
 namespace peloton {
 namespace storage {

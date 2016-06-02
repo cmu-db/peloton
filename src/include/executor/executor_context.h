@@ -4,7 +4,7 @@
 //
 // executor_context.h
 //
-// Identification: src/backend/executor/executor_context.h
+// Identification: src/executor/executor_context.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction.h"
-#include "backend/common/pool.h"
-#include "backend/common/value.h"
+#include "concurrency/transaction.h"
+#include "common/pool.h"
+#include "common/value.h"
 
 namespace peloton {
 namespace executor {

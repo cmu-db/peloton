@@ -4,7 +4,7 @@
 //
 // materialization_plan.h
 //
-// Identification: src/backend/planner/materialization_plan.h
+// Identification: src/planner/materialization_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,9 +17,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/common/types.h"
-#include "backend/catalog/schema.h"
+#include "planner/abstract_plan.h"
+#include "common/types.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 

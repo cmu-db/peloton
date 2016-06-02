@@ -4,7 +4,7 @@
 //
 // connection_manager.cpp
 //
-// Identification: src/backend/networking/connection_manager.cpp
+// Identification: src/networking/connection_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #include "connection_manager.h"
 
-#include "backend/common/macros.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace networking {

@@ -4,7 +4,7 @@
 //
 // wal_frontend_logger.h
 //
-// Identification: src/backend/logging/loggers/wal_frontend_logger.h
+// Identification: src/logging/loggers/wal_frontend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/logging/frontend_logger.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/log_file.h"
-#include "backend/executor/executors.h"
+#include "logging/frontend_logger.h"
+#include "logging/records/tuple_record.h"
+#include "logging/log_file.h"
+#include "executor/executors.h"
 
 #include <dirent.h>
 #include <vector>

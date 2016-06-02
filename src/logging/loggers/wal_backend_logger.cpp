@@ -6,7 +6,7 @@
 //
 // interface for a worker thread to write persistent logs
 //
-// Identification: src/backend/logging/loggers/wal_backend_logger.cpp
+// Identification: src/logging/loggers/wal_backend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,10 +14,10 @@
 
 #include <iostream>
 
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/frontend_logger.h"
-#include "backend/logging/loggers/wal_backend_logger.h"
+#include "logging/records/tuple_record.h"
+#include "logging/log_manager.h"
+#include "logging/frontend_logger.h"
+#include "logging/loggers/wal_backend_logger.h"
 
 namespace peloton {
 namespace logging {

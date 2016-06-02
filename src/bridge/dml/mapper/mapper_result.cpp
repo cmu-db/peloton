@@ -4,14 +4,14 @@
 //
 // mapper_result.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_result.cpp
+// Identification: src/bridge/dml/mapper/mapper_result.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-//#include "backend/planner/result_plan.h"
+#include "bridge/dml/mapper/mapper.h"
+//#include "planner/result_plan.h"
 
 namespace peloton {
 namespace bridge {

@@ -4,15 +4,15 @@
 //
 // mapper_hash.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_hash.cpp
+// Identification: src/bridge/dml/mapper/mapper_hash.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
-#include "backend/planner/hash_plan.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/expr/expr_transformer.h"
+#include "planner/hash_plan.h"
 
 namespace peloton {
 namespace bridge {

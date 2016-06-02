@@ -5,14 +5,14 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/buffer_pool.h
+ * /peloton/src/logging/buffer_pool.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/logging/log_buffer.h"
+#include "logging/log_buffer.h"
 #include <memory>
 
 // Buffer Pool Size has to be 2^n

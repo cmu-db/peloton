@@ -4,7 +4,7 @@
 //
 // schema.h
 //
-// Identification: src/backend/catalog/schema.h
+// Identification: src/catalog/schema.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/printable.h"
-#include "backend/catalog/column.h"
+#include "common/printable.h"
+#include "catalog/column.h"
 #include <memory>
 
 namespace peloton {

@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/log_buffer.h
+ * /peloton/src/logging/log_buffer.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 #include <cstddef>
 #include <memory>
 
-#include "backend/logging/log_record.h"
-#include "backend/common/macros.h"
+#include "logging/log_record.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace logging {

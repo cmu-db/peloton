@@ -4,17 +4,17 @@
 //
 // rpc_server.cpp
 //
-// Identification: src/backend/networking/rpc_server.cpp
+// Identification: src/networking/rpc_server.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/networking/rpc_server.h"
-#include "backend/networking/rpc_controller.h"
-#include "backend/networking/connection_manager.h"
-#include "backend/common/logger.h"
-#include "backend/common/thread_manager.h"
+#include "networking/rpc_server.h"
+#include "networking/rpc_controller.h"
+#include "networking/connection_manager.h"
+#include "common/logger.h"
+#include "common/thread_manager.h"
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>

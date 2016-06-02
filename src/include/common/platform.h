@@ -4,7 +4,7 @@
 //
 // platform.h
 //
-// Identification: src/backend/common/platform.h
+// Identification: src/common/platform.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

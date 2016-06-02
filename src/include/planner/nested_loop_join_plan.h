@@ -4,7 +4,7 @@
 //
 // nested_loop_join_plan.h
 //
-// Identification: src/backend/planner/nested_loop_join_plan.h
+// Identification: src/planner/nested_loop_join_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,9 +17,9 @@
 #include <vector>
 
 #include "abstract_join_plan.h"
-#include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/planner/project_info.h"
+#include "common/types.h"
+#include "expression/abstract_expression.h"
+#include "planner/project_info.h"
 #include "nodes/plannodes.h"
 
 namespace peloton {

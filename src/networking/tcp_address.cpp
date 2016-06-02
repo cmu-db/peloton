@@ -4,7 +4,7 @@
 //
 // tcp_address.cpp
 //
-// Identification: src/backend/networking/tcp_address.cpp
+// Identification: src/networking/tcp_address.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #include "tcp_address.h"
 
-#include "backend/common/cast.h"
-#include "backend/common/logger.h"
-#include "backend/common/exception.h"
-#include "backend/common/macros.h"
+#include "common/cast.h"
+#include "common/logger.h"
+#include "common/exception.h"
+#include "common/macros.h"
 
 #include <netdb.h>
 #include <cstdlib>

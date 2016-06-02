@@ -4,20 +4,20 @@
 //
 // ddl.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl.cpp
+// Identification: src/bridge/ddl/ddl.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/ddl_table.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/bridge/ddl/ddl_index.h"
-#include "backend/bridge/ddl/ddl_transaction.h"
-#include "backend/bridge/ddl/ddl.h"
-#include "backend/common/logger.h"
+#include "bridge/ddl/ddl_table.h"
+#include "bridge/ddl/ddl_database.h"
+#include "bridge/ddl/ddl_index.h"
+#include "bridge/ddl/ddl_transaction.h"
+#include "bridge/ddl/ddl.h"
+#include "common/logger.h"
 
-#include "backend/storage/database.h"
+#include "storage/database.h"
 #include "postmaster/peloton.h"
 
 #include "postgres.h"

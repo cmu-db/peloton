@@ -4,7 +4,7 @@
 //
 // checkpoint_manager.h
 //
-// Identification: src/backend/logging/checkpoint_manager.h
+// Identification: src/logging/checkpoint_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -16,8 +16,8 @@
 #include <memory>
 #include <condition_variable>
 
-#include "backend/logging/checkpoint.h"
-#include "backend/common/logger.h"
+#include "logging/checkpoint.h"
+#include "common/logger.h"
 
 extern CheckpointType peloton_checkpoint_mode;
 

@@ -4,7 +4,7 @@
 //
 // plan_executor.cpp
 //
-// Identification: src/backend/bridge/dml/executor/plan_executor.cpp
+// Identification: src/bridge/dml/executor/plan_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,13 +14,13 @@
 
 #include <vector>
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/executors.h"
-#include "backend/executor/executor_context.h"
-#include "backend/storage/tuple_iterator.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executors.h"
+#include "executor/executor_context.h"
+#include "storage/tuple_iterator.h"
 
 #include "access/tupdesc.h"
 #include "nodes/print.h"

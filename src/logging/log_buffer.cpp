@@ -5,15 +5,15 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/log_buffer.cpp
+ * /peloton/src/logging/log_buffer.cpp
  *
  *-------------------------------------------------------------------------
  */
 
-#include "backend/logging/log_buffer.h"
-#include "backend/logging/log_manager.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "logging/log_buffer.h"
+#include "logging/log_manager.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 #include <cstring>
 

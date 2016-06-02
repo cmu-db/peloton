@@ -4,7 +4,7 @@
 //
 // dml_utils.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/dml_utils.cpp
+// Identification: src/bridge/dml/mapper/dml_utils.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #include <iostream>
 
-#include "backend/bridge/dml/mapper/dml_utils.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "bridge/dml/mapper/dml_utils.h"
+#include "bridge/ddl/bridge.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 #include "postgres.h"
 #include "nodes/execnodes.h"
@@ -27,7 +27,7 @@
 
 #include "executor/nodeAgg.h"
 
-#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "bridge/dml/expr/expr_transformer.h"
 
 extern Datum ExecEvalExprSwitchContext(ExprState *expression,
                                        ExprContext *econtext, bool *isNull,

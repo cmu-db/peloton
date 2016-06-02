@@ -4,7 +4,7 @@
 //
 // tile.h
 //
-// Identification: src/backend/storage/tile.h
+// Identification: src/storage/tile.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/serializer.h"
-#include "backend/common/pool.h"
-#include "backend/common/printable.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/serializer.h"
+#include "common/pool.h"
+#include "common/printable.h"
 
 #include <mutex>
 

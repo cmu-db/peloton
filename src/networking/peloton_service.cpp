@@ -4,23 +4,23 @@
 //
 // peloton_service.cpp
 //
-// Identification: src/backend/networking/peloton_service.cpp
+// Identification: src/networking/peloton_service.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/networking/peloton_service.h"
-#include "backend/networking/peloton_endpoint.h"
-#include "backend/networking/rpc_server.h"
-#include "backend/common/logger.h"
-#include "backend/common/types.h"
-#include "backend/common/serializer.h"
-#include "backend/common/macros.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tuple.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/bridge/dml/executor/plan_executor.h"
+#include "networking/peloton_service.h"
+#include "networking/peloton_endpoint.h"
+#include "networking/rpc_server.h"
+#include "common/logger.h"
+#include "common/types.h"
+#include "common/serializer.h"
+#include "common/macros.h"
+#include "storage/tile.h"
+#include "storage/tuple.h"
+#include "planner/seq_scan_plan.h"
+#include "bridge/dml/executor/plan_executor.h"
 
 #include <unistd.h>
 #include <signal.h>

@@ -4,7 +4,7 @@
 //
 // wbl_frontend_logger.cpp
 //
-// Identification: src/backend/logging/loggers/wbl_frontend_logger.cpp
+// Identification: src/logging/loggers/wbl_frontend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,18 +13,18 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include "backend/common/exception.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/storage/database.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/logging/loggers/wbl_frontend_logger.h"
-#include "backend/logging/loggers/wbl_backend_logger.h"
-#include "backend/logging/logging_util.h"
-#include "backend/logging/log_manager.h"
+#include "common/exception.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
+#include "storage/tuple.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
+#include "logging/loggers/wbl_frontend_logger.h"
+#include "logging/loggers/wbl_backend_logger.h"
+#include "logging/logging_util.h"
+#include "logging/log_manager.h"
 
 #define POSSIBLY_DIRTY_GRANT_SIZE 10000000; // ten million seems reasonable
 

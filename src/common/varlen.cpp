@@ -4,15 +4,15 @@
 //
 // varlen.cpp
 //
-// Identification: src/backend/common/varlen.cpp
+// Identification: src/common/varlen.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/varlen.h"
-#include "backend/common/pool.h"
-#include "backend/common/macros.h"
+#include "common/varlen.h"
+#include "common/pool.h"
+#include "common/macros.h"
 
 namespace peloton {
 

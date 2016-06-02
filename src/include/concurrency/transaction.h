@@ -4,7 +4,7 @@
 //
 // transaction.h
 //
-// Identification: src/backend/concurrency/transaction.h
+// Identification: src/concurrency/transaction.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,9 +19,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/exception.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace concurrency {

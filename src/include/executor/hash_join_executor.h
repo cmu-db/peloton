@@ -4,7 +4,7 @@
 //
 // hash_join_executor.h
 //
-// Identification: src/backend/executor/hash_join_executor.h
+// Identification: src/executor/hash_join_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <deque>
 #include <vector>
 
-#include "backend/executor/abstract_join_executor.h"
-#include "backend/planner/hash_join_plan.h"
-#include "backend/executor/hash_executor.h"
+#include "executor/abstract_join_executor.h"
+#include "planner/hash_join_plan.h"
+#include "executor/hash_executor.h"
 
 namespace peloton {
 namespace executor {

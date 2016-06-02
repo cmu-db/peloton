@@ -4,17 +4,17 @@
 //
 // ddl_utils.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_utils.cpp
+// Identification: src/bridge/ddl/ddl_utils.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/ddl_utils.h"
-#include "backend/bridge/ddl/format_transformer.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/logger.h"
-#include "backend/storage/database.h"
+#include "bridge/ddl/ddl_utils.h"
+#include "bridge/ddl/format_transformer.h"
+#include "bridge/ddl/bridge.h"
+#include "common/logger.h"
+#include "storage/database.h"
 
 #include "postmaster/peloton.h"
 #include "parser/parse_type.h"

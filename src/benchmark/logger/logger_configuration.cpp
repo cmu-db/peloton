@@ -4,7 +4,7 @@
 //
 // logger_configuration.cpp
 //
-// Identification: src/backend/benchmark/logger/logger_configuration.cpp
+// Identification: src/benchmark/logger/logger_configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,11 +14,11 @@
 #include <algorithm>
 #include <sys/stat.h>
 
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/benchmark/logger/logger_configuration.h"
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "benchmark/logger/logger_configuration.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
 
 namespace peloton {
 namespace benchmark {

@@ -4,7 +4,7 @@
 //
 // raw_foreign_key_info.h
 //
-// Identification: src/backend/bridge/ddl/raw_foreign_key_info.h
+// Identification: src/bridge/ddl/raw_foreign_key_info.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 #include <vector>
 

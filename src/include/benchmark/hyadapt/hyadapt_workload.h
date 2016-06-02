@@ -4,7 +4,7 @@
 //
 // hyadapt_workload.h
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_workload.h
+// Identification: src/benchmark/hyadapt/hyadapt_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
+#include "benchmark/hyadapt/hyadapt_configuration.h"
 
 namespace peloton {
 namespace benchmark {

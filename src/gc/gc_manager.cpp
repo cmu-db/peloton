@@ -4,17 +4,17 @@
 //
 // gc_manager.cpp
 //
-// Identification: src/backend/gc/gc_manager.cpp
+// Identification: src/gc/gc_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/types.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/gc/gc_manager_factory.h"
-#include "backend/index/index.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/types.h"
+#include "gc/gc_manager.h"
+#include "gc/gc_manager_factory.h"
+#include "index/index.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include <list>
 

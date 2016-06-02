@@ -4,7 +4,7 @@
 //
 // sample.h
 //
-// Identification: src/backend/brain/sample.h
+// Identification: src/brain/sample.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/printable.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/printable.h"
 
 namespace peloton {
 namespace brain {

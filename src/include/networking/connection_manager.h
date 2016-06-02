@@ -4,7 +4,7 @@
 //
 // connection_manager.h
 //
-// Identification: src/backend/networking/connection_manager.h
+// Identification: src/networking/connection_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/mutex.h"
-#include "backend/networking/tcp_connection.h"
+#include "common/mutex.h"
+#include "networking/tcp_connection.h"
 
 #include <event2/event.h>
 #include <pthread.h>

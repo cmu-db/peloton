@@ -4,7 +4,7 @@
 //
 // data_table.cpp
 //
-// Identification: src/backend/storage/data_table.cpp
+// Identification: src/storage/data_table.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,26 +13,26 @@
 #include <mutex>
 #include <utility>
 
-#include "backend/benchmark/hyadapt/hyadapt_configuration.h"
-#include "backend/brain/clusterer.h"
-#include "backend/brain/sample.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/gc/gc_manager_factory.h"
-#include "backend/index/index.h"
-#include "backend/logging/log_manager.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/abstract_table.h"
-#include "backend/storage/database.h"
-#include "backend/storage/data_table.h"
+#include "benchmark/hyadapt/hyadapt_configuration.h"
+#include "brain/clusterer.h"
+#include "brain/sample.h"
+#include "bridge/ddl/bridge.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/platform.h"
+#include "catalog/foreign_key.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "gc/gc_manager_factory.h"
+#include "index/index.h"
+#include "logging/log_manager.h"
+#include "storage/tile_group.h"
+#include "storage/tuple.h"
+#include "storage/tile.h"
+#include "storage/tile_group_header.h"
+#include "storage/tile_group_factory.h"
+#include "storage/abstract_table.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables

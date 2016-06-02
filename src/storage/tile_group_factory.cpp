@@ -4,14 +4,14 @@
 //
 // tile_group_factory.cpp
 //
-// Identification: src/backend/storage/tile_group_factory.cpp
+// Identification: src/storage/tile_group_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/tile_group_header.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tile_group_header.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

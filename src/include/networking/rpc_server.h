@@ -4,7 +4,7 @@
 //
 // rpc_server.h
 //
-// Identification: src/backend/networking/rpc_server.h
+// Identification: src/networking/rpc_server.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,10 +17,10 @@
 #include <thread>
 #include <map>
 
-#include "backend/common/thread_manager.h"
-#include "backend/common/logger.h"
-#include "backend/networking/rpc_method.h"
-#include "backend/networking/tcp_listener.h"
+#include "common/thread_manager.h"
+#include "common/logger.h"
+#include "networking/rpc_method.h"
+#include "networking/tcp_listener.h"
 
 namespace peloton {
 namespace networking {

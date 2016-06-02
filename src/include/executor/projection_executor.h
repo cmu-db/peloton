@@ -4,7 +4,7 @@
 //
 // projection_executor.h
 //
-// Identification: src/backend/executor/projection_executor.h
+// Identification: src/executor/projection_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/project_info.h"
+#include "executor/abstract_executor.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 namespace executor {

@@ -4,23 +4,23 @@
 //
 // logical_tile_factory.cpp
 //
-// Identification: src/backend/executor/logical_tile_factory.cpp
+// Identification: src/executor/logical_tile_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/logical_tile_factory.h"
+#include "executor/logical_tile_factory.h"
 
 #include <memory>
 #include <utility>
 
-#include "backend/common/types.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group_header.h"
+#include "common/types.h"
+#include "executor/logical_tile.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/data_table.h"
+#include "storage/tile_group_header.h"
 
 namespace peloton {
 namespace executor {

@@ -4,7 +4,7 @@
 //
 // result_plan.h
 //
-// Identification: src/backend/planner/result_plan.h
+// Identification: src/planner/result_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "abstract_plan.h"
-#include "backend/common/types.h"
-#include "backend/storage/tuple.h"
+#include "common/types.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace planner {

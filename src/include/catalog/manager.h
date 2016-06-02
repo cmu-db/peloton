@@ -4,7 +4,7 @@
 //
 // manager.h
 //
-// Identification: src/backend/catalog/manager.h
+// Identification: src/catalog/manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,8 +19,8 @@
 #include <unordered_map>
 #include <memory>
 
-#include "backend/common/macros.h"
-#include "backend/common/types.h"
+#include "common/macros.h"
+#include "common/types.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {

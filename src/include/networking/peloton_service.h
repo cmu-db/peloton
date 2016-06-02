@@ -4,7 +4,7 @@
 //
 // peloton_service.h
 //
-// Identification: src/backend/networking/peloton_service.h
+// Identification: src/networking/peloton_service.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/networking/abstract_service.pb.h"
-#include "backend/networking/rpc_server.h"
-#include "backend/networking/peloton_endpoint.h"
+#include "networking/abstract_service.pb.h"
+#include "networking/rpc_server.h"
+#include "networking/peloton_endpoint.h"
 
 #include <iostream>
 

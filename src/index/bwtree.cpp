@@ -4,13 +4,13 @@
 //
 // bwtree.cpp
 //
-// Identification: src/backend/index/bwtree.cpp
+// Identification: src/index/bwtree.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/index/bwtree.h"
+#include "index/bwtree.h"
 
 namespace peloton {
 namespace index {

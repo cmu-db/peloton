@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
 
 namespace peloton {
 namespace storage{

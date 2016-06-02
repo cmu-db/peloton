@@ -4,7 +4,7 @@
 //
 // update_executor.h
 //
-// Identification: src/backend/executor/update_executor.h
+// Identification: src/executor/update_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include "backend/executor/abstract_executor.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/planner/update_plan.h"
+#include "executor/abstract_executor.h"
+#include "expression/abstract_expression.h"
+#include "planner/update_plan.h"
 
 namespace peloton {
 namespace executor {

@@ -4,17 +4,17 @@
 //
 // append_executor.cpp
 //
-// Identification: src/backend/executor/append_executor.cpp
+// Identification: src/executor/append_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/append_executor.h"
+#include "common/logger.h"
+#include "executor/logical_tile.h"
+#include "executor/append_executor.h"
 
-#include "backend/planner/append_plan.h"
+#include "planner/append_plan.h"
 
 namespace peloton {
 namespace executor {

@@ -4,15 +4,15 @@
 //
 // mapper_lock_rows.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_lock_rows.cpp
+// Identification: src/bridge/dml/mapper/mapper_lock_rows.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/common/logger.h"
-#include "backend/planner/abstract_plan.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "common/logger.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace bridge {

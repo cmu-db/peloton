@@ -4,7 +4,7 @@
 //
 // rpc_channel.h
 //
-// Identification: src/backend/networking/rpc_channel.h
+// Identification: src/networking/rpc_channel.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,7 +13,7 @@
 #pragma once
 
 #include "tcp_address.h"
-#include "backend/common/logger.h"
+#include "common/logger.h"
 #include "abstract_service.pb.h"
 
 #include <google/protobuf/service.h>

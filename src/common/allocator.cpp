@@ -4,7 +4,7 @@
 //
 // allocator.cpp
 //
-// Identification: src/backend/common/allocator.cpp
+// Identification: src/common/allocator.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

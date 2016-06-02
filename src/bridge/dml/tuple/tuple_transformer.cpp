@@ -4,7 +4,7 @@
 //
 // tuple_transformer.cpp
 //
-// Identification: src/backend/bridge/dml/tuple/tuple_transformer.cpp
+// Identification: src/bridge/dml/tuple/tuple_transformer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #include <iostream>
 
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/common/logger.h"
-#include "backend/common/value_peeker.h"
-#include "backend/common/pool.h"
-#include "backend/storage/tuple.h"
-#include "backend/common/types.h"
-#include "backend/bridge/ddl/ddl.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "common/logger.h"
+#include "common/value_peeker.h"
+#include "common/pool.h"
+#include "storage/tuple.h"
+#include "common/types.h"
+#include "bridge/ddl/ddl.h"
 
 #include "access/htup_details.h"
 #include "nodes/print.h"

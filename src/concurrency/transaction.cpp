@@ -4,17 +4,17 @@
 //
 // transaction.cpp
 //
-// Identification: src/backend/concurrency/transaction.cpp
+// Identification: src/concurrency/transaction.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/concurrency/transaction.h"
+#include "concurrency/transaction.h"
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/macros.h"
+#include "common/logger.h"
+#include "common/platform.h"
+#include "common/macros.h"
 
 #include <chrono>
 #include <thread>

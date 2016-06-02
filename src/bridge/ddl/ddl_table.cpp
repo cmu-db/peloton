@@ -4,7 +4,7 @@
 //
 // ddl_table.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_table.cpp
+// Identification: src/bridge/ddl/ddl_table.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,14 +14,14 @@
 #include <vector>
 #include <thread>
 
-#include "backend/bridge/ddl/ddl.h"
-#include "backend/bridge/ddl/ddl_table.h"
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/bridge/ddl/ddl_utils.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/logger.h"
-#include "backend/storage/table_factory.h"
-#include "backend/storage/database.h"
+#include "bridge/ddl/ddl.h"
+#include "bridge/ddl/ddl_table.h"
+#include "bridge/ddl/ddl_database.h"
+#include "bridge/ddl/ddl_utils.h"
+#include "bridge/ddl/bridge.h"
+#include "common/logger.h"
+#include "storage/table_factory.h"
+#include "storage/database.h"
 
 #include "commands/dbcommands.h"
 #include "nodes/pg_list.h"

@@ -4,7 +4,7 @@
 //
 // tcp_listener.cpp
 //
-// Identification: src/backend/networking/tcp_listener.cpp
+// Identification: src/networking/tcp_listener.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,10 +14,10 @@
 #include "tcp_connection.h"
 #include "rpc_type.h"
 
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/common/thread_manager.h"
-#include "backend/networking/connection_manager.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/thread_manager.h"
+#include "networking/connection_manager.h"
 
 #include <event2/thread.h>
 #include <pthread.h>

@@ -4,7 +4,7 @@
 //
 // timer.h
 //
-// Identification: src/backend/common/timer.h
+// Identification: src/common/timer.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // bridge.cpp
 //
-// Identification: src/backend/bridge/ddl/bridge.cpp
+// Identification: src/bridge/ddl/bridge.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,9 +14,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "bridge/ddl/bridge.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 #include "postgres.h"
 #include "c.h"

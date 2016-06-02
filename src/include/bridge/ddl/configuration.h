@@ -4,7 +4,7 @@
 //
 // configuration.h
 //
-// Identification: src/backend/bridge/ddl/configuration.h
+// Identification: src/bridge/ddl/configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

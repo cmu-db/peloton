@@ -4,18 +4,18 @@
 //
 // seq_scan_plan.cpp
 //
-// Identification: /peloton/src/backend/planner/seq_scan_plan.cpp
+// Identification: /peloton/src/planner/seq_scan_plan.cpp
 //
 // Copyright (c) 2016, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "seq_scan_plan.h"
-#include "backend/storage/data_table.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/types.h"
-#include "backend/common/macros.h"
-#include "backend/common/logger.h"
+#include "storage/data_table.h"
+#include "catalog/manager.h"
+#include "common/types.h"
+#include "common/macros.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace planner {

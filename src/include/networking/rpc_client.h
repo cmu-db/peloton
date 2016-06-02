@@ -4,7 +4,7 @@
 //
 // rpc_client.h
 //
-// Identification: src/backend/networking/rpc_client.h
+// Identification: src/networking/rpc_client.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 #include "abstract_service.pb.h"
 #include "peloton_endpoint.h"
 
-#include "backend/common/logger.h"
+#include "common/logger.h"
 
 #include <google/protobuf/stubs/common.h>
 #include <iostream>

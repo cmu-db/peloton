@@ -4,7 +4,7 @@
 //
 // storage_manager.h
 //
-// Identification: src/backend/storage/storage_manager.h
+// Identification: src/storage/storage_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <mutex>
 
-#include "backend/common/types.h"
-#include "backend/common/platform.h"
+#include "common/types.h"
+#include "common/platform.h"
 
 namespace peloton {
 namespace storage {

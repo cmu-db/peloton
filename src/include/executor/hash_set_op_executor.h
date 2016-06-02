@@ -4,7 +4,7 @@
 //
 // hash_set_op_executor.h
 //
-// Identification: src/backend/executor/hash_set_op_executor.h
+// Identification: src/executor/hash_set_op_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,10 +14,10 @@
 
 #include <unordered_map>
 
-#include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/expression/container_tuple.h"
+#include "common/types.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
+#include "expression/container_tuple.h"
 
 namespace peloton {
 namespace executor {

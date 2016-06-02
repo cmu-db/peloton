@@ -4,7 +4,7 @@
 //
 // database.h
 //
-// Identification: src/backend/storage/database.h
+// Identification: src/storage/database.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <iostream>
 
-#include "backend/common/printable.h"
-#include "backend/storage/data_table.h"
+#include "common/printable.h"
+#include "storage/data_table.h"
 
 struct peloton_status;
 struct dirty_table_info;

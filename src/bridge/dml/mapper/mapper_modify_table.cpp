@@ -4,18 +4,18 @@
 //
 // mapper_modify_table.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_modify_table.cpp
+// Identification: src/bridge/dml/mapper/mapper_modify_table.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/catalog/manager.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/planner/update_plan.h"
-#include "backend/planner/delete_plan.h"
-#include "backend/storage/data_table.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "catalog/manager.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
+#include "planner/delete_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace bridge {

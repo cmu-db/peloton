@@ -4,7 +4,7 @@
 //
 // hyadapt_configuration.h
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_configuration.h
+// Identification: src/benchmark/hyadapt/hyadapt_configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,7 +18,7 @@
 #include <sys/time.h>
 #include <iostream>
 
-#include "backend/storage/data_table.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace benchmark {

@@ -4,25 +4,25 @@
 //
 // update_executor.cpp
 //
-// Identification: src/backend/executor/update_executor.cpp
+// Identification: src/executor/update_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/update_executor.h"
-#include "backend/planner/update_plan.h"
-#include "backend/common/logger.h"
-#include "backend/catalog/manager.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/executor_context.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/rollback_segment.h"
+#include "executor/update_executor.h"
+#include "planner/update_plan.h"
+#include "common/logger.h"
+#include "catalog/manager.h"
+#include "executor/logical_tile.h"
+#include "executor/executor_context.h"
+#include "expression/container_tuple.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "storage/data_table.h"
+#include "storage/tile_group_header.h"
+#include "storage/tile.h"
+#include "storage/rollback_segment.h"
 
 namespace peloton {
 namespace executor {

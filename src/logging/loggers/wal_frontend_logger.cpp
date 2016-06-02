@@ -5,7 +5,7 @@
 //
 // wal_frontend_logger.cpp
 //
-// Identification: src/backend/logging/loggers/wal_frontend_logger.cpp
+// Identification: src/logging/loggers/wal_frontend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,31 +17,31 @@
 #include <algorithm>
 #include <dirent.h>
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/pool.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/concurrency/transaction_manager.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/pool.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction_manager.h"
 
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/loggers/wal_frontend_logger.h"
-#include "backend/logging/loggers/wal_backend_logger.h"
-#include "backend/logging/checkpoint_tile_scanner.h"
-#include "backend/logging/logging_util.h"
-#include "backend/logging/checkpoint_manager.h"
+#include "logging/log_manager.h"
+#include "logging/records/transaction_record.h"
+#include "logging/records/tuple_record.h"
+#include "logging/loggers/wal_frontend_logger.h"
+#include "logging/loggers/wal_backend_logger.h"
+#include "logging/checkpoint_tile_scanner.h"
+#include "logging/logging_util.h"
+#include "logging/checkpoint_manager.h"
 
-#include "backend/storage/database.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
-#include "backend/common/logger.h"
-#include "backend/index/index.h"
-#include "backend/executor/executor_context.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/bridge/dml/mapper/mapper.h"
+#include "storage/database.h"
+#include "storage/data_table.h"
+#include "storage/tile_group.h"
+#include "storage/tuple.h"
+#include "common/logger.h"
+#include "index/index.h"
+#include "executor/executor_context.h"
+#include "planner/seq_scan_plan.h"
+#include "bridge/dml/mapper/mapper.h"
 
 extern CheckpointType peloton_checkpoint_mode;
 

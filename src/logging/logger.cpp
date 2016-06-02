@@ -4,13 +4,13 @@
 //
 // logger.cpp
 //
-// Identification: src/backend/logging/logger.cpp
+// Identification: src/logging/logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/logging/logger.h"
+#include "logging/logger.h"
 
 namespace peloton {
 namespace logging {

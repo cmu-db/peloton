@@ -4,7 +4,7 @@
 //
 // ddl_transaction.h
 //
-// Identification: src/backend/bridge/ddl/ddl_transaction.h
+// Identification: src/bridge/ddl/ddl_transaction.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/catalog/manager.h"
+#include "catalog/manager.h"
 
 #include "postgres.h"
 #include "c.h"

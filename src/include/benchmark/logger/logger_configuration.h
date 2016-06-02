@@ -4,7 +4,7 @@
 //
 // logger_configuration.h
 //
-// Identification: src/backend/benchmark/logger/logger_configuration.h
+// Identification: src/benchmark/logger/logger_configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,8 +18,8 @@
 #include <sys/time.h>
 #include <iostream>
 
-#include "backend/common/types.h"
-#include "backend/common/pool.h"
+#include "common/types.h"
+#include "common/pool.h"
 
 namespace peloton {
 namespace benchmark {

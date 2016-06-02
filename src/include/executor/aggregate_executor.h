@@ -4,7 +4,7 @@
 //
 // aggregate_executor.h
 //
-// Identification: src/backend/executor/aggregate_executor.h
+// Identification: src/executor/aggregate_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/executor/abstract_executor.h"
-#include "backend/storage/data_table.h"
-#include "backend/common/pool.h"
+#include "executor/abstract_executor.h"
+#include "storage/data_table.h"
+#include "common/pool.h"
 
 #include <vector>
 

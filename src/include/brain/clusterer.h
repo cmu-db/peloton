@@ -4,7 +4,7 @@
 //
 // clusterer.h
 //
-// Identification: src/backend/brain/clusterer.h
+// Identification: src/brain/clusterer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,10 +15,10 @@
 #include <vector>
 #include <map>
 
-#include "backend/common/printable.h"
-#include "backend/brain/sample.h"
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
+#include "common/printable.h"
+#include "brain/sample.h"
+#include "common/printable.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace brain {

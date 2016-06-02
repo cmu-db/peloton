@@ -4,7 +4,7 @@
 //
 // abstract_executor.h
 //
-// Identification: src/backend/executor/abstract_executor.h
+// Identification: src/executor/abstract_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <memory>
 #include <vector>
 
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/executor_context.h"
-#include "backend/common/value.h"
+#include "executor/logical_tile.h"
+#include "executor/executor_context.h"
+#include "common/value.h"
 
 namespace peloton {
 

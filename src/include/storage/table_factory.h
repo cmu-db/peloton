@@ -4,7 +4,7 @@
 //
 // table_factory.h
 //
-// Identification: src/backend/storage/table_factory.h
+// Identification: src/storage/table_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/catalog/manager.h"
-#include "backend/common/types.h"
-#include "backend/storage/data_table.h"
+#include "catalog/manager.h"
+#include "common/types.h"
+#include "storage/data_table.h"
 
 #include <iostream>
 #include <map>

@@ -4,7 +4,7 @@
 //
 // gc_manager_factory.h
 //
-// Identification: src/backend/concurrency/gc_manager_factory.h
+// Identification: src/concurrency/gc_manager_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/gc/gc_manager.h"
+#include "gc/gc_manager.h"
 
 namespace peloton {
 namespace gc {

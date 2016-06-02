@@ -4,27 +4,27 @@
 //
 // delete_executor.cpp
 //
-// Identification: src/backend/executor/delete_executor.cpp
+// Identification: src/executor/delete_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/delete_executor.h"
-#include "backend/executor/executor_context.h"
+#include "executor/delete_executor.h"
+#include "executor/executor_context.h"
 
-#include "backend/common/value.h"
-#include "backend/planner/delete_plan.h"
-#include "backend/catalog/manager.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/common/logger.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/tuple.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/value.h"
+#include "planner/delete_plan.h"
+#include "catalog/manager.h"
+#include "expression/container_tuple.h"
+#include "common/logger.h"
+#include "executor/logical_tile.h"
+#include "storage/data_table.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
+#include "storage/tuple.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace executor {

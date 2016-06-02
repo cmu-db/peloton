@@ -4,7 +4,7 @@
 //
 // log_manager.h
 //
-// Identification: src/backend/logging/log_manager.h
+// Identification: src/logging/log_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,10 +16,10 @@
 #include <map>
 #include <vector>
 
-#include "backend/logging/logger.h"
+#include "logging/logger.h"
 #include "backend_logger.h"
 #include "frontend_logger.h"
-#include "backend/concurrency/transaction.h"
+#include "concurrency/transaction.h"
 #include "loggers/wal_frontend_logger.h"
 
 #define DEFAULT_NUM_FRONTEND_LOGGERS 1

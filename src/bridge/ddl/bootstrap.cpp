@@ -4,7 +4,7 @@
 //
 // bootstrap.cpp
 //
-// Identification: src/backend/bridge/ddl/bootstrap.cpp
+// Identification: src/bridge/ddl/bootstrap.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #include <iostream>
 
-#include "backend/bridge/ddl/bootstrap.h"
-#include "backend/storage/database.h"
-#include "backend/common/logger.h"
+#include "bridge/ddl/bootstrap.h"
+#include "storage/database.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace bridge {

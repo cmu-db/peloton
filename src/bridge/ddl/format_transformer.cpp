@@ -4,14 +4,14 @@
 //
 // format_transformer.cpp
 //
-// Identification: src/backend/bridge/ddl/format_transformer.cpp
+// Identification: src/bridge/ddl/format_transformer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/format_transformer.h"
-#include "backend/common/logger.h"
+#include "bridge/ddl/format_transformer.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace bridge {

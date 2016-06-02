@@ -4,7 +4,7 @@
 //
 // logger_workload.cpp
 //
-// Identification: src/backend/benchmark/logger/logger_workload.cpp
+// Identification: src/benchmark/logger/logger_workload.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,27 +16,27 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-#include "backend/bridge/ddl/ddl_database.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/common/value_factory.h"
+#include "bridge/ddl/ddl_database.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/value_factory.h"
 
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/timer.h"
-#include "backend/logging/log_manager.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/timer.h"
+#include "logging/log_manager.h"
 
-#include "backend/benchmark/logger/logger_workload.h"
-#include "backend/benchmark/logger/logger_loader.h"
+#include "benchmark/logger/logger_workload.h"
+#include "benchmark/logger/logger_loader.h"
 
-#include "backend/benchmark/ycsb/ycsb_workload.h"
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/benchmark/ycsb/ycsb_loader.h"
+#include "benchmark/ycsb/ycsb_workload.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/ycsb/ycsb_loader.h"
 
-#include "backend/benchmark/tpcc/tpcc_workload.h"
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
-#include "backend/benchmark/tpcc/tpcc_loader.h"
+#include "benchmark/tpcc/tpcc_workload.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/tpcc/tpcc_loader.h"
 
-#include "backend/logging/loggers/wbl_frontend_logger.h"
+#include "logging/loggers/wbl_frontend_logger.h"
 
 #include <unistd.h>
 

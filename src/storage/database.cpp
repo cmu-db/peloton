@@ -4,7 +4,7 @@
 //
 // database.cpp
 //
-// Identification: src/backend/storage/database.cpp
+// Identification: src/storage/database.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,12 +13,12 @@
 #include <sstream>
 
 #include "postmaster/peloton.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/storage/database.h"
-#include "backend/storage/table_factory.h"
-#include "backend/common/logger.h"
-#include "backend/index/index.h"
+#include "bridge/ddl/bridge.h"
+#include "catalog/foreign_key.h"
+#include "storage/database.h"
+#include "storage/table_factory.h"
+#include "common/logger.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace storage {

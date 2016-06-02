@@ -4,7 +4,7 @@
 //
 // tcp_connection.h
 //
-// Identification: src/backend/networking/tcp_connection.h
+// Identification: src/networking/tcp_connection.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 #include "rpc_channel.h"
 #include "rpc_controller.h"
 #include "tcp_address.h"
-#include "backend/common/logger.h"
+#include "common/logger.h"
 
 #include <event2/bufferevent.h>
 #include <event2/buffer.h>

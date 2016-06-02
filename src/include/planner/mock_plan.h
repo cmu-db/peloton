@@ -4,7 +4,7 @@
 //
 // mock_plan.h
 //
-// Identification: src/backend/planner/mock_plan.h
+// Identification: src/planner/mock_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/planner/abstract_plan.h"
+#include "common/types.h"
+#include "planner/abstract_plan.h"
 #include "gmock/gmock.h"
 
 namespace peloton {

@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/transaction_manager.h
+// Identification: src/concurrency/transaction_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,11 +17,11 @@
 #include <list>
 #include <utility>
 
-#include "backend/storage/tile_group_header.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/epoch_manager.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/logger.h"
+#include "storage/tile_group_header.h"
+#include "concurrency/transaction.h"
+#include "concurrency/epoch_manager.h"
+#include "catalog/manager.h"
+#include "common/logger.h"
 
 #include "libcuckoo/cuckoohash_map.hh"
 

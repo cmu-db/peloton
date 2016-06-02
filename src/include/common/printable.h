@@ -4,7 +4,7 @@
 //
 // printable.h
 //
-// Identification: src/backend/common/printable.h
+// Identification: src/common/printable.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

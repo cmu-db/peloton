@@ -4,7 +4,7 @@
 //
 // index.h
 //
-// Identification: src/backend/index/index.h
+// Identification: src/index/index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,8 +17,8 @@
 #include <functional>
 #include <memory>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
+#include "common/printable.h"
+#include "common/types.h"
 
 namespace peloton {
 

@@ -4,7 +4,7 @@
 //
 // ssi_txn_manager.h
 //
-// Identification: src/backend/concurrency/ssi_txn_manager.h
+// Identification: src/concurrency/ssi_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/tile_group.h"
-#include "backend/catalog/manager.h"
+#include "concurrency/transaction_manager.h"
+#include "storage/tile_group.h"
+#include "catalog/manager.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
 #include <map>

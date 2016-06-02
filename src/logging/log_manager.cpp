@@ -4,7 +4,7 @@
 //
 // log_manager.cpp
 //
-// Identification: src/backend/logging/log_manager.cpp
+// Identification: src/logging/log_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,17 +13,17 @@
 #include <condition_variable>
 #include <memory>
 
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/executor/executor_context.h"
-#include "backend/catalog/manager.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/database.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "logging/log_manager.h"
+#include "logging/records/transaction_record.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "executor/executor_context.h"
+#include "catalog/manager.h"
+#include "storage/tuple.h"
+#include "storage/tile_group.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace logging {

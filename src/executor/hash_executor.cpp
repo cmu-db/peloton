@@ -4,7 +4,7 @@
 //
 // hash_executor.cpp
 //
-// Identification: src/backend/executor/hash_executor.cpp
+// Identification: src/executor/hash_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,12 +13,12 @@
 #include <utility>
 #include <vector>
 
-#include "backend/common/logger.h"
-#include "backend/common/value.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/hash_executor.h"
-#include "backend/planner/hash_plan.h"
-#include "backend/expression/tuple_value_expression.h"
+#include "common/logger.h"
+#include "common/value.h"
+#include "executor/logical_tile.h"
+#include "executor/hash_executor.h"
+#include "planner/hash_plan.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace executor {
