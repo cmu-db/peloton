@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.7)
 
 # ---[ Peloton project
-project(Peloton CXX)
+project(Peloton CXX C)
 
 # ---[ Peloton version
 set(PELOTON_TARGET_VERSION "0.0.3" CACHE STRING "Peloton logical version")
@@ -43,7 +43,7 @@ include_directories(BEFORE src) # This is needed for gtest.
 
 # ---[ Subdirectories
 add_subdirectory(src)
-#add_subdirectory(docs)
+#add_subdirectory(doc)
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)

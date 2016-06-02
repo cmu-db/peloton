@@ -81,7 +81,7 @@ function(peloton_generate_export_configs)
     list(APPEND Peloton_DEFINITIONS -DUSE_MKL)
   endif()
 
-  configure_file("cmake/Templates/PelotonConfig.cmake.in" "${PROJECT_BINARY_DIR}/CaffeConfig.cmake" @ONLY)
+  configure_file("cmake/Templates/PelotonConfig.cmake.in" "${PROJECT_BINARY_DIR}/PelotonConfig.cmake" @ONLY)
 
   # Add targets to the build-tree export set
   export(TARGETS peloton proto FILE "${PROJECT_BINARY_DIR}/PelotonTargets.cmake")
@@ -101,7 +101,7 @@ function(peloton_generate_export_configs)
      "unset(__peloton_include)\n")
   string(REPLACE ";" "" Peloton_INSTALL_INCLUDE_DIR_APPEND_COMMAND ${lines})
 
-  configure_file("cmake/Templates/PelotonConfig.cmake.in" "${PROJECT_BINARY_DIR}/cmake/CaffeConfig.cmake" @ONLY)
+  configure_file("cmake/Templates/PelotonConfig.cmake.in" "${PROJECT_BINARY_DIR}/cmake/PelotonConfig.cmake" @ONLY)
 
   # Install the PelotonConfig.cmake and export set to use with install-tree
   install(FILES "${PROJECT_BINARY_DIR}/cmake/PelotonConfig.cmake" DESTINATION ${install_cmake_suffix})
@@ -110,9 +110,9 @@ function(peloton_generate_export_configs)
   # ---[ Configure and install version file ]---
 
   # TODO: Lines below are commented because Peloton does't declare its version in headers.
-  # When the declarations are added, modify `peloton_extract_caffe_version()` macro and uncomment
+  # When the declarations are added, modify `peloton_extract_peloton_version()` macro and uncomment
 
-  # configure_file(cmake/Templates/PelotonConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/CaffeConfigVersion.cmake" @ONLY)
+  # configure_file(cmake/Templates/PelotonConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/PelotonConfigVersion.cmake" @ONLY)
   # install(FILES "${PROJECT_BINARY_DIR}/PelotonConfigVersion.cmake" DESTINATION ${install_cmake_suffix})
 endfunction()
 

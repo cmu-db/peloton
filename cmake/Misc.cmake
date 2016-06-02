@@ -48,5 +48,5 @@ set(Peloton_DEBUG_POSTFIX "-d")
 
 set(Peloton_POSTFIX "")
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  set(Peloton_POSTFIX ${Caffe_DEBUG_POSTFIX})
+  set(Peloton_POSTFIX ${Peloton_DEBUG_POSTFIX})
 endif()
