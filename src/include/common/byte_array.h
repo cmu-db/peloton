@@ -4,7 +4,7 @@
 //
 // byte_array.h
 //
-// Identification: src/backend/common/byte_array.h
+// Identification: src/common/byte_array.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <cstring>
 
-#include "backend/common/macros.h"
+#include "common/macros.h"
 
 #include <boost/shared_array.hpp>
 

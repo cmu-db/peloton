@@ -4,7 +4,7 @@
 //
 // constraint.h
 //
-// Identification: src/backend/catalog/constraint.h
+// Identification: src/catalog/constraint.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,8 +15,8 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
+#include "common/printable.h"
+#include "common/types.h"
 
 #include "nodes/nodes.h"
 

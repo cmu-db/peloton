@@ -4,7 +4,7 @@
 //
 // iterator.h
 //
-// Identification: src/backend/common/iterator.h
+// Identification: src/common/iterator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

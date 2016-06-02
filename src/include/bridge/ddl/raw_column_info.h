@@ -4,7 +4,7 @@
 //
 // raw_column_info.h
 //
-// Identification: src/backend/bridge/ddl/raw_column_info.h
+// Identification: src/bridge/ddl/raw_column_info.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/bridge/ddl/raw_constraint_info.h"
-#include "backend/catalog/column.h"
+#include "bridge/ddl/raw_constraint_info.h"
+#include "catalog/column.h"
 
 namespace peloton {
 namespace bridge {

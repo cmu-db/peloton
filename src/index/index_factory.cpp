@@ -4,7 +4,7 @@
 //
 // index_factory.cpp
 //
-// Identification: src/backend/index/index_factory.cpp
+// Identification: src/index/index_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #include <iostream>
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/index/index_factory.h"
-#include "backend/index/index_key.h"
-#include "backend/index/bwtree_index.h"
-#include "backend/index/btree_index.h"
+#include "common/types.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "index/index_factory.h"
+#include "index/index_key.h"
+#include "index/bwtree_index.h"
+#include "index/btree_index.h"
 
 namespace peloton {
 namespace index {

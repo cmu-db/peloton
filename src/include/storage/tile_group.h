@@ -4,7 +4,7 @@
 //
 // tile_group.h
 //
-// Identification: src/backend/storage/tile_group.h
+// Identification: src/storage/tile_group.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,10 +17,10 @@
 #include <vector>
 #include <mutex>
 #include <memory>
-#include <backend/planner/project_info.h>
+#include <planner/project_info.h>
 
-#include "backend/common/types.h"
-#include "backend/common/printable.h"
+#include "common/types.h"
+#include "common/printable.h"
 
 namespace peloton {
 

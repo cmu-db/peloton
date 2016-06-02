@@ -14,8 +14,8 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
-#include "backend/common/logger.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace benchmark {

@@ -4,13 +4,13 @@
 //
 // configuration.cpp
 //
-// Identification: src/backend/bridge/ddl/configuration.cpp
+// Identification: src/bridge/ddl/configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/configuration.h"
+#include "bridge/ddl/configuration.h"
 
 #include "postgres.h"
 #include "utils/guc_tables.h"

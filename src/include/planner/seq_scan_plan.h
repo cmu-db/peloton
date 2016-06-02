@@ -4,7 +4,7 @@
 //
 // seq_scan_plan.h
 //
-// Identification: src/backend/planner/seq_scan_plan.h
+// Identification: src/planner/seq_scan_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,9 +17,9 @@
 #include <vector>
 
 #include "abstract_scan_plan.h"
-#include "backend/common/types.h"
-#include "backend/common/serializer.h"
-#include "backend/expression/abstract_expression.h"
+#include "common/types.h"
+#include "common/serializer.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 

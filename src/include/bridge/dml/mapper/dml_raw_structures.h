@@ -4,7 +4,7 @@
 //
 // dml_raw_structures.h
 //
-// Identification: src/backend/bridge/dml/mapper/dml_raw_structures.h
+// Identification: src/bridge/dml/mapper/dml_raw_structures.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

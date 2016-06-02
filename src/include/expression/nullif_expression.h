@@ -4,7 +4,7 @@
 //
 // nullif_expression.h
 //
-// Identification: src/backend/expression/nullif_expression.h
+// Identification: src/expression/nullif_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 #include <memory>
 namespace peloton {
 namespace expression {

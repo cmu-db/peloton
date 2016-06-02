@@ -4,7 +4,7 @@
 //
 // hash_range_expression.h
 //
-// Identification: src/backend/expression/hash_range_expression.h
+// Identification: src/expression/hash_range_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/common/abstract_tuple.h"
+#include "expression/abstract_expression.h"
+#include "common/abstract_tuple.h"
 #include <iostream>
 #include <string>
 #include <sstream>

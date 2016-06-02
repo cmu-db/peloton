@@ -15,10 +15,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "backend/common/logger.h"
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/benchmark/ycsb/ycsb_loader.h"
-#include "backend/benchmark/ycsb/ycsb_workload.h"
+#include "common/logger.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/ycsb/ycsb_loader.h"
+#include "benchmark/ycsb/ycsb_workload.h"
 
 namespace peloton {
 namespace benchmark {

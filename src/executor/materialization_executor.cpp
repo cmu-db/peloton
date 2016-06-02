@@ -4,25 +4,25 @@
 //
 // materialization_executor.cpp
 //
-// Identification: src/backend/executor/materialization_executor.cpp
+// Identification: src/executor/materialization_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/materialization_executor.h"
+#include "executor/materialization_executor.h"
 
 #include <memory>
 #include <utility>
 
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/planner/materialization_plan.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "planner/materialization_plan.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "storage/tuple.h"
+#include "storage/data_table.h"
+#include "storage/tile.h"
 
 namespace peloton {
 namespace executor {

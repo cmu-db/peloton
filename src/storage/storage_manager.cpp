@@ -4,7 +4,7 @@
 //
 // storage_manager.cpp
 //
-// Identification: src/backend/storage/storage_manager.cpp
+// Identification: src/storage/storage_manager.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -24,11 +24,11 @@
 #include <string>
 #include <iostream>
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/common/exception.h"
-#include "backend/storage/storage_manager.h"
+#include "common/types.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/exception.h"
+#include "storage/storage_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

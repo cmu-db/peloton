@@ -4,7 +4,7 @@
 //
 // varlen.h
 //
-// Identification: src/backend/common/varlen.h
+// Identification: src/common/varlen.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

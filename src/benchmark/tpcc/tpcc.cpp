@@ -14,11 +14,11 @@
 #include <fstream>
 #include <iomanip>
 
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
-#include "backend/benchmark/tpcc/tpcc_loader.h"
-#include "backend/benchmark/tpcc/tpcc_workload.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/tpcc/tpcc_loader.h"
+#include "benchmark/tpcc/tpcc_workload.h"
 
-#include "backend/common/logger.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace benchmark {

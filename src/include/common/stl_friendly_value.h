@@ -4,7 +4,7 @@
 //
 // stl_friendly_value.h
 //
-// Identification: src/backend/common/stl_friendly_value.h
+// Identification: src/common/stl_friendly_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/value.h"
+#include "common/value.h"
 
 namespace peloton {
 

@@ -4,16 +4,16 @@
 //
 // tuple_record.cpp
 //
-// Identification: src/backend/logging/records/tuple_record.cpp
+// Identification: src/logging/records/tuple_record.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/logging/records/tuple_record.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/storage/tuple.h"
+#include "logging/records/tuple_record.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace logging {

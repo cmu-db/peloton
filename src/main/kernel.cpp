@@ -4,7 +4,7 @@
 //
 // kernel.cpp
 //
-// Identification: src/backend/main/kernel.cpp
+// Identification: src/main/kernel.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,9 +14,9 @@
 #include <cstdio>
 #include <vector>
 
-#include "backend/main/kernel.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "main/kernel.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace backend {

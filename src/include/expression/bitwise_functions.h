@@ -4,7 +4,7 @@
 //
 // bitwise_functions.h
 //
-// Identification: src/backend/expression/bitwise_functions.h
+// Identification: src/expression/bitwise_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 #include <string>
 #include <limits.h>
 
-#include "backend/common/value.h"
+#include "common/value.h"
 
 namespace peloton {
 

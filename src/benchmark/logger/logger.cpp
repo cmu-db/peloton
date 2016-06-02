@@ -4,7 +4,7 @@
 //
 // logger.cpp
 //
-// Identification: src/backend/benchmark/logger/logger.cpp
+// Identification: src/benchmark/logger/logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,10 +13,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "backend/benchmark/logger/logger_configuration.h"
-#include "backend/benchmark/logger/logger_workload.h"
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/logger/logger_configuration.h"
+#include "benchmark/logger/logger_workload.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
 
 // Logging mode
 extern LoggingType peloton_logging_mode;

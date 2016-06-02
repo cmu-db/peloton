@@ -4,7 +4,7 @@
 //
 // hybrid_scan_executor.h
 //
-// Identification: src/backend/executor/hybrid_scan_executor.h
+// Identification: src/executor/hybrid_scan_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/storage/data_table.h"
-#include "backend/index/index.h"
-#include "backend/executor/abstract_scan_executor.h"
-#include "backend/planner/hybrid_scan_plan.h"
+#include "storage/data_table.h"
+#include "index/index.h"
+#include "executor/abstract_scan_executor.h"
+#include "planner/hybrid_scan_plan.h"
 
 #include <set>
 

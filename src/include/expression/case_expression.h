@@ -4,7 +4,7 @@
 //
 // case_expression.h
 //
-// Identification: src/backend/expression/case_expression.h
+// Identification: src/expression/case_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 #include <utility>
 #include <memory>
 #include <vector>
 
-#include "backend/expression/expression_util.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {

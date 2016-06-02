@@ -4,7 +4,7 @@
 //
 // index_factory.h
 //
-// Identification: src/backend/index/index_factory.h
+// Identification: src/index/index_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/index/index.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace index {

@@ -4,7 +4,7 @@
 //
 // expression_util.cpp
 //
-// Identification: src/backend/expression/expression_util.cpp
+// Identification: src/expression/expression_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,31 +14,31 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#include "backend/common/value_factory.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/hash_range_expression.h"
-#include "backend/expression/operator_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/case_expression.h"
-#include "backend/expression/conjunction_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/cast_expression.h"
-#include "backend/expression/tuple_address_expression.h"
-#include "backend/expression/scalar_value_expression.h"
-#include "backend/expression/vector_expression.h"
-#include "backend/expression/function_expression.h"
-#include "backend/expression/subquery_expression.h"
-#include "backend/expression/string_expression.h"
-#include "backend/expression/date_expression.h"
-#include "backend/expression/vector_comparison_expression.h"
-#include "backend/expression/coalesce_expression.h"
-#include "backend/expression/nullif_expression.h"
-#include "backend/expression/udf_expression.h"
+#include "common/value_factory.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "expression/expression_util.h"
+#include "expression/abstract_expression.h"
+#include "expression/hash_range_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/case_expression.h"
+#include "expression/conjunction_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/cast_expression.h"
+#include "expression/tuple_address_expression.h"
+#include "expression/scalar_value_expression.h"
+#include "expression/vector_expression.h"
+#include "expression/function_expression.h"
+#include "expression/subquery_expression.h"
+#include "expression/string_expression.h"
+#include "expression/date_expression.h"
+#include "expression/vector_comparison_expression.h"
+#include "expression/coalesce_expression.h"
+#include "expression/nullif_expression.h"
+#include "expression/udf_expression.h"
 
 namespace peloton {
 namespace expression {

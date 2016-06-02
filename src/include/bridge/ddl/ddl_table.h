@@ -4,7 +4,7 @@
 //
 // ddl_table.h
 //
-// Identification: src/backend/bridge/ddl/ddl_table.h
+// Identification: src/bridge/ddl/ddl_table.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/catalog/schema.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/bridge/ddl/ddl_index.h"
+#include "catalog/schema.h"
+#include "catalog/foreign_key.h"
+#include "bridge/ddl/ddl_index.h"
 
 #include "postgres.h"
 #include "c.h"

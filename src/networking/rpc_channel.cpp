@@ -4,21 +4,21 @@
 //
 // rpc_channel.cpp
 //
-// Identification: src/backend/networking/rpc_channel.cpp
+// Identification: src/networking/rpc_channel.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/networking/rpc_type.h"
-#include "backend/networking/rpc_client.h"
-#include "backend/networking/rpc_channel.h"
-#include "backend/networking/rpc_controller.h"
-#include "backend/networking/tcp_connection.h"
-#include "backend/networking/connection_manager.h"
-#include "backend/common/thread_manager.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "networking/rpc_type.h"
+#include "networking/rpc_client.h"
+#include "networking/rpc_channel.h"
+#include "networking/rpc_controller.h"
+#include "networking/tcp_connection.h"
+#include "networking/connection_manager.h"
+#include "common/thread_manager.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 #include <google/protobuf/descriptor.h>
 

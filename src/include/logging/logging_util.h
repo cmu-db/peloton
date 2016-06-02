@@ -5,18 +5,18 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/logging/logger.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/storage/data_table.h"
+#include "common/types.h"
+#include "common/logger.h"
+#include "logging/records/transaction_record.h"
+#include "logging/records/tuple_record.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace logging {

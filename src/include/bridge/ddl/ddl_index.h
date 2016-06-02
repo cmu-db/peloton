@@ -4,7 +4,7 @@
 //
 // ddl_index.h
 //
-// Identification: src/backend/bridge/ddl/ddl_index.h
+// Identification: src/bridge/ddl/ddl_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 #include "postgres.h"
 #include "c.h"

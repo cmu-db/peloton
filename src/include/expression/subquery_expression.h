@@ -4,7 +4,7 @@
 //
 // subquery_expression.h
 //
-// Identification: src/backend/expression/subquery_expression.h
+// Identification: src/expression/subquery_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace expression {

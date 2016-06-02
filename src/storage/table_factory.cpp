@@ -4,19 +4,19 @@
 //
 // table_factory.cpp
 //
-// Identification: src/backend/storage/table_factory.cpp
+// Identification: src/storage/table_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/table_factory.h"
+#include "storage/table_factory.h"
 
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/index/index.h"
-#include "backend/catalog/manager.h"
-#include "backend/storage/data_table.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "index/index.h"
+#include "catalog/manager.h"
+#include "storage/data_table.h"
 
 #include <mutex>
 

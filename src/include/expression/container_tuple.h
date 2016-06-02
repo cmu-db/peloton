@@ -4,7 +4,7 @@
 //
 // container_tuple.h
 //
-// Identification: src/backend/expression/container_tuple.h
+// Identification: src/expression/container_tuple.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,13 +15,13 @@
 #include <functional>
 #include <vector>
 
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/macros.h"
-#include "backend/common/exception.h"
-#include "backend/common/abstract_tuple.h"
-#include "backend/storage/tile_group.h"
-#include "backend/catalog/schema.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/macros.h"
+#include "common/exception.h"
+#include "common/abstract_tuple.h"
+#include "storage/tile_group.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace expression {

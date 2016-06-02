@@ -4,7 +4,7 @@
 //
 // tcp_connection.cpp
 //
-// Identification: src/backend/networking/tcp_connection.cpp
+// Identification: src/networking/tcp_connection.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,11 +15,11 @@
 
 #include <pthread.h>
 
-#include "backend/networking/tcp_connection.h"
-#include "backend/networking/connection_manager.h"
-#include "backend/networking/peloton_service.h"
-#include "backend/networking/rpc_type.h"
-#include "backend/common/macros.h"
+#include "networking/tcp_connection.h"
+#include "networking/connection_manager.h"
+#include "networking/peloton_service.h"
+#include "networking/rpc_type.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace networking {

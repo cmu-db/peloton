@@ -4,7 +4,7 @@
 //
 // abstract_expression.cpp
 //
-// Identification: src/backend/expression/abstract_expression.cpp
+// Identification: src/expression/abstract_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,16 +12,16 @@
 
 #include <sstream>
 
-#include "backend/common/abstract_tuple.h"
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/logger.h"
-#include "backend/common/serializer.h"
-#include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/executor/executor_context.h"
-#include "backend/expression/expression_util.h"
+#include "common/abstract_tuple.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/logger.h"
+#include "common/serializer.h"
+#include "common/types.h"
+#include "expression/abstract_expression.h"
+#include "executor/executor_context.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {

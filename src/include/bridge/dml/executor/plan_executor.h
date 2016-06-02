@@ -4,7 +4,7 @@
 //
 // plan_executor.h
 //
-// Identification: src/backend/bridge/dml/executor/plan_executor.h
+// Identification: src/bridge/dml/executor/plan_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
+#include "common/types.h"
+#include "executor/abstract_executor.h"
 
 #include "postgres.h"
 #include "access/tupdesc.h"

@@ -4,7 +4,7 @@
 //
 // epoch_manager.h
 //
-// Identification: src/backend/concurrency/epoch_manager.h
+// Identification: src/concurrency/epoch_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,9 +14,9 @@
 #include <thread>
 #include <vector>
 
-#include "backend/common/macros.h"
-#include "backend/common/types.h"
-#include "backend/common/platform.h"
+#include "common/macros.h"
+#include "common/types.h"
+#include "common/platform.h"
 
 namespace peloton {
 namespace concurrency {

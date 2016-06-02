@@ -4,19 +4,19 @@
 //
 // abstract_table.cpp
 //
-// Identification: src/backend/storage/abstract_table.cpp
+// Identification: src/storage/abstract_table.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/abstract_table.h"
+#include "storage/abstract_table.h"
 
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/index/index.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "index/index.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
 
 #include <mutex>
 

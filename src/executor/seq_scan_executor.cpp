@@ -4,30 +4,30 @@
 //
 // seq_scan_executor.cpp
 //
-// Identification: src/backend/executor/seq_scan_executor.cpp
+// Identification: src/executor/seq_scan_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/seq_scan_executor.h"
+#include "executor/seq_scan_executor.h"
 
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "backend/common/types.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/executor_context.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/tile.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/common/logger.h"
-#include "backend/index/index.h"
+#include "common/types.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/executor_context.h"
+#include "expression/abstract_expression.h"
+#include "expression/container_tuple.h"
+#include "storage/data_table.h"
+#include "storage/tile_group_header.h"
+#include "storage/tile.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/logger.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace executor {

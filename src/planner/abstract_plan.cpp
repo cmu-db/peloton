@@ -4,7 +4,7 @@
 //
 // abstract_plan.cpp
 //
-// Identification: src/backend/planner/abstract_plan.cpp
+// Identification: src/planner/abstract_plan.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,8 +17,8 @@
 #include <string>
 #include <utility>
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
+#include "common/types.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace planner {

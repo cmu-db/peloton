@@ -4,14 +4,14 @@
 //
 // executor_context.cpp
 //
-// Identification: src/backend/executor/executor_context.cpp
+// Identification: src/executor/executor_context.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/value.h"
-#include "backend/executor/executor_context.h"
+#include "common/value.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 namespace executor {

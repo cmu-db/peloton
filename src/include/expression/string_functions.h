@@ -4,7 +4,7 @@
 //
 // string_functions.h
 //
-// Identification: src/backend/expression/string_functions.h
+// Identification: src/expression/string_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,8 +19,8 @@
 #include <locale>
 #include <iomanip>
 
-#include "backend/common/macros.h"
-#include "backend/expression/function_expression.h"
+#include "common/macros.h"
+#include "expression/function_expression.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_array.hpp>

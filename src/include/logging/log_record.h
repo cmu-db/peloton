@@ -4,7 +4,7 @@
 //
 // log_record.h
 //
-// Identification: src/backend/logging/log_record.h
+// Identification: src/logging/log_record.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -36,9 +36,9 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/common/serializer.h"
+#include "common/types.h"
+#include "bridge/ddl/bridge.h"
+#include "common/serializer.h"
 
 namespace peloton {
 namespace logging {

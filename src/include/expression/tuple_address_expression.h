@@ -4,7 +4,7 @@
 //
 // tuple_address_expression.h
 //
-// Identification: src/backend/expression/tuple_address_expression.h
+// Identification: src/expression/tuple_address_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/common/value_factory.h"
-#include "backend/common/serializer.h"
-#include "backend/storage/tuple.h"
+#include "common/value_factory.h"
+#include "common/serializer.h"
+#include "storage/tuple.h"
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 #include <string>
 #include <sstream>

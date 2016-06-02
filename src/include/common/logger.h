@@ -4,7 +4,7 @@
 //
 // logger.h
 //
-// Identification: src/backend/common/logger.h
+// Identification: src/common/logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

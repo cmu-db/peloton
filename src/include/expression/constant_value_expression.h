@@ -4,7 +4,7 @@
 //
 // constant_value_expression.h
 //
-// Identification: src/backend/expression/constant_value_expression.h
+// Identification: src/expression/constant_value_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/common/value_factory.h"
+#include "expression/abstract_expression.h"
+#include "common/value_factory.h"
 
 #include <string>
 #include <sstream>

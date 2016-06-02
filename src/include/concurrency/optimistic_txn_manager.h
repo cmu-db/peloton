@@ -4,7 +4,7 @@
 //
 // optimistic_txn_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_txn_manager.h
+// Identification: src/concurrency/optimistic_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/tile_group.h"
+#include "concurrency/transaction_manager.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace concurrency {

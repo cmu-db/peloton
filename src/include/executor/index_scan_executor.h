@@ -4,7 +4,7 @@
 //
 // index_scan_executor.h
 //
-// Identification: src/backend/executor/index_scan_executor.h
+// Identification: src/executor/index_scan_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <vector>
 
-#include "backend/executor/abstract_scan_executor.h"
-#include "backend/planner/index_scan_plan.h"
+#include "executor/abstract_scan_executor.h"
+#include "planner/index_scan_plan.h"
 
 namespace peloton {
 

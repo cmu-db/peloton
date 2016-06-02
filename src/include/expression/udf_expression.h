@@ -4,7 +4,7 @@
 //
 // udf_expression.h
 //
-// Identification: src/backend/expression/udf_expression.h
+// Identification: src/expression/udf_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 #include "nodes/execnodes.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
 #include "fmgr.h"
 
 namespace peloton {

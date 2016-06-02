@@ -4,7 +4,7 @@
 //
 // wbl_backend_logger.h
 //
-// Identification: src/backend/logging/loggers/wbl_backend_logger.h
+// Identification: src/logging/loggers/wbl_backend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/logging/backend_logger.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/types.h"
+#include "logging/backend_logger.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "unordered_set"
 

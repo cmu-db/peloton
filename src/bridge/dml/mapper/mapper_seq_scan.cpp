@@ -4,15 +4,15 @@
 //
 // mapper_seq_scan.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_seq_scan.cpp
+// Identification: src/bridge/dml/mapper/mapper_seq_scan.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/catalog/manager.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "planner/seq_scan_plan.h"
+#include "catalog/manager.h"
 
 namespace peloton {
 namespace bridge {

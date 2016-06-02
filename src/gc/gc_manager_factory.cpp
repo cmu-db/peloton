@@ -4,7 +4,7 @@
 //
 // gc_manager_factory.cpp
 //
-// Identification: src/backend/concurrency/gc_manager_factory.cpp
+// Identification: src/concurrency/gc_manager_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

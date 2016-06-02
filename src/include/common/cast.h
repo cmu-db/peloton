@@ -4,7 +4,7 @@
 //
 // cast.h
 //
-// Identification: src/backend/common/cast.h
+// Identification: src/common/cast.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <limits>
 
-#include "backend/common/macros.h"
+#include "common/macros.h"
 
 namespace peloton {
 // Cast from signed to unsigned types.

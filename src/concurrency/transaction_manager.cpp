@@ -4,14 +4,14 @@
 //
 // transaction_manager.cpp
 //
-// Identification: src/backend/concurrency/transaction_manager.cpp
+// Identification: src/concurrency/transaction_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/expression/container_tuple.h"
+#include "concurrency/transaction_manager.h"
+#include "expression/container_tuple.h"
 
 namespace peloton {
 namespace concurrency {

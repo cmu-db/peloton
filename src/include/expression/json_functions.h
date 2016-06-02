@@ -4,7 +4,7 @@
 //
 // json_functions.h
 //
-// Identification: src/backend/expression/json_functions.h
+// Identification: src/expression/json_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include "backend/common/macros.h"
+#include "common/macros.h"
 
 #include "jsoncpp/jsoncpp.h"
 #include "jsoncpp/jsoncpp-forwards.h"

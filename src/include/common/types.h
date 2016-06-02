@@ -4,7 +4,7 @@
 //
 // types.h
 //
-// Identification: src/backend/common/types.h
+// Identification: src/common/types.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -20,7 +20,7 @@
 #include <vector>
 #include <functional>
 
-#include "backend/common/platform.h"
+#include "common/platform.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

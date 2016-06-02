@@ -4,7 +4,7 @@
 //
 // serializer.h
 //
-// Identification: src/backend/common/serializer.h
+// Identification: src/common/serializer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -24,9 +24,9 @@
 #include <arpa/inet.h>
 #include <arpa/inet.h>
 
-#include "backend/common/byte_array.h"
-#include "backend/common/exception.h"
-#include "backend/common/macros.h"
+#include "common/byte_array.h"
+#include "common/exception.h"
+#include "common/macros.h"
 
 namespace peloton {
 

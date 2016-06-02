@@ -4,7 +4,7 @@
 //
 // index_key.h
 //
-// Identification: src/backend/index/index_key.h
+// Identification: src/index/index_key.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,11 +15,11 @@
 #include <iostream>
 #include <sstream>
 
-#include "backend/common/value_peeker.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/storage/tuple.h"
-#include "backend/index/index.h"
+#include "common/value_peeker.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "storage/tuple.h"
+#include "index/index.h"
 
 #include <boost/functional/hash.hpp>
 

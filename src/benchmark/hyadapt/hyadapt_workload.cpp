@@ -4,7 +4,7 @@
 //
 // hyadapt_workload.cpp
 //
-// Identification: src/backend/benchmark/hyadapt/hyadapt_workload.cpp
+// Identification: src/benchmark/hyadapt/hyadapt_workload.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,58 +19,58 @@
 #include <thread>
 #include <algorithm>
 
-#include "backend/expression/expression_util.h"
-#include "backend/brain/clusterer.h"
+#include "expression/expression_util.h"
+#include "brain/clusterer.h"
 
-#include "backend/benchmark/hyadapt/hyadapt_workload.h"
-#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+#include "benchmark/hyadapt/hyadapt_workload.h"
+#include "benchmark/hyadapt/hyadapt_loader.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/logger.h"
-#include "backend/common/timer.h"
-#include "backend/common/macros.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "common/logger.h"
+#include "common/timer.h"
+#include "common/macros.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
 
 
-#include "backend/executor/executor_context.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/aggregate_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/materialization_executor.h"
-#include "backend/executor/projection_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/executor/update_executor.h"
-#include "backend/executor/nested_loop_join_executor.h"
+#include "executor/executor_context.h"
+#include "executor/abstract_executor.h"
+#include "executor/aggregate_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/materialization_executor.h"
+#include "executor/projection_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/update_executor.h"
+#include "executor/nested_loop_join_executor.h"
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
+#include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/conjunction_expression.h"
 
-#include "backend/index/index_factory.h"
+#include "index/index_factory.h"
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/aggregate_plan.h"
-#include "backend/planner/materialization_plan.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/planner/update_plan.h"
-#include "backend/planner/projection_plan.h"
-#include "backend/planner/nested_loop_join_plan.h"
+#include "planner/abstract_plan.h"
+#include "planner/aggregate_plan.h"
+#include "planner/materialization_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/update_plan.h"
+#include "planner/projection_plan.h"
+#include "planner/nested_loop_join_plan.h"
 
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace benchmark {

@@ -4,14 +4,14 @@
 //
 // serializer.cpp
 //
-// Identification: src/backend/common/serializer.cpp
+// Identification: src/common/serializer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/serializer.h"
-#include "backend/common/macros.h"
+#include "common/serializer.h"
+#include "common/macros.h"
 
 namespace peloton {
 

@@ -4,7 +4,7 @@
 //
 // foreign_key.h
 //
-// Identification: src/backend/catalog/foreign_key.h
+// Identification: src/catalog/foreign_key.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 #include <vector>
 #include <iostream>
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace catalog {

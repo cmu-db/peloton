@@ -4,7 +4,7 @@
 //
 // tile_group_header.h
 //
-// Identification: src/backend/storage/tile_group_header.h
+// Identification: src/storage/tile_group_header.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,9 +18,9 @@
 #include <vector>
 #include <cstring>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/macros.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace storage {

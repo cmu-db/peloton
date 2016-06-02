@@ -4,7 +4,7 @@
 //
 // schema_transformer.h
 //
-// Identification: src/backend/bridge/ddl/schema_transformer.h
+// Identification: src/bridge/ddl/schema_transformer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/catalog/schema.h"
+#include "catalog/schema.h"
 
 #include "c.h"
 #include "access/tupdesc.h"

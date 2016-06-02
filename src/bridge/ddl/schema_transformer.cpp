@@ -4,22 +4,22 @@
 //
 // schema_transformer.cpp
 //
-// Identification: src/backend/bridge/ddl/schema_transformer.cpp
+// Identification: src/bridge/ddl/schema_transformer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/bridge/ddl/format_transformer.h"
+#include "bridge/ddl/schema_transformer.h"
+#include "bridge/ddl/format_transformer.h"
 
 #include <vector>
 #include <iostream>
 
-#include "backend/catalog/constraint.h"
-#include "backend/catalog/column.h"
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
+#include "catalog/constraint.h"
+#include "catalog/column.h"
+#include "common/types.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace bridge {

@@ -4,7 +4,7 @@
 //
 // worker_thread_pool.h
 //
-// Identification: src/backend/common/worker_thread_pool.h
+// Identification: src/common/worker_thread_pool.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

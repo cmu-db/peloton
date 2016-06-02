@@ -4,7 +4,7 @@
 //
 // kernel.h
 //
-// Identification: src/backend/main/kernel.h
+// Identification: src/main/kernel.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace backend {

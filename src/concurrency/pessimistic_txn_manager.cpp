@@ -4,7 +4,7 @@
 //
 // pessimistic_txn_manager.cpp
 //
-// Identification: src/backend/concurrency/pessimistic_txn_manager.cpp
+// Identification: src/concurrency/pessimistic_txn_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,16 +12,16 @@
 
 #include "pessimistic_txn_manager.h"
 
-#include "backend/common/platform.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
+#include "common/platform.h"
+#include "logging/log_manager.h"
+#include "logging/records/transaction_record.h"
+#include "concurrency/transaction.h"
+#include "catalog/manager.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "storage/data_table.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
 
 namespace peloton {
 namespace concurrency {

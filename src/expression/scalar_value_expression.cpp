@@ -4,17 +4,17 @@
 //
 // scalar_value_expression.cpp
 //
-// Identification: src/backend/expression/scalar_value_expression.cpp
+// Identification: src/expression/scalar_value_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/expression/scalar_value_expression.h"
-#include "backend/common/value_peeker.h"
-#include "backend/common/value.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/data_table.h"
+#include "expression/scalar_value_expression.h"
+#include "common/value_peeker.h"
+#include "common/value.h"
+#include "storage/tuple.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace expression {

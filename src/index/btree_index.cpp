@@ -4,16 +4,16 @@
 //
 // btree_index.cpp
 //
-// Identification: src/backend/index/btree_index.cpp
+// Identification: src/index/btree_index.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/index/btree_index.h"
-#include "backend/index/index_key.h"
-#include "backend/common/logger.h"
-#include "backend/storage/tuple.h"
+#include "index/btree_index.h"
+#include "index/index_key.h"
+#include "common/logger.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace index {

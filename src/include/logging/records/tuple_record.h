@@ -4,7 +4,7 @@
 //
 // tuple_record.h
 //
-// Identification: src/backend/logging/records/tuple_record.h
+// Identification: src/logging/records/tuple_record.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/logging/log_record.h"
-#include "backend/storage/tuple.h"
-#include "backend/common/serializer.h"
-#include "backend/common/printable.h"
+#include "logging/log_record.h"
+#include "storage/tuple.h"
+#include "common/serializer.h"
+#include "common/printable.h"
 
 namespace peloton {
 namespace logging {

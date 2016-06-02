@@ -13,8 +13,8 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
-#include "backend/common/logger.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace benchmark {

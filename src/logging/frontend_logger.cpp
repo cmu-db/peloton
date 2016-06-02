@@ -4,7 +4,7 @@
 //
 // frontend_logger.cpp
 //
-// Identification: src/backend/logging/frontend_logger.cpp
+// Identification: src/logging/frontend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #include <thread>
 
-#include "backend/common/logger.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/logging/frontend_logger.h"
-#include "backend/logging/checkpoint.h"
-#include "backend/logging/loggers/wal_frontend_logger.h"
-#include "backend/logging/loggers/wbl_frontend_logger.h"
+#include "common/logger.h"
+#include "logging/log_manager.h"
+#include "logging/checkpoint_manager.h"
+#include "logging/frontend_logger.h"
+#include "logging/checkpoint.h"
+#include "logging/loggers/wal_frontend_logger.h"
+#include "logging/loggers/wbl_frontend_logger.h"
 
 // TODO peloton_wait_timeout is always 0
 // configuration for testing

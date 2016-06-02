@@ -4,7 +4,7 @@
 //
 // sdbench_configuration.cpp
 //
-// Identification: src/backend/benchmark/sdbench/sdbench_configuration.cpp
+// Identification: src/benchmark/sdbench/sdbench_configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,8 +13,8 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "backend/benchmark/sdbench/sdbench_configuration.h"
-#include "backend/common/logger.h"
+#include "benchmark/sdbench/sdbench_configuration.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace benchmark {

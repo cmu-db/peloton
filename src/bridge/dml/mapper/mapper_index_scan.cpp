@@ -4,19 +4,19 @@
 //
 // mapper_index_scan.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_index_scan.cpp
+// Identification: src/bridge/dml/mapper/mapper_index_scan.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/catalog/manager.h"
-#include "backend/index/index.h"
-#include "backend/planner/index_scan_plan.h"
-#include "backend/storage/data_table.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/expr/expr_transformer.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "catalog/manager.h"
+#include "index/index.h"
+#include "planner/index_scan_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace bridge {

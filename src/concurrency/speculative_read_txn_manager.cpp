@@ -4,7 +4,7 @@
 //
 // transaction_manager.cpp
 //
-// Identification: src/backend/concurrency/speculative_read_txn_manager.cpp
+// Identification: src/concurrency/speculative_read_txn_manager.cpp
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #include "speculative_read_txn_manager.h"
 
-#include "backend/common/platform.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
+#include "common/platform.h"
+#include "logging/log_manager.h"
+#include "logging/records/transaction_record.h"
+#include "concurrency/transaction.h"
+#include "catalog/manager.h"
+#include "common/exception.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace concurrency {

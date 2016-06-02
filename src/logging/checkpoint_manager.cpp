@@ -4,15 +4,15 @@
 //
 // checkpoint_manager.h
 //
-// Identification: src/backend/logging/checkpoint_manager.h
+// Identification: src/logging/checkpoint_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/macros.h"
-#include "backend/logging/checkpoint/simple_checkpoint.h"
-#include "backend/logging/checkpoint_manager.h"
+#include "common/macros.h"
+#include "logging/checkpoint/simple_checkpoint.h"
+#include "logging/checkpoint_manager.h"
 
 namespace peloton {
 namespace logging {

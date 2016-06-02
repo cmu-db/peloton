@@ -4,7 +4,7 @@
 //
 // update_plan.h
 //
-// Identification: src/backend/planner/update_plan.h
+// Identification: src/planner/update_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,8 +13,8 @@
 #pragma once
 
 #include "abstract_plan.h"
-#include "backend/planner/project_info.h"
-#include "backend/common/types.h"
+#include "planner/project_info.h"
+#include "common/types.h"
 
 namespace peloton {
 

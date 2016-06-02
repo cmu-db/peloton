@@ -4,24 +4,24 @@
 //
 // insert_executor.cpp
 //
-// Identification: src/backend/executor/insert_executor.cpp
+// Identification: src/executor/insert_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/executor/insert_executor.h"
+#include "executor/insert_executor.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/common/logger.h"
-#include "backend/common/pool.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/executor_context.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tuple_iterator.h"
+#include "catalog/manager.h"
+#include "common/logger.h"
+#include "common/pool.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/logical_tile.h"
+#include "executor/executor_context.h"
+#include "expression/container_tuple.h"
+#include "planner/insert_plan.h"
+#include "storage/data_table.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace executor {

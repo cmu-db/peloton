@@ -4,7 +4,7 @@
 //
 // raw_database_info.h
 //
-// Identification: src/backend/bridge/ddl/raw_database_info.h
+// Identification: src/bridge/ddl/raw_database_info.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/bridge/ddl/raw_table_info.h"
-#include "backend/bridge/ddl/raw_index_info.h"
-#include "backend/bridge/ddl/raw_foreign_key_info.h"
+#include "bridge/ddl/raw_table_info.h"
+#include "bridge/ddl/raw_index_info.h"
+#include "bridge/ddl/raw_foreign_key_info.h"
 
 #include "utils/relcache.h"
 #include "commands/dbcommands.h"

@@ -4,7 +4,7 @@
 //
 // tile_group_iterator.h
 //
-// Identification: src/backend/storage/tile_group_iterator.h
+// Identification: src/storage/tile_group_iterator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <memory>
 
-#include "backend/common/types.h"
-#include "backend/common/iterator.h"
+#include "common/types.h"
+#include "common/iterator.h"
 
 namespace peloton {
 namespace storage {

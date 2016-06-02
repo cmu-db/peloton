@@ -4,7 +4,7 @@
 //
 // abstract_table.h
 //
-// Identification: src/backend/storage/abstract_table.h
+// Identification: src/storage/abstract_table.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/printable.h"
+#include "common/types.h"
+#include "common/printable.h"
 
 #include <string>
 

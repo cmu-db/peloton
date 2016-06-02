@@ -4,13 +4,13 @@
 //
 // thread_manager.cpp
 //
-// Identification: src/backend/common/thread_manager.cpp
+// Identification: src/common/thread_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/thread_manager.h"
+#include "common/thread_manager.h"
 
 #define NUM_THREAD 10
 

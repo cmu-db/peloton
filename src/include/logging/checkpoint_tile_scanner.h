@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/checkpoint_tile_scanner.h
+ * /peloton/src/logging/checkpoint_tile_scanner.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,10 +15,10 @@
 #include <string>
 #include <memory>
 
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
-#include "backend/executor/logical_tile.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/tuple.h"
+#include "executor/logical_tile.h"
 
 namespace peloton {
 namespace logging {

@@ -4,7 +4,7 @@
 //
 // logical_tile.h
 //
-// Identification: src/backend/executor/logical_tile.h
+// Identification: src/executor/logical_tile.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,9 +17,9 @@
 #include <memory>
 #include <unordered_map>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/macros.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/macros.h"
 
 namespace peloton {
 

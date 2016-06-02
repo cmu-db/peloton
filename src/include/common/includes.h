@@ -4,7 +4,7 @@
 //
 // includes.h
 //
-// Identification: src/backend/common/includes.h
+// Identification: src/common/includes.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 // Common headers
 //===--------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
+#include "common/logger.h"
 
 #include <cALWAYS_ASSERT>
 #include <iostream>

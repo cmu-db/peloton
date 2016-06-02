@@ -4,7 +4,7 @@
 //
 // ddl_transaction.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_transaction.cpp
+// Identification: src/bridge/ddl/ddl_transaction.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #include <iostream>
 
-#include "backend/bridge/ddl/ddl_transaction.h"
-#include "backend/common/logger.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/concurrency/transaction.h"
+#include "bridge/ddl/ddl_transaction.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace bridge {

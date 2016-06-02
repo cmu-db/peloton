@@ -4,17 +4,17 @@
 //
 // types.cpp
 //
-// Identification: src/backend/common/types.cpp
+// Identification: src/common/types.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/types.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/macros.h"
+#include "common/types.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/value_factory.h"
+#include "common/macros.h"
 
 #include <sstream>
 #include <cstring>

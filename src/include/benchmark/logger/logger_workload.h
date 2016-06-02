@@ -4,7 +4,7 @@
 //
 // logger_workload.h
 //
-// Identification: src/backend/benchmark/logger/logger_workload.h
+// Identification: src/benchmark/logger/logger_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "backend/benchmark/logger/logger_configuration.h"
+#include "benchmark/logger/logger_configuration.h"
 
 namespace peloton {
 

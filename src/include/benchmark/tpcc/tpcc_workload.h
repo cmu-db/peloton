@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/common/macros.h"
-#include "backend/benchmark/tpcc/tpcc_configuration.h"
-#include "backend/benchmark/tpcc/tpcc_loader.h"
+#include "common/macros.h"
+#include "benchmark/tpcc/tpcc_configuration.h"
+#include "benchmark/tpcc/tpcc_loader.h"
 
 namespace peloton {
 

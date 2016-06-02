@@ -4,7 +4,7 @@
 //
 // nested_loop_join_executor.cpp
 //
-// Identification: src/backend/executor/nested_loop_join_executor.cpp
+// Identification: src/executor/nested_loop_join_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,13 +13,13 @@
 #include <vector>
 #include <unordered_set>
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
-#include "backend/executor/nested_loop_join_executor.h"
-#include "backend/executor/executor_context.h"
-#include "backend/planner/nested_loop_join_plan.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/container_tuple.h"
+#include "common/types.h"
+#include "common/logger.h"
+#include "executor/nested_loop_join_executor.h"
+#include "executor/executor_context.h"
+#include "planner/nested_loop_join_plan.h"
+#include "expression/abstract_expression.h"
+#include "expression/container_tuple.h"
 #include "nodes/pg_list.h"
 
 namespace peloton {

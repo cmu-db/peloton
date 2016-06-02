@@ -4,7 +4,7 @@
 //
 // log_record_pool.h
 //
-// Identification: src/backend/logging/records/log_record_pool.h
+// Identification: src/logging/records/log_record_pool.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,7 +15,7 @@
 #include <map>
 #include <vector>
 
-#include "backend/logging/records/tuple_record.h"
+#include "logging/records/tuple_record.h"
 
 namespace peloton {
 namespace logging {

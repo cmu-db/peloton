@@ -4,7 +4,7 @@
 //
 // transaction_record.cpp
 //
-// Identification: src/backend/logging/records/transaction_record.cpp
+// Identification: src/logging/records/transaction_record.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #include <iostream>
 
-#include "backend/common/macros.h"
-#include "backend/logging/records/transaction_record.h"
+#include "common/macros.h"
+#include "logging/records/transaction_record.h"
 
 namespace peloton {
 namespace logging {

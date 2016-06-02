@@ -4,14 +4,14 @@
 //
 // raw_table_info.cpp
 //
-// Identification: src/backend/bridge/ddl/raw_table_info.cpp
+// Identification: src/bridge/ddl/raw_table_info.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/raw_table_info.h"
-#include "backend/bridge/ddl/ddl_table.h"
+#include "bridge/ddl/raw_table_info.h"
+#include "bridge/ddl/ddl_table.h"
 
 namespace peloton {
 namespace bridge {

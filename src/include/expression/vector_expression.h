@@ -4,17 +4,17 @@
 //
 // vector_expression.h
 //
-// Identification: src/backend/expression/vector_expression.h
+// Identification: src/expression/vector_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/common/value_factory.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
+#include "common/value_factory.h"
 
-#include "backend/expression/constant_value_expression.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace expression {

@@ -4,15 +4,15 @@
 //
 // project_info.cpp
 //
-// Identification: src/backend/planner/project_info.cpp
+// Identification: src/planner/project_info.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/project_info.h"
-#include "backend/executor/executor_context.h"
-#include "backend/storage/rollback_segment.h"
+#include "planner/project_info.h"
+#include "executor/executor_context.h"
+#include "storage/rollback_segment.h"
 
 namespace peloton {
 namespace planner {

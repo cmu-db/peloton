@@ -4,7 +4,7 @@
 //
 // function_expression.h
 //
-// Identification: src/backend/expression/function_expression.h
+// Identification: src/expression/function_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 // IMPORTANT: These FUNC_... values must be kept synchronized with those .Isted
 // in the following hsql parser source files:
@@ -280,9 +280,9 @@ static const int FUNC_TRIM_BOTH_CHAR =
 // definitions
 // (FUNC_... constants and ...FunctionExpressionTemplates).
 
-#include "backend/expression/bitwise_functions.h"
-#include "backend/expression/date_functions.h"
-#include "backend/expression/numeric_functions.h"
-#include "backend/expression/string_functions.h"
-#include "backend/expression/logic_functions.h"
-#include "backend/expression/json_functions.h"
+#include "expression/bitwise_functions.h"
+#include "expression/date_functions.h"
+#include "expression/numeric_functions.h"
+#include "expression/string_functions.h"
+#include "expression/logic_functions.h"
+#include "expression/json_functions.h"

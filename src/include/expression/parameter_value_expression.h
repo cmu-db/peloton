@@ -4,7 +4,7 @@
 //
 // parameter_value_expression.h
 //
-// Identification: src/backend/expression/parameter_value_expression.h
+// Identification: src/expression/parameter_value_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/common/value.h"
+#include "common/value.h"
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 #include <vector>
 #include <string>

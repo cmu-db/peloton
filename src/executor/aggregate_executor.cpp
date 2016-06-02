@@ -4,7 +4,7 @@
 //
 // aggregate_executor.cpp
 //
-// Identification: src/backend/executor/aggregate_executor.cpp
+// Identification: src/executor/aggregate_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,16 +12,16 @@
 
 #include <utility>
 #include <vector>
-#include <backend/concurrency/transaction_manager_factory.h>
+#include <concurrency/transaction_manager_factory.h>
 
-#include "backend/common/logger.h"
-#include "backend/executor/aggregator.h"
-#include "backend/executor/aggregate_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/executor_context.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/planner/aggregate_plan.h"
-#include "backend/storage/table_factory.h"
+#include "common/logger.h"
+#include "executor/aggregator.h"
+#include "executor/aggregate_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/executor_context.h"
+#include "expression/container_tuple.h"
+#include "planner/aggregate_plan.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace executor {

@@ -4,7 +4,7 @@
 //
 // logger.h
 //
-// Identification: src/backend/logging/logger.h
+// Identification: src/logging/logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
+#include "common/types.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace logging {

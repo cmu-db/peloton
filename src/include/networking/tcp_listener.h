@@ -4,7 +4,7 @@
 //
 // tcp_listener.h
 //
-// Identification: src/backend/networking/tcp_listener.h
+// Identification: src/networking/tcp_listener.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/thread_manager.h"
+#include "common/thread_manager.h"
 
 #include <event2/listener.h>
 #include <event2/bufferevent.h>

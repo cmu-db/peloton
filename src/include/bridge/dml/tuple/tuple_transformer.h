@@ -4,7 +4,7 @@
 //
 // tuple_transformer.h
 //
-// Identification: src/backend/bridge/dml/tuple/tuple_transformer.h
+// Identification: src/bridge/dml/tuple/tuple_transformer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,10 +15,10 @@
 #include "postgres.h"
 #include "executor/tuptable.h"
 
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/storage/data_table.h"
-#include "backend/common/abstract_tuple.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "storage/data_table.h"
+#include "common/abstract_tuple.h"
 
 namespace peloton {
 

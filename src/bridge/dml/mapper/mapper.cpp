@@ -4,24 +4,24 @@
 //
 // mapper.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper.cpp
+// Identification: src/bridge/dml/mapper/mapper.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/dml/executor/plan_executor.h"
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/common/logger.h"
-#include "backend/common/cache.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/project_info.h"
-#include "backend/planner/insert_plan.h"
+#include "bridge/ddl/bridge.h"
+#include "bridge/dml/executor/plan_executor.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "common/logger.h"
+#include "common/cache.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
+#include "planner/abstract_plan.h"
+#include "planner/project_info.h"
+#include "planner/insert_plan.h"
 
 #include "nodes/print.h"
 #include "nodes/pprint.h"

@@ -4,13 +4,13 @@
 //
 // sdbench_loader.cpp
 //
-// Identification: src/backend/benchmark/sdbench/sdbench_loader.cpp
+// Identification: src/benchmark/sdbench/sdbench_loader.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/sdbench/sdbench_loader.h"
+#include "benchmark/sdbench/sdbench_loader.h"
 
 #include <memory>
 #include <string>
@@ -20,20 +20,20 @@
 #include <iostream>
 #include <ctime>
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/common/macros.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/index/index_factory.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/macros.h"
+#include "executor/abstract_executor.h"
+#include "executor/insert_executor.h"
+#include "expression/constant_value_expression.h"
+#include "index/index_factory.h"
+#include "planner/insert_plan.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
 
 namespace peloton {
 namespace benchmark {

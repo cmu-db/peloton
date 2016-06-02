@@ -4,7 +4,7 @@
 //
 // test.cpp
 //
-// Identification: src/backend/raft/test.cpp
+// Identification: src/raft/test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

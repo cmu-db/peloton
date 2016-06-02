@@ -4,7 +4,7 @@
 //
 // thread_manager.h
 //
-// Identification: src/backend/common/thread_manager.h
+// Identification: src/common/thread_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/mutex.h"
+#include "common/mutex.h"
 
 #include <pthread.h>
 

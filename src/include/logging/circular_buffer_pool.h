@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/circular_buffer_pool.h
+ * /peloton/src/logging/circular_buffer_pool.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 #include <atomic>
 #include <cstring>
 
-#include "backend/logging/buffer_pool.h"
-#include "backend/common/logger.h"
+#include "logging/buffer_pool.h"
+#include "common/logger.h"
 
 #define BUFFER_POOL_MASK (BUFFER_POOL_SIZE - 1)
 #define GET_BUFFER_POOL_INDEX(a) (a & BUFFER_POOL_MASK)

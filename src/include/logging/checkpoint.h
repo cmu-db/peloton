@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/checkpoint.h
+ * /peloton/src/logging/checkpoint.h
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 #include <string>
 #include <sys/stat.h>
 
-#include "backend/common/types.h"
-#include "backend/common/pool.h"
+#include "common/types.h"
+#include "common/pool.h"
 
 namespace peloton {
 

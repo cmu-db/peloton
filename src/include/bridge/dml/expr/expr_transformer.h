@@ -4,7 +4,7 @@
 //
 // expr_transformer.h
 //
-// Identification: src/backend/bridge/dml/expr/expr_transformer.h
+// Identification: src/bridge/dml/expr/expr_transformer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 #include "postgres.h"
 #include "nodes/execnodes.h"

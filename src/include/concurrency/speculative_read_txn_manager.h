@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/backend/concurrency/speculative_read_txn_manager.h
+// Identification: src/concurrency/speculative_read_txn_manager.h
 //
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/storage/tile_group.h"
+#include "concurrency/transaction_manager.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace concurrency {

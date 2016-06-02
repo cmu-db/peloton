@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "backend/planner/abstract_scan_plan.h"
-#include "backend/planner/index_scan_plan.h"
-#include "backend/storage/data_table.h"
-#include "backend/index/index.h"
-#include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
+#include "planner/abstract_scan_plan.h"
+#include "planner/index_scan_plan.h"
+#include "storage/data_table.h"
+#include "index/index.h"
+#include "common/types.h"
+#include "expression/abstract_expression.h"
 
 
 namespace peloton {

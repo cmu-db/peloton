@@ -4,17 +4,17 @@
 //
 // value.cpp
 //
-// Identification: src/backend/common/value.cpp
+// Identification: src/common/value.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/value.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/common/stl_friendly_value.h"
-#include "backend/expression/function_expression.h"
+#include "common/value.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "common/stl_friendly_value.h"
+#include "expression/function_expression.h"
 
 #include <cstdio>
 #include <sstream>

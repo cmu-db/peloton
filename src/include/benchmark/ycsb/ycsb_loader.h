@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/benchmark/ycsb/ycsb_configuration.h"
+#include "benchmark/ycsb/ycsb_configuration.h"
 
 namespace peloton {
 namespace benchmark {

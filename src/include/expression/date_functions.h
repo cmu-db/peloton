@@ -4,7 +4,7 @@
 //
 // date_functions.h
 //
-// Identification: src/backend/expression/date_functions.h
+// Identification: src/expression/date_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,8 +14,8 @@
 
 #include <ctime>
 
-#include "backend/common/exception.h"
-#include "backend/common/value.h"
+#include "common/exception.h"
+#include "common/value.h"
 
 #include "boost/date_time/gregorian/greg_date.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"

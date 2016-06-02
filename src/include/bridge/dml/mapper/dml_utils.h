@@ -4,7 +4,7 @@
 //
 // dml_utils.h
 //
-// Identification: src/backend/bridge/dml/mapper/dml_utils.h
+// Identification: src/bridge/dml/mapper/dml_utils.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/bridge/dml/mapper/dml_raw_structures.h"
+#include "planner/abstract_plan.h"
+#include "bridge/dml/mapper/dml_raw_structures.h"
 
 #include "postgres.h"
 #include "c.h"

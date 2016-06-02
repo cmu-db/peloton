@@ -4,7 +4,7 @@
 //
 // coalesce_expression.h
 //
-// Identification: src/backend/expression/coalesce_expression.h
+// Identification: src/expression/coalesce_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 #include <memory>
 #include <vector>
 
-#include "backend/expression/expression_util.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {

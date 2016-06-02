@@ -4,7 +4,7 @@
 //
 // exception.h
 //
-// Identification: src/backend/common/exception.h
+// Identification: src/common/exception.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,7 @@
 #include <signal.h>
 #include <memory>
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

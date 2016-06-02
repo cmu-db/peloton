@@ -4,14 +4,14 @@
 //
 // function_expression.cpp
 //
-// Identification: src/backend/expression/function_expression.cpp
+// Identification: src/expression/function_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/expression/function_expression.h"
-#include "backend/expression/expression_util.h"
+#include "expression/function_expression.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 

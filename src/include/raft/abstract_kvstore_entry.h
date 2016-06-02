@@ -4,7 +4,7 @@
 //
 // abstract_kvstore_entry.h
 //
-// Identification: src/backend/raft/abstract_kvstore_entry.h
+// Identification: src/raft/abstract_kvstore_entry.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

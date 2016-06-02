@@ -4,7 +4,7 @@
 //
 // mapper.h
 //
-// Identification: src/backend/bridge/dml/mapper/mapper.h
+// Identification: src/bridge/dml/mapper/mapper.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
-#include "backend/bridge/dml/mapper/dml_raw_structures.h"
-#include "backend/common/cache.h"
-#include "backend/common/types.h"
+#include "bridge/dml/mapper/dml_raw_structures.h"
+#include "common/cache.h"
+#include "common/types.h"
 
 #include "postgres.h"
 #include "c.h"

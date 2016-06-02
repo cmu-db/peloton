@@ -4,7 +4,7 @@
 //
 // expression_util.h
 //
-// Identification: src/backend/expression/expression_util.h
+// Identification: src/expression/expression_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "backend/expression/abstract_expression.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace expression {

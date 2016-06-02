@@ -4,7 +4,7 @@
 //
 // abstract_plan.h
 //
-// Identification: src/backend/planner/abstract_plan.h
+// Identification: src/planner/abstract_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,9 +19,9 @@
 #include <map>
 #include <vector>
 
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/serializer.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/serializer.h"
 
 #include "nodes/nodes.h"
 

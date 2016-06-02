@@ -4,7 +4,7 @@
 //
 // value.h
 //
-// Identification: src/backend/common/value.h
+// Identification: src/common/value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,13 +26,13 @@
 #include <vector>
 #include <iostream>
 
-#include "backend/common/exception.h"
-#include "backend/common/pool.h"
-#include "backend/common/serializer.h"
-#include "backend/common/types.h"
-#include "backend/common/varlen.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
+#include "common/exception.h"
+#include "common/pool.h"
+#include "common/serializer.h"
+#include "common/types.h"
+#include "common/varlen.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 #include "boost/scoped_ptr.hpp"
 #include "ttmath/ttmathint.h"

@@ -4,7 +4,7 @@
 //
 // expr_transformer.cpp
 //
-// Identification: src/backend/bridge/dml/expr/expr_transformer.cpp
+// Identification: src/bridge/dml/expr/expr_transformer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,26 +19,26 @@
 #include "parser/parsetree.h"
 #include "fmgr.h"
 
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/bridge/dml/expr/pg_func_map.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "bridge/dml/expr/pg_func_map.h"
+#include "bridge/dml/expr/expr_transformer.h"
 
-#include "backend/bridge/dml/executor/plan_executor.h"
-#include "backend/common/logger.h"
-#include "backend/common/value.h"
-#include "backend/common/macros.h"
-#include "backend/common/value_factory.h"
-#include "backend/expression/cast_expression.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/vector_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/expression_util.h"
+#include "bridge/dml/executor/plan_executor.h"
+#include "common/logger.h"
+#include "common/value.h"
+#include "common/macros.h"
+#include "common/value_factory.h"
+#include "expression/cast_expression.h"
+#include "expression/abstract_expression.h"
+#include "expression/vector_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/expression_util.h"
 #include "postgres/include/executor/executor.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/string_expression.h"
-#include "backend/expression/case_expression.h"
-#include "backend/expression/nullif_expression.h"
-#include "backend/expression/coalesce_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/string_expression.h"
+#include "expression/case_expression.h"
+#include "expression/nullif_expression.h"
+#include "expression/coalesce_expression.h"
 namespace peloton {
 namespace bridge {
 

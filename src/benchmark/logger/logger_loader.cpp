@@ -4,13 +4,13 @@
 //
 // logger_loader.cpp
 //
-// Identification: src/backend/benchmark/logger/logger_loader.cpp
+// Identification: src/benchmark/logger/logger_loader.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/benchmark/hyadapt/hyadapt_loader.h"
+#include "benchmark/hyadapt/hyadapt_loader.h"
 
 #include <memory>
 #include <string>

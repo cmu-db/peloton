@@ -4,7 +4,7 @@
 //
 // logcabin_kvstore.h
 //
-// Identification: src/backend/raft/logcabin_kvstore.h
+// Identification: src/raft/logcabin_kvstore.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

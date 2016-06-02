@@ -4,22 +4,22 @@
 //
 // tuple.cpp
 //
-// Identification: src/backend/storage/tuple.cpp
+// Identification: src/storage/tuple.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/storage/tuple.h"
+#include "storage/tuple.h"
 
 #include <cstdlib>
 #include <sstream>
 
-#include "backend/storage/tuple.h"
-#include "backend/common/exception.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/catalog/schema.h"
+#include "storage/tuple.h"
+#include "common/exception.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace storage {

@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/checkpoint/simple_checkpoint.cpp
+ * /peloton/src/logging/checkpoint/simple_checkpoint.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -15,31 +15,31 @@
 #include <sys/mman.h>
 #include <stdio.h>
 
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/logging/checkpoint/simple_checkpoint.h"
-#include "backend/logging/loggers/wal_frontend_logger.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/logging/log_record.h"
-#include "backend/logging/checkpoint_tile_scanner.h"
-#include "backend/logging/logging_util.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "logging/checkpoint/simple_checkpoint.h"
+#include "logging/loggers/wal_frontend_logger.h"
+#include "logging/records/tuple_record.h"
+#include "logging/records/transaction_record.h"
+#include "logging/log_record.h"
+#include "logging/checkpoint_tile_scanner.h"
+#include "logging/logging_util.h"
 
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/executor/executors.h"
-#include "backend/executor/executor_context.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/catalog/manager.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction_manager.h"
+#include "concurrency/transaction.h"
+#include "executor/executors.h"
+#include "executor/executor_context.h"
+#include "planner/seq_scan_plan.h"
+#include "catalog/manager.h"
 
-#include "backend/common/logger.h"
-#include "backend/common/types.h"
+#include "common/logger.h"
+#include "common/types.h"
 
-#include "backend/logging/log_record.h"
-#include "backend/logging/log_manager.h"
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/storage/database.h"
-#include "backend/executor/seq_scan_executor.h"
+#include "logging/log_record.h"
+#include "logging/log_manager.h"
+#include "logging/checkpoint_manager.h"
+#include "storage/database.h"
+#include "executor/seq_scan_executor.h"
 
 namespace peloton {
 namespace logging {

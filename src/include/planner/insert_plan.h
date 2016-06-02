@@ -4,7 +4,7 @@
 //
 // insert_plan.h
 //
-// Identification: src/backend/planner/insert_plan.h
+// Identification: src/planner/insert_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,7 +13,7 @@
 #pragma once
 
 #include "abstract_plan.h"
-#include "backend/planner/project_info.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 

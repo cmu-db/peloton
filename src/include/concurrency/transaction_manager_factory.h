@@ -4,7 +4,7 @@
 //
 // transaction_manager_factory.h
 //
-// Identification: src/backend/concurrency/transaction_manager_factory.h
+// Identification: src/concurrency/transaction_manager_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include "backend/concurrency/optimistic_txn_manager.h"
-#include "backend/concurrency/pessimistic_txn_manager.h"
-#include "backend/concurrency/speculative_read_txn_manager.h"
-#include "backend/concurrency/eager_write_txn_manager.h"
-#include "backend/concurrency/ts_order_txn_manager.h"
-#include "backend/concurrency/ssi_txn_manager.h"
-#include "backend/concurrency/optimistic_rb_txn_manager.h"
+#include "concurrency/optimistic_txn_manager.h"
+#include "concurrency/pessimistic_txn_manager.h"
+#include "concurrency/speculative_read_txn_manager.h"
+#include "concurrency/eager_write_txn_manager.h"
+#include "concurrency/ts_order_txn_manager.h"
+#include "concurrency/ssi_txn_manager.h"
+#include "concurrency/optimistic_rb_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {

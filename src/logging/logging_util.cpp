@@ -5,7 +5,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/logging/logger.h
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,9 @@
 #include <dirent.h>
 #include <cstring>
 
-#include "backend/catalog/manager.h"
-#include "backend/logging/logging_util.h"
-#include "backend/storage/database.h"
+#include "catalog/manager.h"
+#include "logging/logging_util.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace logging {

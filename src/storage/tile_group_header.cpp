@@ -4,7 +4,7 @@
 //
 // tile_group_header.cpp
 //
-// Identification: src/backend/storage/tile_group_header.cpp
+// Identification: src/storage/tile_group_header.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,16 +14,16 @@
 #include <iomanip>
 #include <sstream>
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/common/macros.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/gc/gc_manager.h"
-#include "backend/logging/log_manager.h"
-#include "backend/storage/storage_manager.h"
-#include "backend/storage/tile_group_header.h"
+#include "common/logger.h"
+#include "common/platform.h"
+#include "common/printable.h"
+#include "common/macros.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "expression/container_tuple.h"
+#include "gc/gc_manager.h"
+#include "logging/log_manager.h"
+#include "storage/storage_manager.h"
+#include "storage/tile_group_header.h"
 
 namespace peloton {
 namespace storage {

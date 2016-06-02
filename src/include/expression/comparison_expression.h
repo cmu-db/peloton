@@ -4,7 +4,7 @@
 //
 // comparison_expression.h
 //
-// Identification: src/backend/expression/comparison_expression.h
+// Identification: src/expression/comparison_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/common/serializer.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/parameter_value_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/tuple_value_expression.h"
+#include "common/serializer.h"
+#include "expression/abstract_expression.h"
+#include "expression/parameter_value_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace expression {

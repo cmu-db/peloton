@@ -4,17 +4,17 @@
 //
 // mapper_agg.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_agg.cpp
+// Identification: src/bridge/dml/mapper/mapper_agg.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/aggregate_plan.h"
-#include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/bridge/dml/expr/pg_func_map.h"
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "planner/aggregate_plan.h"
+#include "bridge/ddl/schema_transformer.h"
+#include "bridge/dml/expr/pg_func_map.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/dml/expr/expr_transformer.h"
 
 #include "executor/nodeAgg.h"
 

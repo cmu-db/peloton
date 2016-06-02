@@ -4,7 +4,7 @@
 //
 // abstract_join_executor.h
 //
-// Identification: src/backend/executor/abstract_join_executor.h
+// Identification: src/executor/abstract_join_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/catalog/schema.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/project_info.h"
+#include "catalog/schema.h"
+#include "executor/abstract_executor.h"
+#include "planner/project_info.h"
 
 #include <vector>
 #include <unordered_set>

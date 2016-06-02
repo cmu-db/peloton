@@ -4,7 +4,7 @@
 //
 // ddl_index.cpp
 //
-// Identification: src/backend/bridge/ddl/ddl_index.cpp
+// Identification: src/bridge/ddl/ddl_index.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,17 +13,17 @@
 #include <vector>
 #include <thread>
 
-#include "backend/bridge/ddl/ddl.h"
-#include "backend/bridge/ddl/ddl_index.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/logger.h"
-#include "backend/common/macros.h"
-#include "backend/index/index.h"
-#include "backend/index/index_factory.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/database.h"
+#include "bridge/ddl/ddl.h"
+#include "bridge/ddl/ddl_index.h"
+#include "bridge/ddl/bridge.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/logger.h"
+#include "common/macros.h"
+#include "index/index.h"
+#include "index/index_factory.h"
+#include "storage/data_table.h"
+#include "storage/database.h"
 
 #include "nodes/pg_list.h"
 #include "postgres.h"

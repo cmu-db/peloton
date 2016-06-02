@@ -4,7 +4,7 @@
 //
 // abstract_expression.h
 //
-// Identification: src/backend/expression/abstract_expression.h
+// Identification: src/expression/abstract_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/macros.h"
-#include "backend/common/abstract_tuple.h"
-#include "backend/common/printable.h"
+#include "common/macros.h"
+#include "common/abstract_tuple.h"
+#include "common/printable.h"
 
 #include "postgres.h"
 #include "common/fe_memutils.h"

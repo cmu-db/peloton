@@ -4,7 +4,7 @@
 //
 // logic_functions.h
 //
-// Identification: src/backend/expression/logic_functions.h
+// Identification: src/expression/logic_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/value.h"
+#include "common/value.h"
 
 namespace peloton {
 

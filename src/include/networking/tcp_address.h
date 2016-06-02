@@ -4,7 +4,7 @@
 //
 // tcp_address.h
 //
-// Identification: src/backend/networking/tcp_address.h
+// Identification: src/networking/tcp_address.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

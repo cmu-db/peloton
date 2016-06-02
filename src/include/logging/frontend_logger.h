@@ -4,7 +4,7 @@
 //
 // frontend_logger.h
 //
-// Identification: src/backend/logging/frontend_logger.h
+// Identification: src/logging/frontend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -20,12 +20,12 @@
 #include <map>
 #include <thread>
 
-#include "backend/common/types.h"
-#include "backend/logging/logger.h"
-#include "backend/logging/log_buffer.h"
-#include "backend/logging/buffer_pool.h"
-#include "backend/logging/backend_logger.h"
-#include "backend/logging/checkpoint.h"
+#include "common/types.h"
+#include "logging/logger.h"
+#include "logging/log_buffer.h"
+#include "logging/buffer_pool.h"
+#include "logging/backend_logger.h"
+#include "logging/checkpoint.h"
 
 namespace peloton {
 namespace logging {

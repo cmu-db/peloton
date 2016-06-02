@@ -4,7 +4,7 @@
 //
 // string_expression.h
 //
-// Identification: src/backend/expression/string_expression.h
+// Identification: src/expression/string_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
-#include "backend/common/serializer.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/string_functions.h"
+#include "common/serializer.h"
+#include "expression/abstract_expression.h"
+#include "expression/string_functions.h"
 
 namespace peloton {
 namespace expression {

@@ -4,7 +4,7 @@
 //
 // bridge_test.h
 //
-// Identification: src/backend/bridge/ddl/tests/bridge_test.h
+// Identification: src/bridge/ddl/tests/bridge_test.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,8 +16,8 @@
 #include <string>
 #include <iostream>
 
-#include <backend/common/types.h>
-#include <backend/common/logger.h>
+#include <common/types.h>
+#include <common/logger.h>
 
 namespace peloton {
 

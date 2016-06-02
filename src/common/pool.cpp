@@ -4,7 +4,7 @@
 //
 // pool.cpp
 //
-// Identification: src/backend/common/pool.cpp
+// Identification: src/common/pool.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #include <cstring>
 
-#include "backend/common/pool.h"
-#include "backend/common/macros.h"
+#include "common/pool.h"
+#include "common/macros.h"
 
 namespace peloton {
 

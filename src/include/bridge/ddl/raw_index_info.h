@@ -4,7 +4,7 @@
 //
 // raw_index_info.h
 //
-// Identification: src/backend/bridge/ddl/raw_index_info.h
+// Identification: src/bridge/ddl/raw_index_info.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/bridge/ddl/ddl_index.h"
+#include "bridge/ddl/ddl_index.h"
 
 #include <vector>
 

@@ -4,7 +4,7 @@
 //
 // limit_executor.h
 //
-// Identification: src/backend/executor/limit_executor.h
+// Identification: src/executor/limit_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/executor/abstract_executor.h"
+#include "executor/abstract_executor.h"
 
 namespace peloton {
 namespace executor {

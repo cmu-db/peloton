@@ -4,7 +4,7 @@
 //
 // cast_expression.h
 //
-// Identification: src/backend/expression/cast_expression.h
+// Identification: src/expression/cast_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,8 +16,8 @@
 #include <string>
 #include <sstream>
 
-#include "backend/common/logger.h"
-#include "backend/common/types.h"
+#include "common/logger.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace expression {

@@ -4,7 +4,7 @@
 //
 // gc_manager.h
 //
-// Identification: src/backend/gc/gc_manager.h
+// Identification: src/gc/gc_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,9 +17,9 @@
 #include <map>
 #include <vector>
 
-#include "backend/common/types.h"
-#include "backend/common/lockfree_queue.h"
-#include "backend/common/logger.h"
+#include "common/types.h"
+#include "common/lockfree_queue.h"
+#include "common/logger.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {

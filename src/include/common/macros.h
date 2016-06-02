@@ -4,7 +4,7 @@
 //
 // macros.h
 //
-// Identification: src/backend/common/macros.h
+// Identification: src/common/macros.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

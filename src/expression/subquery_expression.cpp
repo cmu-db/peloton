@@ -4,7 +4,7 @@
 //
 // subquery_expression.cpp
 //
-// Identification: src/backend/expression/subquery_expression.cpp
+// Identification: src/expression/subquery_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,12 +14,12 @@
 
 #include <sstream>
 
-#include "backend/common/logger.h"
-#include "backend/executor/executor_context.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/data_table.h"
+#include "common/logger.h"
+#include "executor/executor_context.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "storage/tuple.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace expression {

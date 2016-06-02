@@ -4,7 +4,7 @@
 //
 // append_executor.h
 //
-// Identification: src/backend/executor/append_executor.h
+// Identification: src/executor/append_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/logical_tile.h"
+#include "common/types.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
 
 namespace peloton {
 namespace executor {

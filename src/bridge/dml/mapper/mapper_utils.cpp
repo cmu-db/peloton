@@ -4,22 +4,22 @@
 //
 // mapper_utils.cpp
 //
-// Identification: src/backend/bridge/dml/mapper/mapper_utils.cpp
+// Identification: src/bridge/dml/mapper/mapper_utils.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/brain/sample.h"
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/bridge/ddl/schema_transformer.h"
-#include "backend/bridge/dml/expr/expr_transformer.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
-#include "backend/catalog/manager.h"
-#include "backend/planner/projection_plan.h"
-#include "backend/planner/aggregate_plan.h"
-#include "backend/planner/abstract_scan_plan.h"
-#include "backend/expression/tuple_value_expression.h"
+#include "brain/sample.h"
+#include "bridge/dml/mapper/mapper.h"
+#include "bridge/ddl/schema_transformer.h"
+#include "bridge/dml/expr/expr_transformer.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
+#include "catalog/manager.h"
+#include "planner/projection_plan.h"
+#include "planner/aggregate_plan.h"
+#include "planner/abstract_scan_plan.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace bridge {

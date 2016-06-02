@@ -4,15 +4,15 @@
 //
 // parameter_value_expression.cpp
 //
-// Identification: src/backend/expression/parameter_value_expression.cpp
+// Identification: src/expression/parameter_value_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/common/logger.h"
-#include "backend/expression/parameter_value_expression.h"
-#include "backend/executor/executor_context.h"
+#include "common/logger.h"
+#include "expression/parameter_value_expression.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 namespace expression {

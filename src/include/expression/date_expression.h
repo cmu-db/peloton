@@ -4,7 +4,7 @@
 //
 // date_expression.h
 //
-// Identification: src/backend/expression/date_expression.h
+// Identification: src/expression/date_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include "backend/common/serializer.h"
+#include "common/serializer.h"
 
-#include "backend/common/value.h"
-#include "backend/common/value_peeker.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/string_functions.h"
+#include "common/value.h"
+#include "common/value_peeker.h"
+#include "expression/abstract_expression.h"
+#include "expression/string_functions.h"
 
 namespace peloton {
 namespace expression {

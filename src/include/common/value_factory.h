@@ -4,7 +4,7 @@
 //
 // value_factory.h
 //
-// Identification: src/backend/common/value_factory.h
+// Identification: src/common/value_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/common/value.h"
+#include "common/value.h"
 
 namespace peloton {
 

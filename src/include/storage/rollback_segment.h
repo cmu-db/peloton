@@ -4,7 +4,7 @@
 //
 // tile_group_header.h
 //
-// Identification: src/backend/storage/tile_group_header.h
+// Identification: src/storage/tile_group_header.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,12 +16,12 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/common/printable.h"
-#include "backend/common/types.h"
-#include "backend/common/abstract_tuple.h"
-#include "backend/common/macros.h"
+#include "common/logger.h"
+#include "common/platform.h"
+#include "common/printable.h"
+#include "common/types.h"
+#include "common/abstract_tuple.h"
+#include "common/macros.h"
 
 namespace peloton {
 

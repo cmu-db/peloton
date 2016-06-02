@@ -37,8 +37,9 @@ endif()
 configure_file(cmake/Templates/peloton_config.h.in "${PROJECT_BINARY_DIR}/peloton_config.h")
 
 # ---[ Includes
-set(Peloton_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-include_directories(${Peloton_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
+set(Peloton_SRC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/src/include)
+set(Peloton_TEST_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/test/include)
+include_directories(${Peloton_SRC_INCLUDE_DIR} ${Peloton_TEST_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
 include_directories(BEFORE src) # This is needed for gtest.
 
 # ---[ Subdirectories

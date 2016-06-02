@@ -4,13 +4,13 @@
 //
 // logcabin_kvstore.cpp
 //
-// Identification: src/backend/raft/logcabin_kvstore.cpp
+// Identification: src/raft/logcabin_kvstore.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/raft/logcabin_kvstore.h"
+#include "raft/logcabin_kvstore.h"
 
 namespace peloton {
 namespace kvstore {

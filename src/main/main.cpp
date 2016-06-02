@@ -4,7 +4,7 @@
 //
 // main.cpp
 //
-// Identification: src/backend/main/main.cpp
+// Identification: src/main/main.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,7 +26,7 @@
 #include "postgres/include/utils/pg_locale.h"
 #include "postgres/include/utils/ps_status.h"
 
-#include "backend/common/macros.h"
+#include "common/macros.h"
 
 const char *progname;
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
 /*
  * If supported on the current platform, set up a handler to be called if
- * the backend/postmaster crashes with a fatal signal or exception.
+ * the postmaster crashes with a fatal signal or exception.
  */
 #if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
   pgwin32_install_crashdump_handler();

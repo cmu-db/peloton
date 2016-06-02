@@ -4,13 +4,13 @@
 //
 // pg_func_map.cpp
 //
-// Identification: src/backend/bridge/dml/expr/pg_func_map.cpp
+// Identification: src/bridge/dml/expr/pg_func_map.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/dml/expr/pg_func_map.h"
+#include "bridge/dml/expr/pg_func_map.h"
 
 namespace peloton {
 namespace bridge {

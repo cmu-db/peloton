@@ -4,7 +4,7 @@
 //
 // bwtree_index.h
 //
-// Identification: src/backend/index/bwtree_index.h
+// Identification: src/index/bwtree_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,12 +16,12 @@
 #include <string>
 #include <map>
 
-#include "backend/catalog/manager.h"
-#include "backend/common/platform.h"
-#include "backend/common/types.h"
-#include "backend/index/index.h"
+#include "catalog/manager.h"
+#include "common/platform.h"
+#include "common/types.h"
+#include "index/index.h"
 
-#include "backend/index/bwtree.h"
+#include "index/bwtree.h"
 
 namespace peloton {
 namespace index {

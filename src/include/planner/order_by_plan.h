@@ -4,7 +4,7 @@
 //
 // order_by_plan.h
 //
-// Identification: src/backend/planner/order_by_plan.h
+// Identification: src/planner/order_by_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "abstract_plan.h"
-#include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
+#include "common/types.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace planner {

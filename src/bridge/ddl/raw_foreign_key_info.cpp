@@ -4,19 +4,19 @@
 //
 // raw_foreign_key_info.cpp
 //
-// Identification: src/backend/bridge/ddl/raw_foreign_key_info.cpp
+// Identification: src/bridge/ddl/raw_foreign_key_info.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/bridge/ddl/raw_foreign_key_info.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/column.h"
-#include "backend/catalog/schema.h"
-#include "backend/storage/data_table.h"
+#include "bridge/ddl/raw_foreign_key_info.h"
+#include "bridge/ddl/bridge.h"
+#include "catalog/foreign_key.h"
+#include "catalog/manager.h"
+#include "catalog/column.h"
+#include "catalog/schema.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace bridge {
