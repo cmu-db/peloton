@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "rpc_client.h"
-#include "abstract_service.pb.h"
+#include "networking/rpc_client.h"
+#include "networking/abstract_service.pb.h"
 
 namespace peloton {
 namespace networking {

@@ -18,8 +18,6 @@
 #include "common/printable.h"
 #include "common/types.h"
 
-#include "nodes/nodes.h"
-
 namespace peloton {
 namespace catalog {
 
@@ -29,11 +27,9 @@ namespace catalog {
 
 class Constraint : public Printable {
  public:
-  Constraint(ConstraintType type, std::string constraint_name,
-             Node *raw_expr = nullptr)
+  Constraint(ConstraintType type, std::string constraint_name)
       : constraint_type(type),
-        constraint_name(constraint_name),
-        expr(raw_expr) {}
+        constraint_name(constraint_name) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -73,8 +69,6 @@ class Constraint : public Printable {
 
   std::string constraint_name;
 
-  // Default_expr
-  Node *expr = nullptr;
 };
 
 }  // End catalog namespace

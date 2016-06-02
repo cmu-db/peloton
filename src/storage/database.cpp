@@ -12,8 +12,6 @@
 
 #include <sstream>
 
-#include "postmaster/peloton.h"
-#include "bridge/ddl/bridge.h"
 #include "catalog/foreign_key.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
@@ -85,41 +83,6 @@ storage::DataTable *Database::GetTable(const oid_t table_offset) const {
 oid_t Database::GetTableCount() const { return tables.size(); }
 
 //===--------------------------------------------------------------------===//
-// STATS
-//===--------------------------------------------------------------------===//
-
-void Database::UpdateStats() const {
-  LOG_TRACE("Update All Stats in Database(%u)", database_oid);
-  for (oid_t table_offset = 0; table_offset < GetTableCount(); table_offset++) {
-    auto table = GetTable(table_offset);
-    bridge::Bridge::SetNumberOfTuples(table->GetOid(),
-                                      table->GetNumberOfTuples());
-
-    for (oid_t index_offset = 0; index_offset < table->GetIndexCount();
-         index_offset++) {
-      auto index = table->GetIndex(index_offset);
-      bridge::Bridge::SetNumberOfTuples(index->GetOid(),
-                                        index->GetNumberOfTuples());
-    }
-  }
-}
-
-void Database::UpdateStatsWithOid(const oid_t table_oid) const {
-  LOG_TRACE("Update table(%u)'s stats in Database(%u)", table_oid,
-           database_oid);
-
-  auto table = GetTableWithOid(table_oid);
-  bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
-
-  for (oid_t index_offset = 0; index_offset < table->GetIndexCount();
-       index_offset++) {
-    auto index = table->GetIndex(index_offset);
-    bridge::Bridge::SetNumberOfTuples(index->GetOid(),
-                                      index->GetNumberOfTuples());
-  }
-}
-
-//===--------------------------------------------------------------------===//
 // UTILITIES
 //===--------------------------------------------------------------------===//
 
@@ -138,7 +101,7 @@ const std::string Database::GetInfo() const {
     if (table != nullptr) {
       os << "(" << ++table_itr << "/" << table_count << ") "
          << "Table Name(" << table->GetOid() << ") : " << table->GetName()
-         << "\n" << *(table->GetSchema()) << std::endl;
+         << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 
@@ -173,9 +136,8 @@ const std::string Database::GetInfo() const {
           auto sink_table_oid = foreign_key->GetSinkTableOid();
           auto sink_table = GetTableWithOid(sink_table_oid);
 
-          auto sink_table_schema = sink_table->GetSchema();
-          os << "table name : " << sink_table->GetName() << " "
-             << *sink_table_schema << std::endl;
+          os << "table name : " << sink_table->GetName()
+              << std::endl;
         }
       }
     }

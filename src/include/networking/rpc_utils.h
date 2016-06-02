@@ -14,10 +14,6 @@
 
 #include "abstract_service.pb.h"
 
-#include "postgres/include/c.h"
-#include "postgres/include/access/transam.h"
-#include "postgres/include/access/tupdesc.h"
-
 #include <memory>
 
 namespace peloton {
@@ -26,17 +22,6 @@ namespace networking {
 //===----------------------------------------------------------------------===//
 //   Message Creation Functions
 //===----------------------------------------------------------------------===//
-
-/*
- * CreateTupleDescMsg is used when a node sends query plan
- */
-void SetTupleDescMsg(TupleDesc tuple_desc, TupleDescMsg& tuple_desc_msg);
-
-/*
- * When executing the query plan, a node must parse the received msg and convert it
- * to Postgres's TupleDesc
- */
-std::unique_ptr<tupleDesc> ParseTupleDescMsg(const TupleDescMsg& tuple_desc_msg);
 
 } // namespace message
 } // namespace peloton

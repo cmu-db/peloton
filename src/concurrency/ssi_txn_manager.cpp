@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ssi_txn_manager.h"
+#include "concurrency/ssi_txn_manager.h"
 
 #include "common/platform.h"
 #include "logging/log_manager.h"

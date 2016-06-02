@@ -15,16 +15,33 @@
 #include "common/types.h"
 #include "executor/abstract_executor.h"
 
-#include "postgres.h"
-#include "access/tupdesc.h"
-#include "postmaster/peloton.h"
-
 namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Plan Executor
 //===--------------------------------------------------------------------===//
+
+typedef struct peloton_status {
+  peloton::Result m_result;
+  int *m_result_slots;
+
+  // number of tuples processed
+  uint32_t m_processed;
+
+  peloton_status(){
+    m_processed = 0;
+    m_result = peloton::RESULT_SUCCESS;
+    m_result_slots = nullptr;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Serialization/Deserialization
+  //===--------------------------------------------------------------------===//
+  bool SerializeTo(peloton::SerializeOutput &output);
+  bool DeserializeFrom(peloton::SerializeInputBE &input);
+
+} peloton_status;
 
 class PlanExecutor {
  public:
@@ -50,8 +67,7 @@ class PlanExecutor {
    *        value list directly rather than passing Postgres's ParamListInfo
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<Value> &params,
-                                    TupleDesc m_tuple_desc);
+                                    const std::vector<Value> &params);
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked

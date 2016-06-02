@@ -37,7 +37,6 @@
 #pragma once
 
 #include "common/types.h"
-#include "bridge/ddl/bridge.h"
 #include "common/serializer.h"
 
 namespace peloton {

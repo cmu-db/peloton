@@ -26,10 +26,6 @@ const std::string Constraint::GetInfo() const {
   os << GetName() << " ";
   os << ConstraintTypeToString(constraint_type);
 
-  if (GetType() == CONSTRAINT_TYPE_DEFAULT) {
-    os << " Default expression : " << nodeToString(expr);
-  }
-
   os << "\n\n";
 
   return os.str();

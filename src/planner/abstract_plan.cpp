@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "abstract_plan.h"
+#include "planner/abstract_plan.h"
 
 #include <sstream>
 #include <stdexcept>

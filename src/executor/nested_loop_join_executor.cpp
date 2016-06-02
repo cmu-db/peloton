@@ -20,7 +20,6 @@
 #include "planner/nested_loop_join_plan.h"
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
-#include "nodes/pg_list.h"
 
 namespace peloton {
 namespace executor {

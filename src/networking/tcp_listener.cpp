@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tcp_listener.h"
-#include "tcp_connection.h"
-#include "rpc_type.h"
+#include "networking/tcp_listener.h"
+#include "networking/tcp_connection.h"
+#include "networking/rpc_type.h"
 
 #include "common/logger.h"
 #include "common/macros.h"
