@@ -42,13 +42,8 @@ include_directories(${Peloton_INCLUDE_DIR} ${PROJECT_BINARY_DIR})
 include_directories(BEFORE src) # This is needed for gtest.
 
 # ---[ Subdirectories
-add_subdirectory(src/gtest)
-add_subdirectory(src/peloton)
-add_subdirectory(tools)
-add_subdirectory(examples)
-add_subdirectory(python)
-add_subdirectory(matlab)
-add_subdirectory(docs)
+add_subdirectory(src)
+#add_subdirectory(docs)
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
