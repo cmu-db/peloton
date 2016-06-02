@@ -1,5 +1,0 @@
-/* Sources directory */
-#define SOURCE_FOLDER "${PROJECT_SOURCE_DIR}"
-
-/* Binaries directory */
-#define BINARY_FOLDER "${PROJECT_BINARY_DIR}"
