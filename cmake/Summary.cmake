@@ -58,8 +58,8 @@ endfunction()
 ################################################################################################
 # Function for fetching Peloton version from git and headers
 # Usage:
-#   peloton_extract_caffe_version()
-function(peloton_extract_caffe_version)
+#   peloton_extract_peloton_version()
+function(peloton_extract_peloton_version)
   set(Peloton_GIT_VERSION "unknown")
   find_package(Git)
   if(GIT_FOUND)
@@ -73,15 +73,15 @@ function(peloton_extract_caffe_version)
     endif()
   endif()
 
-  set(Peloton_GIT_VERSION ${Caffe_GIT_VERSION} PARENT_SCOPE)
-  set(Peloton_VERSION "<TODO> (Caffe doesn't declare its version in headers)" PARENT_SCOPE)
+  set(Peloton_GIT_VERSION ${Peloton_GIT_VERSION} PARENT_SCOPE)
+  set(Peloton_VERSION "<TODO> (Peloton doesn't declare its version in headers)" PARENT_SCOPE)
 
-  # peloton_parse_header(${Peloton_INCLUDE_DIR}/caffe/version.hpp Caffe_VERSION_LINES PELOTON_MAJOR CAFFE_MINOR CAFFE_PATCH)
-  # set(Peloton_VERSION "${PELOTON_MAJOR}.${CAFFE_MINOR}.${CAFFE_PATCH}" PARENT_SCOPE)
+  # peloton_parse_header(${Peloton_INCLUDE_DIR}/peloton/version.hpp Peloton_VERSION_LINES PELOTON_MAJOR PELOTON_MINOR PELOTON_PATCH)
+  # set(Peloton_VERSION "${PELOTON_MAJOR}.${PELOTON_MINOR}.${PELOTON_PATCH}" PARENT_SCOPE)
 
   # or for #define Peloton_VERSION "x.x.x"
-  # peloton_parse_header_single_define(Peloton ${Caffe_INCLUDE_DIR}/caffe/version.hpp Caffe_VERSION)
-  # set(Peloton_VERSION ${Caffe_VERSION_STRING} PARENT_SCOPE)
+  # peloton_parse_header_single_define(Peloton ${Peloton_INCLUDE_DIR}/peloton/version.hpp Peloton_VERSION)
+  # set(Peloton_VERSION ${Peloton_VERSION_STRING} PARENT_SCOPE)
 
 endfunction()
 
@@ -92,8 +92,8 @@ endfunction()
 #   peloton_print_configuration_summary()
 
 function(peloton_print_configuration_summary)
-  peloton_extract_caffe_version()
-  set(Peloton_VERSION ${Caffe_VERSION} PARENT_SCOPE)
+  peloton_extract_peloton_version()
+  set(Peloton_VERSION ${Peloton_VERSION} PARENT_SCOPE)
 
   peloton_merge_flag_lists(__flags_rel CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS)
   peloton_merge_flag_lists(__flags_deb CMAKE_CXX_FLAGS_DEBUG   CMAKE_CXX_FLAGS)
@@ -109,7 +109,6 @@ function(peloton_print_configuration_summary)
   peloton_status("  Debug CXX flags   :   ${__flags_deb}")
   peloton_status("  Build type        :   ${CMAKE_BUILD_TYPE}")
   peloton_status("")
-  peloton_status("  BUILD_SHARED_LIBS :   ${BUILD_SHARED_LIBS}")
   peloton_status("  BUILD_docs        :   ${BUILD_docs}")
   peloton_status("")
   peloton_status("Dependencies:")

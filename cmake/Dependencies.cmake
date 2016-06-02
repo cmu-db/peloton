@@ -7,8 +7,8 @@ include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${Boost_LIBRARIES})
 
 # ---[ Threads
-#find_package(Threads REQUIRED)
-#list(APPEND Peloton_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
+find_package(Threads REQUIRED)
+list(APPEND Peloton_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 # ---[ Google-glog
 include("cmake/External/glog.cmake")
