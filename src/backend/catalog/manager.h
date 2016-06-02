@@ -42,10 +42,16 @@ namespace catalog {
 
 // typedef cuckoohash_map<oid_t, std::shared_ptr<storage::TileGroup>>
 //     lookup_dir;
+const int MaxTileGroupCount = 102400;
 
 class Manager {
  public:
-  Manager() {}
+  Manager() {
+    for (int i = 0; i < MaxTileGroupCount; ++i) {
+      locator[i] = nullptr;
+    }
+
+  }
 
   // Singleton
   static Manager &GetInstance();
@@ -108,7 +114,7 @@ class Manager {
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   //lookup_dir locator;
-  std::shared_ptr<storage::TileGroup> locator[10240] = {};
+  std::shared_ptr<storage::TileGroup> locator[MaxTileGroupCount];
 
   // DATABASES
 

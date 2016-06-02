@@ -67,8 +67,10 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   // }
   // return location;
 
-  while (locator[oid].get() == nullptr)
-    ;
+  if (oid > MaxTileGroupCount) {
+    LOG_ERROR("exceed max tile group count!");
+  }
+  while (locator[oid].get() == nullptr);
   return locator[oid];
 }
 
