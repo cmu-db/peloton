@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "speculative_read_txn_manager.h"
+#include "concurrency/speculative_read_txn_manager.h"
 
 #include "common/platform.h"
 #include "logging/log_manager.h"

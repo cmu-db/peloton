@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "hybrid_scan_executor.h"
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -31,6 +29,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
 #include "planner/hybrid_scan_plan.h"
+#include "executor/hybrid_scan_executor.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
 #include "storage/tile.h"

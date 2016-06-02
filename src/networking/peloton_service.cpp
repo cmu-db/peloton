@@ -20,7 +20,7 @@
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "planner/seq_scan_plan.h"
-#include "bridge/dml/executor/plan_executor.h"
+#include "executor/plan_executor.h"
 
 #include <unistd.h>
 #include <signal.h>

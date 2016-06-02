@@ -16,7 +16,6 @@
 #include <sys/stat.h>
 #include <fts.h>
 
-#include "bridge/ddl/ddl_database.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "common/value_factory.h"
 

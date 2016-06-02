@@ -19,9 +19,6 @@
 #include "common/abstract_tuple.h"
 #include "common/printable.h"
 
-#include "postgres.h"
-#include "common/fe_memutils.h"
-
 namespace peloton {
 
 namespace executor {

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimistic_rb_txn_manager.h"
+#include "concurrency/optimistic_rb_txn_manager.h"
 
 #include "common/platform.h"
 #include "logging/log_manager.h"

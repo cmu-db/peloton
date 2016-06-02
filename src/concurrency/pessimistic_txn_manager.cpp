@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "pessimistic_txn_manager.h"
+#include "concurrency/pessimistic_txn_manager.h"
 
 #include "common/platform.h"
 #include "logging/log_manager.h"

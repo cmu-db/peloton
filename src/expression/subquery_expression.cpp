@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "subquery_expression.h"
+#include "expression/subquery_expression.h"
 
 #include <sstream>
 

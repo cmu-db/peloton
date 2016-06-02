@@ -10,27 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "plan_executor.h"
 
 #include <vector>
 
-#include "bridge/dml/mapper/mapper.h"
-#include "bridge/dml/tuple/tuple_transformer.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
 #include "executor/executor_context.h"
+#include "executor/plan_executor.h"
 #include "storage/tuple_iterator.h"
-
-#include "access/tupdesc.h"
-#include "nodes/print.h"
-#include "utils/memutils.h"
 
 namespace peloton {
 namespace bridge {
-
-executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
-                                                concurrency::Transaction *txn);
 
 /*
  * Added for network invoking efficiently
@@ -52,8 +43,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         const std::vector<Value> &params,
-                                         TupleDesc tuple_desc) {
+                                         const std::vector<Value> &params) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -63,7 +53,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   bool status;
   bool init_failure = false;
   bool single_statement_txn = false;
-  List *slots = NULL;
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = peloton::concurrency::current_txn;
@@ -118,21 +107,11 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     }
 
     // Go over the logical tile
-    for (oid_t tuple_id : *logical_tile) {
-      expression::ContainerTuple<executor::LogicalTile> cur_tuple(
-          logical_tile.get(), tuple_id);
-
-      auto slot = TupleTransformer::GetPostgresTuple(&cur_tuple, tuple_desc);
-
-      if (slot != nullptr) {
-        slots = lappend(slots, slot);
-      }
-    }
   }
 
   // Set the result
   p_status.m_processed = executor_context->num_processed;
-  p_status.m_result_slots = slots;
+  p_status.m_result_slots = nullptr;
 
 // final cleanup
 cleanup:
@@ -284,15 +263,6 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
   for (auto &child : children) {
     PrintPlan(child.get(), prefix);
   }
-}
-
-/**
- * @brief Build Executor Context
- */
-executor::ExecutorContext *BuildExecutorContext(ParamListInfoData *param_list,
-                                                concurrency::Transaction *txn) {
-  return new executor::ExecutorContext(
-      txn, PlanTransformer::BuildParams(param_list));
 }
 
 /**

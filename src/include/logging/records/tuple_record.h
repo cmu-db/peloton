@@ -45,10 +45,6 @@ class TupleRecord : public LogRecord, Printable {
         db_oid(_db_oid) {
     PL_ASSERT(cid);
     PL_ASSERT(table_oid);
-
-    if (db_oid == INVALID_OID) {
-      db_oid = bridge::Bridge::GetCurrentDatabaseOid();
-    }
     PL_ASSERT(db_oid);
   }
 

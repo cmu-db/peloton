@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "eager_write_txn_manager.h"
+#include "concurrency/eager_write_txn_manager.h"
 
 #include "common/platform.h"
 #include "logging/log_manager.h"

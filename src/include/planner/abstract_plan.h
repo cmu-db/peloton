@@ -23,8 +23,6 @@
 #include "common/types.h"
 #include "common/serializer.h"
 
-#include "nodes/nodes.h"
-
 namespace peloton {
 
 namespace executor {

@@ -41,7 +41,6 @@
 #include "index/index.h"
 #include "executor/executor_context.h"
 #include "planner/seq_scan_plan.h"
-#include "bridge/dml/mapper/mapper.h"
 
 extern CheckpointType peloton_checkpoint_mode;
 

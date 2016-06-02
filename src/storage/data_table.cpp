@@ -16,7 +16,6 @@
 #include "benchmark/hyadapt/hyadapt_configuration.h"
 #include "brain/clusterer.h"
 #include "brain/sample.h"
-#include "bridge/ddl/bridge.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"

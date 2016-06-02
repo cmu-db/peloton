@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "gc_manager_factory.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 namespace gc {

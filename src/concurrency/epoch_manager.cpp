@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "epoch_manager.h"
+#include "concurrency/epoch_manager.h"
 
 namespace peloton {
 namespace concurrency {

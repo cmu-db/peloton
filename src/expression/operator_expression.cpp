@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "operator_expression.h"
+#include "expression/operator_expression.h"
 
 #include <sstream>
 

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "transaction_manager_factory.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace concurrency {

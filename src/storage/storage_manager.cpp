@@ -400,7 +400,7 @@ StorageManager::~StorageManager() {
       exit(EXIT_FAILURE);
     }
 
-    if (munmap(data_file_address, data_file_len) == MAP_FAILED) {
+    if (munmap(data_file_address, data_file_len)) {
       perror("munmap");
       exit(EXIT_FAILURE);
     }

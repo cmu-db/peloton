@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "tcp_address.h"
+#include "networking/tcp_address.h"
 
 #include "common/cast.h"
 #include "common/logger.h"
