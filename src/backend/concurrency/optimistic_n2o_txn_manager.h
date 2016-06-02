@@ -45,6 +45,9 @@ public:
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id, const oid_t &tuple_id);
 
+  virtual void YieldOwnership(const oid_t &tile_group_id,
+    const oid_t &tuple_id);
+
   virtual bool PerformInsert(const ItemPointer &location __attribute__((unused)))
     {assert(false); return false;}
 
