@@ -18,47 +18,43 @@
 namespace peloton {
 namespace index {
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BWTreeIndex(
-    IndexMetadata *metadata)
-    : Index(metadata), equals(metadata), comparator(metadata) {
-  // Add your implementation here
+BWTREE_TEMPLATE_ARGUMENTS
+BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata) :
+      // Base class
+      Index{metadata},
+      // Key "less than" relation comparator
+      comparator{metadata},
+      // Key equality checker
+      equals{metadata},
+      // NOTE: These two arguments need to be constructed in advance
+      // and do not have trivial constructor
+      container{comparator,
+                equals} {
+  return;
 }
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-BWTreeIndex<KeyType, ValueType, KeyComparator,
-            KeyEqualityChecker>::~BWTreeIndex() {
-  // Add your implementation here
+BWTREE_TEMPLATE_ARGUMENTS
+BWTREE_INDEX_TYPE::~BWTreeIndex() {
+  return;
 }
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-bool BWTreeIndex<KeyType, ValueType, KeyComparator,
-                 KeyEqualityChecker>::InsertEntry(UNUSED_ATTRIBUTE const
-                                                  storage::Tuple *key,
-                                                  UNUSED_ATTRIBUTE const
-                                                  ItemPointer &location) {
-  // Add your implementation here
+BWTREE_TEMPLATE_ARGUMENTS
+bool
+BWTREE_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                               UNUSED_ATTRIBUTE const ItemPointer &location) {
   return false;
 }
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-bool BWTreeIndex<KeyType, ValueType, KeyComparator,
-                 KeyEqualityChecker>::DeleteEntry(UNUSED_ATTRIBUTE const
-                                                  storage::Tuple *key,
-                                                  UNUSED_ATTRIBUTE const
-                                                  ItemPointer &location) {
-  // Add your implementation here
+BWTREE_TEMPLATE_ARGUMENTS
+bool
+BWTREE_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                               UNUSED_ATTRIBUTE const ItemPointer &location) {
   return false;
 }
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-bool BWTreeIndex<KeyType, ValueType, KeyComparator,
-                 KeyEqualityChecker>::CondInsertEntry(
+BWTREE_TEMPLATE_ARGUMENTS
+bool
+BWTREE_INDEX_TYPE::CondInsertEntry(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
     UNUSED_ATTRIBUTE const ItemPointer &location,
     UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
@@ -66,54 +62,61 @@ bool BWTreeIndex<KeyType, ValueType, KeyComparator,
   return false;
 }
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-void BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
+BWTREE_TEMPLATE_ARGUMENTS
+void
+BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<Value> &values,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
     UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
+BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
+BWTREE_INDEX_TYPE::ScanAllKeys(
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
+BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
+BWTREE_INDEX_TYPE::ScanKey(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-void BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
+BWTREE_TEMPLATE_ARGUMENTS
+void
+BWTREE_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<Value> &values,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
     UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
+BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
-    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
+BWTREE_INDEX_TYPE::ScanAllKeys(
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
+BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKey(
+BWTREE_INDEX_TYPE::ScanKey(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  return;
+}
 
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-std::string BWTreeIndex<KeyType, ValueType, KeyComparator,
-                        KeyEqualityChecker>::GetTypeName() const {
+BWTREE_TEMPLATE_ARGUMENTS
+std::string
+BWTREE_INDEX_TYPE::GetTypeName() const {
   return "BWTree";
 }
 
