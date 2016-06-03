@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
-#include "backend/logging/circular_buffer_pool.h"
+#include "common/harness.h"
+#include "logging/circular_buffer_pool.h"
 #include "logging/logging_tests_util.h"
 #include "executor/executor_tests_util.h"
 #include <stdlib.h>

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 #include "concurrency/transaction_tests_util.h"
 
 namespace peloton {

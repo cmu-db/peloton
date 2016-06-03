@@ -12,13 +12,13 @@
 
 #include "executor/join_tests_util.h"
 
-#include "backend/common/types.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
-#include "backend/planner/project_info.h"
-#include "backend/storage/data_table.h"
+#include "common/types.h"
+#include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/conjunction_expression.h"
+#include "planner/project_info.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace test {

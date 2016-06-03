@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/storage/storage_manager.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace test {

@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/pool.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/pool.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace test {

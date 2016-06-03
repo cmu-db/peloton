@@ -15,28 +15,28 @@
 #include <string>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/executor_context.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/expression_util.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group_factory.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/seq_scan_executor.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
+#include "planner/seq_scan_plan.h"
+#include "storage/data_table.h"
+#include "storage/tile_group_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
+#include "common/harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;

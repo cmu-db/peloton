@@ -10,18 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
-#include "backend/logging/checkpoint.h"
-#include "backend/logging/logging_util.h"
-#include "backend/logging/loggers/wal_backend_logger.h"
-#include "backend/logging/checkpoint/simple_checkpoint.h"
-#include "backend/logging/checkpoint_manager.h"
-#include "backend/bridge/dml/mapper/mapper.h"
-#include "backend/storage/database.h"
+#include "common/harness.h"
+#include "logging/checkpoint.h"
+#include "logging/logging_util.h"
+#include "logging/loggers/wal_backend_logger.h"
+#include "logging/checkpoint/simple_checkpoint.h"
+#include "logging/checkpoint_manager.h"
+#include "storage/database.h"
 
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/index/index.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/logical_tile_factory.h"
+#include "index/index.h"
 
 #include "executor/mock_executor.h"
 #include "logging/logging_tests_util.h"
@@ -41,6 +40,7 @@ namespace test {
 
 class CheckpointTests : public PelotonTest {};
 
+/*
 oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -241,6 +241,7 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
   thread.join();
 }
+*/
 
 }  // End test namespace
 }  // End peloton namespace

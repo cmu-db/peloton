@@ -12,13 +12,13 @@
 
 #include <memory>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
+#include "storage/data_table.h"
+#include "storage/tile_group.h"
 #include "executor/executor_tests_util.h"
-#include "backend/storage/tile_group_iterator.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "storage/tile_group_iterator.h"
+#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace test {

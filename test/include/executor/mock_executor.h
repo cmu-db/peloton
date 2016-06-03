@@ -14,7 +14,7 @@
 
 #include "gmock/gmock.h"
 
-#include "backend/executor/abstract_executor.h"
+#include "executor/abstract_executor.h"
 
 namespace peloton {
 

@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/value_factory.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_header.h"
+#include "common/value_factory.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tile.h"
+#include "storage/tuple.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_header.h"
 
 namespace peloton {
 namespace test {

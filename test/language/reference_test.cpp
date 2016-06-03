@@ -14,7 +14,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "harness.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {

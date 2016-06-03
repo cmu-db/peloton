@@ -66,8 +66,9 @@ void Listener::Run(void *arg) {
   /* Listen on the given port. */
   sin.sin_port = htons(port_);
 
+  // TODO: Fix cmake to link in "-levent_pthreads"
   /* We must specify this function if we use multiple threads*/
-  evthread_use_pthreads();
+  //evthread_use_pthreads();
 
   // TODO: LEV_OPT_THREADSAFE is necessary here?
   listener_ = evconnlistener_new_bind(

@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/planner/abstract_plan.h"
+#include "planner/abstract_plan.h"
 
-#include "harness.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {

@@ -15,21 +15,21 @@
 #include <string>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/planner/order_by_plan.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/executor/executor_context.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/order_by_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "planner/order_by_plan.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "executor/executor_context.h"
+#include "executor/logical_tile.h"
+#include "executor/order_by_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
+#include "common/harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;

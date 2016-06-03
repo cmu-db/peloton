@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
 #include "concurrency/transaction_tests_util.h"
-#include "backend/gc/gc_manager_factory.h"
+#include "gc/gc_manager_factory.h"
 
 namespace peloton {
 

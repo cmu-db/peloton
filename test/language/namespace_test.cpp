@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {
@@ -34,10 +34,6 @@ class NamespaceTests : public PelotonTest {};
 
 TEST_F(NamespaceTests, BasicTest) {
   std::vector<int> v1;  // Standard vector.
-  vec::vector<int> v2;  // User defined vector.
-
-  // Error: v1 and v2 are different object's type.
-  // v1 = v2;
 
   {
     using namespace std;
@@ -46,12 +42,6 @@ TEST_F(NamespaceTests, BasicTest) {
     EXPECT_EQ(v1, v3);  // OK
   }
 
-  {
-    using vec::vector;
-    vector<int> v4;  // Same as vec::vector
-
-    EXPECT_EQ(v2, v4);  // OK
-  }
 }
 
 }  // End test namespace

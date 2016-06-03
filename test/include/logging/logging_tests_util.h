@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/logging/log_manager.h"
-#include "backend/common/logger.h"
-#include "backend/logging/loggers/wal_frontend_logger.h"
-#include "backend/logging/loggers/wal_backend_logger.h"
-#include "backend/logging/records/tuple_record.h"
-#include "backend/logging/records/transaction_record.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/tile.h"
+#include "logging/log_manager.h"
+#include "common/logger.h"
+#include "logging/loggers/wal_frontend_logger.h"
+#include "logging/loggers/wal_backend_logger.h"
+#include "logging/records/tuple_record.h"
+#include "logging/records/transaction_record.h"
+#include "storage/data_table.h"
+#include "storage/tile.h"
 #include "executor/executor_tests_util.h"
 #include <climits>
 
@@ -83,7 +83,7 @@ class LoggerId {
   LoggerId() : front(INVALID_LOGGER_IDX), back(INVALID_LOGGER_IDX) {}
 };
 
-// A thread wrapper that runs a backend/frontend logger
+// A thread wrapper that runs a frontend logger
 class AbstractLoggingThread {
  public:
   AbstractLoggingThread(LoggingSchedule *sched,

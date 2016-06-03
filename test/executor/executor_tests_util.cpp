@@ -17,22 +17,22 @@
 #include <memory>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/exception.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
-#include "backend/index/index_factory.h"
+#include "catalog/schema.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "common/exception.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
+#include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tuple.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
+#include "index/index_factory.h"
 
 #include "executor/mock_executor.h"
 

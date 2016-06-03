@@ -55,19 +55,19 @@
  * See isolation_level_test.cpp for examples.
  */
 
-#include "harness.h"
-#include "backend/catalog/schema.h"
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/table_factory.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile_group_header.h"
-#include "backend/index/index.h"
-#include "backend/index/index_factory.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/concurrency/transaction_manager.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/common/types.h"
-#include "backend/expression/comparison_expression.h"
+#include "common/harness.h"
+#include "catalog/schema.h"
+#include "storage/tile_group_factory.h"
+#include "storage/table_factory.h"
+#include "storage/tuple.h"
+#include "storage/tile_group_header.h"
+#include "index/index.h"
+#include "index/index_factory.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "concurrency/transaction_manager.h"
+#include "concurrency/transaction.h"
+#include "common/types.h"
+#include "expression/comparison_expression.h"
 
 #pragma once
 

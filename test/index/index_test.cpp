@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/logger.h"
-#include "backend/common/platform.h"
-#include "backend/index/index_factory.h"
-#include "backend/storage/tuple.h"
+#include "common/logger.h"
+#include "common/platform.h"
+#include "index/index_factory.h"
+#include "storage/tuple.h"
 
 //#define ALLOW_UNIQUE_KEY
 

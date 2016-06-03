@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
-#include "backend/common/thread_manager.h"
+#include "common/harness.h"
+#include "common/thread_manager.h"
 
 namespace peloton {
 namespace test {

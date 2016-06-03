@@ -15,19 +15,19 @@
 #include <string>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/planner/projection_plan.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/executor/projection_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "planner/projection_plan.h"
+#include "expression/expression_util.h"
+#include "expression/constant_value_expression.h"
+#include "executor/projection_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
+#include "common/harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;

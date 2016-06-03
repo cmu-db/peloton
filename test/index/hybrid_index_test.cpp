@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "harness.h"
+#include "common/harness.h"
 
 #include <memory>
 #include <string>
@@ -23,35 +23,36 @@
 #include <cassert>
 #include <thread>
 
-#include "backend/planner/hybrid_scan_plan.h"
-#include "backend/executor/hybrid_scan_executor.h"
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/common/timer.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/index/index_factory.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/data_table.h"
-#include "backend/storage/table_factory.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/expression/constant_value_expression.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
-#include "backend/planner/index_scan_plan.h"
-#include "backend/index/index_factory.h"
+#include "planner/hybrid_scan_plan.h"
+#include "executor/hybrid_scan_executor.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "common/timer.h"
+#include "executor/abstract_executor.h"
+#include "executor/insert_executor.h"
+#include "index/index_factory.h"
+#include "planner/insert_plan.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/data_table.h"
+#include "storage/table_factory.h"
+#include "expression/expression_util.h"
+#include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/conjunction_expression.h"
+#include "planner/index_scan_plan.h"
+#include "index/index_factory.h"
 
 namespace peloton {
 namespace test {
 
 class HybridIndexTests : public PelotonTest {};
 
+/*
 static double projectivity = 1.0;
 static int columncount = 4;
 static size_t tuples_per_tile_group = 100;
@@ -620,6 +621,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
 
   index_builder.join();
 }
+*/
 
 }  // namespace tet
 }  // namespace peloton

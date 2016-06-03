@@ -14,19 +14,19 @@
 #include <utility>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/common/value_factory.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/tile.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value_factory.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "storage/tile_group.h"
+#include "storage/tuple.h"
+#include "storage/tile.h"
 
 #include "executor/executor_tests_util.h"
 

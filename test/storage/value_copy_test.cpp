@@ -12,9 +12,9 @@
 
 #include <memory>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/storage/tuple.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace test {
