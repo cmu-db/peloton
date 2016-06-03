@@ -132,12 +132,31 @@ bool OptimisticN2OTxnManager::AcquireOwnership(
   return true;
 }
 
+
+// release write lock on a tuple.
+// one example usage of this method is when a tuple is acquired, but operation
+// (insert,update,delete) can't proceed, the executor needs to yield the 
+// ownership before return false to upper layer.
+// It should not be called if the tuple is in the write set as commit and abort
+// will release the write lock anyway.
+void OptimisticN2OTxnManager::YieldOwnership(const oid_t &tile_group_id,
+  const oid_t &tuple_id) {
+
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+  assert(IsOwner(tile_group_header, tuple_id));
+  tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
+}
+
 bool OptimisticN2OTxnManager::PerformRead(const ItemPointer &location) {
+  LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
   current_txn->RecordRead(location);
   return true;
 }
 
 bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) {
+  LOG_TRACE("PerformInsert (%u, %u)\n", location.block, location.offset);
+  
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -160,7 +179,6 @@ bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPoi
   InitTupleReserved(tile_group_header, tuple_id);
 
   // Write down the head pointer's address in tile group header
-//  fprintf(stderr, "Insert Set ptr: %p\n", itemptr_ptr);
   SetHeadPtr(tile_group_header, tuple_id, itemptr_ptr);
 
   return true;
@@ -404,7 +422,7 @@ Result OptimisticN2OTxnManager::CommitTransaction() {
         // logging.
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
-        ItemPointer old_version(tile_group_id, tuple_slot);
+        //ItemPointer old_version(tile_group_id, tuple_slot);
 
         // logging.
         // log_manager.LogUpdate(current_txn, end_commit_id, old_version,
