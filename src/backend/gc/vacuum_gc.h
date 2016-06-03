@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Zrs_y on 5/10/16.
+//                         Peloton
 //
+// vacuum_gc.h
+//
+// Identification: src/backend/gc/vacuum_gc.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Zrs_y on 5/10/16.
+//                         Peloton
 //
+// vacuum_gc.cpp
+//
+// Identification: src/backend/gc/vacuum_gc.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/gc/vacuum_gc.h"
 #include "backend/index/index.h"
@@ -213,7 +221,7 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
-
+  // return INVALID_ITEMPOINTER;
   assert(recycle_queue_map_.count(table_id) != 0);
   TupleMetadata tuple_metadata;
   auto recycle_queue = recycle_queue_map_[table_id];
