@@ -31,8 +31,8 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-#define MAX_ATTEMPT_COUNT 100000
-#define MAX_QUEUE_LENGTH 100000
+#define MAX_ATTEMPT_COUNT 1000000
+#define MAX_QUEUE_LENGTH 1000000
 
 #define GC_PERIOD_MILLISECONDS 100
 class GCBuffer {
