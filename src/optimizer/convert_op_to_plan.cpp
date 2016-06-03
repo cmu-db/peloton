@@ -66,7 +66,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
     std::tie(table_idx, column_idx) =
       FindRelativeIndex(left_columns, right_columns, var->column);
     output_expr =
-      expression::ExpressionUtil::TupleValueFactory(table_idx, column_idx);
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_NULL,table_idx, column_idx);
   }
 
   void visit(const ExprConstant *op) override {
@@ -102,7 +102,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
     case BoolOpType::Not: {
       assert(children.size() == 1);
       output_expr = expression::ExpressionUtil::OperatorFactory(
-        EXPRESSION_TYPE_OPERATOR_NOT, child_exprs.front(), nullptr);
+        EXPRESSION_TYPE_OPERATOR_NOT,VALUE_TYPE_NULL, child_exprs.front(), nullptr);
     } break;
     case BoolOpType::And: {
       assert(children.size() > 0);
@@ -133,6 +133,7 @@ class ExprOpToAbstractExpressionTransformer : public OperatorVisitor {
 
     output_expr = expression::ExpressionUtil::OperatorFactory(
       op->expr_type,
+	  VALUE_TYPE_NULL,
       child_exprs[0],
       child_exprs[1],
       child_exprs[2],
@@ -319,7 +320,7 @@ class OpToPlanTransformer : public OperatorVisitor {
   planner::ProjectInfo *BuildProjectInfoFromColumns(
     std::vector<Column *> columns)
   {
-    planner::ProjectInfo::DirectMapList dm_list;
+    DirectMapList dm_list;
     for (size_t col_id = 0; col_id < columns.size(); ++col_id) {
       Column *column = columns[col_id];
 
@@ -336,7 +337,7 @@ class OpToPlanTransformer : public OperatorVisitor {
   planner::ProjectInfo *BuildProjectInfoFromExprs(
     std::vector<expression::AbstractExpression *> exprs)
   {
-    planner::ProjectInfo::TargetList target_list;
+    TargetList target_list;
     for (size_t col_id = 0; col_id < exprs.size(); ++col_id) {
       target_list.push_back({col_id, exprs[col_id]});
     }

@@ -190,8 +190,8 @@ void Join::accept(QueryNodeVisitor *v) const {
 //===--------------------------------------------------------------------===//
 OrderBy::OrderBy(
   int output_list_index,
-  bridge::PltFuncMetaInfo equality_fn,
-  bridge::PltFuncMetaInfo sort_fn,
+  std::vector<bool> equality_fn,
+  std::vector<bool> sort_fn,
   bool hashable,
   bool nulls_first,
   bool reverse)
