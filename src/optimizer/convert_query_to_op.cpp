@@ -19,8 +19,6 @@
 #include "planner/order_by_plan.h"
 
 #include "catalog/manager.h"
-#include "bridge/ddl/bridge.h"
-#include "bridge/dml/mapper/mapper.h"
 
 namespace peloton {
 namespace optimizer {

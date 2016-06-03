@@ -17,7 +17,6 @@
 #include "common/types.h"
 #include "common/value.h"
 #include "storage/data_table.h"
-#include "bridge/dml/expr/pg_func_map.h"
 #include "catalog/schema.h"
 
 #include <vector>
@@ -248,8 +247,8 @@ struct Join : QueryJoinNode {
 //===--------------------------------------------------------------------===//
 struct OrderBy {
   OrderBy(int output_list_index,
-          bridge::PltFuncMetaInfo equality_fn,
-          bridge::PltFuncMetaInfo sort_fn,
+          std::vector<bool> equality_fn,
+          std::vector<bool> sort_fn,
           bool hashable,
           bool nulls_first,
           bool reverse);
@@ -257,8 +256,8 @@ struct OrderBy {
   void accept(QueryNodeVisitor *v) const;
 
   int output_list_index;
-  bridge::PltFuncMetaInfo equality_fn;
-  bridge::PltFuncMetaInfo sort_fn;
+  std::vector<bool> equality_fn;
+  std::vector<bool> sort_fn;
   bool hashable;
   bool nulls_first;
 

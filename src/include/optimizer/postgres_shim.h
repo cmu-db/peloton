@@ -15,11 +15,6 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/query_operators.h"
 
-#include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/plannodes.h"
-#include "nodes/params.h"
-
 namespace peloton {
 namespace optimizer {
 
@@ -27,15 +22,15 @@ namespace optimizer {
 // Compatibility with Postgres
 //===--------------------------------------------------------------------===//
 
-bool ShouldPelotonOptimize(Query *parse);
+bool ShouldPelotonOptimize(std::string parse);
 
-std::shared_ptr<Select> PostgresQueryToPelotonQuery(Query *parse);
+std::shared_ptr<Select> PostgresQueryToPelotonQuery(std::string parse);
 
 std::shared_ptr<planner::AbstractPlan>
 PelotonOptimize(Optimizer &optimizer,
-                Query *parse,
+                std::string parse,
                 int cursorOptions,
-                ParamListInfo boundParams);
+                std::vector<int> boundParams);
 
 } /* namespace optimizer */
 } /* namespace peloton */

@@ -21,8 +21,6 @@
 #include "planner/order_by_plan.h"
 
 #include "catalog/manager.h"
-#include "bridge/ddl/bridge.h"
-#include "bridge/dml/mapper/mapper.h"
 
 #include <memory>
 
@@ -69,7 +67,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::GeneratePlan(
   planner::AbstractPlan* top_plan = OptimizerPlanToPlannerPlan(best_plan);
 
   std::shared_ptr<planner::AbstractPlan> final_plan(
-    top_plan, bridge::PlanTransformer::CleanPlan);
+    top_plan, NULL);
 
   return final_plan;
 }
