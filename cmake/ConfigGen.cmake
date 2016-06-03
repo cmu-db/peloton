@@ -105,7 +105,8 @@ function(peloton_generate_export_configs)
 
   # Install the PelotonConfig.cmake and export set to use with install-tree
   install(FILES "${PROJECT_BINARY_DIR}/cmake/PelotonConfig.cmake" DESTINATION ${install_cmake_suffix})
-  install(EXPORT PelotonTargets DESTINATION ${install_cmake_suffix})
+  # TODO: Fix the target
+  #install(EXPORT PelotonTargets DESTINATION ${install_cmake_suffix})
 
   # ---[ Configure and install version file ]---
 

@@ -1,4 +1,4 @@
-# generate protobuf sources
+# --[ Proto library
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
 
