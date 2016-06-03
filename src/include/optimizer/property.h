@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// convert_query_to_op.h
+// property.h
 //
-// Identification: src/backend/optimizer/convert_query_to_op.h
+// Identification: src/optimizer/property.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,18 +12,25 @@
 
 #pragma once
 
-#include "backend/optimizer/op_expression.h"
-#include "backend/optimizer/column_manager.h"
-#include "backend/optimizer/query_operators.h"
-
-#include <memory>
+#include "optimizer/util.h"
 
 namespace peloton {
 namespace optimizer {
 
-std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
-  ColumnManager &manager,
-  std::shared_ptr<Select> op);
+enum class PropertyType {
+  Sort,
+  Columns,
+};
+
+class Property {
+ public:
+  virtual PropertyType Type() const = 0;
+
+  virtual hash_t Hash() const = 0;
+
+  virtual bool operator==(const Property &r) const = 0;
+
+};
 
 } /* namespace optimizer */
 } /* namespace peloton */

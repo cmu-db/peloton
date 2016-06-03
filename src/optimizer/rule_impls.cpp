@@ -4,14 +4,14 @@
 //
 // rule_impls.cpp
 //
-// Identification: src/backend/optimizer/rule_impls.cpp
+// Identification: src/optimizer/rule_impls.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/rule_impls.h"
-#include "backend/optimizer/operators.h"
+#include "optimizer/rule_impls.h"
+#include "optimizer/operators.h"
 
 #include <memory>
 

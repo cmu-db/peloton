@@ -4,7 +4,7 @@
 //
 // operator_node.h
 //
-// Identification: src/backend/optimizer/operator_node.h
+// Identification: src/optimizer/operator_node.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/property_set.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/property_set.h"
+#include "optimizer/util.h"
 
 #include <string>
 #include <memory>

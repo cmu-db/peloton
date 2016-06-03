@@ -4,7 +4,7 @@
 //
 // query_node_printer.h
 //
-// Identification: src/backend/optimizer/query_node_printer.h
+// Identification: src/optimizer/query_node_printer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/optimizer/query_node_visitor.h"
+#include "optimizer/query_node_visitor.h"
 #include <string>
 
 namespace peloton {

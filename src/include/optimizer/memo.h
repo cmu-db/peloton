@@ -4,7 +4,7 @@
 //
 // memo.h
 //
-// Identification: src/backend/optimizer/memo.h
+// Identification: src/optimizer/memo.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/group.h"
-#include "backend/optimizer/op_expression.h"
+#include "optimizer/group.h"
+#include "optimizer/op_expression.h"
 
 #include <unordered_set>
 #include <vector>

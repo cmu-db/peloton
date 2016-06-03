@@ -4,13 +4,13 @@
 //
 // operator_node.cpp
 //
-// Identification: src/backend/optimizer/operator_node.cpp
+// Identification: src/optimizer/operator_node.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/operator_node.h"
+#include "optimizer/operator_node.h"
 
 namespace peloton {
 namespace optimizer {

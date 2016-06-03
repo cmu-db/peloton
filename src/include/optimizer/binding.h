@@ -4,7 +4,7 @@
 //
 // binding.h
 //
-// Identification: src/backend/optimizer/binding.h
+// Identification: src/optimizer/binding.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
-#include "backend/optimizer/group.h"
-#include "backend/optimizer/pattern.h"
-#include "backend/optimizer/op_expression.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/group.h"
+#include "optimizer/pattern.h"
+#include "optimizer/op_expression.h"
 
 #include <map>
 #include <tuple>

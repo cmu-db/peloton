@@ -4,13 +4,13 @@
 //
 // op_expression.cpp
 //
-// Identification: src/backend/optimizer/op_expression.cpp
+// Identification: src/optimizer/op_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/op_expression.h"
+#include "optimizer/op_expression.h"
 
 #include <limits>
 

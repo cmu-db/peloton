@@ -4,7 +4,7 @@
 //
 // postgres_shim.cpp
 //
-// Identification: src/backend/optimizer/postgres_shim.cpp
+// Identification: src/optimizer/postgres_shim.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,10 +14,10 @@
 #include "postgres.h"
 #include "nodes/memnodes.h"
 
-#include "backend/optimizer/postgres_shim.h"
-#include "backend/optimizer/query_transformer.h"
-#include "backend/optimizer/query_operators.h"
-#include "backend/optimizer/query_node_printer.h"
+#include "optimizer/postgres_shim.h"
+#include "optimizer/query_transformer.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/query_node_printer.h"
 
 #include "access/attnum.h"
 #include "miscadmin.h"

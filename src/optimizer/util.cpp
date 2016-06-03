@@ -4,13 +4,13 @@
 //
 // util.cpp
 //
-// Identification: src/backend/optimizer/util.cpp
+// Identification: src/optimizer/util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/util.h"
+#include "optimizer/util.h"
 
 namespace peloton {
 namespace optimizer {

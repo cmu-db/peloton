@@ -4,7 +4,7 @@
 //
 // query_transformer.cpp
 //
-// Identification: src/backend/optimizer/query_transformer.cpp
+// Identification: src/optimizer/query_transformer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,13 +14,13 @@
 #include "postgres.h"
 #include "nodes/memnodes.h"
 
-#include "backend/optimizer/postgres_shim.h"
-#include "backend/optimizer/query_transformer.h"
-#include "backend/optimizer/query_operators.h"
-#include "backend/optimizer/query_node_printer.h"
-#include "backend/catalog/manager.h"
-#include "backend/common/value_factory.h"
-#include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "optimizer/postgres_shim.h"
+#include "optimizer/query_transformer.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/query_node_printer.h"
+#include "catalog/manager.h"
+#include "common/value_factory.h"
+#include "bridge/dml/tuple/tuple_transformer.h"
 
 #include "access/attnum.h"
 #include "miscadmin.h"

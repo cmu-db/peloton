@@ -4,15 +4,15 @@
 //
 // query_node_printer.cpp
 //
-// Identification: src/backend/optimizer/query_node_printer.cpp
+// Identification: src/optimizer/query_node_printer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/query_node_printer.h"
-#include "backend/optimizer/query_operators.h"
-#include "backend/common/types.h"
+#include "optimizer/query_node_printer.h"
+#include "optimizer/query_operators.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace optimizer {

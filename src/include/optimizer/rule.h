@@ -4,7 +4,7 @@
 //
 // rule.h
 //
-// Identification: src/backend/optimizer/rule.h
+// Identification: src/optimizer/rule.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/op_expression.h"
-#include "backend/optimizer/pattern.h"
+#include "optimizer/op_expression.h"
+#include "optimizer/pattern.h"
 
 #include <memory>
 

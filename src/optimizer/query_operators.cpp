@@ -4,14 +4,14 @@
 //
 // query_operators.cpp
 //
-// Identification: src/backend/optimizer/query_operators.cpp
+// Identification: src/optimizer/query_operators.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/query_operators.h"
-#include "backend/optimizer/query_node_visitor.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/query_node_visitor.h"
 
 namespace peloton {
 namespace optimizer {

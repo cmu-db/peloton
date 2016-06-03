@@ -4,25 +4,25 @@
 //
 // optimizer.cpp
 //
-// Identification: src/backend/optimizer/optimizer.cpp
+// Identification: src/optimizer/optimizer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/optimizer.h"
-#include "backend/optimizer/operator_visitor.h"
-#include "backend/optimizer/convert_query_to_op.h"
-#include "backend/optimizer/convert_op_to_plan.h"
-#include "backend/optimizer/rule_impls.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/operator_visitor.h"
+#include "optimizer/convert_query_to_op.h"
+#include "optimizer/convert_op_to_plan.h"
+#include "optimizer/rule_impls.h"
 
-#include "backend/planner/projection_plan.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/planner/order_by_plan.h"
+#include "planner/projection_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/order_by_plan.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/bridge/ddl/bridge.h"
-#include "backend/bridge/dml/mapper/mapper.h"
+#include "catalog/manager.h"
+#include "bridge/ddl/bridge.h"
+#include "bridge/dml/mapper/mapper.h"
 
 #include <memory>
 

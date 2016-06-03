@@ -4,7 +4,7 @@
 //
 // postgres_shim.h
 //
-// Identification: src/backend/optimizer/postgres_shim.h
+// Identification: src/optimizer/postgres_shim.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/optimizer.h"
-#include "backend/optimizer/query_operators.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/query_operators.h"
 
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"

@@ -4,15 +4,15 @@
 //
 // memo.cpp
 //
-// Identification: src/backend/optimizer/memo.cpp
+// Identification: src/optimizer/memo.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/memo.h"
+#include "optimizer/memo.h"
 
-#include "backend/optimizer/operators.h"
+#include "optimizer/operators.h"
 
 #include <cassert>
 

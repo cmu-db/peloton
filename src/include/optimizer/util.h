@@ -4,7 +4,7 @@
 //
 // util.h
 //
-// Identification: src/backend/optimizer/util.h
+// Identification: src/optimizer/util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
