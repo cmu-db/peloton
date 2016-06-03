@@ -4,7 +4,7 @@
 //
 // column.h
 //
-// Identification: src/backend/optimizer/column.h
+// Identification: src/optimizer/column.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
-#include "backend/optimizer/query_operators.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/util.h"
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace optimizer {

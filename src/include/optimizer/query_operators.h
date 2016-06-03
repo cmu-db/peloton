@@ -4,7 +4,7 @@
 //
 // query_operators.h
 //
-// Identification: src/backend/optimizer/query_operators.h
+// Identification: src/optimizer/query_operators.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,13 +12,13 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
+#include "optimizer/operator_node.h"
 
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/storage/data_table.h"
-#include "backend/bridge/dml/expr/pg_func_map.h"
-#include "backend/catalog/schema.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "storage/data_table.h"
+#include "bridge/dml/expr/pg_func_map.h"
+#include "catalog/schema.h"
 
 #include <vector>
 #include <memory>

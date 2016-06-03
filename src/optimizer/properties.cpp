@@ -4,13 +4,13 @@
 //
 // properties.cpp
 //
-// Identification: src/backend/optimizer/properties.cpp
+// Identification: src/optimizer/properties.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/properties.h"
+#include "optimizer/properties.h"
 
 namespace peloton {
 namespace optimizer {

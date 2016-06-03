@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// pattern.h
+// convert_query_to_op.h
 //
-// Identification: src/backend/optimizer/pattern.h
+// Identification: src/optimizer/convert_query_to_op.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,28 +12,18 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
+#include "optimizer/op_expression.h"
+#include "optimizer/column_manager.h"
+#include "optimizer/query_operators.h"
 
-#include <vector>
 #include <memory>
 
 namespace peloton {
 namespace optimizer {
 
-class Pattern {
- public:
-  Pattern(OpType op);
-
-  void AddChild(std::shared_ptr<Pattern> child);
-
-  const std::vector<std::shared_ptr<Pattern>> &Children() const;
-
-  OpType Type() const;
-
- private:
-  OpType _type;
-  std::vector<std::shared_ptr<Pattern>> children;
-};
+std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
+  ColumnManager &manager,
+  std::shared_ptr<Select> op);
 
 } /* namespace optimizer */
 } /* namespace peloton */

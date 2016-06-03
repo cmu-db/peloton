@@ -4,21 +4,21 @@
 //
 // convert_op_to_plan.cpp
 //
-// Identification: src/backend/optimizer/convert_op_to_plan.cpp
+// Identification: src/optimizer/convert_op_to_plan.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/convert_op_to_plan.h"
-#include "backend/optimizer/operator_visitor.h"
+#include "optimizer/convert_op_to_plan.h"
+#include "optimizer/operator_visitor.h"
 
-#include "backend/planner/hash_join_plan.h"
-#include "backend/planner/nested_loop_join_plan.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/planner/projection_plan.h"
+#include "planner/hash_join_plan.h"
+#include "planner/nested_loop_join_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/projection_plan.h"
 
-#include "backend/expression/expression_util.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace optimizer {

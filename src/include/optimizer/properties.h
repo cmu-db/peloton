@@ -4,7 +4,7 @@
 //
 // properties.h
 //
-// Identification: src/backend/optimizer/properties.h
+// Identification: src/optimizer/properties.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/property.h"
-#include "backend/optimizer/column.h"
+#include "optimizer/property.h"
+#include "optimizer/column.h"
 
 namespace peloton {
 namespace optimizer {

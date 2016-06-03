@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// property.h
+// pattern.h
 //
-// Identification: src/backend/optimizer/property.h
+// Identification: src/optimizer/pattern.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,24 +12,27 @@
 
 #pragma once
 
-#include "backend/optimizer/util.h"
+#include "optimizer/operator_node.h"
+
+#include <vector>
+#include <memory>
 
 namespace peloton {
 namespace optimizer {
 
-enum class PropertyType {
-  Sort,
-  Columns,
-};
-
-class Property {
+class Pattern {
  public:
-  virtual PropertyType Type() const = 0;
+  Pattern(OpType op);
 
-  virtual hash_t Hash() const = 0;
+  void AddChild(std::shared_ptr<Pattern> child);
 
-  virtual bool operator==(const Property &r) const = 0;
+  const std::vector<std::shared_ptr<Pattern>> &Children() const;
 
+  OpType Type() const;
+
+ private:
+  OpType _type;
+  std::vector<std::shared_ptr<Pattern>> children;
 };
 
 } /* namespace optimizer */

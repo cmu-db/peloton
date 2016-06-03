@@ -4,7 +4,7 @@
 //
 // operators.h
 //
-// Identification: src/backend/optimizer/operators.h
+// Identification: src/optimizer/operators.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
-#include "backend/optimizer/query_operators.h"
-#include "backend/optimizer/group.h"
-#include "backend/optimizer/column.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/group.h"
+#include "optimizer/column.h"
+#include "optimizer/util.h"
 
 #include <vector>
 

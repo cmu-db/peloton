@@ -4,7 +4,7 @@
 //
 // tuple_sample.h
 //
-// Identification: src/backend/optimizer/tuple_sample.h
+// Identification: src/optimizer/tuple_sample.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/optimizer/column.h"
-#include "backend/storage/tile_group.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/column.h"
+#include "storage/tile_group.h"
+#include "optimizer/util.h"
 
 #include <vector>
 

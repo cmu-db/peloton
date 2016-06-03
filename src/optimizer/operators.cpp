@@ -4,14 +4,14 @@
 //
 // logical_operators.cpp
 //
-// Identification: src/backend/optimizer/logical_operators.cpp
+// Identification: src/optimizer/logical_operators.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/operators.h"
-#include "backend/optimizer/operator_visitor.h"
+#include "optimizer/operators.h"
+#include "optimizer/operator_visitor.h"
 
 namespace peloton {
 namespace optimizer {

@@ -4,7 +4,7 @@
 //
 // convert_op_to_plan.h
 //
-// Identification: src/backend/optimizer/convert_op_to_plan.h
+// Identification: src/optimizer/convert_op_to_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/optimizer/op_expression.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan.h"
+#include "optimizer/op_expression.h"
+#include "expression/abstract_expression.h"
+#include "planner/abstract_plan.h"
 
 #include <memory>
 

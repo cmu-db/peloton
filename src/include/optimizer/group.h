@@ -4,7 +4,7 @@
 //
 // group.h
 //
-// Identification: src/backend/optimizer/group.h
+// Identification: src/optimizer/group.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
-#include "backend/optimizer/property.h"
-#include "backend/optimizer/group_expression.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/property.h"
+#include "optimizer/group_expression.h"
 
 #include <vector>
 #include <unordered_map>

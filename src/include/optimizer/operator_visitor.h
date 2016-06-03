@@ -4,7 +4,7 @@
 //
 // operator_visitor.h
 //
-// Identification: src/backend/optimizer/operator_visitor.h
+// Identification: src/optimizer/operator_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/optimizer/operators.h"
+#include "optimizer/operators.h"
 
 namespace peloton {
 namespace optimizer {

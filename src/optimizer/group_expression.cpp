@@ -4,14 +4,14 @@
 //
 // group_expression.cpp
 //
-// Identification: src/backend/optimizer/group_expression.cpp
+// Identification: src/optimizer/group_expression.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/group_expression.h"
-#include "backend/optimizer/group.h"
+#include "optimizer/group_expression.h"
+#include "optimizer/group.h"
 
 namespace peloton {
 namespace optimizer {

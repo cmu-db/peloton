@@ -4,7 +4,7 @@
 //
 // group_expression.h
 //
-// Identification: src/backend/optimizer/group_expression.h
+// Identification: src/optimizer/group_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "backend/optimizer/operator_node.h"
-#include "backend/optimizer/stats.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/stats.h"
+#include "optimizer/util.h"
 
 #include <tuple>
 #include <vector>

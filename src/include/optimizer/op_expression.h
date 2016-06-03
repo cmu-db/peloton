@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// stats.h
+// op_expression.h
 //
-// Identification: src/backend/optimizer/stats.h
+// Identification: src/optimizer/op_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,20 +12,35 @@
 
 #pragma once
 
-#include "backend/optimizer/tuple_sample.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/group.h"
+
+#include <vector>
+#include <memory>
 
 namespace peloton {
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
-// Stats
+// Operator Expr
 //===--------------------------------------------------------------------===//
-class Stats {
- public:
-  Stats(TupleSample *sample);
+class OpExpressionVisitor;
 
- private:
-  TupleSample *sample;
+class OpExpression {
+public:
+  OpExpression(Operator op);
+
+  void PushChild(std::shared_ptr<OpExpression> op);
+
+  void PopChild();
+
+  const std::vector<std::shared_ptr<OpExpression>> &Children() const;
+
+  const Operator &Op() const;
+
+private:
+  Operator op;
+  std::vector<std::shared_ptr<OpExpression>> children;
 };
 
 } /* namespace optimizer */

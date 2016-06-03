@@ -4,7 +4,7 @@
 //
 // property_set.h
 //
-// Identification: src/backend/optimizer/property_set.h
+// Identification: src/optimizer/property_set.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "backend/optimizer/property.h"
-#include "backend/optimizer/util.h"
+#include "optimizer/property.h"
+#include "optimizer/util.h"
 
 #include <vector>
 #include <memory>

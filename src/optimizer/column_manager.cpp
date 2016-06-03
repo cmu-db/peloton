@@ -4,13 +4,13 @@
 //
 // column_manager.cpp
 //
-// Identification: src/backend/optimizer/column_manager.cpp
+// Identification: src/optimizer/column_manager.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/column_manager.h"
+#include "optimizer/column_manager.h"
 
 #include <tuple>
 

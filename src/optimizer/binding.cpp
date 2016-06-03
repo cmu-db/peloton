@@ -4,15 +4,15 @@
 //
 // binding.cpp
 //
-// Identification: src/backend/optimizer/binding.cpp
+// Identification: src/optimizer/binding.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/optimizer/binding.h"
-#include "backend/optimizer/operator_visitor.h"
-#include "backend/optimizer/optimizer.h"
+#include "optimizer/binding.h"
+#include "optimizer/operator_visitor.h"
+#include "optimizer/optimizer.h"
 
 #include <cassert>
 
