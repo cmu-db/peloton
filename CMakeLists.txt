@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 2.8.7)
+if(POLICY CMP0046)
+  cmake_policy(SET CMP0046 NEW)
+endif()
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
 
 # ---[ Peloton project
 project(Peloton CXX C)
@@ -55,6 +61,10 @@ include_directories(BEFORE src) # This is needed for gtest.
 # ---[ Subdirectories
 add_subdirectory(src)
 #add_subdirectory(doc)
+
+#file(GLOB_RECURSE hyadapt_files ${root}/benchmark/hyadapt/src/*.cpp)    
+#ADD_EXECUTABLE(hyadapt ${hyadapt_files})
+#TARGET_LINK_LIBRARIES(hyadapt peloton)
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)

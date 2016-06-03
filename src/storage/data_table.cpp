@@ -13,7 +13,6 @@
 #include <mutex>
 #include <utility>
 
-#include "benchmark/hyadapt/hyadapt_configuration.h"
 #include "brain/clusterer.h"
 #include "brain/sample.h"
 #include "common/exception.h"
