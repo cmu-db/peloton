@@ -75,6 +75,8 @@ class Manager {
 
   void ClearTileGroup(void);
 
+  oid_t GetLastTileGroupId() const { return last_tile_group_id; }
+
   //===--------------------------------------------------------------------===//
   // DATABASE
   //===--------------------------------------------------------------------===//
@@ -115,6 +117,7 @@ class Manager {
 
   //lookup_dir locator;
   std::shared_ptr<storage::TileGroup> locator[MaxTileGroupCount];
+  oid_t last_tile_group_id = 0;
 
   // DATABASES
 

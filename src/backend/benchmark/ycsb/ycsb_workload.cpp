@@ -212,6 +212,8 @@ void RunWorkload() {
     commit_counts_snapshots[round_id] = new oid_t[num_threads];
   }
 
+  oid_t *allocated_memories = new oid_t[snapshot_round];
+
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
     thread_group.push_back(std::move(std::thread(RunBackend, thread_itr)));

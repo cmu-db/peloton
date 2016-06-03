@@ -47,6 +47,7 @@ void Manager::AddTileGroup(
   // locator[oid] = location;
 
   locator[oid] = location;
+  last_tile_group_id = oid;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
