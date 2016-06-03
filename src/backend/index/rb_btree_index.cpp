@@ -14,8 +14,14 @@
 #include "backend/index/index_key.h"
 #include "backend/common/logger.h"
 #include "backend/storage/tuple.h"
+#include "backend/concurrency/transaction.h"
 
 namespace peloton {
+
+namespace concurrency {
+  extern thread_local Transaction *current_txn;
+}
+
 namespace index {
 
 template <typename KeyType, typename ValueType, class KeyComparator,
@@ -112,7 +118,7 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
     const storage::Tuple *key, const ItemPointer &location,
-    std::function<bool(const ItemPointer &)> predicate,
+    std::function<bool(const ItemPointer &)> predicate UNUSED_ATTRIBUTE,
     RBItemPointer **rb_itempointer_ptr) {
 
   KeyType index_key;
@@ -129,7 +135,7 @@ bool RBBTreeIndex<KeyType, ValueType, KeyComparator,
 
       RBItemPointer rb_item_pointer = *(entry->second);
 
-      if (predicate(rb_item_pointer.location)) {
+      if (concurrency::current_txn->GetBeginCommitId() < rb_item_pointer.timestamp) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
         return false;
@@ -193,6 +199,9 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction, std::vector<RBItemPointer> &result) {
+
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   KeyType index_key;
 
   // Checkif we have leading (leftmost) column equality
@@ -249,9 +258,14 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
 
-            RBItemPointer item_pointer = *(scan_itr->second);
+            RBItemPointer *item_pointer = scan_itr->second;
 
-            result.push_back(item_pointer);
+            if (item_pointer->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+              auto itr = result_map.find(item_pointer->location);
+              if (itr == result_map.end() || itr->second->timestamp < item_pointer->timestamp) {
+                result_map.emplace(item_pointer->location, item_pointer);
+              }
+            }
           } else {
             // We can stop scanning if we know that all constraints are equal
             if (all_constraints_are_equal == true) {
@@ -270,6 +284,10 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     index_lock.Unlock();
   }
+
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(*itr->second);
+  }
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
@@ -277,6 +295,9 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 void
 RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<RBItemPointer> &result) {
+
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   {
     index_lock.Lock();
 
@@ -285,13 +306,21 @@ RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys
     // scan all entries
     while (itr != container.end()) {
 
-      RBItemPointer item_pointer = *(itr->second);
+      RBItemPointer *item_pointer = itr->second;
 
-      result.push_back(std::move(item_pointer));
-      itr++;
+      if (item_pointer->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+        auto itr = result_map.find(item_pointer->location);
+        if (itr == result_map.end() || itr->second->timestamp < item_pointer->timestamp) {
+          result_map.emplace(item_pointer->location, item_pointer);
+        }
+      }
     }
 
     index_lock.Unlock();
+  }
+
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(*itr->second);
   }
 }
 
@@ -302,6 +331,8 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKe
   KeyType index_key;
   index_key.SetFromKey(key);
 
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   {
     index_lock.Lock();
 
@@ -309,14 +340,22 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKe
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
 
-      RBItemPointer item_pointer = *(entry->second);
+      RBItemPointer *item_pointer = entry->second;
 
-      result.push_back(item_pointer);
+      if (item_pointer->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+        auto itr = result_map.find(item_pointer->location);
+        if (itr == result_map.end() || itr->second->timestamp < item_pointer->timestamp) {
+          result_map.emplace(item_pointer->location, item_pointer);
+        }
+      }
     }
 
     index_lock.Unlock();
   }
 
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(*itr->second);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -328,6 +367,9 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction,
     std::vector<RBItemPointer *> &result) {
+
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   KeyType index_key;
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
@@ -383,7 +425,13 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           // For instance, "5" EXPR_GREATER_THAN "2" is true
           if (Compare(tuple, key_column_ids, expr_types, values) == true) {
             RBItemPointer *location_header = scan_itr->second;
-            result.push_back(location_header);
+
+            if (location_header->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+              auto itr = result_map.find(location_header->location);
+              if (itr == result_map.end() || itr->second->timestamp < location_header->timestamp) {
+                result_map.emplace(location_header->location, location_header);
+              }
+            }
           } else {
             // We can stop scanning if we know that all constraints are equal
             if (all_constraints_are_equal == true) {
@@ -402,6 +450,10 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
     index_lock.Unlock();
   }
+
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(itr->second);
+  }
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
@@ -409,6 +461,9 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 void
 RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<RBItemPointer *> &result) {
+
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   {
     index_lock.Lock();
 
@@ -417,13 +472,23 @@ RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanAllKeys
     // scan all entries
     while (itr != container.end()) {
       RBItemPointer *location = itr->second;
-      result.push_back(location);
+
+      if (location->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+        auto itr = result_map.find(location->location);
+        if (itr == result_map.end() || itr->second->timestamp < location->timestamp) {
+          result_map.emplace(location->location, location);
+        }
+      }
+
       itr++;
     }
 
     index_lock.Unlock();
   }
 
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(itr->second);
+  }
 }
 
 /**
@@ -436,16 +501,29 @@ void RBBTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanKe
   KeyType index_key;
   index_key.SetFromKey(key);
 
+  std::unordered_map<ItemPointer, RBItemPointer *> result_map;
+
   {
     index_lock.Lock();
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
-      result.push_back(entry->second);
+      RBItemPointer *location = entry->second;
+
+      if (location->timestamp > concurrency::current_txn->GetBeginCommitId()) {
+        auto itr = result_map.find(location->location);
+        if (itr == result_map.end() || itr->second->timestamp < location->timestamp) {
+          result_map.emplace(location->location, location);
+        }
+      }
     }
 
     index_lock.Unlock();
+  }
+
+  for (auto itr = result_map.begin(); itr != result_map.end(); itr++) {
+    result.push_back(itr->second);
   }
 }
 
