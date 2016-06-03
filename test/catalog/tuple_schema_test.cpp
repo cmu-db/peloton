@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace test {

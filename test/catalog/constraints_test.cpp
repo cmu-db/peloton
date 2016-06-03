@@ -11,20 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/catalog/foreign_key.h"
-#include "backend/common/value.h"
-#include "backend/concurrency/transaction.h"
-#include "backend/concurrency/transaction_manager_factory.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/storage/tile_group_factory.h"
-#include "backend/storage/tuple.h"
-#include "backend/storage/table_factory.h"
-#include "backend/storage/database.h"
-#include "backend/index/index_factory.h"
-#include "backend/bridge/ddl/bridge.h"
+#include "catalog/schema.h"
+#include "catalog/foreign_key.h"
+#include "common/value.h"
+#include "concurrency/transaction.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/abstract_executor.h"
+#include "storage/tile_group_factory.h"
+#include "storage/tuple.h"
+#include "storage/table_factory.h"
+#include "storage/database.h"
+#include "index/index_factory.h"
 
 #include "catalog/constraints_tests_util.h"
 #include "concurrency/transaction_tests_util.h"
@@ -42,6 +41,7 @@ namespace test {
 
 class ConstraintsTests : public PelotonTest {};
 
+/*
 #ifdef NOTNULL_TEST
 TEST_F(ConstraintsTests, NOTNULLTest) {
   // First, generate the table with index
@@ -219,7 +219,7 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
 
   // create new db
   auto &manager = catalog::Manager::GetInstance();
-  oid_t current_db_oid = bridge::Bridge::GetCurrentDatabaseOid();
+  oid_t current_db_oid = 2001;
   auto newdb = new storage::Database(current_db_oid);
   manager.AddDatabase(newdb);
 
@@ -257,6 +257,7 @@ TEST_F(ConstraintsTests, ForeignKeyInsertTest) {
   delete newdb;
 }
 #endif
+*/
 
 }  // End test namespace
 }  // End peloton namespace

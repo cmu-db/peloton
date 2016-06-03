@@ -14,19 +14,19 @@
 #include <sstream>
 #include <queue>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/expression/abstract_expression.h"
-#include "backend/common/types.h"
-#include "backend/common/value_peeker.h"
-#include "backend/storage/tuple.h"
+#include "expression/abstract_expression.h"
+#include "common/types.h"
+#include "common/value_peeker.h"
+#include "storage/tuple.h"
 
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/conjunction_expression.h"
-#include "backend/expression/vector_expression.h"
-#include "backend/expression/operator_expression.h"
-#include "backend/expression/case_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/conjunction_expression.h"
+#include "expression/vector_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/case_expression.h"
 
 namespace peloton {
 namespace test {

@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
 #include <memory>
 
-#include "backend/storage/tuple.h"
-#include "harness.h"
+#include "storage/tuple.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {

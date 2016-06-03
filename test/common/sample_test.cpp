@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {

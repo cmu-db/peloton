@@ -14,13 +14,13 @@
 #include <sstream>
 #include <queue>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/types.h"
-#include "backend/common/value_peeker.h"
-#include "backend/common/value_factory.h"
-#include "backend/expression/container_tuple.h"
-#include "backend/storage/tuple.h"
+#include "common/types.h"
+#include "common/value_peeker.h"
+#include "common/value_factory.h"
+#include "expression/container_tuple.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace test {

@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "harness.h"
-#include "backend/networking/rpc_server.h"
-#include "backend/networking/peloton_service.h"
-#include "backend/planner/seq_scan_plan.h"
+#include "common/harness.h"
+#include "networking/rpc_server.h"
+#include "networking/peloton_service.h"
+#include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace test {

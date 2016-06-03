@@ -14,10 +14,10 @@
 #include <random>
 #include <chrono>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/brain/clusterer.h"
-#include "backend/common/generator.h"
+#include "brain/clusterer.h"
+#include "common/generator.h"
 
 namespace peloton {
 namespace test {

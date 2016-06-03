@@ -16,34 +16,34 @@
 #include <vector>
 #include <atomic>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/pool.h"
+#include "catalog/schema.h"
+#include "common/value_factory.h"
+#include "common/pool.h"
 
-#include "backend/executor/executor_context.h"
-#include "backend/executor/delete_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/executor/update_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/table_factory.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "executor/delete_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/abstract_expression.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/table_factory.h"
+#include "concurrency/transaction_manager_factory.h"
 
-#include "executor_tests_util.h"
+#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
-#include "backend/planner/delete_plan.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/planner/seq_scan_plan.h"
-#include "backend/planner/update_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -187,6 +187,7 @@ TEST_F(MutateTests, StressTests) {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
+  /*
   auto null_tuple = ExecutorTestsUtil::GetNullTuple(table, testing_pool);
 
   planner::InsertPlan node(table, std::move(null_tuple));
@@ -197,6 +198,7 @@ TEST_F(MutateTests, StressTests) {
   } catch (ConstraintException &ce) {
     LOG_ERROR("%s", ce.what());
   }
+  */
 
   auto non_empty_tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
   planner::InsertPlan node2(table, std::move(non_empty_tuple));
@@ -349,7 +351,7 @@ TEST_F(MutateTests, DeleteTest) {
   tuple_id = 0;
 }
 
-int SeqScanCount(storage::DataTable *table,
+static int SeqScanCount(storage::DataTable *table,
                  const std::vector<oid_t> &column_ids,
                  expression::AbstractExpression *predicate) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// harness.h
+// common/harness.h
 //
-// Identification: tests/harness.h
+// Identification: tests/common/harness.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -18,9 +18,9 @@
 #include <iostream>
 #include <atomic>
 
-#include "backend/common/macros.h"
-#include "backend/common/types.h"
-#include "backend/common/logger.h"
+#include "common/macros.h"
+#include "common/types.h"
+#include "common/logger.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

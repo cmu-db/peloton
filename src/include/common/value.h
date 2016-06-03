@@ -835,7 +835,7 @@ class Value {
    * Calling correctness.
    */
   int32_t GetObjectLengthWithoutNull() const {
-    PL_ASSERT(IsNull() == false);
+    //PL_ASSERT(IsNull() == false);
     PL_ASSERT(GetValueType() == VALUE_TYPE_VARCHAR ||
            GetValueType() == VALUE_TYPE_VARBINARY);
     // now safe to read and return the length preceding value.

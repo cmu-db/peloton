@@ -16,28 +16,28 @@
 #include <vector>
 #include <atomic>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/pool.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "catalog/schema.h"
+#include "common/value_factory.h"
+#include "common/pool.h"
+#include "concurrency/transaction_manager_factory.h"
 
-#include "backend/executor/executor_context.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util.h"
-#include "backend/expression/tuple_value_expression.h"
-#include "backend/expression/comparison_expression.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/table_factory.h"
+#include "executor/executor_context.h"
+#include "executor/insert_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/abstract_expression.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "storage/table_factory.h"
 
-#include "executor_tests_util.h"
+#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
-#include "backend/planner/insert_plan.h"
+#include "planner/insert_plan.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -51,7 +51,7 @@ namespace test {
 
 class LoaderTests : public PelotonTest {};
 
-std::atomic<int> tuple_id;
+std::atomic<int> loader_tuple_id;
 
 //===------------------------------===//
 // Utility
@@ -61,7 +61,7 @@ std::atomic<int> tuple_id;
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-std::unique_ptr<const planner::ProjectInfo>
+static std::unique_ptr<const planner::ProjectInfo>
 MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   TargetList target_list;
   DirectMapList direct_map_list;
@@ -86,7 +86,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
   // Start a txn for each insert
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<storage::Tuple> tuple(
-      ExecutorTestsUtil::GetTuple(table, ++tuple_id, pool));
+      ExecutorTestsUtil::GetTuple(table, ++loader_tuple_id, pool));
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

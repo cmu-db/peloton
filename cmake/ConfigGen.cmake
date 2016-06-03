@@ -51,35 +51,6 @@ function(peloton_generate_export_configs)
   peloton_get_current_includes(Peloton_INCLUDE_DIRS)
 
   set(Peloton_DEFINITIONS "")
-  if(NOT HAVE_CUDA)
-    set(HAVE_CUDA FALSE)
-    list(APPEND Peloton_DEFINITIONS -DCPU_ONLY)
-  endif()
-
-  if(USE_OPENCV)
-    list(APPEND Peloton_DEFINITIONS -DUSE_OPENCV)
-  endif()
-
-  if(USE_LMDB)
-    list(APPEND Peloton_DEFINITIONS -DUSE_LMDB)
-    if (ALLOW_LMDB_NOLOCK)
-        list(APPEND Peloton_DEFINITIONS -DALLOW_LMDB_NOLOCK)
-    endif()
-  endif()
-
-  if(USE_LEVELDB)
-    list(APPEND Peloton_DEFINITIONS -DUSE_LEVELDB)
-  endif()
-
-  if(NOT HAVE_CUDNN)
-    set(HAVE_CUDNN FALSE)
-  else()
-    list(APPEND DEFINITIONS -DUSE_CUDNN)
-  endif()
-
-  if(BLAS STREQUAL "MKL" OR BLAS STREQUAL "mkl")
-    list(APPEND Peloton_DEFINITIONS -DUSE_MKL)
-  endif()
 
   configure_file("cmake/Templates/PelotonConfig.cmake.in" "${PROJECT_BINARY_DIR}/PelotonConfig.cmake" @ONLY)
 

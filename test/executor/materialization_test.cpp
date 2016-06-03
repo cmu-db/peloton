@@ -15,21 +15,21 @@
 #include <unordered_map>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/materialization_plan.h"
+#include "planner/abstract_plan.h"
+#include "planner/materialization_plan.h"
 
-#include "backend/catalog/manager.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/materialization_executor.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/tile_group.h"
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/materialization_executor.h"
+#include "storage/tile.h"
+#include "storage/tile_group.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"

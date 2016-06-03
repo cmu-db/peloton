@@ -11,20 +11,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "concurrency/transaction_tests_util.h"
-#include "backend/planner/index_scan_plan.h"
-#include "backend/executor/executor_context.h"
-#include "backend/executor/delete_executor.h"
-#include "backend/executor/insert_executor.h"
-#include "backend/executor/seq_scan_executor.h"
-#include "backend/executor/index_scan_executor.h"
-#include "backend/executor/update_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util.h"
+#include "planner/index_scan_plan.h"
+#include "executor/executor_context.h"
+#include "executor/delete_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/seq_scan_executor.h"
+#include "executor/index_scan_executor.h"
+#include "executor/update_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "expression/expression_util.h"
 #include "executor/mock_executor.h"
-#include "backend/planner/delete_plan.h"
-#include "backend/planner/insert_plan.h"
-#include "backend/storage/tile.h"
-#include "backend/storage/database.h"
+#include "planner/delete_plan.h"
+#include "planner/insert_plan.h"
+#include "storage/tile.h"
+#include "storage/database.h"
 
 namespace peloton {
 namespace executor {

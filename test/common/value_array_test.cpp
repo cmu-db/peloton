@@ -13,12 +13,12 @@
 #include <string>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/value_peeker.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "common/value_peeker.h"
 
 namespace peloton {
 namespace test {

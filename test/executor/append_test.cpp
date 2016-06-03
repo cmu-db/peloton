@@ -12,16 +12,16 @@
 
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/planner/append_plan.h"
+#include "planner/append_plan.h"
 
-#include "backend/common/types.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/executor/append_executor.h"
-#include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/types.h"
+#include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
+#include "executor/append_executor.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"

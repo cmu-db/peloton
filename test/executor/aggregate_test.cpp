@@ -15,19 +15,19 @@
 #include <string>
 #include <vector>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/types.h"
-#include "backend/common/value.h"
-#include "backend/executor/executor_context.h"
-#include "backend/executor/logical_tile.h"
-#include "backend/executor/aggregate_executor.h"
-#include "backend/executor/logical_tile_factory.h"
-#include "backend/expression/expression_util.h"
-#include "backend/planner/abstract_plan.h"
-#include "backend/planner/aggregate_plan.h"
-#include "backend/storage/data_table.h"
-#include "backend/concurrency/transaction_manager_factory.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "executor/executor_context.h"
+#include "executor/logical_tile.h"
+#include "executor/aggregate_executor.h"
+#include "executor/logical_tile_factory.h"
+#include "expression/expression_util.h"
+#include "planner/abstract_plan.h"
+#include "planner/aggregate_plan.h"
+#include "storage/data_table.h"
+#include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"

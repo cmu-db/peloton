@@ -23,6 +23,11 @@ list(APPEND Peloton_LINKER_LIBS ${GFLAGS_LIBRARIES})
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
+# ---[ Libevent
+find_package(Libevent REQUIRED)
+include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${LIBEVENT_LIBRARIES})
+
 # ---[ Doxygen
 if(BUILD_docs)
   find_package(Doxygen)

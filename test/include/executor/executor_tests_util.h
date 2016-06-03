@@ -15,7 +15,7 @@
 #include <vector>
 #include <memory>
 
-#include "backend/common/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

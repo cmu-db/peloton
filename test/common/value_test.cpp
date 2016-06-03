@@ -13,12 +13,12 @@
 #include <cfloat>
 #include <limits>
 
-#include "harness.h"
+#include "common/harness.h"
 
-#include "backend/common/value.h"
-#include "backend/common/value_factory.h"
-#include "backend/common/value_peeker.h"
-#include "backend/common/serializer.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "common/value_peeker.h"
+#include "common/serializer.h"
 
 namespace peloton {
 namespace test {
