@@ -62,9 +62,9 @@ static void WriteOutput() {
   LOG_INFO("%lf %d %d :: %lf tps, %lf", state.update_ratio, state.scale_factor,
            state.column_count, state.throughput, state.abort_rate);
 
-  out << state.update_ratio << " ";
-  out << state.scale_factor << " ";
-  out << state.column_count << "\n";
+  // out << state.update_ratio << " ";
+  // out << state.scale_factor << " ";
+  // out << state.column_count << "\n";
 
   for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
        ++round_id) {
@@ -72,7 +72,8 @@ static void WriteOutput() {
         << state.snapshot_duration * round_id << " - " << std::setw(3)
         << std::left << state.snapshot_duration * (round_id + 1)
         << " s]: " << state.snapshot_throughput[round_id] << " "
-        << state.snapshot_abort_rate[round_id] << "\n";
+        << state.snapshot_abort_rate[round_id] << " " 
+        << state.snapshot_memory[round_id] << "\n";
   }
 
   out << state.throughput << " ";
