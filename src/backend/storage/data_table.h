@@ -22,6 +22,7 @@
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/common/platform.h"
+#include "backend/index/index.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -55,7 +56,10 @@ namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
-namespace index { class Index; }
+namespace index {
+  class Index;
+  class RBItemPointer;
+}
 
 namespace storage {
 
@@ -100,6 +104,8 @@ class DataTable : public AbstractTable {
   ItemPointer InsertVersion(const Tuple *tuple);
   // insert tuple in table
   ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **itemptr_ptr = nullptr);
+  // For RB
+  ItemPointer InsertTuple(const Tuple *tuple, index::RBItemPointer **rb_itemptr_ptr);
 
   // delete the tuple at given location
   // bool DeleteTuple(const concurrency::Transaction *transaction,
@@ -233,6 +239,8 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   // the forth argument return the itempointer ptr inserted into the primary index
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **itemptr_ptr);
+  // For RB
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, index::RBItemPointer **rb_itemptr_ptr);
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
                                 ItemPointer location);

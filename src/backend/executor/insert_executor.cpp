@@ -92,7 +92,14 @@ bool InsertExecutor::DExecute() {
                         executor_pool);
 
       ItemPointer *itemptr_ptr = nullptr;
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), &itemptr_ptr);
+      index::RBItemPointer *rb_itemptr_ptr = nullptr;
+      peloton::ItemPointer location;
+      
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        location = target_table->InsertTuple(tuple.get(), &rb_itemptr_ptr);
+      } else {
+        location = target_table->InsertTuple(tuple.get(), &itemptr_ptr);
+      }
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(
             peloton::Result::RESULT_FAILURE);
@@ -103,6 +110,8 @@ bool InsertExecutor::DExecute() {
       if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
         // If we are using OCC N2O txn manager, use another form of perform insert
         res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        res = ((concurrency::OptimisticRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
       } else {
         res = transaction_manager.PerformInsert(location);
       }
@@ -152,21 +161,26 @@ bool InsertExecutor::DExecute() {
 
       // Carry out insertion
       ItemPointer *itemptr_ptr = nullptr;
-      ItemPointer location = target_table->InsertTuple(tuple, &itemptr_ptr);
-      LOG_TRACE("Inserted into location: %u, %u", location.block,
-                location.offset);
-
+      index::RBItemPointer *rb_itemptr_ptr = nullptr;
+      peloton::ItemPointer location;
+      
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        location = target_table->InsertTuple(tuple, &rb_itemptr_ptr);
+      } else {
+        location = target_table->InsertTuple(tuple, &itemptr_ptr);
+      }
       if (location.block == INVALID_OID) {
-        LOG_TRACE("Failed to Insert. Set txn failure.");
-        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        transaction_manager.SetTransactionResult(
+            peloton::Result::RESULT_FAILURE);
         return false;
       }
-
       bool res;
 
       if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
         // If we are using OCC N2O txn manager, use another form of perform insert
         res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+        res = ((concurrency::OptimisticRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
       } else {
         res = transaction_manager.PerformInsert(location);
       }

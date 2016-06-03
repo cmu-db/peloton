@@ -73,6 +73,8 @@ public:
 
   virtual bool PerformInsert(const ItemPointer &location);
 
+  bool PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr);
+
   // Get the read timestamp of the latest transaction on this thread, it is 
   // either the begin commit time of current transaction of the just committed
   // transaction.

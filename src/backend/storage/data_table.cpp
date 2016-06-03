@@ -274,6 +274,94 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
   return location;
 }
 
+// For RB
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, index::RBItemPointer **rb_itemptr_ptr) {
+  assert(rb_itemptr_ptr != nullptr);
+
+  ItemPointer location = FillInEmptyTupleSlot(tuple);
+  if (location.block == INVALID_OID) {
+    LOG_WARN("Failed to get tuple slot.");
+    return INVALID_ITEMPOINTER;
+  }
+
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
+
+  // Index checks and updates
+  if (InsertInIndexes(tuple, location, rb_itemptr_ptr) == false) {
+    LOG_WARN("Index constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  // ForeignKey checks
+  if (CheckForeignKeyConstraints(tuple) == false) {
+    LOG_WARN("ForeignKey constraint violated");
+    return INVALID_ITEMPOINTER;
+  }
+
+  // Increase the table's number of tuples by 1
+  IncreaseNumberOfTuplesBy(1);
+  // Increase the indexes' number of tuples by 1 as well
+  for (auto index : indexes_)
+    index->IncreaseNumberOfTuplesBy(1);
+
+  return location;
+}
+
+// For RB
+bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
+                                ItemPointer location, index::RBItemPointer **rb_itempointer_ptr) {
+  *rb_itempointer_ptr = nullptr;
+  index::RBItemPointer *temp_ptr = nullptr;
+
+  int index_count = GetIndexCount();
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  std::function<bool(const ItemPointer &)> fn =
+      std::bind(&concurrency::TransactionManager::IsOccupied,
+                &transaction_manager, std::placeholders::_1);
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+
+    switch (index->GetIndexType()) {
+      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+        // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->CondInsertEntry(key.get(), location, fn, rb_itempointer_ptr) == false) {
+          return false;
+        }
+      } break;
+      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+        // TODO: get unique tuple from primary index.
+        // if in this index there has been a visible or uncommitted
+        // <key, location> pair, this constraint is violated
+        if (index->CondInsertEntry(key.get(), location, fn, &temp_ptr) == false) {
+          return false;
+        }
+
+      } break;
+
+      case INDEX_CONSTRAINT_TYPE_DEFAULT:
+      default:
+        index->InsertEntry(key.get(), location);
+        break;
+    }
+    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
+  }
+
+  return true;
+}
+
+
+
 /**
  * @brief Insert a tuple into all indexes. If index is primary/unique,
  * check visibility of existing

@@ -144,8 +144,13 @@ bool OptimisticRbTxnManager::PerformRead(const ItemPointer &location) {
   return true;
 }
 
-bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
+bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location UNUSED_ATTRIBUTE) {
+  assert(false);
 
+  return false;
+}
+
+bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -164,6 +169,8 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
 
   // init the reserved field
   InitTupleReserved(tile_group_header, tuple_id);
+
+  SetSIndexPtr(tile_group_header, tuple_id, rb_item_ptr);
 
   // Add the new tuple into the insert set
   current_txn->RecordInsert(location);
@@ -509,6 +516,10 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         // Reset the deleted bit for safety
         ClearDeleteFlag(tile_group_header, tuple_slot);
 
+        // Set the timestamp of the entry corresponding to the latest version
+        index::RBItemPointer *index_ptr = GetSIndexPtr(tile_group_header, tuple_slot);
+        index_ptr->timestamp = end_commit_id;
+
         COMPILER_MEMORY_FENCE;
 
         // Finally we release the write lock
@@ -552,7 +563,7 @@ Result OptimisticRbTxnManager::AbortTransaction() {
   auto &rw_set = current_txn->GetRWSet();
 
   // Delete from secondary index here, currently the workaround is just to 
-  // invalidate the index entry
+  // invalidate the index entry by setting its timestamp to 0
   for (auto itr = updated_index_entries.begin(); itr != updated_index_entries.end(); itr++) {
     itr->second->timestamp = 0;
   }
