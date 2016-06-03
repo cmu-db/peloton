@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// gc_manager.h
+// off_gc.h
 //
 // Identification: src/backend/gc/off_gc.h
 //

@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// gc_manager.h
+// cooperative_gc.h
 //
 // Identification: src/backend/gc/cooperative_gc.h
 //
