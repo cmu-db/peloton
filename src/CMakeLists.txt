@@ -19,3 +19,9 @@ set_target_properties(peloton PROPERTIES
     VERSION   ${PELOTON_TARGET_VERSION}
     SOVERSION ${PELOTON_TARGET_SOVERSION}
     )
+
+file(GLOB_RECURSE foo_src ${PROJECT_SOURCE_DIR}/benchmark/peloton/src/*.cpp)    
+MESSAGE( STATUS, ${foo_src})
+
+ADD_EXECUTABLE(foo ${foo_src})
+TARGET_LINK_LIBRARIES(foo ${PROJECT_BINARY_DIR}/lib/libpeloton.a)
