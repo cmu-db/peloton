@@ -204,7 +204,7 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  LOG_TRACE("Perform read");
+  LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
@@ -247,6 +247,9 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location) {
 
   // Add the new tuple into the insert set
   current_txn->RecordInsert(location);
+  
+  InitTupleReserved(tile_group_header, tuple_id);
+
   SetLastReaderCid(tile_group_header, location.offset, current_txn->GetBeginCommitId());
   return true;
 }
@@ -294,6 +297,8 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+
+  InitTupleReserved(new_tile_group_header, new_location.offset);
 
   // set last read
   SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
@@ -358,6 +363,7 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 
+  InitTupleReserved(new_tile_group_header, new_location.offset);
   SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
   current_txn->RecordDelete(old_location);
 }

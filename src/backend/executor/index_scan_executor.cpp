@@ -220,7 +220,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
-          // See an invisible version that not belongs to any one in a new to old version chain
+          // See an invisible version that does not belong to any one in a new to old version chain
+          break;
+        }
+
+        // Break for new to old
+        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O
+          && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
+          && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
+          // See an invisible version that does not belong to any one in a new to old version chain
           break;
         }
 

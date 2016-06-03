@@ -225,7 +225,7 @@ void RunBenchmark() {
   LoadYCSBDatabase();
 
   // Validate MVCC storage
-  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
+  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_TO_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
     ValidateMVCC();
   }
 
@@ -233,7 +233,7 @@ void RunBenchmark() {
   RunWorkload();
 
   // Validate MVCC storage
-  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
+  if (state.protocol != CONCURRENCY_TYPE_OCC_N2O && state.protocol != CONCURRENCY_TYPE_TO_N2O && state.protocol != CONCURRENCY_TYPE_OCC_RB) {
     ValidateMVCC();
   }
 

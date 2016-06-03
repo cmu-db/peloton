@@ -21,6 +21,7 @@
 #include "backend/concurrency/ssi_txn_manager.h"
 #include "backend/concurrency/optimistic_rb_txn_manager.h"
 #include "backend/concurrency/optimistic_n2o_txn_manager.h"
+#include "backend/concurrency/ts_order_n2o_txn_manager.h"
 
 namespace peloton {
 namespace concurrency {
@@ -43,11 +44,13 @@ class TransactionManagerFactory {
      case CONCURRENCY_TYPE_TO:
        return TsOrderTxnManager::GetInstance();
      case CONCURRENCY_TYPE_OCC_RB:
-        return OptimisticRbTxnManager::GetInstance();
+       return OptimisticRbTxnManager::GetInstance();
      case CONCURRENCY_TYPE_OCC_N2O:
-        return OptimisticN2OTxnManager::GetInstance();
+       return OptimisticN2OTxnManager::GetInstance();
+      case CONCURRENCY_TYPE_TO_N2O:
+       return TsOrderN2OTxnManager::GetInstance();
       default:
-        return OptimisticRbTxnManager::GetInstance();
+       return OptimisticTxnManager::GetInstance();
     }
   }
 

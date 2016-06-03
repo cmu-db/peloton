@@ -51,8 +51,8 @@ public:
   virtual bool PerformInsert(const ItemPointer &location __attribute__((unused)))
     {assert(false); return false;}
 
-  // The itemptr_ptr is the address head node of the version chain, which is directly
-  // pointed by the primary index
+  // The itemptr_ptr is the address of the head node of the version chain, 
+  // which is directly pointed by the primary index.
   bool PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr);
 
   virtual bool PerformRead(const ItemPointer &location);
@@ -90,6 +90,8 @@ public:
     delete current_txn;
     current_txn = nullptr;
   }
+
+private:
 
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
