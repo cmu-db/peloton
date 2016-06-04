@@ -112,6 +112,8 @@ void ValidateDuration(const configuration &state);
 
 void ValidateSnapshotDuration(const configuration &state);
 
+void ValidateProtocol(const configuration &state);
+
 void ParseArguments(int argc, char *argv[], configuration &state);
 
 }  // namespace ycsb

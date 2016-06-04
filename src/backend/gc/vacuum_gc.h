@@ -56,7 +56,7 @@ public:
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
-  void RegisterTable(oid_t table_id) {
+  virtual void RegisterTable(oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
       LOG_INFO("register table %d to garbage collector", (int)table_id);

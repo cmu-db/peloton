@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// cooperative_gc.h
+// n2o_gc.h
 //
-// Identification: src/backend/gc/cooperative_gc.h
+// Identification: src/backend/gc/n2o_gc.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -21,7 +21,6 @@
 #include "backend/common/lockfree_queue.h"
 #include "backend/common/logger.h"
 #include "backend/gc/gc_manager.h"
-#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace gc {
@@ -30,18 +29,18 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-class Cooperative_GCManager : public GCManager {
+class N2O_GCManager : public GCManager {
 public:
-  Cooperative_GCManager()
+  N2O_GCManager()
     : is_running_(true),
       reclaim_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
-  virtual ~Cooperative_GCManager() { StopGC(); }
+  virtual ~N2O_GCManager() { StopGC(); }
 
-  static Cooperative_GCManager &GetInstance() {
-    static Cooperative_GCManager gcManager;
+  static N2O_GCManager &GetInstance() {
+    static N2O_GCManager gcManager;
     return gcManager;
   }
 
@@ -61,7 +60,7 @@ public:
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
-  virtual void RegisterTable(oid_t table_id) {
+  void RegisterTable(oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
       LOG_TRACE("register table %d to garbage collector", (int)table_id);

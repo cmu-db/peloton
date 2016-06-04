@@ -72,6 +72,8 @@ class GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 
+  virtual void RegisterTable(oid_t table_id) = 0;
+
 protected:
   void DeleteInvalidTupleFromIndex(const TupleMetadata &tuple_metadata) {
     return;

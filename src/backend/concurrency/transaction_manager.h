@@ -112,20 +112,19 @@ class TransactionManager {
 
   void RecycleOldTupleSlot(const oid_t &tile_group_id, const oid_t &tuple_id,
                            const cid_t &tuple_end_cid) {
-    if(gc::GCManagerFactory::GetGCType() != GC_TYPE_VACUUM) {
-      return;
+    if(gc::GCManagerFactory::GetGCType() == GC_TYPE_VACUUM || gc::GCManagerFactory::GetGCType() == GC_TYPE_N2O) {
+  
+      LOG_TRACE("recycle old tuple slot: %u, %u", tile_group_id, tuple_id);
+
+      auto& gc_instance = gc::GCManagerFactory::GetInstance();
+
+      auto tile_group =
+        catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
+
+      gc_instance.RecycleOldTupleSlot(
+        tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
     }
-    LOG_TRACE("recycle old tuple slot: %u, %u", tile_group_id, tuple_id);
-
-    auto& gc_instance = gc::GCManagerFactory::GetInstance();
-
-    auto tile_group =
-      catalog::Manager::GetInstance().GetTileGroup(tile_group_id);
-
-    gc_instance.RecycleOldTupleSlot(
-      tile_group->GetTableId(), tile_group_id, tuple_id, tuple_end_cid);
   }
-
 
 
   // Txn manager may store related information in TileGroupHeader, so when

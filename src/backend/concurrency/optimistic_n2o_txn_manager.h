@@ -67,6 +67,7 @@ public:
 
   virtual void PerformDelete(const ItemPointer &location);
 
+
   virtual Result CommitTransaction();
 
   virtual Result AbortTransaction();

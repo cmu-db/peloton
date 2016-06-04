@@ -282,6 +282,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         // it must be cooperative GC.
         assert(gc::GCManagerFactory::GetGCType() == GC_TYPE_CO);
+        assert(concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_TO_N2O && 
+          concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_OCC_N2O);
 
         if (old_end_cid <= max_committed_cid) {
           // if the older version is a garbage.

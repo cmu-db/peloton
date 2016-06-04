@@ -515,7 +515,6 @@ Result TsOrderN2OTxnManager::CommitTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INITIAL_TXN_ID);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-
         // GC recycle.
         RecycleOldTupleSlot(tile_group_id, tuple_slot, end_commit_id);
 

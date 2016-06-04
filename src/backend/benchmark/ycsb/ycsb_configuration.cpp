@@ -42,7 +42,7 @@ void Usage(FILE *out) {
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
-          "                             gc protocol could be off, co, va\n"
+          "                             gc protocol could be off, co, va, and n2o\n"
   );
   exit(EXIT_FAILURE);
 }
@@ -154,6 +154,20 @@ void ValidateZipfTheta(const configuration &state) {
   LOG_TRACE("%s : %lf", "zipf_theta", state.zipf_theta);
 }
 
+void ValidateProtocol(const configuration &state) {
+  if (state.protocol != CONCURRENCY_TYPE_TO_N2O && state.protocol != CONCURRENCY_TYPE_OCC_N2O) {
+    if (state.gc_protocol == GC_TYPE_N2O) {
+      LOG_ERROR("Invalid protocol");
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    if (state.gc_protocol != GC_TYPE_OFF && state.gc_protocol != GC_TYPE_N2O) {
+      LOG_ERROR("Invalid protocol");
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
@@ -250,6 +264,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.gc_protocol = GC_TYPE_VACUUM;
         }else if (strcmp(gc_protocol, "co") == 0) {
           state.gc_protocol = GC_TYPE_CO;
+        }else if (strcmp(gc_protocol, "n2o") == 0) {
+          state.gc_protocol = GC_TYPE_N2O;
         }else {
           fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
           exit(EXIT_FAILURE);
@@ -278,6 +294,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateDuration(state);
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
+  ValidateProtocol(state);
 
   LOG_TRACE("%s : %d", "Run mix query", state.run_mix);
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
