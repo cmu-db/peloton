@@ -86,7 +86,8 @@ void QueryNodePrinter::visit(const Table *op) {
 }
 
 void QueryNodePrinter::visit(const Join *op) {
-  push_header("Join: type " + PelotonJoinTypeToString(op->join_type));
+  // TODO: Fix this
+  //push_header("Join: type " + PelotonJoinTypeToString(op->join_type));
   push_header("Left child");
   op->left_node->accept(this);
   append_line();
@@ -105,9 +106,10 @@ void QueryNodePrinter::visit(const OrderBy *op) {
   append("OrderBy: ");
   append("output_column_index " + std::to_string(op->output_list_index));
   append(", ");
-  append("equalify_fn " + ExpressionTypeToString(op->equality_fn.exprtype));
+  // TODO: Fix this
+  //append("equalify_fn " + ExpressionTypeToString(op->equality_fn.exprtype));
   append(", ");
-  append("sort_fn " + ExpressionTypeToString(op->sort_fn.exprtype));
+  //append("sort_fn " + ExpressionTypeToString(op->sort_fn.exprtype));
   append(", ");
   append("hashable " + std::to_string(op->hashable));
   append(", ");

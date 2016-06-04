@@ -9,8 +9,8 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "socket_base.h"
 
+#include "wire/socket_base.h"
 
 namespace peloton {
 namespace wire {

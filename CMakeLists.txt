@@ -51,9 +51,9 @@ endif()
 
 # ---[ Color diagnostics
 CHECK_CXX_COMPILER_FLAG("-fdiagnostics-color=auto" COMPILER_SUPPORTS_COLOR)
-if(COMPILER_SUPPORTS_COLOR)
+#if(COMPILER_SUPPORTS_COLOR)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
-endif()
+#endif()
 
 # -- [ Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
@@ -79,7 +79,6 @@ include_directories(BEFORE src) # This is needed for gtest.
 # ---[ Subdirectories
 add_subdirectory(src)
 add_subdirectory(test)
-#add_subdirectory(doc)
 
 # -- [ Doxygen
 include(doxygen)

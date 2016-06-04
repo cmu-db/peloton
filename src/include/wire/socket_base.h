@@ -28,7 +28,6 @@
 #include <iostream>
 #include "logger.h"
 #include "globals.h"
-#include "parser/pg_query.h"
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
@@ -45,28 +44,28 @@ typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
 
 struct Server {
-	int port;
-	int server_fd;
-	int max_connections;
+  int port;
+  int server_fd;
+  int max_connections;
 
-	inline Server(int port, int max_conn)
-	: port(port), max_connections(max_conn) {}
+  inline Server(int port, int max_conn)
+  : port(port), max_connections(max_conn) {}
 };
 
 // Buffers used to batch meesages at the socket
 struct Buffer {
-	size_t buf_ptr; // buffer cursor
-	size_t buf_size; // buffer size
-	SockBuf buf;
+  size_t buf_ptr; // buffer cursor
+  size_t buf_size; // buffer size
+  SockBuf buf;
 
-	inline Buffer() : buf_ptr(0), buf_size(0) {}
+  inline Buffer() : buf_ptr(0), buf_size(0) {}
 
-	inline void reset() {
-		buf_ptr = 0;
-		buf_size = 0;
-	}
+  inline void reset() {
+    buf_ptr = 0;
+    buf_size = 0;
+  }
 
-	inline size_t get_max_size() { return SOCKET_BUFFER_SIZE; }
+  inline size_t get_max_size() { return SOCKET_BUFFER_SIZE; }
 };
 /*
  * SocektManager - Wrapper for managing socket.
@@ -74,29 +73,29 @@ struct Buffer {
  */
 template <typename B>
 class SocketManager {
-	int sock_fd; // file descriptor
-	Buffer rbuf; //socket's read buffer
-	Buffer wbuf; // socket's write buffer
+  int sock_fd; // file descriptor
+  Buffer rbuf; //socket's read buffer
+  Buffer wbuf; // socket's write buffer
 
-private:
-	/* refill_read_buffer - Used to repopulate read buffer with a fresh
-	 * batch of data from the socket
-	 */
-	bool refill_read_buffer();
+ private:
+  /* refill_read_buffer - Used to repopulate read buffer with a fresh
+   * batch of data from the socket
+   */
+  bool refill_read_buffer();
 
-public:
-	inline SocketManager(int sock_fd) : sock_fd(sock_fd) {}
+ public:
+  inline SocketManager(int sock_fd) : sock_fd(sock_fd) {}
 
-	// Reads a packet of length "bytes" from the head of the buffer
-	bool read_bytes(B &pkt_buf, size_t bytes);
+  // Reads a packet of length "bytes" from the head of the buffer
+  bool read_bytes(B &pkt_buf, size_t bytes);
 
-	// Writes a packet into the write buffer
-	bool buffer_write_bytes(B &pkt_buf, size_t len, uchar type);
+  // Writes a packet into the write buffer
+  bool buffer_write_bytes(B &pkt_buf, size_t len, uchar type);
 
-	// Used to invoke a write into the Socket, once the write buffer is ready
-	bool flush_write_buffer();
+  // Used to invoke a write into the Socket, once the write buffer is ready
+  bool flush_write_buffer();
 
-	void close_socket();
+  void close_socket();
 };
 
 extern void start_server(Server *server);
@@ -121,48 +120,27 @@ void handle_connections(Server *server);
 
 template <typename P, typename B>
 void handle_connections(Server *server) {
-	int content;
-	char buffer[SOCKET_BUFFER_SIZE];
-	int connfd, clilen;
-	struct sockaddr_in cli_addr;
-	clilen = sizeof(cli_addr);
-	ThreadGlobals globals;
+  int connfd, clilen;
+  struct sockaddr_in cli_addr;
+  clilen = sizeof(cli_addr);
+  ThreadGlobals globals;
 
-	for (;;) {
-		// block and wait for incoming connection
-		connfd = accept(server->server_fd, (struct sockaddr *)&cli_addr,
-				(socklen_t *)&clilen);
-		if (connfd < 0) {
-			LOG_ERROR("Server error: Connection not established");
-			exit(EXIT_FAILURE);
-		}
+  for (;;) {
+    // block and wait for incoming connection
+    connfd = accept(server->server_fd, (struct sockaddr *)&cli_addr,
+                    (socklen_t *)&clilen);
+    if (connfd < 0) {
+      LOG_ERROR("Server error: Connection not established");
+      exit(EXIT_FAILURE);
+    }
 
-		bzero(buffer, SOCKET_BUFFER_SIZE);
-		content = read( connfd,buffer,SOCKET_BUFFER_SIZE );
-		PgQueryParseResult result;
-		std::cout << "\n" << buffer << "\n" << std::endl;
-		LOG_INFO("Bytes read:" , content);
+    std::unique_ptr<int> clientfd(new int(connfd));
 
-		//
-		pg_query_init();
+    std::cout << "LAUNCHING NEW THREAD" << std::endl;
+    std::thread client_thread(client_handler<P, B>, std::ref(globals), std::move(clientfd));
+    client_thread.detach();
+  }
 
-		//
-		result = pg_query_parse(buffer);
-
-		if (result.error) {
-			printf("error: %s at %d\n", result.error->message, result.error->cursorpos);
-		} else {
-			printf("%s\n", result.parse_tree);
-			content = write(connfd, result.parse_tree, strlen(result.parse_tree));
-		}
-
-		pg_query_free_parse_result(result);
-//		std::unique_ptr<int> clientfd(new int(connfd));
-//
-//		//std::cout << "LAUNCHING NEW THREAD" << std::endl;
-//		std::thread client_thread(client_handler<P, B>, std::ref(globals), std::move(clientfd));
-//		client_thread.detach();
-	}
 }
 
 /*
@@ -172,11 +150,11 @@ void handle_connections(Server *server) {
  */
 template <typename P, typename B>
 void client_handler(ThreadGlobals& globals, std::unique_ptr<int> clientfd) {
-	int fd = *clientfd;
-	LOG_INFO("Client fd: %d", fd);
-	SocketManager<B> sm(fd);
-	P p(&sm);
-	p.manage_packets(globals);
+  int fd = *clientfd;
+  LOG_INFO("Client fd: %d", fd);
+  SocketManager<B> sm(fd);
+  P p(&sm);
+  p.manage_packets(globals);
 }
 
 

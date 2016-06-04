@@ -1,7 +1,7 @@
 # Support for building with ASAN and TSAN -
 # https://code.google.com/p/thread-sanitizer/
 
-set(PELOTON_USE_TSAN "TRUE")
+set(PELOTON_USE_TSAN "OFF")
 
 # Clang does not support using ASAN and TSAN simultaneously.
 if ("${PELOTON_USE_ASAN}" AND "${PELOTON_USE_TSAN}")
@@ -64,13 +64,13 @@ if (${PELOTON_USE_TSAN})
   # so that the annotations in the header actually take effect.
   SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D_GLIBCXX_EXTERN_TEMPLATE=0")
 
+  set(TSAN_LIBRARIES "-ltsan")
+
   # Some of the above also need to be passed to the linker.
-  set(CMAKE_EXE_LINKER_FLAGS "-pie -fsanitize=thread ${CMAKE_EXE_LINKER_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "-pie -fsanitize=thread ${TSAN_LIBRARIES} ${CMAKE_EXE_LINKER_FLAGS}")
 
   message(STATUS "CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
   message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-
-  set(TSAN_LIBRARIES "-ltsan")
 
   # Strictly speaking, TSAN doesn't require dynamic linking. But it does
   # require all code to be position independent, and the easiest way to

@@ -33,7 +33,7 @@ class PropertySet {
 
   hash_t Hash() const;
 
-  bool operator==(const PropertySet &r);
+  bool operator==(const PropertySet &r) const;
 
  private:
   std::vector<std::shared_ptr<Property>> properties;

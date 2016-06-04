@@ -163,7 +163,7 @@ class OpToPlanTransformer : public OperatorVisitor {
     std::shared_ptr<OpExpression> plan)
   {
     VisitOpExpression(plan);
-    return output_plan;
+    return output_plan.get();
   }
 
   void visit(const PhysicalScan *op) override {
@@ -176,7 +176,7 @@ class OpToPlanTransformer : public OperatorVisitor {
     left_columns = op->columns;
 
     output_columns = op->columns;
-    output_plan = new planner::SeqScanPlan(op->table, nullptr, column_ids);
+    output_plan.reset(new planner::SeqScanPlan(op->table, nullptr, column_ids));
   }
 
   void visit(const PhysicalComputeExprs *) override {
@@ -184,7 +184,7 @@ class OpToPlanTransformer : public OperatorVisitor {
     assert(children.size() == 2);
 
     VisitOpExpression(children[0]);
-    planner::AbstractPlan *child_plan = output_plan;
+    std::unique_ptr<planner::AbstractPlan> child_plan = std::move(output_plan);
     left_columns = output_columns;
 
     std::vector<Column *> proj_columns;
@@ -201,14 +201,16 @@ class OpToPlanTransformer : public OperatorVisitor {
         exprs.push_back(ConvertToAbstractExpression(op_expr->Children()[0]));
       }
     }
-    catalog::Schema *project_schema = BuildSchemaFromColumns(proj_columns);
+
+    std::shared_ptr<const catalog::Schema> projection_schema(
+        BuildSchemaFromColumns(proj_columns));
 
     // Build projection info from target list
-    planner::ProjectInfo *project_info = BuildProjectInfoFromExprs(exprs);
+    std::unique_ptr<planner::ProjectInfo> project_info(BuildProjectInfoFromExprs(exprs));
 
     output_columns = proj_columns;
-    output_plan = new planner::ProjectionPlan(project_info, project_schema);
-    output_plan->AddChild(child_plan);
+    output_plan.reset(new planner::ProjectionPlan(std::move(project_info), projection_schema));
+    output_plan->AddChild(std::move(child_plan));
   }
 
   void visit(const PhysicalFilter *) override {
@@ -216,26 +218,27 @@ class OpToPlanTransformer : public OperatorVisitor {
     assert(children.size() == 2);
 
     VisitOpExpression(children[0]);
-    planner::AbstractPlan *child_plan = output_plan;
+    std::unique_ptr<planner::AbstractPlan> child_plan = std::move(output_plan);
     left_columns = output_columns;
 
     expression::AbstractExpression *predicate =
       ConvertToAbstractExpression(children[1]);
 
-    output_plan = new planner::SeqScanPlan(nullptr, predicate, {});
-    output_plan->AddChild(child_plan);
+    output_plan.reset(new planner::SeqScanPlan(nullptr, predicate, {}));
+    output_plan->AddChild(std::move(child_plan));
   }
 
   void visit(const PhysicalInnerNLJoin *) override {
     auto children = current_children;
     assert(children.size() == 3);
 
+    /* TODO: Fix ownership
     VisitOpExpression(children[0]);
-    planner::AbstractPlan *left_child = output_plan;
+    //planner::AbstractPlan *left_child = output_plan;
     left_columns = output_columns;
 
     VisitOpExpression(children[1]);
-    planner::AbstractPlan *right_child = output_plan;
+    //planner::AbstractPlan *right_child = output_plan;
     right_columns = output_columns;
 
     expression::AbstractExpression *predicate =
@@ -251,6 +254,7 @@ class OpToPlanTransformer : public OperatorVisitor {
       JOIN_TYPE_INNER, predicate, proj_info, project_schema, nullptr);
     output_plan->AddChild(left_child);
     output_plan->AddChild(right_child);
+    */
   }
 
   void visit(const PhysicalLeftNLJoin *) override {
@@ -350,7 +354,7 @@ class OpToPlanTransformer : public OperatorVisitor {
     return columns;
   }
 
-  planner::AbstractPlan *output_plan;
+  std::unique_ptr<planner::AbstractPlan> output_plan;
   std::vector<std::shared_ptr<OpExpression>> current_children;
   std::vector<Column *> output_columns;
   std::vector<Column *> left_columns;

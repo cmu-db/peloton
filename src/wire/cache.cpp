@@ -12,8 +12,8 @@
 
 #include <cassert>
 
-#include "cache.h"
-#include "cache_entry.h"
+#include "wire/cache.h"
+#include "wire/cache_entry.h"
 
 namespace peloton {
 
