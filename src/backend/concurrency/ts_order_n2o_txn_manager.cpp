@@ -454,13 +454,13 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &location) {
 Result TsOrderN2OTxnManager::CommitTransaction() {
   LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
-  if (current_txn->IsReadOnly() == true) {
-    Result ret = current_txn->GetResult();
+  // if (current_txn->IsReadOnly() == true) {
+  //   Result ret = current_txn->GetResult();
 
-    EndTransaction();
+  //   EndTransaction();
 
-    return ret;
-  }
+  //   return ret;
+  // }
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -623,7 +623,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
           old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
         }
 
-        tile_group_header->SetNextItemPointer(tuple_slot, old_prev);
+        tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
 
         COMPILER_MEMORY_FENCE;
         
@@ -678,10 +678,10 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         if (old_prev.IsNull() == false){
           auto old_prev_tile_group_header = catalog::Manager::GetInstance()
             .GetTileGroup(old_prev.block)->GetHeader();
-          old_prev_tile_group_header->SetPrevItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
+          old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
         }
 
-        tile_group_header->SetNextItemPointer(tuple_slot, old_prev);
+        tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
 
         COMPILER_MEMORY_FENCE;
         
