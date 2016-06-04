@@ -259,7 +259,8 @@ bool TsOrderN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointe
 
 void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
                                       const ItemPointer &new_location) {
-  LOG_TRACE("Performing Write %u %u", old_location.block, old_location.offset);
+  LOG_TRACE("Performing Write old tuple %u %u", old_location.block, old_location.offset);
+  LOG_TRACE("Performing Write new tuple %u %u", new_location.block, new_location.offset);
 
   auto transaction_id = current_txn->GetTransactionId();
 
@@ -286,9 +287,11 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   // Set double linked list
   // old_prev is the version next (newer) to the old version.
 
-  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
-
   auto old_prev = tile_group_header->GetPrevItemPointer(old_location.offset);
+
+  LOG_TRACE("old prev item pointer: %u, %u", old_prev.block, old_prev.offset);
+
+  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
 
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_prev);
 
@@ -314,10 +317,14 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   // if the transaction is not updating the latest version, 
   // then do not change item pointer header.
   if (old_prev.IsNull() == true) {
+    // if we are updating the latest version.
     // Set the header information for the new version
     auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
-    SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
 
+    assert(head_ptr != nullptr);
+    
+    SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+    LOG_TRACE("swap pointer: %u, %u", new_location.block, new_location.offset);
     // Set the index header in an atomic way.
     // We do it atomically because we don't want any one to see a half-done pointer.
     // In case of contention, no one can update this pointer when we are updating it
@@ -374,9 +381,9 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &old_location,
 
   // Set up double linked list
   
-  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
-  
   auto old_prev = tile_group_header->GetPrevItemPointer(old_location.offset);
+
+  tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
   
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_prev);
 
@@ -400,9 +407,10 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &old_location,
   
   SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
 
-  // if the transaction is not updating the latest version, 
+  // if the transaction is not deleting the latest version, 
   // then do not change item pointer header.
   if (old_prev.IsNull() == true) {
+    // if we are deleting the latest version.
     // Set the header information for the new version
     auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
     SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
@@ -594,6 +602,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
         if (old_prev.IsNull() == true) {
+          // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
           auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
@@ -651,6 +660,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
         if (old_prev.IsNull() == true) {
+          // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
           auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
