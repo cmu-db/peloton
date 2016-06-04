@@ -114,6 +114,9 @@ bool OptimisticN2OTxnManager::IsOwnable(
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  // if (tuple_end_cid <= current_txn->GetBeginCommitId()) {
+  //   fprintf(stderr, "tuple_begin_cid: %d, tuple_end_cid: %d, begin_commit_id: %d\n", (int)tile_group_header->GetBeginCommitId(tuple_id), (int)tuple_end_cid, (int)current_txn->GetBeginCommitId());
+  // }
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid == MAX_CID;
 }
 
@@ -125,7 +128,7 @@ bool OptimisticN2OTxnManager::AcquireOwnership(
   auto txn_id = current_txn->GetTransactionId();
 
   if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_ERROR("Fail to acquire tuple. Set txn failure.");
+    LOG_TRACE("Fail to acquire tuple. Set txn failure.");
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   }
@@ -209,7 +212,9 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   // Set double linked list in a newest to oldest manner
   new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
+
   tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
+  
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
 
@@ -247,7 +252,7 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &location) {
   assert(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
-  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  auto old_location = tile_group_header->GetNextItemPointer(tuple_id);
   if (old_location.IsNull() == false) {
     // if this version is not newly inserted.
     current_txn->RecordUpdate(old_location);
@@ -316,7 +321,7 @@ void OptimisticN2OTxnManager::PerformDelete(const ItemPointer &location) {
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
 
   // Add the old tuple into the delete set
-  auto old_location = tile_group_header->GetPrevItemPointer(tuple_id);
+  auto old_location = tile_group_header->GetNextItemPointer(tuple_id);
   if (old_location.IsNull() == false) {
     // if this version is not newly inserted.
     current_txn->RecordDelete(old_location);

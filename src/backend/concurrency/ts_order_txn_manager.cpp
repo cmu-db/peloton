@@ -279,21 +279,29 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
+  // no one will possibly release the write lock acquired by this txn.
+
   // Set double linked list
   auto old_next = tile_group_header->GetNextItemPointer(old_location.offset);
 
-  new_tile_group_header->SetNextItemPointer(new_location.offset, old_next);
-
-  COMPILER_MEMORY_FENCE;
-  if (!old_next.IsNull()){
+  if (old_next.IsNull() == false){
     auto old_next_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_next.block)->GetHeader();
+
+    // its fine to set prev item pointer.
+    // anyone that wants to use the prev item pointer must already hold the lock on the older version.
     old_next_tile_group_header->SetPrevItemPointer(old_next.offset, new_location);
   }
 
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
+
+  // I think there's no need to set this fence,
+  // as we have already acquired the lock on the older version.
+  // every transaction that wants to update this version must acquire the lock on the older version first.
+  // COMPILER_MEMORY_FENCE;
+
+  new_tile_group_header->SetNextItemPointer(new_location.offset, old_next);
+  
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
@@ -302,6 +310,7 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   // set last read
   SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
+  
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
 }
@@ -518,16 +527,17 @@ Result TsOrderTxnManager::AbortTransaction() {
 
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ) {
-        continue;
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      if (tuple_entry.second == RW_TYPE_UPDATE) {
+        
         ItemPointer new_version =
             tile_group_header->GetNextItemPointer(tuple_slot);
+        
         auto new_tile_group_header =
             manager.GetTileGroup(new_version.block)->GetHeader();
         new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
 
+        // TODO: I think there is no need to set this fence.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,
@@ -535,7 +545,7 @@ Result TsOrderTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         auto old_next = new_tile_group_header->GetNextItemPointer(new_version.offset);
-        if (!old_next.IsNull()){
+        if (old_next.IsNull() == false){
           auto old_next_tile_group_header = catalog::Manager::GetInstance()
             .GetTileGroup(old_next.block)->GetHeader();
           old_next_tile_group_header->SetPrevItemPointer(old_next.offset, ItemPointer(tile_group_id, tuple_slot));
@@ -565,6 +575,7 @@ Result TsOrderTxnManager::AbortTransaction() {
         new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
 
+        // TODO: I think there is no need to set this fence.
         COMPILER_MEMORY_FENCE;
 
         new_tile_group_header->SetTransactionId(new_version.offset,

@@ -147,7 +147,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
 
-  if (tuple_location_ptrs.size() == 0) return false;
+  if (tuple_location_ptrs.size() == 0) {
+    LOG_INFO("no tuple is retrieved from index.");
+    return false;
+  }
 
   auto &transaction_manager =
     concurrency::TransactionManagerFactory::GetInstance();
@@ -178,7 +181,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
       // if the tuple is deleted
       if (visibility == VISIBILITY_DELETED) {
-        LOG_TRACE("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
+        LOG_INFO("encounter deleted tuple: %u, %u", tuple_location.block, tuple_location.offset);
         break;
       }
         // if the tuple is visible.
@@ -215,7 +218,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
         // if the tuple is not visible.
       else {
-
         // Break for new to old
         if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
@@ -229,8 +231,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
           // See an invisible version that does not belong to any one in a new to old version chain
+          LOG_INFO("no tuple returned!");
           break;
         }
+
+        LOG_INFO("here!");
 
         ItemPointer old_item = tuple_location;
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
@@ -254,7 +259,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
           // timestamp update. In such case, we just return false and abort the txn.
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-
+          transaction_manager.AddOneReadAbort();
           return false;
         }
 
