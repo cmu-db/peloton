@@ -9,6 +9,9 @@ endif()
 # ---[ Peloton project
 project(Peloton CXX C)
 
+# ---[ CTest
+include(CTest)
+
 # ---[ Peloton version
 set(PELOTON_TARGET_VERSION "0.0.3" CACHE STRING "Peloton logical version")
 set(PELOTON_TARGET_SOVERSION "0.0.3" CACHE STRING "Peloton soname version")
@@ -27,6 +30,7 @@ include(ExternalProject)
 include(cmake/Utils.cmake)
 include(cmake/Targets.cmake)
 include(cmake/Misc.cmake)
+include(cmake/CompilerInfo.cmake)
 include(cmake/Summary.cmake)
 include(cmake/ConfigGen.cmake)
 

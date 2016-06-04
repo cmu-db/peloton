@@ -32,3 +32,14 @@ list(APPEND Peloton_LINKER_LIBS ${LIBEVENT_LIBRARIES})
 if(BUILD_docs)
   find_package(Doxygen)
 endif()
+
+# ---[ Jsoncpp
+find_package(Jsoncpp)
+include_directories(SYSTEM ${JSONCPP_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${JSONCPP_LIBRARIES})
+
+# ---[ Sanitizers
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  find_package(Sanitizer)
+  list(APPEND Peloton_LINKER_LIBS "-ltsan")
+endif()
