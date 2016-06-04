@@ -49,6 +49,12 @@ else()
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+# ---[ Color diagnostics
+CHECK_CXX_COMPILER_FLAG("-fdiagnostics-color=auto" COMPILER_SUPPORTS_COLOR)
+if(COMPILER_SUPPORTS_COLOR)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
+endif()
+
 # -- [ Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
 
