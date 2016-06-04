@@ -12,7 +12,8 @@ peloton_default_properties(proto)
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton ${srcs})
+add_library(peloton SHARED ${srcs})
+
 target_link_libraries(peloton ${Peloton_LINKER_LIBS} proto)
 
 peloton_default_properties(peloton)
@@ -22,7 +23,7 @@ set_target_properties(peloton PROPERTIES
     )
 
 # --[ Peloton
-set(peloton_main ${PROJECT_SOURCE_DIR}/src/main/peloton.cpp)
+set(peloton_main ${PROJECT_SOURCE_DIR}/src/main/peloton/peloton.cpp)
 add_executable(peloton-bin ${peloton_main})
 target_link_libraries(peloton-bin peloton)
 set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
@@ -30,26 +31,30 @@ set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
 # --[ Benchmarks
 
 # --[ hyadapt
-set(hyadapt_main ${PROJECT_SOURCE_DIR}/src/benchmark/hyadapt/hyadapt.cpp)
-add_executable(hyadapt ${hyadapt_main})
+file(GLOB_RECURSE hyadapt_srcs ${PROJECT_SOURCE_DIR}/src/main/hyadapt/*.cpp)
+add_executable(hyadapt ${hyadapt_srcs})
 target_link_libraries(hyadapt peloton)
 
 # --[ ycsb
-set(ycsb_main ${PROJECT_SOURCE_DIR}/src/benchmark/ycsb/ycsb.cpp)
-add_executable(ycsb ${ycsb_main})
+file(GLOB_RECURSE ycsb_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/*.cpp)
+add_executable(ycsb ${ycsb_srcs})
 target_link_libraries(ycsb peloton)
 
 # --[ tpcc
-set(tpcc_main ${PROJECT_SOURCE_DIR}/src/benchmark/tpcc/tpcc.cpp)
-add_executable(tpcc ${tpcc_main})
+file(GLOB_RECURSE tpcc_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/*.cpp)
+add_executable(tpcc ${tpcc_srcs})
 target_link_libraries(tpcc peloton)
 
 # --[ sdbench
-set(sdbench_main ${PROJECT_SOURCE_DIR}/src/benchmark/sdbench/sdbench.cpp)
-add_executable(sdbench ${sdbench_main})
+file(GLOB_RECURSE sdbench_srcs ${PROJECT_SOURCE_DIR}/src/main/sdbench/*.cpp)
+add_executable(sdbench ${sdbench_srcs})
 target_link_libraries(sdbench peloton)
 
 # --[ logger
-set(logger_main ${PROJECT_SOURCE_DIR}/src/benchmark/logger/logger.cpp)
-add_executable(logger ${logger_main})
+file(GLOB_RECURSE logger_srcs ${PROJECT_SOURCE_DIR}/src/main/logger/*.cpp)
+list(APPEND logger_srcs ${ycsb_srcs})
+list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/ycsb.cpp)
+list(APPEND logger_srcs ${tpcc_srcs})
+list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/tpcc.cpp)
+add_executable(logger ${logger_srcs})
 target_link_libraries(logger peloton)
