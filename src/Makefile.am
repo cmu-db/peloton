@@ -70,7 +70,7 @@ libpeloton_la_SOURCES = \
 			$(planner_FILES) \
 			$(storage_FILES) \
 			$(logging_FILES) \
-			$(gc_FILES)  \
+			$(gc_FILES)  
 #			$(parser_FILES)
 
 ## Use different compiler flags for Peloton and pelotonpg.
