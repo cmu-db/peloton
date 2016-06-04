@@ -47,7 +47,7 @@ hash_t PropertySet::Hash() const {
   return hash;
 }
 
-bool PropertySet::operator==(const PropertySet &r) {
+bool PropertySet::operator==(const PropertySet &r) const {
   for (auto &left_prop : properties) {
     bool match = false;
     for (auto &right_prop : r.properties) {

@@ -10,11 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "marshal.h"
-#include <netinet/in.h>
 #include <algorithm>
 #include <cstring>
 #include <iterator>
+
+#include "wire/marshal.h"
+
+#include <netinet/in.h>
 
 namespace peloton {
 namespace wire {

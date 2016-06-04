@@ -66,8 +66,7 @@ std::shared_ptr<planner::AbstractPlan> Optimizer::GeneratePlan(
 
   planner::AbstractPlan* top_plan = OptimizerPlanToPlannerPlan(best_plan);
 
-  std::shared_ptr<planner::AbstractPlan> final_plan(
-    top_plan, NULL);
+  std::shared_ptr<planner::AbstractPlan> final_plan(top_plan);
 
   return final_plan;
 }

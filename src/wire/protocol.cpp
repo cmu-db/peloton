@@ -10,14 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "marshal.h"
-#include "cache.h"
-#include "portal.h"
-#include "cache_entry.h"
-#include "types.h"
-#include <stdio.h>
-#include <boost/algorithm/string.hpp>
+#include <cstdio>
 #include <unordered_map>
+
+#include "wire/marshal.h"
+#include "wire/cache.h"
+#include "wire/portal.h"
+#include "wire/cache_entry.h"
+
+#include "common/types.h"
+
+#include <boost/algorithm/string.hpp>
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
