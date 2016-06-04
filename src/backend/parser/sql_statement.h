@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include "backend/common/types.h"
-#include "backend/expression/expression.h"
+#include "backend/expression/expressions.h"
 
 namespace nstore {
 namespace parser {
