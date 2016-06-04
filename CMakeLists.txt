@@ -82,15 +82,7 @@ doxygen_configure(src/ test/)
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-
-# ---[ Code coverage
-include(CodeCoverage)
-if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_COVERAGE}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_COVERAGE}")
-endif()
-SETUP_TARGET_FOR_COVERAGE(coverage peloton-testsuite coverage)
-				
+									
 # ---[ Configuration summary
 peloton_print_configuration_summary()
 
