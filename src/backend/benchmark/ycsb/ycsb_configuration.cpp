@@ -70,7 +70,7 @@ void ValidateScaleFactor(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
+  LOG_TRACE("%s : %d", "scale_factor", state.scale_factor);
 }
 
 void ValidateColumnCount(const configuration &state) {
@@ -79,7 +79,7 @@ void ValidateColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "column_count", state.column_count);
+  LOG_TRACE("%s : %d", "column_count", state.column_count);
 }
 
 void ValidateUpdateColumnCount(const configuration &state) {
@@ -88,7 +88,7 @@ void ValidateUpdateColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "update_column_count", state.update_column_count);
+  LOG_TRACE("%s : %d", "update_column_count", state.update_column_count);
 }
 
 void ValidateReadColumnCount(const configuration &state) {
@@ -97,7 +97,7 @@ void ValidateReadColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "read_column_count", state.read_column_count);
+  LOG_TRACE("%s : %d", "read_column_count", state.read_column_count);
 }
 
 void ValidateOperationCount(const configuration &state) {
@@ -106,7 +106,7 @@ void ValidateOperationCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "operation_count", state.operation_count);
+  LOG_TRACE("%s : %d", "operation_count", state.operation_count);
 }
 
 void ValidateUpdateRatio(const configuration &state) {
@@ -115,7 +115,7 @@ void ValidateUpdateRatio(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "update_ratio", state.update_ratio);
+  LOG_TRACE("%s : %lf", "update_ratio", state.update_ratio);
 }
 
 void ValidateBackendCount(const configuration &state) {
@@ -124,7 +124,7 @@ void ValidateBackendCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "backend_count", state.backend_count);
+  LOG_TRACE("%s : %d", "backend_count", state.backend_count);
 }
 
 void ValidateDuration(const configuration &state) {
@@ -133,7 +133,7 @@ void ValidateDuration(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "execution duration", state.duration);
+  LOG_TRACE("%s : %lf", "execution duration", state.duration);
 }
 
 void ValidateSnapshotDuration(const configuration &state) {
@@ -142,7 +142,7 @@ void ValidateSnapshotDuration(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
+  LOG_TRACE("%s : %lf", "snapshot_duration", state.snapshot_duration);
 }
 
 void ValidateZipfTheta(const configuration &state) {
@@ -151,7 +151,7 @@ void ValidateZipfTheta(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "zipf_theta", state.zipf_theta);
+  LOG_TRACE("%s : %lf", "zipf_theta", state.zipf_theta);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -279,8 +279,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
 
-  LOG_INFO("%s : %d", "Run mix query", state.run_mix);
-  LOG_INFO("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run mix query", state.run_mix);
+  LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
 }
 
 }  // namespace ycsb

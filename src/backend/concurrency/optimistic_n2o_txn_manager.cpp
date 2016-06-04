@@ -545,6 +545,7 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         // TODO: actually, there's no need to reset the end commit id.
+        assert(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         // We must first adjust the head pointer

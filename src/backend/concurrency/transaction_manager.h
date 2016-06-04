@@ -44,14 +44,14 @@ class TransactionManager {
   TransactionManager() {
     next_txn_id_ = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid_ = ATOMIC_VAR_INIT(START_CID);
-    read_abort_ = 0;
-    acquire_owner_abort_ = 0;
-    no_space_abort_ = 0;
-    cannot_own_abort_ = 0;
+    // read_abort_ = 0;
+    // acquire_owner_abort_ = 0;
+    // no_space_abort_ = 0;
+    // cannot_own_abort_ = 0;
   }
 
   virtual ~TransactionManager() {
-    printf("read_abort_ = %d, acquire_owner_abort_ = %d, no_space_abort_ = %d, cannot_own_abort_ = %d\n", read_abort_.load(), acquire_owner_abort_.load(), no_space_abort_.load(), cannot_own_abort_.load());
+    // printf("read_abort_ = %d, acquire_owner_abort_ = %d, no_space_abort_ = %d, cannot_own_abort_ = %d\n", read_abort_.load(), acquire_owner_abort_.load(), no_space_abort_.load(), cannot_own_abort_.load());
   }
 
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
@@ -162,30 +162,30 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
   }
 
-  void AddOneReadAbort() {
-    ++read_abort_;
+  inline void AddOneReadAbort() {
+    // ++read_abort_;
   }
 
-  void AddOneAcquireOwnerAbort() {
-    ++acquire_owner_abort_;
+  inline void AddOneAcquireOwnerAbort() {
+    // ++acquire_owner_abort_;
   }
 
-  void AddOneNoSpaceAbort() {
-    ++no_space_abort_;
+  inline void AddOneNoSpaceAbort() {
+    // ++no_space_abort_;
   }
 
-  void AddOneCannotOwnAbort() {
-    ++cannot_own_abort_;
+  inline void AddOneCannotOwnAbort() {
+    // ++cannot_own_abort_;
   }
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
 
-  std::atomic<int> read_abort_;
-  std::atomic<int> acquire_owner_abort_;
-  std::atomic<int> no_space_abort_;
-  std::atomic<int> cannot_own_abort_;
+  // std::atomic<int> read_abort_;
+  // std::atomic<int> acquire_owner_abort_;
+  // std::atomic<int> no_space_abort_;
+  // std::atomic<int> cannot_own_abort_;
 
 };
 }  // End storage namespace

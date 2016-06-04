@@ -157,6 +157,17 @@ bool TsOrderN2OTxnManager::IsOwnable(
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid > current_txn->GetBeginCommitId();
 }
 
+// bool TsOrderN2OTxnManager::IsOwnable(
+//     const storage::TileGroupHeader *const tile_group_header,
+//     const oid_t &tuple_id) {
+//   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+//   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+//   // if (tuple_end_cid != MAX_CID) {
+//   //   fprintf(stderr, "tuple_begin_cid: %d, tuple_end_cid: %d, begin_commit_id: %d\n", (int)tile_group_header->GetBeginCommitId(tuple_id), (int)tuple_end_cid, (int)current_txn->GetBeginCommitId());
+//   // }
+//   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid > MAX_CID;
+// }
+
 bool TsOrderN2OTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
@@ -289,8 +300,6 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   auto old_prev = tile_group_header->GetPrevItemPointer(old_location.offset);
 
-  LOG_TRACE("old prev item pointer: %u, %u", old_prev.block, old_prev.offset);
-
   tile_group_header->SetPrevItemPointer(old_location.offset, new_location);
 
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_prev);
@@ -305,7 +314,8 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
       .GetTileGroup(old_prev.block)->GetHeader();
 
     COMPILER_MEMORY_FENCE;
-
+  
+    // once everything is set, we can allow traversing the new version.
     old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, new_location);
   }
 
@@ -324,7 +334,7 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
     assert(head_ptr != nullptr);
     
     SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
-    LOG_TRACE("swap pointer: %u, %u", new_location.block, new_location.offset);
+    
     // Set the index header in an atomic way.
     // We do it atomically because we don't want any one to see a half-done pointer.
     // In case of contention, no one can update this pointer when we are updating it
@@ -413,6 +423,9 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &old_location,
     // if we are deleting the latest version.
     // Set the header information for the new version
     auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+
+    assert(head_ptr != nullptr);
+
     SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
 
     // Set the index header in an atomic way.
@@ -477,16 +490,13 @@ Result TsOrderN2OTxnManager::CommitTransaction() {
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_READ) {
-        continue;
-      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
+      if (tuple_entry.second == RW_TYPE_UPDATE) {
         // we must guarantee that, at any time point, only one version is
         // visible.
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
 
-        assert(new_version.block != INVALID_OID && new_version.offset != INVALID_OID);
-        
+        assert(new_version.IsNull() == false);
 
         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
         assert(cid > end_commit_id);
@@ -602,6 +612,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
 
         if (old_prev.IsNull() == true) {
+          assert(tile_group_header->GetEndCommitId(tuple_slot) == MAX_CID);
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
@@ -621,9 +632,11 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
           auto old_prev_tile_group_header = catalog::Manager::GetInstance()
             .GetTileGroup(old_prev.block)->GetHeader();
           old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
+          tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
+        } else {
+          assert(tile_group_header->GetPrevItemPointer(tuple_slot) == new_version);
+          tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
-
-        tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
 
         COMPILER_MEMORY_FENCE;
         

@@ -218,12 +218,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
         // if the tuple is not visible.
       else {
-          // LOG_TRACE("no tuple returned! txn_id = %d, begin commit id =%d, end commit id = %d, current_txn_id = %d", (int)tile_group_header->GetTransactionId(tuple_location.offset), (int)tile_group_header->GetBeginCommitId(tuple_location.offset), (int)tile_group_header->GetEndCommitId(tuple_location.offset), (int)concurrency::current_txn->GetBeginCommitId());
-          // LOG_TRACE("current: block = %u, offset = %u", tuple_location.block, tuple_location.offset);
+          // LOG_INFO("no tuple returned! txn_id = %d, begin commit id =%d, end commit id = %d, current_txn_id = %d", (int)tile_group_header->GetTransactionId(tuple_location.offset), (int)tile_group_header->GetBeginCommitId(tuple_location.offset), (int)tile_group_header->GetEndCommitId(tuple_location.offset), (int)concurrency::current_txn->GetBeginCommitId());
+          // LOG_INFO("current: block = %u, offset = %u", tuple_location.block, tuple_location.offset);
           // auto tmp_prev = tile_group_header->GetPrevItemPointer(tuple_location.offset);
           // auto tmp_next = tile_group_header->GetNextItemPointer(tuple_location.offset);
-          // LOG_TRACE("prev: block = %u, offset = %u", tmp_prev.block, tmp_prev.offset);
-          // LOG_TRACE("old: block = %u, offset = %u", tmp_next.block, tmp_next.offset);
+          // LOG_INFO("prev: block = %u, offset = %u", tmp_prev.block, tmp_prev.offset);
+          // LOG_INFO("old: block = %u, offset = %u", tmp_next.block, tmp_next.offset);
 
         // Break for new to old
         if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O

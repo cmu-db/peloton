@@ -266,6 +266,7 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   auto transaction_id = current_txn->GetTransactionId();
 
+  // ATTENTION: this assert may fail some time!
   assert(GetLastReaderCid(tile_group_header, old_location.offset) == current_txn->GetBeginCommitId());
 
   // if we can perform update, then we must have already locked the older

@@ -59,7 +59,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
 
-  LOG_INFO("Data table %u created", table_oid);
+  LOG_TRACE("Data table %u created", table_oid);
 
   // Create a tile group.
   AddDefaultTileGroup();
