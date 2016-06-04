@@ -43,3 +43,11 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   find_package(Sanitizer)
   list(APPEND Peloton_LINKER_LIBS "-ltsan")
 endif()
+
+# ---[ Jemalloc
+find_package(JeMalloc)
+message(status, "Jemallc: ${JEMALLOC_LIBRARIES}")
+include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
+list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
+
+message(status, "Libs: ${Peloton_LINKER_LIBS}")
