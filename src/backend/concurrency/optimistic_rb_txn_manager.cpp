@@ -518,7 +518,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 
         // Set the timestamp of the entry corresponding to the latest version
         index::RBItemPointer *index_ptr = GetSIndexPtr(tile_group_header, tuple_slot);
-        index_ptr->timestamp = end_commit_id;
+        if (index_ptr != nullptr)
+          index_ptr->timestamp = end_commit_id;
 
         COMPILER_MEMORY_FENCE;
 
