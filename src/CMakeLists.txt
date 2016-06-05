@@ -20,7 +20,7 @@ peloton_default_properties(proto)
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton SHARED ${BISON_SQLParser_OUTPUTS} ${srcs})
+add_library(peloton SHARED ${BISON_SQLParser_OUTPUTS} ${FLEX_SQLScanner_OUTPUTS} ${srcs})
 
 target_link_libraries(peloton ${Peloton_LINKER_LIBS} proto)
 

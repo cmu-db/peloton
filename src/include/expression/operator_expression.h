@@ -25,9 +25,9 @@ namespace expression {
  * Unary operators. (NOT and IS_NULL)
  */
 
-class OperatorNotExpression : public AbstractExpression {
+class OperatorUnaryNotExpression : public AbstractExpression {
  public:
-  OperatorNotExpression(AbstractExpression *left)
+  OperatorUnaryNotExpression(AbstractExpression *left)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT, VALUE_TYPE_BOOLEAN,
                            left, nullptr) {}
 
@@ -52,7 +52,7 @@ class OperatorNotExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    return new OperatorNotExpression(CopyUtil(GetLeft()));
+    return new OperatorUnaryNotExpression(CopyUtil(GetLeft()));
   }
 };
 

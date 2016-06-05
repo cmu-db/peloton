@@ -218,7 +218,7 @@ AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
-      ret = new OperatorNotExpression(lc);
+      ret = new OperatorUnaryNotExpression(lc);
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_IS_NULL):
@@ -271,7 +271,7 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
-      ret = new OperatorNotExpression(first);
+      ret = new OperatorUnaryNotExpression(first);
       break;
     case (EXPRESSION_TYPE_SUBSTR):
       ret = new SubstringExpression(first, second, third);

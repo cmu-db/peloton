@@ -157,7 +157,7 @@ struct PARSER_CUST_LTYPE {
 	peloton::parser::TransactionStatement* txn_stmt;
 
 	peloton::parser::TableRef* table;
-	peloton::expression::ParserExpression* expr;
+	peloton::expression::AbstractExpression* expr;
 	peloton::parser::OrderDescription* order;
 	peloton::parser::OrderType order_type;
 	peloton::parser::LimitDescription* limit;
@@ -171,7 +171,7 @@ struct PARSER_CUST_LTYPE {
 	std::vector<peloton::parser::TableRef*>* table_vec;
 	std::vector<peloton::parser::ColumnDefinition*>* column_vec;
 	std::vector<peloton::parser::UpdateClause*>* update_vec;
-	std::vector<peloton::expression::ParserExpression*>* expr_vec;
+	std::vector<peloton::expression::AbstractExpression*>* expr_vec;
 }
 
 
@@ -657,12 +657,12 @@ opt_limit:
  * Expressions 
  ******************************/
 expr_list:
-		expr_alias { $$ = new std::vector<peloton::expression::ParserExpression*>(); $$->push_back($1); }
+		expr_alias { $$ = new std::vector<peloton::expression::AbstractExpression*>(); $$->push_back($1); }
 	|	expr_list ',' expr_alias { $1->push_back($3); $$ = $1; }
 	;
 
 literal_list:
-		literal { $$ = new std::vector<peloton::expression::ParserExpression*>(); $$->push_back($1); }
+		literal { $$ = new std::vector<peloton::expression::AbstractExpression*>(); $$->push_back($1); }
 	|	literal_list ',' literal { $1->push_back($3); $$ = $1; }
 	;
 
@@ -694,10 +694,10 @@ unary_expr:
 
 binary_expr:
 		comp_expr
-	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMinus>(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, $1, $3); }
-	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpPlus>(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, $1, $3); }
-	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpDivide>(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, $1, $3); }
-	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMultiply>(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, $1, $3); }
+	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMinus>(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, $1->GetValueType(), $1, $3); }
+	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpPlus>(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, $1->GetValueType(), $1, $3); }
+	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpDivide>(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, $1->GetValueType(), $1, $3); }
+	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMultiply>(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, $1->GetValueType(), $1, $3); }
 	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionAnd>(peloton::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
 	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionOr>(peloton::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
 	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
@@ -706,21 +706,21 @@ binary_expr:
 
 
 comp_expr:
-		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_EQ, $1, $3); }
-	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_NE, $1, $3); }
-	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLt>(peloton::EXPRESSION_TYPE_COMPARE_LT, $1, $3);; }
-	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGt>(peloton::EXPRESSION_TYPE_COMPARE_GT, $1, $3); }
-	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLte>(peloton::EXPRESSION_TYPE_COMPARE_LTE, $1, $3); }
-	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGte>(peloton::EXPRESSION_TYPE_COMPARE_GTE, $1, $3); }
+		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_EQUAL, $1, $3); }
+	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_NOTEQUAL, $1, $3); }
+	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLt>(peloton::EXPRESSION_TYPE_COMPARE_LESSTHAN, $1, $3);; }
+	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGt>(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHAN, $1, $3); }
+	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLte>(peloton::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, $1, $3); }
+	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGte>(peloton::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, $1, $3); }
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
+		IDENTIFIER '(' opt_distinct expr ')' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); */ }
 	;
 
 column_name:
-		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
+		IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); */ }
+	|	IDENTIFIER '.' IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); */ }
 	;
 
 literal:
@@ -744,13 +744,13 @@ int_literal:
 	;
 
 star_expr:
-		'*' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR); }
+		'*' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_STAR); */ } 
 	;
 
 
 placeholder_expr:
 		'?' {
-			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
+			/* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column) */ ;
 			yyloc.placeholder_list.push_back($$);
 		}
 	;

@@ -96,6 +96,17 @@ class AbstractExpression : public Printable {
 
   virtual int SerializeSize() { return 0; }
 
+ public:
+  // Parser stuff
+  int ival = 0;
+  AbstractExpression* expr = nullptr;
+
+  char* name = nullptr;
+  char* column = nullptr;
+  char* alias = nullptr;
+
+  bool distinct = false;
+
  protected:
   AbstractExpression(ExpressionType expr_type, ValueType type);
   AbstractExpression(ExpressionType expr_type, ValueType type,
