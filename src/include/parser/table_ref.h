@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <vector>
 
-#include "expression/expressions.h"
+#include "expression/abstract_expression.h"
 #include "common/types.h"
 
 namespace peloton {
@@ -67,7 +67,7 @@ struct JoinDefinition {
   TableRef* right;
   expression::AbstractExpression* condition;
 
-  JoinType type;
+  PelotonJoinType type;
 };
 
 } // End parser namespace

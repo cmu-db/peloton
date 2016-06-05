@@ -1,5 +1,6 @@
 
 #include "parser/parser_utils.h"
+#include "common/types.h"
 
 #include <stdio.h>
 #include <string>
@@ -92,32 +93,36 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
   }
 
   std::cout << indent(num_indent);
-  std::cout << "-> Expr Type :: " << ExpressionToString(expr->GetExpressionType()) << "\n";
+  std::cout << "-> Expr Type :: " << ExpressionTypeToString(expr->GetExpressionType()) << "\n";
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:
       inprint("*", num_indent);
       break;
     case EXPRESSION_TYPE_COLUMN_REF:
-      inprint((expr)->GetName(), num_indent);
+      // TODO: Fix this
+      //inprint((expr)->GetName(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
-      std::cout << indent(num_indent);
-      std::cout << ((expression::ConstantValueExpression*)expr)->GetValue();
+      // TODO: Fix this
+      //std::cout << indent(num_indent);
+      //std::cout << ((expression::ConstantValueExpression*)expr)->Evaluate(nullptr, nullptr, nullptr);
       printf("\n");
       break;
     case EXPRESSION_TYPE_FUNCTION_REF:
-      inprint(expr->GetName(), num_indent);
-      inprint(expr->GetExpression()->GetName(), num_indent);
+      // TODO: Fix this
+      //inprint(expr->GetName(), num_indent);
+      //inprint(expr->GetExpression()->GetName(), num_indent);
       break;
     default:
       PrintOperatorExpression(expr, num_indent);
       break;
   }
 
-  if (expr->alias != NULL) {
-    inprint("Alias", num_indent+1); inprint(expr->alias, num_indent+2);
-  }
+  // TODO: Fix this
+  //if (expr->alias != NULL) {
+  //  inprint("Alias", num_indent+1); inprint(expr->alias, num_indent+2);
+  //}
 }
 
 void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {

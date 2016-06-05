@@ -32,24 +32,24 @@ class ParserExpression : public AbstractExpression {
   }
 
   ParserExpression(ExpressionType type, char* name_, char* column_)
- : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
+  : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
     name = name_;
     column = column_;
   }
 
   ParserExpression(ExpressionType type)
- : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
+  : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
   }
 
   ParserExpression(ExpressionType type, char* func_name_, AbstractExpression* expr_, bool distinct_)
- : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
+  : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
     name = func_name_;
     expr = expr_;
     distinct = distinct_;
   }
 
   ParserExpression(ExpressionType type, int placeholder)
- : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
+  : AbstractExpression(type, VALUE_TYPE_VARCHAR) {
     ival = placeholder;
   }
 
@@ -62,11 +62,22 @@ class ParserExpression : public AbstractExpression {
     return Value::GetTrue();
   }
 
-  std::string DebugInfo(__attribute__((unused)) const std::string &spacer) const {
-    std::stringstream os;
-    return os.str();
+  std::string DebugInfo(const std::string &spacer) const override {
+    return (spacer + "ParserExpression");
   }
 
+  AbstractExpression *Copy() const override {
+    return new ParserExpression(EXPRESSION_TYPE_INVALID, name);
+  }
+
+  int ival = 0;
+  AbstractExpression* expr = nullptr;
+
+  char* name = nullptr;
+  char* column = nullptr;
+  char* alias = nullptr;
+
+  bool distinct = false;
 };
 
 } // End expression namespace

@@ -1,6 +1,6 @@
 /**
- * SQL Lexer
- * parser_flex.lpp
+ * SQL Scanner
+ * sql_scanner.l
  *
  * Based on : https://github.com/hyrise/sql-parser (Feb 2015)
  */
@@ -13,8 +13,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "backend/parser/statements.h"
-#include "backend/parser/parser_bison.h"
+
+#include "parser/statements.h"
+#include "parser/sql_parser.h"
 
 char* substr(const char* source, int from, int to) {
 	int len = to-from;
@@ -34,8 +35,8 @@ char* substr(const char* source, int from, int to) {
  ***************************/
 
 /* Define the output files */
-%option header-file="parser_flex.h"
-%option outfile="parser_flex.cpp"
+%option outfile="parser/sql_scanner.cpp"
+%option header-file="include/parser/sql_scanner.h"
 
 /* Make reentrant */
 %option reentrant
@@ -239,7 +240,7 @@ TO			TOKEN(TO)
 	return SQL_STRING;
 }
 
-. { fprintf(stderr, "[SQL-Lexer-Error] Unknown Character: %c\n", yytext[0]); return 0; }
+. { fprintf(stderr, "[SQL-Scanner-Error] Unknown Character: %c\n", yytext[0]); return 0; }
 
 
 %%
@@ -248,7 +249,7 @@ TO			TOKEN(TO)
  ***************************/
 
 int yyerror(const char *msg) {
-    fprintf(stderr, "[SQL-Lexer-Error] %s\n",msg); return 0;
+    fprintf(stderr, "[SQL-Scanner-Error] %s\n",msg); return 0;
 }
 
 /* redefine these functions to get rid of unused variable warnings */

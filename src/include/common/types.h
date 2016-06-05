@@ -504,7 +504,8 @@ enum StatementType {
   STATEMENT_TYPE_EXPORT = 10,       // export statement type
   STATEMENT_TYPE_RENAME = 11,       // rename statement type
   STATEMENT_TYPE_ALTER = 12,        // alter statement type
-  STATEMENT_TYPE_TRANSACTION = 13,  // transaction statement type
+  STATEMENT_TYPE_TRANSACTION = 13,  // transaction statement type,
+  STATEMENT_TYPE_IMPORT = 14        // import type
 };
 
 //===--------------------------------------------------------------------===//

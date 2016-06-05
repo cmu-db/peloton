@@ -1,8 +1,7 @@
 %{
 /**
- * parser_bison.y
- * defines parser_bison.h
- * outputs parser_bison.c
+ * sql_parser.y
+ * defines sql_parser.h
  * 
  * Grammar File Spec: http://dinosaur.compilertools.net/bison/bison_6.html
  * Based on : https://github.com/hyrise/sql-parser (Feb 2015)
@@ -17,19 +16,27 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "parser_bison.h"
+#include "common/types.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "expression/abstract_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/conjunction_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/function_expression.h"
 
-#include "backend/parser/statements.h"
-#include "backend/common/value_factory.h"
+#include "parser/statements.h"
+#include "parser/sql_parser.h"
 
 using namespace std;
-using namespace nstore::parser;
+using namespace peloton::parser;
 
 extern int parser_lex (YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
-int yyerror(YYLTYPE* llocp, nstore::parser::SQLStatementList** result, __attribute__((unused)) yyscan_t scanner, const char *msg) {
+int yyerror(YYLTYPE* llocp, peloton::parser::SQLStatementList** result, __attribute__((unused)) yyscan_t scanner, const char *msg) {
 
-	nstore::parser::SQLStatementList* list = new nstore::parser::SQLStatementList();
+	peloton::parser::SQLStatementList* list = new peloton::parser::SQLStatementList();
 	list->is_valid = false;
 	list->parser_msg = strdup(msg);
 	list->error_line = llocp->first_line;
@@ -96,8 +103,8 @@ struct PARSER_CUST_LTYPE {
 }
 
 // Define the names of the created files
-%output  "parser_bison.cpp"
-%defines "parser_bison.h"
+%output  "parser/sql_parser.cpp"
+%defines "include/parser/sql_parser.h"
 
 // Tell bison to create a reentrant parser
 %define api.pure full
@@ -124,7 +131,7 @@ struct PARSER_CUST_LTYPE {
 %lex-param   { yyscan_t scanner }
 
 // Define additional parameters for yyparse
-%parse-param { nstore::parser::SQLStatementList** result }
+%parse-param { peloton::parser::SQLStatementList** result }
 %parse-param { yyscan_t scanner }
 
 
@@ -138,33 +145,33 @@ struct PARSER_CUST_LTYPE {
 	uint uval;
 	bool bval;
 
-	nstore::parser::SQLStatement* statement;
-	nstore::parser::SelectStatement*  	  select_stmt;
-	nstore::parser::CreateStatement* 	  create_stmt;
-	nstore::parser::InsertStatement* 	  insert_stmt;
-	nstore::parser::DeleteStatement* 	  delete_stmt;
-	nstore::parser::UpdateStatement* 	  update_stmt;
-	nstore::parser::DropStatement*   	  drop_stmt;
-	nstore::parser::PrepareStatement*     prep_stmt;
-	nstore::parser::ExecuteStatement*     exec_stmt;
-	nstore::parser::TransactionStatement* txn_stmt;
+	peloton::parser::SQLStatement* statement;
+	peloton::parser::SelectStatement*  	  select_stmt;
+	peloton::parser::CreateStatement* 	  create_stmt;
+	peloton::parser::InsertStatement* 	  insert_stmt;
+	peloton::parser::DeleteStatement* 	  delete_stmt;
+	peloton::parser::UpdateStatement* 	  update_stmt;
+	peloton::parser::DropStatement*   	  drop_stmt;
+	peloton::parser::PrepareStatement*     prep_stmt;
+	peloton::parser::ExecuteStatement*     exec_stmt;
+	peloton::parser::TransactionStatement* txn_stmt;
 
-	nstore::parser::TableRef* table;
-	nstore::expression::AbstractExpression* expr;
-	nstore::parser::OrderDescription* order;
-	nstore::parser::OrderType order_type;
-	nstore::parser::LimitDescription* limit;
-	nstore::parser::ColumnDefinition* column_t;
-	nstore::parser::GroupByDescription* group_t;
-	nstore::parser::UpdateClause* update_t;
+	peloton::parser::TableRef* table;
+	peloton::expression::ParserExpression* expr;
+	peloton::parser::OrderDescription* order;
+	peloton::parser::OrderType order_type;
+	peloton::parser::LimitDescription* limit;
+	peloton::parser::ColumnDefinition* column_t;
+	peloton::parser::GroupByDescription* group_t;
+	peloton::parser::UpdateClause* update_t;
 
-	nstore::parser::SQLStatementList* stmt_list;
+	peloton::parser::SQLStatementList* stmt_list;
 
 	std::vector<char*>* str_vec;
-	std::vector<nstore::parser::TableRef*>* table_vec;
-	std::vector<nstore::parser::ColumnDefinition*>* column_vec;
-	std::vector<nstore::parser::UpdateClause*>* update_vec;
-	std::vector<nstore::expression::AbstractExpression*>* expr_vec;
+	std::vector<peloton::parser::TableRef*>* table_vec;
+	std::vector<peloton::parser::ColumnDefinition*>* column_vec;
+	std::vector<peloton::parser::UpdateClause*>* update_vec;
+	std::vector<peloton::expression::ParserExpression*>* expr_vec;
 }
 
 
@@ -500,13 +507,13 @@ truncate_statement:
  ******************************/
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES '(' literal_list ')' {
-			$$ = new InsertStatement(nstore::INSERT_TYPE_VALUES);
+			$$ = new InsertStatement(peloton::INSERT_TYPE_VALUES);
 			$$->table_name = $3;
 			$$->columns = $4;
 			$$->values = $7;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
-			$$ = new InsertStatement(nstore::INSERT_TYPE_SELECT);
+			$$ = new InsertStatement(peloton::INSERT_TYPE_SELECT);
 			$$->table_name = $3;
 			$$->columns = $4;
 			$$->select = $5;
@@ -650,12 +657,12 @@ opt_limit:
  * Expressions 
  ******************************/
 expr_list:
-		expr_alias { $$ = new std::vector<nstore::expression::AbstractExpression*>(); $$->push_back($1); }
+		expr_alias { $$ = new std::vector<peloton::expression::ParserExpression*>(); $$->push_back($1); }
 	|	expr_list ',' expr_alias { $1->push_back($3); $$ = $1; }
 	;
 
 literal_list:
-		literal { $$ = new std::vector<nstore::expression::AbstractExpression*>(); $$->push_back($1); }
+		literal { $$ = new std::vector<peloton::expression::ParserExpression*>(); $$->push_back($1); }
 	|	literal_list ',' literal { $1->push_back($3); $$ = $1; }
 	;
 
@@ -681,39 +688,39 @@ scalar_expr:
 	;
 
 unary_expr:
-		'-' expr { $$ = new nstore::expression::OperatorUnaryMinusExpression($2); }
-	|	NOT expr { $$ = new nstore::expression::OperatorUnaryNotExpression($2); }
+		'-' expr { $$ = new peloton::expression::OperatorUnaryMinusExpression($2); }
+	|	NOT expr { $$ = new peloton::expression::OperatorUnaryNotExpression($2); }
 	;
 
 binary_expr:
 		comp_expr
-	|	expr '-' expr	{ $$ = new nstore::expression::OperatorExpression<nstore::expression::OpMinus>(nstore::EXPRESSION_TYPE_OPERATOR_MINUS, $1, $3); }
-	|	expr '+' expr	{ $$ = new nstore::expression::OperatorExpression<nstore::expression::OpPlus>(nstore::EXPRESSION_TYPE_OPERATOR_PLUS, $1, $3); }
-	|	expr '/' expr	{ $$ = new nstore::expression::OperatorExpression<nstore::expression::OpDivide>(nstore::EXPRESSION_TYPE_OPERATOR_DIVIDE, $1, $3); }
-	|	expr '*' expr	{ $$ = new nstore::expression::OperatorExpression<nstore::expression::OpMultiply>(nstore::EXPRESSION_TYPE_OPERATOR_MULTIPLY, $1, $3); }
-	|	expr AND expr	{ $$ = new nstore::expression::ConjunctionExpression<nstore::expression::ConjunctionAnd>(nstore::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
-	|	expr OR expr	{ $$ = new nstore::expression::ConjunctionExpression<nstore::expression::ConjunctionOr>(nstore::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
-	|	expr LIKE expr	{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpEq>(nstore::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
-	|	expr NOT LIKE expr	{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpNe>(nstore::EXPRESSION_TYPE_COMPARE_LIKE, $1, $4); }
+	|	expr '-' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMinus>(peloton::EXPRESSION_TYPE_OPERATOR_MINUS, $1, $3); }
+	|	expr '+' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpPlus>(peloton::EXPRESSION_TYPE_OPERATOR_PLUS, $1, $3); }
+	|	expr '/' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpDivide>(peloton::EXPRESSION_TYPE_OPERATOR_DIVIDE, $1, $3); }
+	|	expr '*' expr	{ $$ = new peloton::expression::OperatorExpression<peloton::expression::OpMultiply>(peloton::EXPRESSION_TYPE_OPERATOR_MULTIPLY, $1, $3); }
+	|	expr AND expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionAnd>(peloton::EXPRESSION_TYPE_CONJUNCTION_AND, $1, $3); }
+	|	expr OR expr	{ $$ = new peloton::expression::ConjunctionExpression<peloton::expression::ConjunctionOr>(peloton::EXPRESSION_TYPE_CONJUNCTION_OR, $1, $3); }
+	|	expr LIKE expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $3); }
+	|	expr NOT LIKE expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_LIKE, $1, $4); }
 	;
 
 
 comp_expr:
-		expr '=' expr		{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpEq>(nstore::EXPRESSION_TYPE_COMPARE_EQ, $1, $3); }
-	|	expr NOTEQUALS expr	{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpNe>(nstore::EXPRESSION_TYPE_COMPARE_NE, $1, $3); }
-	|	expr '<' expr		{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpLt>(nstore::EXPRESSION_TYPE_COMPARE_LT, $1, $3);; }
-	|	expr '>' expr		{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpGt>(nstore::EXPRESSION_TYPE_COMPARE_GT, $1, $3); }
-	|	expr LESSEQ expr	{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpLte>(nstore::EXPRESSION_TYPE_COMPARE_LTE, $1, $3); }
-	|	expr GREATEREQ expr	{ $$ = new nstore::expression::ComparisonExpression<nstore::expression::CmpGte>(nstore::EXPRESSION_TYPE_COMPARE_GTE, $1, $3); }
+		expr '=' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpEq>(peloton::EXPRESSION_TYPE_COMPARE_EQ, $1, $3); }
+	|	expr NOTEQUALS expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpNe>(peloton::EXPRESSION_TYPE_COMPARE_NE, $1, $3); }
+	|	expr '<' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLt>(peloton::EXPRESSION_TYPE_COMPARE_LT, $1, $3);; }
+	|	expr '>' expr		{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGt>(peloton::EXPRESSION_TYPE_COMPARE_GT, $1, $3); }
+	|	expr LESSEQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpLte>(peloton::EXPRESSION_TYPE_COMPARE_LTE, $1, $3); }
+	|	expr GREATEREQ expr	{ $$ = new peloton::expression::ComparisonExpression<peloton::expression::CmpGte>(peloton::EXPRESSION_TYPE_COMPARE_GTE, $1, $3); }
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { $$ = new nstore::expression::ParserExpression(nstore::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
+		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
 	;
 
 column_name:
-		IDENTIFIER { $$ = new nstore::expression::ParserExpression(nstore::EXPRESSION_TYPE_COLUMN_REF, $1); }
-	|	IDENTIFIER '.' IDENTIFIER { $$ = new nstore::expression::ParserExpression(nstore::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
+		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
 	;
 
 literal:
@@ -723,27 +730,27 @@ literal:
 	;
 
 string_literal:
-		STRING { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetStringValue($1)); free($1);}
+		STRING { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetStringValue($1)); free($1);}
 	;
 
 
 num_literal:
-		FLOATVAL { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetDoubleValue($1)); }
+		FLOATVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetDoubleValue($1)); }
 	|	int_literal
 	;
 
 int_literal:
-		INTVAL { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
+		INTVAL { $$ = new peloton::expression::ConstantValueExpression(peloton::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
 	;
 
 star_expr:
-		'*' { $$ = new nstore::expression::ParserExpression(nstore::EXPRESSION_TYPE_STAR); }
+		'*' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR); }
 	;
 
 
 placeholder_expr:
 		'?' {
-			$$ = new nstore::expression::ParserExpression(nstore::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
+			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
 			yyloc.placeholder_list.push_back($$);
 		}
 	;
@@ -756,7 +763,7 @@ table_ref:
 		table_ref_atomic
 	|	table_ref_atomic ',' table_ref_commalist {
 			$3->push_back($1);
-			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_CROSS_PRODUCT);
+			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_CROSS_PRODUCT);
 			tbl->list = $3;
 			$$ = tbl;
 		}
@@ -766,7 +773,7 @@ table_ref:
 table_ref_atomic:
 		table_ref_name
 	|	'(' select_statement ')' alias {
-			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_SELECT);
+			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;
@@ -782,7 +789,7 @@ table_ref_commalist:
 
 table_ref_name:
 		table_name opt_alias {
-			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_NAME);
+			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
 			tbl->name = $1;
 			tbl->alias = $2;
 			$$ = tbl;
@@ -792,7 +799,7 @@ table_ref_name:
 
 table_ref_name_no_alias:
 		table_name {
-			$$ = new TableRef(nstore::TABLE_REFERENCE_TYPE_NAME);
+			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_NAME);
 			$$->name = $1;
 		}
 	;
@@ -821,9 +828,9 @@ opt_alias:
 join_clause:
 		join_table opt_join_type JOIN join_table ON join_condition
 		{ 
-			$$ = new TableRef(nstore::TABLE_REFERENCE_TYPE_JOIN);
+			$$ = new TableRef(peloton::TABLE_REFERENCE_TYPE_JOIN);
 			$$->join = new JoinDefinition();
-			$$->join->type = (nstore::JoinType) $2;
+			$$->join->type = (peloton::PelotonJoinType) $2;
 			$$->join->left = $1;
 			$$->join->right = $4;
 			$$->join->condition = $6;
@@ -831,18 +838,18 @@ join_clause:
 		;
 
 opt_join_type:
-		INNER 	{ $$ = nstore::JOIN_TYPE_INNER; }
-	|	OUTER 	{ $$ = nstore::JOIN_TYPE_OUTER; }
-	|	LEFT 	{ $$ = nstore::JOIN_TYPE_LEFT; }
-	|	RIGHT 	{ $$ = nstore::JOIN_TYPE_RIGHT; }
-	|	/* empty, default */ 	{ $$ = nstore::JOIN_TYPE_INNER; }
+		INNER 	{ $$ = peloton::JOIN_TYPE_INNER; }
+	|	OUTER 	{ $$ = peloton::JOIN_TYPE_OUTER; }
+	|	LEFT 	{ $$ = peloton::JOIN_TYPE_LEFT; }
+	|	RIGHT 	{ $$ = peloton::JOIN_TYPE_RIGHT; }
+	|	/* empty, default */ 	{ $$ = peloton::JOIN_TYPE_INNER; }
 	;
 
 
 
 join_table:
 		'(' select_statement ')' alias {
-			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_SELECT);
+			auto tbl = new TableRef(peloton::TABLE_REFERENCE_TYPE_SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;

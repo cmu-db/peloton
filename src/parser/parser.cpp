@@ -13,10 +13,10 @@
 #include <iostream>
 #include <string>
 
-#include "parser.h"
+#include "parser/parser.h"
 
-#include "parser/parser_bison.h"
-#include "parser/parser_flex.h"
+#include "parser/sql_parser.h"
+#include "parser/sql_lexer.h"
 #include "common/exception.h"
 
 namespace peloton {
