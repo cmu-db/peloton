@@ -103,7 +103,9 @@ struct PARSER_CUST_LTYPE {
 }
 
 // Define the names of the created files
-%output  "parser/sql_parser.cpp"
+// Defined by the build system
+/* Output location is defined by the build system */
+/* %output  "parser/sql_parser.cpp" */
 %defines "include/parser/sql_parser.h"
 
 // Tell bison to create a reentrant parser
