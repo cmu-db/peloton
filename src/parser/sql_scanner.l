@@ -35,7 +35,8 @@ char* substr(const char* source, int from, int to) {
  ***************************/
 
 /* Define the output files */
-%option outfile="parser/sql_scanner.cpp"
+/* Output location is defined by the build system */
+/* %option outfile="parser/sql_scanner.cpp" */
 %option header-file="include/parser/sql_scanner.h"
 
 /* Make reentrant */

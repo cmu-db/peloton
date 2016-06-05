@@ -1,28 +1,32 @@
 # --[ BISON
-find_package(BISON)
-find_package(FLEX)
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
 
-BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${CMAKE_SOURCE_DIR}/src/parser/sql_parser.cpp)
-FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${CMAKE_SOURCE_DIR}/src/parser/sql_scanner.cpp)
+BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp)
+FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp)
 ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
+
+add_library(peloton-parser STATIC ${BISON_SQLParser_OUTPUTS} ${FLEX_SQLScanner_OUTPUTS})
+set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+peloton_default_properties(peloton-parser)
 
 # --[ Proto library
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
 
 # include python files either to force generation
-add_library(proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
-set(Peloton_LINKER_LIBS proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
-peloton_default_properties(proto)
+add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
+set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+peloton_default_properties(peloton-proto)
 
 # --[ Peloton library
 
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton SHARED ${BISON_SQLParser_OUTPUTS} ${FLEX_SQLScanner_OUTPUTS} ${srcs})
+add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} proto)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-parser peloton-proto)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
