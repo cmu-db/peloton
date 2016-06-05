@@ -377,8 +377,9 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
   CONCURRENCY_TYPE_OCC_RB = 6,            // optimistic + rollback segment
   CONCURRENCY_TYPE_OCC_N2O = 7,           // optimisitic with new to old version chain
-  CONCURRENCY_TYPE_TO_N2O = 8,            // timestamp ordering with new to old version chain
-  CONCURRENCY_TYPE_PESSIMISTIC_OPT = 9    // pessimistic with optimization
+  CONCURRENCY_TYPE_TO_RB = 8,             // timestamp ordering + rollback segment
+  CONCURRENCY_TYPE_TO_N2O = 9,            // timestamp ordering with new to old version chain
+  CONCURRENCY_TYPE_PESSIMISTIC_OPT = 10   // pessimistic with optimization
 };
 
 enum IsolationLevelType {

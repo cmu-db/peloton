@@ -40,7 +40,7 @@ void Usage(FILE *out) {
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, and ton2o\n"
+          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
   );
@@ -248,6 +248,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_OCC_N2O;
         } else if (strcmp(protocol, "pccopt") == 0) {
           state.protocol = CONCURRENCY_TYPE_PESSIMISTIC_OPT;
+        } else if (strcmp(protocol, "torb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO_RB;
         } else if (strcmp(protocol, "ton2o") == 0) {
           state.protocol = CONCURRENCY_TYPE_TO_N2O;
         } else {
