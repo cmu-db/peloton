@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// optimistic_n2o_txn_manager.h
+// ts_order_txn_manager.h
 //
-// Identification: src/backend/concurrency/optimistic_n2o_txn_manager.h
+// Identification: src/backend/concurrency/ts_order_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,31 +19,31 @@ namespace peloton {
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
-// optimistic concurrency control
+// timestamp ordering
 //===--------------------------------------------------------------------===//
 
-class OptimisticN2OTxnManager : public TransactionManager {
-public:
-  OptimisticN2OTxnManager() {}
+class TsOrderN2OTxnManager : public TransactionManager {
+ public:
+  TsOrderN2OTxnManager() {}
 
-  virtual ~OptimisticN2OTxnManager() {}
+  virtual ~TsOrderN2OTxnManager() {}
 
-  static OptimisticN2OTxnManager &GetInstance();
+  static TsOrderN2OTxnManager &GetInstance();
 
   virtual VisibilityType IsVisible(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id);
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
 
   virtual bool IsOwnable(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id);
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
 
   virtual bool AcquireOwnership(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id, const oid_t &tuple_id);
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tile_group_id, const oid_t &tuple_id);
 
   virtual void YieldOwnership(const oid_t &tile_group_id,
     const oid_t &tuple_id);
@@ -66,7 +66,6 @@ public:
   virtual void PerformUpdate(const ItemPointer &location);
 
   virtual void PerformDelete(const ItemPointer &location);
-
 
   virtual Result CommitTransaction();
 
@@ -92,7 +91,33 @@ public:
     current_txn = nullptr;
   }
 
-private:
+
+ private:
+
+  static const int LOCK_OFFSET = 0;
+  static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
+  static const int ITEM_POINTER_OFFSET = (LAST_READER_OFFSET + 8);
+
+
+  Spinlock *GetSpinlockField(
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t &tuple_id);
+
+  cid_t GetLastReaderCid(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id);
+
+  void SetLastReaderCid(
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id, const cid_t &last_read_ts);
+
+  ItemPointer *GetHeadPtr(
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t tuple_id);
+
+  void SetHeadPtr(
+      const storage::TileGroupHeader *const tile_group_header, 
+      const oid_t tuple_id, ItemPointer *item_ptr);
 
   // Init reserved area of a tuple
   // delete_flag is used to mark that the transaction that owns the tuple
@@ -100,18 +125,11 @@ private:
   // Primary index header ptr (8 bytes)
   static void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
-    *(reinterpret_cast<ItemPointer**>(reserved_area)) = nullptr;
-  }
 
-  static inline ItemPointer *GetHeadPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id)));
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
+    *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
+    *(reinterpret_cast<ItemPointer**>(reserved_area + ITEM_POINTER_OFFSET)) = nullptr;
   }
-
-  static inline void SetHeadPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id,
-                         ItemPointer *item_ptr) {
-    *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id))) = item_ptr;
-  }
-
 };
 }
 }

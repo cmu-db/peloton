@@ -147,7 +147,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
 
-  if (tuple_location_ptrs.size() == 0) return false;
+  if (tuple_location_ptrs.size() == 0) {
+    // LOG_TRACE("no tuple is retrieved from index.");
+    return false;
+  }
 
   auto &transaction_manager =
     concurrency::TransactionManagerFactory::GetInstance();
@@ -215,12 +218,27 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
       }
         // if the tuple is not visible.
       else {
+          // LOG_INFO("no tuple returned! txn_id = %d, begin commit id =%d, end commit id = %d, current_txn_id = %d", (int)tile_group_header->GetTransactionId(tuple_location.offset), (int)tile_group_header->GetBeginCommitId(tuple_location.offset), (int)tile_group_header->GetEndCommitId(tuple_location.offset), (int)concurrency::current_txn->GetBeginCommitId());
+          // LOG_INFO("current: block = %u, offset = %u", tuple_location.block, tuple_location.offset);
+          // auto tmp_prev = tile_group_header->GetPrevItemPointer(tuple_location.offset);
+          // auto tmp_next = tile_group_header->GetNextItemPointer(tuple_location.offset);
+          // LOG_INFO("prev: block = %u, offset = %u", tmp_prev.block, tmp_prev.offset);
+          // LOG_INFO("old: block = %u, offset = %u", tmp_next.block, tmp_next.offset);
 
         // Break for new to old
         if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
-          // See an invisible version that not belongs to any one in a new to old version chain
+          // See an invisible version that does not belong to any one in a new to old version chain
+          break;
+        }
+
+        // Break for new to old
+        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O
+          && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
+          && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
+          // See an invisible version that does not belong to any one in a new to old version chain
+
           break;
         }
 
@@ -246,7 +264,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           // For speculative read, a transaction may incidentally miss a visible tuple due to a non-atomic
           // timestamp update. In such case, we just return false and abort the txn.
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
-
+          transaction_manager.AddOneReadAbort();
           return false;
         }
 
@@ -264,6 +282,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
         // it must be cooperative GC.
         assert(gc::GCManagerFactory::GetGCType() == GC_TYPE_CO);
+        assert(concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_TO_N2O && 
+          concurrency::TransactionManagerFactory::GetProtocol() != CONCURRENCY_TYPE_OCC_N2O);
 
         if (old_end_cid <= max_committed_cid) {
           // if the older version is a garbage.

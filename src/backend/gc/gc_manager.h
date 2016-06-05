@@ -31,8 +31,8 @@ namespace gc {
 // GC Manager
 //===--------------------------------------------------------------------===//
 
-#define MAX_ATTEMPT_COUNT 1000000
-#define MAX_QUEUE_LENGTH 1000000
+#define MAX_ATTEMPT_COUNT 100000
+#define MAX_QUEUE_LENGTH 100000
 
 #define GC_PERIOD_MILLISECONDS 100
 class GCBuffer {
@@ -71,6 +71,8 @@ class GCManager {
   virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
+
+  virtual void RegisterTable(oid_t table_id) = 0;
 
 protected:
   void DeleteInvalidTupleFromIndex(const TupleMetadata &tuple_metadata) {

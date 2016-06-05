@@ -60,6 +60,7 @@ enum GCType {
   GC_TYPE_OFF = 0,
   GC_TYPE_CO,
   GC_TYPE_VACUUM,
+  GC_TYPE_N2O
 };
 
 //===--------------------------------------------------------------------===//
@@ -376,7 +377,9 @@ enum ConcurrencyType {
   CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
   CONCURRENCY_TYPE_OCC_RB = 6,            // optimistic + rollback segment
   CONCURRENCY_TYPE_OCC_N2O = 7,           // optimisitic with new to old version chain
-  CONCURRENCY_TYPE_PESSIMISTIC_OPT = 8    // pessimistic with optimization
+  CONCURRENCY_TYPE_TO_RB = 8,             // timestamp ordering + rollback segment
+  CONCURRENCY_TYPE_TO_N2O = 9,            // timestamp ordering with new to old version chain
+  CONCURRENCY_TYPE_PESSIMISTIC_OPT = 10   // pessimistic with optimization
 };
 
 enum IsolationLevelType {

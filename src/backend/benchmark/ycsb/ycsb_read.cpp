@@ -139,6 +139,8 @@ bool RunRead(ReadPlans &read_plans, ZipfDistribution &zipf) {
 
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
+  // printf("perform read, key = %d\n", (int)lookup_key);
+  
   read_plans.index_scan_executor_->SetValues(values);
 
   /////////////////////////////////////////////////////////

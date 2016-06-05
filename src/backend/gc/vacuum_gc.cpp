@@ -275,7 +275,8 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
         LOG_TRACE("Deleting primary index");
 
         // Do nothing for new to old version chain here
-        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
+        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O || 
+          concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
           continue;
         }
 

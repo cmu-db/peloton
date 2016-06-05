@@ -112,9 +112,13 @@ bool InsertExecutor::DExecute() {
         res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
       } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
         res = ((concurrency::OptimisticRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
+        // If we are using TO N2O txn manager, use another form of perform insert
+        res = ((concurrency::TsOrderN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
       } else {
         res = transaction_manager.PerformInsert(location);
       }
+
 
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
@@ -177,10 +181,14 @@ bool InsertExecutor::DExecute() {
       bool res;
 
       if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O) {
+      
         // If we are using OCC N2O txn manager, use another form of perform insert
         res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
       } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
         res = ((concurrency::OptimisticRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
+        // If we are using TO N2O txn manager, use another form of perform insert
+        res = ((concurrency::TsOrderN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
       } else {
         res = transaction_manager.PerformInsert(location);
       }

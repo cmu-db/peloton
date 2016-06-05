@@ -53,6 +53,8 @@ public:
   virtual ItemPointer ReturnFreeSlot(const oid_t __attribute__((unused))&table_id) {
     return INVALID_ITEMPOINTER;
   }
+
+  virtual void RegisterTable(oid_t table_id __attribute__((unused))){}
 };
 
 }  // namespace gc

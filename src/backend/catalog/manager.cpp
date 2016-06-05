@@ -47,7 +47,7 @@ void Manager::AddTileGroup(
   // locator[oid] = location;
 
   locator[oid] = location;
-  //last_tile_group_id = oid;
+  last_tile_group_id = oid;
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
@@ -69,7 +69,7 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   // return location;
 
   if (oid > MaxTileGroupCount) {
-    LOG_ERROR("exceed max tile group count!");
+    LOG_ERROR("exceed max tile group count! oid = %u", oid);
   }
   while (locator[oid].get() == nullptr);
   return locator[oid];
