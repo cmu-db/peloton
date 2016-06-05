@@ -310,8 +310,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, index::RBItemPoi
 // For RB
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location, index::RBItemPointer **rb_itempointer_ptr) {
+  
   *rb_itempointer_ptr = nullptr;
-  index::RBItemPointer *temp_rb_itemptr = nullptr;
 
   ItemPointer *temp_itemptr = nullptr;
 
@@ -345,7 +345,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
         // TODO: get unique tuple from primary index.
         // if in this index there has been a visible or uncommitted
         // <key, location> pair, this constraint is violated
-        if (index->CondInsertEntry(key.get(), location, fn, &temp_rb_itemptr) == false) {
+        if (index->CondInsertEntry(key.get(), location, fn, rb_itempointer_ptr) == false) {
           return false;
         }
 

@@ -196,6 +196,29 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
     }
   }
 
+  if (ints_only && (index_type == INDEX_TYPE_RBBTREE)) {
+    if (key_size <= sizeof(uint64_t)) {
+      return new RBBTreeIndex<IntsKey<1>, RBItemPointer *,
+                             IntsComparator<1>, IntsEqualityChecker<1>>(
+          metadata);
+    } else if (key_size <= sizeof(int64_t) * 2) {
+      return new RBBTreeIndex<IntsKey<2>, RBItemPointer *,
+                             IntsComparator<2>, IntsEqualityChecker<2>>(
+          metadata);
+    } else if (key_size <= sizeof(int64_t) * 3) {
+      return new RBBTreeIndex<IntsKey<3>, RBItemPointer *,
+                             IntsComparator<3>, IntsEqualityChecker<3>>(
+          metadata);
+    } else if (key_size <= sizeof(int64_t) * 4) {
+      return new RBBTreeIndex<IntsKey<4>, RBItemPointer *,
+                             IntsComparator<4>, IntsEqualityChecker<4>>(
+          metadata);
+    } else {
+      throw IndexException("We currently only support tree index on non-unique "
+                           "integer keys of size 32 bytes or smaller...");
+    }
+  }
+
   if (index_type == INDEX_TYPE_RBBTREE) {
     if (key_size <= 4) {
       return new RBBTreeIndex<GenericKey<4>, RBItemPointer *,
