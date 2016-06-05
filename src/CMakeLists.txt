@@ -2,11 +2,16 @@
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
 
-BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp)
-FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp)
-ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
+set(SQLParser_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
+set(SQLScanner_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
 
-add_library(peloton-parser STATIC ${BISON_SQLParser_OUTPUTS} ${FLEX_SQLScanner_OUTPUTS})
+if(NOT EXISTS "${SQLScanner_LOCATION}")
+	BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${SQLParser_LOCATION})
+	FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${SQLScanner_LOCATION})
+	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
+endif()
+
+add_library(peloton-parser STATIC ${SQLParser_LOCATION} ${SQLScanner_LOCATION})
 set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-parser)
 
