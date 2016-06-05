@@ -279,6 +279,12 @@ distribute/*
 cmake_build
 .cmake_build
 
+# Bison/Flex
+sql_parser.cpp
+sql_parser.h
+sql_scanner.cpp
+sql_scanner.h
+
 # Generated documentation
 docs/_site
 docs/gathered

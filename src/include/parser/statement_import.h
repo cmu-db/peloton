@@ -17,7 +17,7 @@ struct ImportStatement : SQLStatement {
 
 	ImportStatement() :
 		SQLStatement(STATEMENT_TYPE_IMPORT),
-		type(type),
+		type(kImportCSV),
         file_path(NULL),
         table_name(NULL) {};  // For bulk import support
 
@@ -28,8 +28,7 @@ struct ImportStatement : SQLStatement {
 	
 	ImportType type;
 	char* file_path;
-        char* table_name;
-
+  char* table_name;
 };
 
 } // End parser namespace

@@ -9,7 +9,6 @@
 #include <iostream>
 
 #include "common/types.h"
-#include "expression/expressions.h"
 
 namespace peloton {
 namespace parser {

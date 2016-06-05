@@ -1,5 +1,5 @@
 #include "parser/statement_select.h"
-#include "table_ref.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
 namespace parser {

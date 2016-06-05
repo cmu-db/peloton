@@ -1,3 +1,11 @@
+# --[ BISON
+find_package(BISON)
+find_package(FLEX)
+
+BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${CMAKE_SOURCE_DIR}/src/parser/sql_parser.cpp)
+FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${CMAKE_SOURCE_DIR}/src/parser/sql_scanner.cpp)
+ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
+
 # --[ Proto library
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
@@ -12,7 +20,7 @@ peloton_default_properties(proto)
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton SHARED ${srcs})
+add_library(peloton SHARED ${BISON_SQLParser_OUTPUTS} ${srcs})
 
 target_link_libraries(peloton ${Peloton_LINKER_LIBS} proto)
 
