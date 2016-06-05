@@ -2,7 +2,7 @@
 
 #include "parser/sql_statement.h"
 #include "parser/statement_select.h"
-#include "expression/parser_expression.h"
+#include "expression/abstract_expression.h"
 
 #include <algorithm>
 
@@ -24,7 +24,7 @@ struct PrepareStatement : SQLStatement {
 		free(name);
 
 		for(void* e : placeholders){
-		  delete (peloton::expression::ParserExpression*)e;
+		  delete (peloton::expression::AbstractExpression*)e;
 		}
 
 	}
@@ -38,11 +38,11 @@ struct PrepareStatement : SQLStatement {
 	void setPlaceholders(std::vector<void*> ph) {
 		for (void* e : ph) {
 			if (e != NULL)
-				placeholders.push_back((expression::ParserExpression*) e);
+				placeholders.push_back((expression::AbstractExpression*) e);
 		}
 		// Sort by col-id
 		std::sort(placeholders.begin(), placeholders.end(), [](
-		    expression::ParserExpression* i, expression::ParserExpression* j) -> bool { return (i->ival < j->ival); }
+		    expression::AbstractExpression* i, expression::AbstractExpression* j) -> bool { return (i->ival < j->ival); }
 		);
 
 		// Set the placeholder id on the Expr. This replaces the previously stored column id
@@ -51,7 +51,7 @@ struct PrepareStatement : SQLStatement {
 
 	char* name;
 	SQLStatementList* query;
-	std::vector<expression::ParserExpression*> placeholders;
+	std::vector<expression::AbstractExpression*> placeholders;
 };
 
 } // End parser namespace

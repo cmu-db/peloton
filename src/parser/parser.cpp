@@ -16,7 +16,7 @@
 #include "parser/parser.h"
 
 #include "parser/sql_parser.h"
-#include "parser/sql_lexer.h"
+#include "parser/sql_scanner.h"
 #include "common/exception.h"
 
 namespace peloton {
