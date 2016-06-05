@@ -230,7 +230,7 @@ void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   // In case of contention, no one can update this pointer when we are updating it
   // because we are holding the write lock. This update should success in its first trial.
   auto res = AtomicUpdateItemPointer(head_ptr, new_location);
-  assert(res == true);
+  PL_ASSERT(res == true);
   (void) res;
 
   // Add the old tuple into the update set
@@ -560,9 +560,12 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
-        // reset the item pointers.
-        tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        // NOTE: We cannot do the unlink here because maybe someone is still traversing
+        // the aborted version. Such unlink will isolate such travelers. The unlink task
+        // should be offload to GC
+
+        // tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+        // new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 

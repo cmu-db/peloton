@@ -91,6 +91,9 @@ class TsOrderN2OTxnManager : public TransactionManager {
     current_txn = nullptr;
   }
 
+  ItemPointer *GetHeadPtr(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t tuple_id);
 
  private:
 
@@ -110,10 +113,6 @@ class TsOrderN2OTxnManager : public TransactionManager {
   void SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id, const cid_t &last_read_ts);
-
-  ItemPointer *GetHeadPtr(
-      const storage::TileGroupHeader *const tile_group_header, 
-      const oid_t tuple_id);
 
   void SetHeadPtr(
       const storage::TileGroupHeader *const tile_group_header, 

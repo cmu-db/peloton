@@ -637,10 +637,13 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
-        COMPILER_MEMORY_FENCE;
+        // NOTE: We cannot do the unlink here because maybe someone is still traversing
+        // the aborted version. Such unlink will isolate such travelers. The unlink task
+        // should be offload to GC
+        // COMPILER_MEMORY_FENCE;
         
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        // new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        // new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         COMPILER_MEMORY_FENCE;
