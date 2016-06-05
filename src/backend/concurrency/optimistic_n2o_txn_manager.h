@@ -92,6 +92,10 @@ public:
     current_txn = nullptr;
   }
 
+  static inline ItemPointer *GetHeadPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
+    return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id)));
+  }
+
 private:
 
   // Init reserved area of a tuple
@@ -101,10 +105,6 @@ private:
   static void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
     *(reinterpret_cast<ItemPointer**>(reserved_area)) = nullptr;
-  }
-
-  static inline ItemPointer *GetHeadPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
-    return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id)));
   }
 
   static inline void SetHeadPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id,

@@ -173,7 +173,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     size_t chain_length = 0;
 
     cid_t max_committed_cid = transaction_manager.GetMaxCommittedCid();
-
     while (true) {
       ++chain_length;
 
@@ -229,8 +228,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
-          // See an invisible version that does not belong to any one in a new to old version chain
-          break;
+          // See an invisible version that does not belong to any one in a new to old version chain.
+          // In such case, we assert that there should be either a deleted version or a newly updated version.
+          // So we just wire back using the index head ptr stored in the reserve field.
+          tuple_location = *((concurrency::OptimisticN2OTxnManager*)(&transaction_manager))->
+              GetHeadPtr(tile_group_header, tuple_location.offset);
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          chain_length = 0;
+          continue;
         }
 
         // Break for new to old
@@ -238,8 +244,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           && tile_group_header->GetTransactionId(tuple_location.offset) == INITIAL_TXN_ID
           && tile_group_header->GetEndCommitId(tuple_location.offset) <= concurrency::current_txn->GetBeginCommitId()) {
           // See an invisible version that does not belong to any one in a new to old version chain
-
-          break;
+          // Wire back
+          tuple_location = *((concurrency::TsOrderN2OTxnManager*)(&transaction_manager))->
+            GetHeadPtr(tile_group_header, tuple_location.offset);
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
+          chain_length = 0;
+          continue;
         }
 
         ItemPointer old_item = tuple_location;
