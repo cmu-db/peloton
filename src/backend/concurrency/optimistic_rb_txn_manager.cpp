@@ -151,6 +151,9 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location UNUSED_AT
 }
 
 bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr) {
+  LOG_TRACE("Perform insert in RB with rb_itemptr %p", rb_item_ptr);
+
+  assert(rb_item_ptr != nullptr);
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -188,7 +191,6 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location, index::R
 bool OptimisticRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
   const ItemPointer &location, const storage::Tuple *tuple) {
   // Index checks and updates
-
   int index_count = target_table->GetIndexCount();
 
   std::function<bool(const ItemPointer &)> fn =
@@ -468,6 +470,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
     oid_t tuple_id = location.offset;
     auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
     index::RBItemPointer *old_index_ptr = GetSIndexPtr(tile_group_header, tuple_id);
+    assert(old_index_ptr != nullptr);
     old_index_ptr->timestamp = end_commit_id;
     SetSIndexPtr(tile_group_header, tuple_id, itr->second);
   }
@@ -518,7 +521,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 
         // Set the timestamp of the entry corresponding to the latest version
         index::RBItemPointer *index_ptr = GetSIndexPtr(tile_group_header, tuple_slot);
-        index_ptr->timestamp = end_commit_id;
+        if (index_ptr != nullptr)
+          index_ptr->timestamp = end_commit_id;
 
         COMPILER_MEMORY_FENCE;
 
