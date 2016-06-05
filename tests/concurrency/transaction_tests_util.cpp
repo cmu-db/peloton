@@ -83,6 +83,7 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
 
 
 storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
+  LOG_TRACE("Create Primary Key Unique Key Table");
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
   id_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
@@ -120,9 +121,17 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   bool unique2 = false;
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
-  auto index_metadata2 = new index::IndexMetadata(
+  index::IndexMetadata *index_metadata2;
+  if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+    LOG_TRACE("Create RBBtree index");
+    index_metadata2 = new index::IndexMetadata(
+      "unique_btree_index", 1235, INDEX_TYPE_RBBTREE,
+      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);  
+  } else {
+    index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);
+      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);  
+  }
 
   index::Index *ukey_index = index::IndexFactory::GetInstance(index_metadata2);
 

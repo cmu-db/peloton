@@ -126,8 +126,11 @@ bool UpdateExecutor::DExecute() {
         // Overwrite the master copy
         tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
 
+        // Insert into secondary index
+        rb_txn_manager->RBInsertVersion(target_table_, old_location, new_tuple.get());
       } else {
         // Current rb segment is OK, just overwrite the tuple in place
+        // The above comment should be wrong?
         tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
         transaction_manager.PerformUpdate(old_location);
       }
@@ -165,6 +168,10 @@ bool UpdateExecutor::DExecute() {
 
         // Overwrite the master copy
         tile_group->CopyTuple(new_tuple.get(), old_location.offset);
+
+        // Insert into secondary index. Maybe we can insert index before
+        // CopyTuple? -- RX
+        rb_txn_manager->RBInsertVersion(target_table_, old_location, new_tuple.get());
       } else {
         // finally insert updated tuple into the table
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());

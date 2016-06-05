@@ -39,6 +39,10 @@ public:
     timestamp(ts) {}
   ItemPointer location;
   cid_t timestamp;
+
+  bool operator==(const RBItemPointer &other) {
+    return this->location == other.location && this->timestamp == other.timestamp;
+  }
 };
 
 //===--------------------------------------------------------------------===//
@@ -175,6 +179,13 @@ class Index : public Printable {
   virtual bool InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
                            UNUSED_ATTRIBUTE const ItemPointer &location,
                            UNUSED_ATTRIBUTE RBItemPointer **result)
+  {
+    assert(false);
+    return false;
+  }
+
+  virtual bool DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                           UNUSED_ATTRIBUTE const RBItemPointer &rb_location)
   {
     assert(false);
     return false;

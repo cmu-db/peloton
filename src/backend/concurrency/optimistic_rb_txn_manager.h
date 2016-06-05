@@ -31,7 +31,7 @@ extern thread_local std::unordered_map<ItemPointer, index::RBItemPointer *> upda
 //===--------------------------------------------------------------------===//
 
 class OptimisticRbTxnManager : public TransactionManager {
-  public:
+public:
   typedef char* RBSegType;
 
   OptimisticRbTxnManager() {}
@@ -73,6 +73,8 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   virtual bool PerformInsert(const ItemPointer &location);
 
+  bool PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr);
+
   // Get the read timestamp of the latest transaction on this thread, it is 
   // either the begin commit time of current transaction of the just committed
   // transaction.
@@ -99,6 +101,10 @@ class OptimisticRbTxnManager : public TransactionManager {
 
   // Add a new rollback segment to the tuple
   void PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg);
+
+  // Insert a version, basically maintain secondary index
+  bool RBInsertVersion(storage::DataTable *target_table,
+    const ItemPointer &location, const storage::Tuple *tuple);
 
   // Rollback the master copy of a tuple to the status at the begin of the 
   // current transaction
@@ -250,6 +256,11 @@ class OptimisticRbTxnManager : public TransactionManager {
     *index_ptr = ptr;
   }
 
+  inline index::RBItemPointer *GetSIndexPtr(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
+    index::RBItemPointer **index_ptr = (index::RBItemPointer **)(tile_group_header->GetReservedFieldRef(tuple_id) + sindex_ptr);
+    return *index_ptr;
+  }
+
   inline bool GetDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     return *(reinterpret_cast<bool*>(tile_group_header->GetReservedFieldRef(tuple_id) + delete_flag_offset));
   }
@@ -261,9 +272,6 @@ class OptimisticRbTxnManager : public TransactionManager {
   inline void ClearDeleteFlag(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     *(reinterpret_cast<bool*>(tile_group_header->GetReservedFieldRef(tuple_id) + delete_flag_offset)) = false;
   }
-
-  bool RBInsertVersion(storage::DataTable *target_table,
-        const ItemPointer &location, const storage::Tuple *tuple);
 };
 }
 }
