@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PELOTON_SOCKET_BASE_H
-#define PELOTON_SOCKET_BASE_H
+#pragma once
 
 #include <array>
 #include <vector>
@@ -26,8 +25,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <iostream>
-#include "logger.h"
-#include "globals.h"
+
+#include "common/logger.h"
+#include "wire/globals.h"
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
@@ -42,14 +42,15 @@ typedef unsigned char uchar;
 // use array as memory for the socket buffers can be fixed
 typedef std::array<uchar, SOCKET_BUFFER_SIZE> SockBuf;
 
-
 struct Server {
   int port;
   int server_fd;
   int max_connections;
 
   inline Server(int port, int max_conn)
-  : port(port), max_connections(max_conn) {}
+  : port(port),
+    server_fd(-1),
+    max_connections(max_conn) {}
 };
 
 // Buffers used to batch meesages at the socket
@@ -60,12 +61,12 @@ struct Buffer {
 
   inline Buffer() : buf_ptr(0), buf_size(0) {}
 
-  inline void reset() {
+  inline void Reset() {
     buf_ptr = 0;
     buf_size = 0;
   }
 
-  inline size_t get_max_size() { return SOCKET_BUFFER_SIZE; }
+  inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
 };
 /*
  * SocektManager - Wrapper for managing socket.
@@ -81,32 +82,32 @@ class SocketManager {
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
    */
-  bool refill_read_buffer();
+  bool RefillReadBuffer();
 
  public:
   inline SocketManager(int sock_fd) : sock_fd(sock_fd) {}
 
   // Reads a packet of length "bytes" from the head of the buffer
-  bool read_bytes(B &pkt_buf, size_t bytes);
+  bool ReadBytes(B &pkt_buf, size_t bytes);
 
   // Writes a packet into the write buffer
-  bool buffer_write_bytes(B &pkt_buf, size_t len, uchar type);
+  bool BufferWriteBytes(B &pkt_buf, size_t len, uchar type);
 
   // Used to invoke a write into the Socket, once the write buffer is ready
-  bool flush_write_buffer();
+  bool FlushWriteBuffer();
 
-  void close_socket();
+  void CloseSocket();
 };
 
-extern void start_server(Server *server);
+extern void StartServer(Server *server);
 
 // Thread function created per client
 template <typename P, typename B>
-void client_handler(ThreadGlobals& globals, std::unique_ptr<int> clientfd);
+void ClientHandler(ThreadGlobals& globals, std::unique_ptr<int> clientfd);
 
 // Server's "accept loop"
 template <typename P, typename B>
-void handle_connections(Server *server);
+void HandleConnections(Server *server);
 
 /*
  * Functions defined here for template visibility
@@ -119,7 +120,7 @@ void handle_connections(Server *server);
  */
 
 template <typename P, typename B>
-void handle_connections(Server *server) {
+void HandleConnections(Server *server) {
   int connfd, clilen;
   struct sockaddr_in cli_addr;
   clilen = sizeof(cli_addr);
@@ -137,7 +138,7 @@ void handle_connections(Server *server) {
     std::unique_ptr<int> clientfd(new int(connfd));
 
     std::cout << "LAUNCHING NEW THREAD" << std::endl;
-    std::thread client_thread(client_handler<P, B>, std::ref(globals), std::move(clientfd));
+    std::thread client_thread(ClientHandler<P, B>, std::ref(globals), std::move(clientfd));
     client_thread.detach();
   }
 
@@ -149,15 +150,14 @@ void handle_connections(Server *server) {
  * 		type for the protocol's buffer (B)
  */
 template <typename P, typename B>
-void client_handler(ThreadGlobals& globals, std::unique_ptr<int> clientfd) {
+void ClientHandler(ThreadGlobals& globals, std::unique_ptr<int> clientfd) {
   int fd = *clientfd;
   LOG_INFO("Client fd: %d", fd);
   SocketManager<B> sm(fd);
   P p(&sm);
-  p.manage_packets(globals);
+  p.ManagePackets(globals);
 }
 
 
 }
 }
-#endif  // PELOTON_SOCKET_BASE_H

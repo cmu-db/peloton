@@ -15,8 +15,9 @@
 #include <vector>
 #include <string>
 #include <tuple>
-#include "logger.h"
-#include "wire.h"
+
+#include "common/logger.h"
+#include "wire/wire.h"
 
 namespace peloton {
 namespace wiredb {

@@ -22,38 +22,38 @@ namespace peloton {
 namespace wire {
 
 // checks for parsing overflows
-void check_overflow(Packet *pkt, size_t size) {
+void CheckOverflow(Packet *pkt, size_t size) {
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
     LOG_WARN("Parsing error: pointer overflow for int");
   }
 }
 
-PktBuf::iterator get_end_itr(Packet *pkt, int len) {
+PktBuf::iterator GetEndItr(Packet *pkt, int len) {
   if (len == 0) return std::end(pkt->buf);
   return std::begin(pkt->buf) + pkt->ptr + len;
 }
 
 
-int packet_get_int(Packet *pkt, uchar base) {
+int PacketGetInt(Packet *pkt, uchar base) {
   int value = 0;
 
-  check_overflow(pkt, base);
+  CheckOverflow(pkt, base);
 
   switch (base) {
     case 1: // 8-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
+      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       break;
 
     case 2: // 16-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
+      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohs(value);
       break;
 
     case 4: // 32-bit int
-      std::copy(pkt->buf.begin() + pkt->ptr, get_end_itr(pkt, base),
+      std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohl(value);
       break;
@@ -68,29 +68,29 @@ int packet_get_int(Packet *pkt, uchar base) {
   return value;
 }
 
-void packet_get_bytes(Packet *pkt, size_t len, PktBuf& result) {
+void PacketGetBytes(Packet *pkt, size_t len, PktBuf& result) {
   result.clear();
-  check_overflow(pkt, len);
+  CheckOverflow(pkt, len);
 
   // return empty vector
   if (len == 0)
     return;
 
   result.insert(std::end(result), std::begin(pkt->buf) + pkt->ptr,
-                get_end_itr(pkt, len));
+                GetEndItr(pkt, len));
 
   // move the pointer
   pkt->ptr += len;
 }
 
-void packet_get_string(Packet *pkt, size_t len, std::string& result) {
+void PacketGetString(Packet *pkt, size_t len, std::string& result) {
   // exclude null char for std string
   result = std::string(std::begin(pkt->buf) + pkt->ptr,
-                     get_end_itr(pkt, len - 1));
+                     GetEndItr(pkt, len - 1));
 }
 
 
-void get_string_token(Packet *pkt, std::string& result) {
+void GetStringToken(Packet *pkt, std::string& result) {
   // save start itr position of string
   auto start = std::begin(pkt->buf) + pkt->ptr;
 
@@ -117,12 +117,12 @@ void get_string_token(Packet *pkt, std::string& result) {
 }
 
 
-void packet_put_byte(std::unique_ptr<Packet> &pkt, const uchar c) {
+void PacketPutByte(std::unique_ptr<Packet> &pkt, const uchar c) {
   pkt->buf.push_back(c);
   pkt->len++;
 }
 
-void packet_put_string(std::unique_ptr<Packet> &pkt, const std::string &str) {
+void PacketPutString(std::unique_ptr<Packet> &pkt, const std::string &str) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(str), std::end(str));
   // add null character
   pkt->buf.push_back(0);
@@ -130,12 +130,12 @@ void packet_put_string(std::unique_ptr<Packet> &pkt, const std::string &str) {
   pkt->len += str.size() + 1;
 }
 
-void packet_put_bytes(std::unique_ptr<Packet> &pkt, const std::vector<uchar>& data) {
+void PacketPutBytes(std::unique_ptr<Packet> &pkt, const std::vector<uchar>& data) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(data), std::end(data));
   pkt->len += data.size();
 }
 
-void packet_put_int(std::unique_ptr<Packet> &pkt, int n, int base) {
+void PacketPutInt(std::unique_ptr<Packet> &pkt, int n, int base) {
   switch (base) {
     case 2:
       n = htons(n);
@@ -150,10 +150,10 @@ void packet_put_int(std::unique_ptr<Packet> &pkt, int n, int base) {
       exit(EXIT_FAILURE);
   }
 
-  packet_put_cbytes(pkt, reinterpret_cast<uchar *>(&n), base);
+  PacketPutCbytes(pkt, reinterpret_cast<uchar *>(&n), base);
 }
 
-void packet_put_cbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
+void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
   pkt->buf.insert(std::end(pkt->buf), b, b + len);
   pkt->len += len;
 }
@@ -167,7 +167,7 @@ void packet_put_cbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
  * 		Assume: Packet length field is always 32-bit int
  */
 
-bool read_packet(Packet *pkt, bool has_type_field, Client *client) {
+bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
   uint32_t pkt_size = 0, initial_read_size = sizeof(int32_t);
 
   if (has_type_field)
@@ -178,7 +178,7 @@ bool read_packet(Packet *pkt, bool has_type_field, Client *client) {
   PktBuf init_pkt;
 
   // read first size_field_end bytes
-  if (!client->sock->read_bytes(init_pkt,
+  if (!client->sock->ReadBytes(init_pkt,
                                 static_cast<size_t>(initial_read_size))) {
     // nothing more to read
     return false;
@@ -200,7 +200,7 @@ bool read_packet(Packet *pkt, bool has_type_field, Client *client) {
   // packet size includes initial bytes read as well
   pkt_size = ntohl(pkt_size) - sizeof(int32_t);
 
-  if (!client->sock->read_bytes(pkt->buf, static_cast<size_t>(pkt_size))) {
+  if (!client->sock->ReadBytes(pkt->buf, static_cast<size_t>(pkt_size))) {
     // nothing more to read
     return false;
   }
@@ -210,13 +210,13 @@ bool read_packet(Packet *pkt, bool has_type_field, Client *client) {
   return true;
 }
 
-bool write_packets(std::vector<std::unique_ptr<Packet>> &packets,
+bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
                    Client *client) {
 
   // iterate through all the packets
   for (size_t i = 0; i < packets.size(); i++) {
     auto pkt = packets[i].get();
-    if (!client->sock->buffer_write_bytes(pkt->buf, pkt->len, pkt->msg_type)) {
+    if (!client->sock->BufferWriteBytes(pkt->buf, pkt->len, pkt->msg_type)) {
       packets.clear();
       return false;
     }
@@ -224,7 +224,7 @@ bool write_packets(std::vector<std::unique_ptr<Packet>> &packets,
 
   // clear packets
   packets.clear();
-  return client->sock->flush_write_buffer();
+  return client->sock->FlushWriteBuffer();
 }
 
 }  // end wire

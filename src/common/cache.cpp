@@ -14,6 +14,8 @@
 #include "common/macros.h"
 #include "planner/abstract_plan.h"
 
+#include "wire/cache_entry.h"
+
 namespace peloton {
 
 /** @brief the constructor, nothing fancy here
@@ -137,4 +139,7 @@ bool Cache<Key, Value>::empty(void) const {
 template class Cache<uint32_t, const planner::AbstractPlan>; /* For testing */
 template class Cache<std::string,
                      const planner::AbstractPlan>; /* Actual in use */
+
+template class Cache<std::string, CacheEntry>;
+
 }

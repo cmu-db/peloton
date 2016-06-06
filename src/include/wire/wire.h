@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef WIRE_H
-#define WIRE_H
+#pragma once
 
 #include "socket_base.h"
 #include "sqlite.h"
@@ -20,9 +19,9 @@
 #include <iostream>
 #include <unordered_map>
 #include <boost/assign/list_of.hpp>
-#include "assert.h"
-#include "cache.h"
-#include "cache_entry.h"
+
+#include "common/cache.h"
+#include "wire/cache_entry.h"
 
 /* TXN state definitions */
 #define BUFFER_INIT_SIZE 100
@@ -58,9 +57,9 @@ struct Packet {
   uchar msg_type; // header
 
   // reserve buf's size as maximum packet size
-  inline Packet() { reset(); }
+  inline Packet() { Reset(); }
 
-  inline void reset() {
+  inline void Reset() {
     buf.resize(BUFFER_INIT_SIZE);
     buf.shrink_to_fit();
     buf.clear();
@@ -78,7 +77,7 @@ class PacketManager {
   uchar txn_state;
 
   // state to mang skipped queries
-  bool skipped_stmt_;
+  bool skipped_stmt_ = false;
   std::string skipped_query_;
   std::string skipped_query_type_;
 
@@ -90,54 +89,54 @@ class PacketManager {
    * is used to batch all the generated packets ofr that unit */
 
   // Generic error protocol packet
-  void send_error_response(
+  void SendErrorResponse(
       std::vector<std::pair<uchar, std::string>> error_status,
       ResponseBuffer& responses);
 
   // Sends ready for query packet to the frontend
-  void send_ready_for_query(uchar txn_status, ResponseBuffer& responses);
+  void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
 
   // Sends the attribute headers required by SELECT queries
-  void put_row_desc(std::vector<wiredb::FieldInfoType>& rowdesc, ResponseBuffer& responses);
+  void PutRowDesc(std::vector<wiredb::FieldInfoType>& rowdesc, ResponseBuffer& responses);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void send_data_rows(std::vector<wiredb::ResType>& results, int colcount, int &rows_affected,  ResponseBuffer& responses);
+  void SendDataRows(std::vector<wiredb::ResType>& results, int colcount, int &rows_affected,  ResponseBuffer& responses);
 
   // Used to send a packet that indicates the completion of a query. Also has txn state mgmt
-  void complete_command(const std::string& query_type,
+  void CompleteCommand(const std::string& query_type,
                         int rows, ResponseBuffer& responses);
 
   // Specific response for empty or NULL queries
-  void send_empty_query_response(ResponseBuffer& responses);
+  void SendEmptyQueryResponse(ResponseBuffer& responses);
 
   /* Helper function used to make hardcoded ParameterStatus('S')
    * packets during startup
    */
-  void make_hardcoded_parameter_status(ResponseBuffer& responses, const std::pair<std::string, std::string>& kv);
+  void MakeHardcodedParameterStatus(ResponseBuffer& responses, const std::pair<std::string, std::string>& kv);
 
   /* SQLite doesn't support "SET" and "SHOW" SQL commands.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
    * This function helps filtering out the execution for such cases
    */
-  bool hardcoded_execute_filter(std::string query_type);
+  bool HardcodedExecuteFilter(std::string query_type);
 
   /* Execute a Simple query protocol message */
-  void exec_query_message(Packet *pkt, ResponseBuffer &responses);
+  void ExecQueryMessage(Packet *pkt, ResponseBuffer &responses);
 
   /* Process the PARSE message of the extended query protocol */
-  void exec_parse_message(Packet *pkt, ResponseBuffer &responses);
+  void ExecParseMessage(Packet *pkt, ResponseBuffer &responses);
 
   /* Process the BIND message of the extended query protocol */
-  void exec_bind_message(Packet *pkt, ResponseBuffer &responses);
+  void ExecBindMessage(Packet *pkt, ResponseBuffer &responses);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  void exec_describe_message(Packet *pkt, ResponseBuffer &responses);
+  void ExecDescribeMessage(Packet *pkt, ResponseBuffer &responses);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void exec_execute_message(Packet *pkt, ResponseBuffer &response, ThreadGlobals& globals);
+  void ExecExecuteMessage(Packet *pkt, ResponseBuffer &response, ThreadGlobals& globals);
 
   /* closes the socket connection with the client */
-  void close_client();
+  void CloseClient();
 
  public:
 
@@ -145,15 +144,15 @@ class PacketManager {
       client(sock), txn_state(TXN_IDLE) {}
 
   /* Startup packet processing logic */
-  bool process_startup_packet(Packet* pkt, ResponseBuffer& responses);
+  bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Main switch case wrapper to process every packet apart from the startup packet */
-  bool process_packet(Packet* pkt, ThreadGlobals &globals, ResponseBuffer& responses);
+  bool ProcessPacket(Packet* pkt, ThreadGlobals &globals, ResponseBuffer& responses);
 
   /* Protocol manager */
-  void manage_packets(ThreadGlobals& globals);
+  void ManagePackets(ThreadGlobals& globals);
 };
-}
-}
 
-#endif  // WIRE_H
+}  // End wire namespace
+}  // End peloton namespace
+
