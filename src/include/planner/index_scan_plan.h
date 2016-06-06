@@ -4,7 +4,7 @@
 //
 // index_scan_plan.h
 //
-// Identification: src/planner/index_scan_plan.h
+// Identification: src/include/planner/index_scan_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

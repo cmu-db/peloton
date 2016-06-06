@@ -4,7 +4,7 @@
 //
 // query_node_printer.h
 //
-// Identification: src/optimizer/query_node_printer.h
+// Identification: src/include/optimizer/query_node_printer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,12 +28,12 @@ class QueryNodePrinter : QueryNodeVisitor {
 
   std::string print();
 
-  virtual void visit(const Variable*);
-  virtual void visit(const Constant*);
-  virtual void visit(const OperatorExpression*);
-  virtual void visit(const AndOperator*);
-  virtual void visit(const OrOperator*);
-  virtual void visit(const NotOperator*);
+  virtual void visit(const Variable *);
+  virtual void visit(const Constant *);
+  virtual void visit(const OperatorExpression *);
+  virtual void visit(const AndOperator *);
+  virtual void visit(const OrOperator *);
+  virtual void visit(const NotOperator *);
   virtual void visit(const Attribute *);
   virtual void visit(const Table *);
   virtual void visit(const Join *);

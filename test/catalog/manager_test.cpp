@@ -4,7 +4,7 @@
 //
 // manager_test.cpp
 //
-// Identification: tests/catalog/manager_test.cpp
+// Identification: test/catalog/manager_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -65,7 +65,7 @@ TEST_F(ManagerTests, TransactionTest) {
   LOG_INFO("Catalog allocations :: %u",
            catalog::Manager::GetInstance().GetCurrentOid());
 
-  //EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
+  // EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
 }
 
 }  // End test namespace

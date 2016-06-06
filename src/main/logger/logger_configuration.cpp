@@ -4,7 +4,7 @@
 //
 // logger_configuration.cpp
 //
-// Identification: src/benchmark/logger/logger_configuration.cpp
+// Identification: src/main/logger/logger_configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -36,8 +36,7 @@ void Usage(FILE* out) {
           "   -p --pcommit-latency   :  pcommit latency \n"
           "   -v --flush-mode        :  Flush mode \n"
           "   -w --commit-interval   :  Group commit interval \n"
-          "   -y --benchmark-type    :  Benchmark type \n"
-  );
+          "   -y --benchmark-type    :  Benchmark type \n");
 }
 
 static struct option opts[] = {
@@ -59,7 +58,8 @@ static void ValidateLoggingType(const configuration& state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("Logging_type :: %s", LoggingTypeToString(state.logging_type).c_str());
+  LOG_INFO("Logging_type :: %s",
+           LoggingTypeToString(state.logging_type).c_str());
 }
 
 std::string BenchmarkTypeToString(BenchmarkType type) {
@@ -121,19 +121,17 @@ std::string AsynchronousTypeToString(AsynchronousType type) {
   return "INVALID";
 }
 
-
-static void ValidateBenchmarkType(
-    const configuration& state) {
+static void ValidateBenchmarkType(const configuration& state) {
   if (state.benchmark_type <= 0 || state.benchmark_type > 3) {
     LOG_ERROR("Invalid benchmark_type :: %d", state.benchmark_type);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %s", "benchmark_type", BenchmarkTypeToString(state.benchmark_type).c_str());
+  LOG_INFO("%s : %s", "benchmark_type",
+           BenchmarkTypeToString(state.benchmark_type).c_str());
 }
 
-static void ValidateDataFileSize(
-    const configuration& state) {
+static void ValidateDataFileSize(const configuration& state) {
   if (state.data_file_size <= 0) {
     LOG_ERROR("Invalid data_file_size :: %lu", state.data_file_size);
     exit(EXIT_FAILURE);
@@ -142,14 +140,14 @@ static void ValidateDataFileSize(
   LOG_INFO("data_file_size :: %lu", state.data_file_size);
 }
 
-static void ValidateExperimentType(
-    const configuration& state) {
+static void ValidateExperimentType(const configuration& state) {
   if (state.experiment_type < 0 || state.experiment_type > 4) {
     LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %s", "experiment_type", ExperimentTypeToString(state.experiment_type).c_str());
+  LOG_INFO("%s : %s", "experiment_type",
+           ExperimentTypeToString(state.experiment_type).c_str());
 }
 
 static void ValidateWaitTimeout(const configuration& state) {
@@ -161,8 +159,7 @@ static void ValidateWaitTimeout(const configuration& state) {
   LOG_INFO("wait_timeout :: %d", state.wait_timeout);
 }
 
-static void ValidateFlushMode(
-    const configuration& state) {
+static void ValidateFlushMode(const configuration& state) {
   if (state.flush_mode <= 0 || state.flush_mode >= 3) {
     LOG_ERROR("Invalid flush_mode :: %d", state.flush_mode);
     exit(EXIT_FAILURE);
@@ -171,19 +168,18 @@ static void ValidateFlushMode(
   LOG_INFO("flush_mode :: %d", state.flush_mode);
 }
 
-static void ValidateAsynchronousMode(
-    const configuration& state) {
+static void ValidateAsynchronousMode(const configuration& state) {
   if (state.asynchronous_mode <= ASYNCHRONOUS_TYPE_INVALID ||
       state.asynchronous_mode > ASYNCHRONOUS_TYPE_DISABLED) {
     LOG_ERROR("Invalid asynchronous_mode :: %d", state.asynchronous_mode);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %s", "asynchronous_mode", AsynchronousTypeToString(state.asynchronous_mode).c_str());
+  LOG_INFO("%s : %s", "asynchronous_mode",
+           AsynchronousTypeToString(state.asynchronous_mode).c_str());
 }
 
-static void ValidateNVMLatency(
-    const configuration& state) {
+static void ValidateNVMLatency(const configuration& state) {
   if (state.nvm_latency < 0) {
     LOG_ERROR("Invalid nvm_latency :: %d", state.nvm_latency);
     exit(EXIT_FAILURE);
@@ -192,8 +188,7 @@ static void ValidateNVMLatency(
   LOG_INFO("nvm_latency :: %d", state.nvm_latency);
 }
 
-static void ValidatePCOMMITLatency(
-    const configuration& state) {
+static void ValidatePCOMMITLatency(const configuration& state) {
   if (state.pcommit_latency < 0) {
     LOG_ERROR("Invalid pcommit_latency :: %d", state.pcommit_latency);
     exit(EXIT_FAILURE);
@@ -202,8 +197,7 @@ static void ValidatePCOMMITLatency(
   LOG_INFO("pcommit_latency :: %d", state.pcommit_latency);
 }
 
-static void ValidateLogFileDir(
-    configuration& state) {
+static void ValidateLogFileDir(configuration& state) {
   struct stat data_stat;
 
   // Assign log file dir based on logging type
@@ -251,7 +245,6 @@ static void ValidateLogFileDir(
 }
 
 void ParseArguments(int argc, char* argv[], configuration& state) {
-
   // Default Logger Values
   state.logging_type = LOGGING_TYPE_NVM_WAL;
   state.log_file_dir = TMP_DIR;
@@ -284,13 +277,14 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // logger - a:e:f:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:s:u:
     // tpcc   - b:d:k:
-    int c = getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
+    int c =
+        getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
       case 'a':
-        state.asynchronous_mode = (AsynchronousType) atoi(optarg);
+        state.asynchronous_mode = (AsynchronousType)atoi(optarg);
         break;
       case 'e':
         state.experiment_type = (ExperimentType)atoi(optarg);
@@ -317,7 +311,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         state.benchmark_type = (BenchmarkType)atoi(optarg);
         break;
 
-        // YCSB
+      // YCSB
       case 'b':
         ycsb::state.backend_count = atoi(optarg);
         tpcc::state.backend_count = atoi(optarg);
@@ -367,7 +361,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ValidatePCOMMITLatency(state);
 
   // Print YCSB configuration
-  if(state.benchmark_type == BENCHMARK_TYPE_YCSB) {
+  if (state.benchmark_type == BENCHMARK_TYPE_YCSB) {
     ycsb::ValidateScaleFactor(ycsb::state);
     ycsb::ValidateColumnCount(ycsb::state);
     ycsb::ValidateUpdateRatio(ycsb::state);
@@ -376,7 +370,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     ycsb::ValidateSkewFactor(ycsb::state);
   }
   // Print TPCC configuration
-  else if(state.benchmark_type == BENCHMARK_TYPE_TPCC){
+  else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     tpcc::ValidateBackendCount(tpcc::state);
     tpcc::ValidateDuration(tpcc::state);
     tpcc::ValidateScaleFactor(tpcc::state);
@@ -388,7 +382,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     tpcc::state.customers_per_district = 30;
     tpcc::state.new_orders_per_district = 9;
   }
-
 }
 
 }  // namespace logger

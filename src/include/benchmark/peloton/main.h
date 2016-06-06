@@ -4,7 +4,7 @@
 //
 // main.h
 //
-// Identification: src/main/main.h
+// Identification: src/include/benchmark/peloton/main.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

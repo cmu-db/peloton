@@ -16,15 +16,13 @@
 #include "common/macros.h"
 #include "planner/abstract_plan.h"
 
-
 namespace peloton {
 
 /** @brief the constructor, nothing fancy here
  */
 template <class Key, class Value>
 Cache<Key, Value>::Cache(size_type capacity, size_t insert_threshold)
-    : capacity_(capacity),
-      insert_threshold_(insert_threshold) {}
+    : capacity_(capacity), insert_threshold_(insert_threshold) {}
 
 /* @brief find a value cached with key
  *
@@ -142,5 +140,4 @@ template class Cache<std::string,
                      const planner::AbstractPlan>; /* Actual in use */
 
 template class Cache<std::string, Statement>;
-
 }

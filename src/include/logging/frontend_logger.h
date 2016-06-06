@@ -4,7 +4,7 @@
 //
 // frontend_logger.h
 //
-// Identification: src/logging/frontend_logger.h
+// Identification: src/include/logging/frontend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // string_expression.h
 //
-// Identification: src/expression/string_expression.h
+// Identification: src/include/expression/string_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -77,8 +77,8 @@ class ConcatExpression : public AbstractExpression {
  private:
  public:
   ConcatExpression(AbstractExpression *lc, AbstractExpression *rc)
-      : AbstractExpression(EXPRESSION_TYPE_CONCAT, VALUE_TYPE_VARCHAR, lc, rc)
-  {}
+      : AbstractExpression(EXPRESSION_TYPE_CONCAT, VALUE_TYPE_VARCHAR, lc, rc) {
+  }
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                  executor::ExecutorContext *context) const override {

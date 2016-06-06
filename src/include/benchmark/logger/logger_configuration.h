@@ -4,7 +4,7 @@
 //
 // logger_configuration.h
 //
-// Identification: src/benchmark/logger/logger_configuration.h
+// Identification: src/include/benchmark/logger/logger_configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -49,7 +49,6 @@ enum AsynchronousType {
   ASYNCHRONOUS_TYPE_DISABLED = 3  // logging disabled
 };
 
-
 class configuration {
  public:
   // experiment type
@@ -81,7 +80,6 @@ class configuration {
 
   // asynchronous_mode
   AsynchronousType asynchronous_mode;
-
 };
 
 void Usage(FILE *out);

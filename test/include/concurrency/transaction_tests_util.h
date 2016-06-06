@@ -4,6 +4,18 @@
 //
 // transaction_tests_util.h
 //
+// Identification: test/include/concurrency/transaction_tests_util.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// transaction_tests_util.h
+//
 // Identification: tests/concurrency/transaction_tests_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
@@ -110,7 +122,7 @@ enum txn_op_t {
   TXN_OP_UPDATE_BY_VALUE
 };
 
-#define TXN_STORED_VALUE      -10000
+#define TXN_STORED_VALUE -10000
 
 class TransactionTestsUtil {
  public:
@@ -140,7 +152,8 @@ class TransactionTestsUtil {
   static bool ExecuteUpdate(concurrency::Transaction *txn,
                             storage::DataTable *table, int id, int value);
   static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
-                                   storage::DataTable *table, int old_value, int new_value);
+                                   storage::DataTable *table, int old_value,
+                                   int new_value);
   static bool ExecuteScan(concurrency::Transaction *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id);
@@ -170,7 +183,10 @@ struct TransactionSchedule {
   std::vector<int> results;
   int stored_value;
   int schedule_id;
-  TransactionSchedule(int schedule_id_) : txn_result(RESULT_FAILURE), stored_value(0), schedule_id(schedule_id_) {}
+  TransactionSchedule(int schedule_id_)
+      : txn_result(RESULT_FAILURE),
+        stored_value(0),
+        schedule_id(schedule_id_) {}
 };
 
 // A thread wrapper that runs a transaction
@@ -223,10 +239,8 @@ class TransactionThread {
     int id = schedule->operations[cur_seq].id;
     int value = schedule->operations[cur_seq].value;
 
-    if (id == TXN_STORED_VALUE)
-      id = schedule->stored_value;
-    if (value == TXN_STORED_VALUE)
-      value = schedule->stored_value;
+    if (id == TXN_STORED_VALUE) id = schedule->stored_value;
+    if (value == TXN_STORED_VALUE) value = schedule->stored_value;
 
     if (cur_seq == 0) txn = txn_manager->BeginTransaction();
     if (schedule->txn_result == RESULT_ABORTED) {
@@ -261,7 +275,8 @@ class TransactionThread {
       case TXN_OP_UPDATE: {
         execute_result =
             TransactionTestsUtil::ExecuteUpdate(txn, table, id, value);
-        LOG_INFO("Txn %d Update %d's value to %d, %d", schedule->schedule_id, id, value, execute_result);
+        LOG_INFO("Txn %d Update %d's value to %d, %d", schedule->schedule_id,
+                 id, value, execute_result);
         break;
       }
       case TXN_OP_SCAN: {
@@ -287,7 +302,8 @@ class TransactionThread {
       }
       case TXN_OP_COMMIT: {
         schedule->txn_result = txn_manager->CommitTransaction();
-        LOG_INFO("Txn %d commits: %s", schedule->schedule_id, schedule->txn_result == RESULT_SUCCESS ? "Success" : "Fail");
+        LOG_INFO("Txn %d commits: %s", schedule->schedule_id,
+                 schedule->txn_result == RESULT_SUCCESS ? "Success" : "Fail");
         txn = NULL;
         break;
       }
@@ -296,7 +312,9 @@ class TransactionThread {
         execute_result =
             TransactionTestsUtil::ExecuteRead(txn, table, id, result);
         schedule->results.push_back(result);
-        LOG_INFO("Txn %d READ_STORE, key: %d, read: %d, modify and stored as: %d", schedule->schedule_id, id, result, result+value);
+        LOG_INFO(
+            "Txn %d READ_STORE, key: %d, read: %d, modify and stored as: %d",
+            schedule->schedule_id, id, result, result + value);
         schedule->stored_value = result + value;
         break;
       }
@@ -328,10 +346,10 @@ class TransactionScheduler {
         table(datatable_),
         time(0),
         concurrent(false) {
-          for (size_t i = 0; i < num_txn; i++) {
-            schedules.emplace_back(i);
-          } 
-        }
+    for (size_t i = 0; i < num_txn; i++) {
+      schedules.emplace_back(i);
+    }
+  }
 
   void Run() {
     // Run the txns according to the schedule
@@ -400,20 +418,20 @@ class TransactionScheduler {
     sequence[time++] = cur_txn_id;
   }
   void UpdateByValue(int old_value, int new_value) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE, old_value, new_value);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_UPDATE_BY_VALUE,
+                                                  old_value, new_value);
     sequence[time++] = cur_txn_id;
   }
   // ReadStore will store the (result of read + modify) to the schedule, the
   // schedule may refer it by using TXN_STORED_VALUE in adding a new operation
   // to a schedule. See usage in isolation_level_test SIAnomalyTest.
   void ReadStore(int id, int modify) {
-    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id, modify);
+    schedules[cur_txn_id].operations.emplace_back(TXN_OP_READ_STORE, id,
+                                                  modify);
     sequence[time++] = cur_txn_id;
   }
 
-  void SetConcurrent(bool flag) {
-    concurrent = flag;
-  }
+  void SetConcurrent(bool flag) { concurrent = flag; }
 
   concurrency::TransactionManager *txn_manager;
   storage::DataTable *table;

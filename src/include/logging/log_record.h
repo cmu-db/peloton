@@ -4,6 +4,18 @@
 //
 // log_record.h
 //
+// Identification: src/include/logging/log_record.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_record.h
+//
 // Identification: src/logging/log_record.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group

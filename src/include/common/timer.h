@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // timer.h
 //
-// Identification: src/common/timer.h
+// Identification: src/include/common/timer.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,22 +23,19 @@ typedef std::chrono::high_resolution_clock clock_;
 
 typedef std::chrono::time_point<clock_> time_point_;
 
-template<typename ResolutionRatio = std::ratio<1> >
-class Timer{
-
+template <typename ResolutionRatio = std::ratio<1> >
+class Timer {
  public:
   Timer() : elapsed(0) {}
 
-  void Start(){
-    begin = clock_::now();
-  }
+  void Start() { begin = clock_::now(); }
 
   void Stop() {
     end = clock_::now();
 
-    double duration =
-        std::chrono::duration_cast<
-        std::chrono::duration<double, ResolutionRatio> >(end - begin).count();
+    double duration = std::chrono::duration_cast<
+                          std::chrono::duration<double, ResolutionRatio> >(
+                          end - begin).count();
 
     elapsed += duration;
   }
@@ -46,12 +43,9 @@ class Timer{
   void Reset() { elapsed = 0; }
 
   // Get Elapsed duration
-  double GetDuration() const {
-    return elapsed;
-  }
+  double GetDuration() const { return elapsed; }
 
  private:
-
   // Start
   time_point_ begin;
 

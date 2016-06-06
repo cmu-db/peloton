@@ -119,8 +119,10 @@ void BackendLogger::Log(LogRecord *record) {
   this->log_buffer_lock.Unlock();
 }
 
-// used by the frontend logger to collect data on the current state of the backend
-// returns a pair of commit ids, the first is the lower bound for values this logger may
+// used by the frontend logger to collect data on the current state of the
+// backend
+// returns a pair of commit ids, the first is the lower bound for values this
+// logger may
 // commit, The second is the maximum id this worker has committed
 std::pair<cid_t, cid_t> BackendLogger::PrepareLogBuffers() {
   this->log_buffer_lock.Lock();
@@ -157,7 +159,8 @@ void BackendLogger::GrantEmptyBuffer(std::unique_ptr<LogBuffer> empty_buffer) {
   available_buffer_pool_->Put(std::move(empty_buffer));
 }
 
-// set when the frontend logger is shutting down, prevents deadlock between frontend and backend
+// set when the frontend logger is shutting down, prevents deadlock between
+// frontend and backend
 void BackendLogger::SetShutdown(bool val) { shutdown = val; }
 }  // namespace logging
 }

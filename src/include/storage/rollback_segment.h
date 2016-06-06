@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// tile_group_header.h
+// rollback_segment.h
 //
-// Identification: src/storage/tile_group_header.h
+// Identification: src/include/storage/rollback_segment.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,7 +28,7 @@ namespace peloton {
 class VarlenPool;
 
 namespace catalog {
-  class Schema;
+class Schema;
 }
 
 namespace storage {
@@ -41,25 +41,26 @@ struct ColIdOffsetPair {
   size_t offset;
 };
 
-typedef char* RBSegType;
+typedef char *RBSegType;
 
 /* @brief per transaction rollback segment pool. Rollback segments genereted
- * by each transaction will be allocated from its own pool. The responsibility 
+ * by each transaction will be allocated from its own pool. The responsibility
  * of the RollbackSegmentPool is data (de)allocation, and garbage collection.
  */
 class RollbackSegmentPool {
-  RollbackSegmentPool(const RollbackSegmentPool&) = delete;
-  RollbackSegmentPool &operator=(const RollbackSegmentPool&) = delete;
-public:
+  RollbackSegmentPool(const RollbackSegmentPool &) = delete;
+  RollbackSegmentPool &operator=(const RollbackSegmentPool &) = delete;
+
+ public:
   /**
     * Data layout:
     * | next_seg_ptr (8 bytes) | timestamp (8 bytes) | column_count (8 bytes)
     * | id_offset_pairs (column_count * 16 bytes) | segment data
-    * 
+    *
     * Rollback segment is variable length byte buffer
     * - The first 8 byte field is a pointer to the next rollback segment on the
     *  singly linked rollback segment list
-    * - The next 8 byte field is the timestamp of a rollback segment. This is 
+    * - The next 8 byte field is the timestamp of a rollback segment. This is
     *  the *END* timestamp of the rollback segment, meaning that any transaction
     *  that has a smaller timestamp may be able to read it. The begin timestamp
     *  of a rollback segment is JUST the end timestamp of next rollback segment
@@ -72,19 +73,18 @@ public:
     * - Finally follows is the rollback segment's data
     */
   static const size_t next_ptr_offset_ = 0;
-  static const size_t timestamp_offset_ = next_ptr_offset_ + sizeof(void*);
+  static const size_t timestamp_offset_ = next_ptr_offset_ + sizeof(void *);
   static const size_t col_count_offset_ = timestamp_offset_ + sizeof(cid_t);
   static const size_t pairs_start_offset = col_count_offset_ + sizeof(size_t);
 
-  RollbackSegmentPool(BackendType backend_type):
-    pool_(backend_type), tombstone_(false), timestamp_(MAX_CID) {}
+  RollbackSegmentPool(BackendType backend_type)
+      : pool_(backend_type), tombstone_(false), timestamp_(MAX_CID) {}
 
-  RollbackSegmentPool(BackendType backend_type,
-                      uint64_t allocation_size,
+  RollbackSegmentPool(BackendType backend_type, uint64_t allocation_size,
                       uint64_t max_chunk_count)
-                      : pool_(backend_type, allocation_size, max_chunk_count),
-                        tombstone_(false),
-                        timestamp_(MAX_CID) {}
+      : pool_(backend_type, allocation_size, max_chunk_count),
+        tombstone_(false),
+        timestamp_(MAX_CID) {}
 
   // pool_ will be deallocated here, so all space will be reclaimed
   ~RollbackSegmentPool() {}
@@ -93,36 +93,32 @@ public:
    * Public Getters
    */
   inline static char *GetNextPtr(char *rb_seg) {
-    return *(reinterpret_cast<char**>(rb_seg + next_ptr_offset_));
+    return *(reinterpret_cast<char **>(rb_seg + next_ptr_offset_));
   }
 
   // The semantics of timestamp on rollback segment:
   //    The timestamp of a rollback segment stands for its "end timestamp".
-  //    The "start timestamp" of a rollback segment should be discovered from 
+  //    The "start timestamp" of a rollback segment should be discovered from
   //    the next rollback segment
   inline static cid_t GetTimeStamp(char *rb_seg) {
-    return *(reinterpret_cast<cid_t*>(rb_seg + timestamp_offset_));
+    return *(reinterpret_cast<cid_t *>(rb_seg + timestamp_offset_));
   }
 
   inline static size_t GetColCount(const char *rb_seg) {
-    return *(reinterpret_cast<const size_t*>(rb_seg + col_count_offset_));
+    return *(reinterpret_cast<const size_t *>(rb_seg + col_count_offset_));
   }
 
   inline static ColIdOffsetPair *GetIdOffsetPair(char *rb_seg, int idx) {
     PL_ASSERT(idx >= 0);
-    return (reinterpret_cast<ColIdOffsetPair*>(rb_seg + pairs_start_offset
-                                               + sizeof(ColIdOffsetPair) * idx));
+    return (reinterpret_cast<ColIdOffsetPair *>(rb_seg + pairs_start_offset +
+                                                sizeof(ColIdOffsetPair) * idx));
   }
 
-  inline cid_t GetPoolTimestamp() const {
-    return timestamp_;
-  }
+  inline cid_t GetPoolTimestamp() const { return timestamp_; }
 
-  inline bool IsMarkedAsGarbage() const {
-    return tombstone_;
-  }
+  inline bool IsMarkedAsGarbage() const { return tombstone_; }
 
-  inline static char * GetDataLocation(char *rb_seg) {
+  inline static char *GetDataLocation(char *rb_seg) {
     size_t col_count = GetColCount(rb_seg);
     return rb_seg + pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
   }
@@ -132,7 +128,7 @@ public:
     return GetDataLocation(rb_seg) + offset;
   }
 
-  // Get the value on the rollback segment by the table's schema and the idx 
+  // Get the value on the rollback segment by the table's schema and the idx
   // within this rollback segment
   static Value GetValue(char *rb_seg, const catalog::Schema *schema, int idx);
 
@@ -140,36 +136,32 @@ public:
   // Public setters
   /////////////////////
   inline static void SetNextPtr(char *rb_seg, const char *next_seg) {
-    *(reinterpret_cast<const char**>(rb_seg + next_ptr_offset_)) = next_seg;
+    *(reinterpret_cast<const char **>(rb_seg + next_ptr_offset_)) = next_seg;
   }
 
   inline static void SetTimeStamp(char *rb_seg, cid_t ts) {
-    *(reinterpret_cast<cid_t*>(rb_seg + timestamp_offset_)) = ts;
+    *(reinterpret_cast<cid_t *>(rb_seg + timestamp_offset_)) = ts;
   }
 
-  inline void SetPoolTimestamp(const cid_t ts) {
-    timestamp_ = ts;
-  }
+  inline void SetPoolTimestamp(const cid_t ts) { timestamp_ = ts; }
 
   // FIXME: should set timestamp_ as the next commit id here
-  inline void MarkedAsGarbage() {
-    tombstone_ = true;
-  }
+  inline void MarkedAsGarbage() { tombstone_ = true; }
 
   // Get a prepared rollback segment from a tuple
   // TODO: Return nullptr if there is no need to generate a new segment
   RBSegType CreateSegmentFromTuple(const catalog::Schema *schema,
-                            const TargetList &target_list,
-                            const AbstractTuple *tuple);
+                                   const TargetList &target_list,
+                                   const AbstractTuple *tuple);
 
-  inline static void SetColIdOffsetPair(char *rb_seg,
-                                 size_t idx, oid_t col_id, size_t off) {
+  inline static void SetColIdOffsetPair(char *rb_seg, size_t idx, oid_t col_id,
+                                        size_t off) {
     auto pair = GetIdOffsetPair(rb_seg, idx);
     pair->col_id = col_id;
     pair->offset = off;
   }
 
-private:
+ private:
   VarlenPool pool_;
   // If the pool has been marked as garbage
   bool tombstone_;
@@ -179,7 +171,7 @@ private:
   cid_t timestamp_;
 
   inline static void SetColCount(char *rb_seg, size_t col_count) {
-    *(reinterpret_cast<size_t*>(rb_seg + col_count_offset_)) = col_count;
+    *(reinterpret_cast<size_t *>(rb_seg + col_count_offset_)) = col_count;
   }
 };
 

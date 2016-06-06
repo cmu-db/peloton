@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// checkpoint.h
+//
+// Identification: src/include/logging/checkpoint.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * checkpoint.h
@@ -20,7 +32,7 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class Tuple;
 class DataTable;
 }
@@ -68,14 +80,14 @@ class Checkpoint {
   bool disable_file_access = false;
 
   // Default checkpoint interval (seconds)
-  //TODO set interval to configurable variable
+  // TODO set interval to configurable variable
   int64_t checkpoint_interval_ = 5;
 
   // variable length memory pool
-  //TODO better periodically clean up varlen pool?
+  // TODO better periodically clean up varlen pool?
   std::unique_ptr<VarlenPool> pool;
 
-  //TODO set directory to configurable variables
+  // TODO set directory to configurable variables
   std::string checkpoint_dir = "pl_checkpoint";
 
   // the version of next checkpoint

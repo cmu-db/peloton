@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.cpp
+// speculative_read_txn_manager.cpp
 //
 // Identification: src/concurrency/speculative_read_txn_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -171,12 +171,13 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
                                    ->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
 
@@ -210,9 +211,9 @@ void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &location) {
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) ==
-         current_txn->GetBeginCommitId());
+            current_txn->GetBeginCommitId());
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
@@ -237,12 +238,13 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &old_location,
                                    ->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   new_tile_group_header->SetBeginCommitId(new_location.offset, txn_begin_id);
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
@@ -273,9 +275,9 @@ void SpeculativeReadTxnManager::PerformDelete(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) ==
-         current_txn->GetBeginCommitId());
+            current_txn->GetBeginCommitId());
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
@@ -384,7 +386,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -394,7 +396,7 @@ Result SpeculativeReadTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);

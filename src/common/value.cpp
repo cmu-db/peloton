@@ -126,8 +126,7 @@ Value::Value(const Value &other) {
   }
 }
 
-Value Value::Clone(const Value &src,
-                   VarlenPool *varlen_pool UNUSED_ATTRIBUTE) {
+Value Value::Clone(const Value &src, VarlenPool *varlen_pool UNUSED_ATTRIBUTE) {
   Value rv = src;
 
   return rv;
@@ -168,8 +167,7 @@ Value Value::CastAs(ValueType type) const {
       return CastAsDecimal();
     default:
       std::string message =
-          "Type not a recognized type for casting : " +
-          std::to_string(type);
+          "Type not a recognized type for casting : " + std::to_string(type);
       throw Exception(message);
   }
 }
@@ -183,7 +181,7 @@ void Value::AllocateObjectFromInlinedValue(VarlenPool *pool) {
     return;
   }
   PL_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
-         m_valueType == VALUE_TYPE_VARBINARY);
+            m_valueType == VALUE_TYPE_VARBINARY);
   PL_ASSERT(m_sourceInlined);
 
   if (IsNull()) {
@@ -222,7 +220,7 @@ void Value::AllocateObjectFromOutlinedValue() {
     return;
   }
   PL_ASSERT(m_valueType == VALUE_TYPE_VARCHAR ||
-         m_valueType == VALUE_TYPE_VARBINARY);
+            m_valueType == VALUE_TYPE_VARBINARY);
   PL_ASSERT(!m_sourceInlined);
 
   if (IsNull()) {

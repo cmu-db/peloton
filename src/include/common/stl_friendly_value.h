@@ -4,7 +4,7 @@
 //
 // stl_friendly_value.h
 //
-// Identification: src/common/stl_friendly_value.h
+// Identification: src/include/common/stl_friendly_value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

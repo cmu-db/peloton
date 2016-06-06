@@ -4,7 +4,7 @@
 //
 // value_array_test.cpp
 //
-// Identification: tests/common/value_array_test.cpp
+// Identification: test/common/value_array_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

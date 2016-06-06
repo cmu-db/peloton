@@ -4,7 +4,7 @@
 //
 // log_manager.h
 //
-// Identification: src/logging/log_manager.h
+// Identification: src/include/logging/log_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -170,7 +170,8 @@ class LogManager {
   // remove all frontend loggers (used for testing)
   void DropFrontendLoggers();
 
-  // perpare to log must be called before a commit id is generated for a transaction
+  // perpare to log must be called before a commit id is generated for a
+  // transaction
   void PrepareLogging();
 
   // log the beginning of a commited transaction
@@ -178,7 +179,7 @@ class LogManager {
 
   // log an update
   void LogUpdate(cid_t commit_id, const ItemPointer &old_version,
-		  const ItemPointer &new_version);
+                 const ItemPointer &new_version);
 
   // log an insert
   void LogInsert(cid_t commit_id, const ItemPointer &new_location);
@@ -205,7 +206,8 @@ class LogManager {
     global_max_flushed_id_for_recovery = new_max;
   }
 
-  // updates the catalog and transaction managers to the correct oid and cid after recovery
+  // updates the catalog and transaction managers to the correct oid and cid
+  // after recovery
   void UpdateCatalogAndTxnManagers(oid_t new_oid, cid_t new_cid);
 
   // set the maximum commit id which has been persisted to disk
@@ -230,7 +232,8 @@ class LogManager {
   // get the beginning capacity of a log buffer
   inline unsigned int GetLogBufferCapacity() { return log_buffer_capacity_; }
 
-  // set the initial capacity of log buffers passed between frontend and backend loggers
+  // set the initial capacity of log buffers passed between frontend and backend
+  // loggers
   inline void SetLogBufferCapacity(unsigned int log_buffer_capacity) {
     log_buffer_capacity_ = log_buffer_capacity;
   }
@@ -267,7 +270,6 @@ class LogManager {
 
   LoggingStatus logging_status = LOGGING_STATUS_TYPE_INVALID;
 
-
   bool prepared_recovery_ = false;
 
   // To synch the status
@@ -302,7 +304,8 @@ class LogManager {
 
   cid_t global_max_flushed_commit_id = 0;
 
-  // number the fronted loggers who have updated the manager of their max oid and cid
+  // number the fronted loggers who have updated the manager of their max oid
+  // and cid
   int update_managers_count = 0;
 
   // max oid after recovery

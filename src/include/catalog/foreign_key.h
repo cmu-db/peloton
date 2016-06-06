@@ -4,7 +4,7 @@
 //
 // foreign_key.h
 //
-// Identification: src/catalog/foreign_key.h
+// Identification: src/include/catalog/foreign_key.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -31,8 +31,7 @@ class ForeignKey {
   ForeignKey(oid_t sink_table_id, std::vector<std::string> pk_column_names,
              std::vector<oid_t> pk_column_offsets,
              std::vector<std::string> fk_column_names,
-             std::vector<oid_t> fk_column_offsets,
-             char fk_update_action,
+             std::vector<oid_t> fk_column_offsets, char fk_update_action,
              char fk_delete_action, std::string constraint_name)
 
       : sink_table_id(sink_table_id),

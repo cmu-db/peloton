@@ -4,7 +4,7 @@
 //
 // expression_util.h
 //
-// Identification: src/expression/expression_util.h
+// Identification: src/include/expression/expression_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,6 @@ namespace expression {
 
 class ExpressionUtil {
  public:
-
   //===--------------------------------------------------------------------===//
   // Factories
   //===--------------------------------------------------------------------===//
@@ -35,8 +34,7 @@ class ExpressionUtil {
 
   // convert the enumerated value type into a concrete c type for the
   //  operator expression templated ctors
-  static AbstractExpression *OperatorFactory(ExpressionType et,
-                                             ValueType vt,
+  static AbstractExpression *OperatorFactory(ExpressionType et, ValueType vt,
                                              AbstractExpression *first,
                                              AbstractExpression *second,
                                              AbstractExpression *third,
@@ -83,7 +81,6 @@ class ExpressionUtil {
                                                int value_idx);
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
-
 };
 
 }  // End expression namespace

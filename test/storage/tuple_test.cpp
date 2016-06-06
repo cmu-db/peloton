@@ -4,7 +4,7 @@
 //
 // tuple_test.cpp
 //
-// Identification: tests/storage/tuple_test.cpp
+// Identification: test/storage/tuple_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

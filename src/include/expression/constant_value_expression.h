@@ -4,7 +4,7 @@
 //
 // constant_value_expression.h
 //
-// Identification: src/expression/constant_value_expression.h
+// Identification: src/include/expression/constant_value_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -34,10 +34,10 @@ class ConstantValueExpression : public AbstractExpression {
     this->value = ValueFactory::Clone(value, nullptr);
   }
 
-  Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
-                 UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-                 UNUSED_ATTRIBUTE
-                 executor::ExecutorContext *context) const override {
+  Value Evaluate(
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
+      UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     LOG_TRACE("returning constant value as Value:%s type:%d",
               value.GetInfo().c_str(), (int)this->m_type);
     return this->value;

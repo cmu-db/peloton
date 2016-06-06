@@ -4,7 +4,7 @@
 //
 // tuple_address_expression.h
 //
-// Identification: src/expression/tuple_address_expression.h
+// Identification: src/include/expression/tuple_address_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -30,10 +30,9 @@ class TupleAddressExpression : public AbstractExpression {
       : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS,
                            VALUE_TYPE_ADDRESS) {}
 
-  inline Value Evaluate(const AbstractTuple *tuple1,
-                        UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-                        UNUSED_ATTRIBUTE
-                        executor::ExecutorContext *context) const {
+  inline Value Evaluate(
+      const AbstractTuple *tuple1, UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
     return ValueFactory::GetAddressValue(tuple1->GetData());
   }
 

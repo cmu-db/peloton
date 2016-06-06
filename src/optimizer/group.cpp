@@ -27,14 +27,12 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr) {
 }
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
-                              double cost,
-                              PropertySet properties)
-{
+                              double cost, PropertySet properties) {
   auto it = lowest_cost_expressions.find(properties);
   if (it == lowest_cost_expressions.end()) {
     // No other cost to compare against
     lowest_cost_expressions.insert(
-      std::make_pair(properties, std::make_tuple(cost, expr)));
+        std::make_pair(properties, std::make_tuple(cost, expr)));
   } else {
     // Only insert if the cost is lower than the existing cost
     if (std::get<0>(it->second) > cost) {
@@ -44,8 +42,7 @@ void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
 }
 
 std::shared_ptr<GroupExpression> Group::GetBestExpression(
-  PropertySet properties)
-{
+    PropertySet properties) {
   auto it = lowest_cost_expressions.find(properties);
   if (it != lowest_cost_expressions.end()) {
     return std::get<1>(it->second);
@@ -53,8 +50,8 @@ std::shared_ptr<GroupExpression> Group::GetBestExpression(
   return nullptr;
 }
 
-const std::vector<std::shared_ptr<GroupExpression>>
-&Group::GetExpressions() const {
+const std::vector<std::shared_ptr<GroupExpression>> &Group::GetExpressions()
+    const {
   return expressions;
 }
 

@@ -4,7 +4,7 @@
 //
 // abstract_table.h
 //
-// Identification: src/storage/abstract_table.h
+// Identification: src/include/storage/abstract_table.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

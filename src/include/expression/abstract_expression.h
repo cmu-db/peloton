@@ -4,7 +4,7 @@
 //
 // abstract_expression.h
 //
-// Identification: src/expression/abstract_expression.h
+// Identification: src/include/expression/abstract_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -99,11 +99,11 @@ class AbstractExpression : public Printable {
  public:
   // Parser stuff
   int ival = 0;
-  AbstractExpression* expr = nullptr;
+  AbstractExpression *expr = nullptr;
 
-  char* name = nullptr;
-  char* column = nullptr;
-  char* alias = nullptr;
+  char *name = nullptr;
+  char *column = nullptr;
+  char *alias = nullptr;
 
   bool distinct = false;
 

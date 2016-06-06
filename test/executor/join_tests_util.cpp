@@ -4,7 +4,7 @@
 //
 // join_tests_util.cpp
 //
-// Identification: tests/executor/join_tests_util.cpp
+// Identification: test/executor/join_tests_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -50,23 +50,18 @@ std::unique_ptr<const planner::ProjectInfo> JoinTestsUtil::CreateProjection() {
   /////////////////////////////////////////////////////////
 
   // direct map
-  DirectMap direct_map1 =
-      std::make_pair(0, std::make_pair(0, 1));
-  DirectMap direct_map2 =
-      std::make_pair(1, std::make_pair(1, 1));
-  DirectMap direct_map3 =
-      std::make_pair(2, std::make_pair(1, 0));
-  DirectMap direct_map4 =
-      std::make_pair(3, std::make_pair(0, 0));
+  DirectMap direct_map1 = std::make_pair(0, std::make_pair(0, 1));
+  DirectMap direct_map2 = std::make_pair(1, std::make_pair(1, 1));
+  DirectMap direct_map3 = std::make_pair(2, std::make_pair(1, 0));
+  DirectMap direct_map4 = std::make_pair(3, std::make_pair(0, 0));
 
   direct_map_list.push_back(direct_map1);
   direct_map_list.push_back(direct_map2);
   direct_map_list.push_back(direct_map3);
   direct_map_list.push_back(direct_map4);
 
-  return std::unique_ptr<const planner::ProjectInfo>(
-      new planner::ProjectInfo(std::move(target_list),
-                               std::move(direct_map_list)));
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
 }
 
 // Create complicated join predicate

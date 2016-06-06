@@ -4,7 +4,7 @@
 //
 // cast_expression.h
 //
-// Identification: src/expression/cast_expression.h
+// Identification: src/include/expression/cast_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -37,7 +37,7 @@ class CastExpression : public AbstractExpression {
     PL_ASSERT(GetValueType() != VALUE_TYPE_INVALID);
     Value child_value = GetLeft()->Evaluate(tuple1, tuple2, econtext);
     LOG_TRACE("CastExpr: cast %d as %d", child_value.GetValueType(),
-             GetValueType());
+              GetValueType());
 
     switch (GetValueType()) {
       case VALUE_TYPE_VARCHAR:

@@ -4,7 +4,7 @@
 //
 // logger_workload.h
 //
-// Identification: src/benchmark/logger/logger_workload.h
+// Identification: src/include/benchmark/logger/logger_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

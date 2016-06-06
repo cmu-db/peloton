@@ -4,7 +4,7 @@
 //
 // pool.h
 //
-// Identification: src/common/pool.h
+// Identification: src/include/common/pool.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -65,11 +65,9 @@ class VarlenPool {
   VarlenPool &operator=(const VarlenPool &) = delete;
 
  public:
-
   VarlenPool(BackendType backend_type);
 
-  VarlenPool(BackendType backend_type,
-             uint64_t allocation_size,
+  VarlenPool(BackendType backend_type, uint64_t allocation_size,
              uint64_t max_chunk_count);
 
   ~VarlenPool();

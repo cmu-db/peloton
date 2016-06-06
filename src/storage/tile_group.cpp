@@ -94,13 +94,14 @@ oid_t TileGroup::GetActiveTupleCount() const {
  * Apply the column delta on the rollback segment to the given tuple
  */
 void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
-
   auto seg_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
   auto table_schema = GetAbstractTable()->GetSchema();
 
   for (size_t idx = 0; idx < seg_col_count; ++idx) {
-    auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
-    Value col_value = storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
+    auto col_id =
+        storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, idx)->col_id;
+    Value col_value =
+        storage::RollbackSegmentPool::GetValue(rb_seg, table_schema, idx);
 
     // Get target tile
     auto tile_id = GetTileIdFromColumnId(col_id);
@@ -122,15 +123,14 @@ void TileGroup::ApplyRollbackSegment(char *rb_seg, const oid_t &tuple_slot_id) {
   }
 }
 
-
 /**
  * Grab next slot (thread-safe) and fill in the tuple
  *
  * Returns slot where inserted (INVALID_ID if not inserted)
  */
 void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -158,8 +158,8 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
 
 // This is commented out before merge
 void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
   auto schema = table->GetSchema();
 
   PL_ASSERT(tuple->GetColumnCount() == schema->GetColumnCount());
@@ -177,8 +177,8 @@ void TileGroup::CopyTuple(const oid_t &tuple_slot_id, Tuple *tuple) {
 oid_t TileGroup::InsertTuple(const Tuple *tuple) {
   oid_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   // No more slots
   if (tuple_slot_id == INVALID_OID) {
@@ -209,9 +209,9 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     }
   }
 
-
   // Set MVCC info
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) == INVALID_TXN_ID);
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot_id) ==
+            INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
 
@@ -238,8 +238,8 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
     return tuple_slot_id;
   }
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -278,7 +278,6 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
 }
 
 oid_t TileGroup::DeleteTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id) {
-
   auto status = tile_group_header->GetEmptyTupleSlot(tuple_slot_id);
 
   tile_group_header->GetHeaderLock().Lock();
@@ -345,8 +344,8 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   // No more slots
   if (status == false) return INVALID_OID;
 
-  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ",
-            tile_group_id, tuple_slot_id, num_tuple_slots);
+  LOG_TRACE("Tile Group Id :: %u status :: %u out of %u slots ", tile_group_id,
+            tuple_slot_id, num_tuple_slots);
 
   oid_t tile_column_count;
   oid_t column_itr = 0;

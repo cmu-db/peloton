@@ -18,7 +18,7 @@ namespace peloton {
 namespace optimizer {
 
 QueryNodePrinter::QueryNodePrinter(Select *op)
-  : op_(op), depth_(0), new_line_(false) {}
+    : op_(op), depth_(0), new_line_(false) {}
 
 std::string QueryNodePrinter::print() {
   if (printed_op_.empty()) {
@@ -39,15 +39,14 @@ void QueryNodePrinter::visit(const Constant *op) {
   (void)op;
 }
 
-void QueryNodePrinter::visit(const OperatorExpression* op) {
-  push_header("OperatorExpression, type: " +
-              ExpressionTypeToString(op->type) +
+void QueryNodePrinter::visit(const OperatorExpression *op) {
+  push_header("OperatorExpression, type: " + ExpressionTypeToString(op->type) +
               ", return_type: " + ValueTypeToString(op->value_type));
   for (QueryExpression *e : op->args) {
     e->accept(this);
     append_line();
   }
-  pop(); // OperatorExpression
+  pop();  // OperatorExpression
 }
 
 void QueryNodePrinter::visit(const AndOperator *op) {
@@ -56,7 +55,7 @@ void QueryNodePrinter::visit(const AndOperator *op) {
     e->accept(this);
     append_line();
   }
-  pop(); // And
+  pop();  // And
 }
 
 void QueryNodePrinter::visit(const OrOperator *op) {
@@ -65,7 +64,7 @@ void QueryNodePrinter::visit(const OrOperator *op) {
     e->accept(this);
     append_line();
   }
-  pop(); // Or
+  pop();  // Or
 }
 
 void QueryNodePrinter::visit(const NotOperator *op) {
@@ -87,19 +86,19 @@ void QueryNodePrinter::visit(const Table *op) {
 
 void QueryNodePrinter::visit(const Join *op) {
   // TODO: Fix this
-  //push_header("Join: type " + PelotonJoinTypeToString(op->join_type));
+  // push_header("Join: type " + PelotonJoinTypeToString(op->join_type));
   push_header("Left child");
   op->left_node->accept(this);
   append_line();
-  pop(); // Left child
+  pop();  // Left child
   push_header("Right child");
   op->right_node->accept(this);
   append_line();
-  pop(); // Right child
+  pop();  // Right child
   push_header("Predicate");
   op->predicate->accept(this);
   append_line();
-  pop(); // Join
+  pop();  // Join
 }
 
 void QueryNodePrinter::visit(const OrderBy *op) {
@@ -107,16 +106,15 @@ void QueryNodePrinter::visit(const OrderBy *op) {
   append("output_column_index " + std::to_string(op->output_list_index));
   append(", ");
   // TODO: Fix this
-  //append("equalify_fn " + ExpressionTypeToString(op->equality_fn.exprtype));
+  // append("equalify_fn " + ExpressionTypeToString(op->equality_fn.exprtype));
   append(", ");
-  //append("sort_fn " + ExpressionTypeToString(op->sort_fn.exprtype));
+  // append("sort_fn " + ExpressionTypeToString(op->sort_fn.exprtype));
   append(", ");
   append("hashable " + std::to_string(op->hashable));
   append(", ");
   append("nulls_first " + std::to_string(op->nulls_first));
   append(", ");
   append("reverse " + std::to_string(op->reverse));
-
 }
 
 void QueryNodePrinter::visit(const Select *op) {
@@ -127,14 +125,14 @@ void QueryNodePrinter::visit(const Select *op) {
     op->join_tree->accept(this);
     append_line();
   }
-  pop(); // Join Tree
+  pop();  // Join Tree
 
   push_header("Where Predicate");
   if (op->where_predicate) {
     op->where_predicate->accept(this);
     append_line();
   }
-  pop(); // Where predicate
+  pop();  // Where predicate
 
   push_header("Output list");
   for (size_t i = 0; i < op->output_list.size(); ++i) {
@@ -142,7 +140,7 @@ void QueryNodePrinter::visit(const Select *op) {
     attr->accept(this);
     append_line();
   }
-  pop(); // Output list
+  pop();  // Output list
 
   push_header("Orderings");
   for (size_t i = 0; i < op->orderings.size(); ++i) {
@@ -152,7 +150,7 @@ void QueryNodePrinter::visit(const Select *op) {
   }
   pop();
 
-  pop(); // Select
+  pop();  // Select
 }
 
 void QueryNodePrinter::append(const std::string &string) {
@@ -172,13 +170,9 @@ void QueryNodePrinter::append_line(const std::string &string) {
   }
 }
 
-void QueryNodePrinter::append_line() {
-  append_line("");
-}
+void QueryNodePrinter::append_line() { append_line(""); }
 
-void QueryNodePrinter::push() {
-  depth_++;
-}
+void QueryNodePrinter::push() { depth_++; }
 
 void QueryNodePrinter::push_header(const std::string &string) {
   append_line(string);

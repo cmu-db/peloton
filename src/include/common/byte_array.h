@@ -4,7 +4,7 @@
 //
 // byte_array.h
 //
-// Identification: src/common/byte_array.h
+// Identification: src/include/common/byte_array.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -110,7 +110,7 @@ class GenericArray {
     PL_ASSERT(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
     PL_MEMSET(newData.get(), 0,
-             newLength * sizeof(T));  /// makes valgrind happy.
+              newLength * sizeof(T));  /// makes valgrind happy.
     PL_MEMCPY(newData.get(), array_data.get(), array_length * sizeof(T));
     array_data = newData;
     array_length = newLength;
@@ -127,7 +127,7 @@ class GenericArray {
     PL_ASSERT(array_length >= offset + assignedLength);
     PL_ASSERT(offset >= 0);
     PL_MEMCPY(array_data.get() + offset, assignedData,
-             assignedLength * sizeof(T));
+              assignedLength * sizeof(T));
   };
 
   GenericArray<T> operator+(const GenericArray<T> &tail) const {

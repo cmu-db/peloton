@@ -4,7 +4,7 @@
 //
 // properties.h
 //
-// Identification: src/optimizer/properties.h
+// Identification: src/include/optimizer/properties.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

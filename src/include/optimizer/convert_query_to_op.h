@@ -4,7 +4,7 @@
 //
 // convert_query_to_op.h
 //
-// Identification: src/optimizer/convert_query_to_op.h
+// Identification: src/include/optimizer/convert_query_to_op.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,8 +22,7 @@ namespace peloton {
 namespace optimizer {
 
 std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
-  ColumnManager &manager,
-  std::shared_ptr<Select> op);
+    ColumnManager &manager, std::shared_ptr<Select> op);
 
 } /* namespace optimizer */
 } /* namespace peloton */

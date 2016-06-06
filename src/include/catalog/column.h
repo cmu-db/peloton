@@ -4,7 +4,7 @@
 //
 // column.h
 //
-// Identification: src/catalog/column.h
+// Identification: src/include/catalog/column.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

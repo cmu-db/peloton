@@ -4,7 +4,7 @@
 //
 // append_plan.h
 //
-// Identification: src/planner/append_plan.h
+// Identification: src/include/planner/append_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

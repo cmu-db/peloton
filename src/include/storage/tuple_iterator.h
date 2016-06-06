@@ -4,7 +4,7 @@
 //
 // tuple_iterator.h
 //
-// Identification: src/storage/tuple_iterator.h
+// Identification: src/include/storage/tuple_iterator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

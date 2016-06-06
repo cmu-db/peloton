@@ -4,7 +4,7 @@
 //
 // value_peeker.h
 //
-// Identification: src/common/value_peeker.h
+// Identification: src/include/common/value_peeker.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -80,19 +80,19 @@ class ValuePeeker {
 
   static inline void *PeekObjectValue(const Value &value) {
     PL_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
-           (value.GetValueType() == VALUE_TYPE_VARBINARY));
+              (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectValue();
   }
 
   static inline void *PeekObjectValueWithoutNull(const Value &value) {
     PL_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
-           (value.GetValueType() == VALUE_TYPE_VARBINARY));
+              (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectValueWithoutNull();
   }
 
   static inline int32_t PeekObjectLengthWithoutNull(const Value &value) {
     PL_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
-           (value.GetValueType() == VALUE_TYPE_VARBINARY));
+              (value.GetValueType() == VALUE_TYPE_VARBINARY));
     return value.GetObjectLengthWithoutNull();
   }
 
@@ -102,7 +102,7 @@ class ValuePeeker {
    */
   static std::string PeekStringCopyWithoutNull(const Value &value) {
     PL_ASSERT((value.GetValueType() == VALUE_TYPE_VARCHAR) ||
-           (value.GetValueType() == VALUE_TYPE_VARBINARY));
+              (value.GetValueType() == VALUE_TYPE_VARBINARY));
     std::string result(
         reinterpret_cast<const char *>(value.GetObjectValueWithoutNull()),
         value.GetObjectLengthWithoutNull());

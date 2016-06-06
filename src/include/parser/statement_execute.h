@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// statement_execute.h
+//
+// Identification: src/include/parser/statement_execute.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "parser/sql_statement.h"
@@ -10,26 +22,22 @@ namespace parser {
  * @brief Represents "EXECUTE ins_prep(100, "test", 2.3);"
  */
 struct ExecuteStatement : SQLStatement {
-	ExecuteStatement() :
-		SQLStatement(STATEMENT_TYPE_EXECUTE),
-		name(NULL),
-		parameters(NULL) {}
-	
-	virtual ~ExecuteStatement() {
-	  free(name);
+  ExecuteStatement()
+      : SQLStatement(STATEMENT_TYPE_EXECUTE), name(NULL), parameters(NULL) {}
 
-	  if(parameters){
-	    for(auto expr : *parameters)
-	      delete expr;
-	  }
+  virtual ~ExecuteStatement() {
+    free(name);
 
-		delete parameters;
-	}
+    if (parameters) {
+      for (auto expr : *parameters) delete expr;
+    }
 
-	char* name;
-	std::vector<expression::AbstractExpression*>* parameters;
+    delete parameters;
+  }
+
+  char* name;
+  std::vector<expression::AbstractExpression*>* parameters;
 };
 
-
-} // End parser namespace
-} // End peloton namespace
+}  // End parser namespace
+}  // End peloton namespace

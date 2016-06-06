@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // checkpoint_test.cpp
 //
-// Identification: tests/logging/checkpoint_test.cpp
+// Identification: test/logging/checkpoint_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -132,7 +132,8 @@ TEST_F(CheckpointTests, CheckpointScanTest) {
   txn_manager.CommitTransaction();
 
   auto cid = txn_manager.GetNextCommitId() - 1;
-  LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int) cid, (int) txn_manager.GetMaxCommittedCid());
+  LOG_INFO("Scan with cid = %d. MaxCommittedCid = %d", (int) cid, (int)
+txn_manager.GetMaxCommittedCid());
   auto schema = target_table->GetSchema();
   std::vector<oid_t> column_ids;
   column_ids.resize(schema->GetColumnCount());

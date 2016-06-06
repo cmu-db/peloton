@@ -4,7 +4,7 @@
 //
 // constraints_tests_util.cpp
 //
-// Identification: tests/catalog/constraints_tests_util.cpp
+// Identification: test/catalog/constraints_tests_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -116,10 +116,9 @@ catalog::Column ConstraintsTestsUtil::GetColumnInfo(int index) {
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ConstraintsTestsUtil::PopulateTable(UNUSED_ATTRIBUTE
-                                         concurrency::Transaction *transaction,
-                                         storage::DataTable *table,
-                                         int num_rows) {
+void ConstraintsTestsUtil::PopulateTable(
+    UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
+    storage::DataTable *table, int num_rows) {
   // Ensure that the tile group is as expected.
   UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();
   PL_ASSERT(schema->GetColumnCount() == 4);

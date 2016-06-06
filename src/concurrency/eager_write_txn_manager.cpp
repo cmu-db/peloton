@@ -283,12 +283,13 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
   // if we can perform update, then we must have already locked the older
   // version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   // The write lock must have been acquired
   // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
@@ -314,7 +315,7 @@ void EagerWriteTxnManager::PerformUpdate(const ItemPointer &location) {
 
   // Set MVCC info
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
@@ -339,12 +340,13 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &old_location,
                                    ->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -366,7 +368,7 @@ void EagerWriteTxnManager::PerformDelete(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
@@ -417,14 +419,12 @@ Result EagerWriteTxnManager::CommitTransaction() {
   // Wait for all dependencies to finish
   LOG_TRACE("Start waiting");
   LOG_TRACE("Current wait for counter = %d",
-           current_txn_ctx->wait_for_counter_ - 0);
+            current_txn_ctx->wait_for_counter_ - 0);
   while (current_txn_ctx->wait_for_counter_ != 0) {
     //    std::chrono::microseconds sleep_time(1);
     //    std::this_thread::sleep_for(sleep_time);
   }
   LOG_TRACE("End waiting");
-
-
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.LogBeginTransaction(end_commit_id);
@@ -547,7 +547,8 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset,
+                                                  INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
@@ -572,7 +573,8 @@ Result EagerWriteTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset,
+                                                  INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
@@ -647,10 +649,10 @@ bool EagerWriteTxnManager::CauseDeadLock() {
 // init reserved area of a tuple
 // creator txnid | lock (for read list) | read list head
 // The txn_id could only be the cur_txn's txn id.
-void EagerWriteTxnManager::InitTupleReserved(const oid_t tile_group_id, const oid_t tuple_id) {
-
-  auto tile_group_header = catalog::Manager::GetInstance()
-      .GetTileGroup(tile_group_id)->GetHeader();
+void EagerWriteTxnManager::InitTupleReserved(const oid_t tile_group_id,
+                                             const oid_t tuple_id) {
+  auto tile_group_header =
+      catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
   auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
@@ -658,7 +660,5 @@ void EagerWriteTxnManager::InitTupleReserved(const oid_t tile_group_id, const oi
   // Hack
   *(TxnList *)(reserved_area + LIST_OFFSET) = TxnList(0);
 }
-
-
 }
 }

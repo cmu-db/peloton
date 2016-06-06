@@ -4,7 +4,7 @@
 //
 // database.h
 //
-// Identification: src/storage/database.h
+// Identification: src/include/storage/database.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

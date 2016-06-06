@@ -167,7 +167,8 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   }
 
   LOG_TRACE("tile group count: %lu, tile group id: %u, address: %p",
-            tile_group_count_.load(), tile_group->GetTileGroupId(), tile_group.get());
+            tile_group_count_.load(), tile_group->GetTileGroupId(),
+            tile_group.get());
 
   // Set tuple location
   ItemPointer location(tile_group_id, tuple_slot);
@@ -370,7 +371,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                           UNUSED_ATTRIBUTE) {
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =

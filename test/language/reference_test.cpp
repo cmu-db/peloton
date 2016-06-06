@@ -4,7 +4,7 @@
 //
 // reference_test.cpp
 //
-// Identification: tests/language/reference_test.cpp
+// Identification: test/language/reference_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -73,8 +73,8 @@ TEST_F(ReferenceTests, BasicTest) {
   //    int& bad = cr; // error: less cv-qualified
   int& r3 = const_cast<int&>(cr);  // const_cast is needed
 
-  //B b;
-  //A& base_ref = b;  // reference to base subobject
+  // B b;
+  // A& base_ref = b;  // reference to base subobject
   // int& converted_ref = b; // reference to the result of a conversion
 
   // rvalues
@@ -82,8 +82,8 @@ TEST_F(ReferenceTests, BasicTest) {
   const int& cref = 1;  // bound to rvalue
   int&& rref = 1;       // bound to rvalue
 
-  //const A& cref2 = bar();  // reference to A subobject of B temporary
-  //A&& rref2 = bar();       // same
+  // const A& cref2 = bar();  // reference to A subobject of B temporary
+  // A&& rref2 = bar();       // same
 
   int&& xref = static_cast<int&&>(n);  // bind directly to n
   //  int&& copy_ref = n; // error: can't bind to an lvalue
@@ -95,7 +95,7 @@ TEST_F(ReferenceTests, BasicTest) {
   // was bound to the left operand of operator<<, but its lifetime
   // ended at the semicolon: buf_ref is now a dangling reference.
 
-  //S a{1, {2, 3}};  // temporary pair {2,3} bound to the reference member
+  // S a{1, {2, 3}};  // temporary pair {2,3} bound to the reference member
   // a.mp and its lifetime is extended to match a
   // (Note: does not compile in C++17)
   S* p = new S{1, {2, 3}};  // temporary pair {2,3} bound to the reference

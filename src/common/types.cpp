@@ -365,7 +365,7 @@ BackendType GetBackendType(const LoggingType& logging_type) {
   return backend_type;
 }
 
-void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value) {
+void AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
   PL_ASSERT(sizeof(ItemPointer) == sizeof(int64_t));
   int64_t* cast_src_ptr = reinterpret_cast<int64_t*>((void*)src_ptr);
   int64_t* cast_value_ptr = reinterpret_cast<int64_t*>((void*)&value);

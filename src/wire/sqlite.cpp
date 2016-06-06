@@ -27,29 +27,25 @@ std::mutex sqlite_mutex;
 
 Sqlite::Sqlite() {
   // filename is null for in memory db
-  auto rc = sqlite3_open_v2("sqlite.db", &sqlite_db_, SQLITE_OPEN_NOMUTEX|
-                            SQLITE_OPEN_READWRITE|
-                            SQLITE_OPEN_CREATE, NULL);
+  auto rc = sqlite3_open_v2(
+      "sqlite.db", &sqlite_db_,
+      SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
   if (rc) {
     fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(sqlite_db_));
     LOG_ERROR("Can't open database %s", sqlite3_errmsg(sqlite_db_));
     exit(0);
   } else {
-    fprintf(stderr,"\n");
+    fprintf(stderr, "\n");
   }
 }
 
-Sqlite::~Sqlite() {
-  sqlite3_close(sqlite_db_);
-}
+Sqlite::~Sqlite() { sqlite3_close(sqlite_db_); }
 
 /*
  * PortalExec - Execute query string
  */
-int Sqlite::PortalExec(const char *query,
-                       std::vector<ResType> &res,
-                       std::vector<FieldInfoType> &info,
-                       int &rows_change,
+int Sqlite::PortalExec(const char *query, std::vector<ResType> &res,
+                       std::vector<FieldInfoType> &info, int &rows_change,
                        std::string &err_msg) {
   LOG_INFO("receive %s", query);
   sqlite3_stmt *sql_stmt;
@@ -61,7 +57,8 @@ int Sqlite::PortalExec(const char *query,
 /*
  * InitBindPrepStmt - Prepare and bind a query from a query string
  */
-int Sqlite::PrepareStmt(const char *query, sqlite3_stmt **stmt, std::string &err_msg) {
+int Sqlite::PrepareStmt(const char *query, sqlite3_stmt **stmt,
+                        std::string &err_msg) {
   int rc = sqlite3_prepare_v2(sqlite_db_, query, -1, stmt, NULL);
   if (rc != SQLITE_OK) {
     err_msg = std::string(sqlite3_errmsg(sqlite_db_));
@@ -72,8 +69,7 @@ int Sqlite::PrepareStmt(const char *query, sqlite3_stmt **stmt, std::string &err
 }
 
 int Sqlite::BindStmt(std::vector<std::pair<int, std::string>> &parameters,
-             sqlite3_stmt **stmt, std::string &err_msg) {
-
+                     sqlite3_stmt **stmt, std::string &err_msg) {
   int paramno = 1;
   for (auto &param : parameters) {
     auto wire_type = param.first;
@@ -91,7 +87,7 @@ int Sqlite::BindStmt(std::vector<std::pair<int, std::string>> &parameters,
       case WIRE_TEXT: {
         const char *str_val = wire_val.c_str();
         size_t str_len = wire_val.size();
-        rc = sqlite3_bind_text(*stmt, paramno, str_val, (int) str_len,
+        rc = sqlite3_bind_text(*stmt, paramno, str_val, (int)str_len,
                                SQLITE_TRANSIENT);
       } break;
 
@@ -99,9 +95,7 @@ int Sqlite::BindStmt(std::vector<std::pair<int, std::string>> &parameters,
         rc = sqlite3_bind_null(*stmt, paramno);
         break;
       }
-      default: {
-        return 1;
-      }
+      default: { return 1; }
     }
     if (rc != SQLITE_OK) {
       LOG_INFO("Error in binding: %s", sqlite3_errmsg(sqlite_db_));
@@ -154,9 +148,7 @@ void Sqlite::GetRowDesc(void *stmt, std::vector<FieldInfoType> &info) {
  * ExecPrepStmt - Execute a statement from a prepared and bound statement
  */
 int Sqlite::ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
-                 int &rows_change,
-                 std::string &err_msg) {
-
+                         int &rows_change, std::string &err_msg) {
   LOG_INFO("Executing statement......................");
   auto sql_stmt = (sqlite3_stmt *)stmt;
   auto ret = sqlite3_step(sql_stmt);
@@ -176,16 +168,17 @@ int Sqlite::ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
           break;
         }
         case SQLITE_FLOAT: {
-          double v = (double) sqlite3_column_double(sql_stmt, i);
+          double v = (double)sqlite3_column_double(sql_stmt, i);
           value = std::to_string(v);
           break;
         }
         case SQLITE_TEXT: {
-          const char *v = (char *) sqlite3_column_text(sql_stmt, i);
+          const char *v = (char *)sqlite3_column_text(sql_stmt, i);
           value = std::string(v);
           break;
         }
-        default: break;
+        default:
+          break;
       }
       // TODO: refactor this
       res.push_back(ResType());
@@ -218,10 +211,10 @@ void Sqlite::Test() {
   std::string err;
   int rows;
 
-
   // create table
   PortalExec("DROP TABLE IF EXISTS AA", res, info, rows, err);
-  PortalExec("CREATE TABLE AA (id INT PRIMARY KEY, data TEXT);", res, info, rows, err);
+  PortalExec("CREATE TABLE AA (id INT PRIMARY KEY, data TEXT);", res, info,
+             rows, err);
   res.clear();
 
   // test simple insert
@@ -229,7 +222,6 @@ void Sqlite::Test() {
   std::vector<std::pair<int, std::string>> parameters;
   parameters.push_back(std::make_pair(WIRE_TEXT, std::string("12")));
   parameters.push_back(std::make_pair(WIRE_TEXT, std::string("abc")));
-
 
   // test bind
   sqlite3_stmt *s;
@@ -262,20 +254,20 @@ void Sqlite::CopyFromTo(const char *src, std::vector<unsigned char> &dst) {
     return;
   }
   size_t len = strlen(src);
-  for(unsigned int i = 0; i < len; i++){
+  for (unsigned int i = 0; i < len; i++) {
     dst.push_back((unsigned char)src[i]);
   }
 }
 
-int Sqlite::ExecCallback(void *res, int argc, char **argv, char **azColName){
+int Sqlite::ExecCallback(void *res, int argc, char **argv, char **azColName) {
   auto output = (std::vector<ResType> *)res;
-  for(int i = 0; i < argc; i++){
+  for (int i = 0; i < argc; i++) {
     output->push_back(ResType());
     if (argv[i] == NULL) {
       LOG_INFO("value is null");
-    }else if(azColName[i] == NULL) {
+    } else if (azColName[i] == NULL) {
       LOG_INFO("name is null");
-    }else {
+    } else {
       LOG_INFO("res %s %s", azColName[i], argv[i]);
     }
     CopyFromTo(azColName[i], output->at(i).first);
@@ -285,9 +277,7 @@ int Sqlite::ExecCallback(void *res, int argc, char **argv, char **azColName){
   return 0;
 }
 
-int Sqlite::GetSize(const std::string&) {
-  return 0;
-}
+int Sqlite::GetSize(const std::string &) { return 0; }
 
 }  // End wire namespace
 }  // End peloton namespace

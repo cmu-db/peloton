@@ -4,7 +4,7 @@
 //
 // types.h
 //
-// Identification: src/common/types.h
+// Identification: src/include/common/types.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -46,10 +46,10 @@ enum LoggingType {
 };
 
 enum LoggerMappingStrategyType {
-	LOGGER_MAPPING_INVALID,
-	LOGGER_MAPPING_ROUND_ROBIN,
-	LOGGER_MAPPING_AFFINITY,
-	LOGGER_MAPPING_MANUAL,
+  LOGGER_MAPPING_INVALID,
+  LOGGER_MAPPING_ROUND_ROBIN,
+  LOGGER_MAPPING_AFFINITY,
+  LOGGER_MAPPING_MANUAL,
 };
 
 enum CheckpointType {
@@ -57,10 +57,7 @@ enum CheckpointType {
   CHECKPOINT_TYPE_NORMAL = 1,
 };
 
-enum GCType {
-  GC_TYPE_OFF = 0,
-  GC_TYPE_ON = 1
-};
+enum GCType { GC_TYPE_OFF = 0, GC_TYPE_ON = 1 };
 
 //===--------------------------------------------------------------------===//
 // Filesystem directories
@@ -96,10 +93,8 @@ class Value;
 #define PELOTON_INT32_MIN INT32_NULL + 1
 #define PELOTON_INT64_MIN INT64_NULL + 1
 
-
 #define DECIMAL_MIN -9999999
 #define DECIMAL_MAX 9999999
-
 
 #define PELOTON_INT8_MAX -(INT8_NULL + 1)
 #define PELOTON_INT16_MAX -(INT16_NULL + 1)
@@ -794,7 +789,6 @@ typedef std::bitset<max_col_count> ColBitmap;
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
-
 // logical physical location
 struct ItemPointer {
   // block
@@ -807,12 +801,11 @@ struct ItemPointer {
 
   ItemPointer(oid_t block, oid_t offset) : block(block), offset(offset) {}
 
-  bool IsNull() const { 
+  bool IsNull() const {
     return (block == INVALID_OID && offset == INVALID_OID);
   }
 
-  bool operator<(const ItemPointer& rhs) const
-  {
+  bool operator<(const ItemPointer &rhs) const {
     if (block != rhs.block) {
       return block < rhs.block;
     } else {
@@ -825,9 +818,9 @@ struct ItemPointer {
 extern ItemPointer INVALID_ITEMPOINTER;
 
 struct ItemPointerHasher {
- size_t operator() (const ItemPointer &item) const {
-    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset); 
- }
+  size_t operator()(const ItemPointer &item) const {
+    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
+  }
 };
 
 //===--------------------------------------------------------------------===//
@@ -907,7 +900,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
 
-namespace expression{
+namespace expression {
 class AbstractExpression;
 }
 

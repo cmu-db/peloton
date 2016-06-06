@@ -4,7 +4,7 @@
 //
 // transaction.h
 //
-// Identification: src/concurrency/transaction.h
+// Identification: src/include/concurrency/transaction.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

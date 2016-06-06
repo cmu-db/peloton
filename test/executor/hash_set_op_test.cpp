@@ -4,7 +4,7 @@
 //
 // hash_set_op_test.cpp
 //
-// Identification: tests/executor/hash_set_op_test.cpp
+// Identification: test/executor/hash_set_op_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -105,10 +105,12 @@ TEST_F(HashSetOptTests, ExceptTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table2->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -179,16 +181,20 @@ TEST_F(HashSetOptTests, ExceptAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table2->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table3->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table4->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -256,10 +262,12 @@ TEST_F(HashSetOptTests, IntersectTest) {
   // and the last 2/5 tuples of the second tile.
   // This setting allows us to test all possible set-op's.
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table2->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);
@@ -330,16 +338,20 @@ TEST_F(HashSetOptTests, IntersectAllTest) {
   // Create four mock tiles.
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
-      executor::LogicalTileFactory::WrapTileGroup(data_table1->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table1->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile2(
-      executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table2->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile3(
-      executor::LogicalTileFactory::WrapTileGroup(data_table3->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table3->GetTileGroup(0)));
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile4(
-      executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
+      executor::LogicalTileFactory::WrapTileGroup(
+          data_table4->GetTileGroup(0)));
 
   for (oid_t id = 0; id < tile_size * 2 / 5; id++) {
     source_logical_tile1->RemoveVisibility(id);

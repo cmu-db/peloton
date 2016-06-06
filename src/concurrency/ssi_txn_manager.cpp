@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // ssi_txn_manager.cpp
 //
@@ -108,7 +108,7 @@ bool SsiTxnManager::AcquireOwnership(
   LOG_TRACE("AcquireOwnership %lu", txn_id);
 
   // jump to abort directly
-  if(current_ssi_txn_ctx->is_abort()){
+  if (current_ssi_txn_ctx->is_abort()) {
     PL_ASSERT(current_ssi_txn_ctx->is_abort_ == false);
     LOG_TRACE("detect conflicts");
     return false;
@@ -148,7 +148,7 @@ bool SsiTxnManager::AcquireOwnership(
         SetInConflict(current_ssi_txn_ctx);
         SetOutConflict(owner_ctx);
         LOG_TRACE("set %ld in, set %ld out", txn_id,
-                 owner_ctx->transaction_->GetTransactionId());
+                  owner_ctx->transaction_->GetTransactionId());
       } else {
         // Owner has commited and ownner commit after I start, then I must abort
         if (end_cid > current_txn->GetBeginCommitId() &&
@@ -175,14 +175,13 @@ bool SsiTxnManager::AcquireOwnership(
   return true;
 }
 
-
-bool SsiTxnManager::PerformRead(const ItemPointer &location){
+bool SsiTxnManager::PerformRead(const ItemPointer &location) {
   auto tile_group_id = location.block;
   auto tuple_id = location.offset;
   // LOG_TRACE("Perform Read %lu %lu", tile_group_id, tuple_id);
 
   // jump to abort directly
-  if(current_ssi_txn_ctx->is_abort()){
+  if (current_ssi_txn_ctx->is_abort()) {
     PL_ASSERT(current_ssi_txn_ctx->is_abort_ == false);
     LOG_TRACE("detect conflicts");
     return false;
@@ -205,15 +204,14 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
     // Another transaction is writting this tuple, add an edge
     if (writer != INVALID_TXN_ID && writer != INITIAL_TXN_ID &&
         writer != txn_id) {
-
       SsiTxnContext *writer_ptr = nullptr;
       if (txn_table_.find(writer, writer_ptr) && !writer_ptr->is_abort()) {
         // The writer have not been removed from the txn table
-        //LOG_TRACE("Writer %lu has no entry in txn table when read %lu", writer, tuple_id);
+        // LOG_TRACE("Writer %lu has no entry in txn table when read %lu",
+        // writer, tuple_id);
         SetInConflict(writer_ptr);
         SetOutConflict(current_ssi_txn_ctx);
       }
-
     }
   }
 
@@ -236,7 +234,7 @@ bool SsiTxnManager::PerformRead(const ItemPointer &location){
       auto creator = GetCreatorTxnId(tile_group.get(), next_item.offset);
 
       LOG_TRACE("%u %u creator is %lu", next_item.block, next_item.offset,
-               creator);
+                creator);
 
       // Check creator status, skip if creator has commited before I start
       // or self is creator
@@ -332,7 +330,7 @@ void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
 
   // if we can perform update, then we must already locked the older version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   // Set double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
   new_tile_group_header->SetPrevItemPointer(new_location.offset, old_location);
@@ -504,7 +502,7 @@ Result SsiTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
         log_manager.LogInsert(end_commit_id, insert_location);
@@ -517,7 +515,7 @@ Result SsiTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
 
         // set the begin commit id to persist insert
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -533,8 +531,10 @@ Result SsiTxnManager::CommitTransaction() {
   current_txn = nullptr;
   current_ssi_txn_ctx->is_finish_ = true;
 
-  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] = current_ssi_txn_ctx;
-  EpochManagerFactory::GetInstance().ExitEpoch(current_ssi_txn_ctx->transaction_->GetEpochId());
+  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] =
+      current_ssi_txn_ctx;
+  EpochManagerFactory::GetInstance().ExitEpoch(
+      current_ssi_txn_ctx->transaction_->GetEpochId());
 
   return ret;
 }
@@ -548,8 +548,6 @@ Result SsiTxnManager::AbortTransaction() {
     current_ssi_txn_ctx->is_abort_ = true;
     current_ssi_txn_ctx->lock_.Unlock();
   }
-
-
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -577,7 +575,7 @@ Result SsiTxnManager::AbortTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
         LOG_TRACE("Txn %lu free %u", current_txn->GetTransactionId(),
-                 tuple_slot);
+                  tuple_slot);
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
@@ -612,14 +610,13 @@ Result SsiTxnManager::AbortTransaction() {
     }
   }
 
-
   RemoveReader(current_txn);
 
-  if(current_ssi_txn_ctx->transaction_->GetEndCommitId() == MAX_CID) {
+  if (current_ssi_txn_ctx->transaction_->GetEndCommitId() == MAX_CID) {
     current_ssi_txn_ctx->transaction_->SetEndCommitId(GetNextCommitId());
   }
-  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] = current_ssi_txn_ctx;
-
+  end_txn_table_[current_ssi_txn_ctx->transaction_->GetEndCommitId()] =
+      current_ssi_txn_ctx;
 
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
@@ -661,12 +658,12 @@ void SsiTxnManager::RemoveReader(Transaction *txn) {
 // Current implementation might be very expensive, consider using dependency
 // count
 void SsiTxnManager::CleanUp() {
-  if(!stopped) {
+  if (!stopped) {
     stopped = true;
     vacuum.join();
   }
 
-  std::unordered_set <cid_t> gc_cids;
+  std::unordered_set<cid_t> gc_cids;
   {
     auto iter = end_txn_table_.lock_table();
 
@@ -684,13 +681,13 @@ void SsiTxnManager::CleanUp() {
     }
   }
 
-  for(auto cid : gc_cids) {
+  for (auto cid : gc_cids) {
     end_txn_table_.erase(cid);
   }
 }
 
 void SsiTxnManager::CleanUpBg() {
-  while(!stopped) {
+  while (!stopped) {
     std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
     auto max_begin = GetMaxCommittedCid();
     std::unordered_set<cid_t> gc_cids;
@@ -707,7 +704,7 @@ void SsiTxnManager::CleanUpBg() {
 
       gc_cids.insert(gc_cid);
 
-      if(!ctx_ptr->is_abort()) {
+      if (!ctx_ptr->is_abort()) {
         RemoveReader(ctx_ptr->transaction_);
       }
       delete ctx_ptr->transaction_;
@@ -715,7 +712,7 @@ void SsiTxnManager::CleanUpBg() {
       gc_cid++;
     }
 
-    for(auto cid : gc_cids) {
+    for (auto cid : gc_cids) {
       end_txn_table_.erase(cid);
     }
   }

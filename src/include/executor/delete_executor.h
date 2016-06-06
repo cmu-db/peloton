@@ -4,7 +4,7 @@
 //
 // delete_executor.h
 //
-// Identification: src/executor/delete_executor.h
+// Identification: src/include/executor/delete_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

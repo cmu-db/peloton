@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.h
+// ycsb_configuration.h
 //
-// Identification: benchmark/ycsb/configuration.h
+// Identification: src/include/benchmark/ycsb/ycsb_configuration.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

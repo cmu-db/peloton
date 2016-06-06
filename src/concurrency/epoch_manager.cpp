@@ -10,13 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "concurrency/epoch_manager.h"
 
 namespace peloton {
 namespace concurrency {
 
 //  volatile cid_t EpochManager::curr_epoch_ = 1;
-
 }
 }

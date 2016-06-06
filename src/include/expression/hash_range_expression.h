@@ -4,7 +4,7 @@
 //
 // hash_range_expression.h
 //
-// Identification: src/expression/hash_range_expression.h
+// Identification: src/include/expression/hash_range_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -48,10 +48,9 @@ class HashRangeExpression : public AbstractExpression {
     }
   }
 
-  virtual Value Evaluate(const AbstractTuple *tuple1,
-                         UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
-                         UNUSED_ATTRIBUTE
-                         executor::ExecutorContext *context) const override {
+  virtual Value Evaluate(
+      const AbstractTuple *tuple1, UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     PL_ASSERT(tuple1);
     if (!tuple1) {
       throw Exception(

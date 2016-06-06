@@ -146,10 +146,10 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
     return (buffer.str());
   }
 
-    expression::AbstractExpression *Copy() const {
-      PL_ASSERT(m_child != nullptr);
-      return new UnaryFunctionExpression<F>(m_child->Copy());
-    }
+  expression::AbstractExpression *Copy() const {
+    PL_ASSERT(m_child != nullptr);
+    return new UnaryFunctionExpression<F>(m_child->Copy());
+  }
 };
 
 /*
@@ -158,7 +158,8 @@ class UnaryFunctionExpression : public expression::AbstractExpression {
 template <int F>
 class GeneralFunctionExpression : public expression::AbstractExpression {
  public:
-  GeneralFunctionExpression(ValueType result_type,
+  GeneralFunctionExpression(
+      ValueType result_type,
       const std::vector<expression::AbstractExpression *> &args)
       : AbstractExpression(EXPRESSION_TYPE_FUNCTION, result_type),
         m_args(args) {}
@@ -215,7 +216,7 @@ class GeneralFunctionExpression : public expression::AbstractExpression {
 };
 
 expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
-    int functionId, const std::vector<AbstractExpression *>& arguments) {
+    int functionId, const std::vector<AbstractExpression *> &arguments) {
   AbstractExpression *ret = 0;
   size_t nArgs = arguments.size();
   if (nArgs == 0) {
@@ -252,8 +253,7 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
             (arguments)[0]);
         break;
       case FUNC_EXTRACT_WEEKDAY:
-        ret =
-            new UnaryFunctionExpression<FUNC_EXTRACT_WEEKDAY>((arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_WEEKDAY>((arguments)[0]);
         break;
       case FUNC_EXTRACT_DAY_OF_YEAR:
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_DAY_OF_YEAR>(
@@ -269,8 +269,7 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_MONTH>((arguments)[0]);
         break;
       case FUNC_EXTRACT_QUARTER:
-        ret =
-            new UnaryFunctionExpression<FUNC_EXTRACT_QUARTER>((arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_EXTRACT_QUARTER>((arguments)[0]);
         break;
       case FUNC_EXTRACT_SECOND:
         ret = new UnaryFunctionExpression<FUNC_EXTRACT_SECOND>((arguments)[0]);
@@ -327,12 +326,10 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
         ret = new UnaryFunctionExpression<FUNC_TRUNCATE_HOUR>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_MINUTE:
-        ret =
-            new UnaryFunctionExpression<FUNC_TRUNCATE_MINUTE>((arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MINUTE>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_SECOND:
-        ret =
-            new UnaryFunctionExpression<FUNC_TRUNCATE_SECOND>((arguments)[0]);
+        ret = new UnaryFunctionExpression<FUNC_TRUNCATE_SECOND>((arguments)[0]);
         break;
       case FUNC_TRUNCATE_MILLISECOND:
         ret = new UnaryFunctionExpression<FUNC_TRUNCATE_MILLISECOND>(
@@ -366,8 +363,8 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
         ret = new UnaryFunctionExpression<FUNC_SQRT>((arguments)[0]);
         break;
       case FUNC_VOLT_ARRAY_LENGTH:
-        ret = new UnaryFunctionExpression<FUNC_VOLT_ARRAY_LENGTH>(
-            (arguments)[0]);
+        ret =
+            new UnaryFunctionExpression<FUNC_VOLT_ARRAY_LENGTH>((arguments)[0]);
         break;
       case FUNC_VOLT_BITNOT:
         ret = new UnaryFunctionExpression<FUNC_VOLT_BITNOT>((arguments)[0]);
@@ -472,8 +469,8 @@ expression::AbstractExpression *expression::ExpressionUtil::FunctionFactory(
             VALUE_TYPE_BIGINT, arguments);
         break;
       case FUNC_VOLT_FIELD:
-        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(
-            VALUE_TYPE_VARCHAR, arguments);
+        ret = new GeneralFunctionExpression<FUNC_VOLT_FIELD>(VALUE_TYPE_VARCHAR,
+                                                             arguments);
         break;
       case FUNC_VOLT_FORMAT_CURRENCY:
         ret = new GeneralFunctionExpression<FUNC_VOLT_FORMAT_CURRENCY>(

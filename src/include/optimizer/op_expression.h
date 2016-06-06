@@ -4,7 +4,7 @@
 //
 // op_expression.h
 //
-// Identification: src/optimizer/op_expression.h
+// Identification: src/include/optimizer/op_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -27,7 +27,7 @@ namespace optimizer {
 class OpExpressionVisitor;
 
 class OpExpression {
-public:
+ public:
   OpExpression(Operator op);
 
   void PushChild(std::shared_ptr<OpExpression> op);
@@ -38,7 +38,7 @@ public:
 
   const Operator &Op() const;
 
-private:
+ private:
   Operator op;
   std::vector<std::shared_ptr<OpExpression>> children;
 };

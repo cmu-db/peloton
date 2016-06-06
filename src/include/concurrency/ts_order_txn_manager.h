@@ -4,7 +4,7 @@
 //
 // ts_order_txn_manager.h
 //
-// Identification: src/concurrency/ts_order_txn_manager.h
+// Identification: src/include/concurrency/ts_order_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -76,14 +76,11 @@ class TsOrderTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
   }
-
 
  private:
   inline cid_t GetLastReaderCid(
@@ -105,7 +102,6 @@ class TsOrderTxnManager : public TransactionManager {
       PL_MEMCPY(reserved_field, &last_read_ts, sizeof(cid_t));
     }
   }
-
 };
 }
 }

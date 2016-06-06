@@ -115,17 +115,19 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
   const bool is_inlined = schema.IsInlined(column_id);
 
   // ROLLBACK SEGMENT
-  if (concurrency::TransactionManagerFactory::GetProtocol() == peloton::CONCURRENCY_TYPE_OCC_RB) {
-    auto txn_manager = static_cast<concurrency::OptimisticRbTxnManager *>(&concurrency::TransactionManagerFactory::GetInstance());
+  if (concurrency::TransactionManagerFactory::GetProtocol() ==
+      peloton::CONCURRENCY_TYPE_OCC_RB) {
+    auto txn_manager = static_cast<concurrency::OptimisticRbTxnManager *>(
+        &concurrency::TransactionManagerFactory::GetInstance());
     cid_t read_ts = txn_manager->GetLatestReadTimestamp();
     auto tile_group_header = tile_group->GetHeader();
 
     // The ininitial value of this column is in the master copy
-    Value value = Value::InitFromTupleStorage(field_location, column_type, is_inlined);
+    Value value =
+        Value::InitFromTupleStorage(field_location, column_type, is_inlined);
 
     // If self is owner, just return the master version
-    if (txn_manager->IsOwner(tile_group_header, tuple_offset))
-      return value;
+    if (txn_manager->IsOwner(tile_group_header, tuple_offset)) return value;
 
     RBSegType rb_seg = txn_manager->GetRbSeg(tile_group_header, tuple_offset);
 
@@ -133,10 +135,12 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
     while (txn_manager->IsRBVisible(rb_seg, read_ts) == true) {
       auto rb_col_count = storage::RollbackSegmentPool::GetColCount(rb_seg);
       for (size_t col_idx = 0; col_idx < rb_col_count; col_idx++) {
-        auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(rb_seg, col_idx)->col_id;
+        auto col_id = storage::RollbackSegmentPool::GetIdOffsetPair(
+                          rb_seg, col_idx)->col_id;
         // We have found the column in one of the rollback segment
         if (col_id == column_id) {
-          value = storage::RollbackSegmentPool::GetValue(rb_seg, &schema, col_idx);
+          value =
+              storage::RollbackSegmentPool::GetValue(rb_seg, &schema, col_idx);
         }
       }
 
@@ -216,7 +220,7 @@ Tile *Tile::CopyTile(BackendType backend_type) {
       new_header, *schema, tile_group, allocated_tuple_count);
 
   PL_MEMCPY(static_cast<void *>(new_tile->data), static_cast<void *>(data),
-           tile_size);
+            tile_size);
 
   // Do a deep copy if some column is uninlined, so that
   // the values in that column point to the new pool
@@ -435,7 +439,7 @@ void Tile::DeserializeTuplesFrom(SerializeInputBE &input, VarlenPool *pool) {
 
   // Skip the column types
   for (oid_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    types[column_itr] = (ValueType) input.ReadEnumInSingleByte();
+    types[column_itr] = (ValueType)input.ReadEnumInSingleByte();
   }
 
   // Skip the column names
@@ -494,8 +498,8 @@ oid_t Tile::GetActiveTupleCount() const {
   if (tile_group_header != nullptr) {
     return tile_group_header->GetCurrentNextTupleSlot();
   }
-      // For temp tiles
-      else {
+  // For temp tiles
+  else {
     return num_tuple_slots;
   }
 }

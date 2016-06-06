@@ -4,7 +4,7 @@
 //
 // loader_test.cpp
 //
-// Identification: tests/executor/loader_test.cpp
+// Identification: test/executor/loader_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -61,8 +61,8 @@ std::atomic<int> loader_tuple_id;
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-static std::unique_ptr<const planner::ProjectInfo>
-MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
+static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
+    const storage::Tuple *tuple) {
   TargetList target_list;
   DirectMapList direct_map_list;
 
@@ -72,9 +72,8 @@ MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
     target_list.emplace_back(col_id, expression);
   }
 
-  return std::unique_ptr<const planner::ProjectInfo>(
-      new planner::ProjectInfo(std::move(target_list),
-                               std::move(direct_map_list)));
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
 }
 
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
@@ -106,7 +105,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 
 TEST_F(LoaderTests, LoadingTest) {
   // We are going to simply load tile groups concurrently in this test
-  // WARNING: This test may potentially run for a long time if 
+  // WARNING: This test may potentially run for a long time if
   // DEFAULT_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard
   // code the number of tuples per tile group in this test
   oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
@@ -135,7 +134,7 @@ TEST_F(LoaderTests, LoadingTest) {
 
   LOG_INFO("Dataset size : %u MB \n",
            (expected_tile_group_count * tuples_per_tilegroup * tuple_size) /
-           bytes_to_megabytes_converter);
+               bytes_to_megabytes_converter);
 }
 
 }  // namespace test

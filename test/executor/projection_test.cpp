@@ -4,7 +4,7 @@
 //
 // projection_test.cpp
 //
-// Identification: tests/executor/projection_test.cpp
+// Identification: test/executor/projection_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -64,8 +64,8 @@ TEST_F(ProjectionTests, BasicTest) {
   txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -90,8 +90,7 @@ TEST_F(ProjectionTests, BasicTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  DirectMap direct_map =
-      std::make_pair(0, std::make_pair(0, 0));
+  DirectMap direct_map = std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
   std::unique_ptr<const planner::ProjectInfo> project_info(
@@ -122,8 +121,8 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -150,12 +149,9 @@ TEST_F(ProjectionTests, TwoColumnTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  DirectMap map0 =
-      std::make_pair(0, std::make_pair(0, 3));
-  DirectMap map1 =
-      std::make_pair(1, std::make_pair(0, 1));
-  DirectMap map2 =
-      std::make_pair(2, std::make_pair(0, 3));
+  DirectMap map0 = std::make_pair(0, std::make_pair(0, 3));
+  DirectMap map1 = std::make_pair(1, std::make_pair(0, 1));
+  DirectMap map2 = std::make_pair(2, std::make_pair(0, 3));
   direct_map_list.push_back(map0);
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
@@ -188,8 +184,8 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   txn_manager.BeginTransaction();
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
   txn_manager.CommitTransaction();
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
@@ -214,15 +210,14 @@ TEST_F(ProjectionTests, BasicTargetTest) {
   std::shared_ptr<const catalog::Schema> schema(new catalog::Schema(columns));
 
   // direct map
-  DirectMap direct_map =
-      std::make_pair(0, std::make_pair(0, 0));
+  DirectMap direct_map = std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
   // target list
   auto const_val = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(20));
-  auto tuple_value_expr = expression::ExpressionUtil::TupleValueFactory(
-      VALUE_TYPE_INTEGER, 0, 0);
+  auto tuple_value_expr =
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
   expression::AbstractExpression *expr =
       expression::ExpressionUtil::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS,
                                                   VALUE_TYPE_INTEGER,

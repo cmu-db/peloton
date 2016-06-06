@@ -4,7 +4,7 @@
 //
 // value.h
 //
-// Identification: src/common/value.h
+// Identification: src/include/common/value.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -463,7 +463,8 @@ class Value {
 
   /**
    * If this Value is an array value, Get a value.
-   * Undefined behavior if not an array or if oob (cALWAYS_ASSERT fail in Debug).
+   * Undefined behavior if not an array or if oob (cALWAYS_ASSERT fail in
+   * Debug).
    */
   Value ItemAtIndex(int index) const;
 
@@ -564,19 +565,20 @@ class Value {
      * That wouldn't be needed if we pre-validated the buffer.
      */
     uint32_t ExtractCodePoint() {
-      PL_ASSERT(m_cursor <
-             m_end);  // Caller should have tested and handled AtEnd() condition
-                      /*
-                       * Copy the next 6 bytes to a temp buffer and retrieve.
-                       * We should only Get 4 byte code points, and the library
-                       * should only accept 4 byte code points, but once upon a time there
-                       * were 6 byte code points in UTF-8 so be careful here.
-                       */
+      PL_ASSERT(
+          m_cursor <
+          m_end);  // Caller should have tested and handled AtEnd() condition
+                   /*
+                    * Copy the next 6 bytes to a temp buffer and retrieve.
+                    * We should only Get 4 byte code points, and the library
+                    * should only accept 4 byte code points, but once upon a time there
+                    * were 6 byte code points in UTF-8 so be careful here.
+                    */
       char nextPotentialCodePoint[] = {0, 0, 0, 0, 0, 0};
       char *nextPotentialCodePointIter = nextPotentialCodePoint;
       // Copy 6 bytes or until the end
       PL_MEMCPY(nextPotentialCodePoint, m_cursor,
-               std::min(6L, m_end - m_cursor));
+                std::min(6L, m_end - m_cursor));
 
       /*
        * Extract the code point, find out how many bytes it was
@@ -835,9 +837,9 @@ class Value {
    * Calling correctness.
    */
   int32_t GetObjectLengthWithoutNull() const {
-    //PL_ASSERT(IsNull() == false);
+    // PL_ASSERT(IsNull() == false);
     PL_ASSERT(GetValueType() == VALUE_TYPE_VARCHAR ||
-           GetValueType() == VALUE_TYPE_VARBINARY);
+              GetValueType() == VALUE_TYPE_VARBINARY);
     // now safe to read and return the length preceding value.
     return *reinterpret_cast<const int32_t *>(&m_data[8]);
   }
@@ -953,27 +955,27 @@ class Value {
 
   const int32_t &GetInteger() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
-           GetValueType() == VALUE_TYPE_DATE);
+              GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
-           GetValueType() == VALUE_TYPE_DATE);
+              GetValueType() == VALUE_TYPE_DATE);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
   const int64_t &GetBigInt() const {
     PL_ASSERT((GetValueType() == VALUE_TYPE_BIGINT) ||
-           (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
-           (GetValueType() == VALUE_TYPE_ADDRESS));
+              (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
+              (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<const int64_t *>(m_data);
   }
 
   int64_t &GetBigInt() {
     PL_ASSERT((GetValueType() == VALUE_TYPE_BIGINT) ||
-           (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
-           (GetValueType() == VALUE_TYPE_ADDRESS));
+              (GetValueType() == VALUE_TYPE_TIMESTAMP) ||
+              (GetValueType() == VALUE_TYPE_ADDRESS));
     return *reinterpret_cast<int64_t *>(m_data);
   }
 
@@ -1730,7 +1732,7 @@ class Value {
 
       if (m_sourceInlined) {
         PL_MEMCPY(storage, *reinterpret_cast<char *const *>(m_data),
-                 GetObjectLengthLength() + objLength);
+                  GetObjectLengthLength() + objLength);
       } else {
         const Varlen *sref = *reinterpret_cast<Varlen *const *>(m_data);
         PL_MEMCPY(storage, sref->Get(), GetObjectLengthLength() + objLength);
@@ -2053,7 +2055,7 @@ class Value {
     }
 
     const int result =
-      ::strncmp(left, right, std::min(leftLength, rightLength));
+        ::strncmp(left, right, std::min(leftLength, rightLength));
     if (result == 0 && leftLength != rightLength) {
       if (leftLength > rightLength) {
         return VALUE_COMPARE_GREATERTHAN;
@@ -2872,7 +2874,8 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
           Varlen *sref = Varlen::Create(minlength, varlen_pool);
           char *copy = sref->Get();
           SetObjectLengthToLocation(objLength, copy);
-          PL_MEMCPY(copy + lengthLength, GetObjectValueWithoutNull(), objLength);
+          PL_MEMCPY(copy + lengthLength, GetObjectValueWithoutNull(),
+                    objLength);
           *reinterpret_cast<Varlen **>(storage) = sref;
         }
       }

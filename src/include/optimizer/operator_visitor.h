@@ -4,7 +4,7 @@
 //
 // operator_visitor.h
 //
-// Identification: src/optimizer/operator_visitor.h
+// Identification: src/include/optimizer/operator_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,7 +23,7 @@ namespace optimizer {
 
 class OperatorVisitor {
  public:
-  virtual ~OperatorVisitor() {};
+  virtual ~OperatorVisitor(){};
 
   virtual void visit(const LeafOperator *);
   virtual void visit(const LogicalGet *);

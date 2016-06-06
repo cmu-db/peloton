@@ -4,7 +4,7 @@
 //
 // numeric_functions.h
 //
-// Identification: src/expression/numeric_functions.h
+// Identification: src/include/expression/numeric_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

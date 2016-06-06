@@ -4,7 +4,7 @@
 //
 // schema.h
 //
-// Identification: src/catalog/schema.h
+// Identification: src/include/catalog/schema.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// simple_checkpoint.cpp
+//
+// Identification: src/logging/checkpoint/simple_checkpoint.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * simple_checkpoint.cpp
@@ -99,7 +111,7 @@ void SimpleCheckpoint::DoCheckpoint() {
       storage::DataTable *target_table = database->GetTable(table_idx);
       PL_ASSERT(target_table);
       LOG_TRACE("SeqScan: database idx %u table idx %u: %s", database_idx,
-               table_idx, target_table->GetName().c_str());
+                table_idx, target_table->GetName().c_str());
       Scan(target_table, database_oid);
     }
   }
@@ -211,8 +223,8 @@ void SimpleCheckpoint::InsertTuple(cid_t commit_id) {
   if (max_oid_ < target_location.block) {
     max_oid_ = tile_group_id;
   }
-  LOG_TRACE("Inserted a tuple from checkpoint: (%u, %u)",
-            target_location.block, target_location.offset);
+  LOG_TRACE("Inserted a tuple from checkpoint: (%u, %u)", target_location.block,
+            target_location.offset);
 }
 
 void SimpleCheckpoint::Scan(storage::DataTable *target_table,
@@ -326,7 +338,7 @@ void SimpleCheckpoint::Cleanup() {
   records_.clear();
 
   if (!disable_file_access) {
-	//Close and sync the current one
+    // Close and sync the current one
     fclose(file_handle_.file);
 
     // Remove previous version

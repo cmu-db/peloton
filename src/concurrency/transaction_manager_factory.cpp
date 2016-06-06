@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transaction_manager_factory.h
+// transaction_manager_factory.cpp
 //
-// Identification: src/concurrency/transaction_manager_factory.h
+// Identification: src/concurrency/transaction_manager_factory.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

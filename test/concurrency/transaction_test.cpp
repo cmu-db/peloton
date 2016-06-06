@@ -4,7 +4,7 @@
 //
 // transaction_test.cpp
 //
-// Identification: tests/concurrency/transaction_test.cpp
+// Identification: test/concurrency/transaction_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -24,14 +24,11 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-  CONCURRENCY_TYPE_OPTIMISTIC,
-  CONCURRENCY_TYPE_PESSIMISTIC,
-  CONCURRENCY_TYPE_SSI,
-  // CONCURRENCY_TYPE_SPECULATIVE_READ,
-  CONCURRENCY_TYPE_EAGER_WRITE,
-  CONCURRENCY_TYPE_TO,
-  CONCURRENCY_TYPE_OCC_RB
-};
+    CONCURRENCY_TYPE_OPTIMISTIC,  CONCURRENCY_TYPE_PESSIMISTIC,
+    CONCURRENCY_TYPE_SSI,
+    // CONCURRENCY_TYPE_SPECULATIVE_READ,
+    CONCURRENCY_TYPE_EAGER_WRITE, CONCURRENCY_TYPE_TO,
+    CONCURRENCY_TYPE_OCC_RB};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
@@ -150,7 +147,8 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     }
 
     // // insert, delete inserted, read deleted, insert again, delete again
-    // // read deleted, insert again, read inserted, update inserted, read updated
+    // // read deleted, insert again, read inserted, update inserted, read
+    // updated
     {
       TransactionScheduler scheduler(1, table.get(), &txn_manager);
 
@@ -178,13 +176,13 @@ TEST_F(TransactionTests, SingleTransactionTest) {
     // // Deadlock detection test for eager write
     // // T0:  R0      W0      C0
     // // T1:      R1      W1      C1
-    if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_EAGER_WRITE)
-    {
+    if (concurrency::TransactionManagerFactory::GetProtocol() ==
+        CONCURRENCY_TYPE_EAGER_WRITE) {
       TransactionScheduler scheduler(2, table.get(), &txn_manager);
       scheduler.Txn(0).Read(2);
       scheduler.Txn(1).Read(3);
-      scheduler.Txn(0).Update(3,1);
-      scheduler.Txn(1).Update(2,2);
+      scheduler.Txn(0).Update(3, 1);
+      scheduler.Txn(1).Update(2, 2);
       scheduler.Txn(0).Commit();
       scheduler.Txn(1).Commit();
 

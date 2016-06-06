@@ -4,7 +4,7 @@
 //
 // stats.h
 //
-// Identification: src/optimizer/stats.h
+// Identification: src/include/optimizer/stats.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

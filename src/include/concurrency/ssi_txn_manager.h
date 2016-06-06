@@ -1,10 +1,10 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // ssi_txn_manager.h
 //
-// Identification: src/concurrency/ssi_txn_manager.h
+// Identification: src/include/concurrency/ssi_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -63,14 +63,14 @@ struct SIReadLock {
 
 class SsiTxnManager : public TransactionManager {
  public:
-  SsiTxnManager() : stopped(false), cleaned(false){
+  SsiTxnManager() : stopped(false), cleaned(false) {
     gc_cid = 0;
     vacuum = std::thread(&SsiTxnManager::CleanUpBg, this);
   }
 
   virtual ~SsiTxnManager() {
     LOG_TRACE("Deconstruct SSI manager");
-    if(!stopped) {
+    if (!stopped) {
       stopped = true;
       vacuum.join();
     }
@@ -123,15 +123,13 @@ class SsiTxnManager : public TransactionManager {
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 
-
     txn_table_[txn->GetTransactionId()] = current_ssi_txn_ctx;
     // txn_manager_mutex_.Unlock();
     LOG_TRACE("Begin txn %lu", txn->GetTransactionId());
     return txn;
   }
 
-  virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 UNUSED_ATTRIBUTE) {
+  virtual void DroppingTileGroup(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {
     CleanUp();
   }
 
@@ -167,10 +165,11 @@ class SsiTxnManager : public TransactionManager {
   void InitTupleReserved(const txn_id_t txn_id, const oid_t tile_group_id,
                          const oid_t tuple_id) {
     LOG_TRACE("init reserved txn %ld, group %u tid %u", txn_id, tile_group_id,
-             tuple_id);
+              tuple_id);
 
     auto tile_group_header = catalog::Manager::GetInstance()
-        .GetTileGroup(tile_group_id)->GetHeader();
+                                 .GetTileGroup(tile_group_id)
+                                 ->GetHeader();
 
     PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == txn_id);
     PL_ASSERT(current_txn->GetTransactionId() == txn_id);
@@ -186,7 +185,8 @@ class SsiTxnManager : public TransactionManager {
   inline txn_id_t GetCreatorTxnId(storage::TileGroup *tile_group,
                                   const oid_t &tuple_id) {
     return *(txn_id_t *)(tile_group->GetHeader()->GetReservedFieldRef(
-        tuple_id) + CREATOR_OFFSET);
+                             tuple_id) +
+                         CREATOR_OFFSET);
   }
 
   void GetReadLock(const storage::TileGroupHeader *const tile_group_header,
@@ -208,8 +208,9 @@ class SsiTxnManager : public TransactionManager {
     ReadList *reader = new ReadList(current_ssi_txn_ctx);
 
     GetReadLock(tile_group->GetHeader(), tuple_id);
-    ReadList **headp = (ReadList **)(
-        tile_group->GetHeader()->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+    ReadList **headp =
+        (ReadList **)(tile_group->GetHeader()->GetReservedFieldRef(tuple_id) +
+                      LIST_OFFSET);
     reader->next = *headp;
     *headp = reader;
     ReleaseReadLock(tile_group->GetHeader(), tuple_id);
@@ -222,8 +223,9 @@ class SsiTxnManager : public TransactionManager {
     GetReadLock(tile_group_header, tuple_id);
     LOG_TRACE("Acquired");
 
-    ReadList **headp = (ReadList **)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+    ReadList **headp =
+        (ReadList **)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                      LIST_OFFSET);
 
     ReadList fake_header;
     fake_header.next = *headp;
@@ -271,7 +273,8 @@ class SsiTxnManager : public TransactionManager {
   }
 
   inline void SetOutConflict(SsiTxnContext *txn_ctx) {
-    LOG_TRACE("Set out conflict %lu", txn_ctx->transaction_->GetTransactionId());
+    LOG_TRACE("Set out conflict %lu",
+              txn_ctx->transaction_->GetTransactionId());
     txn_ctx->out_conflict_ = true;
   }
 

@@ -4,7 +4,7 @@
 //
 // vector_comparison_expression.h
 //
-// Identification: src/expression/vector_comparison_expression.h
+// Identification: src/include/expression/vector_comparison_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

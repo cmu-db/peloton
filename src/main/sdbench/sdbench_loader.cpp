@@ -4,7 +4,7 @@
 //
 // sdbench_loader.cpp
 //
-// Identification: src/benchmark/sdbench/sdbench_loader.cpp
+// Identification: src/main/sdbench/sdbench_loader.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -28,7 +28,7 @@ VarlenPool::VarlenPool(BackendType backend_type)
 }
 
 VarlenPool::VarlenPool(BackendType backend_type, uint64_t allocation_size,
-           uint64_t max_chunk_count)
+                       uint64_t max_chunk_count)
     : backend_type(backend_type),
       allocation_size(allocation_size),
       max_chunk_count(static_cast<std::size_t>(max_chunk_count)),

@@ -4,7 +4,7 @@
 //
 // group_expression.h
 //
-// Identification: src/optimizer/group_expression.h
+// Identification: src/include/optimizer/group_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -65,12 +65,11 @@ class GroupExpression {
 
 namespace std {
 
-template<> struct hash<peloton::optimizer::GroupExpression> {
+template <>
+struct hash<peloton::optimizer::GroupExpression> {
   typedef peloton::optimizer::GroupExpression argument_type;
   typedef std::size_t result_type;
-  result_type operator()(argument_type const& s) const {
-    return s.Hash();
-  }
+  result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
 } /* namespace std */

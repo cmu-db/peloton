@@ -45,12 +45,12 @@ RpcChannel::~RpcChannel() { Close(); }
  * Channel is only invoked by protobuf rpc client. So this method is sending
  * request msg
  */
-void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
-                            google::protobuf::RpcController* controller,
-                            const google::protobuf::Message* request,
-                            UNUSED_ATTRIBUTE
-                            google::protobuf::Message* response,
-                            google::protobuf::Closure* done) {
+void RpcChannel::CallMethod(
+    const google::protobuf::MethodDescriptor* method,
+    google::protobuf::RpcController* controller,
+    const google::protobuf::Message* request,
+    UNUSED_ATTRIBUTE google::protobuf::Message* response,
+    google::protobuf::Closure* done) {
   PL_ASSERT(request != nullptr);
   /*  run call back function */
   if (done != NULL) {
@@ -97,8 +97,9 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
    * it will be returned. If not, a new connection will be created and connect
    * to server
    */
-  Connection* conn = ConnectionManager::GetInstance().CreateConn(addr_); //CreateConn is used for self connect
-  //Connection* conn = ConnectionManager::GetInstance().GetConn(addr_);
+  Connection* conn = ConnectionManager::GetInstance().CreateConn(
+      addr_);  // CreateConn is used for self connect
+  // Connection* conn = ConnectionManager::GetInstance().GetConn(addr_);
 
   /* Connect to server with given address */
   if (conn == NULL) {

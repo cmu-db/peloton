@@ -4,7 +4,7 @@
 //
 // tuple_value_expression.h
 //
-// Identification: src/expression/tuple_value_expression.h
+// Identification: src/include/expression/tuple_value_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -33,10 +33,9 @@ class TupleValueExpression : public AbstractExpression {
         GetValueType(), tuple_idx_, value_idx_);
   };
 
-  virtual Value Evaluate(const AbstractTuple *tuple1,
-                         const AbstractTuple *tuple2,
-                         UNUSED_ATTRIBUTE
-                         executor::ExecutorContext *context) const override {
+  virtual Value Evaluate(
+      const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     if (tuple_idx_ == 0) {
       PL_ASSERT(tuple1);
       if (!tuple1) {

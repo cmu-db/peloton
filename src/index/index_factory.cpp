@@ -39,36 +39,31 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 
   if (ints_only && (index_type == INDEX_TYPE_BTREE)) {
     if (key_size <= sizeof(uint64_t)) {
-      return new BTreeIndex<IntsKey<1>, ItemPointer *,
-                            IntsComparator<1>, IntsEqualityChecker<1>>(
-          metadata);
+      return new BTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
+                            IntsEqualityChecker<1>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 2) {
-      return new BTreeIndex<IntsKey<2>, ItemPointer *,
-                            IntsComparator<2>, IntsEqualityChecker<2>>(
-          metadata);
+      return new BTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
+                            IntsEqualityChecker<2>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 3) {
-      return new BTreeIndex<IntsKey<3>, ItemPointer *,
-                            IntsComparator<3>, IntsEqualityChecker<3>>(
-          metadata);
+      return new BTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
+                            IntsEqualityChecker<3>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 4) {
-      return new BTreeIndex<IntsKey<4>, ItemPointer *,
-                            IntsComparator<4>, IntsEqualityChecker<4>>(
-          metadata);
+      return new BTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
+                            IntsEqualityChecker<4>>(metadata);
     } else {
-      throw IndexException("We currently only support tree index on non-unique "
-                           "integer keys of size 32 bytes or smaller...");
+      throw IndexException(
+          "We currently only support tree index on non-unique "
+          "integer keys of size 32 bytes or smaller...");
     }
   }
 
   if (index_type == INDEX_TYPE_BTREE) {
     if (key_size <= 4) {
-      return new BTreeIndex<GenericKey<4>, ItemPointer *,
-                            GenericComparator<4>, GenericEqualityChecker<4>>(
-          metadata);
+      return new BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+                            GenericEqualityChecker<4>>(metadata);
     } else if (key_size <= 8) {
-      return new BTreeIndex<GenericKey<8>, ItemPointer *,
-                            GenericComparator<8>, GenericEqualityChecker<8>>(
-          metadata);
+      return new BTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+                            GenericEqualityChecker<8>>(metadata);
     } else if (key_size <= 12) {
       return new BTreeIndex<GenericKey<12>, ItemPointer *,
                             GenericComparator<12>, GenericEqualityChecker<12>>(
@@ -110,44 +105,38 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
                             GenericComparator<512>,
                             GenericEqualityChecker<512>>(metadata);
     } else {
-      return new BTreeIndex<TupleKey, ItemPointer *,
-                            TupleKeyComparator, TupleKeyEqualityChecker>(
-          metadata);
+      return new BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
+                            TupleKeyEqualityChecker>(metadata);
     }
   }
 
   if (ints_only && (index_type == INDEX_TYPE_BWTREE)) {
     if (key_size <= sizeof(uint64_t)) {
-      return new BWTreeIndex<IntsKey<1>, ItemPointer *,
-                             IntsComparator<1>, IntsEqualityChecker<1>>(
-          metadata);
+      return new BWTreeIndex<IntsKey<1>, ItemPointer *, IntsComparator<1>,
+                             IntsEqualityChecker<1>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 2) {
-      return new BWTreeIndex<IntsKey<2>, ItemPointer *,
-                             IntsComparator<2>, IntsEqualityChecker<2>>(
-          metadata);
+      return new BWTreeIndex<IntsKey<2>, ItemPointer *, IntsComparator<2>,
+                             IntsEqualityChecker<2>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 3) {
-      return new BWTreeIndex<IntsKey<3>, ItemPointer *,
-                             IntsComparator<3>, IntsEqualityChecker<3>>(
-          metadata);
+      return new BWTreeIndex<IntsKey<3>, ItemPointer *, IntsComparator<3>,
+                             IntsEqualityChecker<3>>(metadata);
     } else if (key_size <= sizeof(int64_t) * 4) {
-      return new BWTreeIndex<IntsKey<4>, ItemPointer *,
-                             IntsComparator<4>, IntsEqualityChecker<4>>(
-          metadata);
+      return new BWTreeIndex<IntsKey<4>, ItemPointer *, IntsComparator<4>,
+                             IntsEqualityChecker<4>>(metadata);
     } else {
-      throw IndexException("We currently only support tree index on non-unique "
-                           "integer keys of size 32 bytes or smaller...");
+      throw IndexException(
+          "We currently only support tree index on non-unique "
+          "integer keys of size 32 bytes or smaller...");
     }
   }
 
   if (index_type == INDEX_TYPE_BWTREE) {
     if (key_size <= 4) {
-      return new BWTreeIndex<GenericKey<4>, ItemPointer *,
-                             GenericComparator<4>, GenericEqualityChecker<4>>(
-          metadata);
+      return new BWTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+                             GenericEqualityChecker<4>>(metadata);
     } else if (key_size <= 8) {
-      return new BWTreeIndex<GenericKey<8>, ItemPointer *,
-                             GenericComparator<8>, GenericEqualityChecker<8>>(
-          metadata);
+      return new BWTreeIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+                             GenericEqualityChecker<8>>(metadata);
     } else if (key_size <= 12) {
       return new BWTreeIndex<GenericKey<12>, ItemPointer *,
                              GenericComparator<12>, GenericEqualityChecker<12>>(
@@ -189,9 +178,8 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
                              GenericComparator<512>,
                              GenericEqualityChecker<512>>(metadata);
     } else {
-      return new BWTreeIndex<TupleKey, ItemPointer *,
-                             TupleKeyComparator, TupleKeyEqualityChecker>(
-          metadata);
+      return new BWTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
+                             TupleKeyEqualityChecker>(metadata);
     }
   }
 

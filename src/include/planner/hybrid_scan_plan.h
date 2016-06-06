@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// hybrid_scan_plan.h
+//
+// Identification: src/include/planner/hybrid_scan_plan.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 //
 // Created by Rui Wang on 16-4-29.
 //
@@ -11,71 +23,58 @@
 #include "common/types.h"
 #include "expression/abstract_expression.h"
 
-
 namespace peloton {
-namespace planner{
+namespace planner {
 
-enum HybridType {
-  UNKNOWN,
-  SEQ,
-  INDEX,
-  HYBRID
-};
+enum HybridType { UNKNOWN, SEQ, INDEX, HYBRID };
 
 class HybridScanPlan : public AbstractScan {
-public:
+ public:
   HybridScanPlan(const HybridScanPlan &) = delete;
   HybridScanPlan &operator=(const HybridScanPlan &) = delete;
   HybridScanPlan(HybridScanPlan &&) = delete;
   HybridScanPlan &operator=(HybridScanPlan &&) = delete;
 
-
   HybridScanPlan(index::Index *index, storage::DataTable *table,
                  expression::AbstractExpression *predicate,
                  const std::vector<oid_t> &column_ids,
                  const IndexScanPlan::IndexScanDesc &index_scan_desc)
-    : AbstractScan(table, predicate, column_ids),
-                index_(index),
-                column_ids_(column_ids),
-                key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-                expr_types_(std::move(index_scan_desc.expr_types)),
-                values_(std::move(index_scan_desc.values)),
-                runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-                type_(HYBRID) {}
+      : AbstractScan(table, predicate, column_ids),
+        index_(index),
+        column_ids_(column_ids),
+        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+        expr_types_(std::move(index_scan_desc.expr_types)),
+        values_(std::move(index_scan_desc.values)),
+        runtime_keys_(std::move(index_scan_desc.runtime_keys)),
+        type_(HYBRID) {}
 
-
-  HybridScanPlan(storage::DataTable *table, expression::AbstractExpression *predicate,
-      const std::vector<oid_t> &column_ids)
+  HybridScanPlan(storage::DataTable *table,
+                 expression::AbstractExpression *predicate,
+                 const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids),
         column_ids_(column_ids),
         type_(SEQ) {}
 
   HybridScanPlan(storage::DataTable *table,
-                expression::AbstractExpression *predicate,
-                const std::vector<oid_t> &column_ids,
-                const IndexScanPlan::IndexScanDesc &index_scan_desc)
-                : AbstractScan(table, predicate, column_ids),
-                  index_(index_scan_desc.index),
-                  column_ids_(column_ids),
-                  key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-                  expr_types_(std::move(index_scan_desc.expr_types)),
-                  values_(std::move(index_scan_desc.values)),
-                  runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-                  type_(INDEX){}
+                 expression::AbstractExpression *predicate,
+                 const std::vector<oid_t> &column_ids,
+                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
+      : AbstractScan(table, predicate, column_ids),
+        index_(index_scan_desc.index),
+        column_ids_(column_ids),
+        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+        expr_types_(std::move(index_scan_desc.expr_types)),
+        values_(std::move(index_scan_desc.values)),
+        runtime_keys_(std::move(index_scan_desc.runtime_keys)),
+        type_(INDEX) {}
 
-
-  index::Index *GetDataIndex() const {
-    return this->index_;
-  }
+  index::Index *GetDataIndex() const { return this->index_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
-
-  PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_SEQSCAN;
-  }
+  PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   index::Index *GetIndex() const { return index_; }
 
@@ -93,11 +92,9 @@ public:
     return runtime_keys_;
   }
 
-  HybridType GetHybridType() const {
-    return type_;
-  }
+  HybridType GetHybridType() const { return type_; }
 
-private:
+ private:
   index::Index *index_ = nullptr;
 
   const std::vector<oid_t> column_ids_;
@@ -109,7 +106,7 @@ private:
   const std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
-  
+
   HybridType type_;
 };
 

@@ -4,7 +4,7 @@
 //
 // tile_group_test.cpp
 //
-// Identification: tests/storage/tile_group_test.cpp
+// Identification: test/storage/tile_group_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -115,13 +115,16 @@ TEST_F(TileGroupTests, BasicTest) {
   txn_manager.BeginTransaction();
 
   auto tuple_slot = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   tuple_slot = tile_group->InsertTuple(tuple2);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   tuple_slot = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   txn_manager.CommitTransaction();
 
@@ -154,7 +157,8 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     auto tuple_slot = tile_group->InsertTuple(tuple);
-    txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
+    txn_manager.PerformInsert(
+        ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
   }
 
   txn_manager.CommitTransaction();
@@ -429,13 +433,16 @@ TEST_F(TileGroupTests, TileCopyTest) {
   tile->InsertTuple(2, tuple3);
 
   tuple_slot_id = tile_group->InsertTuple(tuple1);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(0, tuple_slot_id);
   tuple_slot_id = tile_group->InsertTuple(tuple2);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(1, tuple_slot_id);
   tuple_slot_id = tile_group->InsertTuple(tuple3);
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(2, tuple_slot_id);
 
   txn_manager.CommitTransaction();

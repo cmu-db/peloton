@@ -4,7 +4,7 @@
 //
 // transaction_manager.h
 //
-// Identification: src/concurrency/transaction_manager.h
+// Identification: src/include/concurrency/transaction_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@ namespace peloton {
 
 class ItemPointer;
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 
@@ -54,10 +54,11 @@ class TransactionManager {
   txn_id_t GetNextTransactionId() { return next_txn_id_++; }
 
   cid_t GetNextCommitId() {
-	  cid_t temp_cid = next_cid_++;
-	  // wait if we do not yet have a grant for this commit id
-	  while(temp_cid > maximum_grant_cid_.load());
-	  return temp_cid;
+    cid_t temp_cid = next_cid_++;
+    // wait if we do not yet have a grant for this commit id
+    while (temp_cid > maximum_grant_cid_.load())
+      ;
+    return temp_cid;
   }
 
   cid_t GetCurrentCommitId() { return next_cid_.load(); }
@@ -70,7 +71,6 @@ class TransactionManager {
 
   virtual bool IsOwner(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;
-
 
   virtual bool IsOwnable(
       const storage::TileGroupHeader *const tile_group_header,
@@ -94,11 +94,9 @@ class TransactionManager {
 
   virtual void PerformDelete(const ItemPointer &location) = 0;
 
-
   // Txn manager may store related information in TileGroupHeader, so when
   // TileGroup is dropped, txn manager might need to be notified
-  virtual void DroppingTileGroup(const oid_t &tile_group_id
-                                 UNUSED_ATTRIBUTE) {
+  virtual void DroppingTileGroup(const oid_t &tile_group_id UNUSED_ATTRIBUTE) {
     return;
   }
 
@@ -106,10 +104,10 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  //for use by recovery
+  // for use by recovery
   void SetNextCid(cid_t cid) { next_cid_ = cid; }
 
-  void SetMaxGrantCid(cid_t cid){ maximum_grant_cid_ = cid; }
+  void SetMaxGrantCid(cid_t cid) { maximum_grant_cid_ = cid; }
 
   virtual Transaction *BeginTransaction() = 0;
 
@@ -131,26 +129,23 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetMaxDeadTxnCid();
   }
 
-  void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range){
-	  this->dirty_range_ = dirty_range;
+  void SetDirtyRange(std::pair<cid_t, cid_t> dirty_range) {
+    this->dirty_range_ = dirty_range;
   }
 
  protected:
-
-
-  inline bool CidIsInDirtyRange(cid_t cid){
-	  return ((cid > dirty_range_.first) & (cid <= dirty_range_.second));
+  inline bool CidIsInDirtyRange(cid_t cid) {
+    return ((cid > dirty_range_.first) & (cid <= dirty_range_.second));
   }
   // invisible range after failure and recovery;
   // first value is exclusive, last value is inclusive
-  std::pair<cid_t, cid_t> dirty_range_ = std::make_pair(INVALID_CID, INVALID_CID);
-
+  std::pair<cid_t, cid_t> dirty_range_ =
+      std::make_pair(INVALID_CID, INVALID_CID);
 
  private:
   std::atomic<txn_id_t> next_txn_id_;
   std::atomic<cid_t> next_cid_;
   std::atomic<cid_t> maximum_grant_cid_;
-
 };
 }  // End storage namespace
 }  // End peloton namespace

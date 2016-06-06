@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// checkpoint_manager.h
+// checkpoint_manager.cpp
 //
-// Identification: src/logging/checkpoint_manager.h
+// Identification: src/logging/checkpoint_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -70,7 +70,7 @@ Checkpoint *CheckpointManager::GetCheckpointer(unsigned int idx) {
 }
 
 void CheckpointManager::InitCheckpointers() {
-  //TODO avoid using push_back
+  // TODO avoid using push_back
   for (unsigned int i = 0; i < num_checkpointers_; i++) {
     checkpointers_.push_back(
         Checkpoint::GetCheckpoint(checkpoint_type_, disable_file_access_));

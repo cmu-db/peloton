@@ -4,7 +4,7 @@
 //
 // optimistic_txn_manager.h
 //
-// Identification: src/concurrency/optimistic_txn_manager.h
+// Identification: src/include/concurrency/optimistic_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -24,7 +24,7 @@ namespace concurrency {
 
 class OptimisticTxnManager : public TransactionManager {
  public:
-  OptimisticTxnManager()  {}
+  OptimisticTxnManager() {}
 
   virtual ~OptimisticTxnManager() {}
 
@@ -77,13 +77,11 @@ class OptimisticTxnManager : public TransactionManager {
   }
 
   virtual void EndTransaction() {
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
     current_txn = nullptr;
   }
-
 };
 }
 }

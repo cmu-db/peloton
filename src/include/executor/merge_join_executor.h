@@ -4,7 +4,7 @@
 //
 // merge_join_executor.h
 //
-// Identification: src/executor/merge_join_executor.h
+// Identification: src/include/executor/merge_join_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // buffer_pool_test.cpp
 //
-// Identification: tests/logging/buffer_pool_test.cpp
+// Identification: test/logging/buffer_pool_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -134,9 +134,9 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(key_schema.get(), true));
   tuple->SetValue(0, ValueFactory::GetIntegerValue(1), testing_pool);
-  tuple->SetValue(
-      1, ValueFactory::GetStringValue(std::string(1024 * 1024 * 20, 'e').c_str()),
-      testing_pool);
+  tuple->SetValue(1, ValueFactory::GetStringValue(
+                         std::string(1024 * 1024 * 20, 'e').c_str()),
+                  testing_pool);
 
   logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID,
                               INVALID_OID, INVALID_ITEMPOINTER,

@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// statement_insert.h
+//
+// Identification: src/include/parser/statement_insert.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "parser/sql_statement.h"
@@ -7,30 +19,29 @@ namespace parser {
 
 /**
  * @struct InsertStatement
- * @brief Represents "INSERT INTO students VALUES ('Max', 1112233, 'Musterhausen', 2.3)"
+ * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
+ * 'Musterhausen', 2.3)"
  */
 struct InsertStatement : SQLStatement {
-
-  InsertStatement(InsertType type) :
-    SQLStatement(STATEMENT_TYPE_INSERT),
-    type(type),
-    table_name(NULL),
-    columns(NULL),
-    values(NULL),
-    select(NULL) {}
+  InsertStatement(InsertType type)
+      : SQLStatement(STATEMENT_TYPE_INSERT),
+        type(type),
+        table_name(NULL),
+        columns(NULL),
+        values(NULL),
+        select(NULL) {}
 
   virtual ~InsertStatement() {
     free(table_name);
 
-    if(columns) {
-      for(auto col : *columns)
-        free(col);
+    if (columns) {
+      for (auto col : *columns) free(col);
       delete columns;
     }
 
-    if(values){
-      for(auto expr : *values){
-        if(expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
+    if (values) {
+      for (auto expr : *values) {
+        if (expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
           delete expr;
       }
       delete values;
@@ -46,5 +57,5 @@ struct InsertStatement : SQLStatement {
   SelectStatement* select;
 };
 
-} // End parser namespace
-} // End peloton namespace
+}  // End parser namespace
+}  // End peloton namespace

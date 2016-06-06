@@ -4,7 +4,7 @@
 //
 // value_test.cpp
 //
-// Identification: tests/common/value_test.cpp
+// Identification: test/common/value_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -48,9 +48,9 @@ TEST_F(ValueTest, CloneString) {
 
   ASSERT_TRUE(v1 == v2);
   ASSERT_TRUE(ValuePeeker::PeekObjectLengthWithoutNull(v1) ==
-      ValuePeeker::PeekObjectLengthWithoutNull(v2));
+              ValuePeeker::PeekObjectLengthWithoutNull(v2));
   ASSERT_FALSE(ValuePeeker::PeekObjectValue(v1) ==
-      ValuePeeker::PeekObjectValue(v2));
+               ValuePeeker::PeekObjectValue(v2));
 }
 
 TEST_F(ValueTest, DeserializeDecimal) {
@@ -108,10 +108,10 @@ TEST_F(ValueTest, DeserializeDecimal) {
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
   ASSERT_EQ(value, TTInt(
-      "-9999999999"  // 10 digits
-      "9999999999"   // 20 digits
-      "9999999999"   // 30 digits
-      "99999999"));
+                       "-9999999999"  // 10 digits
+                       "9999999999"   // 20 digits
+                       "9999999999"   // 30 digits
+                       "99999999"));
   ASSERT_FALSE(strcmp(str.c_str(),
                       "-9999999999"  // 10 digits
                       "9999999999"   // 20 digits
@@ -128,10 +128,10 @@ TEST_F(ValueTest, DeserializeDecimal) {
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
   ASSERT_EQ(value, TTInt(
-      "9999999999"  // 10 digits
-      "9999999999"  // 20 digits
-      "9999999999"  // 30 digits
-      "99999999"));
+                       "9999999999"  // 10 digits
+                       "9999999999"  // 20 digits
+                       "9999999999"  // 30 digits
+                       "99999999"));
   ASSERT_FALSE(strcmp(str.c_str(),
                       "9999999999"   // 10 digits
                       "9999999999"   // 20 digits

@@ -68,13 +68,14 @@ bool NestedLoopJoinExecutor::DInit() {
  * execute. And there is no predicate_ for IN+NestLoop
  *
  * For now, we only set this context for IN operator. Normally, the right child
- * has a complete query that can execute without the context, and we use predicate_
+ * has a complete query that can execute without the context, and we use
+ *predicate_
  * to join the left and right result.
  *
  */
 bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("********** Nested Loop %s Join executor :: 2 children ",
-           GetJoinTypeString());
+            GetJoinTypeString());
 
   // Loop until we have non-empty result tile or exit
   for (;;) {

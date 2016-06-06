@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// logical_operators.cpp
+// operators.cpp
 //
-// Identification: src/optimizer/logical_operators.cpp
+// Identification: src/optimizer/operators.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,8 +28,7 @@ Operator LeafOperator::make(GroupID group) {
 // Get
 //===--------------------------------------------------------------------===//
 Operator LogicalGet::make(storage::DataTable *table,
-                          std::vector<Column *> cols)
-{
+                          std::vector<Column *> cols) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->columns = cols;
@@ -38,7 +37,7 @@ Operator LogicalGet::make(storage::DataTable *table,
 
 bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
-  const LogicalGet &r = *static_cast<const LogicalGet*>(&node);
+  const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
   if (table->GetOid() != r.table->GetOid()) return false;
   if (columns.size() != r.columns.size()) return false;
 
@@ -77,8 +76,7 @@ Operator LogicalSelect::make() {
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make()
-{
+Operator LogicalInnerJoin::make() {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   return Operator(join);
 }
@@ -86,8 +84,7 @@ Operator LogicalInnerJoin::make()
 //===--------------------------------------------------------------------===//
 // LeftJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalLeftJoin::make()
-{
+Operator LogicalLeftJoin::make() {
   LogicalLeftJoin *join = new LogicalLeftJoin;
   return Operator(join);
 }
@@ -95,8 +92,7 @@ Operator LogicalLeftJoin::make()
 //===--------------------------------------------------------------------===//
 // RightJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalRightJoin::make()
-{
+Operator LogicalRightJoin::make() {
   LogicalRightJoin *join = new LogicalRightJoin;
   return Operator(join);
 }
@@ -104,8 +100,7 @@ Operator LogicalRightJoin::make()
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalOuterJoin::make()
-{
+Operator LogicalOuterJoin::make() {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   return Operator(join);
 }
@@ -129,8 +124,7 @@ Operator LogicalLimit::make() {
 // Scan
 //===--------------------------------------------------------------------===//
 Operator PhysicalScan::make(storage::DataTable *table,
-                            std::vector<Column *> cols)
-{
+                            std::vector<Column *> cols) {
   PhysicalScan *scan = new PhysicalScan;
   scan->table = table;
   scan->columns = cols;
@@ -178,8 +172,7 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make()
-{
+Operator PhysicalInnerNLJoin::make() {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin;
   return Operator(join);
 }
@@ -187,8 +180,7 @@ Operator PhysicalInnerNLJoin::make()
 //===--------------------------------------------------------------------===//
 // LeftNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make()
-{
+Operator PhysicalLeftNLJoin::make() {
   PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin;
   return Operator(join);
 }
@@ -196,8 +188,7 @@ Operator PhysicalLeftNLJoin::make()
 //===--------------------------------------------------------------------===//
 // RightNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make()
-{
+Operator PhysicalRightNLJoin::make() {
   PhysicalRightNLJoin *join = new PhysicalRightNLJoin;
   return Operator(join);
 }
@@ -205,8 +196,7 @@ Operator PhysicalRightNLJoin::make()
 //===--------------------------------------------------------------------===//
 // OuterNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make()
-{
+Operator PhysicalOuterNLJoin::make() {
   PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin;
   return Operator(join);
 }
@@ -214,8 +204,7 @@ Operator PhysicalOuterNLJoin::make()
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make()
-{
+Operator PhysicalInnerHashJoin::make() {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin;
   return Operator(join);
 }
@@ -223,8 +212,7 @@ Operator PhysicalInnerHashJoin::make()
 //===--------------------------------------------------------------------===//
 // LeftHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make()
-{
+Operator PhysicalLeftHashJoin::make() {
   PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin;
   return Operator(join);
 }
@@ -232,8 +220,7 @@ Operator PhysicalLeftHashJoin::make()
 //===--------------------------------------------------------------------===//
 // RightHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make()
-{
+Operator PhysicalRightHashJoin::make() {
   PhysicalRightHashJoin *join = new PhysicalRightHashJoin;
   return Operator(join);
 }
@@ -241,8 +228,7 @@ Operator PhysicalRightHashJoin::make()
 //===--------------------------------------------------------------------===//
 // OuterHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make()
-{
+Operator PhysicalOuterHashJoin::make() {
   PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin;
   return Operator(join);
 }
@@ -392,455 +378,458 @@ hash_t ExprProjectColumn::Hash() const {
 
 //===--------------------------------------------------------------------===//
 
-template<>
+template <>
 void OperatorNode<LeafOperator>::accept(OperatorVisitor *v) const {
   v->visit((const LeafOperator *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalGet>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalGet *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalProject>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalProject *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalSelect>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalSelect *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalInnerJoin>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalInnerJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalLeftJoin>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalLeftJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalRightJoin>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalRightJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalOuterJoin>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalOuterJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalAggregate>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalAggregate *)this);
 }
-template<>
+template <>
 void OperatorNode<LogicalLimit>::accept(OperatorVisitor *v) const {
   v->visit((const LogicalLimit *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalScan>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalScan *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalComputeExprs>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalComputeExprs *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalFilter>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalFilter *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalInnerNLJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalInnerNLJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalLeftNLJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalLeftNLJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalRightNLJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalRightNLJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalOuterNLJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalOuterNLJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalInnerHashJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalInnerHashJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalLeftHashJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalLeftHashJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalRightHashJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalRightHashJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<PhysicalOuterHashJoin>::accept(OperatorVisitor *v) const {
   v->visit((const PhysicalOuterHashJoin *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprVariable>::accept(OperatorVisitor *v) const {
   v->visit((const ExprVariable *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprConstant>::accept(OperatorVisitor *v) const {
   v->visit((const ExprConstant *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprCompare>::accept(OperatorVisitor *v) const {
   v->visit((const ExprCompare *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprBoolOp>::accept(OperatorVisitor *v) const {
   v->visit((const ExprBoolOp *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprOp>::accept(OperatorVisitor *v) const {
   v->visit((const ExprOp *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprProjectList>::accept(OperatorVisitor *v) const {
   v->visit((const ExprProjectList *)this);
 }
-template<>
+template <>
 void OperatorNode<ExprProjectColumn>::accept(OperatorVisitor *v) const {
   v->visit((const ExprProjectColumn *)this);
 }
 
-template<>
+template <>
 std::string OperatorNode<LeafOperator>::_name = "LeafOperator";
-template<>
+template <>
 std::string OperatorNode<LogicalGet>::_name = "LogicalGet";
-template<>
+template <>
 std::string OperatorNode<LogicalProject>::_name = "LogicalProject";
-template<>
+template <>
 std::string OperatorNode<LogicalSelect>::_name = "LogicalSelect";
-template<>
+template <>
 std::string OperatorNode<LogicalInnerJoin>::_name = "LogicalInnerJoin";
-template<>
+template <>
 std::string OperatorNode<LogicalLeftJoin>::_name = "LogicalLeftJoin";
-template<>
+template <>
 std::string OperatorNode<LogicalRightJoin>::_name = "LogicalRightJoin";
-template<>
+template <>
 std::string OperatorNode<LogicalOuterJoin>::_name = "LogicalOuterJoin";
-template<>
+template <>
 std::string OperatorNode<LogicalAggregate>::_name = "LogicalAggregate";
-template<>
+template <>
 std::string OperatorNode<LogicalLimit>::_name = "LogicalLimit";
-template<>
+template <>
 std::string OperatorNode<PhysicalScan>::_name = "PhysicalScan";
-template<>
+template <>
 std::string OperatorNode<PhysicalComputeExprs>::_name = "PhysicalComputeExprs";
-template<>
+template <>
 std::string OperatorNode<PhysicalFilter>::_name = "PhysicalFilter";
-template<>
+template <>
 std::string OperatorNode<PhysicalInnerNLJoin>::_name = "PhysicalInnerNLJoin";
-template<>
+template <>
 std::string OperatorNode<PhysicalLeftNLJoin>::_name = "PhysicalLeftNLJoin";
-template<>
+template <>
 std::string OperatorNode<PhysicalRightNLJoin>::_name = "PhysicalRightNLJoin";
-template<>
+template <>
 std::string OperatorNode<PhysicalOuterNLJoin>::_name = "PhysicalOuterNLJoin";
-template<>
-std::string OperatorNode<PhysicalInnerHashJoin>::_name = "PhysicalInnerHashJoin";
-template<>
+template <>
+std::string OperatorNode<PhysicalInnerHashJoin>::_name =
+    "PhysicalInnerHashJoin";
+template <>
 std::string OperatorNode<PhysicalLeftHashJoin>::_name = "PhysicalLeftHashJoin";
-template<>
-std::string OperatorNode<PhysicalRightHashJoin>::_name = "PhysicalRightHashJoin";
-template<>
-std::string OperatorNode<PhysicalOuterHashJoin>::_name = "PhysicalOuterHashJoin";
-template<>
+template <>
+std::string OperatorNode<PhysicalRightHashJoin>::_name =
+    "PhysicalRightHashJoin";
+template <>
+std::string OperatorNode<PhysicalOuterHashJoin>::_name =
+    "PhysicalOuterHashJoin";
+template <>
 std::string OperatorNode<ExprVariable>::_name = "ExprVariable";
-template<>
+template <>
 std::string OperatorNode<ExprConstant>::_name = "ExprConstant";
-template<>
+template <>
 std::string OperatorNode<ExprCompare>::_name = "ExprCompare";
-template<>
+template <>
 std::string OperatorNode<ExprBoolOp>::_name = "ExprBoolOp";
-template<>
+template <>
 std::string OperatorNode<ExprOp>::_name = "ExprOp";
-template<>
+template <>
 std::string OperatorNode<ExprProjectList>::_name = "ExprProjectList";
-template<>
+template <>
 std::string OperatorNode<ExprProjectColumn>::_name = "ExprProjectColumn";
 
-template<>
+template <>
 OpType OperatorNode<LeafOperator>::_type = OpType::Leaf;
-template<>
+template <>
 OpType OperatorNode<LogicalGet>::_type = OpType::Get;
-template<>
+template <>
 OpType OperatorNode<LogicalProject>::_type = OpType::Project;
-template<>
+template <>
 OpType OperatorNode<LogicalSelect>::_type = OpType::Select;
-template<>
+template <>
 OpType OperatorNode<LogicalInnerJoin>::_type = OpType::InnerJoin;
-template<>
+template <>
 OpType OperatorNode<LogicalLeftJoin>::_type = OpType::LeftJoin;
-template<>
+template <>
 OpType OperatorNode<LogicalRightJoin>::_type = OpType::RightJoin;
-template<>
+template <>
 OpType OperatorNode<LogicalOuterJoin>::_type = OpType::OuterJoin;
-template<>
+template <>
 OpType OperatorNode<LogicalAggregate>::_type = OpType::Aggregate;
-template<>
+template <>
 OpType OperatorNode<LogicalLimit>::_type = OpType::Limit;
-template<>
+template <>
 OpType OperatorNode<PhysicalScan>::_type = OpType::Scan;
-template<>
+template <>
 OpType OperatorNode<PhysicalComputeExprs>::_type = OpType::ComputeExprs;
-template<>
+template <>
 OpType OperatorNode<PhysicalFilter>::_type = OpType::Filter;
-template<>
+template <>
 OpType OperatorNode<PhysicalInnerNLJoin>::_type = OpType::InnerNLJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalLeftNLJoin>::_type = OpType::LeftNLJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalRightNLJoin>::_type = OpType::RightNLJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalOuterNLJoin>::_type = OpType::OuterNLJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalInnerHashJoin>::_type = OpType::InnerHashJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalLeftHashJoin>::_type = OpType::LeftHashJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalRightHashJoin>::_type = OpType::RightHashJoin;
-template<>
+template <>
 OpType OperatorNode<PhysicalOuterHashJoin>::_type = OpType::OuterHashJoin;
-template<>
+template <>
 OpType OperatorNode<ExprVariable>::_type = OpType::Variable;
-template<>
+template <>
 OpType OperatorNode<ExprConstant>::_type = OpType::Constant;
-template<>
+template <>
 OpType OperatorNode<ExprCompare>::_type = OpType::Compare;
-template<>
+template <>
 OpType OperatorNode<ExprBoolOp>::_type = OpType::BoolOp;
-template<>
+template <>
 OpType OperatorNode<ExprOp>::_type = OpType::Op;
-template<>
+template <>
 OpType OperatorNode<ExprProjectList>::_type = OpType::ProjectList;
-template<>
+template <>
 OpType OperatorNode<ExprProjectColumn>::_type = OpType::ProjectColumn;
 
-template<>
+template <>
 bool OperatorNode<LeafOperator>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalGet>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalProject>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalSelect>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalInnerJoin>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalLeftJoin>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalRightJoin>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalOuterJoin>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalAggregate>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<LogicalLimit>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalScan>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalComputeExprs>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalFilter>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalInnerNLJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalLeftNLJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalRightNLJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalOuterNLJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalInnerHashJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalLeftHashJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalRightHashJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalOuterHashJoin>::IsLogical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<ExprVariable>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprConstant>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprCompare>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprBoolOp>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprOp>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprProjectList>::IsLogical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprProjectColumn>::IsLogical() const {
   return true;
 }
 
-template<>
+template <>
 bool OperatorNode<LeafOperator>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalGet>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalProject>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalSelect>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalInnerJoin>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalLeftJoin>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalRightJoin>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalOuterJoin>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalAggregate>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<LogicalLimit>::IsPhysical() const {
   return false;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalScan>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalComputeExprs>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalFilter>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalInnerNLJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalLeftNLJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalRightNLJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalOuterNLJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalInnerHashJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalLeftHashJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalRightHashJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<PhysicalOuterHashJoin>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprVariable>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprConstant>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprCompare>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprBoolOp>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprOp>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprProjectList>::IsPhysical() const {
   return true;
 }
-template<>
+template <>
 bool OperatorNode<ExprProjectColumn>::IsPhysical() const {
   return true;
 }

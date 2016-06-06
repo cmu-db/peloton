@@ -27,11 +27,11 @@ namespace expression {
 SubqueryExpression::SubqueryExpression(
     ExpressionType subqueryType, ValueType result_type, int subqueryId,
     const std::vector<int> &paramIdxs, const std::vector<int> &otherParamIdxs,
-    UNUSED_ATTRIBUTE const std::vector<AbstractExpression *>& tveParams)
+    UNUSED_ATTRIBUTE const std::vector<AbstractExpression *> &tveParams)
     : AbstractExpression(subqueryType, result_type),
       m_subqueryId(subqueryId),
       m_paramIdxs(paramIdxs),
-      m_otherParamIdxs(otherParamIdxs){
+      m_otherParamIdxs(otherParamIdxs) {
   LOG_TRACE("SubqueryExpression %d", subqueryId);
 }
 

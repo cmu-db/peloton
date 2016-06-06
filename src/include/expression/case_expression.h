@@ -4,7 +4,7 @@
 //
 // case_expression.h
 //
-// Identification: src/expression/case_expression.h
+// Identification: src/include/expression/case_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

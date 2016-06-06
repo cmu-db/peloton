@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// checkpoint_tile_scanner.h
+//
+// Identification: src/include/logging/checkpoint_tile_scanner.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * checkpoint_tile_scanner.h
@@ -32,10 +44,10 @@ class CheckpointTileScanner {
 
   ~CheckpointTileScanner() {}
 
-  //Scan a tile group r.w.t start_cid
+  // Scan a tile group r.w.t start_cid
   std::unique_ptr<executor::LogicalTile> Scan(
-      std::shared_ptr<storage::TileGroup>,
-      const std::vector<oid_t> &column_ids, cid_t start_cid);
+      std::shared_ptr<storage::TileGroup>, const std::vector<oid_t> &column_ids,
+      cid_t start_cid);
 
   // check whether a tuple is visible to current checkpoint.
   bool IsVisible(const storage::TileGroupHeader *const tile_group_header,

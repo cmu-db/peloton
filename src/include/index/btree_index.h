@@ -4,7 +4,7 @@
 //
 // btree_index.h
 //
-// Identification: src/index/btree_index.h
+// Identification: src/include/index/btree_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -88,7 +88,7 @@ class BTreeIndex : public Index {
       const std::vector<oid_t> &key_column_ids,
       const std::vector<ExpressionType> &expr_types,
       std::map<oid_t, std::pair<Value, Value>> &non_leading_columns);
-  
+
   // Get the indexed tile group offset
   virtual int GetIndexedTileGroupOff() {
     return indexed_tile_group_offset_.load();
@@ -98,7 +98,7 @@ class BTreeIndex : public Index {
     indexed_tile_group_offset_++;
     return;
   }
-  
+
  protected:
   MapType container;
 
@@ -110,7 +110,6 @@ class BTreeIndex : public Index {
   RWLock index_lock;
 
   std::atomic<int> indexed_tile_group_offset_;
-
 };
 
 }  // End index namespace

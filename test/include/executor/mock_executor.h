@@ -4,7 +4,7 @@
 //
 // mock_executor.h
 //
-// Identification: tests/executor/mock_executor.h
+// Identification: test/include/executor/mock_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

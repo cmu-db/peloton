@@ -4,7 +4,7 @@
 //
 // comparison_expression.h
 //
-// Identification: src/expression/comparison_expression.h
+// Identification: src/include/expression/comparison_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -47,16 +47,12 @@ class CmpEq {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
-                                          const Value &l,
-                                          UNUSED_ATTRIBUTE
-                                          const Value &r) {
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                          UNUSED_ATTRIBUTE const Value &r) {
     return false;
   }
-  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
-                                           const Value &l,
-                                           UNUSED_ATTRIBUTE
-                                           const Value &r) {
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                           UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
   inline static bool implies_null_for_row() { return false; }
@@ -69,16 +65,12 @@ class CmpNe {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r);
   }
-  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
-                                          const Value &l,
-                                          UNUSED_ATTRIBUTE
-                                          const Value &r) {
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                          UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
-  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
-                                           const Value &l,
-                                           UNUSED_ATTRIBUTE
-                                           const Value &r) {
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                           UNUSED_ATTRIBUTE const Value &r) {
     return false;
   }
   inline static bool implies_null_for_row() { return false; }
@@ -91,10 +83,8 @@ class CmpLt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpLessThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
-                                          const Value &l,
-                                          UNUSED_ATTRIBUTE
-                                          const Value &r) {
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                          UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
   inline static bool implies_false_for_row(const Value &l, const Value &r) {
@@ -110,10 +100,8 @@ class CmpGt {
   inline static Value compare_withoutNull(const Value &l, const Value &r) {
     return l.OpGreaterThanWithoutNull(r);
   }
-  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE
-                                          const Value &l,
-                                          UNUSED_ATTRIBUTE
-                                          const Value &r) {
+  inline static bool implies_true_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                          UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
   inline static bool implies_false_for_row(const Value &l, const Value &r) {
@@ -132,10 +120,8 @@ class CmpLte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
-                                           const Value &l,
-                                           UNUSED_ATTRIBUTE
-                                           const Value &r) {
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                           UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
   inline static bool implies_null_for_row() { return true; }
@@ -151,10 +137,8 @@ class CmpGte {
   inline static bool implies_true_for_row(const Value &l, const Value &r) {
     return l.OpNotEqualsWithoutNull(r).IsTrue();
   }
-  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE
-                                           const Value &l,
-                                           UNUSED_ATTRIBUTE
-                                           const Value &r) {
+  inline static bool implies_false_for_row(UNUSED_ATTRIBUTE const Value &l,
+                                           UNUSED_ATTRIBUTE const Value &r) {
     return true;
   }
   inline static bool implies_null_for_row() { return true; }

@@ -14,9 +14,6 @@
 
 namespace peloton {
 namespace optimizer {
-namespace util {
-
-
-} /* namespace util */
+namespace util {} /* namespace util */
 } /* namespace optimizer */
 } /* namespace peloton */

@@ -4,7 +4,7 @@
 //
 // cast.h
 //
-// Identification: src/common/cast.h
+// Identification: src/include/common/cast.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -51,7 +51,8 @@ template <typename DestinationType, typename SourceType,
 class ALWAYS_ASSERT_range_cast_dispatch;
 
 template <typename DestinationType, typename SourceType>
-class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true, true> {
+class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true,
+                                        true> {
  public:
   DestinationType operator()(SourceType value) const {
     return ALWAYS_ASSERT_range_cast_same<DestinationType>(value);
@@ -59,7 +60,8 @@ class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true, true>
 };
 
 template <typename DestinationType, typename SourceType>
-class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false, false> {
+class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false,
+                                        false> {
  public:
   DestinationType operator()(SourceType value) const {
     return ALWAYS_ASSERT_range_cast_same<DestinationType>(value);
@@ -67,7 +69,8 @@ class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false, fals
 };
 
 template <typename DestinationType, typename SourceType>
-class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true, false> {
+class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true,
+                                        false> {
  public:
   DestinationType operator()(SourceType value) const {
     return ALWAYS_ASSERT_range_cast_unsigned_to_signed<DestinationType>(value);
@@ -75,7 +78,8 @@ class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, true, false
 };
 
 template <typename DestinationType, typename SourceType>
-class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false, true> {
+class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false,
+                                        true> {
  public:
   DestinationType operator()(SourceType value) const {
     return ALWAYS_ASSERT_range_cast_signed_to_unsigned<DestinationType>(value);
@@ -85,10 +89,10 @@ class ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType, false, true
 // User interface
 template <typename DestinationType, typename SourceType>
 DestinationType ALWAYS_ASSERT_range_cast(SourceType value) {
-  ALWAYS_ASSERT_range_cast_dispatch<DestinationType, SourceType,
-                             std::numeric_limits<DestinationType>::is_signed,
-                             std::numeric_limits<SourceType>::is_signed>
-      dispatch;
+  ALWAYS_ASSERT_range_cast_dispatch<
+      DestinationType, SourceType,
+      std::numeric_limits<DestinationType>::is_signed,
+      std::numeric_limits<SourceType>::is_signed> dispatch;
   return dispatch(value);
 }
 

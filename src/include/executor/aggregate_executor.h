@@ -4,7 +4,7 @@
 //
 // aggregate_executor.h
 //
-// Identification: src/executor/aggregate_executor.h
+// Identification: src/include/executor/aggregate_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

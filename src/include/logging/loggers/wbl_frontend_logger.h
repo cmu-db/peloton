@@ -4,7 +4,7 @@
 //
 // wbl_frontend_logger.h
 //
-// Identification: src/logging/loggers/wbl_frontend_logger.h
+// Identification: src/include/logging/loggers/wbl_frontend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

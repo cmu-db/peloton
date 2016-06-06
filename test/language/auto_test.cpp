@@ -4,7 +4,7 @@
 //
 // auto_test.cpp
 //
-// Identification: tests/language/auto_test.cpp
+// Identification: test/language/auto_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -53,7 +53,7 @@ TEST_F(AutoTests, BasicTest) {
   LOG_INFO("type of d: %s", typeid(d).name());
 
   auto my_lambda = [](int x) { return x + 3; };
-  LOG_INFO("my_lambda: %d",  my_lambda(5));
+  LOG_INFO("my_lambda: %d", my_lambda(5));
 
   auto my_fun = get_fun(2);
   LOG_INFO("type of my_fun: %s", typeid(my_fun).name());

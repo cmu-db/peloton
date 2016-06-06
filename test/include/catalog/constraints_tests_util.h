@@ -4,7 +4,7 @@
 //
 // constraints_tests_util.h
 //
-// Identification: tests/catalog/constraints_tests_util.h
+// Identification: test/include/catalog/constraints_tests_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

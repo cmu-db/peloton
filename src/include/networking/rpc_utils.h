@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rpc_utils.h
 //
-// Identification: /peloton/src/networking/rpc_utils.h
+// Identification: src/include/networking/rpc_utils.h
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,7 +23,5 @@ namespace networking {
 //   Message Creation Functions
 //===----------------------------------------------------------------------===//
 
-} // namespace message
-} // namespace peloton
-
-
+}  // namespace message
+}  // namespace peloton

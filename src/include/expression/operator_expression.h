@@ -4,7 +4,7 @@
 //
 // operator_expression.h
 //
-// Identification: src/expression/operator_expression.h
+// Identification: src/include/expression/operator_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -201,7 +201,7 @@ class OperatorExistsExpression : public AbstractExpression {
                            left, nullptr) {}
 
   Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                 executor::ExecutorContext *context) const override ;
+                 executor::ExecutorContext *context) const override;
 
   std::string DebugInfo(const std::string &spacer) const override {
     return (spacer + "OperatorE.IstsExpression");

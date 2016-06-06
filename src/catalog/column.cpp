@@ -50,7 +50,7 @@ const std::string Column::GetInfo() const {
      << " variable length = " << variable_length << ","
      << " inlined = " << is_inlined;
 
-  if(constraints.empty() == false) {
+  if (constraints.empty() == false) {
     os << "\n";
   }
 

@@ -4,7 +4,7 @@
 //
 // storage_manager.h
 //
-// Identification: src/storage/storage_manager.h
+// Identification: src/include/storage/storage_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -43,9 +43,7 @@ class StorageManager {
 
   size_t GetClflushCount() const { return clflush_count; }
 
-  size_t GetAllocationCount() const {
-    return allocation_count;
-  }
+  size_t GetAllocationCount() const { return allocation_count; }
 
  private:
   // data file address

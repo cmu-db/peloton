@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// logging_test.cpp
+// recovery_test.cpp
 //
-// Identification: tests/logging/logging_test.cpp
+// Identification: test/logging/recovery_test.cpp
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

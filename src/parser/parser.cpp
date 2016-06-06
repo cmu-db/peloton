@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// parser.cpp
+//
+// Identification: src/parser/parser.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * parser.cpp
@@ -5,7 +17,7 @@
  *
  * Copyright(c) 2015, CMU
  *
- * 
+ *
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +34,7 @@
 namespace peloton {
 namespace parser {
 
-SQLStatementList* Parser::ParseSQLString(const char *text) {
+SQLStatementList* Parser::ParseSQLString(const char* text) {
   SQLStatementList* result;
   yyscan_t scanner;
   YY_BUFFER_STATE state;
@@ -51,6 +63,5 @@ SQLStatementList* Parser::ParseSQLString(const std::string& text) {
   return ParseSQLString(text.c_str());
 }
 
-} // End parser namespace
-} // End peloton namespace
-
+}  // End parser namespace
+}  // End peloton namespace

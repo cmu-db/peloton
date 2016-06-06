@@ -4,7 +4,7 @@
 //
 // logger_test.cpp
 //
-// Identification: tests/common/logger_test.cpp
+// Identification: test/common/logger_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

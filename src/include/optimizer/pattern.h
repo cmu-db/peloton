@@ -4,7 +4,7 @@
 //
 // pattern.h
 //
-// Identification: src/optimizer/pattern.h
+// Identification: src/include/optimizer/pattern.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

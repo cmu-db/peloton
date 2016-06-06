@@ -4,7 +4,7 @@
 //
 // date_expression.h
 //
-// Identification: src/expression/date_expression.h
+// Identification: src/include/expression/date_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -48,8 +48,8 @@ class ExtractExpression : public AbstractExpression {
    * date: date or timestamp to extract from
    */
   ExtractExpression(AbstractExpression *subfield, AbstractExpression *date)
-      : AbstractExpression(EXPRESSION_TYPE_EXTRACT, VALUE_TYPE_BIGINT,
-                           subfield, date) {
+      : AbstractExpression(EXPRESSION_TYPE_EXTRACT, VALUE_TYPE_BIGINT, subfield,
+                           date) {
     if (subfield->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT) {
       this->subfield = ExtractExpression::GetFieldFromValue(
           subfield->Evaluate(nullptr, nullptr, nullptr));

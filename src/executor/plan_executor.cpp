@@ -4,12 +4,11 @@
 //
 // plan_executor.cpp
 //
-// Identification: src/bridge/dml/executor/plan_executor.cpp
+// Identification: src/executor/plan_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <vector>
 
@@ -26,8 +25,8 @@ namespace bridge {
 /*
  * Added for network invoking efficiently
  */
-executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
-                                                concurrency::Transaction *txn);
+executor::ExecutorContext *BuildExecutorContext(
+    const std::vector<Value> &params, concurrency::Transaction *txn);
 
 executor::AbstractExecutor *BuildExecutorTree(
     executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
@@ -68,8 +67,8 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-  BuildExecutorContext(params, txn));
-  //auto executor_context = BuildExecutorContext(param_list, txn);
+      BuildExecutorContext(params, txn));
+  // auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -149,10 +148,9 @@ cleanup:
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
-int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-    const std::vector<Value> &params,
-    std::vector<std::unique_ptr<executor::LogicalTile>>& logical_tile_list) {
-
+int PlanExecutor::ExecutePlan(
+    const planner::AbstractPlan *plan, const std::vector<Value> &params,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   if (plan == nullptr) return -1;
 
   LOG_TRACE("PlanExecutor Start ");
@@ -176,7 +174,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
-  BuildExecutorContext(params, txn));
+      BuildExecutorContext(params, txn));
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -231,15 +229,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-        return
-            executor_context->num_processed;
+        return executor_context->num_processed;
 
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
-       return -1;
+        return -1;
     }
   }
   return executor_context->num_processed;
@@ -268,10 +265,9 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 /**
  * @brief Build Executor Context
  */
-executor::ExecutorContext *BuildExecutorContext(const std::vector<Value> &params,
-                                                concurrency::Transaction *txn) {
-  return new executor::ExecutorContext(
-      txn, params);
+executor::ExecutorContext *BuildExecutorContext(
+    const std::vector<Value> &params, concurrency::Transaction *txn) {
+  return new executor::ExecutorContext(txn, params);
 }
 
 /**
@@ -369,7 +365,8 @@ executor::AbstractExecutor *BuildExecutorTree(
   // Recurse
   auto &children = plan->GetChildren();
   for (auto &child : children) {
-    child_executor = BuildExecutorTree(child_executor, child.get(), executor_context);
+    child_executor =
+        BuildExecutorTree(child_executor, child.get(), executor_context);
   }
 
   return root;

@@ -20,9 +20,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 TupleSample::TupleSample(std::vector<Column *> columns,
                          storage::TileGroup *sampled_tuples)
-  : columns(columns), sampled_tuples(sampled_tuples)
-{
-}
+    : columns(columns), sampled_tuples(sampled_tuples) {}
 
 } /* namespace optimizer */
 } /* namespace peloton */

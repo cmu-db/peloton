@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// cache_entry.h
+// statement.h
 //
-// Identification: src/wire/cache_entry.h
+// Identification: src/include/wire/statement.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <string>

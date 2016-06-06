@@ -26,14 +26,14 @@
 #include "logging/logging_util.h"
 #include "logging/log_manager.h"
 
-#define POSSIBLY_DIRTY_GRANT_SIZE 10000000; // ten million seems reasonable
+#define POSSIBLY_DIRTY_GRANT_SIZE 10000000;  // ten million seems reasonable
 
 namespace peloton {
 namespace logging {
 
-struct WriteBehindLogRecord{
-	cid_t persistent_commit_id;
-	cid_t max_possible_dirty_commit_id;
+struct WriteBehindLogRecord {
+  cid_t persistent_commit_id;
+  cid_t max_possible_dirty_commit_id;
 };
 
 // TODO for now, these helper routines are defined here, and also use
@@ -81,28 +81,29 @@ WriteBehindFrontendLogger::~WriteBehindFrontendLogger() {
  * @brief flush all log records to the file
  */
 void WriteBehindFrontendLogger::FlushLogRecords(void) {
-	struct WriteBehindLogRecord record;
-	record.persistent_commit_id = max_collected_commit_id;
-	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	cid_t new_grant = txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
-	// get current highest dispense commit id
-	record.max_possible_dirty_commit_id = new_grant;
-	if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)){
-		LOG_ERROR("Unable to write log record");
-	}
+  struct WriteBehindLogRecord record;
+  record.persistent_commit_id = max_collected_commit_id;
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  cid_t new_grant =
+      txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
+  // get current highest dispense commit id
+  record.max_possible_dirty_commit_id = new_grant;
+  if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)) {
+    LOG_ERROR("Unable to write log record");
+  }
 
-	// for now fsync every time because the cost is relatively low
-	if (fsync(log_file_fd)){
-		LOG_ERROR("Unable to fsync log");
-	}
+  // for now fsync every time because the cost is relatively low
+  if (fsync(log_file_fd)) {
+    LOG_ERROR("Unable to fsync log");
+  }
 
-	// inform backend loggers they can proceed if waiting for sync
-	max_flushed_commit_id = max_collected_commit_id;
-	auto &manager = LogManager::GetInstance();
-	manager.FrontendLoggerFlushed();
+  // inform backend loggers they can proceed if waiting for sync
+  max_flushed_commit_id = max_collected_commit_id;
+  auto &manager = LogManager::GetInstance();
+  manager.FrontendLoggerFlushed();
 
-	//set new grant in txn_manager
-	txn_manager.SetMaxGrantCid(new_grant);
+  // set new grant in txn_manager
+  txn_manager.SetMaxGrantCid(new_grant);
 }
 
 //===--------------------------------------------------------------------===//
@@ -113,48 +114,49 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
  * @brief Recovery system based on log file
  */
 void WriteBehindFrontendLogger::DoRecovery() {
+  // read file, truncate any trailing log data
+  // get file size
 
-	// read file, truncate any trailing log data
-	// get file size
+  struct stat stat_buf;
+  fstat(log_file_fd, &stat_buf);
 
-	struct stat stat_buf;
-	fstat(log_file_fd, &stat_buf);
+  // calculate number of records
+  long record_num = stat_buf.st_size / sizeof(WriteBehindLogRecord);
+  if (stat_buf.st_size % sizeof(WriteBehindLogRecord)) {
+    if (!ftruncate(log_file_fd, record_num * sizeof(WriteBehindLogRecord))) {
+      LOG_ERROR("ftruncate failed on recovery");
+    }
+  }
 
-	// calculate number of records
-	long record_num = stat_buf.st_size/sizeof(WriteBehindLogRecord);
-	if (stat_buf.st_size%sizeof(WriteBehindLogRecord)){
-		if (!ftruncate(log_file_fd, record_num*sizeof(WriteBehindLogRecord))){
-			LOG_ERROR("ftruncate failed on recovery");
-		}
-	}
+  // if no records, return
+  if (record_num == 0) {
+    return;
+  }
 
-	// if no records, return
-	if (record_num == 0){
-		return;
-	}
+  long first_record_offset = (record_num - 1) * sizeof(WriteBehindLogRecord);
 
-	long first_record_offset = (record_num-1)*sizeof(WriteBehindLogRecord);
+  // seek to current record;
+  fseek(log_file, first_record_offset, SEEK_SET);
 
-	// seek to current record;
-	fseek(log_file, first_record_offset, SEEK_SET);
+  // read last record to get the possibly dirty span
+  WriteBehindLogRecord most_recent_log_record;
+  if (!fread(&most_recent_log_record, sizeof(WriteBehindLogRecord), 1,
+             log_file)) {
+    LOG_ERROR("log recovery read failed");
+  }
 
-	// read last record to get the possibly dirty span
-	WriteBehindLogRecord most_recent_log_record;
-	if (!fread(&most_recent_log_record, sizeof(WriteBehindLogRecord), 1, log_file)){
-		LOG_ERROR("log recovery read failed");
-	}
+  // set the next cid of the transaction manager
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.SetNextCid(most_recent_log_record.max_possible_dirty_commit_id +
+                         1);
 
-	// set the next cid of the transaction manager
-	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-	txn_manager.SetNextCid(most_recent_log_record.max_possible_dirty_commit_id+1);
+  // set the dirty span of the transaction manager
+  txn_manager.SetDirtyRange(
+      std::make_pair(most_recent_log_record.persistent_commit_id,
+                     most_recent_log_record.max_possible_dirty_commit_id));
 
-	// set the dirty span of the transaction manager
-	txn_manager.SetDirtyRange(std::make_pair(most_recent_log_record.persistent_commit_id,
-			most_recent_log_record.max_possible_dirty_commit_id));
-
-	// for now assume that the maximum tile group oid and table tile group
-	// membership info are already set
-
+  // for now assume that the maximum tile group oid and table tile group
+  // membership info are already set
 }
 
 std::string WriteBehindFrontendLogger::GetLogFileName(void) {

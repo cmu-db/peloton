@@ -4,7 +4,7 @@
 //
 // executor_tests_util.cpp
 //
-// Identification: tests/executor/executor_tests_util.cpp
+// Identification: test/executor/executor_tests_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -176,7 +176,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     if (group_by) {
       // First column has only two distinct values
       tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(
-          int(populate_value / (num_rows / 2)), 0)),
+                            int(populate_value / (num_rows / 2)), 0)),
                      testing_pool);
 
     } else {
@@ -189,11 +189,11 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     // In case of random, make sure this column has duplicated values
     tuple.SetValue(
         1, ValueFactory::GetIntegerValue(PopulatedValue(
-            random ? std::rand() % (num_rows / 3) : populate_value, 1)),
-            testing_pool);
+               random ? std::rand() % (num_rows / 3) : populate_value, 1)),
+        testing_pool);
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-        random ? std::rand() : populate_value, 2)),
+                          random ? std::rand() : populate_value, 2)),
                    testing_pool);
 
     // In case of random, make sure this column has duplicated values
@@ -244,7 +244,8 @@ void ExecutorTestsUtil::PopulateTiles(
     tuple.SetValue(3, string_value, testing_pool);
 
     oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
-    txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
+    txn_manager.PerformInsert(
+        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   }
 
   txn_manager.CommitTransaction();
@@ -271,11 +272,11 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   // Where the main work takes place...
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile));
+      .WillOnce(Return(source_logical_tile));
 
   EXPECT_TRUE(executor->Execute());
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
@@ -349,16 +350,17 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.BeginTransaction();
-  ExecutorTestsUtil::PopulateTable(
-      table, tuple_count * DEFAULT_TILEGROUP_COUNT, false, false, false);
+  ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT,
+                                   false, false, false);
   txn_manager.CommitTransaction();
 
   return table;
 }
 
-std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(storage::DataTable *table,
-                                                            oid_t tuple_id, VarlenPool *pool) {
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(
+    storage::DataTable *table, oid_t tuple_id, VarlenPool *pool) {
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)),
                   pool);
   tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)),
@@ -370,9 +372,10 @@ std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetTuple(storage::DataTable *
   return tuple;
 }
 
-std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(storage::DataTable *table,
-                                                                VarlenPool *pool) {
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(), true));
+std::unique_ptr<storage::Tuple> ExecutorTestsUtil::GetNullTuple(
+    storage::DataTable *table, VarlenPool *pool) {
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table->GetSchema(), true));
   tuple->SetValue(0, ValueFactory::GetNullValue(), pool);
   tuple->SetValue(1, ValueFactory::GetNullValue(), pool);
   tuple->SetValue(2, ValueFactory::GetNullValue(), pool);

@@ -4,7 +4,7 @@
 //
 // abstract_tuple.h
 //
-// Identification: src/common/abstract_tuple.h
+// Identification: src/include/common/abstract_tuple.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

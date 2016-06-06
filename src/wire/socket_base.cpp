@@ -34,7 +34,8 @@ void StartServer(Server *server) {
     exit(EXIT_FAILURE);
   }
 
-  ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+  ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                   sizeof(yes));
   if (ret == -1) {
     LOG_ERROR("Setsockopt error: can't config reuse addr");
     exit(EXIT_FAILURE);
@@ -42,7 +43,8 @@ void StartServer(Server *server) {
 
   memset(&serv_addr, 0, sizeof(serv_addr));
   serv_addr.sun_family = AF_UNIX;
-  strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(), sizeof(serv_addr.sun_path) - 1);
+  strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
+          sizeof(serv_addr.sun_path) - 1);
   unlink(serv_addr.sun_path);
 
   len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
@@ -59,7 +61,6 @@ void StartServer(Server *server) {
     perror("listen");
     exit(EXIT_FAILURE);
   }
-
 }
 
 template <typename B>
@@ -265,4 +266,3 @@ template class SocketManager<std::vector<uchar>>;
 
 }  // End wire namespace
 }  // End peloton namespace
-

@@ -4,7 +4,7 @@
 //
 // harness.cpp
 //
-// Identification: tests/harness.cpp
+// Identification: test/common/harness.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

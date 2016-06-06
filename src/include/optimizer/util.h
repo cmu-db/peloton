@@ -4,7 +4,7 @@
 //
 // util.h
 //
-// Identification: src/optimizer/util.h
+// Identification: src/include/optimizer/util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,8 +26,7 @@ namespace util {
  */
 inline hash_t HashBytes(const char *bytes, size_t length) {
   hash_t hash = length;
-  for(size_t i = 0; i < length; ++i)
-  {
+  for (size_t i = 0; i < length; ++i) {
     hash = ((hash << 5) ^ (hash >> 27)) ^ bytes[i];
   }
   return hash;
@@ -39,7 +38,6 @@ inline hash_t CombineHashes(hash_t l, hash_t r) {
   both[1] = r;
   return HashBytes((char *)both, sizeof(hash_t) * 2);
 }
-
 
 template <typename T>
 inline hash_t Hash(const T *ptr) {

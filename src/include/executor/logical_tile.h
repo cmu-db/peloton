@@ -4,7 +4,7 @@
 //
 // logical_tile.h
 //
-// Identification: src/executor/logical_tile.h
+// Identification: src/include/executor/logical_tile.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -284,19 +284,22 @@ class LogicalTile : public Printable {
 
   //===--------------------------------------------------------------------===//
   // Materialize utilities. We can make these public if it is necessary.
-  // TODO: We might refactor MaterializationExecutor using these functions in the future
+  // TODO: We might refactor MaterializationExecutor using these functions in
+  // the future
   //===--------------------------------------------------------------------===//
 
   // Column-oriented materialization
   void MaterializeColumnAtATime(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+          tile_to_cols,
       storage::Tile *dest_tile);
 
   // Row-oriented materialization
   void MaterializeRowAtAtATime(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+          tile_to_cols,
       storage::Tile *dest_tile);
 
   /**
@@ -307,7 +310,8 @@ class LogicalTile : public Printable {
    */
   void MaterializeByTiles(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+          tile_to_cols,
       storage::Tile *dest_tile);
 
   /**
@@ -316,7 +320,8 @@ class LogicalTile : public Printable {
    * @param column_ids Ids of columns to be materialized.
    * @param tile_to_cols Map to be populated with mappings from tile to columns.
    *
-   * We generate this mapping so that we can materialize columns tile by tile for
+   * We generate this mapping so that we can materialize columns tile by tile
+   *for
    * efficiency reasons.
    */
   void GenerateTileToColMap(

@@ -4,7 +4,7 @@
 //
 // sample.h
 //
-// Identification: src/brain/sample.h
+// Identification: src/include/brain/sample.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

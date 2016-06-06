@@ -4,7 +4,7 @@
 //
 // index_factory.h
 //
-// Identification: src/index/index_factory.h
+// Identification: src/include/index/index_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

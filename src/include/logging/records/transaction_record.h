@@ -4,7 +4,7 @@
 //
 // transaction_record.h
 //
-// Identification: src/logging/records/transaction_record.h
+// Identification: src/include/logging/records/transaction_record.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,7 +23,7 @@ namespace logging {
 // TransactionRecord
 //===--------------------------------------------------------------------===//
 
-class TransactionRecord : public LogRecord, Printable  {
+class TransactionRecord : public LogRecord, Printable {
  public:
   TransactionRecord(LogRecordType log_record_type,
                     const cid_t cid = INVALID_CID)
@@ -50,7 +50,6 @@ class TransactionRecord : public LogRecord, Printable  {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
-
 };
 
 }  // namespace logging

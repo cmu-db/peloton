@@ -156,7 +156,8 @@ bool AggregateExecutor::DExecute() {
       PL_ASSERT(location.block != INVALID_OID);
 
       auto &manager = catalog::Manager::GetInstance();
-      auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
+      auto tile_group_header =
+          manager.GetTileGroup(location.block)->GetHeader();
       tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);
 
     } else {
@@ -175,8 +176,7 @@ bool AggregateExecutor::DExecute() {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
-    auto logical_tile =
-        LogicalTileFactory::WrapTileGroup(tile_group);
+    auto logical_tile = LogicalTileFactory::WrapTileGroup(tile_group);
 
     result.push_back(logical_tile);
   }

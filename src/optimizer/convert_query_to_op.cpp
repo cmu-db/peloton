@@ -27,30 +27,27 @@ namespace {
 
 bool IsCompareOp(ExpressionType et) {
   switch (et) {
-  case (EXPRESSION_TYPE_COMPARE_EQUAL):
-  case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-  case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-  case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-  case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-  case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
-  case (EXPRESSION_TYPE_COMPARE_LIKE):
-  case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
-  case (EXPRESSION_TYPE_COMPARE_IN):
-    return true;
-  default:
-    return false;
+    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_LIKE):
+    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
+    case (EXPRESSION_TYPE_COMPARE_IN):
+      return true;
+    default:
+      return false;
   }
 }
 
 class QueryToOpTransformer : public QueryNodeVisitor {
  public:
-  QueryToOpTransformer(ColumnManager &manager)
-    : manager(manager) {
-  }
+  QueryToOpTransformer(ColumnManager &manager) : manager(manager) {}
 
   std::shared_ptr<OpExpression> ConvertToOpExpression(
-    std::shared_ptr<Select> op)
-  {
+      std::shared_ptr<Select> op) {
     op->accept(this);
     return output_expr;
   }
@@ -64,12 +61,9 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
     Column *col = manager.LookupColumn(table_oid, col_id);
     if (col == nullptr) {
-      col = manager.AddBaseColumn(schema_col.GetType(),
-                                  schema_col.GetLength(),
-                                  schema_col.GetName(),
-                                  schema_col.IsInlined(),
-                                  table_oid,
-                                  col_id);
+      col = manager.AddBaseColumn(schema_col.GetType(), schema_col.GetLength(),
+                                  schema_col.GetName(), schema_col.IsInlined(),
+                                  table_oid, col_id);
     }
 
     output_expr = std::make_shared<OpExpression>(ExprVariable::make(col));
@@ -90,8 +84,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     if (IsCompareOp(op->type)) {
       expr = std::make_shared<OpExpression>(ExprCompare::make(op->type));
     } else {
-      expr = std::make_shared<OpExpression>(ExprOp::make(op->type,
-                                                         op->value_type));
+      expr = std::make_shared<OpExpression>(
+          ExprOp::make(op->type, op->value_type));
     }
 
     for (QueryExpression *arg : op->args) {
@@ -115,7 +109,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const AndOperator *op) override {
     auto expr =
-      std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::And));
+        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::And));
 
     for (QueryExpression *arg : op->args) {
       arg->accept(this);
@@ -130,7 +124,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const OrOperator *op) override {
     auto expr =
-      std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Or));
+        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Or));
 
     for (QueryExpression *arg : op->args) {
       arg->accept(this);
@@ -145,7 +139,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
 
   void visit(const NotOperator *op) override {
     auto expr =
-      std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Not));
+        std::make_shared<OpExpression>(ExprBoolOp::make(BoolOpType::Not));
 
     QueryExpression *arg = op->arg;
     arg->accept(this);
@@ -165,11 +159,8 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     if (output_size == 0) {
       output_size = std::pow(2, 16);
     }
-    Column *col =
-      manager.AddExprColumn(output_type,
-                            output_size,
-                            op->name,
-                            output_inlined);
+    Column *col = manager.AddExprColumn(output_type, output_size, op->name,
+                                        output_inlined);
     auto expr = std::make_shared<OpExpression>(ExprProjectColumn::make(col));
     expr->PushChild(output_expr);
 
@@ -186,37 +177,34 @@ class QueryToOpTransformer : public QueryNodeVisitor {
       catalog::Column schema_col = schema->GetColumn(col_id);
       Column *col = manager.LookupColumn(table_oid, col_id);
       if (col == nullptr) {
-        col = manager.AddBaseColumn(schema_col.GetType(),
-                                    schema_col.GetLength(),
-                                    schema_col.GetName(),
-                                    schema_col.IsInlined(),
-                                    table_oid,
-                                    col_id);
+        col = manager.AddBaseColumn(
+            schema_col.GetType(), schema_col.GetLength(), schema_col.GetName(),
+            schema_col.IsInlined(), table_oid, col_id);
       }
       columns.push_back(col);
     }
-    output_expr =
-      std::make_shared<OpExpression>(LogicalGet::make(op->data_table, columns));
+    output_expr = std::make_shared<OpExpression>(
+        LogicalGet::make(op->data_table, columns));
   }
 
   void visit(const Join *op) override {
     // Self
     std::shared_ptr<OpExpression> expr;
     switch (op->join_type) {
-    case JOIN_TYPE_INNER: {
-      expr = std::make_shared<OpExpression>(LogicalInnerJoin::make());
-    } break;
-    case JOIN_TYPE_LEFT: {
-      expr = std::make_shared<OpExpression>(LogicalLeftJoin::make());
-    } break;
-    case JOIN_TYPE_RIGHT: {
-      expr = std::make_shared<OpExpression>(LogicalRightJoin::make());
-    } break;
-    case JOIN_TYPE_OUTER: {
-      expr = std::make_shared<OpExpression>(LogicalOuterJoin::make());
-    } break;
-    default:
-      assert(false);
+      case JOIN_TYPE_INNER: {
+        expr = std::make_shared<OpExpression>(LogicalInnerJoin::make());
+      } break;
+      case JOIN_TYPE_LEFT: {
+        expr = std::make_shared<OpExpression>(LogicalLeftJoin::make());
+      } break;
+      case JOIN_TYPE_RIGHT: {
+        expr = std::make_shared<OpExpression>(LogicalRightJoin::make());
+      } break;
+      case JOIN_TYPE_OUTER: {
+        expr = std::make_shared<OpExpression>(LogicalOuterJoin::make());
+      } break;
+      default:
+        assert(false);
     }
 
     // Left child
@@ -234,9 +222,7 @@ class QueryToOpTransformer : public QueryNodeVisitor {
     output_expr = expr;
   }
 
-  void visit(const OrderBy *op) override {
-    (void) op;
-  }
+  void visit(const OrderBy *op) override { (void)op; }
 
   void visit(const Select *op) override {
     // Add join tree op expression
@@ -277,17 +263,13 @@ class QueryToOpTransformer : public QueryNodeVisitor {
   int output_size;
   bool output_inlined;
 };
-
 }
 
 std::shared_ptr<OpExpression> ConvertQueryToOpExpression(
-  ColumnManager &manager,
-  std::shared_ptr<Select> tree)
-{
+    ColumnManager &manager, std::shared_ptr<Select> tree) {
   QueryToOpTransformer converter(manager);
   return converter.ConvertToOpExpression(tree);
 }
-
 
 } /* namespace optimizer */
 } /* namespace peloton */

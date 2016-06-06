@@ -4,7 +4,7 @@
 //
 // operator_node.h
 //
-// Identification: src/optimizer/operator_node.h
+// Identification: src/include/optimizer/operator_node.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -82,9 +82,7 @@ struct BaseOperatorNode {
     return {};
   }
 
-  virtual PropertySet ProvidedOutputProperties() const {
-    return PropertySet();
-  }
+  virtual PropertySet ProvidedOutputProperties() const { return PropertySet(); }
 
   virtual hash_t Hash() const {
     OpType t = type();
@@ -94,11 +92,10 @@ struct BaseOperatorNode {
   virtual bool operator==(const BaseOperatorNode &r) {
     return type() == r.type();
   }
-
 };
 
 // Curiously recurring template pattern
-template<typename T>
+template <typename T>
 struct OperatorNode : public BaseOperatorNode {
   void accept(OperatorVisitor *v) const;
 
@@ -116,10 +113,10 @@ struct OperatorNode : public BaseOperatorNode {
 };
 
 class Operator {
-public:
+ public:
   Operator();
 
-  Operator(BaseOperatorNode* node);
+  Operator(BaseOperatorNode *node);
 
   void accept(OperatorVisitor *v) const;
 
@@ -141,14 +138,15 @@ public:
 
   bool defined() const;
 
-  template <typename T> const T *as() const {
+  template <typename T>
+  const T *as() const {
     if (node && typeid(*node) == typeid(T)) {
       return (const T *)node.get();
     }
     return nullptr;
   }
 
-private:
+ private:
   std::shared_ptr<BaseOperatorNode> node;
 };
 
@@ -157,12 +155,11 @@ private:
 
 namespace std {
 
-template<> struct hash<peloton::optimizer::BaseOperatorNode> {
+template <>
+struct hash<peloton::optimizer::BaseOperatorNode> {
   typedef peloton::optimizer::BaseOperatorNode argument_type;
   typedef std::size_t result_type;
-  result_type operator()(argument_type const& s) const {
-    return s.Hash();
-  }
+  result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
 } /* namespace std */

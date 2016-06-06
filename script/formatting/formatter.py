@@ -23,12 +23,11 @@ PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.par
 
 #other directory paths used are relative to peloton_dir
 PELOTON_SRC_DIR = os.path.join(PELOTON_DIR, "src")
-PELOTON_SRC_BACKEND_DIR = os.path.join(PELOTON_SRC_DIR, "backend")
-PELOTON_TESTS_DIR = os.path.join(PELOTON_DIR, "tests")
+PELOTON_TESTS_DIR = os.path.join(PELOTON_DIR, "test")
 
 # DEFAULT DIRS
 DEFAULT_DIRS = []
-DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
+DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
 CLANG_FORMAT = "clang-format-3.6"

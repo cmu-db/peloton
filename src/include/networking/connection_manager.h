@@ -4,7 +4,7 @@
 //
 // connection_manager.h
 //
-// Identification: src/networking/connection_manager.h
+// Identification: src/include/networking/connection_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

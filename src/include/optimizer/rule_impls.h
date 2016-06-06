@@ -4,7 +4,7 @@
 //
 // rule_impls.h
 //
-// Identification: src/optimizer/rule_impls.h
+// Identification: src/include/optimizer/rule_impls.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,8 +28,8 @@ class InnerJoinCommutativity : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,8 +41,8 @@ class GetToScan : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,8 +54,8 @@ class ProjectToComputeExprs : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,8 +67,8 @@ class SelectToFilter : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,8 @@ class InnerJoinToInnerNLJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -93,8 +93,8 @@ class LeftJoinToLeftNLJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,8 +106,8 @@ class RightJoinToRightNLJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,8 +119,8 @@ class OuterJoinToOuterNLJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -132,8 +132,8 @@ class InnerJoinToInnerHashJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,8 +145,8 @@ class LeftJoinToLeftHashJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -158,8 +158,8 @@ class RightJoinToRightHashJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -171,8 +171,8 @@ class OuterJoinToOuterHashJoin : public Rule {
   bool Check(std::shared_ptr<OpExpression> plan) const override;
 
   void Transform(
-    std::shared_ptr<OpExpression> input,
-    std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
+      std::shared_ptr<OpExpression> input,
+      std::vector<std::shared_ptr<OpExpression>> &transformed) const override;
 };
 
 } /* namespace optimizer */

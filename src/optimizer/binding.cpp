@@ -23,30 +23,26 @@ namespace optimizer {
 // Base Binding Iterator
 //===--------------------------------------------------------------------===//
 BindingIterator::BindingIterator(Optimizer &optimizer)
-  : optimizer(optimizer), memo(optimizer.memo)
-{
-}
+    : optimizer(optimizer), memo(optimizer.memo) {}
 
 //===--------------------------------------------------------------------===//
 // Group Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupBindingIterator::GroupBindingIterator(Optimizer &optimizer,
-                                           GroupID id,
+GroupBindingIterator::GroupBindingIterator(Optimizer &optimizer, GroupID id,
                                            std::shared_ptr<Pattern> pattern)
-  : BindingIterator(optimizer),
-    group_id(id),
-    pattern(pattern),
-    target_group(memo.GetGroupByID(id)),
-    num_group_items(target_group->GetExpressions().size()),
-    current_item_index(0)
-{
+    : BindingIterator(optimizer),
+      group_id(id),
+      pattern(pattern),
+      target_group(memo.GetGroupByID(id)),
+      num_group_items(target_group->GetExpressions().size()),
+      current_item_index(0) {
   LOG_TRACE("Attempting to bind on group %d", id);
   // We'd like to only explore rules which we know will produce a match of our
   // current pattern. However, because our rules don't currently expose the
   // structure of the output they produce after a transformation, we must be
   // conservative and apply all rules
   const std::vector<std::shared_ptr<GroupExpression>> gexprs =
-    target_group->GetExpressions();
+      target_group->GetExpressions();
   for (size_t i = 0; i < num_group_items; ++i) {
     optimizer.ExploreExpression(gexprs[i]);
   }
@@ -69,10 +65,8 @@ bool GroupBindingIterator::HasNext() {
   if (current_iterator == nullptr) {
     // Keep checking item iterators until we find a match
     while (current_item_index < num_group_items) {
-      current_iterator.reset(
-        new ItemBindingIterator(
-          optimizer,
-          target_group->GetExpressions()[current_item_index],
+      current_iterator.reset(new ItemBindingIterator(
+          optimizer, target_group->GetExpressions()[current_item_index],
           pattern));
 
       if (current_iterator->HasNext()) {
@@ -101,20 +95,19 @@ std::shared_ptr<OpExpression> GroupBindingIterator::Next() {
 ItemBindingIterator::ItemBindingIterator(Optimizer &optimizer,
                                          std::shared_ptr<GroupExpression> gexpr,
                                          std::shared_ptr<Pattern> pattern)
-  : BindingIterator(optimizer),
-    gexpr(gexpr),
-    pattern(pattern),
-    first(true),
-    has_next(false),
-    current_binding(std::make_shared<OpExpression>(gexpr->Op()))
-{
+    : BindingIterator(optimizer),
+      gexpr(gexpr),
+      pattern(pattern),
+      first(true),
+      has_next(false),
+      current_binding(std::make_shared<OpExpression>(gexpr->Op())) {
   LOG_TRACE("Attempting to bind on group %d with expression of type %s",
             gexpr->GetGroupID(), gexpr->Op().name().c_str());
   if (gexpr->Op().type() != pattern->Type()) return;
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
   const std::vector<std::shared_ptr<Pattern>> &child_patterns =
-    pattern->Children();
+      pattern->Children();
 
   if (child_groups.size() != child_patterns.size()) return;
 
@@ -123,10 +116,9 @@ ItemBindingIterator::ItemBindingIterator(Optimizer &optimizer,
   children_bindings_pos.resize(child_groups.size(), 0);
   for (size_t i = 0; i < child_groups.size(); ++i) {
     // Try to find a match in the given group
-    std::vector<std::shared_ptr<OpExpression>>& child_bindings =
-      children_bindings[i];
-    GroupBindingIterator iterator(optimizer,
-                                  child_groups[i],
+    std::vector<std::shared_ptr<OpExpression>> &child_bindings =
+        children_bindings[i];
+    GroupBindingIterator iterator(optimizer, child_groups[i],
                                   child_patterns[i]);
 
     // Get all bindings
@@ -155,8 +147,8 @@ bool ItemBindingIterator::HasNext() {
     for (i = 0; i < size; ++i) {
       current_binding->PopChild();
 
-      const std::vector<std::shared_ptr<OpExpression>>& child_binding =
-        children_bindings[size - 1 - i];
+      const std::vector<std::shared_ptr<OpExpression>> &child_binding =
+          children_bindings[size - 1 - i];
 
       size_t new_pos = ++children_bindings_pos[size - 1 - i];
       if (new_pos < child_binding.size()) {
@@ -173,10 +165,10 @@ bool ItemBindingIterator::HasNext() {
       // Replay to end
       size_t offset = size - 1 - i;
       for (size_t j = 0; j < i + 1; ++j) {
-        const std::vector<std::shared_ptr<OpExpression>>& child_binding =
-          children_bindings[offset + j];
+        const std::vector<std::shared_ptr<OpExpression>> &child_binding =
+            children_bindings[offset + j];
         std::shared_ptr<OpExpression> binding =
-          child_binding[children_bindings_pos[offset + j]];
+            child_binding[children_bindings_pos[offset + j]];
         current_binding->PushChild(binding);
       }
     }

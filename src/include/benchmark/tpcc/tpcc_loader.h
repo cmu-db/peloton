@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// tpcc_loader.h
 //
-// Identification: benchmark/tpcc/workload.h
+// Identification: src/include/benchmark/tpcc/tpcc_loader.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 #include "benchmark/tpcc/tpcc_configuration.h"
 
 namespace peloton {
-namespace storage{
+namespace storage {
 class Database;
 class DataTable;
 class Tuple;
@@ -54,7 +54,7 @@ extern storage::DataTable* order_line_table;
 /////////////////////////////////////////////////////////
 
 extern const size_t name_length;
-extern const size_t middle_name_length ;
+extern const size_t middle_name_length;
 extern const size_t data_length;
 extern const size_t state_length;
 extern const size_t zip_length;
@@ -119,7 +119,7 @@ extern int stock_max_threshold;
 extern double new_order_remote_txns;
 
 extern const int syllable_count;
-extern const char *syllables[];
+extern const char* syllables[];
 
 struct NURandConstant {
   int c_last;
@@ -135,58 +135,43 @@ extern NURandConstant nu_rand_const;
 // Tuple Constructors
 /////////////////////////////////////////////////////////
 
-std::unique_ptr<storage::Tuple>
-BuildItemTuple(const int item_id,
-               const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildItemTuple(
+    const int item_id, const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildWarehouseTuple(const int warehouse_id,
-                    const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildWarehouseTuple(
+    const int warehouse_id, const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildDistrictTuple(const int district_id,
-                   const int warehouse_id,
-                   const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildDistrictTuple(
+    const int district_id, const int warehouse_id,
+    const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildCustomerTuple(const int customer_id,
-                   const int district_id,
-                   const int warehouse_id,
-                   const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildCustomerTuple(
+    const int customer_id, const int district_id, const int warehouse_id,
+    const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildHistoryTuple(const int customer_id,
-                  const int district_id,
-                  const int warehouse_id,
-                  const int history_district_id,
-                  const int history_warehouse_id,
-                  const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildHistoryTuple(
+    const int customer_id, const int district_id, const int warehouse_id,
+    const int history_district_id, const int history_warehouse_id,
+    const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildOrdersTuple(const int orders_id,
-                 const int district_id,
-                 const int warehouse_id,
-                 const bool new_order,
-                 const int o_ol_cnt);
+std::unique_ptr<storage::Tuple> BuildOrdersTuple(const int orders_id,
+                                                 const int district_id,
+                                                 const int warehouse_id,
+                                                 const bool new_order,
+                                                 const int o_ol_cnt);
 
-std::unique_ptr<storage::Tuple>
-BuildNewOrderTuple(const int orders_id,
-                   const int district_id,
-                   const int warehouse_id);
+std::unique_ptr<storage::Tuple> BuildNewOrderTuple(const int orders_id,
+                                                   const int district_id,
+                                                   const int warehouse_id);
 
-std::unique_ptr<storage::Tuple>
-BuildOrderLineTuple(const int orders_id,
-                    const int district_id,
-                    const int warehouse_id,
-                    const int order_line_id,
-                    const int ol_supply_w_id,
-                    const bool new_order,
-                    const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildOrderLineTuple(
+    const int orders_id, const int district_id, const int warehouse_id,
+    const int order_line_id, const int ol_supply_w_id, const bool new_order,
+    const std::unique_ptr<VarlenPool>& pool);
 
-std::unique_ptr<storage::Tuple>
-BuildStockTuple(const int stock_id,
-                const int s_w_id,
-                const std::unique_ptr<VarlenPool>& pool);
+std::unique_ptr<storage::Tuple> BuildStockTuple(
+    const int stock_id, const int s_w_id,
+    const std::unique_ptr<VarlenPool>& pool);
 
 /////////////////////////////////////////////////////////
 // Utils
@@ -202,11 +187,9 @@ std::string GetRandomLastName(int max_cid);
 
 bool GetRandomBoolean(double ratio);
 
-int GetRandomInteger(const int lower_bound,
-                     const int upper_bound);
+int GetRandomInteger(const int lower_bound, const int upper_bound);
 
-int GetRandomIntegerExcluding(const int lower_bound,
-                              const int upper_bound,
+int GetRandomIntegerExcluding(const int lower_bound, const int upper_bound,
                               const int exclude_sample);
 
 double GetRandomDouble(const double lower_bound, const double upper_bound);

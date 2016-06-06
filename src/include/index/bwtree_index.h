@@ -4,7 +4,7 @@
 //
 // bwtree_index.h
 //
-// Identification: src/index/bwtree_index.h
+// Identification: src/include/index/bwtree_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -68,8 +68,7 @@ class BWTreeIndex : public Index {
 
   void ScanAllKeys(std::vector<ItemPointer *> &result);
 
-  void ScanKey(const storage::Tuple *key,
-               std::vector<ItemPointer *> &result);
+  void ScanKey(const storage::Tuple *key, std::vector<ItemPointer *> &result);
 
   std::string GetTypeName() const;
 

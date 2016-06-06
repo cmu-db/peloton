@@ -4,7 +4,7 @@
 //
 // bitwise_functions.h
 //
-// Identification: src/expression/bitwise_functions.h
+// Identification: src/include/expression/bitwise_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

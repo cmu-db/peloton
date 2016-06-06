@@ -4,7 +4,7 @@
 //
 // json_functions.h
 //
-// Identification: src/expression/json_functions.h
+// Identification: src/include/expression/json_functions.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

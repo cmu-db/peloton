@@ -4,7 +4,7 @@
 //
 // hash_join_plan.h
 //
-// Identification: src/planner/hash_join_plan.h
+// Identification: src/include/planner/hash_join_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

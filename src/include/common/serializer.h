@@ -4,7 +4,7 @@
 //
 // serializer.h
 //
-// Identification: src/common/serializer.h
+// Identification: src/include/common/serializer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -256,7 +256,7 @@ class SerializeOutput {
 
   inline void WriteEnumInSingleByte(int value) {
     PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
-           value <= std::numeric_limits<int8_t>::max());
+              value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
 
@@ -510,7 +510,9 @@ class CopySerializeOutput : public SerializeOutput {
  public:
   // Start with something sizeable so we avoid a ton of initial
   // allocations.
-  static const int INITIAL_SIZE = 1024*4; // 4KB. The previous value is 8388608 which is too big for network
+  static const int INITIAL_SIZE =
+      1024 *
+      4;  // 4KB. The previous value is 8388608 which is too big for network
 
   CopySerializeOutput() : bytes_(INITIAL_SIZE) {
     Initialize(bytes_.Data(), INITIAL_SIZE);
@@ -530,7 +532,7 @@ class CopySerializeOutput : public SerializeOutput {
   virtual void Expand(size_t minimum_desired) {
     size_t next_capacity = (bytes_.Length() + minimum_desired) * 2;
     PL_ASSERT(next_capacity <
-           static_cast<size_t>(std::numeric_limits<int>::max()));
+              static_cast<size_t>(std::numeric_limits<int>::max()));
     bytes_.CopyAndExpand(static_cast<int>(next_capacity));
     Initialize(bytes_.Data(), next_capacity);
   }
@@ -689,7 +691,7 @@ class ExportSerializeOutput {
 
   inline void WriteEnumInSingleByte(int value) {
     PL_ASSERT(std::numeric_limits<int8_t>::min() <= value &&
-           value <= std::numeric_limits<int8_t>::max());
+              value <= std::numeric_limits<int8_t>::max());
     WriteByte(static_cast<int8_t>(value));
   }
 

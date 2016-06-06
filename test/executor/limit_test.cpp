@@ -4,7 +4,7 @@
 //
 // limit_test.cpp
 //
-// Identification: tests/executor/limit_test.cpp
+// Identification: test/executor/limit_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

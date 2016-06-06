@@ -4,7 +4,7 @@
 //
 // scalar_value_expression.h
 //
-// Identification: src/expression/scalar_value_expression.h
+// Identification: src/include/expression/scalar_value_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

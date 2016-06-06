@@ -34,25 +34,24 @@ PktBuf::iterator GetEndItr(Packet *pkt, int len) {
   return std::begin(pkt->buf) + pkt->ptr + len;
 }
 
-
 int PacketGetInt(Packet *pkt, uchar base) {
   int value = 0;
 
   CheckOverflow(pkt, base);
 
   switch (base) {
-    case 1: // 8-bit int
+    case 1:  // 8-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       break;
 
-    case 2: // 16-bit int
+    case 2:  // 16-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohs(value);
       break;
 
-    case 4: // 32-bit int
+    case 4:  // 32-bit int
       std::copy(pkt->buf.begin() + pkt->ptr, GetEndItr(pkt, base),
                 reinterpret_cast<uchar *>(&value));
       value = ntohl(value);
@@ -68,13 +67,12 @@ int PacketGetInt(Packet *pkt, uchar base) {
   return value;
 }
 
-void PacketGetBytes(Packet *pkt, size_t len, PktBuf& result) {
+void PacketGetBytes(Packet *pkt, size_t len, PktBuf &result) {
   result.clear();
   CheckOverflow(pkt, len);
 
   // return empty vector
-  if (len == 0)
-    return;
+  if (len == 0) return;
 
   result.insert(std::end(result), std::begin(pkt->buf) + pkt->ptr,
                 GetEndItr(pkt, len));
@@ -83,14 +81,13 @@ void PacketGetBytes(Packet *pkt, size_t len, PktBuf& result) {
   pkt->ptr += len;
 }
 
-void PacketGetString(Packet *pkt, size_t len, std::string& result) {
+void PacketGetString(Packet *pkt, size_t len, std::string &result) {
   // exclude null char for std string
-  result = std::string(std::begin(pkt->buf) + pkt->ptr,
-                     GetEndItr(pkt, len - 1));
+  result =
+      std::string(std::begin(pkt->buf) + pkt->ptr, GetEndItr(pkt, len - 1));
 }
 
-
-void GetStringToken(Packet *pkt, std::string& result) {
+void GetStringToken(Packet *pkt, std::string &result) {
   // save start itr position of string
   auto start = std::begin(pkt->buf) + pkt->ptr;
 
@@ -108,14 +105,13 @@ void GetStringToken(Packet *pkt, std::string& result) {
   pkt->ptr = find_itr - std::begin(pkt->buf) + 1;
 
   // edge case
-  if (start == find_itr){
+  if (start == find_itr) {
     result = std::string("");
     return;
   }
 
   result = std::string(start, find_itr);
 }
-
 
 void PacketPutByte(std::unique_ptr<Packet> &pkt, const uchar c) {
   pkt->buf.push_back(c);
@@ -130,7 +126,8 @@ void PacketPutString(std::unique_ptr<Packet> &pkt, const std::string &str) {
   pkt->len += str.size() + 1;
 }
 
-void PacketPutBytes(std::unique_ptr<Packet> &pkt, const std::vector<uchar>& data) {
+void PacketPutBytes(std::unique_ptr<Packet> &pkt,
+                    const std::vector<uchar> &data) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(data), std::end(data));
   pkt->len += data.size();
 }
@@ -179,7 +176,7 @@ bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
 
   // read first size_field_end bytes
   if (!client->sock->ReadBytes(init_pkt,
-                                static_cast<size_t>(initial_read_size))) {
+                               static_cast<size_t>(initial_read_size))) {
     // nothing more to read
     return false;
   }
@@ -211,8 +208,7 @@ bool ReadPacket(Packet *pkt, bool has_type_field, Client *client) {
 }
 
 bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
-                   Client *client) {
-
+                  Client *client) {
   // iterate through all the packets
   for (size_t i = 0; i < packets.size(); i++) {
     auto pkt = packets[i].get();

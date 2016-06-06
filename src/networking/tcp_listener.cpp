@@ -68,7 +68,7 @@ void Listener::Run(void *arg) {
 
   // TODO: Fix cmake to link in "-levent_pthreads"
   /* We must specify this function if we use multiple threads*/
-  //evthread_use_pthreads();
+  // evthread_use_pthreads();
 
   // TODO: LEV_OPT_THREADSAFE is necessary here?
   listener_ = evconnlistener_new_bind(
@@ -117,7 +117,7 @@ void Listener::AcceptConnCb(struct evconnlistener *listener, evutil_socket_t fd,
   ConnectionManager::GetInstance().AddConn(*address, conn);
 
   LOG_TRACE("Server: connection received from fd: %d, address: %s, port:%d", fd,
-           addr.IpToString().c_str(), addr.GetPort());
+            addr.IpToString().c_str(), addr.GetPort());
 }
 
 void Listener::AcceptErrorCb(struct evconnlistener *listener,

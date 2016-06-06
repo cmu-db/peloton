@@ -4,7 +4,7 @@
 //
 // rpc_channel.h
 //
-// Identification: src/networking/rpc_channel.h
+// Identification: src/include/networking/rpc_channel.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

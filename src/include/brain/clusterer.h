@@ -4,7 +4,7 @@
 //
 // clusterer.h
 //
-// Identification: src/brain/clusterer.h
+// Identification: src/include/brain/clusterer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

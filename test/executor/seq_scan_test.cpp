@@ -4,7 +4,7 @@
 //
 // seq_scan_test.cpp
 //
-// Identification: tests/executor/seq_scan_test.cpp
+// Identification: test/executor/seq_scan_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -139,9 +139,10 @@ expression::AbstractExpression *CreatePredicate(
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr =
-        even ? expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0)
-             : expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_VARCHAR, 0, 3);
+    tuple_value_expr = even ? expression::ExpressionUtil::TupleValueFactory(
+                                  VALUE_TYPE_INTEGER, 0, 0)
+                            : expression::ExpressionUtil::TupleValueFactory(
+                                  VALUE_TYPE_VARCHAR, 0, 3);
 
     // Second, create constant value expression.
     Value constant_value =

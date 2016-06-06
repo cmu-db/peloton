@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // ts_order_txn_manager_test.cpp
 //
-// Identification: tests/concurrency/ts_order_txn_manager_test.cpp
+// Identification: test/concurrency/ts_order_txn_manager_test.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

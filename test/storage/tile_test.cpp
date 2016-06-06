@@ -4,7 +4,7 @@
 //
 // tile_test.cpp
 //
-// Identification: tests/storage/tile_test.cpp
+// Identification: test/storage/tile_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

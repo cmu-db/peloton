@@ -57,7 +57,8 @@ bool Index::Compare(const AbstractTuple &index_key,
   //    key_column_ids { 0 }
   //    expr_types { == }
   //    values    { 5 }
-  // basically it's saying get the tuple whose 0 column, which is the key column,
+  // basically it's saying get the tuple whose 0 column, which is the key
+  // column,
   //  equals to 5
   //
   // 2.
@@ -150,13 +151,13 @@ bool Index::Compare(const AbstractTuple &index_key,
 bool Index::IfForwardExpression(ExpressionType e) {
   if (e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
       e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) {
-      return true;
+    return true;
   }
   return false;
 }
 
 bool Index::IfBackwardExpression(ExpressionType e) {
-  if (e == EXPRESSION_TYPE_COMPARE_LESSTHAN||
+  if (e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
       e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) {
     return true;
   }
@@ -164,7 +165,7 @@ bool Index::IfBackwardExpression(ExpressionType e) {
 }
 
 bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                         const std::pair<peloton::Value, int> &j) {
+                                const std::pair<peloton::Value, int> &j) {
   if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
     return i.second < j.second;
   }
@@ -183,7 +184,7 @@ bool Index::ConstructLowerBoundTuple(
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
     auto key_column_itr =
-      std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
+        std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
     bool placeholder = false;
     Value value;
 
@@ -195,7 +196,7 @@ bool Index::ConstructLowerBoundTuple(
         placeholder = true;
         value = values[offset];
       }
-        // Not all expressions / constraints are equal
+      // Not all expressions / constraints are equal
       else {
         all_constraints_equal = false;
       }
@@ -207,7 +208,7 @@ bool Index::ConstructLowerBoundTuple(
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
     }
-      // Fill in the min value
+    // Fill in the min value
     else {
       auto value_type = schema->GetType(column_itr);
       index_key->SetValue(column_itr, Value::GetMinValue(value_type),

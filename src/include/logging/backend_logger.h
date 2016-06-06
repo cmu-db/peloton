@@ -4,7 +4,7 @@
 //
 // backend_logger.h
 //
-// Identification: src/logging/backend_logger.h
+// Identification: src/include/logging/backend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -72,8 +72,10 @@ class BackendLogger : public Logger {
     return local_queue;
   }
 
-  // used by the frontend logger to collect data on the current state of the backend
-  // returns a pair of commit ids, the first is the lower bound for values this logger may
+  // used by the frontend logger to collect data on the current state of the
+  // backend
+  // returns a pair of commit ids, the first is the lower bound for values this
+  // logger may
   // commit, The second is the maximum id this worker has committed
   std::pair<cid_t, cid_t> PrepareLogBuffers();
 

@@ -164,12 +164,13 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
   // if we can perform update, then we must have already locked the older
   // version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   // Set double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -191,7 +192,7 @@ void OptimisticTxnManager::PerformUpdate(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // Add the old tuple into the update set
@@ -216,12 +217,13 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &old_location,
   // if we can perform update, then we must have already locked the older
   // version.
   PL_ASSERT(tile_group_header->GetTransactionId(old_location.offset) ==
-         transaction_id);
+            transaction_id);
   PL_ASSERT(new_tile_group_header->GetTransactionId(new_location.offset) ==
-         INVALID_TXN_ID);
+            INVALID_TXN_ID);
   PL_ASSERT(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
-         MAX_CID);
-  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
+            MAX_CID);
+  PL_ASSERT(new_tile_group_header->GetEndCommitId(new_location.offset) ==
+            MAX_CID);
 
   // Set up double linked list
   tile_group_header->SetNextItemPointer(old_location.offset, new_location);
@@ -242,7 +244,7 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-         current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetEndCommitId(tuple_id, INVALID_CID);
@@ -410,7 +412,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         ItemPointer insert_location(tile_group_id, tuple_slot);
         log_manager.LogInsert(end_commit_id, insert_location);
@@ -424,7 +426,7 @@ Result OptimisticTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-               current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
 
         // set the begin commit id to persist insert
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -476,7 +478,8 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset,
+                                                  INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
@@ -503,7 +506,8 @@ Result OptimisticTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         tile_group_header->SetNextItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        new_tile_group_header->SetPrevItemPointer(new_version.offset,
+                                                  INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 

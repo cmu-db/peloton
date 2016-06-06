@@ -89,7 +89,7 @@ void LogManager::StartStandbyMode() {
       UINT64_MAX)  // no one has logged anything
     global_max_flushed_id_for_recovery = 0;
   LOG_TRACE("Log manager set global_max_flushed_id_for_recovery as %d",
-           (int)global_max_flushed_id_for_recovery);
+            (int)global_max_flushed_id_for_recovery);
 }
 
 void LogManager::StartRecoveryMode() {
@@ -159,8 +159,8 @@ void LogManager::PrepareLogging() {
 
 void LogManager::DoneLogging() {
   if (this->IsInLoggingMode()) {
-	auto logger = this->GetBackendLogger();
-	logger->SetLoggingCidLowerBound(INVALID_CID);
+    auto logger = this->GetBackendLogger();
+    logger->SetLoggingCidLowerBound(INVALID_CID);
   }
 }
 
@@ -173,7 +173,7 @@ void LogManager::LogBeginTransaction(cid_t commit_id) {
 }
 
 void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
-		const ItemPointer &new_version) {
+                           const ItemPointer &new_version) {
   if (this->IsInLoggingMode()) {
     auto &manager = catalog::Manager::GetInstance();
 
@@ -210,35 +210,35 @@ void LogManager::LogInsert(cid_t commit_id, const ItemPointer &new_location) {
     auto tile_group = manager.GetTileGroup(new_location.block);
     std::unique_ptr<LogRecord> record;
     std::unique_ptr<storage::Tuple> tuple;
-    if (IsBasedOnWriteAheadLogging(logging_type_)){
-		auto schema =
-			manager.GetTableWithOid(tile_group->GetDatabaseId(),
-									tile_group->GetTableId())->GetSchema();
-		tuple.reset(new storage::Tuple(schema, true));
-		for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-		  tuple->SetValue(col,
-						  new_tuple_tile_group->GetValue(new_location.offset, col),
-						  logger->GetVarlenPool());
-		}
+    if (IsBasedOnWriteAheadLogging(logging_type_)) {
+      auto schema =
+          manager.GetTableWithOid(tile_group->GetDatabaseId(),
+                                  tile_group->GetTableId())->GetSchema();
+      tuple.reset(new storage::Tuple(schema, true));
+      for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
+        tuple->SetValue(
+            col, new_tuple_tile_group->GetValue(new_location.offset, col),
+            logger->GetVarlenPool());
+      }
 
-		record.reset(logger->GetTupleRecord(
-			LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
-			new_tuple_tile_group->GetDatabaseId(), new_location,
-			INVALID_ITEMPOINTER, tuple.get()));
+      record.reset(logger->GetTupleRecord(
+          LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
+          new_tuple_tile_group->GetDatabaseId(), new_location,
+          INVALID_ITEMPOINTER, tuple.get()));
 
-    }else{
-    	// do not construct the tuple for the wbl case
-    	record.reset(logger->GetTupleRecord(
-    				LOGRECORD_TYPE_TUPLE_INSERT, commit_id, tile_group->GetTableId(),
-    				new_tuple_tile_group->GetDatabaseId(), new_location,
-    				INVALID_ITEMPOINTER));
+    } else {
+      // do not construct the tuple for the wbl case
+      record.reset(logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_INSERT,
+                                          commit_id, tile_group->GetTableId(),
+                                          new_tuple_tile_group->GetDatabaseId(),
+                                          new_location, INVALID_ITEMPOINTER));
     }
     logger->Log(record.get());
-
   }
 }
 
-void LogManager::LogDelete(cid_t commit_id, const ItemPointer &delete_location) {
+void LogManager::LogDelete(cid_t commit_id,
+                           const ItemPointer &delete_location) {
   if (this->IsInLoggingMode()) {
     auto logger = this->GetBackendLogger();
     auto &manager = catalog::Manager::GetInstance();
@@ -444,7 +444,7 @@ cid_t LogManager::GetPersistentFlushedCommitId() {
     id = reinterpret_cast<WriteAheadFrontendLogger *>(frontend_logger)
              ->GetMaxFlushedCommitId();
     LOG_TRACE("FrontendLogger%d has max flushed commit id as %d", (int)i,
-             (int)id);
+              (int)id);
 
     // assume 0 is INACTIVE STATE
     if (id != INVALID_CID && id < persistent_flushed_commit_id)
@@ -475,8 +475,9 @@ void LogManager::WaitForFlush(cid_t cid) {
           this->GetPersistentFlushedCommitId(), cid);
       flush_notify_cv.wait(wait_lock);
     }
-    LOG_TRACE("Flushes done! Can return! Got persistent flushed commit id as %d",
-             (int)this->GetPersistentFlushedCommitId());
+    LOG_TRACE(
+        "Flushes done! Can return! Got persistent flushed commit id as %d",
+        (int)this->GetPersistentFlushedCommitId());
   }
 }
 
@@ -485,7 +486,7 @@ void LogManager::NotifyRecoveryDone() {
 
   unsigned int i = __sync_add_and_fetch(&this->recovery_to_logging_counter, 1);
   LOG_TRACE("%d loggers have done recovery so far.",
-           (int)recovery_to_logging_counter);
+            (int)recovery_to_logging_counter);
   if (i == num_frontend_loggers_) {
     LOG_TRACE(
         "This was the last one! Recover Index and change to LOGGING mode.");

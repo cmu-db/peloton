@@ -4,7 +4,7 @@
 //
 // abstract_message.h
 //
-// Identification: src/networking/abstract_message.h
+// Identification: src/include/networking/abstract_message.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

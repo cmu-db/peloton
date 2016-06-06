@@ -34,23 +34,22 @@ thread_local peloton::Cache<std::string, Statement> cache_;
 thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
 // Hardcoded authentication strings used during session startup. To be removed
-const std::unordered_map<std::string, std::string> PacketManager::parameter_status_map =
-  boost::assign::map_list_of ("application_name","psql")("client_encoding", "UTF8")
-  ("DateStyle", "ISO, MDY")("integer_datetimes", "on")
-  ("IntervalStyle", "postgres")("is_superuser", "on")
-  ("server_encoding", "UTF8")("server_version", "9.5devel")
-  ("session_authorization", "postgres")("standard_conforming_strings", "on")
-  ("TimeZone", "US/Eastern");
+const std::unordered_map<std::string, std::string>
+    PacketManager::parameter_status_map =
+        boost::assign::map_list_of("application_name", "psql")(
+            "client_encoding", "UTF8")("DateStyle", "ISO, MDY")(
+            "integer_datetimes", "on")("IntervalStyle", "postgres")(
+            "is_superuser", "on")("server_encoding", "UTF8")(
+            "server_version", "9.5devel")("session_authorization", "postgres")(
+            "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
 /*
  * close_client - Close the socket of the underlying client
  */
 void PacketManager::CloseClient() { client.sock->CloseSocket(); }
 
-
 void PacketManager::MakeHardcodedParameterStatus(
-    ResponseBuffer &responses,
-    const std::pair<std::string, std::string>& kv) {
+    ResponseBuffer &responses, const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = 'S';
   PacketPutString(response, kv.first);
@@ -61,8 +60,8 @@ void PacketManager::MakeHardcodedParameterStatus(
  * process_startup_packet - Processes the startup packet
  * 	(after the size field of the header).
  */
-bool PacketManager::ProcessStartupPacket(Packet* pkt,
-                                           ResponseBuffer& responses) {
+bool PacketManager::ProcessStartupPacket(Packet *pkt,
+                                         ResponseBuffer &responses) {
   std::string token, value;
   std::unique_ptr<Packet> response(new Packet());
 
@@ -103,7 +102,8 @@ bool PacketManager::ProcessStartupPacket(Packet* pkt,
   responses.push_back(std::move(response));
 
   // Send the parameterStatus map ('S')
-  for(auto it = parameter_status_map.begin(); it != parameter_status_map.end(); it++) {
+  for (auto it = parameter_status_map.begin(); it != parameter_status_map.end();
+       it++) {
     MakeHardcodedParameterStatus(responses, *it);
   }
 
@@ -112,9 +112,9 @@ bool PacketManager::ProcessStartupPacket(Packet* pkt,
   return true;
 }
 
-void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc, ResponseBuffer &responses) {
-  if (!rowdesc.size())
-    return;
+void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc,
+                               ResponseBuffer &responses) {
+  if (!rowdesc.size()) return;
 
   LOG_INFO("Put RowDescription");
   std::unique_ptr<Packet> pkt(new Packet());
@@ -140,13 +140,10 @@ void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc, Respon
   responses.push_back(std::move(pkt));
 }
 
-
 void PacketManager::SendDataRows(std::vector<wire::ResType> &results,
-                                   int colcount,
-                                   int &rows_affected,
-                                   ResponseBuffer &responses) {
-  if (!results.size() || !colcount)
-    return;
+                                 int colcount, int &rows_affected,
+                                 ResponseBuffer &responses) {
+  if (!results.size() || !colcount) return;
 
   LOG_INFO("Flatten result size: %lu", results.size());
   size_t numrows = results.size() / colcount;
@@ -158,9 +155,9 @@ void PacketManager::SendDataRows(std::vector<wire::ResType> &results,
     PacketPutInt(pkt, colcount, 2);
     for (int j = 0; j < colcount; j++) {
       // length of the row attribute
-      PacketPutInt(pkt, results[i*colcount + j].second.size(), 4);
+      PacketPutInt(pkt, results[i * colcount + j].second.size(), 4);
       // contents of the row attribute
-      PacketPutBytes(pkt, results[i*colcount + j].second);
+      PacketPutBytes(pkt, results[i * colcount + j].second);
     }
     responses.push_back(std::move(pkt));
   }
@@ -171,26 +168,26 @@ void PacketManager::SendDataRows(std::vector<wire::ResType> &results,
 /* Gets the first token of a query */
 std::string get_query_type(std::string query) {
   std::vector<std::string> query_tokens;
-  boost::split(query_tokens, query, boost::is_any_of(" "), boost::token_compress_on);
+  boost::split(query_tokens, query, boost::is_any_of(" "),
+               boost::token_compress_on);
   return query_tokens[0];
 }
 
-void PacketManager::CompleteCommand(const std::string &query_type,
-                                     int rows, ResponseBuffer& responses) {
+void PacketManager::CompleteCommand(const std::string &query_type, int rows,
+                                    ResponseBuffer &responses) {
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'C';
   std::string tag = query_type;
   /* After Begin, we enter a txn block */
-  if(query_type.compare("BEGIN") == 0)
-    txn_state = TXN_BLOCK;
+  if (query_type.compare("BEGIN") == 0) txn_state = TXN_BLOCK;
   /* After commit, we end the txn block */
-  else if(query_type.compare("COMMIT") == 0)
+  else if (query_type.compare("COMMIT") == 0)
     txn_state = TXN_IDLE;
   /* After rollback, the txn block is ended */
-  else if(!query_type.compare("ROLLBACK"))
+  else if (!query_type.compare("ROLLBACK"))
     txn_state = TXN_IDLE;
   /* the rest are custom status messages for each command */
-  else if(!query_type.compare("INSERT"))
+  else if (!query_type.compare("INSERT"))
     tag += " 0 " + std::to_string(rows);
   else
     tag += " " + std::to_string(rows);
@@ -203,7 +200,7 @@ void PacketManager::CompleteCommand(const std::string &query_type,
 /*
  * put_empty_query_response - Informs the client that an empty query was sent
  */
-void PacketManager::SendEmptyQueryResponse(ResponseBuffer& responses) {
+void PacketManager::SendEmptyQueryResponse(ResponseBuffer &responses) {
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = 'I';
   responses.push_back(std::move(response));
@@ -211,17 +208,14 @@ void PacketManager::SendEmptyQueryResponse(ResponseBuffer& responses) {
 
 bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
   // Skip SET
-  if(query_type.compare("SET") == 0 || query_type.compare("SHOW") == 0)
+  if (query_type.compare("SET") == 0 || query_type.compare("SHOW") == 0)
     return false;
   // skip duplicate BEGIN
-  if (!query_type.compare("BEGIN") && txn_state == TXN_BLOCK)
-    return false;
+  if (!query_type.compare("BEGIN") && txn_state == TXN_BLOCK) return false;
   // skip duplicate Commits
-  if (!query_type.compare("COMMIT") && txn_state == TXN_IDLE)
-    return false;
+  if (!query_type.compare("COMMIT") && txn_state == TXN_IDLE) return false;
   // skip duplicate Rollbacks
-  if (!query_type.compare("ROLLBACK") && txn_state == TXN_IDLE)
-    return false;
+  if (!query_type.compare("ROLLBACK") && txn_state == TXN_IDLE) return false;
   return true;
 }
 
@@ -256,9 +250,10 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     int rows_affected;
 
     // execute the query in Sqlite
-    int isfailed =  db.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
+    int isfailed =
+        db.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
 
-    if(isfailed) {
+    if (isfailed) {
       SendErrorResponse({{'M', err_msg}}, responses);
       break;
     }
@@ -351,7 +346,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   LOG_INFO("Prep stmt name: %s", prep_stmt_name.c_str());
 
   if (skipped_stmt_) {
-    //send bind complete
+    // send bind complete
     std::unique_ptr<Packet> response(new Packet());
     response->msg_type = '2';
     responses.push_back(std::move(response));
@@ -371,7 +366,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   int num_params = PacketGetInt(pkt, 2);
   if (num_params_format != num_params) {
     std::string err_msg =
-      "Malformed request: num_params_format is not equal to num_params";
+        "Malformed request: num_params_format is not equal to num_params";
     SendErrorResponse({{'M', err_msg}}, responses);
     return;
   }
@@ -424,8 +419,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
       if (formats[param_idx] == 0) {
         // TEXT mode
-        std::string param_str = std::string(std::begin(param),
-            std::end(param));
+        std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters.push_back(std::make_pair(WIRE_TEXT, param_str));
       } else {
         // BINARY mode
@@ -437,8 +431,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(
                 std::make_pair(WIRE_INTEGER, std::to_string(int_val)));
-          }
-            break;
+          } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
             unsigned long buf = 0;
@@ -449,13 +442,11 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             bind_parameters.push_back(
                 std::make_pair(WIRE_FLOAT, std::to_string(float_val)));
             // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
-          }
-            break;
+          } break;
           default: {
             LOG_ERROR("Do not support data type: %d",
                       entry->param_types[param_idx]);
-          }
-            break;
+          } break;
         }
       }
     }
@@ -484,14 +475,14 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     itr->second = portal;
   }
 
-  //send bind complete
+  // send bind complete
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = '2';
   responses.push_back(std::move(response));
 }
 
 void PacketManager::ExecDescribeMessage(Packet *pkt,
-                                          ResponseBuffer &responses) {
+                                        ResponseBuffer &responses) {
   PktBuf mode;
   std::string name;
   LOG_INFO("DESCRIBE message");
@@ -513,9 +504,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
   }
 }
 
-void PacketManager::ExecExecuteMessage(Packet *pkt,
-                                       ResponseBuffer &responses) {
-
+void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
   LOG_INFO("EXECUTE message");
   std::vector<wire::ResType> results;
@@ -524,7 +513,8 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
   int rows_affected = 0, is_failed;
   GetStringToken(pkt, portal_name);
 
-  // covers weird JDBC edge case of sending double BEGIN statements. Don't execute them
+  // covers weird JDBC edge case of sending double BEGIN statements. Don't
+  // execute them
   if (skipped_stmt_) {
     LOG_INFO("Statement skipped: %s", skipped_query_.c_str());
     CompleteCommand(skipped_query_type_, rows_affected, responses);
@@ -561,7 +551,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
     sqlite_mutex.unlock();
   }
 
-  //put_row_desc(portal->rowdesc, responses);
+  // put_row_desc(portal->rowdesc, responses);
   SendDataRows(results, portal->tuple_desc.size(), rows_affected, responses);
   CompleteCommand(query_type, rows_affected, responses);
 }
@@ -570,7 +560,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(Packet* pkt, ResponseBuffer& responses) {
+bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   switch (pkt->msg_type) {
     case 'Q': {
       ExecQueryMessage(pkt, responses);
@@ -596,7 +586,8 @@ bool PacketManager::ProcessPacket(Packet* pkt, ResponseBuffer& responses) {
       return false;
     } break;
     default: {
-      LOG_INFO("Packet type not supported yet: %d (%c)", pkt->msg_type, pkt->msg_type);
+      LOG_INFO("Packet type not supported yet: %d (%c)", pkt->msg_type,
+               pkt->msg_type);
     }
   }
   return true;
@@ -608,7 +599,7 @@ bool PacketManager::ProcessPacket(Packet* pkt, ResponseBuffer& responses) {
  */
 void PacketManager::SendErrorResponse(
     std::vector<std::pair<uchar, std::string>> error_status,
-    ResponseBuffer& responses) {
+    ResponseBuffer &responses) {
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'E';
 
@@ -625,7 +616,7 @@ void PacketManager::SendErrorResponse(
 }
 
 void PacketManager::SendReadyForQuery(uchar txn_status,
-                                         ResponseBuffer& responses) {
+                                      ResponseBuffer &responses) {
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'Z';
 

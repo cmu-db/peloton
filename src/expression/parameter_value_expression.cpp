@@ -36,7 +36,7 @@ Value ParameterValueExpression::Evaluate(
     UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
     UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
     executor::ExecutorContext *context) const {
-  auto& params = context->GetParams();
+  auto &params = context->GetParams();
   PL_ASSERT(value_idx_ < params.size());
   return params[value_idx_];
 }
