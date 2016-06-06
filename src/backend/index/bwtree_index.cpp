@@ -48,7 +48,7 @@ bool
 BWTREE_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
                                UNUSED_ATTRIBUTE const ItemPointer &location) {
   bool ret = container.Insert(key, location);
-  
+
   return ret;
 }
 
@@ -62,43 +62,134 @@ bool
 BWTREE_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
                                UNUSED_ATTRIBUTE const ItemPointer &location) {
   bool ret = container.Delete(key, location);
-  
+
   return ret;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
 bool
-BWTREE_INDEX_TYPE::CondInsertEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE const ItemPointer &location,
-    UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
-    UNUSED_ATTRIBUTE ItemPointer **itemptr_ptr ) {
-  return false;
+BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
+                                   const ItemPointer &location,
+                                   std::function<bool(const ItemPointer &)> predicate,
+                                   ItemPointer **itemptr_ptr ) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  // This function will complete them in one step
+  // predicate will be set to nullptr if the predicate
+  // returns true for some value
+  bool ret = container.ConditionalInsert(index_key,
+                                         location,
+                                         predicate,
+                                         itemptr_ptr);
+
+  return ret;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTREE_INDEX_TYPE::Scan(
-    UNUSED_ATTRIBUTE const std::vector<Value> &values,
-    UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
-    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
-    UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
+BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &values,
+                        const std::vector<oid_t> &key_column_ids,
+                        const std::vector<ExpressionType> &expr_types,
+                        const ScanDirectionType &scan_direction,
+                        std::vector<ItemPointer> &result) {
+  KeyType index_key;
+
+  // Checkif we have leading (leftmost) column equality
+  // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
+  oid_t leading_column_id = 0;
+  auto key_column_ids_itr = std::find(key_column_ids.begin(),
+                                      key_column_ids.end(), leading_column_id);
+
+  // SPECIAL CASE : leading column id is one of the key column ids
+  // and is involved in a equality constraint
+  bool special_case = false;
+  if (key_column_ids_itr != key_column_ids.end()) {
+    auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
+      special_case = true;
+    }
+  }
+
+  LOG_TRACE("Special case : %d ", special_case);
+
+  auto scan_begin_itr = container.Begin();
+  std::unique_ptr<storage::Tuple> start_key;
+  bool all_constraints_are_equal = false;
+
+  // If it is a special case, we can figure out the range to scan in the index
+  if (special_case == true) {
+    start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+
+    // Construct the lower bound key tuple
+    all_constraints_are_equal = ConstructLowerBoundTuple(
+        start_key.get(), values, key_column_ids, expr_types);
+    LOG_TRACE("All constraints are equal : %d ", all_constraints_are_equal);
+    index_key.SetFromKey(start_key.get());
+
+    // This returns an iterator pointing to index_key's values
+    scan_begin_itr = container.Begin(index_key);
+  }
+
+  switch (scan_direction) {
+    case SCAN_DIRECTION_TYPE_FORWARD:
+    case SCAN_DIRECTION_TYPE_BACKWARD: {
+      // Scan the index entries in forward direction
+      for (auto scan_itr = scan_begin_itr;
+           scan_itr.IsEnd() == false;
+           scan_itr++) {
+        auto &scan_current_key = *scan_itr.GetCurrentKey();
+        auto tuple =
+            scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+        // Compare the current key in the scan with "values" based on
+        // "expression types"
+        // For instance, "5" EXPR_GREATER_THAN "2" is true
+        if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+          result.push_back(*scan_itr);
+        } else {
+          // We can stop scanning if we know that all constraints are equal
+          if (all_constraints_are_equal == true) {
+            break;
+          }
+        }
+      }
+
+    } break;
+
+    case SCAN_DIRECTION_TYPE_INVALID:
+    default:
+      throw Exception("Invalid scan direction \n");
+      break;
+  }
+
   return;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTREE_INDEX_TYPE::ScanAllKeys(
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
-  return;
+BWTREE_INDEX_TYPE::ScanAllKeys(std::vector<ItemPointer> &result) {
+    auto it = container.Begin();
+
+    // scan all entries
+    while (it.IsEnd() == false) {
+      result.push_back(*it);
+      it++;
+    }
+
+    return;
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
 void
-BWTREE_INDEX_TYPE::ScanKey(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
+BWTREE_INDEX_TYPE::ScanKey(const storage::Tuple *key,
+                           std::vector<ItemPointer> &result) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  // This function in BwTree fills a given vector
+  container.GetValue(index_key, result);
+
   return;
 }
 
