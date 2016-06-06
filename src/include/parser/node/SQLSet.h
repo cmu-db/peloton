@@ -1,19 +1,9 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#ifndef _USQL_SQLSET_H_
-#define _USQL_SQLSET_H_
+#pragma once
 
 #include "parser/node/SQLExpression.h"
 
-namespace uSQL {
+namespace peloton {
+namespace parser {
 
 class SQLSet : public SQLExpression {
 
@@ -57,6 +47,5 @@ public:
   std::string &toString(std::string &buf);
 };
 
-}
-
-#endif
+}  // End parser namespace
+}  // End peloton namespace

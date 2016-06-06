@@ -1,30 +1,23 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#include<sstream>
+#include <sstream>
 
 #include "parser/SQLStatement.h"
 
-uSQL::SQLStatementList::SQLStatementList()
+namespace peloton {
+namespace parser {
+
+SQLStatementList::SQLStatementList()
 {
 }
 
-uSQL::SQLStatementList::~SQLStatementList()
+SQLStatementList::~SQLStatementList()
 {
   clear();
 }
 
-void uSQL::SQLStatementList::clear()
+void SQLStatementList::clear()
 {
   /* FIXME
-  uSQL::SQLStatementList::iterator stmt = begin();
+  SQLStatementList::iterator stmt = begin();
   while (stmt != end()) {
     stmt = erase(stmt);
     delete (*stmt);
@@ -32,3 +25,6 @@ void uSQL::SQLStatementList::clear()
   */
   std::vector<SQLStatement *>::clear();
 }
+
+}  // End parser namespace
+}  // End peloton namespace

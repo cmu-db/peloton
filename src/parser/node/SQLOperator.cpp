@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* uSQL for C++
+* peloton for C++
 *
 * Copyright (C) Satoshi Konno 2012
 *
@@ -12,20 +12,23 @@
 
 #include "parser/node/SQLOperator.h"
 
-const int uSQL::SQLOperator::UNKNOWN = 0;
-const int uSQL::SQLOperator::SEQ = 1;
-const int uSQL::SQLOperator::DEQ = 2;
-const int uSQL::SQLOperator::LT = 3;
-const int uSQL::SQLOperator::LE = 4;
-const int uSQL::SQLOperator::GT = 5;
-const int uSQL::SQLOperator::GE = 6;
-const int uSQL::SQLOperator::NOTEQ = 7;
-const int uSQL::SQLOperator::AND = 8;
-const int uSQL::SQLOperator::OR = 9;
+namespace peloton {
+namespace parser {
 
-std::string &uSQL::SQLOperator::toString(std::string &buf) 
+const int SQLOperator::UNKNOWN = 0;
+const int SQLOperator::SEQ = 1;
+const int SQLOperator::DEQ = 2;
+const int SQLOperator::LT = 3;
+const int SQLOperator::LE = 4;
+const int SQLOperator::GT = 5;
+const int SQLOperator::GE = 6;
+const int SQLOperator::NOTEQ = 7;
+const int SQLOperator::AND = 8;
+const int SQLOperator::OR = 9;
+
+std::string &SQLOperator::toString(std::string &buf)
 {
-  uSQL::SQLExpression *firstExpr = getLeftExpression();
+  SQLExpression *firstExpr = getLeftExpression();
 
   std::ostringstream oss;
   std::string exprBuf;
@@ -68,10 +71,10 @@ std::string &uSQL::SQLOperator::toString(std::string &buf)
     break;
   }
   
-  uSQL::SQLNodeList *expressions = getExpressions();
+  SQLNodeList *expressions = getExpressions();
   std::size_t expressionCnt = expressions->size();
   for (std::size_t n=1; n <expressionCnt; n++) {
-    uSQL::SQLNode *exprNode = expressions->at(n);
+    SQLNode *exprNode = expressions->at(n);
     oss << operStr << " " << exprNode->toString(exprBuf);
   }
   
@@ -79,3 +82,7 @@ std::string &uSQL::SQLOperator::toString(std::string &buf)
   
   return buf;
 }
+
+}  // End parser namespace
+}  // End peloton namespace
+

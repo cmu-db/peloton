@@ -1,19 +1,9 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#ifndef _USQL_SQLERROR_H_
-#define _USQL_SQLERROR_H_
+#pragma once
 
 #include <string>
 
-namespace uSQL {
+namespace peloton {
+namespace parser {
 
 class SQLError {
 
@@ -64,6 +54,5 @@ public:
   void clear();
 };
 
-}
-
-#endif
+}  // End parser namespace
+}  // End peloton namespace
