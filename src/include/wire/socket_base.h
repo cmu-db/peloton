@@ -27,7 +27,6 @@
 #include <iostream>
 
 #include "common/logger.h"
-#include "wire/globals.h"
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
@@ -104,7 +103,7 @@ extern void StartServer(Server *server);
 
 // Thread function created per client
 template <typename P, typename B>
-void ClientHandler(ThreadGlobals& globals, std::unique_ptr<int> clientfd);
+void ClientHandler(std::unique_ptr<int> clientfd);
 
 // Server's "accept loop"
 template <typename P, typename B>
@@ -125,7 +124,6 @@ void HandleConnections(Server *server) {
   int connfd, clilen;
   struct sockaddr_in cli_addr;
   clilen = sizeof(cli_addr);
-  ThreadGlobals globals;
 
   for (;;) {
     // block and wait for incoming connection
@@ -139,7 +137,7 @@ void HandleConnections(Server *server) {
     std::unique_ptr<int> clientfd(new int(connfd));
 
     std::cout << "LAUNCHING NEW THREAD" << std::endl;
-    std::thread client_thread(ClientHandler<P, B>, std::ref(globals), std::move(clientfd));
+    std::thread client_thread(ClientHandler<P, B>, std::move(clientfd));
     client_thread.detach();
   }
 
@@ -151,12 +149,12 @@ void HandleConnections(Server *server) {
  * 		type for the protocol's buffer (B)
  */
 template <typename P, typename B>
-void ClientHandler(ThreadGlobals& globals, std::unique_ptr<int> clientfd) {
+void ClientHandler(std::unique_ptr<int> clientfd) {
   int fd = *clientfd;
   LOG_INFO("Client fd: %d", fd);
   SocketManager<B> sm(fd);
   P p(&sm);
-  p.ManagePackets(globals);
+  p.ManagePackets();
 }
 
 
