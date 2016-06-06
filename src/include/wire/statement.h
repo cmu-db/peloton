@@ -12,13 +12,23 @@
 #pragma once
 
 #include <string>
-#include <sqlite3.h>
 #include <vector>
 
-struct CacheEntry {
-  std::string stmt_name; // logical name of statement
-  sqlite3_stmt *sql_stmt;  // pointer to statement allocated by sqlite
-  std::string query_string; // query string
-  std::string query_type; // first token in query
-  std::vector<int32_t> param_types; // format codes of the parameters
+#include <sqlite3.h>
+
+struct Statement {
+  // logical name of statement
+  std::string stmt_name;
+
+  // pointer to statement allocated by sqlite
+  sqlite3_stmt *sql_stmt;
+
+  // query string
+  std::string query_string;
+
+  // first token in query
+  std::string query_type;
+
+  // format codes of the parameters
+  std::vector<int32_t> param_types;
 };

@@ -9,19 +9,18 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include <mutex>
 
-#ifndef FRONTEND_GLOBALS_H
-#define FRONTEND_GLOBALS_H
+#pragma once
+
+#include <mutex>
 
 namespace peloton {
 namespace wire {
 
 // globals used by all client connections
 struct ThreadGlobals {
-	std::mutex sqlite_mutex; // used for CC over sqlite
+  std::mutex sqlite_mutex; // used for CC over sqlite
 };
 
-}
-}
-#endif //FRONTEND_GLOBALS_H
+}  // End wire namespace
+}  // End peloton namespace

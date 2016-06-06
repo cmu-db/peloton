@@ -21,9 +21,9 @@
 #include <boost/assign/list_of.hpp>
 
 #include "common/cache.h"
-#include "wire/cache_entry.h"
+#include "statement.h"
 
-/* TXN state definitions */
+// TXN state definitions
 #define BUFFER_INIT_SIZE 100
 #define TXN_IDLE 'I'
 #define TXN_BLOCK 'T'
@@ -71,7 +71,7 @@ class PacketManager {
   Client client;
 
   // Manage standalone queries
-  std::shared_ptr<CacheEntry> unnamed_entry;
+  std::shared_ptr<Statement> unnamed_entry;
 
   // gloabl txn state
   uchar txn_state;

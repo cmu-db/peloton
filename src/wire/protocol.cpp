@@ -19,9 +19,8 @@
 
 #include "wire/marshal.h"
 #include "wire/portal.h"
-#include "wire/cache_entry.h"
-
 #include <boost/algorithm/string.hpp>
+#include "../include/wire/statement.h"
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
@@ -29,7 +28,7 @@ namespace peloton {
 namespace wire {
 
 // Prepares statment cache
-thread_local peloton::Cache<std::string, CacheEntry> cache_;
+thread_local peloton::Cache<std::string, Statement> cache_;
 
 // Query portal handler
 thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
@@ -321,7 +320,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // Cache the received qury
-  std::shared_ptr<CacheEntry> entry(new CacheEntry());
+  std::shared_ptr<Statement> entry(new Statement());
   entry->stmt_name = prep_stmt_name;
   entry->query_string = query;
   entry->query_type = std::move(query_type);
@@ -379,7 +378,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Get statement info generated in PARSE message
   sqlite3_stmt *stmt = nullptr;
-  std::shared_ptr<CacheEntry> entry;
+  std::shared_ptr<Statement> entry;
   if (prep_stmt_name.empty()) {
     LOG_INFO("Unnamed statement");
     entry = unnamed_entry;
@@ -509,8 +508,8 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
       return;
     }
     std::shared_ptr<Portal> p = portal_itr->second;
-    db.GetRowDesc(p->stmt, p->rowdesc);
-    PutRowDesc(p->rowdesc, responses);
+    db.GetRowDesc(p->stmt, p->tuple_desc);
+    PutRowDesc(p->tuple_desc, responses);
   }
 }
 
@@ -562,7 +561,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
   }
 
   //put_row_desc(portal->rowdesc, responses);
-  SendDataRows(results, portal->rowdesc.size(), rows_affected, responses);
+  SendDataRows(results, portal->tuple_desc.size(), rows_affected, responses);
   CompleteCommand(query_type, rows_affected, responses);
 }
 

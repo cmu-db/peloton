@@ -262,5 +262,7 @@ void SocketManager<B>::CloseSocket() {
 
 // explicit template instantiation for read_bytes
 template class SocketManager<std::vector<uchar>>;
-}
-}
+
+}  // End wire namespace
+}  // End peloton namespace
+
