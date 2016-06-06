@@ -1,19 +1,9 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#ifndef _USQL_SQLLIMIT_H_
-#define _USQL_SQLLIMIT_H_
+#pragma once
 
 #include "parser/SQLNode.h"
 
-namespace uSQL {
+namespace peloton {
+namespace parser {
 
 class SQLLimit : public SQLNode {
 
@@ -36,6 +26,5 @@ public:
   }
 };
 
-}
-
-#endif
+}  // End parser namespace
+}  // End peloton namespace

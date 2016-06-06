@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* uSQL for C++
+* peloton for C++
 *
 * Copyright (C) Satoshi Konno 2012
 *
@@ -11,11 +11,14 @@
 #include "parser/SQLStatement.h"
 #include "parser/node/SQLValues.h"
 
-std::string &uSQL::SQLValues::toString(std::string &buf) 
+namespace peloton {
+namespace parser {
+
+std::string &SQLValues::toString(std::string &buf)
 {
   bool isUnQL = false;
   if ((getRootNode()->isStatementNode())) {
-    uSQL::SQLStatement *stmtNode = (uSQL::SQLStatement *)getRootNode();
+    SQLStatement *stmtNode = (SQLStatement *)getRootNode();
     isUnQL = stmtNode->isUnQL();
   }
   
@@ -25,3 +28,6 @@ std::string &uSQL::SQLValues::toString(std::string &buf)
   buf = oss.str();
   return buf;
 }
+
+}  // End parser namespace
+}  // End peloton namespace

@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* uSQL for C++
+* peloton for C++
 *
 * Copyright (C) Satoshi Konno 2012
 *
@@ -10,7 +10,10 @@
 
 #include "parser/node/SQLSets.h"
 
-std::string &uSQL::SQLSets::toString(std::string &buf) 
+namespace peloton {
+namespace parser {
+
+std::string &SQLSets::toString(std::string &buf)
 {
   std::ostringstream oss;
   std::string childNodeStr;
@@ -18,3 +21,6 @@ std::string &uSQL::SQLSets::toString(std::string &buf)
   buf = oss.str();
   return buf;
 }
+
+}  // End parser namespace
+}  // End peloton namespace

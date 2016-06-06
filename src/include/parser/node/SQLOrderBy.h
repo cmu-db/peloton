@@ -1,19 +1,9 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#ifndef _USQL_SQLORDERBY_H_
-#define _USQL_SQLORDERBY_H_
+#pragma once
 
 #include "parser/SQLNode.h"
 
-namespace uSQL {
+namespace peloton {
+namespace parser {
 
 class SQLOrderBy : public SQLNode {
 
@@ -38,6 +28,6 @@ public:
   
 };
 
-}
+}  // End parser namespace
+}  // End peloton namespace
 
-#endif

@@ -1,15 +1,4 @@
-/******************************************************************
-*
-* uSQL for C++
-*
-* Copyright (C) Satoshi Konno 2012
-*
-* This is licensed under BSD-style license, see file COPYING.
-*
-******************************************************************/
-
-#ifndef _USQL_SQLNODES_H_
-#define _USQL_SQLNODES_H_
+#pragma once
 
 #include "parser/node/SQLCollection.h"
 #include "parser/node/SQLCollections.h"
@@ -32,5 +21,3 @@
 #include "parser/node/SQLFunction.h"
 #include "parser/node/SQLValues.h"
 #include "parser/node/SQLCondition.h"
-
-#endif

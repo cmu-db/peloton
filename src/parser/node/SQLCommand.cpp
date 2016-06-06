@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* uSQL for C++
+* peloton for C++
 *
 * Copyright (C) Satoshi Konno 2012
 *
@@ -10,19 +10,22 @@
 
 #include "parser/node/SQLCommand.h"
 
-const int uSQL::SQLCommand::UNKOWN = -1;
-const int uSQL::SQLCommand::SELECT = 0;
-const int uSQL::SQLCommand::UPDATE = 1;
-const int uSQL::SQLCommand::INSERT = 2;
-const int uSQL::SQLCommand::DEL= 3;
-const int uSQL::SQLCommand::CREATE = 4;
-const int uSQL::SQLCommand::DROP = 5;
-const int uSQL::SQLCommand::CREATE_INDEX = 6;
-const int uSQL::SQLCommand::DROP_INDEX = 7;
-const int uSQL::SQLCommand::SHOW = 8;
-const int uSQL::SQLCommand::USE = 9;
+namespace peloton {
+namespace parser {
 
-void uSQL::SQLCommand::setCommandType(int commandType) 
+const int SQLCommand::UNKOWN = -1;
+const int SQLCommand::SELECT = 0;
+const int SQLCommand::UPDATE = 1;
+const int SQLCommand::INSERT = 2;
+const int SQLCommand::DEL= 3;
+const int SQLCommand::CREATE = 4;
+const int SQLCommand::DROP = 5;
+const int SQLCommand::CREATE_INDEX = 6;
+const int SQLCommand::DROP_INDEX = 7;
+const int SQLCommand::SHOW = 8;
+const int SQLCommand::USE = 9;
+
+void SQLCommand::setCommandType(int commandType)
 {
   this->commandType = commandType;
   
@@ -63,3 +66,7 @@ void uSQL::SQLCommand::setCommandType(int commandType)
   
   setValue(commandValue);
 }
+
+}  // End parser namespace
+}  // End peloton namespace
+

@@ -1,6 +1,6 @@
 /******************************************************************
 *
-* uSQL for C++
+* peloton for C++
 *
 * Copyright (C) Satoshi Konno 2012
 *
@@ -10,9 +10,12 @@
 
 #include "parser/node/SQLOrder.h"
 
-const int uSQL::SQLOrder::UNKOWN = -1;
-const int uSQL::SQLOrder::ASC = 0;
-const int uSQL::SQLOrder::DESC = 1;
+namespace peloton {
+namespace parser {
+
+const int SQLOrder::UNKOWN = -1;
+const int SQLOrder::ASC = 0;
+const int SQLOrder::DESC = 1;
 
 static const char *CgSQLOrderStrings[] = {
 "ASC",
@@ -36,23 +39,27 @@ static int CgSQLOrderStringToValue(const std::string value)
     if (value.compare(CgSQLOrderStrings[n]) == 0)
       return n;
   }
-  return uSQL::SQLOrder::UNKOWN;
+  return SQLOrder::UNKOWN;
 }
 
-void uSQL::SQLOrder::setOrder(int type) 
+void SQLOrder::setOrder(int type)
 {
   this->order = type;
 }
 
-void uSQL::SQLOrder::setOrder(const std::string &order)
+void SQLOrder::setOrder(const std::string &order)
 {
   setOrder(CgSQLOrderStringToValue(order));
 }
 
-std::string &uSQL::SQLOrder::toString(std::string &buf) 
+std::string &SQLOrder::toString(std::string &buf)
 {
   std::ostringstream oss;
   oss << getValue() << " " << CgSQLOrderValueToString(getOrder());
   buf = oss.str();
   return buf;
 }
+
+}  // End parser namespace
+}  // End peloton namespace
+
