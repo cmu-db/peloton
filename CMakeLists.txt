@@ -50,10 +50,16 @@ else()
 endif()
 
 # ---[ Color diagnostics
-CHECK_CXX_COMPILER_FLAG("-fdiagnostics-color=auto" COMPILER_SUPPORTS_COLOR)
-#if(COMPILER_SUPPORTS_COLOR)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
-#endif()
+# Clang
+check_cxx_compiler_flag("-fcolor-diagnostics" HAS_FCOLOR_DIAGNOSTICS_FLAG)
+if (HAS_FCOLOR_DIAGNOSTICS_FLAG)
+  add_definitions(-fcolor-diagnostics)
+else() # GCC (and Clang for compatibility with GCC)
+  check_cxx_compiler_flag("-fdiagnostics-color" HAS_DIAGNOSTICS_FCOLOR_FLAG)
+  if (HAS_DIAGNOSTICS_FCOLOR_FLAG)
+    add_definitions(-fdiagnostics-color)
+  endif()
+endif()
 
 # -- [ Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb")
