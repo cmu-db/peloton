@@ -9,8 +9,8 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#ifndef PELOTON_DATABASE_H
-#define PELOTON_DATABASE_H
+
+#pragma once
 
 #include <vector>
 #include <string>
@@ -20,8 +20,10 @@
 #include "wire/wire.h"
 
 namespace peloton {
-namespace wiredb {
+namespace wire {
+
 typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>> ResType;
+
 // fieldinfotype: field name, oid (data type), size
 typedef std::tuple<std::string, int, int> FieldInfoType;
 
@@ -37,7 +39,6 @@ public:
   virtual ~DataBase() { }
 };
 
-}
-}
+}  // End wire namespace
+}  // End peloton namespace
 
-#endif //PELOTON_DATABASE_H

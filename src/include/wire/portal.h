@@ -10,10 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "sqlite.h"
 #include <string>
 #include <vector>
-#include "marshal.h"
+
+#include "wire/marshal.h"
+#include "wire/sqlite.h"
 
 namespace peloton {
 namespace wire {
@@ -21,7 +22,7 @@ namespace wire {
 struct Portal {
   std::string portal_name;
   std::string prep_stmt_name; // logical name of prep stmt
-  std::vector<wiredb::FieldInfoType> rowdesc; // stores the attribute names
+  std::vector<wire::FieldInfoType> rowdesc; // stores the attribute names
   std::string query_string;
   std::string query_type;
   sqlite3_stmt *stmt;
