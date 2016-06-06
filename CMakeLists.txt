@@ -50,15 +50,16 @@ else()
 endif()
 
 # ---[ Color diagnostics
-# Clang
-check_cxx_compiler_flag("-fcolor-diagnostics" HAS_FCOLOR_DIAGNOSTICS_FLAG)
-if (HAS_FCOLOR_DIAGNOSTICS_FLAG)
-  add_definitions(-fcolor-diagnostics)
-else() # GCC (and Clang for compatibility with GCC)
-  check_cxx_compiler_flag("-fdiagnostics-color" HAS_DIAGNOSTICS_FCOLOR_FLAG)
-  if (HAS_DIAGNOSTICS_FCOLOR_FLAG)
-    add_definitions(-fdiagnostics-color)
-  endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fcolor-diagnostics")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND 
+  (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.9 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9))
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
 endif()
 
 # -- [ Debug Flags

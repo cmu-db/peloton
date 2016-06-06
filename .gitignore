@@ -284,6 +284,15 @@ sql_parser.h
 sql_scanner.cpp
 sql_scanner.h
 
+# Antlr
+SQLParser.h
+SQLParser.c
+SQLParser.cpp
+SQLLexer.h
+SQLLexer.c
+SQLLexer.cpp
+
+
 # Generated documentation
 docs/_site
 docs/gathered

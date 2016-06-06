@@ -54,3 +54,9 @@ find_package(SQLite3)
 include_directories(SYSTEM ${SQLITE3_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${SQLITE3_LIBRARIES})
 
+# ---[ Antlr3
+find_package(Antlr3 REQUIRED)
+include_directories(SYSTEM ${ANTLR3C_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${ANTLR3C_LIBRARIES})
+
+
