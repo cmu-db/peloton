@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <mutex>
 
 #include "wire/portal.h"
 
@@ -26,6 +27,9 @@ namespace wire {
 #define WIRE_TEXT 2
 #define WIRE_FLOAT 3
 #define WIRE_NULL 4
+
+// used to synch sqlite accesses
+extern std::mutex sqlite_mutex;
 
 class Sqlite {
 

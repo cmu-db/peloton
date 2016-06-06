@@ -22,6 +22,9 @@
 namespace peloton {
 namespace wire {
 
+// used to synch sqlite accesses
+std::mutex sqlite_mutex;
+
 Sqlite::Sqlite() {
   // filename is null for in memory db
   auto rc = sqlite3_open_v2("sqlite.db", &sqlite_db_, SQLITE_OPEN_NOMUTEX|

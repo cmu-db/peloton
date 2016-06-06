@@ -133,7 +133,7 @@ class PacketManager {
   void ExecDescribeMessage(Packet *pkt, ResponseBuffer &responses);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(Packet *pkt, ResponseBuffer &response, ThreadGlobals& globals);
+  void ExecExecuteMessage(Packet *pkt, ResponseBuffer &response);
 
   /* closes the socket connection with the client */
   void CloseClient();
@@ -147,10 +147,10 @@ class PacketManager {
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Main switch case wrapper to process every packet apart from the startup packet */
-  bool ProcessPacket(Packet* pkt, ThreadGlobals &globals, ResponseBuffer& responses);
+  bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Protocol manager */
-  void ManagePackets(ThreadGlobals& globals);
+  void ManagePackets();
 };
 
 }  // End wire namespace

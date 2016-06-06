@@ -514,7 +514,8 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 }
 
 void PacketManager::ExecExecuteMessage(Packet *pkt,
-                                         ResponseBuffer &responses, ThreadGlobals& globals) {
+                                       ResponseBuffer &responses) {
+
   // EXECUTE message
   LOG_INFO("EXECUTE message");
   std::vector<wire::ResType> results;
@@ -544,7 +545,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
   // acquire the mutex if we are starting a txn
   if (query_string.compare("BEGIN") == 0) {
     LOG_WARN("BEGIN - acquire lock");
-    globals.sqlite_mutex.lock();
+    sqlite_mutex.lock();
   }
 
   is_failed = db.ExecPrepStmt(stmt, unnamed, results, rows_affected, err_msg);
@@ -557,7 +558,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
   // release the mutex after a txn commit
   if (query_string.compare("COMMIT") == 0) {
     LOG_WARN("COMMIT - release lock");
-    globals.sqlite_mutex.unlock();
+    sqlite_mutex.unlock();
   }
 
   //put_row_desc(portal->rowdesc, responses);
@@ -569,7 +570,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-bool PacketManager::ProcessPacket(Packet* pkt, ThreadGlobals& globals, ResponseBuffer& responses) {
+bool PacketManager::ProcessPacket(Packet* pkt, ResponseBuffer& responses) {
   switch (pkt->msg_type) {
     case 'Q': {
       ExecQueryMessage(pkt, responses);
@@ -584,7 +585,7 @@ bool PacketManager::ProcessPacket(Packet* pkt, ThreadGlobals& globals, ResponseB
       ExecDescribeMessage(pkt, responses);
     } break;
     case 'E': {
-      ExecExecuteMessage(pkt, responses, globals);
+      ExecExecuteMessage(pkt, responses);
     } break;
     case 'S': {
       // SYNC message
@@ -637,7 +638,7 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
  * PacketManager - Main wire protocol logic.
  * 		Always return with a closed socket.
  */
-void PacketManager::ManagePackets(ThreadGlobals& globals) {
+void PacketManager::ManagePackets() {
   Packet pkt;
   ResponseBuffer responses;
   bool status;
@@ -657,7 +658,7 @@ void PacketManager::ManagePackets(ThreadGlobals& globals) {
 
   pkt.Reset();
   while (ReadPacket(&pkt, true, &client)) {
-    status = ProcessPacket(&pkt, globals, responses);
+    status = ProcessPacket(&pkt, responses);
     if (!WritePackets(responses, &client) || !status) {
       // close client on write failure or status failure
       CloseClient();
