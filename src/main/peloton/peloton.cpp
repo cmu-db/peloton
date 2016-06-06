@@ -28,9 +28,9 @@ int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
   }
 
   peloton::wire::Server server(atoi(argv[1]), MAX_CONNECTIONS);
-  peloton::wire::start_server(&server);
-  peloton::wire::handle_connections<peloton::wire::PacketManager,
-                                    peloton::wire::PktBuf>(&server);
+  peloton::wire::StartServer(&server);
+  peloton::wire::HandleConnections<peloton::wire::PacketManager,
+  peloton::wire::PktBuf>(&server);
 
   return 0;
 }

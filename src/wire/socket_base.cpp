@@ -15,7 +15,7 @@
 namespace peloton {
 namespace wire {
 
-void start_server(Server *server) {
+void StartServer(Server *server) {
   struct sockaddr_in serv_addr;
   int yes = 1;
 
@@ -47,11 +47,11 @@ void start_server(Server *server) {
 }
 
 template <typename B>
-bool SocketManager<B>::refill_read_buffer() {
+bool SocketManager<B>::RefillReadBuffer() {
   ssize_t bytes_read;
 
   // our buffer is to be emptied
-  rbuf.reset();
+  rbuf.Reset();
 
   // return explicitly
   for (;;) {
@@ -85,7 +85,7 @@ bool SocketManager<B>::refill_read_buffer() {
 }
 
 template <typename B>
-bool SocketManager<B>::flush_write_buffer() {
+bool SocketManager<B>::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   wbuf.buf_ptr = 0;
   // still outstanding bytes
@@ -113,7 +113,7 @@ bool SocketManager<B>::flush_write_buffer() {
   }
 
   // buffer is empty
-  wbuf.reset();
+  wbuf.Reset();
 
   // we are ok
   return true;
@@ -125,7 +125,7 @@ bool SocketManager<B>::flush_write_buffer() {
  * 		false on failure. B can be any STL container.
  */
 template <typename B>
-bool SocketManager<B>::read_bytes(B &pkt_buf, size_t bytes) {
+bool SocketManager<B>::ReadBytes(B &pkt_buf, size_t bytes) {
   size_t window, pkt_buf_idx = 0;
   // while data still needs to be read
   while (bytes) {
@@ -156,7 +156,7 @@ bool SocketManager<B>::read_bytes(B &pkt_buf, size_t bytes) {
       }
 
       // refill buffer, reset buf ptr here
-      if (!refill_read_buffer()) {
+      if (!RefillReadBuffer()) {
         // nothing more to read, end
         return false;
       }
@@ -167,14 +167,14 @@ bool SocketManager<B>::read_bytes(B &pkt_buf, size_t bytes) {
 }
 
 template <typename B>
-bool SocketManager<B>::buffer_write_bytes(B &pkt_buf, size_t len, uchar type) {
+bool SocketManager<B>::BufferWriteBytes(B &pkt_buf, size_t len, uchar type) {
   size_t window, pkt_buf_ptr = 0;
   int len_nb;  // length in network byte order
 
   // check if we don't have enough space in the buffer
-  if (wbuf.get_max_size() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
+  if (wbuf.GetMaxSize() - wbuf.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
-    flush_write_buffer();
+    FlushWriteBuffer();
   }
 
   // assuming wbuf is now large enough to
@@ -198,7 +198,7 @@ bool SocketManager<B>::buffer_write_bytes(B &pkt_buf, size_t len, uchar type) {
 
   // fill the contents
   while (len) {
-    window = wbuf.get_max_size() - wbuf.buf_ptr;
+    window = wbuf.GetMaxSize() - wbuf.buf_ptr;
     if (len <= window) {
       // contents fit in the window, range copy "len" bytes
       std::copy(std::begin(pkt_buf) + pkt_buf_ptr,
@@ -221,16 +221,16 @@ bool SocketManager<B>::buffer_write_bytes(B &pkt_buf, size_t len, uchar type) {
       pkt_buf_ptr += window;
       len -= window;
 
-      wbuf.buf_size = wbuf.get_max_size();
+      wbuf.buf_size = wbuf.GetMaxSize();
       // write failure
-      if (!flush_write_buffer()) return false;
+      if (!FlushWriteBuffer()) return false;
     }
   }
   return true;
 }
 
 template <typename B>
-void SocketManager<B>::close_socket() {
+void SocketManager<B>::CloseSocket() {
   for (;;) {
     int status = close(sock_fd);
     if (status < 0) {
