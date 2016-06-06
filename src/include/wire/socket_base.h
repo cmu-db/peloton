@@ -31,6 +31,7 @@
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
+#define DEFAULT_PORT 5432
 
 namespace peloton {
 namespace wire {
@@ -49,7 +50,7 @@ struct Server {
 
   inline Server(int port, int max_conn)
   : port(port),
-    server_fd(-1),
+    server_fd(0),
     max_connections(max_conn) {}
 };
 
