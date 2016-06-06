@@ -81,7 +81,7 @@ class PacketManager {
   std::string skipped_query_;
   std::string skipped_query_type_;
 
-  wiredb::Sqlite db; // dbhandler to use sqlite
+  wire::Sqlite db; // dbhandler to use sqlite
 
   static const std::unordered_map<std::string, std::string> parameter_status_map;
 
@@ -97,10 +97,10 @@ class PacketManager {
   void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
 
   // Sends the attribute headers required by SELECT queries
-  void PutRowDesc(std::vector<wiredb::FieldInfoType>& rowdesc, ResponseBuffer& responses);
+  void PutRowDesc(std::vector<wire::FieldInfoType>& rowdesc, ResponseBuffer& responses);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<wiredb::ResType>& results, int colcount, int &rows_affected,  ResponseBuffer& responses);
+  void SendDataRows(std::vector<wire::ResType>& results, int colcount, int &rows_affected,  ResponseBuffer& responses);
 
   // Used to send a packet that indicates the completion of a query. Also has txn state mgmt
   void CompleteCommand(const std::string& query_type,

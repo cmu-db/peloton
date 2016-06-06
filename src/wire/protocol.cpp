@@ -113,7 +113,7 @@ bool PacketManager::ProcessStartupPacket(Packet* pkt,
   return true;
 }
 
-void PacketManager::PutRowDesc(std::vector<wiredb::FieldInfoType> &rowdesc, ResponseBuffer &responses) {
+void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc, ResponseBuffer &responses) {
   if (!rowdesc.size())
     return;
 
@@ -142,7 +142,7 @@ void PacketManager::PutRowDesc(std::vector<wiredb::FieldInfoType> &rowdesc, Resp
 }
 
 
-void PacketManager::SendDataRows(std::vector<wiredb::ResType> &results,
+void PacketManager::SendDataRows(std::vector<wire::ResType> &results,
                                    int colcount,
                                    int &rows_affected,
                                    ResponseBuffer &responses) {
@@ -251,8 +251,8 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
       return;
     }
 
-    std::vector<wiredb::ResType> results;
-    std::vector<wiredb::FieldInfoType> rowdesc;
+    std::vector<wire::ResType> results;
+    std::vector<wire::FieldInfoType> rowdesc;
     std::string err_msg;
     int rows_affected;
 
@@ -504,7 +504,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto portal_itr = portals_.find(name);
     if (portal_itr == portals_.end()) {
       // TODO: error handling here
-      std::vector<wiredb::FieldInfoType> rowdesc;
+      std::vector<wire::FieldInfoType> rowdesc;
       PutRowDesc(rowdesc, responses);
       return;
     }
@@ -518,7 +518,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt,
                                          ResponseBuffer &responses, ThreadGlobals& globals) {
   // EXECUTE message
   LOG_INFO("EXECUTE message");
-  std::vector<wiredb::ResType> results;
+  std::vector<wire::ResType> results;
   std::string err_msg, portal_name;
   sqlite3_stmt *stmt = nullptr;
   int rows_affected = 0, is_failed;

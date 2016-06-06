@@ -10,18 +10,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PELOTON_SQLITE_H
-#define PELOTON_SQLITE_H
+#pragma once
 
-#include "database.h"
 #include <stdlib.h>
-#include "sqlite3.h"
 #include <stdio.h>
+#include <vector>
+
+#include "wire/database.h"
+#include "wire/sqlite3.h"
 
 namespace peloton {
-namespace wiredb {
+namespace wire {
 
-#define UNUSED __attribute__((unused))
 class Sqlite : public DataBase {
 
 public:
@@ -287,14 +287,13 @@ private:
     return 0;
   }
 
-  static int getSize(const std::string& type UNUSED) {
+  static int getSize(const std::string&) {
     return 0;
   }
 
 private:
   sqlite3 *db;
 };
-}
-}
 
-#endif //PELOTON_SQLITE_H
+}  // End wire namespace
+}  // End peloton namespace
