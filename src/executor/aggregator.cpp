@@ -137,7 +137,6 @@ bool Helper(const planner::AggregatePlan *node, Agg **aggregates,
     LOG_ERROR("Failed to insert tuple ");
     return false;
   } else {
-
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group_header = manager.GetTileGroup(location.block)->GetHeader();
     tile_group_header->SetTransactionId(location.offset, INITIAL_TXN_ID);

@@ -147,7 +147,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-
   if (tuple_location_ptrs.size() == 0) return false;
 
   auto &transaction_manager =
@@ -157,25 +156,22 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   std::vector<ItemPointer> garbage_tuples;
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
-    
     ItemPointer tuple_location = *tuple_location_ptr;
-    
+
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();
 
     size_t chain_length = 0;
     while (true) {
-
       ++chain_length;
 
       // if the tuple is visible.
       if (transaction_manager.IsVisible(tile_group_header,
                                         tuple_location.offset)) {
-
         LOG_TRACE("traverse chain length : %lu", chain_length);
         LOG_TRACE("perform read: %u, %u", tuple_location.block,
-                 tuple_location.offset);
+                  tuple_location.offset);
 
         // perform predicate evaluation.
         if (predicate_ == nullptr) {
@@ -192,8 +188,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples[tuple_location.block]
-                .push_back(tuple_location.offset);
+            visible_tuples[tuple_location.block].push_back(
+                tuple_location.offset);
 
             auto res = transaction_manager.PerformRead(tuple_location);
             if (!res) {
@@ -212,9 +208,10 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         tuple_location = tile_group_header->GetNextItemPointer(old_item.offset);
         // there must exist a visible version.
 
-        // FIXME: currently, only speculative read transaction manager **may** see a null version
+        // FIXME: currently, only speculative read transaction manager **may**
+        // see a null version
         // it's a potential bug
-        if(tuple_location.IsNull()) {
+        if (tuple_location.IsNull()) {
           transaction_manager.SetTransactionResult(RESULT_FAILURE);
           // FIXME: this cause unnecessary abort when we have delete operations
           return false;
@@ -228,11 +225,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         // check whether older version is garbage.
 
         if (old_end_cid <= max_committed_cid) {
-          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) == INITIAL_TXN_ID ||
-                      tile_group_header->GetTransactionId(old_item.offset) == INVALID_TXN_ID);
+          PL_ASSERT(tile_group_header->GetTransactionId(old_item.offset) ==
+                        INITIAL_TXN_ID ||
+                    tile_group_header->GetTransactionId(old_item.offset) ==
+                        INVALID_TXN_ID);
 
-          if (tile_group_header->SetAtomicTransactionId(old_item.offset, INVALID_TXN_ID) == true) {
-
+          if (tile_group_header->SetAtomicTransactionId(
+                  old_item.offset, INVALID_TXN_ID) == true) {
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
 
@@ -244,31 +243,28 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
-            tile_group_header->SetPrevItemPointer(tuple_location.offset, INVALID_ITEMPOINTER);
+            tile_group_header->SetPrevItemPointer(tuple_location.offset,
+                                                  INVALID_ITEMPOINTER);
 
           } else {
-
             tile_group = manager.GetTileGroup(tuple_location.block);
             tile_group_header = tile_group.get()->GetHeader();
           }
 
         } else {
-        tile_group = manager.GetTileGroup(tuple_location.block);
-        tile_group_header = tile_group.get()->GetHeader();
-
+          tile_group = manager.GetTileGroup(tuple_location.block);
+          tile_group_header = tile_group.get()->GetHeader();
         }
-
-
       }
     }
   }
 
   // Add all garbage tuples to GC manager
-  if(garbage_tuples.size() != 0) {
+  if (garbage_tuples.size() != 0) {
     cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
     for (auto garbage : garbage_tuples) {
       gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-        table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
+          table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
     }
   }
 

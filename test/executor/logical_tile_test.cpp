@@ -4,7 +4,7 @@
 //
 // logical_tile_test.cpp
 //
-// Identification: tests/executor/logical_tile_test.cpp
+// Identification: test/executor/logical_tile_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -73,9 +73,12 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   auto tuple_id2 = tile_group->InsertTuple(&tuple2);
   auto tuple_id3 = tile_group->InsertTuple(&tuple1);
 
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id1));
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id2));
-  txn_manager.PerformInsert(ItemPointer(tile_group->GetTileGroupId(), tuple_id3));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id1));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id2));
+  txn_manager.PerformInsert(
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id3));
 
   txn_manager.CommitTransaction();
 

@@ -4,7 +4,7 @@
 //
 // hyadapt.cpp
 //
-// Identification: src/benchmark/hyadapt/hyadapt.cpp
+// Identification: src/main/hyadapt/hyadapt.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

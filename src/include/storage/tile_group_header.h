@@ -4,7 +4,7 @@
 //
 // tile_group_header.h
 //
-// Identification: src/storage/tile_group_header.h
+// Identification: src/include/storage/tile_group_header.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -40,7 +40,8 @@ class TileGroup;
  *
  *  -----------------------------------------------------------------------------
  *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | IndexCount(4 bytes) | 
+ *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) | IndexCount(4
+ *bytes) |
  *  | ReservedField (24 bytes) | InsertCommit (1 byte) | DeleteCommit (1 byte)
  *  -----------------------------------------------------------------------------
  */
@@ -159,7 +160,7 @@ class TileGroupHeader : public Printable {
   }
 
   // used only by occ_rb_txn_manager
-  inline char* GetPrevItempointerField(const oid_t &tuple_slot_id) const {
+  inline char *GetPrevItempointerField(const oid_t &tuple_slot_id) const {
     return (char *)(TUPLE_HEADER_LOCATION + prev_pointer_offset);
   }
 
@@ -238,7 +239,7 @@ class TileGroupHeader : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  static inline size_t GetReservedSize() {return  reserverd_size;}
+  static inline size_t GetReservedSize() { return reserverd_size; }
   // *
   // -----------------------------------------------------------------------------
   // *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
@@ -252,8 +253,8 @@ class TileGroupHeader : public Printable {
   static const size_t reserverd_size = 24;
   // FIXME: there is no space reserved for index count?
   static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) + reserverd_size +
-                                          2 * sizeof(bool);
+                                          2 * sizeof(ItemPointer) +
+                                          reserverd_size + 2 * sizeof(bool);
   static const size_t txn_id_offset = 0;
   static const size_t begin_cid_offset = sizeof(txn_id_t);
   static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
@@ -262,11 +263,12 @@ class TileGroupHeader : public Printable {
       next_pointer_offset + sizeof(ItemPointer);
   static const size_t reserved_field_offset =
       prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t insert_commit_offset = reserved_field_offset + reserverd_size;
+  static const size_t insert_commit_offset =
+      reserved_field_offset + reserverd_size;
   static const size_t delete_commit_offset =
       insert_commit_offset + sizeof(bool);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

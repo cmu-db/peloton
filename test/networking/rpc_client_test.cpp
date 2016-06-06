@@ -4,7 +4,7 @@
 //
 // rpc_client_test.cpp
 //
-// Identification: tests/networking/rpc_client_test.cpp
+// Identification: test/networking/rpc_client_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -81,6 +81,5 @@ TEST_F(RpcClientTests, BasicTest) {
   EXPECT_EQ(comp, true);
 }
 */
-
 }
 }

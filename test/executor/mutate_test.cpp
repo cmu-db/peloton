@@ -4,7 +4,7 @@
 //
 // mutate_test.cpp
 //
-// Identification: tests/executor/mutate_test.cpp
+// Identification: test/executor/mutate_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -200,7 +200,8 @@ TEST_F(MutateTests, StressTests) {
   }
   */
 
-  auto non_empty_tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
+  auto non_empty_tuple =
+      ExecutorTestsUtil::GetTuple(table, ++tuple_id, testing_pool);
   planner::InsertPlan node2(table, std::move(non_empty_tuple));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
@@ -225,7 +226,7 @@ TEST_F(MutateTests, StressTests) {
 
   LaunchParallelTest(1, DeleteTuple, table);
 
-  LOG_TRACE("%s",table->GetInfo().c_str());
+  LOG_TRACE("%s", table->GetInfo().c_str());
 
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
@@ -352,8 +353,8 @@ TEST_F(MutateTests, DeleteTest) {
 }
 
 static int SeqScanCount(storage::DataTable *table,
-                 const std::vector<oid_t> &column_ids,
-                 expression::AbstractExpression *predicate) {
+                        const std::vector<oid_t> &column_ids,
+                        expression::AbstractExpression *predicate) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(

@@ -1,15 +1,14 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// tpcc_configuration.cpp
 //
-// Identification: benchmark/tpcc/configuration.cpp
+// Identification: src/main/tpcc/tpcc_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <iomanip>
 #include <algorithm>
@@ -27,16 +26,13 @@ void Usage(FILE *out) {
           "   -h --help              :  Print help message \n"
           "   -b --backend_count     :  # of backends \n"
           "   -d --duration          :  execution duration \n"
-          "   -k --scale_factor      :  scale factor \n"
-  );
+          "   -k --scale_factor      :  scale factor \n");
 }
 
-static struct option opts[] = {
-    { "backend_count", optional_argument, NULL, 'b'},
-    { "duration", optional_argument, NULL, 'd' },
-    { "scale_factor", optional_argument, NULL, 'k' },
-    {NULL, 0, NULL, 0}
-};
+static struct option opts[] = {{"backend_count", optional_argument, NULL, 'b'},
+                               {"duration", optional_argument, NULL, 'd'},
+                               {"scale_factor", optional_argument, NULL, 'k'},
+                               {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -66,7 +62,6 @@ void ValidateBackendCount(const configuration &state) {
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
-
   // Default Values
   state.scale_factor = 1;
   state.duration = 1000;
@@ -113,7 +108,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateBackendCount(state);
   ValidateScaleFactor(state);
   ValidateDuration(state);
-
 }
 
 }  // namespace tpcc

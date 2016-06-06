@@ -4,7 +4,7 @@
 //
 // delete_plan.h
 //
-// Identification: src/planner/delete_plan.h
+// Identification: src/include/planner/delete_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // pessimistic_txn_manager.h
 //
-// Identification: src/concurrency/pessimistic_txn_manager.h
+// Identification: src/include/concurrency/pessimistic_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -25,7 +25,7 @@ extern thread_local std::unordered_map<oid_t, std::unordered_set<oid_t>>
 //===--------------------------------------------------------------------===//
 class PessimisticTxnManager : public TransactionManager {
  public:
-  PessimisticTxnManager(){}
+  PessimisticTxnManager() {}
   virtual ~PessimisticTxnManager() {}
 
   static PessimisticTxnManager &GetInstance();
@@ -73,13 +73,10 @@ class PessimisticTxnManager : public TransactionManager {
     txn->SetEpochId(eid);
     LOG_TRACE("Begin txn %lu", txn_id);
 
-
     return txn;
   }
 
   virtual void EndTransaction() {
-
-
     EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());
 
     delete current_txn;
@@ -101,7 +98,6 @@ class PessimisticTxnManager : public TransactionManager {
 
   void ReleaseReadLock(const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id);
-
 };
 }
 }

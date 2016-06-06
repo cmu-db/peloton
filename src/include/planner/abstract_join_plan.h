@@ -4,7 +4,7 @@
 //
 // abstract_join_plan.h
 //
-// Identification: src/planner/abstract_join_plan.h
+// Identification: src/include/planner/abstract_join_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -59,13 +59,9 @@ class AbstractJoinPlan : public AbstractPlan {
     return predicate_.get();
   }
 
-  const ProjectInfo* GetProjInfo() const {
-    return proj_info_.get();
-  }
+  const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
 
-  const catalog::Schema *GetSchema() const {
-    return proj_schema_.get();
-  }
+  const catalog::Schema *GetSchema() const { return proj_schema_.get(); }
 
   std::unique_ptr<AbstractPlan> Copy() const = 0;
 

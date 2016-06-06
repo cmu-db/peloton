@@ -4,7 +4,7 @@
 //
 // abstract_plan.h
 //
-// Identification: src/planner/abstract_plan.h
+// Identification: src/include/planner/abstract_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -80,23 +80,22 @@ class AbstractPlan : public Printable {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   // Each sub-class will have to implement these functions
-  // After the implementation for each sub-class, we should set these to pure virtual
+  // After the implementation for each sub-class, we should set these to pure
+  // virtual
   //===--------------------------------------------------------------------===//
   virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
-      PL_ASSERT(&output != nullptr);
-      return false;
+    PL_ASSERT(&output != nullptr);
+    return false;
   }
   virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
     PL_ASSERT(&input != nullptr);
     return false;
   }
-  virtual int SerializeSize() {
-      return 0;
-  }
+  virtual int SerializeSize() { return 0; }
 
  protected:
   // only used by its derived classes (when deserialization)
-  AbstractPlan *Parent() {return parent_;}
+  AbstractPlan *Parent() { return parent_; }
 
  private:
   // A plan node can have multiple children

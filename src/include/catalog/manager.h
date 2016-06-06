@@ -4,7 +4,7 @@
 //
 // manager.h
 //
-// Identification: src/catalog/manager.h
+// Identification: src/include/catalog/manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -40,8 +40,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef cuckoohash_map<oid_t, std::shared_ptr<storage::TileGroup>>
-    lookup_dir;
+typedef cuckoohash_map<oid_t, std::shared_ptr<storage::TileGroup>> lookup_dir;
 
 class Manager {
  public:

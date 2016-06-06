@@ -4,7 +4,7 @@
 //
 // storage_manager_test.cpp
 //
-// Identification: tests/storage/storage_manager_test.cpp
+// Identification: test/storage/storage_manager_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

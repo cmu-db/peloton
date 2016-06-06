@@ -23,8 +23,8 @@ namespace logging {
 
 void WriteBehindBackendLogger::Log(LogRecord *record) {
   // if we are committing, sync all data before taking the lock
-  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT){
-	  SyncDataForCommit();
+  if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
+    SyncDataForCommit();
   }
   log_buffer_lock.Lock();
   switch (record->GetType()) {
@@ -35,22 +35,26 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
     case LOGRECORD_TYPE_TRANSACTION_BEGIN:
     case LOGRECORD_TYPE_TRANSACTION_DONE:
     case LOGRECORD_TYPE_TRANSACTION_END: {
-      if(logging_cid_lower_bound < record->GetTransactionId()-1 ){
-    	  logging_cid_lower_bound = record->GetTransactionId()-1;
+      if (logging_cid_lower_bound < record->GetTransactionId() - 1) {
+        logging_cid_lower_bound = record->GetTransactionId() - 1;
       }
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:{
-        tile_groups_to_sync_.insert(((TupleRecord *)record)->GetDeleteLocation().block);
-        break;
-      }
-    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:{
-    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetInsertLocation().block);
-        break;
-      }
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
+      tile_groups_to_sync_.insert(
+          ((TupleRecord *)record)->GetDeleteLocation().block);
+      break;
+    }
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
+      tile_groups_to_sync_.insert(
+          ((TupleRecord *)record)->GetInsertLocation().block);
+      break;
+    }
     case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
-    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetDeleteLocation().block);
-    	tile_groups_to_sync_.insert(((TupleRecord *)record)->GetInsertLocation().block);
+      tile_groups_to_sync_.insert(
+          ((TupleRecord *)record)->GetDeleteLocation().block);
+      tile_groups_to_sync_.insert(
+          ((TupleRecord *)record)->GetInsertLocation().block);
       break;
     }
     default:
@@ -61,18 +65,18 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
   log_buffer_lock.Unlock();
 }
 
-void WriteBehindBackendLogger::SyncDataForCommit(){
-	auto &manager = catalog::Manager::GetInstance();
+void WriteBehindBackendLogger::SyncDataForCommit() {
+  auto &manager = catalog::Manager::GetInstance();
 
   // Sync the tiles in the modified tile groups and their headers
-	for (oid_t tile_group_id : tile_groups_to_sync_){
-		auto tile_group = manager.GetTileGroup(tile_group_id);
-		tile_group->Sync();
-		tile_group->GetHeader()->Sync();
-	}
+  for (oid_t tile_group_id : tile_groups_to_sync_) {
+    auto tile_group = manager.GetTileGroup(tile_group_id);
+    tile_group->Sync();
+    tile_group->GetHeader()->Sync();
+  }
 
-	// Clear the list of tile groups
-	tile_groups_to_sync_.clear();
+  // Clear the list of tile groups
+  tile_groups_to_sync_.clear();
 }
 
 LogRecord *WriteBehindBackendLogger::GetTupleRecord(

@@ -1,6 +1,10 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
+//
+// gc_test.cpp
+//
+// Identification: test/gc/gc_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +26,8 @@ namespace test {
 class GCTest : public PelotonTest {};
 
 /*
-int UpdateTable(storage::DataTable *table, const int scale, const int num_key, const int num_txn) {
+int UpdateTable(storage::DataTable *table, const int scale, const int num_key,
+const int num_txn) {
   srand(15721);
 
 
@@ -112,7 +117,8 @@ TEST_F(GCTest, SimpleTest) {
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(
-    TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID, INVALID_OID, 1234, true));
+    TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID,
+INVALID_OID, 1234, true));
 
   // update this key 1 times, using only one thread
   const int scale = 1;
@@ -160,7 +166,8 @@ TEST_F(GCTest, StressTest) {
   const int num_key = 256;
   const int scale = 1;
   std::unique_ptr<storage::DataTable> table(
-    TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID, INVALID_OID, 1234, true));
+    TransactionTestsUtil::CreateTable(num_key, "TEST_TABLE", INVALID_OID,
+INVALID_OID, 1234, true));
 
   // stress db to create garbage
   auto succ_num = UpdateTable(table.get(), scale, num_key, 16);
@@ -192,7 +199,8 @@ TEST_F(GCTest, StressTest) {
   std::this_thread::sleep_for(
     10 * std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
-  // garbage number should be scale * succ update time * how many tuples updated each time
+  // garbage number should be scale * succ update time * how many tuples updated
+each time
   EXPECT_EQ(scale * succ_num * 2, RecycledNum(table.get()));
 
 }

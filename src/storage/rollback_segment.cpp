@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // rollback_segment.cpp
 //
@@ -22,16 +22,19 @@ namespace storage {
  * @param target_list The columns to be selected
  * @param tuple The tuple to construct the RB
  *
- * TODO: Optimization can be done. We can save copying those columns that are already
- * in the rollback segment created by the same transaction. What we need to do is to add
- * a bitmap in the rollback segment indicating columns it contains. After that we
+ * TODO: Optimization can be done. We can save copying those columns that are
+ *already
+ * in the rollback segment created by the same transaction. What we need to do
+ *is to add
+ * a bitmap in the rollback segment indicating columns it contains. After that
+ *we
  * can bypass these columns when making a new rollback segment.
  */
-RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
-                                                const TargetList &target_list,
-                                                const AbstractTuple *tuple) {
+RBSegType RollbackSegmentPool::CreateSegmentFromTuple(
+    const catalog::Schema *schema, const TargetList &target_list,
+    const AbstractTuple *tuple) {
   PL_ASSERT(schema);
-  PL_ASSERT(target_list.size() != 0); 
+  PL_ASSERT(target_list.size() != 0);
 
   size_t col_count = target_list.size();
   size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
@@ -63,7 +66,8 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
     const bool is_inbytes = false;
 
     size_t inline_col_size = schema->GetLength(col_id);
-    size_t allocate_col_size = (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
+    size_t allocate_col_size =
+        (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
 
     SetColIdOffsetPair(rb_seg, idx, target.first, offset);
 
@@ -72,7 +76,7 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
     Value value = tuple->GetValue(col_id);
     PL_ASSERT(schema->GetType(col_id) == value.GetValueType());
     value.SerializeToTupleStorageAllocateForObjects(
-                value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
+        value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
 
     // Update the offset
     offset += inline_col_size;
@@ -86,7 +90,8 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
  *
  * @param idx The index of the recored column in the rollback segment
  */
-Value RollbackSegmentPool::GetValue(RBSegType rb_seg, const catalog::Schema *schema, int idx) {
+Value RollbackSegmentPool::GetValue(RBSegType rb_seg,
+                                    const catalog::Schema *schema, int idx) {
   auto col_id = GetIdOffsetPair(rb_seg, idx)->col_id;
 
   const ValueType column_type = schema->GetType(col_id);

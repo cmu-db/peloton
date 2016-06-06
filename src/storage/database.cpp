@@ -25,8 +25,7 @@ Database::Database(const oid_t &database_oid) : database_oid(database_oid) {}
 
 Database::~Database() {
   // Clean up all the tables
-  for (auto table : tables)
-    delete table;
+  for (auto table : tables) delete table;
 }
 
 //===--------------------------------------------------------------------===//
@@ -136,8 +135,7 @@ const std::string Database::GetInfo() const {
           auto sink_table_oid = foreign_key->GetSinkTableOid();
           auto sink_table = GetTableWithOid(sink_table_oid);
 
-          os << "table name : " << sink_table->GetName()
-              << std::endl;
+          os << "table name : " << sink_table->GetName() << std::endl;
         }
       }
     }

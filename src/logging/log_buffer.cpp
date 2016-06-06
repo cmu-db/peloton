@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_buffer.cpp
+//
+// Identification: src/logging/log_buffer.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * log_buffer.cpp
@@ -34,9 +46,7 @@ bool LogBuffer::WriteRecord(LogRecord *record) {
   return success;
 }
 
-void LogBuffer::ResetData() {
-  size_ = 0;
-}
+void LogBuffer::ResetData() { size_ = 0; }
 
 // Internal Methods
 bool LogBuffer::WriteData(char *data, size_t len) {

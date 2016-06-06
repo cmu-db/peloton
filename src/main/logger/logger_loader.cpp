@@ -4,7 +4,7 @@
 //
 // logger_loader.cpp
 //
-// Identification: src/benchmark/logger/logger_loader.cpp
+// Identification: src/main/logger/logger_loader.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,8 +22,6 @@
 
 namespace peloton {
 namespace benchmark {
-namespace hyadapt {
-
-}  // namespace hyadapt
+namespace hyadapt {}  // namespace hyadapt
 }  // namespace benchmark
 }  // namespace peloton

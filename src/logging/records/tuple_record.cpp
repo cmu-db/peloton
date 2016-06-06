@@ -112,13 +112,9 @@ size_t TupleRecord::GetTupleRecordSize(void) {
          sizeof(txn_id_t) + sizeof(ItemPointer) * 2;
 }
 
-void TupleRecord::SetTuple(storage::Tuple *tuple){
-  this->tuple = tuple;
-}
+void TupleRecord::SetTuple(storage::Tuple *tuple) { this->tuple = tuple; }
 
-storage::Tuple *TupleRecord::GetTuple(){
-  return tuple;
-}
+storage::Tuple *TupleRecord::GetTuple() { return tuple; }
 
 const std::string TupleRecord::GetInfo() const {
   std::ostringstream os;

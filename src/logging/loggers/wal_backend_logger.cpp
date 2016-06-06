@@ -4,8 +4,6 @@
 //
 // wal_backend_logger.cpp
 //
-// interface for a worker thread to write persistent logs
-//
 // Identification: src/logging/loggers/wal_backend_logger.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group

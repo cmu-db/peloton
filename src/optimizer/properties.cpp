@@ -16,24 +16,15 @@ namespace peloton {
 namespace optimizer {
 
 PropertyColumns::PropertyColumns(std::vector<Column *> columns)
-  : columns(columns)
-{
-}
+    : columns(columns) {}
 
-PropertyType PropertyColumns::Type() const {
-  return PropertyType::Columns;
-}
+PropertyType PropertyColumns::Type() const { return PropertyType::Columns; }
 
 PropertySort::PropertySort(std::vector<Column *> sort_columns,
                            std::vector<bool> sort_ascending)
-  : sort_columns(sort_columns), sort_ascending(sort_ascending)
-{
-}
+    : sort_columns(sort_columns), sort_ascending(sort_ascending) {}
 
-PropertyType PropertySort::Type() const {
-  return PropertyType::Sort;
-}
-
+PropertyType PropertySort::Type() const { return PropertyType::Sort; }
 
 } /* namespace optimizer */
 } /* namespace peloton */

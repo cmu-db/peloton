@@ -4,7 +4,7 @@
 //
 // sdbench_configuration.cpp
 //
-// Identification: src/benchmark/sdbench/sdbench_configuration.cpp
+// Identification: src/main/sdbench/sdbench_configuration.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -21,18 +21,19 @@ namespace benchmark {
 namespace sdbench {
 
 void Usage() {
-  LOG_TRACE("Command line options : sdbench <options>"
-          "   -h --help              :  Print help message"
-          "   -o --operator-type     :  Operator type"
-          "   -k --scale-factor      :  # of tuples"
-          "   -s --selectivity       :  Selectivity"
-          "   -p --projectivity      :  Projectivity"
-          "   -l --layout            :  Layout"
-          "   -t --transactions      :  # of transactions"
-          "   -e --experiment_type   :  Experiment Type"
-          "   -c --column_count      :  # of columns"
-          "   -w --write_ratio       :  Fraction of writes"
-          "   -g --tuples_per_tg     :  # of tuples per tilegroup");
+  LOG_TRACE(
+      "Command line options : sdbench <options>"
+      "   -h --help              :  Print help message"
+      "   -o --operator-type     :  Operator type"
+      "   -k --scale-factor      :  # of tuples"
+      "   -s --selectivity       :  Selectivity"
+      "   -p --projectivity      :  Projectivity"
+      "   -l --layout            :  Layout"
+      "   -t --transactions      :  # of transactions"
+      "   -e --experiment_type   :  Experiment Type"
+      "   -c --column_count      :  # of columns"
+      "   -w --write_ratio       :  Fraction of writes"
+      "   -g --tuples_per_tg     :  # of tuples per tilegroup");
   exit(EXIT_FAILURE);
 }
 

@@ -4,7 +4,7 @@
 //
 // platform.h
 //
-// Identification: src/common/platform.h
+// Identification: src/include/common/platform.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -35,7 +35,7 @@ inline bool atomic_cas(T *object, T old_value, T new_value) {
 // Alignment
 //===--------------------------------------------------------------------===//
 
-#define CACHELINE_SIZE 64 // XXX: don't assume x86
+#define CACHELINE_SIZE 64  // XXX: don't assume x86
 
 // some helpers for cacheline alignment
 #define CACHE_ALIGNED __attribute__((aligned(CACHELINE_SIZE)))
@@ -135,7 +135,6 @@ class Spinlock {
   }
 
  private:
-
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/
   std::atomic<LockState> spin_lock_state;

@@ -4,7 +4,7 @@
 //
 // mutex.h
 //
-// Identification: src/common/mutex.h
+// Identification: src/include/common/mutex.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -101,7 +101,8 @@ class Condition {
 
   // Calls timedwait with a relative, instead of an absolute, timeout.
   bool TimedwaitRelative(const struct timespec& relative_time) {
-    PL_ASSERT(0 <= relative_time.tv_nsec && relative_time.tv_nsec < ONE_S_IN_NS);
+    PL_ASSERT(0 <= relative_time.tv_nsec &&
+              relative_time.tv_nsec < ONE_S_IN_NS);
 
     struct timespec absolute;
     // clock_gettime would be more convenient, but that needs librt
@@ -123,7 +124,8 @@ class Condition {
   // Returns true if the lock is acquired, false otherwise. abstime is the
   // *absolute* time.
   bool Timedwait(const struct timespec& absolute_time) {
-    PL_ASSERT(0 <= absolute_time.tv_nsec && absolute_time.tv_nsec < ONE_S_IN_NS);
+    PL_ASSERT(0 <= absolute_time.tv_nsec &&
+              absolute_time.tv_nsec < ONE_S_IN_NS);
 
     UNUSED_ATTRIBUTE int status =
         pthread_cond_timedwait(&cond_, mutex_->RawMutex(), &absolute_time);

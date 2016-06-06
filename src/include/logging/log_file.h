@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// log_file.h
+//
+// Identification: src/include/logging/log_file.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * logger.h
@@ -24,7 +36,6 @@ namespace logging {
 
 class LogFile {
  public:
-
   LogFile(FileHandle file_handle, std::string log_file_name, int log_number,
           cid_t max_log_id_file, cid_t max_delimiter_file)
       : file_handle_(file_handle),
@@ -53,10 +64,10 @@ class LogFile {
   // set the file descriptor for this file
   void SetLogFileFD(int);
 
-  //set the file pointer
+  // set the file pointer
   void SetFilePtr(FILE *);
 
-  //set the max delimeter this file contains
+  // set the max delimeter this file contains
   void SetMaxDelimiter(cid_t);
 
   // get the max delimiter in this file

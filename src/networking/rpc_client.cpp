@@ -114,9 +114,10 @@ void RpcClient::TimeSync(const TimeSyncRequest* request,
                          TimeSyncResponse* response) {
   stub_->TimeSync(controller_, request, response, NULL);
 }
- void RpcClient::QueryPlan(const QueryPlanExecRequest* request, QueryPlanExecResponse* response) {
-   stub_->QueryPlan(controller_, request, response, NULL);
- }
+void RpcClient::QueryPlan(const QueryPlanExecRequest* request,
+                          QueryPlanExecResponse* response) {
+  stub_->QueryPlan(controller_, request, response, NULL);
+}
 
 }  // namespace networking
 }  // namespace peloton

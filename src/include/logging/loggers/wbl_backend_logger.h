@@ -4,7 +4,7 @@
 //
 // wbl_backend_logger.h
 //
-// Identification: src/logging/loggers/wbl_backend_logger.h
+// Identification: src/include/logging/loggers/wbl_backend_logger.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -47,8 +47,7 @@ class WriteBehindBackendLogger : public BackendLogger {
       std::vector<std::unique_ptr<LogRecord>> &frontend_queue);
 
  private:
-
- void SyncDataForCommit();
+  void SyncDataForCommit();
 
   std::unordered_set<oid_t> tile_groups_to_sync_;
 };

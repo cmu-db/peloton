@@ -4,7 +4,7 @@
 //
 // join_tests_util.h
 //
-// Identification: tests/executor/join_tests_util.h
+// Identification: test/include/executor/join_tests_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

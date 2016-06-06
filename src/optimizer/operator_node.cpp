@@ -20,11 +20,9 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Operator::Operator() : node(nullptr) {}
 
-Operator::Operator(BaseOperatorNode* node) : node(node) {}
+Operator::Operator(BaseOperatorNode *node) : node(node) {}
 
-void Operator::accept(OperatorVisitor *v) const {
-  node->accept(v);
-}
+void Operator::accept(OperatorVisitor *v) const { node->accept(v); }
 
 std::string Operator::name() const {
   if (defined()) {
@@ -84,9 +82,7 @@ bool Operator::operator==(const Operator &r) {
   return false;
 }
 
-bool Operator::defined() const {
-  return node != nullptr;
-}
+bool Operator::defined() const { return node != nullptr; }
 
 } /* namespace optimizer */
 } /* namespace peloton */

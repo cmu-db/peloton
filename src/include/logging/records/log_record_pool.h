@@ -4,7 +4,7 @@
 //
 // log_record_pool.h
 //
-// Identification: src/logging/records/log_record_pool.h
+// Identification: src/include/logging/records/log_record_pool.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // order_by_plan.h
 //
-// Identification: src/planner/order_by_plan.h
+// Identification: src/include/planner/order_by_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

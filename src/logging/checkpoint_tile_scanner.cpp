@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// checkpoint_tile_scanner.cpp
+//
+// Identification: src/logging/checkpoint_tile_scanner.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * checkpoint_tile_scanner.cpp
@@ -49,7 +61,7 @@ std::unique_ptr<executor::LogicalTile> CheckpointTileScanner::Scan(
 }
 
 // Same visibility check logic as optimistic concurrency control
-//where dirty read is not allowed
+// where dirty read is not allowed
 bool CheckpointTileScanner::IsVisible(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, cid_t start_cid) {

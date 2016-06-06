@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// sql_statement.h
+//
+// Identification: src/include/parser/sql_statement.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*
  * SQLStatement.h
  * Definition of the structure used to build the syntax tree.
@@ -16,15 +28,11 @@ namespace parser {
 // Base class for every SQLStatement
 class SQLStatement {
  public:
-
-  SQLStatement(StatementType type) :
-    stmt_type(type) {};
+  SQLStatement(StatementType type) : stmt_type(type){};
 
   virtual ~SQLStatement() {}
 
-  virtual StatementType GetType() {
-    return stmt_type;
-  }
+  virtual StatementType GetType() { return stmt_type; }
 
   // Get a string representation of this statement
   friend std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt);
@@ -37,47 +45,31 @@ class SQLStatement {
 // If parsing was successful it is a list of SQLStatement.
 class SQLStatementList {
  public:
+  SQLStatementList()
+      : is_valid(true), parser_msg(NULL), error_line(0), error_col(0){};
 
-  SQLStatementList() :
-    is_valid(true),
-    parser_msg(NULL),
-    error_line(0),
-    error_col(0){
-  };
-
-  SQLStatementList(SQLStatement* stmt) :
-    is_valid(true),
-    parser_msg(NULL) {
+  SQLStatementList(SQLStatement* stmt) : is_valid(true), parser_msg(NULL) {
     AddStatement(stmt);
   };
 
   virtual ~SQLStatementList() {
-
     // clean up statements
-    for(auto stmt : statements)
-      delete stmt;
+    for (auto stmt : statements) delete stmt;
 
-    free((char *) parser_msg);
+    free((char*)parser_msg);
   }
 
-  void AddStatement(SQLStatement* stmt) {
-    statements.push_back(stmt);
-  }
+  void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }
 
-  SQLStatement* GetStatement(int id) const {
-    return statements[id];
-  }
+  SQLStatement* GetStatement(int id) const { return statements[id]; }
 
-  const std::vector<SQLStatement*>& GetStatements() const {
-    return statements;
-  }
+  const std::vector<SQLStatement*>& GetStatements() const { return statements; }
 
-  size_t GetNumStatements() const {
-    return statements.size();
-  }
+  size_t GetNumStatements() const { return statements.size(); }
 
   // Get a string representation of this statement list
-  friend std::ostream& operator<<(std::ostream& os, const SQLStatementList& stmt_list);
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const SQLStatementList& stmt_list);
 
   std::vector<SQLStatement*> statements;
   bool is_valid;
@@ -86,7 +78,5 @@ class SQLStatementList {
   int error_col;
 };
 
-
-} // End parser namespace
-} // End peloton namespace
-
+}  // End parser namespace
+}  // End peloton namespace

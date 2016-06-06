@@ -4,7 +4,7 @@
 //
 // data_table.h
 //
-// Identification: src/storage/data_table.h
+// Identification: src/include/storage/data_table.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -51,11 +51,11 @@ namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
-namespace brain{
+namespace brain {
 class Sample;
 }
 
-namespace catalog{
+namespace catalog {
 class ForeignKey;
 }
 
@@ -246,8 +246,6 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
-
-
 
   bool InsertInSecondaryIndexes(const storage::Tuple *tuple,
                                 ItemPointer location);

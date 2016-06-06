@@ -4,7 +4,7 @@
 //
 // gc_manager_factory.h
 //
-// Identification: src/concurrency/gc_manager_factory.h
+// Identification: src/include/gc/gc_manager_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,10 +29,9 @@ class GCManagerFactory {
   static GCType GetGCType() { return gc_type_; }
 
  private:
-
   // GC type
   static GCType gc_type_;
 };
 
-} // namespace gc
-} // namespace peloton
+}  // namespace gc
+}  // namespace peloton

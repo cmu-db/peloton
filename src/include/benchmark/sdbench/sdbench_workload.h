@@ -4,7 +4,7 @@
 //
 // sdbench_workload.h
 //
-// Identification: src/benchmark/sdbench/sdbench_workload.h
+// Identification: src/include/benchmark/sdbench/sdbench_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

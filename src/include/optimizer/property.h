@@ -4,7 +4,7 @@
 //
 // property.h
 //
-// Identification: src/optimizer/property.h
+// Identification: src/include/optimizer/property.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,6 @@ class Property {
   virtual hash_t Hash() const = 0;
 
   virtual bool operator==(const Property &r) const = 0;
-
 };
 
 } /* namespace optimizer */

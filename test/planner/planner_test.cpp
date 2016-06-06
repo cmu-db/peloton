@@ -4,7 +4,7 @@
 //
 // planner_test.cpp
 //
-// Identification: tests/planner/planner_test.cpp
+// Identification: test/planner/planner_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

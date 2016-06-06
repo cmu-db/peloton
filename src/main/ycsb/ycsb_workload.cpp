@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // ycsb_workload.cpp
 //
-// Identification: benchmark/ycsb/ycsb_workload.cpp
+// Identification: src/main/ycsb/ycsb_workload.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -134,7 +134,7 @@ class fast_random {
 class ZipfDistribution {
  public:
   ZipfDistribution(const uint64_t &n, const double &theta)
- : rand_generator(rand()) {
+      : rand_generator(rand()) {
     // range: 1-n
     the_n = n;
     zipf_theta = theta;
@@ -194,12 +194,13 @@ void RunBackend(oid_t thread_id) {
 
   // Set zipfian skew
   auto zipf_theta = 0.0;
-  if(state.skew_factor == SKEW_FACTOR_HIGH) {
+  if (state.skew_factor == SKEW_FACTOR_HIGH) {
     zipf_theta = 0.5;
   }
 
   fast_random rng(rand());
-  ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1, zipf_theta);
+  ZipfDistribution zipf((state.scale_factor * DEFAULT_TUPLES_PER_TILEGROUP) - 1,
+                        zipf_theta);
   auto committed_transaction_count = 0;
 
   // Partition the domain across backends
@@ -220,13 +221,12 @@ void RunBackend(oid_t thread_id) {
     if (rng_val < update_ratio) {
       next_insert_key += state.backend_count;
       transaction_status = RunInsert(zipf, next_insert_key);
-    }
-    else {
+    } else {
       transaction_status = RunRead(zipf);
     }
 
     // Update transaction count if it committed
-    if(transaction_status == true){
+    if (transaction_status == true) {
       committed_transaction_count++;
     }
   }
@@ -258,13 +258,13 @@ void RunWorkload() {
 
   // Compute total committed transactions
   auto sum_transaction_count = 0;
-  for(auto transaction_count : transaction_counts){
+  for (auto transaction_count : transaction_counts) {
     sum_transaction_count += transaction_count;
   }
 
   // Compute average throughput and latency
-  state.throughput = (sum_transaction_count * 1000)/state.duration;
-  state.latency = state.backend_count/state.throughput;
+  state.throughput = (sum_transaction_count * 1000) / state.duration;
+  state.latency = state.backend_count / state.throughput;
 }
 
 /////////////////////////////////////////////////////////
@@ -305,14 +305,14 @@ static bool EndTransaction(concurrency::Transaction *txn) {
     } else {
       // transaction aborted or failed
       PL_ASSERT(result == Result::RESULT_ABORTED ||
-             result == Result::RESULT_FAILURE);
+                result == Result::RESULT_FAILURE);
       return false;
     }
   }
   // transaction aborted during execution.
   else {
     PL_ASSERT(result == Result::RESULT_ABORTED ||
-           result == Result::RESULT_FAILURE);
+              result == Result::RESULT_FAILURE);
     result = txn_manager.AbortTransaction();
     return false;
   }
@@ -324,7 +324,6 @@ static bool EndTransaction(concurrency::Transaction *txn) {
 
 bool RunRead(ZipfDistribution &zipf) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
 
   auto txn = txn_manager.BeginTransaction();
 
@@ -353,12 +352,10 @@ bool RunRead(ZipfDistribution &zipf) {
   auto lookup_key = zipf.GetNextNumber();
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
-  auto ycsb_pkey_index = user_table->GetIndexWithOid(
-      user_table_pkey_index_oid);
+  auto ycsb_pkey_index = user_table->GetIndexWithOid(user_table_pkey_index_oid);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       ycsb_pkey_index, key_column_ids, expr_types, values, runtime_keys);
@@ -366,8 +363,7 @@ bool RunRead(ZipfDistribution &zipf) {
   // Create plan node.
   auto predicate = nullptr;
 
-  planner::IndexScanPlan index_scan_node(user_table,
-                                         predicate, column_ids,
+  planner::IndexScanPlan index_scan_node(user_table, predicate, column_ids,
                                          index_scan_desc);
 
   // Run the executor
@@ -384,13 +380,11 @@ bool RunRead(ZipfDistribution &zipf) {
     old_to_new_cols[col_itr] = col_itr;
   }
 
-  std::shared_ptr<const catalog::Schema> output_schema {
-    catalog::Schema::CopySchema(user_table->GetSchema())
-  };
+  std::shared_ptr<const catalog::Schema> output_schema{
+      catalog::Schema::CopySchema(user_table->GetSchema())};
 
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema,
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
                                         physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
@@ -409,8 +403,7 @@ bool RunRead(ZipfDistribution &zipf) {
   return txn_status;
 }
 
-bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf,
-               oid_t next_insert_key) {
+bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf, oid_t next_insert_key) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   const oid_t col_count = state.column_count + 1;
@@ -428,7 +421,8 @@ bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf,
   // INSERT
   /////////////////////////////////////////////////////////
 
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, allocate));
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(table_schema, allocate));
   auto key_value = ValueFactory::GetIntegerValue(next_insert_key);
   auto field_value = ValueFactory::GetStringValue(field_raw_value);
 

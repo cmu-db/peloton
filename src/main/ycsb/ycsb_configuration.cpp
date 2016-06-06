@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// configuration.cpp
+// ycsb_configuration.cpp
 //
-// Identification: benchmark/ycsb/configuration.cpp
+// Identification: src/main/ycsb/ycsb_configuration.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,18 +29,16 @@ void Usage(FILE *out) {
           "   -d --duration          :  execution duration \n"
           "   -k --scale-factor      :  # of tuples \n"
           "   -s --skew              :  Skew factor \n"
-          "   -u --update-ratio      :  Fraction of updates \n"
-          );
+          "   -u --update-ratio      :  Fraction of updates \n");
 }
 
-static struct option opts[] = {
-    {"backend-count", optional_argument, NULL, 'b'},
-    {"column-count", optional_argument, NULL, 'c'},
-    {"duration", optional_argument, NULL, 'd'},
-    {"scale-factor", optional_argument, NULL, 'k'},
-    {"skew", optional_argument, NULL, 's'},
-    {"update-ratio", optional_argument, NULL, 'u'},
-    {NULL, 0, NULL, 0}};
+static struct option opts[] = {{"backend-count", optional_argument, NULL, 'b'},
+                               {"column-count", optional_argument, NULL, 'c'},
+                               {"duration", optional_argument, NULL, 'd'},
+                               {"scale-factor", optional_argument, NULL, 'k'},
+                               {"skew", optional_argument, NULL, 's'},
+                               {"update-ratio", optional_argument, NULL, 'u'},
+                               {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -97,7 +95,6 @@ void ValidateSkewFactor(const configuration &state) {
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
-
   // Default Values
   state.scale_factor = 1;
   state.duration = 1000;
@@ -153,7 +150,6 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateUpdateRatio(state);
   ValidateDuration(state);
   ValidateSkewFactor(state);
-
 }
 
 }  // namespace ycsb

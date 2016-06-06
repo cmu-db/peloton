@@ -4,7 +4,7 @@
 //
 // constraint.h
 //
-// Identification: src/catalog/constraint.h
+// Identification: src/include/catalog/constraint.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,8 +28,7 @@ namespace catalog {
 class Constraint : public Printable {
  public:
   Constraint(ConstraintType type, std::string constraint_name)
-      : constraint_type(type),
-        constraint_name(constraint_name) {}
+      : constraint_type(type), constraint_name(constraint_name) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -68,7 +67,6 @@ class Constraint : public Printable {
   oid_t unique_index_list_offset = INVALID_OID;
 
   std::string constraint_name;
-
 };
 
 }  // End catalog namespace

@@ -4,7 +4,7 @@
 //
 // column.h
 //
-// Identification: src/optimizer/column.h
+// Identification: src/include/optimizer/column.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,11 +28,7 @@ using ColumnID = int32_t;
 //===--------------------------------------------------------------------===//
 class Column {
  public:
-  Column(ColumnID id,
-         ValueType type,
-         int size,
-         std::string name,
-         bool inlined);
+  Column(ColumnID id, ValueType type, int size, std::string name, bool inlined);
 
   virtual ~Column() {}
 
@@ -61,13 +57,8 @@ class Column {
 //===--------------------------------------------------------------------===//
 class TableColumn : public Column {
  public:
-  TableColumn(ColumnID id,
-              ValueType type,
-              int size,
-              std::string name,
-              bool inlined,
-              oid_t base_table,
-              oid_t column_index);
+  TableColumn(ColumnID id, ValueType type, int size, std::string name,
+              bool inlined, oid_t base_table, oid_t column_index);
 
   oid_t BaseTableOid() const;
 
@@ -82,11 +73,8 @@ class TableColumn : public Column {
 // ExprColumn
 //===--------------------------------------------------------------------===//
 class ExprColumn : public Column {
-public:
-  ExprColumn(ColumnID id,
-             ValueType type,
-             int size,
-             std::string name,
+ public:
+  ExprColumn(ColumnID id, ValueType type, int size, std::string name,
              bool inlined);
 };
 

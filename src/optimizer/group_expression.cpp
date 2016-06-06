@@ -20,40 +20,27 @@ namespace optimizer {
 // Group Expression
 //===--------------------------------------------------------------------===//
 GroupExpression::GroupExpression(Operator op, std::vector<GroupID> child_groups)
-  : group_id(UNDEFINED_GROUP), op(op), child_groups(child_groups)
-{
-}
+    : group_id(UNDEFINED_GROUP), op(op), child_groups(child_groups) {}
 
-GroupID GroupExpression::GetGroupID() const {
-  return group_id;
-}
+GroupID GroupExpression::GetGroupID() const { return group_id; }
 
-void GroupExpression::SetGroupID(GroupID id) {
-  group_id = id;
-}
+void GroupExpression::SetGroupID(GroupID id) { group_id = id; }
 
 const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
   return child_groups;
 }
 
-Operator GroupExpression::Op() const {
-  return op;
-}
+Operator GroupExpression::Op() const { return op; }
 
-std::shared_ptr<Stats> GroupExpression::GetStats() const {
-  return stats;
-}
+std::shared_ptr<Stats> GroupExpression::GetStats() const { return stats; }
 
-double GroupExpression::GetCost() const {
-  return cost;
-}
+double GroupExpression::GetCost() const { return cost; }
 
 void GroupExpression::DeriveStatsAndCost(
-  std::vector<std::shared_ptr<Stats>> child_stats,
-  std::vector<double> child_costs)
-{
-  (void) child_stats;
-  (void) child_costs;
+    std::vector<std::shared_ptr<Stats>> child_stats,
+    std::vector<double> child_costs) {
+  (void)child_stats;
+  (void)child_costs;
 }
 
 hash_t GroupExpression::Hash() const {

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// common/harness.h
+// harness.h
 //
-// Identification: tests/common/harness.h
+// Identification: test/include/common/harness.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

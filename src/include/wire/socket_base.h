@@ -4,7 +4,7 @@
 //
 // socket_base.h
 //
-// Identification: src/wire/socket_base.h
+// Identification: src/include/wire/socket_base.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -48,15 +48,13 @@ struct Server {
   int max_connections;
 
   inline Server(int port, int max_conn)
-  : port(port),
-    server_fd(0),
-    max_connections(max_conn) {}
+      : port(port), server_fd(0), max_connections(max_conn) {}
 };
 
 // Buffers used to batch meesages at the socket
 struct Buffer {
-  size_t buf_ptr; // buffer cursor
-  size_t buf_size; // buffer size
+  size_t buf_ptr;   // buffer cursor
+  size_t buf_size;  // buffer size
   SockBuf buf;
 
   inline Buffer() : buf_ptr(0), buf_size(0) {}
@@ -74,9 +72,9 @@ struct Buffer {
  */
 template <typename B>
 class SocketManager {
-  int sock_fd; // file descriptor
-  Buffer rbuf; //socket's read buffer
-  Buffer wbuf; // socket's write buffer
+  int sock_fd;  // file descriptor
+  Buffer rbuf;  // socket's read buffer
+  Buffer wbuf;  // socket's write buffer
 
  private:
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
@@ -140,7 +138,6 @@ void HandleConnections(Server *server) {
     std::thread client_thread(ClientHandler<P, B>, std::move(clientfd));
     client_thread.detach();
   }
-
 }
 
 /*
@@ -156,7 +153,5 @@ void ClientHandler(std::unique_ptr<int> clientfd) {
   P p(&sm);
   p.ManagePackets();
 }
-
-
 }
 }

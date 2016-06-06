@@ -341,7 +341,8 @@ void AbstractJoinExecutor::UpdateLeftJoinRowSets() {
   * Update the row set with all rows from the last tile from right child
   */
 void AbstractJoinExecutor::UpdateRightJoinRowSets() {
-  PL_ASSERT(right_result_tiles_.size() - no_matching_right_row_sets_.size() == 1);
+  PL_ASSERT(right_result_tiles_.size() - no_matching_right_row_sets_.size() ==
+            1);
   no_matching_right_row_sets_.emplace_back(right_result_tiles_.back()->begin(),
                                            right_result_tiles_.back()->end());
 }

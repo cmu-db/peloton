@@ -4,7 +4,7 @@
 //
 // wire.h
 //
-// Identification: src/wire/wire.h
+// Identification: src/include/wire/wire.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -39,7 +39,7 @@ struct Packet;
 typedef std::vector<std::unique_ptr<Packet>> ResponseBuffer;
 
 struct Client {
-  SocketManager<PktBuf>* sock; // handle to socket manager
+  SocketManager<PktBuf>* sock;  // handle to socket manager
 
   // Authentication details
   std::string dbname;
@@ -49,12 +49,11 @@ struct Client {
   inline Client(SocketManager<PktBuf>* sock) : sock(sock) {}
 };
 
-
 struct Packet {
-  PktBuf buf; //stores packet contents
-  size_t len; // size of packet
-  size_t ptr; // PktBuf cursor
-  uchar msg_type; // header
+  PktBuf buf;  // stores packet contents
+  size_t len;      // size of packet
+  size_t ptr;      // PktBuf cursor
+  uchar msg_type;  // header
 
   // reserve buf's size as maximum packet size
   inline Packet() { Reset(); }
@@ -81,9 +80,10 @@ class PacketManager {
   std::string skipped_query_;
   std::string skipped_query_type_;
 
-  wire::Sqlite db; // dbhandler to use sqlite
+  wire::Sqlite db;  // dbhandler to use sqlite
 
-  static const std::unordered_map<std::string, std::string> parameter_status_map;
+  static const std::unordered_map<std::string, std::string>
+      parameter_status_map;
 
   /* Note: The responses argument in every subsequent function
    * is used to batch all the generated packets ofr that unit */
@@ -97,14 +97,17 @@ class PacketManager {
   void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
 
   // Sends the attribute headers required by SELECT queries
-  void PutRowDesc(std::vector<wire::FieldInfoType>& rowdesc, ResponseBuffer& responses);
+  void PutRowDesc(std::vector<wire::FieldInfoType>& rowdesc,
+                  ResponseBuffer& responses);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<wire::ResType>& results, int colcount, int &rows_affected,  ResponseBuffer& responses);
+  void SendDataRows(std::vector<wire::ResType>& results, int colcount,
+                    int& rows_affected, ResponseBuffer& responses);
 
-  // Used to send a packet that indicates the completion of a query. Also has txn state mgmt
-  void CompleteCommand(const std::string& query_type,
-                        int rows, ResponseBuffer& responses);
+  // Used to send a packet that indicates the completion of a query. Also has
+  // txn state mgmt
+  void CompleteCommand(const std::string& query_type, int rows,
+                       ResponseBuffer& responses);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse(ResponseBuffer& responses);
@@ -112,7 +115,8 @@ class PacketManager {
   /* Helper function used to make hardcoded ParameterStatus('S')
    * packets during startup
    */
-  void MakeHardcodedParameterStatus(ResponseBuffer& responses, const std::pair<std::string, std::string>& kv);
+  void MakeHardcodedParameterStatus(
+      ResponseBuffer& responses, const std::pair<std::string, std::string>& kv);
 
   /* SQLite doesn't support "SET" and "SHOW" SQL commands.
    * Also, duplicate BEGINs and COMMITs shouldn't be executed.
@@ -121,32 +125,32 @@ class PacketManager {
   bool HardcodedExecuteFilter(std::string query_type);
 
   /* Execute a Simple query protocol message */
-  void ExecQueryMessage(Packet *pkt, ResponseBuffer &responses);
+  void ExecQueryMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the PARSE message of the extended query protocol */
-  void ExecParseMessage(Packet *pkt, ResponseBuffer &responses);
+  void ExecParseMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the BIND message of the extended query protocol */
-  void ExecBindMessage(Packet *pkt, ResponseBuffer &responses);
+  void ExecBindMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the DESCRIBE message of the extended query protocol */
-  void ExecDescribeMessage(Packet *pkt, ResponseBuffer &responses);
+  void ExecDescribeMessage(Packet* pkt, ResponseBuffer& responses);
 
   /* Process the EXECUTE message of the extended query protocol */
-  void ExecExecuteMessage(Packet *pkt, ResponseBuffer &response);
+  void ExecExecuteMessage(Packet* pkt, ResponseBuffer& response);
 
   /* closes the socket connection with the client */
   void CloseClient();
 
  public:
-
-  inline PacketManager(SocketManager<PktBuf>* sock) :
-      client(sock), txn_state(TXN_IDLE) {}
+  inline PacketManager(SocketManager<PktBuf>* sock)
+      : client(sock), txn_state(TXN_IDLE) {}
 
   /* Startup packet processing logic */
   bool ProcessStartupPacket(Packet* pkt, ResponseBuffer& responses);
 
-  /* Main switch case wrapper to process every packet apart from the startup packet */
+  /* Main switch case wrapper to process every packet apart from the startup
+   * packet */
   bool ProcessPacket(Packet* pkt, ResponseBuffer& responses);
 
   /* Protocol manager */
@@ -155,4 +159,3 @@ class PacketManager {
 
 }  // End wire namespace
 }  // End peloton namespace
-

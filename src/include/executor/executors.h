@@ -4,7 +4,7 @@
 //
 // executors.h
 //
-// Identification: src/executor/executors.h
+// Identification: src/include/executor/executors.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

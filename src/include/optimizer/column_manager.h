@@ -4,7 +4,7 @@
 //
 // column_manager.h
 //
-// Identification: src/optimizer/column_manager.h
+// Identification: src/include/optimizer/column_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,16 +26,10 @@ class ColumnManager {
 
   Column *LookupColumnByID(ColumnID id);
 
-  Column *AddBaseColumn(ValueType type,
-                        int size,
-                        std::string name,
-                        bool inlined,
-                        oid_t base_table,
-                        oid_t column_index);
+  Column *AddBaseColumn(ValueType type, int size, std::string name,
+                        bool inlined, oid_t base_table, oid_t column_index);
 
-  Column *AddExprColumn(ValueType type,
-                        int size,
-                        std::string name,
+  Column *AddExprColumn(ValueType type, int size, std::string name,
                         bool inlined);
 
  private:

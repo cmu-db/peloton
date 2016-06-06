@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// workload.h
+// tpcc_workload.h
 //
-// Identification: benchmark/tpcc/workload.h
+// Identification: src/include/benchmark/tpcc/tpcc_workload.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 

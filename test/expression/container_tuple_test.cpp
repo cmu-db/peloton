@@ -4,7 +4,7 @@
 //
 // container_tuple_test.cpp
 //
-// Identification: tests/expression/container_tuple_test.cpp
+// Identification: test/expression/container_tuple_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -38,7 +38,7 @@ TEST_F(ContainerTupleTest, VectorValue) {
   expression::ContainerTuple<std::vector<Value>> ctuple(&values);
 
   for (size_t i = 0; i < values.size(); i++) {
-    LOG_INFO("%s",  ctuple.GetValue(i).GetInfo().c_str());
+    LOG_INFO("%s", ctuple.GetValue(i).GetInfo().c_str());
     EXPECT_TRUE(values[i].OpEquals(ctuple.GetValue(i)).IsTrue());
   }
 }

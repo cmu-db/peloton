@@ -4,7 +4,7 @@
 //
 // ycsb_loader.h
 //
-// Identification: benchmark/ycsb/ycsb_loader.h
+// Identification: src/include/benchmark/ycsb/ycsb_loader.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

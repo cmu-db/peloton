@@ -4,7 +4,7 @@
 //
 // sdbench_configuration.h
 //
-// Identification: src/benchmark/sdbench/sdbench_configuration.h
+// Identification: src/include/benchmark/sdbench/sdbench_configuration.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

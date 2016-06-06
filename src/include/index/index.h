@@ -4,7 +4,7 @@
 //
 // index.h
 //
-// Identification: src/index/index.h
+// Identification: src/include/index/index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -25,9 +25,13 @@ namespace peloton {
 class AbstractTuple;
 class VarlenPool;
 
-namespace catalog { class Schema; }
+namespace catalog {
+class Schema;
+}
 
-namespace storage { class Tuple; }
+namespace storage {
+class Tuple;
+}
 
 namespace index {
 
@@ -214,18 +218,14 @@ class Index : public Printable {
 
   // Get the memory footprint
   virtual size_t GetMemoryFootprint() = 0;
-  
+
   bool static ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                           const std::pair<peloton::Value, int> &j);
+                                  const std::pair<peloton::Value, int> &j);
 
   // Get the indexed tile group offset
-  virtual int GetIndexedTileGroupOff() {
-    return -1;
-  }
+  virtual int GetIndexedTileGroupOff() { return -1; }
 
-  virtual void IncreamentIndexedTileGroupOff() {
-    return;
-  }
+  virtual void IncreamentIndexedTileGroupOff() { return; }
 
  protected:
   Index(IndexMetadata *schema);
@@ -235,7 +235,6 @@ class Index : public Printable {
                                 const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
-
 
   bool IfForwardExpression(ExpressionType e);
 

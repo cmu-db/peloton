@@ -4,7 +4,7 @@
 //
 // table_factory.h
 //
-// Identification: src/storage/table_factory.h
+// Identification: src/include/storage/table_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

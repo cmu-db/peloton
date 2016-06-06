@@ -4,7 +4,7 @@
 //
 // logger_loader.h
 //
-// Identification: src/benchmark/logger/logger_loader.h
+// Identification: src/include/benchmark/logger/logger_loader.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

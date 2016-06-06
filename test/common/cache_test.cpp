@@ -4,7 +4,7 @@
 //
 // cache_test.cpp
 //
-// Identification: tests/common/cache_test.cpp
+// Identification: test/common/cache_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -55,7 +55,7 @@ TEST_F(CacheTest, Basic) {
 TEST_F(CacheTest, Find) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
-  //EXPECT_EQ(cache.end(), cache.find(1));
+  // EXPECT_EQ(cache.end(), cache.find(1));
 }
 
 /**

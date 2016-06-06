@@ -97,8 +97,7 @@ bool InsertExecutor::DExecute() {
             peloton::Result::RESULT_FAILURE);
         return false;
       }
-      auto res =
-          transaction_manager.PerformInsert(location);
+      auto res = transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
@@ -121,7 +120,7 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<storage::Tuple> project_tuple;
 
     // Check if this is not a raw tuple
-    if(tuple == nullptr) {
+    if (tuple == nullptr) {
       // Otherwise, there must exist a project info
       PL_ASSERT(project_info);
       // There should be no direct maps
@@ -141,7 +140,6 @@ bool InsertExecutor::DExecute() {
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
-
       // Carry out insertion
       ItemPointer location = target_table->InsertTuple(tuple);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
@@ -153,15 +151,13 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res =
-          transaction_manager.PerformInsert(location);
+      auto res = transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
 
       executor_context_->num_processed += 1;  // insert one
-
     }
 
     done_ = true;

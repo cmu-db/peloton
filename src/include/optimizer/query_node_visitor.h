@@ -4,7 +4,7 @@
 //
 // query_node_visitor.h
 //
-// Identification: src/optimizer/query_node_visitor.h
+// Identification: src/include/optimizer/query_node_visitor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -33,7 +33,7 @@ class Select;
 
 class QueryNodeVisitor {
  public:
-  virtual ~QueryNodeVisitor() {};
+  virtual ~QueryNodeVisitor(){};
 
   virtual void visit(const Variable*) = 0;
   virtual void visit(const Constant*) = 0;

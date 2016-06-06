@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // constraints_test.cpp
 //
-// Identification: tests/catalog/constraints_test.cpp
+// Identification: test/catalog/constraints_test.cpp
 //
-// Copyright (c) 2016, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

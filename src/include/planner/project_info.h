@@ -4,7 +4,7 @@
 //
 // project_info.h
 //
-// Identification: src/planner/project_info.h
+// Identification: src/include/planner/project_info.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,9 +4,9 @@
 //
 // index_test.cpp
 //
-// Identification: tests/index/index_test.cpp
+// Identification: test/index/index_test.cpp
 //
-// Copyright (c) 2015-16, CMU Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -450,14 +450,13 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
   // FORWARD SCAN
   index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_FORWARD, locations);
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 0);
   locations.clear();
 
-  index->Scan(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+              {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 0);
   locations.clear();
 
@@ -523,27 +522,27 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
   key4->SetValue(0, ValueFactory::GetIntegerValue(500), pool);
   key4->SetValue(1, ValueFactory::GetStringValue(
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
-      pool);
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                        "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
+                 pool);
 
   index->ScanKey(key0.get(), locations);
   EXPECT_EQ(locations.size(), 0);
@@ -563,15 +562,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   locations.clear();
 
   // FORWARD SCAN
-      index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_FORWARD, locations);
+  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 
-  index->Scan(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+              {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
@@ -589,41 +587,41 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   EXPECT_EQ(locations.size(), 0);
   locations.clear();
 
-  index->Scan(
-      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+              {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
   index->Scan(
-      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0), key2->GetValue(1)},
+      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
+       key2->GetValue(1)},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
-  index->Scan(
-      {key0->GetValue(0), key0->GetValue(1), key4->GetValue(0), key4->GetValue(1)},
-      {0, 1, 0, 1},
-      {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-        EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+               key4->GetValue(1)},
+              {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                             EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+                             EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+                             EXPRESSION_TYPE_COMPARE_LESSTHAN},
+              SCAN_DIRECTION_TYPE_FORWARD, locations);
   EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 
-// REVERSE SCAN
-      index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-                  SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  // REVERSE SCAN
+  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+              SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 
-  index->Scan(
-      {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+              {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
+              SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
@@ -641,28 +639,29 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   EXPECT_EQ(locations.size(), 0);
   locations.clear();
 
-  index->Scan(
-      {key2->GetValue(0), key2->GetValue(1)}, {0, 1},
-      {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+              {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+              SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
   index->Scan(
-      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0), key2->GetValue(1)},
+      {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
+       key2->GetValue(1)},
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
+       EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 2 * num_threads);
   locations.clear();
 
-  index->Scan(
-      {key0->GetValue(0), key0->GetValue(1), key4->GetValue(0), key4->GetValue(1)},
-      {0, 1, 0, 1},
-      {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
-      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+               key4->GetValue(1)},
+              {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                             EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+                             EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+                             EXPRESSION_TYPE_COMPARE_LESSTHAN},
+              SCAN_DIRECTION_TYPE_BACKWARD, locations);
   EXPECT_EQ(locations.size(), 3 * num_threads);
   locations.clear();
 

@@ -4,7 +4,7 @@
 //
 // seq_scan_executor.h
 //
-// Identification: src/executor/seq_scan_executor.h
+// Identification: src/include/executor/seq_scan_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

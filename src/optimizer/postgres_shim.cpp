@@ -10,31 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer/postgres_shim.h"
 #include "optimizer/query_operators.h"
 #include "optimizer/query_node_printer.h"
 
-
 namespace peloton {
 namespace optimizer {
 
-namespace {
-
-} // anonymous namespace
+namespace {}  // anonymous namespace
 
 //===--------------------------------------------------------------------===//
 // Compatibility with Postgres
 //===--------------------------------------------------------------------===//
 bool ShouldPelotonOptimize(std::string parse) {
-	std::cout <<"Just a placeholder for prase string " << parse << std::endl;
-	return false;
+  std::cout << "Just a placeholder for prase string " << parse << std::endl;
+  return false;
 }
 
 std::shared_ptr<Select> PostgresQueryToPelotonQuery(std::string parse) {
-	std::cout <<"Just a placeholder for prase string " << parse << std::endl;
-	return NULL;
+  std::cout << "Just a placeholder for prase string " << parse << std::endl;
+  return NULL;
 }
-
 }
 }

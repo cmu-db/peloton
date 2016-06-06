@@ -4,7 +4,7 @@
 //
 // peloton_endpoint.h
 //
-// Identification: src/networking/peloton_endpoint.h
+// Identification: src/include/networking/peloton_endpoint.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

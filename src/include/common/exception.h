@@ -4,7 +4,7 @@
 //
 // exception.h
 //
-// Identification: src/common/exception.h
+// Identification: src/include/common/exception.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -134,7 +134,7 @@ class Exception : public std::runtime_error {
     }
 
     /// resolve addresses into strings containing "filename(function+address)",
-    char** symbol_list = backtrace_symbols(addrlist, addrlen);
+    char **symbol_list = backtrace_symbols(addrlist, addrlen);
 
     /// allocate string which will be filled with the demangled function name
     size_t func_name_size = 1024;
@@ -167,8 +167,8 @@ class Exception : public std::runtime_error {
         /// mangled name is now in [begin_name, begin_offset) and caller
         /// offset in [begin_offset, end_offset). now apply  __cxa_demangle():
         int status;
-        char *ret = abi::__cxa_demangle(begin_name, func_name.get(), &func_name_size,
-                                        &status);
+        char *ret = abi::__cxa_demangle(begin_name, func_name.get(),
+                                        &func_name_size, &status);
         if (status == 0) {
           func_name.reset(ret);  // use possibly realloc()-ed string
           ::fprintf(out, "  %s : %s+%s\n", symbol_list[i], func_name.get(),
@@ -184,7 +184,6 @@ class Exception : public std::runtime_error {
         ::fprintf(out, "  %s\n", symbol_list[i]);
       }
     }
-
   }
 
  private:

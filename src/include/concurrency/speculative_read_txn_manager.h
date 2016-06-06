@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
-// transaction_manager.h
+// speculative_read_txn_manager.h
 //
-// Identification: src/concurrency/speculative_read_txn_manager.h
+// Identification: src/include/concurrency/speculative_read_txn_manager.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -126,7 +126,6 @@ class SpeculativeReadTxnManager : public TransactionManager {
     current_txn = nullptr;
   }
 
-
   // is it because this dependency has been registered before?
   // or the dst txn does not exist?
   bool RegisterDependency(const txn_id_t &dst_txn_id) {
@@ -140,17 +139,17 @@ class SpeculativeReadTxnManager : public TransactionManager {
     bool changeable = true;
     bool ret =
         running_txn_buckets_[dst_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
-            dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext * context) {
-      context->inner_dep_set_lock_.Lock();
-      if (context->inner_dep_set_changeable_ == true) {
-        PL_ASSERT(context->inner_dep_set_.find(src_txn_id) ==
-               context->inner_dep_set_.end());
-        context->inner_dep_set_.insert(src_txn_id);
-      } else {
-        changeable = false;
-      }
-      context->inner_dep_set_lock_.Unlock();
-    });
+            dst_txn_id, [&changeable, &src_txn_id](SpecTxnContext *context) {
+              context->inner_dep_set_lock_.Lock();
+              if (context->inner_dep_set_changeable_ == true) {
+                PL_ASSERT(context->inner_dep_set_.find(src_txn_id) ==
+                          context->inner_dep_set_.end());
+                context->inner_dep_set_.insert(src_txn_id);
+              } else {
+                changeable = false;
+              }
+              context->inner_dep_set_lock_.Unlock();
+            });
 
     if (changeable == false || ret == false) {
       return false;
@@ -177,11 +176,11 @@ class SpeculativeReadTxnManager : public TransactionManager {
     // so lock first.
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-          .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        PL_ASSERT(context->outer_dep_count_ > 0);
-        context->outer_dep_count_--;
-      });
+      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
+          child_txn_id, [](SpecTxnContext *context) {
+            PL_ASSERT(context->outer_dep_count_ > 0);
+            context->outer_dep_count_--;
+          });
     }
     spec_txn_context.inner_dep_set_changeable_ = false;
     spec_txn_context.inner_dep_set_lock_.Unlock();
@@ -192,11 +191,11 @@ class SpeculativeReadTxnManager : public TransactionManager {
     // so lock first.
     spec_txn_context.inner_dep_set_lock_.Lock();
     for (auto &child_txn_id : spec_txn_context.inner_dep_set_) {
-      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM]
-          .update_fn(child_txn_id, [](SpecTxnContext * context) {
-        PL_ASSERT(context->outer_dep_count_ > 0);
-        context->is_cascading_abort_ = true;
-      });
+      running_txn_buckets_[child_txn_id % RUNNING_TXN_BUCKET_NUM].update_fn(
+          child_txn_id, [](SpecTxnContext *context) {
+            PL_ASSERT(context->outer_dep_count_ > 0);
+            context->is_cascading_abort_ = true;
+          });
     }
     spec_txn_context.inner_dep_set_changeable_ = false;
     spec_txn_context.inner_dep_set_lock_.Unlock();

@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // optimistic_rb_txn_manager.cpp
 //
@@ -64,8 +64,7 @@ bool OptimisticRbTxnManager::IsVisible(
     }
   } else {
     bool invalidated = (current_txn->GetBeginCommitId() >= tuple_end_cid);
-    if (invalidated)
-      return false;
+    if (invalidated) return false;
 
     if (tuple_txn_id != INITIAL_TXN_ID) {
       // if the tuple is owned by other transactions.
@@ -102,8 +101,8 @@ bool OptimisticRbTxnManager::IsOwnable(
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   char *evidence = GetActivatedEvidence(tile_group_header, tuple_id);
 
-  return tuple_txn_id == INITIAL_TXN_ID && 
-      evidence == tile_group_header->GetReservedFieldRef(tuple_id);
+  return tuple_txn_id == INITIAL_TXN_ID &&
+         evidence == tile_group_header->GetReservedFieldRef(tuple_id);
 }
 
 // get write lock on a tuple.
@@ -120,7 +119,6 @@ bool OptimisticRbTxnManager::AcquireOwnership(
   }
   return true;
 }
-
 
 bool OptimisticRbTxnManager::PerformRead(const ItemPointer &location) {
   current_txn->RecordRead(location);
@@ -152,13 +150,15 @@ bool OptimisticRbTxnManager::PerformInsert(const ItemPointer &location) {
   return true;
 }
 
-void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg) {
+void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location,
+                                                 char *new_rb_seg) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
 
-  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) == current_txn->GetTransactionId());
+  PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
+            current_txn->GetTransactionId());
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   // new_rb_seg is a new segment
@@ -172,7 +172,8 @@ void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location, ch
   COMPILER_MEMORY_FENCE;
 
   // Modify the head of the segment list
-  // Note that since we are holding the write lock, we don't need atomic update here
+  // Note that since we are holding the write lock, we don't need atomic update
+  // here
   SetRbSeg(tile_group_header, tuple_id, new_rb_seg);
 
   // Add the location to the update set
@@ -187,7 +188,7 @@ void OptimisticRbTxnManager::PerformDelete(const ItemPointer &location) {
   auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
 
   PL_ASSERT(tile_group_header->GetTransactionId(tuple_id) ==
-      current_txn->GetTransactionId());
+            current_txn->GetTransactionId());
 
   // tuple deleted should be globally visible
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
@@ -208,14 +209,14 @@ void OptimisticRbTxnManager::PerformDelete(const ItemPointer &location) {
   }
 }
 
-void OptimisticRbTxnManager::RollbackTuple(std::shared_ptr<storage::TileGroup> tile_group, const oid_t tuple_id) {
+void OptimisticRbTxnManager::RollbackTuple(
+    std::shared_ptr<storage::TileGroup> tile_group, const oid_t tuple_id) {
   auto tile_group_header = tile_group->GetHeader();
   auto txn_begin_cid = current_txn->GetBeginCommitId();
 
   auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
   // Follow the RB chain, rollback if needed, stop when first unreadable RB
   while (IsRBVisible(rb_seg, txn_begin_cid) == true) {
-
     // Copy the content of the rollback segment onto the tuple
     tile_group->ApplyRollbackSegment(rb_seg, tuple_id);
 
@@ -225,12 +226,14 @@ void OptimisticRbTxnManager::RollbackTuple(std::shared_ptr<storage::TileGroup> t
 
   COMPILER_MEMORY_FENCE;
 
-  // Set the tile group header's rollback segment header to next rollback segment
+  // Set the tile group header's rollback segment header to next rollback
+  // segment
   SetRbSeg(tile_group_header, tuple_id, rb_seg);
 }
 
-void OptimisticRbTxnManager::InstallRollbackSegments(storage::TileGroupHeader *tile_group_header,
-                                                     const oid_t tuple_id, const cid_t end_cid) {
+void OptimisticRbTxnManager::InstallRollbackSegments(
+    storage::TileGroupHeader *tile_group_header, const oid_t tuple_id,
+    const cid_t end_cid) {
   auto txn_begin_cid = current_txn->GetBeginCommitId();
   auto rb_seg = GetRbSeg(tile_group_header, tuple_id);
 
@@ -241,10 +244,13 @@ void OptimisticRbTxnManager::InstallRollbackSegments(storage::TileGroupHeader *t
 }
 
 /**
- * @brief Check if begin commit id and end commit id still falls in the same version
+ * @brief Check if begin commit id and end commit id still falls in the same
+ * version
  *        as when then transaction starts
  */
-bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id, const cid_t &end_cid) {
+bool OptimisticRbTxnManager::ValidateRead(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t &tuple_id, const cid_t &end_cid) {
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
 
   if (IsOwner(tile_group_header, tuple_id) == true) {
@@ -252,7 +258,8 @@ bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const 
     return true;
   }
 
-  // The following is essentially to test that begin_cid and end_cid will look at the same
+  // The following is essentially to test that begin_cid and end_cid will look
+  // at the same
   // version
 
   if (end_cid >= tuple_end_cid) {
@@ -264,13 +271,16 @@ bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const 
 
   if (evidence == tile_group_header->GetReservedFieldRef(tuple_id)) {
     // begin cid is activated on the master version
-    // we already know that the end cid is less than the master version's end cid
-    // since master end cid > end cid > begin cid >= master version's begin cid, we are ok
+    // we already know that the end cid is less than the master version's end
+    // cid
+    // since master end cid > end cid > begin cid >= master version's begin cid,
+    // we are ok
     return true;
   }
 
   // Now the evidence is a rollback segment
-  // If the read is valid, the end cid should also be activated by that rollback segment
+  // If the read is valid, the end cid should also be activated by that rollback
+  // segment
   return end_cid >= storage::RollbackSegmentPool::GetTimeStamp(evidence);
 }
 
@@ -296,17 +306,22 @@ Result OptimisticRbTxnManager::CommitTransaction() {
           // No one should be writting, I can still read it and the begin commit
           // id still fall before the end commit id of the tuple
           //
-          // To give an example why tile_group_header->GetEndCommitId(tuple_slot) >=
+          // To give an example why
+          // tile_group_header->GetEndCommitId(tuple_slot) >=
           //    current_txn->GetBeginCommitId() is needed
           //
-          // T0 begin at 1, delete a tuple, then get end commit 2, but not commit yet
-          // T1 begin at 3, read the same tuple, it should read the master version
-          // T0 now commit, master version has been changed to be visible for (0, 2)
+          // T0 begin at 1, delete a tuple, then get end commit 2, but not
+          // commit yet
+          // T1 begin at 3, read the same tuple, it should read the master
+          // version
+          // T0 now commit, master version has been changed to be visible for
+          // (0, 2)
           // Now the master version is no longer visible for T0.
-          if (tile_group_header->GetTransactionId(tuple_slot) == INITIAL_TXN_ID &&
+          if (tile_group_header->GetTransactionId(tuple_slot) ==
+                  INITIAL_TXN_ID &&
               GetActivatedEvidence(tile_group_header, tuple_slot) != nullptr &&
               tile_group_header->GetEndCommitId(tuple_slot) >=
-              current_txn->GetBeginCommitId()) {
+                  current_txn->GetBeginCommitId()) {
             // the version is not owned by other txns and is still visible.
             continue;
           }
@@ -316,7 +331,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         } else {
           // It must be a deleted
           PL_ASSERT(tuple_entry.second == RW_TYPE_INS_DEL);
-          PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+          PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
+                    INVALID_TXN_ID);
         }
       }
     }
@@ -340,7 +356,6 @@ Result OptimisticRbTxnManager::CommitTransaction() {
       // update or deleted.
       if (tuple_entry.second != RW_TYPE_INSERT &&
           tuple_entry.second != RW_TYPE_INS_DEL) {
-
         if (ValidateRead(tile_group_header, tuple_slot, end_commit_id)) {
           continue;
         }
@@ -421,10 +436,11 @@ Result OptimisticRbTxnManager::CommitTransaction() {
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
-            current_txn->GetTransactionId());
+                  current_txn->GetTransactionId());
         // set the begin commit id to persist insert
         // ItemPointer insert_location(tile_group_id, tuple_slot);
-        //        log_manager.LogInsert(current_txn, end_commit_id, insert_location);
+        //        log_manager.LogInsert(current_txn, end_commit_id,
+        //        insert_location);
 
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
         tile_group_header->SetBeginCommitId(tuple_slot, end_commit_id);
@@ -434,7 +450,8 @@ Result OptimisticRbTxnManager::CommitTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
+                  INVALID_TXN_ID);
         // Do nothing for INS_DEL
       }
     }
@@ -461,7 +478,6 @@ Result OptimisticRbTxnManager::AbortTransaction() {
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
       if (tuple_entry.second == RW_TYPE_UPDATE) {
-
         // We do not have new version now, no need to mantain it
         PL_ASSERT(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
 
@@ -476,7 +492,6 @@ Result OptimisticRbTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-
         // We do not have new version now, no need to mantain it
         PL_ASSERT(tile_group_header->GetNextItemPointer(tuple_slot).IsNull());
 
@@ -503,7 +518,8 @@ Result OptimisticRbTxnManager::AbortTransaction() {
         // RecycleTupleSlot(tile_group_id, tuple_slot, START_OID);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
-        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) == INVALID_TXN_ID);
+        PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
+                  INVALID_TXN_ID);
         // Do nothing for INS_DEL
         // GC this tuple
       }
@@ -532,8 +548,9 @@ bool OptimisticRbTxnManager::IsRBVisible(char *rb_seg, cid_t read_ts) {
 
 // Return nullptr if the tuple is not activated to current txn.
 // Otherwise return the evident that current tuple is activated
-char* OptimisticRbTxnManager::GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header,
-                                                   const oid_t tuple_slot_id) {
+char *OptimisticRbTxnManager::GetActivatedEvidence(
+    const storage::TileGroupHeader *tile_group_header,
+    const oid_t tuple_slot_id) {
   cid_t txn_begin_cid = current_txn->GetBeginCommitId();
   cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
 
@@ -565,7 +582,6 @@ Transaction *OptimisticRbTxnManager::BeginTransaction() {
 
   LOG_TRACE("Beginning transaction %lu", txn_id);
 
-
   Transaction *txn = new Transaction(txn_id, begin_cid);
   current_txn = txn;
 
@@ -582,7 +598,6 @@ Transaction *OptimisticRbTxnManager::BeginTransaction() {
 }
 
 void OptimisticRbTxnManager::EndTransaction() {
-
   txn_id_t txn_id = current_txn->GetTransactionId();
 
   running_txn_buckets_[txn_id % RUNNING_TXN_BUCKET_NUM].erase(txn_id);
@@ -598,13 +613,17 @@ void OptimisticRbTxnManager::EndTransaction() {
     } else {
       // It's not read only txn
       current_segment_pool->SetPoolTimestamp(end_cid);
-      living_pools_[end_cid] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
+      living_pools_[end_cid] =
+          std::shared_ptr<peloton::storage::RollbackSegmentPool>(
+              current_segment_pool);
     }
   } else {
     // Aborted
     // TODO: Add coperative GC
     current_segment_pool->MarkedAsGarbage();
-    garbage_pools_[current_txn->GetBeginCommitId()] = std::shared_ptr<peloton::storage::RollbackSegmentPool>(current_segment_pool);
+    garbage_pools_[current_txn->GetBeginCommitId()] =
+        std::shared_ptr<peloton::storage::RollbackSegmentPool>(
+            current_segment_pool);
   }
 
   EpochManagerFactory::GetInstance().ExitEpoch(current_txn->GetEpochId());

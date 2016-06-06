@@ -13,7 +13,5 @@
 #include "optimizer/property.h"
 
 namespace peloton {
-namespace optimizer {
-
-} /* namespace optimizer */
+namespace optimizer {} /* namespace optimizer */
 } /* namespace peloton */

@@ -4,7 +4,7 @@
 //
 // hybrid_scan_executor.h
 //
-// Identification: src/executor/hybrid_scan_executor.h
+// Identification: src/include/executor/hybrid_scan_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,19 +23,19 @@ namespace peloton {
 namespace executor {
 
 class HybridScanExecutor : public AbstractScanExecutor {
-public:
+ public:
   HybridScanExecutor(const HybridScanExecutor &) = delete;
   HybridScanExecutor &operator=(const HybridScanExecutor &) = delete;
 
   explicit HybridScanExecutor(const planner::AbstractPlan *node,
-                     ExecutorContext *executor_context);
+                              ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
+ private:
   index::Index *index_ = nullptr;
 
   storage::DataTable *table_ = nullptr;
@@ -44,7 +44,7 @@ private:
 
   planner::HybridType type_;
 
-//  bool build_index_ = true;
+  //  bool build_index_ = true;
 
   // Used for Seq Scan
   /** @brief Keeps track of current tile group id being scanned. */
@@ -52,7 +52,6 @@ private:
 
   /** @brief Keeps track of the number of tile groups to scan. */
   oid_t table_tile_group_count_ = INVALID_OID;
-
 
   inline bool SeqScanUtil();
   inline bool IndexScanUtil();
@@ -63,7 +62,7 @@ private:
 
   bool HybridExecPrimaryIndexLookup();
   bool HybridSeqScanUtil();
-//  bool ExecSecondaryIndexLookup();
+  //  bool ExecSecondaryIndexLookup();
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -99,7 +98,6 @@ private:
 
   oid_t block_threshold = 0;
 };
-
 
 }  // namespace executor
 }  // namespace peloton

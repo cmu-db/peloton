@@ -218,7 +218,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         LOG_TRACE("%s", "Constructing start/end keys\n");
 
-        LOG_TRACE("left bound %s\t\t right bound %s\n", interval.first.GetInfo().c_str(),
+        LOG_TRACE("left bound %s\t\t right bound %s\n",
+                  interval.first.GetInfo().c_str(),
                   interval.second.GetInfo().c_str());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
@@ -228,7 +229,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           LOG_TRACE("left bound %s\t\t right bound %s\n",
-                    k_v.second.first.GetInfo().c_str(), k_v.second.second.GetInfo().c_str());
+                    k_v.second.first.GetInfo().c_str(),
+                    k_v.second.second.GetInfo().c_str());
         }
 
         KeyType start_index_key;
@@ -429,13 +431,13 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
       auto type = values[i].GetValueType();
-      //std::pair<Value, Value> *range = new std::pair<Value, Value>(Value::GetMaxValue(type),
+      // std::pair<Value, Value> *range = new std::pair<Value,
+      // Value>(Value::GetMaxValue(type),
       //                                            Value::GetMinValue(type));
       // std::pair<oid_t, std::pair<Value, Value>> key_value(column_id, range);
-       non_leading_columns.insert(std::pair<oid_t, std::pair<Value, Value>>(
-                                         column_id, std::pair<Value, Value>(
-                                         Value::GetNullValue(type),
-                                         Value::GetNullValue(type))));
+      non_leading_columns.insert(std::pair<oid_t, std::pair<Value, Value>>(
+          column_id, std::pair<Value, Value>(Value::GetNullValue(type),
+                                             Value::GetNullValue(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
@@ -449,9 +451,11 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
                 non_leading_columns[column_id].first.GetInfo().size(),
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].first.Compare(values[i]) == VALUE_COMPARE_GREATERTHAN) {
+          non_leading_columns[column_id].first.Compare(values[i]) ==
+              VALUE_COMPARE_GREATERTHAN) {
         LOG_TRACE("Update min\n");
-        non_leading_columns[column_id].first = ValueFactory::Clone(values[i], nullptr);
+        non_leading_columns[column_id].first =
+            ValueFactory::Clone(values[i], nullptr);
       }
     }
 
@@ -461,9 +465,11 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
                 non_leading_columns[column_id].second.GetInfo().c_str(),
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
-          non_leading_columns[column_id].second.Compare(values[i]) == VALUE_COMPARE_LESSTHAN) {
+          non_leading_columns[column_id].second.Compare(values[i]) ==
+              VALUE_COMPARE_LESSTHAN) {
         LOG_TRACE("Update max\n");
-        non_leading_columns[column_id].second = ValueFactory::Clone(values[i], nullptr);
+        non_leading_columns[column_id].second =
+            ValueFactory::Clone(values[i], nullptr);
       }
     }
   }
@@ -564,7 +570,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         LOG_TRACE("%s", "Constructing start/end keys\n");
 
-        LOG_TRACE("left bound %s\t\t right bound %s\n", interval.first.GetInfo().c_str(),
+        LOG_TRACE("left bound %s\t\t right bound %s\n",
+                  interval.first.GetInfo().c_str(),
                   interval.second.GetInfo().c_str());
 
         start_key->SetValue(leading_column_id, interval.first, GetPool());
@@ -574,7 +581,8 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
           LOG_TRACE("left bound %s\t\t right bound %s\n",
-                    k_v.second.first.GetInfo().c_str(), k_v.second.second.GetInfo().c_str());
+                    k_v.second.first.GetInfo().c_str(),
+                    k_v.second.second.GetInfo().c_str());
         }
 
         KeyType start_index_key;

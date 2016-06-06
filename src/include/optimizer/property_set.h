@@ -4,7 +4,7 @@
 //
 // property_set.h
 //
-// Identification: src/optimizer/property_set.h
+// Identification: src/include/optimizer/property_set.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -44,12 +44,10 @@ class PropertySet {
 
 namespace std {
 
-template<> struct hash<peloton::optimizer::PropertySet> {
+template <>
+struct hash<peloton::optimizer::PropertySet> {
   typedef peloton::optimizer::PropertySet argument_type;
   typedef std::size_t result_type;
-  result_type operator()(argument_type const& s) const {
-    return s.Hash();
-  }
+  result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
-
 }

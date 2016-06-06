@@ -4,7 +4,7 @@
 //
 // merge_join_plan.h
 //
-// Identification: src/planner/merge_join_plan.h
+// Identification: src/include/planner/merge_join_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

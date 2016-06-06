@@ -15,16 +15,14 @@
 namespace peloton {
 namespace optimizer {
 
-PropertySet::PropertySet() {
-}
+PropertySet::PropertySet() {}
 
 const std::vector<std::shared_ptr<Property>> &PropertySet::Properties() const {
   return properties;
 }
 
 const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
-  PropertyType type) const
-{
+    PropertyType type) const {
   for (auto &prop : properties) {
     if (prop->Type() == type) {
       return prop;
@@ -34,7 +32,7 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
 }
 
 bool PropertySet::IsSubset(const PropertySet &r) {
-  (void) r;
+  (void)r;
   return true;
 }
 

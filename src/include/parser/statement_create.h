@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// statement_create.h
+//
+// Identification: src/include/parser/statement_create.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "parser/sql_statement.h"
@@ -35,39 +47,31 @@ struct ColumnDefinition {
     VARBINARY
   };
 
-  ColumnDefinition(DataType type) :
-    type(type) {}
+  ColumnDefinition(DataType type) : type(type) {}
 
-
-  ColumnDefinition(char* name, DataType type) :
-    name(name),
-    type(type){}
+  ColumnDefinition(char* name, DataType type) : name(name), type(type) {}
 
   virtual ~ColumnDefinition() {
-
-    if(primary_key) {
-      for(auto key : *primary_key)
-        free(key);
+    if (primary_key) {
+      for (auto key : *primary_key) free(key);
       delete primary_key;
     }
 
-    if(foreign_key_source) {
-      for(auto key : *foreign_key_source)
-        free(key);
+    if (foreign_key_source) {
+      for (auto key : *foreign_key_source) free(key);
       delete foreign_key_source;
     }
 
-    if(foreign_key_sink) {
-      for(auto key : *foreign_key_sink)
-        free(key);
+    if (foreign_key_sink) {
+      for (auto key : *foreign_key_sink) free(key);
       delete foreign_key_sink;
     }
 
     free(name);
   }
 
-  static ValueType GetValueType(DataType type){
-    switch(type){
+  static ValueType GetValueType(DataType type) {
+    switch (type) {
       case INT:
       case INTEGER:
         return VALUE_TYPE_INTEGER;
@@ -135,36 +139,29 @@ struct ColumnDefinition {
   std::vector<char*>* foreign_key_sink = nullptr;
 };
 
-
 /**
  * @struct CreateStatement
- * @brief Represents "CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, grade DOUBLE)"
+ * @brief Represents "CREATE TABLE students (name TEXT, student_number INTEGER,
+ * city TEXT, grade DOUBLE)"
  */
 struct CreateStatement : SQLStatement {
-  enum CreateType {
-    kTable,
-    kDatabase,
-    kIndex
-  };
+  enum CreateType { kTable, kDatabase, kIndex };
 
-  CreateStatement(CreateType type) :
-    SQLStatement(STATEMENT_TYPE_CREATE),
-    type(type),
-    if_not_exists(false),
-    columns(NULL),
-    name(NULL) {};
+  CreateStatement(CreateType type)
+      : SQLStatement(STATEMENT_TYPE_CREATE),
+        type(type),
+        if_not_exists(false),
+        columns(NULL),
+        name(NULL){};
 
   virtual ~CreateStatement() {
-
-    if(columns) {
-      for(auto col : *columns)
-        delete col;
+    if (columns) {
+      for (auto col : *columns) delete col;
       delete columns;
     }
 
-    if(index_attrs) {
-      for(auto attr : *index_attrs)
-        free(attr);
+    if (index_attrs) {
+      for (auto attr : *index_attrs) free(attr);
       delete index_attrs;
     }
 
@@ -183,5 +180,5 @@ struct CreateStatement : SQLStatement {
   bool unique = false;
 };
 
-} // End parser namespace
-} // End peloton namespace
+}  // End parser namespace
+}  // End peloton namespace

@@ -108,7 +108,7 @@ void LogicalTile::SetPositionListsAndVisibility(
  */
 int LogicalTile::AddPositionList(LogicalTile::PositionList &&position_list) {
   PL_ASSERT(position_lists_.size() == 0 ||
-         position_lists_[0].size() == position_list.size());
+            position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
     visible_tuples_ = position_list.size();
@@ -504,11 +504,9 @@ void LogicalTile::MaterializeByTiles(
 
   // Materialize as needed
   if (row_wise_materialization == true) {
-    MaterializeRowAtAtATime(old_to_new_cols, tile_to_cols,
-                            dest_tile);
+    MaterializeRowAtAtATime(old_to_new_cols, tile_to_cols, dest_tile);
   } else {
-    MaterializeColumnAtATime(old_to_new_cols, tile_to_cols,
-                             dest_tile);
+    MaterializeColumnAtATime(old_to_new_cols, tile_to_cols, dest_tile);
   }
 }
 
@@ -696,7 +694,7 @@ std::unique_ptr<storage::Tile> LogicalTile::Materialize() {
   // Get the number of tuples within this logical tiles
   const int num_tuples = GetTupleCount();
 
-  //const catalog::Schema *output_schema;
+  // const catalog::Schema *output_schema;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t column_count = source_tile_schema->GetColumnCount();
   for (oid_t col = 0; col < column_count; col++) {
@@ -712,8 +710,7 @@ std::unique_ptr<storage::Tile> LogicalTile::Materialize() {
       storage::TileFactory::GetTempTile(*source_tile_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
-  MaterializeByTiles(old_to_new_cols, tile_to_cols,
-                     dest_tile.get());
+  MaterializeByTiles(old_to_new_cols, tile_to_cols, dest_tile.get());
 
   // Wrap physical tile in logical tile.
   return std::move(dest_tile);

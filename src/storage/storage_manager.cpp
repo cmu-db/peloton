@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // storage_manager.cpp
 //
 // Identification: src/storage/storage_manager.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -65,11 +65,11 @@ namespace storage {
 #endif
 
 #ifndef bit_CLFLUSHOPT
-#define bit_CLFLUSHOPT  (1 << 23)
+#define bit_CLFLUSHOPT (1 << 23)
 #endif
 
 #ifndef bit_CLWB
-#define bit_CLWB  (1 << 24)
+#define bit_CLWB (1 << 24)
 #endif
 
 /*
@@ -77,18 +77,17 @@ namespace storage {
  * intrinsic functions are not always available.  The intrinsic
  * functions are defined here in terms of asm statements for now.
  */
-#define _mm_clflushopt(addr)\
-    asm volatile(".byte 0x66; clflush %0" : "+m" (*(volatile char *)addr));
-#define _mm_clwb(addr)\
-    asm volatile(".byte 0x66; xsaveopt %0" : "+m" (*(volatile char *)addr));
-#define _mm_pcommit()\
-    asm volatile(".byte 0x66, 0x0f, 0xae, 0xf8");
+#define _mm_clflushopt(addr) \
+  asm volatile(".byte 0x66; clflush %0" : "+m"(*(volatile char *)addr));
+#define _mm_clwb(addr) \
+  asm volatile(".byte 0x66; xsaveopt %0" : "+m"(*(volatile char *)addr));
+#define _mm_pcommit() asm volatile(".byte 0x66, 0x0f, 0xae, 0xf8");
 
 //===--------------------------------------------------------------------===//
 // CPU CHECK
 //===--------------------------------------------------------------------===//
 
-static inline void cpuid(unsigned func, unsigned subfunc, unsigned cpuinfo[4]){
+static inline void cpuid(unsigned func, unsigned subfunc, unsigned cpuinfo[4]) {
   __cpuid_count(func, subfunc, cpuinfo[EAX_IDX], cpuinfo[EBX_IDX],
                 cpuinfo[ECX_IDX], cpuinfo[EDX_IDX]);
 }
@@ -97,14 +96,14 @@ static inline void cpuid(unsigned func, unsigned subfunc, unsigned cpuinfo[4]){
  * is_cpu_genuine_intel -- checks for genuine Intel CPU
  */
 int is_cpu_genuine_intel(void) {
-  unsigned cpuinfo[4] = { 0 };
+  unsigned cpuinfo[4] = {0};
 
   union {
     char name[0x20];
     unsigned cpuinfo[3];
   } vendor;
 
-  PL_MEMSET(&vendor, 0, sizeof (vendor));
+  PL_MEMSET(&vendor, 0, sizeof(vendor));
 
   cpuid(0x0, 0x0, cpuinfo);
 
@@ -112,8 +111,7 @@ int is_cpu_genuine_intel(void) {
   vendor.cpuinfo[1] = cpuinfo[EDX_IDX];
   vendor.cpuinfo[2] = cpuinfo[ECX_IDX];
 
-  return (strncmp(vendor.name, "GenuineIntel",
-                  sizeof (vendor.name))) == 0;
+  return (strncmp(vendor.name, "GenuineIntel", sizeof(vendor.name))) == 0;
 }
 
 //===--------------------------------------------------------------------===//
@@ -123,8 +121,8 @@ int is_cpu_genuine_intel(void) {
 /*
  * is_cpu_clflush_present -- checks if CLFLUSH instruction is supported
  */
-int is_cpu_clflush_present(void){
-  unsigned cpuinfo[4] = { 0 };
+int is_cpu_clflush_present(void) {
+  unsigned cpuinfo[4] = {0};
 
   cpuid(0x1, 0x0, cpuinfo);
 
@@ -136,11 +134,10 @@ int is_cpu_clflush_present(void){
 /*
  * is_cpu_clwb_present -- checks if CLWB instruction is supported
  */
-int is_cpu_clwb_present(void){
-  unsigned cpuinfo[4] = { 0 };
+int is_cpu_clwb_present(void) {
+  unsigned cpuinfo[4] = {0};
 
-  if (!is_cpu_genuine_intel())
-    return 0;
+  if (!is_cpu_genuine_intel()) return 0;
 
   cpuid(0x7, 0x0, cpuinfo);
 
@@ -152,11 +149,10 @@ int is_cpu_clwb_present(void){
 /*
  * is_cpu_pcommit_present -- checks if PCOMMIT instruction is supported
  */
-int is_cpu_pcommit_present(void){
-  unsigned cpuinfo[4] = { 0 };
+int is_cpu_pcommit_present(void) {
+  unsigned cpuinfo[4] = {0};
 
-  if (!is_cpu_genuine_intel())
-    return 0;
+  if (!is_cpu_genuine_intel()) return 0;
 
   cpuid(0x7, 0x0, cpuinfo);
 
@@ -172,13 +168,13 @@ int is_cpu_pcommit_present(void){
 /*
  * flush_clflush -- (internal) flush the CPU cache, using clflush
  */
-static inline void flush_clflush(const void *addr, size_t len){
+static inline void flush_clflush(const void *addr, size_t len) {
   uintptr_t uptr;
 
   // Loop through cache-line-size (typically 64B) aligned chunks
   // covering the given range.
   for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
-      uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN)
+       uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN)
     _mm_clflush((char *)uptr);
 }
 
@@ -189,7 +185,7 @@ static inline void flush_clwb(const void *addr, size_t len) {
   // Loop through cache-line-size (typically 64B) aligned chunks
   // covering the given range.
   for (uptr = (uintptr_t)addr & ~(FLUSH_ALIGN - 1);
-      uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN) {
+       uptr < (uintptr_t)addr + len; uptr += FLUSH_ALIGN) {
     _mm_clwb((char *)uptr);
   }
 }
@@ -218,7 +214,6 @@ static void predrain_fence_empty(void) {
  * predrain_fence_sfence -- (internal) issue the pre-drain fence instruction
  */
 static void predrain_fence_sfence(void) {
-
   _mm_sfence(); /* ensure CLWB or CLFLUSHOPT completes before PCOMMIT */
 }
 
@@ -238,8 +233,7 @@ static void (*Func_predrain_fence)(void) = predrain_fence_empty;
 /*
  * drain_no_pcommit -- (internal) wait for PM stores to drain, empty version
  */
-static void drain_no_pcommit(void){
-
+static void drain_no_pcommit(void) {
   Func_predrain_fence();
 
   /* caller assumed responsibility for the rest */
@@ -278,7 +272,7 @@ StorageManager &StorageManager::GetInstance(void) {
 }
 
 StorageManager::StorageManager()
-: data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
+    : data_file_address(nullptr), data_file_len(0), data_file_offset(0) {
   // Check if we need a data pool
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode) == true ||
       peloton_logging_mode == LOGGING_TYPE_INVALID) {
@@ -286,7 +280,7 @@ StorageManager::StorageManager()
   }
 
   // Check for instruction availability
-  if(is_cpu_clwb_present()) {
+  if (is_cpu_clwb_present()) {
     LOG_TRACE("Found clwb \n");
     Func_flush = flush_clwb;
     Func_predrain_fence = predrain_fence_sfence;
@@ -360,9 +354,9 @@ StorageManager::StorageManager()
   LOG_TRACE("DATA DIR :: %s ", data_file_name.c_str());
 
   // Create a data file
-  if ((data_fd = open(data_file_name.c_str(), 
-                      O_CREAT | O_TRUNC | O_RDWR,
-                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
+  if ((data_fd = open(
+           data_file_name.c_str(), O_CREAT | O_TRUNC | O_RDWR,
+           S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0) {
     perror(data_file_name.c_str());
     exit(EXIT_FAILURE);
   }
@@ -385,7 +379,6 @@ StorageManager::StorageManager()
 }
 
 StorageManager::~StorageManager() {
-
   LOG_TRACE("Allocation count : %ld \n", allocation_count);
 
   // Check if we need a PMEM pool
@@ -405,7 +398,6 @@ StorageManager::~StorageManager() {
       exit(EXIT_FAILURE);
     }
   }
-
 }
 
 void *StorageManager::Allocate(BackendType type, size_t size) {
@@ -414,7 +406,7 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 
   switch (type) {
     case BACKEND_TYPE_MM:
-    case BACKEND_TYPE_NVM:{
+    case BACKEND_TYPE_NVM: {
       return ::operator new(size);
     } break;
 
@@ -436,13 +428,15 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
           // Unlock the file
           data_file_spinlock.Unlock();
 
-          void *address = reinterpret_cast<char*>(data_file_address) + cache_data_file_offset;
+          void *address = reinterpret_cast<char *>(data_file_address) +
+                          cache_data_file_offset;
           return address;
         }
 
         data_file_spinlock.Unlock();
-        throw Exception("no more memory available: offset : " + std::to_string(data_file_offset) +
-                        " length : " + std::to_string(data_file_len));
+        throw Exception("no more memory available: offset : " +
+                        std::to_string(data_file_offset) + " length : " +
+                        std::to_string(data_file_len));
 
         return nullptr;
       }
@@ -459,7 +453,7 @@ void *StorageManager::Allocate(BackendType type, size_t size) {
 void StorageManager::Release(BackendType type, void *address) {
   switch (type) {
     case BACKEND_TYPE_MM:
-    case BACKEND_TYPE_NVM:{
+    case BACKEND_TYPE_NVM: {
       ::operator delete(address);
     } break;
 

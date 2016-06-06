@@ -4,7 +4,7 @@
 //
 // limit_plan.h
 //
-// Identification: src/planner/limit_plan.h
+// Identification: src/include/planner/limit_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

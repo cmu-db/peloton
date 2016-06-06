@@ -4,7 +4,7 @@
 //
 // binding.h
 //
-// Identification: src/optimizer/binding.h
+// Identification: src/include/optimizer/binding.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -34,7 +34,7 @@ class BindingIterator {
  public:
   BindingIterator(Optimizer &optimizer);
 
-  virtual ~BindingIterator() {};
+  virtual ~BindingIterator(){};
 
   virtual bool HasNext() = 0;
 
@@ -47,8 +47,7 @@ class BindingIterator {
 
 class GroupBindingIterator : public BindingIterator {
  public:
-  GroupBindingIterator(Optimizer &optimizer,
-                       GroupID id,
+  GroupBindingIterator(Optimizer &optimizer, GroupID id,
                        std::shared_ptr<Pattern> pattern);
 
   bool HasNext() override;

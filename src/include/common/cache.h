@@ -4,7 +4,7 @@
 //
 // cache.h
 //
-// Identification: src/common/cache.h
+// Identification: src/include/common/cache.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

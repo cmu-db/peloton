@@ -27,7 +27,6 @@ TileGroup *TileGroupFactory::GetTileGroup(
     oid_t database_id, oid_t table_id, oid_t tile_group_id,
     AbstractTable *table, const std::vector<catalog::Schema> &schemas,
     const column_map_type &column_map, int tuple_count) {
-
   // Allocate the data on appropriate backend
   BackendType backend_type = GetBackendType(peloton_logging_mode);
 

@@ -4,7 +4,7 @@
 //
 // rpc_method.h
 //
-// Identification: src/networking/rpc_method.h
+// Identification: src/include/networking/rpc_method.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

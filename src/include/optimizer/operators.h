@@ -4,7 +4,7 @@
 //
 // operators.h
 //
-// Identification: src/optimizer/operators.h
+// Identification: src/include/optimizer/operators.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -38,8 +38,7 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table,
-                       std::vector<Column *> cols);
+  static Operator make(storage::DataTable *table, std::vector<Column *> cols);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -306,7 +305,6 @@ class ExprProjectColumn : public OperatorNode<ExprProjectColumn> {
 
   Column *column;
 };
-
 
 } /* namespace optimizer */
 } /* namespace peloton */

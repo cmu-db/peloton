@@ -1,12 +1,12 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // tpcc.cpp
 //
-// Identification: benchmark/tpcc/tpcc.cpp
+// Identification: src/main/tpcc/tpcc.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,10 +30,7 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d :: %lf",
-           state.scale_factor,
-           state.backend_count,
-           stat);
+  LOG_INFO("%d %d :: %lf", state.scale_factor, state.backend_count, stat);
 
   out << state.scale_factor << " ";
   out << state.backend_count << " ";
@@ -44,7 +41,6 @@ static void WriteOutput(double stat) {
 
 // Main Entry Point
 void RunBenchmark() {
-
   // Create the database
   CreateTPCCDatabase();
 
@@ -63,8 +59,8 @@ void RunBenchmark() {
 }  // namespace peloton
 
 int main(int argc, char **argv) {
-  peloton::benchmark::tpcc::ParseArguments(
-      argc, argv, peloton::benchmark::tpcc::state);
+  peloton::benchmark::tpcc::ParseArguments(argc, argv,
+                                           peloton::benchmark::tpcc::state);
 
   peloton::benchmark::tpcc::RunBenchmark();
 

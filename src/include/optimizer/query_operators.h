@@ -4,7 +4,7 @@
 //
 // query_operators.h
 //
-// Identification: src/optimizer/query_operators.h
+// Identification: src/include/optimizer/query_operators.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -95,9 +95,8 @@ struct Constant : QueryExpression {
 // OperatorExpression - matches with Peloton's operator_expression.h
 //===--------------------------------------------------------------------===//
 struct OperatorExpression : QueryExpression {
-  OperatorExpression(peloton::ExpressionType type,
-                     ValueType value_type,
-                     const std::vector<QueryExpression *>& args);
+  OperatorExpression(peloton::ExpressionType type, ValueType value_type,
+                     const std::vector<QueryExpression *> &args);
 
   virtual ExpressionType GetExpressionType() const override;
 
@@ -141,14 +140,11 @@ struct NotOperator : QueryExpression {
   QueryExpression *arg;
 };
 
-
 //===--------------------------------------------------------------------===//
 // Attribute
 //===--------------------------------------------------------------------===//
 struct Attribute : QueryExpression {
-  Attribute(QueryExpression *expression,
-            std::string name,
-            bool intermediate);
+  Attribute(QueryExpression *expression, std::string name, bool intermediate);
 
   virtual ExpressionType GetExpressionType() const override;
 
@@ -207,12 +203,10 @@ struct Table : QueryJoinNode {
 // Join
 //===--------------------------------------------------------------------===//
 struct Join : QueryJoinNode {
-  Join(PelotonJoinType join_type,
-       QueryJoinNode *left_node,
-       QueryJoinNode *right_node,
-       QueryExpression *predicate,
-       const std::vector<Table *>& left_tables,
-       const std::vector<Table *>& right_tables);
+  Join(PelotonJoinType join_type, QueryJoinNode *left_node,
+       QueryJoinNode *right_node, QueryExpression *predicate,
+       const std::vector<Table *> &left_tables,
+       const std::vector<Table *> &right_tables);
 
   virtual QueryJoinNodeType GetPlanNodeType() const override;
 
@@ -246,11 +240,8 @@ struct Join : QueryJoinNode {
 // Order By
 //===--------------------------------------------------------------------===//
 struct OrderBy {
-  OrderBy(int output_list_index,
-          std::vector<bool> equality_fn,
-          std::vector<bool> sort_fn,
-          bool hashable,
-          bool nulls_first,
+  OrderBy(int output_list_index, std::vector<bool> equality_fn,
+          std::vector<bool> sort_fn, bool hashable, bool nulls_first,
           bool reverse);
 
   void accept(QueryNodeVisitor *v) const;
@@ -268,10 +259,9 @@ struct OrderBy {
 // Select
 //===--------------------------------------------------------------------===//
 struct Select {
-  Select(QueryJoinNode *join_tree,
-         QueryExpression *where_predicate,
-         const std::vector<Attribute *>& output_list,
-         const std::vector<OrderBy *>& orderings);
+  Select(QueryJoinNode *join_tree, QueryExpression *where_predicate,
+         const std::vector<Attribute *> &output_list,
+         const std::vector<OrderBy *> &orderings);
 
   void accept(QueryNodeVisitor *v) const;
 
@@ -374,7 +364,6 @@ struct Select {
 //   Operator a;
 //   Operator b;
 // };
-
 
 } /* namespace optimizer */
 } /* namespace peloton */

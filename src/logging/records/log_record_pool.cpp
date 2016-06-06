@@ -27,7 +27,7 @@ int LogRecordPool::CreateTxnLogList(txn_id_t txn_id) {
   if (existing_list == false) {
     txn_log_table.insert(
         std::pair<txn_id_t, std::vector<std::unique_ptr<TupleRecord>>>(
-        txn_id, std::vector<std::unique_ptr<TupleRecord>>()));
+            txn_id, std::vector<std::unique_ptr<TupleRecord>>()));
   }
 
   return 0;
@@ -52,7 +52,6 @@ int LogRecordPool::AddLogRecord(std::unique_ptr<TupleRecord> record) {
 void LogRecordPool::RemoveTxnLogRecordList(txn_id_t txn_id) {
   // Locate the transaction log list
   if (txn_log_table.find(txn_id) != txn_log_table.end()) {
-
     // Erase transaction log record list and its contents
     txn_log_table.erase(txn_id);
   }
@@ -66,6 +65,5 @@ bool LogRecordPool::ExistsTxnLogRecordList(txn_id_t txn_id) {
     return false;
   }
 }
-
 }
 }

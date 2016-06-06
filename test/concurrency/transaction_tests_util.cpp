@@ -4,7 +4,7 @@
 //
 // transaction_tests_util.cpp
 //
-// Identification: tests/concurrency/transaction_tests_util.cpp
+// Identification: test/concurrency/transaction_tests_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -39,12 +39,12 @@ namespace test {
 storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
-  id_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
-                                              "not_null"));
+  id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
-  value_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
-                                                 "not_null"));
+  value_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
 
   // Create the table
   catalog::Schema *table_schema =
@@ -81,12 +81,11 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
   return table;
 }
 
-
 storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
-  id_column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
-                                              "not_null"));
+  id_column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
   auto value_column = catalog::Column(
       VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "value", true);
 
@@ -139,12 +138,9 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   return table;
 }
 
-storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
-                                                      std::string table_name,
-                                                      oid_t database_id,
-                                                      oid_t relation_id,
-                                                      oid_t index_oid,
-                                                      bool need_primary_index) {
+storage::DataTable *TransactionTestsUtil::CreateTable(
+    int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
+    oid_t index_oid, bool need_primary_index) {
   auto id_column = catalog::Column(VALUE_TYPE_INTEGER,
                                    GetTypeSize(VALUE_TYPE_INTEGER), "id", true);
   auto value_column = catalog::Column(
@@ -168,7 +164,8 @@ storage::DataTable *TransactionTestsUtil::CreateTable(int num_key,
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
-      need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY : INDEX_CONSTRAINT_TYPE_DEFAULT,
+      need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY
+                         : INDEX_CONSTRAINT_TYPE_DEFAULT,
       tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -231,7 +228,8 @@ bool TransactionTestsUtil::ExecuteInsert(concurrency::Transaction *transaction,
 
 expression::ComparisonExpression<expression::CmpEq> *
 TransactionTestsUtil::MakePredicate(int id) {
-  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+  auto tup_val_exp =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -240,8 +238,8 @@ TransactionTestsUtil::MakePredicate(int id) {
   return predicate;
 }
 
-
-planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table, int id) {
+planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table,
+                                                    int id) {
   auto index = table->GetIndex(0);
   std::vector<expression::AbstractExpression *> runtime_keys;
   std::vector<ExpressionType> expr_types;
@@ -249,25 +247,24 @@ planner::IndexScanPlan::IndexScanDesc MakeIndexDesc(storage::DataTable *table, i
 
   std::vector<oid_t> key_column_ids = {0};
 
-  expr_types.push_back(
-    ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
 
   values.push_back(ValueFactory::GetIntegerValue(id));
 
   return planner::IndexScanPlan::IndexScanDesc(
-    index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 }
 
 bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
                                        storage::DataTable *table, int id,
                                        int &result) {
   std::unique_ptr<executor::ExecutorContext> context(
-    new executor::ExecutorContext(transaction));
-
+      new executor::ExecutorContext(transaction));
 
   // index scan
   std::vector<oid_t> column_ids = {0, 1};
-  planner::IndexScanPlan idx_scan_node(table, nullptr, column_ids, MakeIndexDesc(table, id));
+  planner::IndexScanPlan idx_scan_node(table, nullptr, column_ids,
+                                       MakeIndexDesc(table, id));
   executor::IndexScanExecutor idx_scan_executor(&idx_scan_node, context.get());
 
   EXPECT_TRUE(idx_scan_executor.Init());
@@ -277,7 +274,7 @@ bool TransactionTestsUtil::ExecuteRead(concurrency::Transaction *transaction,
   }
 
   std::unique_ptr<executor::LogicalTile> result_tile(
-    idx_scan_executor.GetOutput());
+      idx_scan_executor.GetOutput());
 
   // Read nothing
   if (result_tile->GetTupleCount() == 0)
@@ -340,9 +337,10 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
   // Index scan
   std::vector<oid_t> column_ids = {0};
   std::unique_ptr<planner::IndexScanPlan> idx_scan_node(
-      new planner::IndexScanPlan(table, nullptr, column_ids, MakeIndexDesc(table, id)));
+      new planner::IndexScanPlan(table, nullptr, column_ids,
+                                 MakeIndexDesc(table, id)));
   executor::IndexScanExecutor idx_scan_executor(idx_scan_node.get(),
-                                              context.get());
+                                                context.get());
 
   update_node.AddChild(std::move(idx_scan_node));
   update_executor.AddChild(&idx_scan_executor);
@@ -353,8 +351,7 @@ bool TransactionTestsUtil::ExecuteUpdate(concurrency::Transaction *transaction,
 
 bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
                                                 storage::DataTable *table,
-                                                int old_value,
-                                                int new_value) {
+                                                int old_value, int new_value) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -376,7 +373,8 @@ bool TransactionTestsUtil::ExecuteUpdateByValue(concurrency::Transaction *txn,
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
-  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+  auto tup_val_exp =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(old_value));
   auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
@@ -403,7 +401,8 @@ bool TransactionTestsUtil::ExecuteScan(concurrency::Transaction *transaction,
       new executor::ExecutorContext(transaction));
 
   // Predicate, WHERE `id`>=id1
-  auto tup_val_exp = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+  auto tup_val_exp =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
   auto const_val_exp = new expression::ConstantValueExpression(
       ValueFactory::GetIntegerValue(id));
 

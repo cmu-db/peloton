@@ -4,7 +4,7 @@
 //
 // gc_manager.h
 //
-// Identification: src/gc/gc_manager.h
+// Identification: src/include/gc/gc_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -34,11 +34,14 @@ namespace gc {
 
 #define GC_PERIOD_MILLISECONDS 100
 class GCBuffer {
-public:
-  GCBuffer(oid_t tid):table_id(tid), garbage_tuples() {}
+ public:
+  GCBuffer(oid_t tid) : table_id(tid), garbage_tuples() {}
   ~GCBuffer();
-  inline void AddGarbage(const ItemPointer& itemptr) {garbage_tuples.push_back(itemptr);}
-private:
+  inline void AddGarbage(const ItemPointer &itemptr) {
+    garbage_tuples.push_back(itemptr);
+  }
+
+ private:
   oid_t table_id;
   std::vector<ItemPointer> garbage_tuples;
 };
@@ -51,9 +54,7 @@ class GCManager {
   GCManager &operator=(GCManager &&) = delete;
 
   GCManager(const GCType type)
-      : is_running_(true),
-        gc_type_(type),
-        reclaim_queue_(MAX_QUEUE_LENGTH) {
+      : is_running_(true), gc_type_(type), reclaim_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 

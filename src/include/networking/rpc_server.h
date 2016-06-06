@@ -4,7 +4,7 @@
 //
 // rpc_server.h
 //
-// Identification: src/networking/rpc_server.h
+// Identification: src/include/networking/rpc_server.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -49,9 +49,7 @@ class RpcServer {
   void RemoveService();
 
   // the rpc function can call this to execute something
-  static void Callback() {
-    LOG_TRACE("This is server backcall");
-  }
+  static void Callback() { LOG_TRACE("This is server backcall"); }
 
   RpcMethodMap rpc_method_map_;
 

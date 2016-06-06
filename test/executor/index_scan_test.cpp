@@ -4,7 +4,7 @@
 //
 // index_scan_test.cpp
 //
-// Identification: tests/executor/index_scan_test.cpp
+// Identification: test/executor/index_scan_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // memo.h
 //
-// Identification: src/optimizer/memo.h
+// Identification: src/include/optimizer/memo.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -23,15 +23,12 @@ namespace peloton {
 namespace optimizer {
 
 struct GExprPtrHash {
-  std::size_t operator()(GroupExpression * const& s) const {
-    return s->Hash();
-  }
+  std::size_t operator()(GroupExpression* const& s) const { return s->Hash(); }
 };
 
 struct GExprPtrEq {
-  bool operator() (GroupExpression * const& t1,
-                   GroupExpression * const& t2) const
-  {
+  bool operator()(GroupExpression* const& t1,
+                  GroupExpression* const& t2) const {
     return *t1 == *t2;
   }
 };
@@ -55,16 +52,15 @@ class Memo {
   bool InsertExpression(std::shared_ptr<GroupExpression> gexpr,
                         GroupID target_group);
 
-  const std::vector<Group> &Groups() const;
+  const std::vector<Group>& Groups() const;
 
-  Group *GetGroupByID(GroupID id);
+  Group* GetGroupByID(GroupID id);
 
  private:
   GroupID AddNewGroup();
 
-  std::unordered_set<GroupExpression *,
-                     GExprPtrHash,
-                     GExprPtrEq> group_expressions;
+  std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
+      group_expressions;
   std::vector<Group> groups;
   std::map<std::vector<Property>, size_t> lowest_cost_items;
 };

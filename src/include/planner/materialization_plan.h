@@ -4,7 +4,7 @@
 //
 // materialization_plan.h
 //
-// Identification: src/planner/materialization_plan.h
+// Identification: src/include/planner/materialization_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -46,9 +46,7 @@ class MaterializationPlan : public AbstractPlan {
     return old_to_new_cols_;
   }
 
-  inline const catalog::Schema *GetSchema() const {
-    return schema_.get();
-  }
+  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
   inline bool GetPhysifyFlag() const { return physify_flag_; }
 

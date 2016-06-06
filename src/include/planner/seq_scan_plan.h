@@ -4,7 +4,7 @@
 //
 // seq_scan_plan.h
 //
-// Identification: src/planner/seq_scan_plan.h
+// Identification: src/include/planner/seq_scan_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -41,7 +41,7 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {}
 
-  SeqScanPlan():AbstractScan(){}
+  SeqScanPlan() : AbstractScan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
@@ -61,7 +61,6 @@ class SeqScanPlan : public AbstractScan {
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
-
 };
 
 }  // namespace planner

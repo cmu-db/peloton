@@ -4,7 +4,7 @@
 //
 // peloton_service.h
 //
-// Identification: src/networking/peloton_service.h
+// Identification: src/include/networking/peloton_service.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -27,7 +27,6 @@ namespace networking {
 
 class PelotonService : public AbstractPelotonService {
  public:
-
   virtual void TransactionInit(::google::protobuf::RpcController* controller,
                                const TransactionInitRequest* request,
                                TransactionInitResponse* response,
@@ -38,9 +37,9 @@ class PelotonService : public AbstractPelotonService {
                                ::google::protobuf::Closure* done);
   virtual void TransactionPrefetch(
       ::google::protobuf::RpcController* controller,
-       const TransactionPrefetchResult* request,
-       TransactionPrefetchAcknowledgement* response,
-       ::google::protobuf::Closure* done);
+      const TransactionPrefetchResult* request,
+      TransactionPrefetchAcknowledgement* response,
+      ::google::protobuf::Closure* done);
   virtual void TransactionMap(::google::protobuf::RpcController* controller,
                               const TransactionMapRequest* request,
                               TransactionMapResponse* response,
@@ -59,8 +58,8 @@ class PelotonService : public AbstractPelotonService {
                                  ::google::protobuf::Closure* done);
   virtual void TransactionRedirect(
       ::google::protobuf::RpcController* controller,
-       const TransactionRedirectRequest* request,
-       TransactionRedirectResponse* response, ::google::protobuf::Closure* done);
+      const TransactionRedirectRequest* request,
+      TransactionRedirectResponse* response, ::google::protobuf::Closure* done);
   virtual void TransactionDebug(::google::protobuf::RpcController* controller,
                                 const TransactionDebugRequest* request,
                                 TransactionDebugResponse* response,
@@ -93,10 +92,10 @@ class PelotonService : public AbstractPelotonService {
                         const TimeSyncRequest* request,
                         TimeSyncResponse* response,
                         ::google::protobuf::Closure* done);
-    virtual void QueryPlan(::google::protobuf::RpcController* controller,
-            const QueryPlanExecRequest* request,
-            QueryPlanExecResponse* response,
-            ::google::protobuf::Closure* done);
+  virtual void QueryPlan(::google::protobuf::RpcController* controller,
+                         const QueryPlanExecRequest* request,
+                         QueryPlanExecResponse* response,
+                         ::google::protobuf::Closure* done);
 };
 
 }  // namespace networking

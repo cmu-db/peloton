@@ -95,7 +95,6 @@ bool DeleteExecutor::DExecute() {
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
-
     LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
@@ -116,22 +115,26 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
 
-      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
-        // If we are using rollback segment, what we need to do is flip the delete
+      if (concurrency::TransactionManagerFactory::GetProtocol() ==
+          CONCURRENCY_TYPE_OCC_RB) {
+        // If we are using rollback segment, what we need to do is flip the
+        // delete
         // flag in the master copy.
         transaction_manager.PerformDelete(old_location);
 
       } else {
         // if it is the latest version and not locked by other threads, then
         // insert a new version.
-        std::unique_ptr<storage::Tuple> new_tuple(new storage::Tuple(target_table_->GetSchema(), true));
+        std::unique_ptr<storage::Tuple> new_tuple(
+            new storage::Tuple(target_table_->GetSchema(), true));
 
         // Make a copy of the original tuple and allocate a new tuple
         expression::ContainerTuple<storage::TileGroup> old_tuple(
-          tile_group, physical_tuple_id);
+            tile_group, physical_tuple_id);
 
         // finally insert updated tuple into the table
-        ItemPointer new_location = target_table_->InsertEmptyVersion(new_tuple.get());
+        ItemPointer new_location =
+            target_table_->InsertEmptyVersion(new_tuple.get());
 
         if (new_location.IsNull() == true) {
           LOG_TRACE("Fail to insert new tuple. Set txn failure.");

@@ -29,8 +29,7 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr) {
 }
 
 bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                            GroupID target_group)
-{
+                            GroupID target_group) {
   // If leaf, then just return
   if (gexpr->Op().type() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().as<LeafOperator>();
@@ -67,13 +66,9 @@ bool Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   return new_expression;
 }
 
-const std::vector<Group> &Memo::Groups() const {
-  return groups;
-}
+const std::vector<Group> &Memo::Groups() const { return groups; }
 
-Group *Memo::GetGroupByID(GroupID id) {
-  return &(groups[id]);
-}
+Group *Memo::GetGroupByID(GroupID id) { return &(groups[id]); }
 
 GroupID Memo::AddNewGroup() {
   GroupID new_group_id = groups.size();

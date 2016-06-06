@@ -4,7 +4,7 @@
 //
 // executor_tests_util.h
 //
-// Identification: tests/executor/executor_tests_util.h
+// Identification: test/include/executor/executor_tests_util.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -94,7 +94,8 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table, oid_t tuple_id,
+  static std::unique_ptr<storage::Tuple> GetTuple(storage::DataTable *table,
+                                                  oid_t tuple_id,
                                                   VarlenPool *pool);
   static std::unique_ptr<storage::Tuple> GetNullTuple(storage::DataTable *table,
                                                       VarlenPool *pool);

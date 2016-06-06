@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// table_ref.h
+//
+// Identification: src/include/parser/table_ref.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <stdio.h>
@@ -15,14 +27,14 @@ struct JoinDefinition;
 //  Holds reference to tables.
 // Can be either table names or a select statement.
 struct TableRef {
-  TableRef(TableReferenceType type) :
-    type(type),
-    schema(NULL),
-    name(NULL),
-    alias(NULL),
-    select(NULL),
-    list(NULL),
-    join(NULL) {}
+  TableRef(TableReferenceType type)
+      : type(type),
+        schema(NULL),
+        name(NULL),
+        alias(NULL),
+        select(NULL),
+        list(NULL),
+        join(NULL) {}
 
   virtual ~TableRef();
 
@@ -37,9 +49,7 @@ struct TableRef {
   JoinDefinition* join;
 
   // Convenience accessor methods
-  inline bool HasSchema() {
-    return schema != NULL;
-  }
+  inline bool HasSchema() { return schema != NULL; }
 
   inline char* GetName() {
     if (alias != NULL)
@@ -51,11 +61,8 @@ struct TableRef {
 
 // Definition of a join table
 struct JoinDefinition {
-  JoinDefinition() :
-    left(NULL),
-    right(NULL),
-    condition(NULL),
-    type(JOIN_TYPE_INNER) {}
+  JoinDefinition()
+      : left(NULL), right(NULL), condition(NULL), type(JOIN_TYPE_INNER) {}
 
   virtual ~JoinDefinition() {
     delete left;
@@ -70,5 +77,5 @@ struct JoinDefinition {
   PelotonJoinType type;
 };
 
-} // End parser namespace
-} // End peloton namespace
+}  // End parser namespace
+}  // End peloton namespace

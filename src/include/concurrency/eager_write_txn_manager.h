@@ -4,7 +4,7 @@
 //
 // eager_write_txn_manager.h
 //
-// Identification: src/concurrency/eager_write_txn_manager.h
+// Identification: src/include/concurrency/eager_write_txn_manager.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -102,7 +102,6 @@ class EagerWriteTxnManager : public TransactionManager {
       running_txn_map_[txn_id] = txn_ctx;
     }
 
-
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
 
@@ -138,9 +137,7 @@ class EagerWriteTxnManager : public TransactionManager {
     current_txn_ctx = nullptr;
   }
 
-
  private:
-
   // init reserved area of a tuple
   // creator txnid | lock (for read list) | read list head
   // The txn_id could only be the cur_txn's txn id.
@@ -179,8 +176,9 @@ class EagerWriteTxnManager : public TransactionManager {
     TxnList *reader = new TxnList(txn_id);
 
     // GetEwReaderLock(tile_group_header, tuple_id);
-    TxnList *headp = (TxnList *)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+    TxnList *headp =
+        (TxnList *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                    LIST_OFFSET);
     reader->next = headp->next;
     headp->next = reader;
     // ReleaseEwReaderLock(tile_group_header, tuple_id);
@@ -192,8 +190,9 @@ class EagerWriteTxnManager : public TransactionManager {
     LOG_TRACE("Remove reader with txn_id = %lu", txn_id);
     GetEwReaderLock(tile_group_header, tuple_id);
 
-    TxnList *headp = (TxnList *)(
-        tile_group_header->GetReservedFieldRef(tuple_id) + LIST_OFFSET);
+    TxnList *headp =
+        (TxnList *)(tile_group_header->GetReservedFieldRef(tuple_id) +
+                    LIST_OFFSET);
 
     auto next = headp->next;
     auto prev = headp;

@@ -4,7 +4,7 @@
 //
 // sdbench.cpp
 //
-// Identification: src/benchmark/sdbench/sdbench.cpp
+// Identification: src/main/sdbench/sdbench.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

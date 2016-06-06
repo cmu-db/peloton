@@ -4,7 +4,7 @@
 //
 // projection_plan.h
 //
-// Identification: src/planner/projection_plan.h
+// Identification: src/include/planner/projection_plan.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -37,14 +37,11 @@ class ProjectionPlan : public AbstractPlan {
                  std::shared_ptr<const catalog::Schema> &schema)
       : project_info_(std::move(project_info)), schema_(schema) {}
 
-  inline const planner::ProjectInfo *GetProjectInfo()
-      const {
+  inline const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
-  inline const catalog::Schema *GetSchema() const {
-    return schema_.get();
-  }
+  inline const catalog::Schema *GetSchema() const { return schema_.get(); }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_PROJECTION;

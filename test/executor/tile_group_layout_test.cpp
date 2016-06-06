@@ -4,7 +4,7 @@
 //
 // tile_group_layout_test.cpp
 //
-// Identification: tests/executor/tile_group_layout_test.cpp
+// Identification: test/executor/tile_group_layout_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -180,8 +180,8 @@ void ExecuteTileGroupTest() {
   std::shared_ptr<const catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols,
-                                        output_schema, physify_flag);
+  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
+                                        physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&seq_scan_executor);

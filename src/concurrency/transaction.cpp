@@ -24,7 +24,6 @@ namespace peloton {
 namespace concurrency {
 
 void Transaction::RecordRead(const ItemPointer &location) {
-
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -32,7 +31,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
       rw_set_.at(tile_group_id).find(tuple_id) !=
           rw_set_.at(tile_group_id).end()) {
     PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_DELETE &&
-           rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
+              rw_set_.at(tile_group_id).at(tuple_id) != RW_TYPE_INS_DEL);
     return;
   } else {
     rw_set_[tile_group_id][tuple_id] = RW_TYPE_READ;
@@ -40,7 +39,6 @@ void Transaction::RecordRead(const ItemPointer &location) {
 }
 
 void Transaction::RecordUpdate(const ItemPointer &location) {
-
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -69,7 +67,6 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
-
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 

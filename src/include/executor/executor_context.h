@@ -4,7 +4,7 @@
 //
 // executor_context.h
 //
-// Identification: src/executor/executor_context.h
+// Identification: src/include/executor/executor_context.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,8 +26,8 @@ namespace executor {
 // TODO: We might move this flag into the types.h in the future
 enum ParamsExecFlag {
   INVALID_FLAG,
-  IN_NESTLOOP = 1 // nestloop (in+indexscan)
-  //IN_**         // other types
+  IN_NESTLOOP = 1  // nestloop (in+indexscan)
+  // IN_**         // other types
 };
 
 class ExecutorContext {
@@ -74,7 +74,7 @@ class ExecutorContext {
   std::unique_ptr<VarlenPool> pool_;
 
   // PARAMS_EXEC_Flag
-  ParamsExecFlag params_exec_flag_ ;
+  ParamsExecFlag params_exec_flag_;
 };
 
 }  // namespace executor

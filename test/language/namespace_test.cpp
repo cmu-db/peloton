@@ -4,7 +4,7 @@
 //
 // namespace_test.cpp
 //
-// Identification: tests/language/namespace_test.cpp
+// Identification: test/language/namespace_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -41,7 +41,6 @@ TEST_F(NamespaceTests, BasicTest) {
 
     EXPECT_EQ(v1, v3);  // OK
   }
-
 }
 
 }  // End test namespace

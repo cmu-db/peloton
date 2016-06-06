@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// statement_transaction.h
+//
+// Identification: src/include/parser/statement_transaction.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "parser/sql_statement.h"
@@ -16,13 +28,11 @@ struct TransactionStatement : SQLStatement {
     kRollback,
   };
 
-  TransactionStatement(CommandType type) :
-    SQLStatement(STATEMENT_TYPE_TRANSACTION),
-    type(type){
-  }
+  TransactionStatement(CommandType type)
+      : SQLStatement(STATEMENT_TYPE_TRANSACTION), type(type) {}
 
   CommandType type;
 };
 
-} // End parser namespace
-} // End peloton namespace
+}  // End parser namespace
+}  // End peloton namespace

@@ -4,7 +4,7 @@
 //
 // tile_group_factory.h
 //
-// Identification: src/storage/tile_group_factory.h
+// Identification: src/include/storage/tile_group_factory.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

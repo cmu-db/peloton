@@ -4,7 +4,7 @@
 //
 // tuple.h
 //
-// Identification: src/storage/tuple.h
+// Identification: src/include/storage/tuple.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

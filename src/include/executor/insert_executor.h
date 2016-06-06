@@ -4,7 +4,7 @@
 //
 // insert_executor.h
 //
-// Identification: src/executor/insert_executor.h
+// Identification: src/include/executor/insert_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -4,7 +4,7 @@
 //
 // thread_manager_test.cpp
 //
-// Identification: tests/common/thread_manager_test.cpp
+// Identification: test/common/thread_manager_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

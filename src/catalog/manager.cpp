@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/exception.h"
 #include "common/logger.h"
 #include "catalog/manager.h"
@@ -33,7 +32,6 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(
     const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
-
   // drop the catalog reference to the old tile group
   locator.erase(oid);
 
@@ -60,9 +58,7 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
 }
 
 // used for logging test
-void Manager::ClearTileGroup() {
-  locator.clear();
-}
+void Manager::ClearTileGroup() { locator.clear(); }
 
 //===--------------------------------------------------------------------===//
 // DATABASE

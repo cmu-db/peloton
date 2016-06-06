@@ -4,7 +4,7 @@
 //
 // ycsb_workload.h
 //
-// Identification: src/benchmark/ycsb_workload.h
+// Identification: src/include/benchmark/ycsb/ycsb_workload.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
