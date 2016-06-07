@@ -1012,7 +1012,7 @@ CREATE
 	;
 
 COLLECTION
-	: C O L L E C T I O N
+	: T A B L E
 	;
 
 CURRENT_DATE
