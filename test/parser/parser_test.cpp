@@ -68,7 +68,7 @@ class SqlEngineTestCase {
 
 };
 
-TEST_F(ParserTest, CloneInt) {
+TEST_F(ParserTest, SQL92Test) {
 
   std::vector<std::string> sqlStrings;
 
@@ -85,6 +85,46 @@ TEST_F(ParserTest, CloneInt) {
 
   sqlStrings.push_back("UPDATE abc SET age = 34");
   sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
+
+  parser::SQL92Parser sqlParser;
+  SqlEngineTestCase sqlTestCase(&sqlParser);
+  sqlTestCase.parse(sqlStrings);
+}
+
+TEST_F(ParserTest, ExpressionTest) {
+
+  std::vector<std::string> sqlStrings;
+
+  sqlStrings.push_back("SELECT * FROM A WHERE age == 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age = 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age < 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age <= 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age > 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age >= 18");
+  sqlStrings.push_back("SELECT * FROM A WHERE age != 18");
+
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35");
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35");
+
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10");
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10");
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 OR age <= 10");
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 AND age <= 10");
+
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND age >= 5");
+  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age >= 5");
+
+  parser::SQL92Parser sqlParser;
+  SqlEngineTestCase sqlTestCase(&sqlParser);
+  sqlTestCase.parse(sqlStrings);
+}
+
+TEST_F(ParserTest, OrderByTest) {
+
+  std::vector<std::string> sqlStrings;
+
+  //sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
+  //sqlStrings.push_back("SELECT 1 FROM a WHERE 1 = 1 AND 1");
 
   parser::SQL92Parser sqlParser;
   SqlEngineTestCase sqlTestCase(&sqlParser);
