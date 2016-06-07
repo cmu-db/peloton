@@ -27,7 +27,7 @@ extern thread_local storage::RollbackSegmentPool *to_current_segment_pool;
 extern thread_local cid_t to_latest_read_timestamp;
 extern thread_local std::unordered_map<ItemPointer, index::RBItemPointer *> to_updated_index_entries;
 //===--------------------------------------------------------------------===//
-// optimistic concurrency control with rollback segment
+// timestamp ordering with rollback segment
 //===--------------------------------------------------------------------===//
 
 class TsOrderRbTxnManager : public TransactionManager {

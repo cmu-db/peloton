@@ -38,19 +38,33 @@ cid_t TsOrderN2OTxnManager::GetLastReaderCid(
   return *(cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
 }
 
-void TsOrderN2OTxnManager::SetLastReaderCid(
+bool TsOrderN2OTxnManager::SetLastReaderCid(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id, const cid_t &last_read_ts) {
+    const oid_t &tuple_id) {
+
+  assert(IsOwner(tile_group_header, tuple_id) == false);
+
   cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
+  
+  cid_t current_cid = current_txn->GetBeginCommitId();
 
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
   
-  if (*ts_ptr < last_read_ts) {
-    *ts_ptr = last_read_ts;
+  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  
+  if(tuple_txn_id != INITIAL_TXN_ID) {
+    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    return false;
+  } else {
+    if (*ts_ptr < current_cid) {
+      *ts_ptr = current_cid;
+    }
+    
+    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    return true;
   }
-
-  GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 }
+
 
 ItemPointer *TsOrderN2OTxnManager::GetHeadPtr(
     const storage::TileGroupHeader *const tile_group_header, 
@@ -151,48 +165,37 @@ bool TsOrderN2OTxnManager::IsOwnable(
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-  // if (tuple_end_cid != MAX_CID) {
-  //   fprintf(stderr, "tuple_begin_cid: %d, tuple_end_cid: %d, begin_commit_id: %d\n", (int)tile_group_header->GetBeginCommitId(tuple_id), (int)tuple_end_cid, (int)current_txn->GetBeginCommitId());
-  // }
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid > current_txn->GetBeginCommitId();
 }
-
-// bool TsOrderN2OTxnManager::IsOwnable(
-//     const storage::TileGroupHeader *const tile_group_header,
-//     const oid_t &tuple_id) {
-//   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-//   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
-//   // if (tuple_end_cid != MAX_CID) {
-//   //   fprintf(stderr, "tuple_begin_cid: %d, tuple_end_cid: %d, begin_commit_id: %d\n", (int)tile_group_header->GetBeginCommitId(tuple_id), (int)tuple_end_cid, (int)current_txn->GetBeginCommitId());
-//   // }
-//   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid > MAX_CID;
-// }
 
 bool TsOrderN2OTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
   // change timestamp
   cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
-    return false;
-  }
-
-  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
-  }
+  } else {
+    if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {    
+      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    
+      SetTransactionResult(Result::RESULT_FAILURE);
+      return false;
+    } else {
+      
+      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
 
-  last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+      return true;
+    }
 
-  if (last_reader_cid > current_txn->GetBeginCommitId()) {
-    tile_group_header->SetTransactionId(tuple_id, INITIAL_TXN_ID);
-    return false;
   }
-  return true;
 }
 
 // release write lock on a tuple.
@@ -219,23 +222,25 @@ bool TsOrderN2OTxnManager::PerformRead(const ItemPointer &location) {
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  auto last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
-  if (IsOwner(tile_group_header, tuple_id)) {
-    assert(last_reader_cid >= current_txn->GetBeginCommitId());
+  //auto last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  if (IsOwner(tile_group_header, tuple_id) == true) {
+    // it is possible to be a blind write.
+    assert(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
     return true;
   }
 
-  txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
+  // txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
-  if(tuple_txn_id != INITIAL_TXN_ID && last_reader_cid < current_txn->GetBeginCommitId()) {
+  // if(tuple_txn_id != INITIAL_TXN_ID && last_reader_cid < current_txn->GetBeginCommitId()) {
+  //   return false;
+  // }
+
+  if (SetLastReaderCid(tile_group_header, tuple_id) == true) {
+    current_txn->RecordRead(location);
+    return true;
+  } else {
     return false;
   }
-
-  SetLastReaderCid(tile_group_header, tuple_id,
-                   current_txn->GetBeginCommitId());
-
-  current_txn->RecordRead(location);
-  return true;
 }
 
 bool TsOrderN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) {
@@ -260,7 +265,7 @@ bool TsOrderN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointe
   
   InitTupleReserved(tile_group_header, tuple_id);
 
-  SetLastReaderCid(tile_group_header, location.offset, current_txn->GetBeginCommitId());
+  //SetLastReaderCid(tile_group_header, location.offset, current_txn->GetBeginCommitId());
 
   // Write down the head pointer's address in tile group header
   SetHeadPtr(tile_group_header, tuple_id, itemptr_ptr);
@@ -273,15 +278,16 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block, old_location.offset);
   LOG_TRACE("Performing Write new tuple %u %u", new_location.block, new_location.offset);
 
-  auto transaction_id = current_txn->GetTransactionId();
-
   auto tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(old_location.block)->GetHeader();
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
+  // ATTENTION: this assert may fail some time!
   assert(GetLastReaderCid(tile_group_header, old_location.offset) == current_txn->GetBeginCommitId());
 
+
+  auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
   // version.
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
@@ -322,7 +328,7 @@ void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
   InitTupleReserved(new_tile_group_header, new_location.offset);
 
   // set last read
-  SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
+  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
 
   // if the transaction is not updating the latest version, 
   // then do not change item pointer header.
@@ -379,7 +385,7 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &old_location,
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  assert(GetLastReaderCid(tile_group_header, old_location.offset) == current_txn->GetBeginCommitId());
+  assert(GetLastReaderCid(tile_group_header, old_location.offset) <= current_txn->GetBeginCommitId());
 
   assert(tile_group_header->GetTransactionId(old_location.offset) ==
          transaction_id);
@@ -415,7 +421,7 @@ void TsOrderN2OTxnManager::PerformDelete(const ItemPointer &old_location,
 
   InitTupleReserved(new_tile_group_header, new_location.offset);
   
-  SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
+  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
 
   // if the transaction is not deleting the latest version, 
   // then do not change item pointer header.
@@ -582,6 +588,8 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
+  std::vector<ItemPointer> aborted_versions;
+
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
@@ -642,6 +650,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         // should be offload to GC
         // COMPILER_MEMORY_FENCE;
         
+        // UPDATE: now we rely on GC for resetting pointers.
         // new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
         // new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -651,7 +660,8 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // GC recycle
-        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -698,10 +708,10 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
 
         tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
 
-        COMPILER_MEMORY_FENCE;
+        //COMPILER_MEMORY_FENCE;
         
-        new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        //new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+        //new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         COMPILER_MEMORY_FENCE;
@@ -709,7 +719,8 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // GC recycle
-        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -718,9 +729,11 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
 
         // GC recycle
         //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
@@ -729,12 +742,19 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
 
         // GC recycle
-        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+        // RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
 
       }
     }
+  }
+
+  cid_t next_commit_id = GetNextCommitId();
+
+  for (auto &item_pointer : aborted_versions) {
+    RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
   }
 
   EndTransaction();

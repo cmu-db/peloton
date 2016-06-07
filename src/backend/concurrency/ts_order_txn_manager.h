@@ -88,7 +88,7 @@ class TsOrderTxnManager : public TransactionManager {
 
 
  private:
-
+  
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
 
@@ -101,9 +101,9 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  void SetLastReaderCid(
+  bool SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &last_read_ts);
+      const oid_t &tuple_id);
 
   // init reserved area of a tuple
   void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {

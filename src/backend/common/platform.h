@@ -114,6 +114,8 @@ enum LockState : bool { Unlocked = 0, Locked };
 class Spinlock {
  public:
   Spinlock() : spin_lock_state(Unlocked) {}
+  Spinlock(Spinlock const &) = delete;
+  Spinlock &operator=(Spinlock const &) = delete;
 
   inline void Lock() {
     while (!TryLock()) {

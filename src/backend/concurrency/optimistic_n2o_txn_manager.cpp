@@ -524,6 +524,8 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
+  
+  std::vector<ItemPointer> aborted_versions;
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -560,19 +562,20 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
         new_tile_group_header->SetTransactionId(new_version.offset,
                                                 INVALID_TXN_ID);
 
+        tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
+
         // NOTE: We cannot do the unlink here because maybe someone is still traversing
         // the aborted version. Such unlink will isolate such travelers. The unlink task
         // should be offload to GC
-
-        // tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         // new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        aborted_versions.push_back(new_version);
         // GC recycle
-        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        //RecycleOldTupleSlot(new_version.block, new_version.offset, current_txn->GetBeginCommitId());
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         ItemPointer new_version =
@@ -602,14 +605,20 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
         // reset the item pointers.
         tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
-        new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
+
+
+        // NOTE: We cannot do the unlink here because maybe someone is still traversing
+        // the aborted version. Such unlink will isolate such travelers. The unlink task
+        // should be offload to GC
+        //new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
 
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
+        aborted_versions.push_back(new_version);
         // GC recycle
-        RecycleInvalidTupleSlot(new_version.block, new_version.offset);
+        //RecycleOldTupleSlot(new_version.block, new_version.offset, current_txn->GetBeginCommitId());
 
       } else if (tuple_entry.second == RW_TYPE_INSERT) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -619,8 +628,9 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
+        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
         // GC recycle
-        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
 
       } else if (tuple_entry.second == RW_TYPE_INS_DEL) {
         tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -630,12 +640,20 @@ Result OptimisticN2OTxnManager::AbortTransaction() {
 
         tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
 
+        // aborted_versions.push_back(ItemPointer(tile_group_id, tuple_slot));
         // GC recycle
-        RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
+        //RecycleInvalidTupleSlot(tile_group_id, tuple_slot);
         
       }
     }
   }
+
+  cid_t next_commit_id = GetNextCommitId();
+
+  for (auto &item_pointer : aborted_versions) {
+    RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
+  }
+
 
   EndTransaction();
   return Result::RESULT_ABORTED;

@@ -110,9 +110,9 @@ class TsOrderN2OTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  void SetLastReaderCid(
+  bool SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &last_read_ts);
+      const oid_t &tuple_id);
 
   void SetHeadPtr(
       const storage::TileGroupHeader *const tile_group_header, 
