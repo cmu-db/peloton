@@ -12,13 +12,18 @@
 
 #pragma once
 
-#include "storage/table_factory.h"
-#include "storage/data_table.h"
 #include "common/types.h"
-#include <string>
-
 
 namespace peloton {
+
+namespace catalog{
+class Schema;
+}
+
+namespace storage{
+class DataTable;
+}
+
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
@@ -42,12 +47,6 @@ public:
 	storage::DataTable CreateDatabaseCatalog(oid_t table_oid, std::string table_name, catalog::Schema *table_schema);
 
 	// TODO: Other Catalogs should be added here
-
-
-private:
-	catalog::Schema* table_schema;
-	catalog::Schema* database_schema;
-	// TODO: More catalogs schema should be added here
 
 };
 
