@@ -19,12 +19,13 @@ add_custom_target(peloton-parser ALL
 				  ${SQL_PARSER_LOCATION}/${SQL_PARSER_GRAMMAR_NAME} -o ${SQL_PARSER_LOCATION}
 				  DEPENDS ${SQL_PARSER_LOCATION}/${SQL_PARSER_GRAMMAR_NAME}
 )
-endif()
 
+# rename files
 file(RENAME ${SQL_PARSER_C} ${SQL_PARSER_CPP})
 file(RENAME ${SQL_LEXER_C} ${SQL_LEXER_CPP})
 file(REMOVE ${SQL_PARSER_C})
 file(REMOVE ${SQL_LEXER_C})
+endif()
 
 set(ANTLR_WARNING_FLAGS " -Wno-unused-variable -Wno-unused-function -Wno-maybe-uninitialized -Wno-type-limits -Wno-address")
 set_source_files_properties(${SQL_LEXER_CPP} APPEND_STRING PROPERTY COMPILE_FLAGS ${ANTLR_WARNING_FLAGS})
