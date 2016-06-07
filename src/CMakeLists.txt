@@ -1,35 +1,19 @@
-# --[ ANTLR
+# --[ BISON
+find_package(BISON REQUIRED)
+find_package(FLEX REQUIRED)
 
-find_package(Java REQUIRED)
+set(SQLParser_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
+set(SQLScanner_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
 
-set(SQL_PARSER_LOCATION "${PROJECT_SOURCE_DIR}/src/parser/parser/antlr")
-set(SQL_PARSER_GRAMMAR_NAME SQL.g)
-set(JAVA_COMMAND "java")
-set(ANTLR_JAR ${PROJECT_SOURCE_DIR}/third_party/antlr/antlr-3.4-complete.jar)
-
-set(SQL_PARSER_C "${SQL_PARSER_LOCATION}/SQLParser.c")
-set(SQL_LEXER_C "${SQL_PARSER_LOCATION}/SQLLexer.c")
-set(SQL_PARSER_CPP "${SQL_PARSER_LOCATION}/SQLParser.cpp")
-set(SQL_LEXER_CPP "${SQL_PARSER_LOCATION}/SQLLexer.cpp")
-
-if(NOT EXISTS "${SQL_PARSER_CPP}")
-add_custom_target(peloton-parser ALL 
-				  COMMAND ${JAVA_COMMAND} 
-				  -classpath ${ANTLR_JAR} org.antlr.Tool 
-				  ${SQL_PARSER_LOCATION}/${SQL_PARSER_GRAMMAR_NAME} -o ${SQL_PARSER_LOCATION}
-				  DEPENDS ${SQL_PARSER_LOCATION}/${SQL_PARSER_GRAMMAR_NAME}
-)
-
-# rename files
-file(RENAME ${SQL_PARSER_C} ${SQL_PARSER_CPP})
-file(RENAME ${SQL_LEXER_C} ${SQL_LEXER_CPP})
-file(REMOVE ${SQL_PARSER_C})
-file(REMOVE ${SQL_LEXER_C})
+if(NOT EXISTS "${SQLScanner_LOCATION}")
+	BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${SQLParser_LOCATION})
+	FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${SQLScanner_LOCATION})
+	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
 endif()
 
-set(ANTLR_WARNING_FLAGS " -Wno-unused-variable -Wno-unused-function -Wno-maybe-uninitialized -Wno-type-limits -Wno-address")
-set_source_files_properties(${SQL_LEXER_CPP} APPEND_STRING PROPERTY COMPILE_FLAGS ${ANTLR_WARNING_FLAGS})
-set_source_files_properties(${SQL_PARSER_CPP} APPEND_STRING PROPERTY COMPILE_FLAGS ${ANTLR_WARNING_FLAGS})
+add_library(peloton-parser STATIC ${SQLParser_LOCATION} ${SQLScanner_LOCATION})
+set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+peloton_default_properties(peloton-parser)
 
 # --[ Proto library
 file(GLOB proto_files proto/*.proto)
@@ -43,11 +27,11 @@ peloton_default_properties(peloton-proto)
 # --[ Peloton library
 
 # creates 'srcs' lists
-peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR} ${SQL_LEXER_CPP} ${SQL_PARSER_CPP})
+peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-parser peloton-proto)
 add_dependencies(peloton peloton-parser)
 
 peloton_default_properties(peloton)

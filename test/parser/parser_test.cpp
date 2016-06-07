@@ -14,8 +14,7 @@
 #include <vector>
 
 #include "common/harness.h"
-
-#include "parser/SQL92Parser.h"
+#include "parser/parser.h"
 
 namespace peloton {
 namespace test {
@@ -25,51 +24,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class ParserTest : public PelotonTest {};
-
-
-class SqlEngineTestCase {
-
-  parser::SQLParser *sqlParser = nullptr;
-
- public:
-
-
-  SqlEngineTestCase(parser::SQLParser *sqlParser){
-    this->sqlParser = sqlParser;
-  }
-
-  virtual ~SqlEngineTestCase(){
-  }
-
-  void parse(std::vector<std::string> &sqlStrings){
-    std::vector<std::string>::iterator sqlString = sqlStrings.begin();
-    while(sqlString != sqlStrings.end()) {
-
-      LOG_INFO("I : %s", (*sqlString).c_str());
-
-      sqlParser->parse(*sqlString);
-
-      std::string parseResult;
-      sqlParser->getStatement()->toString(parseResult);
-
-      int compareResult = parseResult.compare(*sqlString);
-
-      if (compareResult == 0) {
-        std::string buf;
-        LOG_INFO("String: %s", sqlParser->getStatement()->toTreeString(buf).c_str());
-      }
-      else {
-        auto error = sqlParser->getError();
-        auto error_msg = error->getMessage();
-        LOG_INFO("Error: %s", error_msg.c_str());
-      }
-
-      sqlString++;
-    }
-
-  };
-
-};
 
 TEST_F(ParserTest, SQL92Test) {
 
@@ -89,9 +43,7 @@ TEST_F(ParserTest, SQL92Test) {
   sqlStrings.push_back("UPDATE abc SET age = 34");
   sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
 
-  parser::SQL92Parser sqlParser;
-  SqlEngineTestCase sqlTestCase(&sqlParser);
-  sqlTestCase.parse(sqlStrings);
+  //Parse(sqlStrings);
 }
 
 TEST_F(ParserTest, ExpressionTest) {
@@ -117,9 +69,7 @@ TEST_F(ParserTest, ExpressionTest) {
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND age >= 5");
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age >= 5");
 
-  parser::SQL92Parser sqlParser;
-  SqlEngineTestCase sqlTestCase(&sqlParser);
-  sqlTestCase.parse(sqlStrings);
+  //Parse(sqlStrings);
 }
 
 TEST_F(ParserTest, DDLTest) {
@@ -131,9 +81,7 @@ TEST_F(ParserTest, DDLTest) {
   sqlStrings.push_back("CREATE INDEX FooIndex ON FOO(ID)");
   sqlStrings.push_back("DROP INDEX FooIndex");
 
-  parser::SQL92Parser sqlParser;
-  SqlEngineTestCase sqlTestCase(&sqlParser);
-  sqlTestCase.parse(sqlStrings);
+  //Parse(sqlStrings);
 }
 
 
@@ -144,9 +92,7 @@ TEST_F(ParserTest, OrderByTest) {
   //sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
   //sqlStrings.push_back("SELECT 1 FROM a WHERE 1 = 1 AND 1");
 
-  parser::SQL92Parser sqlParser;
-  SqlEngineTestCase sqlTestCase(&sqlParser);
-  sqlTestCase.parse(sqlStrings);
+  //Parse(sqlStrings);
 }
 
 }  // End test namespace
