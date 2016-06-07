@@ -66,7 +66,7 @@ void SQLNodeList::sort()
     //std::cout << "SORT[" << (++n) << "] : " << (*node)->toString(buf) << std::endl;
   }
   
-  size_t logicalOperIndex = SQLNodeListGetIncompleteLogicalOperatorIndex(this);
+  long long logicalOperIndex = SQLNodeListGetIncompleteLogicalOperatorIndex(this);
   while (1 <= logicalOperIndex) {
     SQLNode *logicalOperNode = at(logicalOperIndex);
     SQLNodeListAddAsChildNode(this, logicalOperNode, (logicalOperIndex - 1));
