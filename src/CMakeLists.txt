@@ -1,20 +1,3 @@
-# --[ BISON
-find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
-
-set(SQLParser_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_parser.cpp")
-set(SQLScanner_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/sql_scanner.cpp")
-
-if(NOT EXISTS "${SQLScanner_LOCATION}")
-	BISON_TARGET(SQLParser ${PROJECT_SOURCE_DIR}/src/parser/sql_parser.y ${SQLParser_LOCATION})
-	FLEX_TARGET(SQLScanner ${PROJECT_SOURCE_DIR}/src/parser/sql_scanner.l ${SQLScanner_LOCATION})
-	ADD_FLEX_BISON_DEPENDENCY(SQLScanner SQLParser)
-endif()
-
-add_library(peloton-parser STATIC ${SQLParser_LOCATION} ${SQLScanner_LOCATION})
-set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
-peloton_default_properties(peloton-parser)
-
 # --[ Proto library
 file(GLOB proto_files proto/*.proto)
 peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto_python ${proto_files})
@@ -24,6 +7,15 @@ add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
+# --[ Postgres files
+
+file(GLOB_RECURSE postgres_srcs ${PROJECT_SOURCE_DIR}/src/parser/*.cpp)
+set(POSTGRES_FLAGS "-w -Wno-error -fpermissive")
+
+foreach(postgres_src ${postgres_srcs} )
+	set_source_files_properties(${postgres_src} PROPERTIES COMPILE_FLAGS ${POSTGRES_FLAGS})
+endforeach(postgres_src ${postgres_srcs})    
+
 # --[ Peloton library
 
 # creates 'srcs' lists
@@ -31,8 +23,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-parser peloton-proto)
-add_dependencies(peloton peloton-parser)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES

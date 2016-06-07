@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "common/harness.h"
-#include "parser/parser.h"
+//#include "parser/parser.h"
 
 namespace peloton {
 namespace test {
