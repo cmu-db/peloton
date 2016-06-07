@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include "storage/table_factory.h"
 #include "storage/data_table.h"
+#include "common/types.h"
 #include <string>
 
 
@@ -25,10 +27,27 @@ namespace catalog {
 
 class Bootstrap{
 
-	// Create Table
-	storage::DataTable CreateTable(oid_t table_oid, std::string table_name);
+public:
+
+	// Bootstrap Catalog
+	void bootstrap();
+
+	// Initialize Schemas
+	void InitializeCatalogsSchemas();
+
+	// Create Table for pg_class
+	storage::DataTable CreateTableCatalog(oid_t table_oid, std::string table_name, catalog::Schema *table_schema);
+
+	// Create Table for pg_database
+	storage::DataTable CreateDatabaseCatalog(oid_t table_oid, std::string table_name, catalog::Schema *table_schema);
+
+	// TODO: Other Catalogs should be added here
 
 
+private:
+	catalog::Schema* table_schema;
+	catalog::Schema* database_schema;
+	// TODO: More catalogs schema should be added here
 
 };
 
