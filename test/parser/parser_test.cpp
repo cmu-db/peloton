@@ -25,7 +25,8 @@ namespace test {
 
 class ParserTest : public PelotonTest {};
 
-void ParseSQLStrings(const std::vector<std::string>& sql_strings){
+void ParseSQLStrings(const std::vector<std::string>& sql_strings,
+                     const bool expect_failure){
 
   // Initialize the postgres memory context
   pg_query_init();
@@ -33,12 +34,14 @@ void ParseSQLStrings(const std::vector<std::string>& sql_strings){
   for(auto sql_string : sql_strings) {
     PgQueryParseResult result = pg_query_parse(sql_string.c_str());
 
-    LOG_INFO("input: %s", sql_string.c_str());
-
-    if (result.error) {
+    if(expect_failure == true){
+      EXPECT_NE(result.error, nullptr);
+      LOG_INFO("input: %s", sql_string.c_str());
       LOG_ERROR("error: %s at %d", result.error->message, result.error->cursorpos);
-    } else {
-      LOG_INFO("parse tree: %s", result.parse_tree);
+    }
+    else {
+      EXPECT_EQ(result.error, nullptr);
+      //LOG_INFO("parse tree: %s", result.parse_tree);
     }
 
     pg_query_free_parse_result(result);
@@ -64,7 +67,8 @@ TEST_F(ParserTest, SQL92Test) {
   sqlStrings.push_back("UPDATE abc SET age = 34");
   sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
 
-  ParseSQLStrings(sqlStrings);
+  bool expect_failure = false;
+  ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 TEST_F(ParserTest, ExpressionTest) {
@@ -90,7 +94,8 @@ TEST_F(ParserTest, ExpressionTest) {
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND age >= 5");
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age >= 5");
 
-  ParseSQLStrings(sqlStrings);
+  bool expect_failure = false;
+  ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 TEST_F(ParserTest, DDLTest) {
@@ -102,7 +107,8 @@ TEST_F(ParserTest, DDLTest) {
   sqlStrings.push_back("CREATE INDEX FooIndex ON FOO(ID)");
   sqlStrings.push_back("DROP INDEX FooIndex");
 
-  ParseSQLStrings(sqlStrings);
+  bool expect_failure = false;
+  ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 
@@ -113,7 +119,33 @@ TEST_F(ParserTest, OrderByTest) {
   sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
   sqlStrings.push_back("SELECT 1 FROM a WHERE 1 = 1 AND 1");
 
-  ParseSQLStrings(sqlStrings);
+  bool expect_failure = false;
+  ParseSQLStrings(sqlStrings, expect_failure);
+}
+
+TEST_F(ParserTest, MoreTest) {
+
+  std::vector<std::string> sqlStrings;
+
+  sqlStrings.push_back("SELECT 1");
+  sqlStrings.push_back("SELECT * FROM x WHERE z = 2");
+  sqlStrings.push_back("SELECT 5.41414");
+  sqlStrings.push_back("SELECT $1");
+  sqlStrings.push_back("SELECT 999999999999999999999::numeric/1000000000000000000000");
+  sqlStrings.push_back("SELECT 4790999999999999999999999999999999999999999999999999999999999999999999999999999999999999 * 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+
+  bool expect_failure = false;
+  ParseSQLStrings(sqlStrings, expect_failure);
+}
+
+TEST_F(ParserTest, FailureTest) {
+
+  std::vector<std::string> sqlStrings;
+
+  sqlStrings.push_back("SELECT ?");
+
+  bool expect_failure = true;
+  ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 }  // End test namespace

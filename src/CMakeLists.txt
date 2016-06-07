@@ -41,23 +41,24 @@ set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
 
 # --[ hyadapt
 file(GLOB_RECURSE hyadapt_srcs ${PROJECT_SOURCE_DIR}/src/main/hyadapt/*.cpp)
-add_executable(hyadapt ${hyadapt_srcs})
+add_executable(hyadapt EXCLUDE_FROM_ALL ${hyadapt_srcs})
 target_link_libraries(hyadapt peloton)
 
 # --[ ycsb
 file(GLOB_RECURSE ycsb_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/*.cpp)
-add_executable(ycsb ${ycsb_srcs})
+add_executable(ycsb EXCLUDE_FROM_ALL ${ycsb_srcs})
 target_link_libraries(ycsb peloton)
 
 # --[ tpcc
 file(GLOB_RECURSE tpcc_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/*.cpp)
-add_executable(tpcc ${tpcc_srcs})
+add_executable(tpcc EXCLUDE_FROM_ALL ${tpcc_srcs})
 target_link_libraries(tpcc peloton)
 
 # --[ sdbench
 file(GLOB_RECURSE sdbench_srcs ${PROJECT_SOURCE_DIR}/src/main/sdbench/*.cpp)
-add_executable(sdbench ${sdbench_srcs})
+add_executable(sdbench EXCLUDE_FROM_ALL ${sdbench_srcs})
 target_link_libraries(sdbench peloton)
+
 
 # --[ logger
 file(GLOB_RECURSE logger_srcs ${PROJECT_SOURCE_DIR}/src/main/logger/*.cpp)
@@ -65,5 +66,13 @@ list(APPEND logger_srcs ${ycsb_srcs})
 list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/ycsb.cpp)
 list(APPEND logger_srcs ${tpcc_srcs})
 list(REMOVE_ITEM  logger_srcs ${PROJECT_SOURCE_DIR}/src/main/tpcc/tpcc.cpp)
-add_executable(logger ${logger_srcs})
+add_executable(logger EXCLUDE_FROM_ALL ${logger_srcs})
 target_link_libraries(logger peloton)
+
+# --[ benchmark
+
+add_custom_target(benchmark)
+
+add_dependencies(benchmark hyadapt ycsb tpcc sdbench logger)
+
+
