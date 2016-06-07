@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "common/harness.h"
-//#include "parser/parser.h"
+#include "parser/parser/pg_query.h"
 
 namespace peloton {
 namespace test {
@@ -24,6 +24,27 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 class ParserTest : public PelotonTest {};
+
+void ParseSQLStrings(const std::vector<std::string>& sql_strings){
+
+  // Initialize the postgres memory context
+  pg_query_init();
+
+  for(auto sql_string : sql_strings) {
+    PgQueryParseResult result = pg_query_parse(sql_string.c_str());
+
+    LOG_INFO("input: %s", sql_string.c_str());
+
+    if (result.error) {
+      LOG_ERROR("error: %s at %d", result.error->message, result.error->cursorpos);
+    } else {
+      LOG_INFO("parse tree: %s", result.parse_tree);
+    }
+
+    pg_query_free_parse_result(result);
+  }
+
+}
 
 TEST_F(ParserTest, SQL92Test) {
 
@@ -43,7 +64,7 @@ TEST_F(ParserTest, SQL92Test) {
   sqlStrings.push_back("UPDATE abc SET age = 34");
   sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
 
-  //Parse(sqlStrings);
+  ParseSQLStrings(sqlStrings);
 }
 
 TEST_F(ParserTest, ExpressionTest) {
@@ -69,7 +90,7 @@ TEST_F(ParserTest, ExpressionTest) {
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND age >= 5");
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age >= 5");
 
-  //Parse(sqlStrings);
+  ParseSQLStrings(sqlStrings);
 }
 
 TEST_F(ParserTest, DDLTest) {
@@ -81,7 +102,7 @@ TEST_F(ParserTest, DDLTest) {
   sqlStrings.push_back("CREATE INDEX FooIndex ON FOO(ID)");
   sqlStrings.push_back("DROP INDEX FooIndex");
 
-  //Parse(sqlStrings);
+  ParseSQLStrings(sqlStrings);
 }
 
 
@@ -89,10 +110,10 @@ TEST_F(ParserTest, OrderByTest) {
 
   std::vector<std::string> sqlStrings;
 
-  //sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
-  //sqlStrings.push_back("SELECT 1 FROM a WHERE 1 = 1 AND 1");
+  sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
+  sqlStrings.push_back("SELECT 1 FROM a WHERE 1 = 1 AND 1");
 
-  //Parse(sqlStrings);
+  ParseSQLStrings(sqlStrings);
 }
 
 }  // End test namespace
