@@ -164,7 +164,7 @@ template <std::size_t KeySize> class IntsKey {
   }
 
   const storage::Tuple GetTupleForComparison(UNUSED_ATTRIBUTE const
-                                             catalog::Schema *key_schema) {
+                                             catalog::Schema *key_schema) const {
     throw IndexException("Tuple conversion not supported");
   }
 
@@ -402,7 +402,7 @@ template <std::size_t KeySize> class GenericKey {
   }
 
   const storage::Tuple GetTupleForComparison(
-      const catalog::Schema *key_schema) {
+      const catalog::Schema *key_schema) const {
     return storage::Tuple(key_schema, data);
   }
 

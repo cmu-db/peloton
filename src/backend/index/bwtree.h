@@ -21,6 +21,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
 #include <vector>
 #include <atomic>
 #include <algorithm>
@@ -40,9 +41,9 @@
  * BWTREE_PELOTON - Specifies whether Peloton-specific features are
  *                  Compiled or not
  *                  We strive to make BwTree a standalone and independent
- *                  module that can be plugged-and-played into any situation
+ *                  module that can be plugged-and-played in any situation
  */
-//#define BWTREE_PELOTON
+#define BWTREE_PELOTON
 
 // Used for debugging
 #include <mutex>
@@ -1322,6 +1323,15 @@ class BwTree {
       ubound_p{nullptr},
       next_node_id{INVALID_NODE_ID}
     {}
+
+    /*
+     * Copy Constructor - Copies three members
+     */
+    BaseLogicalNode(const BaseLogicalNode &node) :
+      lbound_p{node.lbound_p},
+      ubound_p{node.ubound_p},
+      next_node_id{node.next_node_id}
+    {}
   };
 
   /*
@@ -1362,6 +1372,67 @@ class BwTree {
      *                       must be given
      */
     LogicalLeafNode() = delete;
+
+    /*
+     * Copy Constructor - Copies metadata and data associated with the
+     *                    logical leaf node into a newly allocated instance
+     *
+     * NOTE: It is reauired that the pointer list being empty, since it makes
+     * no sense copy constructing a logical leaf node object using another
+     * instance in its intermediate state.
+     * This also helps catching some bugs
+     */
+    LogicalLeafNode(const LogicalLeafNode &node) :
+      // Parent copy constructor
+      BaseLogicalNode{node},
+      tree_p{node.tree_p},
+      // This is the most important one
+      key_value_set{node.key_value_set},
+      pointer_list{} {
+      // We cannot copy construct a logical leaf node in its intermediate
+      // state (i.e. pointer list not being empty)
+      assert(node.pointer_list.size() == 0UL);
+
+      return;
+    }
+    
+    /*
+     * operator= - Copies from source to current instance
+     */
+    LogicalLeafNode &operator=(const LogicalLeafNode &node) {
+      // Self-assignment prevention
+      if(this == &node) {
+        return *this;
+      }
+      
+      // To access parent class's member we use scope resolution operator "::"
+      BaseLogicalNode::lbound_p = node.lbound_p;
+      BaseLogicalNode::ubound_p = node.ubound_p;
+      BaseLogicalNode::next_node_id = node.next_node_id;
+      
+      // Same reason; do not copy assign logcal leaf node in its
+      // intermediate state
+      assert(node.pointer_list.size() == 0UL);
+      assert(pointer_list.size() == 0UL);
+      
+      tree_p = node.tree_p;
+      key_value_set = node.key_value_set;
+      
+      return *this;
+    }
+
+    /*
+     * Destructor
+     *
+     * The destructor checks the size of pointer list to make sure we do not
+     * destroy a logical leaf node in its intermediate state. It is required
+     * that pointer list being empty on destruction.
+     */
+    ~LogicalLeafNode() {
+      assert(pointer_list.size() == 0UL);
+
+      return;
+    }
 
     /*
      * GetContainter() - Reuturn the container that holds key - multi value
@@ -1531,6 +1602,8 @@ class BwTree {
         replay_count--;
 
         // Get rid of the last delta node
+        // TODO: This is inefficient, and we could use a more effective
+        // way to replay the log
         pointer_list.pop_back();
       } // for node_p in node_list
 
@@ -1762,6 +1835,11 @@ class BwTree {
      * to first convert it to the correct type
      */
     NodeSnapshot &operator=(NodeSnapshot &&snapshot) {
+      // Need to prevent self move assignment
+      if(this == &snapshot) {
+        return *this;
+      }
+      
       // We do not allow any NodeSnapshot object to have non-empty
       // logical pointer
       assert(logical_node_p != nullptr);
@@ -1985,6 +2063,60 @@ class BwTree {
       lbound_p = p_lbound_p;
 
       return;
+    }
+
+    /*
+     * MoveLogicalNode() - Move out the logical node
+     *
+     * This function returns the base logical node pointer to caller,
+     * and set the pointer inside this instance as nullptr. The semantics
+     * is similar to the move semantics in a sense that the "read" of
+     * base logical node pointer is destructive and will cause the container
+     * to drop ownership of that pointer.
+     *
+     * After calling this function, the destruction of NodeSnapshot instance
+     * does not free memory allocated for logical node. Caller needs to track
+     * the correct type of logical node returned, and call corresponding
+     * destructors accordingly
+     */
+    inline BaseLogicalNode *MoveLogicalNode() {
+      BaseLogicalNode *temp = logical_node_p;
+
+      // Need to save original value before setting this to nullptr
+      // After setting this to nullptr, the destruction of NodeSnaoshot
+      // does not call logical node's destructor
+      logical_node_p = nullptr;
+
+      return temp;
+    }
+
+    /*
+     * MoveLogicalLeafNode() - Move out logical node as a logical leaf node
+     *
+     * Please refer to MoveLogicalNode for more information about how the
+     * semantics being similar to the move semantics
+     */
+    inline LogicalLeafNode *MoveLogicalLeafNode() {
+      LogicalLeafNode *temp = \
+        static_cast<LogicalLeafNode *>(logical_node_p);
+
+      logical_node_p = nullptr;
+
+      return temp;
+    }
+
+    /*
+     * MoveLogicalInnerNode() - Move out logical node as a logical inner node
+     *
+     * Please refer to MoveLogicalNode for more information
+     */
+    inline LogicalInnerNode *MoveLogicalInnerNode() {
+      LogicalInnerNode *temp = \
+        static_cast<LogicalInnerNode *>(logical_node_p);
+
+      logical_node_p = nullptr;
+
+      return temp;
     }
   };
 
@@ -2481,6 +2613,7 @@ class BwTree {
           // Make sure this flag is set
           NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(context_p);
           assert(snapshot_p->is_root == true);
+          (void)snapshot_p;
 
           bwt_printf("Successfully loading root node ID\n");
 
@@ -2556,6 +2689,7 @@ class BwTree {
           // Take care: Do not use conflict names in the
           // outer scope
           const KeyType *snapshot_lbound_p = nullptr;
+          (void)snapshot_lbound_p;
           const KeyType *snapshot_ubound_p = nullptr;
 
           // Get metadata from the next node we are going to
@@ -3008,6 +3142,7 @@ class BwTree {
     }
 
     bool first_time = true;
+    (void)first_time;
 
     // Save some keystrokes
     const BaseNode *node_p = snapshot_p->node_p;
@@ -3293,6 +3428,7 @@ class BwTree {
                                  bool collect_sep) const {
     // Validate remove node, if any
     bool first_time = true;
+    (void)first_time;
 
     // Used to restrict the upper bound in a local branch
     // If we are collecting upper bound, then this will finally
@@ -3427,7 +3563,7 @@ class BwTree {
                 typename decltype(logical_node_p->key_value_map)::value_type( \
                   delete_node_p->delete_key,
                   INVALID_NODE_ID));
-                  
+
               // We might want to use the return value to validate?
               (void)ret;
             }
@@ -3557,6 +3693,7 @@ class BwTree {
     // This is used to test whether a remove node is valid
     // since it could only be the first node on a delta chain
     bool first_time = true;
+    (void)first_time;
 
     // There is no recursion, but we still need to count the
     // number of delta records to replay
@@ -3810,6 +3947,8 @@ class BwTree {
                                   bool collect_ubound,
                                   bool collect_value) const {
     bool first_time = true;
+    (void)first_time;
+    
     // This is the high key for local branch
     // At the end of the loop if we are collecting high key then
     // this value will be set into logical node as its high key
@@ -4181,6 +4320,7 @@ class BwTree {
     bwt_printf("Jumping to the left sibling\n");
 
     std::vector<NodeSnapshot> *path_list_p = &context_p->path_list;
+    (void)path_list_p;
 
     // Make sure the path list is not empty, and that it has a parent node
     // Even if the original root node splits, the node we are on must be the
@@ -4197,6 +4337,7 @@ class BwTree {
     NodeType type = snapshot_p->node_p->GetType();
     assert(type == NodeType::LeafRemoveType || \
            type == NodeType::InnerRemoveType);
+    (void)type;
 
     // This is the low key of current removed node. Also
     // the low key of the separator-ID pair
@@ -4637,6 +4778,7 @@ before_switch:
         // is overwritten with the lbound_p of left sibling
         const KeyType *remove_node_lbound_p = lbound_p;
         NodeID remove_node_id = node_id;
+        (void)remove_node_id;
 
         // Update current node information
         // NOTE: node_p will not be used here since we have already
@@ -5439,6 +5581,7 @@ before_switch:
     // This CAS must succeed since nobody except this thread could remove
     // the ABORT delta on parent node
     assert(ret == true);
+    (void)ret;
 
     // NOTE: DO NOT FORGET TO REMOVE THE ABORT AFTER
     // UNINSTALLING IT FROM THE PARENT NODE
@@ -5531,6 +5674,8 @@ before_switch:
     assert(snapshot_p->is_leaf == false);
     assert(snapshot_p->has_data == true);
     assert(snapshot_p->has_metadata == true);
+    
+    (void)insert_pid;
 
     KeyNodeIDMap &sep_map = \
       snapshot_p->GetLogicalInnerNode()->GetContainer();
@@ -5591,6 +5736,8 @@ before_switch:
     assert(snapshot_p->is_leaf == false);
     assert(snapshot_p->has_data == true);
     assert(snapshot_p->has_metadata == true);
+    
+    (void)deleted_node_id;
 
     // This is the map that stores key to node ID Mapping
     KeyNodeIDMap &sep_map = \
@@ -5827,6 +5974,138 @@ before_switch:
 
     return true;
   }
+  
+#ifdef BWTREE_PELOTON
+
+  /*
+   * ConditionalInsert() - Insert a key-value pair only if a given
+   *                       predicate fails for all values with a key
+   *
+   * If return true then the value has been inserted
+   * If return false then the value is not inserted. The reason could be
+   * predicates returning true for one of the values of a given key
+   * or because the value is already in the index
+   *
+   * Argument value_p is set to nullptr if all predicate tests returned false
+   *
+   * NOTE: We first test the predicate, and then test for duplicated values
+   * so predicate test result is always available
+   */
+  bool ConditionalInsert(const KeyType &key,
+                         const ValueType &value,
+                         std::function<bool(const ItemPointer &)> predicate,
+                         bool *predicate_satisfied) {
+    bwt_printf("Consitional Insert called\n");
+
+    insert_op_count.fetch_add(1);
+
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+
+    while(1) {
+      Context context{key};
+
+      // Collect values with node navigation
+      Traverse(&context, true);
+
+      NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(&context);
+      LogicalLeafNode *logical_node_p = snapshot_p->GetLogicalLeafNode();
+      KeyValueSet &container = logical_node_p->GetContainer();
+      
+      // At the beginning of each iteration we just set the value pointer
+      // to be empty
+      // Note that in Peloton we always store value as ItemPointer * so
+      // in order for simplicity we just assume the value itself
+      // is a pointer type
+      *predicate_satisfied = false;
+
+      // For insertion for should iterate through existing values first
+      // to make sure the key-value pair does not exist
+      typename KeyValueSet::iterator it = container.find(key);
+      if(it != container.end()) {
+        // v is a reference to ValueType
+        for(auto &v : it->second) {
+          if(predicate(*v) == true) {
+            // To notify the caller that predicate
+            // has been satisfied and we cannot insert
+            *predicate_satisfied = true;
+            
+            // Do not forget this!
+            epoch_manager.LeaveEpoch(epoch_node_p);
+            
+            return false;
+          }
+        }
+        
+        // After evaluating predicate on all values we continue to find
+        // whether there is duplication for the value
+        auto it2 = it->second.find(value);
+
+        if(it2 != it->second.end()) {
+          epoch_manager.LeaveEpoch(epoch_node_p);
+
+          // In this case, value_p is set to nullptr
+          // and return value is false
+          return false;
+        }
+      }
+
+      // We will CAS on top of this
+      const BaseNode *node_p = snapshot_p->node_p;
+      NodeID node_id = snapshot_p->node_id;
+
+      // If node_p is a delta node then we have to use its
+      // delta value
+      int depth = 1;
+
+      if(node_p->IsDeltaNode() == true) {
+        const DeltaNode *delta_node_p = \
+          static_cast<const DeltaNode *>(node_p);
+
+        depth = delta_node_p->depth + 1;
+      }
+
+      const LeafInsertNode *insert_node_p = \
+        new LeafInsertNode{key, value, depth, node_p};
+
+      bool ret = InstallNodeToReplace(node_id,
+                                      insert_node_p,
+                                      node_p);
+      if(ret == true) {
+        bwt_printf("Leaf Insert delta (cond) CAS succeed\n");
+
+        // This will actually not be used anymore, so maybe
+        // could save this assignment
+        snapshot_p->SwitchPhysicalPointer(insert_node_p);
+
+        // If install is a success then just break from the loop
+        // and return
+        break;
+      } else {
+        bwt_printf("Leaf Insert delta (cond) CAS failed\n");
+
+        context.abort_counter++;
+
+        delete insert_node_p;
+      }
+
+      // Update abort counter
+      // NOTE 1: We could not do this before return since the context
+      // object is cleared at the end of loop
+      // NOTE 2: Since Traverse() might abort due to other CAS failures
+      // context.abort_counter might be larger than 1 when
+      // LeafInsertNode installation fails
+      insert_abort_count.fetch_add(context.abort_counter);
+
+      // We reach here only because CAS failed
+      bwt_printf("Retry installing leaf insert delta from the root\n");
+    }
+
+    epoch_manager.LeaveEpoch(epoch_node_p);
+
+    return true;
+  }
+  
+#endif
 
   /*
    * Update() - Update an existing value for a key to a new value
@@ -5943,7 +6222,8 @@ before_switch:
    *
    * This functions shares a same structure with the Insert() one
    */
-  bool Delete(const KeyType &key, const ValueType &value) {
+  bool Delete(const KeyType &key,
+              const ValueType &value) {
     bwt_printf("Delete called\n");
 
     delete_op_count.fetch_add(1);
@@ -6026,6 +6306,123 @@ before_switch:
 
     return true;
   }
+  
+  #ifdef BWTREE_PELOTON
+  
+  /*
+   * DeleteItemPointer() - Deletes an item pointer from the index by comparing
+   *                       the target of the pointer, rather than pointer itself
+   *
+   * Note that this function assumes the value always being ItemPointer *
+   * and in this function we compare item pointer's target rather than
+   * the value of pointers themselves. Also when a value is deleted, we
+   * free the memory, which is allocated when the value is inserted
+   */
+  bool DeleteItemPointer(const KeyType &key,
+                         const ItemPointer &value) {
+    bwt_printf("Delete Item Pointer called\n");
+
+    delete_op_count.fetch_add(1);
+
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+
+    while(1) {
+      Context context{key};
+
+      // Collect values with node navigation
+      Traverse(&context, true);
+
+      NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(&context);
+      LogicalLeafNode *logical_node_p = snapshot_p->GetLogicalLeafNode();
+      KeyValueSet &container = logical_node_p->GetContainer();
+
+      // If the key or key-value pair does not exist then we just
+      // return false
+      typename KeyValueSet::iterator it = container.find(key);
+      if(it == container.end()) {
+        epoch_manager.LeaveEpoch(epoch_node_p);
+
+        return false;
+      }
+
+      bool found_flag = false;
+      ItemPointer *found_value = nullptr;
+      // We iterator over values stored with the given key
+      // v should be ItemPointer *
+      for(ItemPointer *v : it->second) {
+        if((v->block == value.block) &&
+           (v->offset == value.offset)) {
+          found_flag = true;
+          found_value = v;
+        }
+      }
+      
+      // If the value was not found, then just leave the epoch
+      // and return false to notify the caller
+      if(found_flag == false) {
+        assert(found_value == nullptr);
+        
+        epoch_manager.LeaveEpoch(epoch_node_p);
+
+        return false;
+      }
+
+      // We will CAS on top of this
+      const BaseNode *node_p = snapshot_p->node_p;
+      NodeID node_id = snapshot_p->node_id;
+
+      // If node_p is a delta node then we have to use its
+      // delta value
+      int depth = 1;
+
+      if(node_p->IsDeltaNode() == true) {
+        const DeltaNode *delta_node_p = \
+          static_cast<const DeltaNode *>(node_p);
+
+        depth = delta_node_p->depth + 1;
+      }
+
+      const LeafDeleteNode *delete_node_p = \
+        new LeafDeleteNode{key, found_value, depth, node_p};
+
+      bool ret = InstallNodeToReplace(node_id,
+                                      delete_node_p,
+                                      node_p);
+      if(ret == true) {
+        bwt_printf("Leaf Delete delta CAS succeed\n");
+
+        // This will actually not be used anymore, so maybe
+        // could save this assignment
+        snapshot_p->SwitchPhysicalPointer(delete_node_p);
+        
+        // This piece of memory holds ItemPointer, and is allocated by
+        // InsertEntry() in its wrapper class. We need to free the memory
+        // when the index is deleted
+        delete found_value;
+
+        // If install is a success then just break from the loop
+        // and return
+        break;
+      } else {
+        bwt_printf("Leaf Delete delta CAS failed\n");
+
+        delete delete_node_p;
+
+        context.abort_counter++;
+      }
+
+      delete_abort_count.fetch_add(context.abort_counter);
+
+      // We reach here only because CAS failed
+      bwt_printf("Retry installing leaf delete delta from the root\n");
+    }
+
+    epoch_manager.LeaveEpoch(epoch_node_p);
+
+    return true;
+  }
+  
+  #endif
 
   /*
    * GetValue() - Fill a value list with values stored
@@ -6040,7 +6437,7 @@ before_switch:
                 std::vector<ValueType> &value_list) {
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
 
-    Context context{&search_key};
+    Context context{search_key};
 
     Traverse(&context, true);
 
@@ -6241,6 +6638,618 @@ before_switch:
 
     return context_p;
   }
+  
+  /*
+   * Iterator Interface
+   */
+  class ForwardIterator;
+  
+  /*
+   * Begin() - Return an iterator pointing the first element in the tree
+   *
+   * If the tree is currently empty, then the iterator is both a begin
+   * iterator and an end iterator (i.e. both flags are set to true). This
+   * is a valid state.
+   */
+  ForwardIterator Begin() {
+    return ForwardIterator{this};
+  }
+  
+  /*
+   * Begin() - Return an iterator using a given key
+   *
+   * The iterator returned will points to a data item whose key is greater than
+   * or equal to the given start key. If such key does not exist then it will
+   * be the smallest key that is greater than start_key
+   */
+  ForwardIterator Begin(const KeyType &start_key) {
+    return ForwardIterator{this, start_key};
+  }
+
+  /*
+   * Iterators
+   */
+
+  /*
+   * class ForwardIterator - Iterator that supports forward iteration of
+   *                         tree elements
+   *
+   * NOTE: An iterator could be begin() and end() iterator at the same time,
+   * as long as the container is empty. To correctly identify this case, we
+   * need to try loading the first page with key = -Inf to test whether
+   * there is any element stored in the tree. And if not then the iterator
+   * is both begin() and end() iterator at the same time
+   */
+  class ForwardIterator {
+   public:
+    /*
+     * Default Constructor
+     *
+     * NOTE: We try to load the first page using -Inf as the next key
+     * during construction in order to correctly identify the case where
+     * the tree is empty, and such that begin() iterator equals end() iterator
+     */
+    ForwardIterator(BwTree *p_tree_p) :
+      tree_p{p_tree_p},
+      logical_node_p{nullptr},
+      raw_key_p{nullptr},
+      value_set_p{nullptr},
+      key_it{},
+      value_it{},
+      // On initialization, next key is set to -Inf
+      // to indicate it is begin() vector
+      next_key{tree_p->GetNegInfKey()},
+      // These two will be set in LoadNextKey()
+      is_begin{false},
+      is_end{false},
+      key_distance{0},
+      value_distance{0} {
+      // 1. If the tree is not empty then this prepares the first page
+      // 2. If LoadNextKey() sees +Inf on the page, then it set is_end flag
+      // 3. If LoadNextKey() sees next_key being -Inf then it set is_begin flag
+      // and now the iterator is a begin() and end() iterator at the same time
+      LoadNextKey();
+
+      return;
+    }
+    
+    /*
+     * Constructor - Construct an iterator given a key
+     *
+     * The given key would locate the iterator on an data item whose
+     * key is >= the given key. This is useful in range query if
+     * a starting key could be derived according to conditions
+     */
+    ForwardIterator(BwTree *p_tree_p,
+                    const KeyType start_key) :
+      tree_p{p_tree_p},
+      logical_node_p{nullptr},
+      raw_key_p{nullptr},
+      value_set_p{nullptr},
+      key_it{},
+      value_it{},
+      // We set next_key here, and it will be loaded by LoadNextKey()
+      next_key{start_key},
+      // These two will be set in LoadNextKey()
+      is_begin{false},
+      is_end{false},
+      key_distance{0},
+      value_distance{0} {
+      // For a given key rather than -Inf, noe we have an iterator
+      // whose first element is on a key >= given start key
+      LoadNextKey();
+
+      return;
+    }
+    
+    /*
+     * Copy Constructor - Constructs a new iterator instance from existing one
+     *
+     * In ForwardIterator we always maintain the property that logical leaf node
+     * is not shared between iterators. This implies we need to also copy the
+     * logical leaf node during copy construction.
+     */
+    ForwardIterator(const ForwardIterator &it) :
+      tree_p{it.tree_p},
+      // We allocate memory here and call copy constructor
+      logical_node_p{new LogicalLeafNode{*it.logical_node_p}},
+      next_key{it.next_key},
+      // These two also need to be copied from the source
+      is_begin{it.is_begin},
+      is_end{it.is_end},
+      key_distance{it.key_distance},
+      value_distance{it.value_distance} {
+      // First locate key using key distance
+      key_it = logical_node_p->key_value_set.begin();
+      std::advance(key_it, key_distance);
+      
+      // Next locate value using value distance
+      value_it = key_it->second.begin();
+      std::advance(value_it, value_distance);
+      
+      // This refers to the raw key pointer in the new object
+      raw_key_p = &key_it->first.key;
+      value_set_p = &key_it->second;
+      
+      return;
+    }
+    
+    /*
+     * operator= - Assigns one object to another
+     *
+     * DONE: As an optimization we could define an assignment operation
+     * for logical leaf node, and direct assign the logical leaf node from
+     * the source object to the current object
+     */
+    ForwardIterator &operator=(const ForwardIterator &it) {
+      // It is crucial to prevent self assignment since we do pointer
+      // operation here
+      if(this == &it) {
+        return *this;
+      }
+      
+      // First copy the logical node into current instance
+      // DO NOT NEED delete; JUST DO A VALUE COPY
+      assert(logical_node_p != nullptr);
+      *logical_node_p = *it.logical_node_p;
+      
+      // Copy everything that could be copied
+      tree_p = it.tree_p;
+      next_key = it.next_key;
+      
+      is_begin = it.is_begin;
+      is_end = it.is_end;
+      
+      key_distance = it.key_distance;
+      value_distance = it.value_distance;
+      
+      // The following is copied from the copy constructor
+      
+      // NOTE: It is possible that for an empty container
+      // the key value set is empty. In that case key_distance
+      // and value_distance must be 0
+      key_it = logical_node_p->key_value_set.begin();
+      std::advance(key_it, key_distance);
+
+      value_it = key_it->second.begin();
+      std::advance(value_it, value_distance);
+
+      raw_key_p = &key_it->first.key;
+      value_set_p = &key_it->second;
+      
+      // The above is copied from the copy constructor
+      
+      return *this;
+    }
+    
+    /*
+     * operator*() - Return the value reference currently pointed to by this
+     *               iterator
+     *
+     * NOTE: We need to return a constant reference to both save a value copy
+     * and also to prevent caller modifying value using the reference
+     */
+    inline const ValueType &operator*() {
+      // This itself is a ValueType reference
+      return (*value_it);
+    }
+    
+    /*
+     * operator->() - Returns the value pointer pointed to by this iterator
+     *
+     * Note that this function returns a contsnat pointer which can be used
+     * to access members of the value, but cannot modify
+     */
+    inline const ValueType *operator->() {
+      return &(*value_it);
+    }
+    
+    /*
+     * operator< - Compares two iterators by comparing their current key
+     *
+     * Since the structure of the tree keeps changing, there is not a
+     * universal coordinate system that allows us to compare absolute
+     * positions of two iterators, all comparisons are done using the current
+     * key associated with values.
+     *
+     * NOTE: It is possible that for an iterator, no raw keys are stored. This
+     * happens when the tree is empty, or the requested key is larger than
+     * all existing keys in the tree. In that case, end flag is set, so
+     * in this function we check end flag first
+     */
+    inline bool operator<(const ForwardIterator &it) const {
+      if(it.is_end == true) {
+        if(is_end == true) {
+          // If both are end iterator then no one is less than another
+          return false;
+        } else {
+          // Otherwise, the left one is smaller as long as the
+          // RHS is an end iterator
+          return true;
+        }
+      }
+      
+      // If none of them is end iterator, we simply do a key comparison
+      return tree_p->RawKeyCmpLess(*raw_key_p, *it.raw_key_p);
+    }
+    
+    /*
+     * operator==() - Compares whether two iterators refer to the same key
+     *
+     * If both iterators are end iterator then we return true
+     * If one of them is not then the result is false
+     * Otherwise the result is the comparison result of current key
+     */
+    inline bool operator==(const ForwardIterator &it) const {
+      if(it.is_end == true) {
+        if(is_end == true) {
+          // Two end iterators are equal to each other
+          return true;
+        } else {
+          // Otherwise they are not equal
+          return false;
+        }
+      }
+      
+      return tree_p->RawKeyCmpEqual(*raw_key_p, *it.raw_key_p);
+    }
+
+    /*
+     * Destructor
+     *
+     * NOTE: Since we always make copies of logical node object when copy
+     * constructing the iterator, we could always safely delete the logical
+     * node, because its memory is not shared between iterators
+     */
+    ~ForwardIterator() {
+      // This holds even if the tree is empty
+      assert(logical_node_p != nullptr);
+
+      delete logical_node_p;
+
+      return;
+    }
+    
+    /*
+     * Prefix operator++ - Move the iterator ahead and return the new iterator
+     *
+     * This operator moves iterator first, and then return the operator itself
+     * as value of expression
+     *
+     * If the iterator is end() iterator then we do nothing
+     */
+    inline ForwardIterator &operator++() {
+      if(is_end == true) {
+        return *this;
+      }
+      
+      is_begin = false;
+      MoveAheadByOne();
+      
+      return *this;
+    }
+    
+    /*
+     * Postfix operator++ - Move the iterator ahead, and return the old one
+     *
+     * For end() iterator we do not do anything but return the same iterator
+     */
+    inline ForwardIterator operator++(int) {
+      if(is_end == true) {
+        return *this;
+      }
+      
+      // Make a copy of the current one before advancing
+      ForwardIterator temp = *this;
+      
+      // Since it is forward iterator, it is sufficient
+      // to set begin flag to false everytime the iterator is advanced
+      // But this has to be done after saving temp
+      is_begin = false;
+      
+      MoveAheadByOne();
+      
+      return temp;
+    }
+    
+    /*
+     * IsEnd() - Returns true if we have reached the end of iteration
+     *
+     * This is just a wrapper of the private member is_end
+     */
+    inline bool IsEnd() const {
+      return is_end;
+    }
+    
+    /*
+     * IsBegin() - Returns true if this iterator points to the first element
+     *             in the tree
+     *
+     * NOTE: Since the tree keeps changing potentially, this method only
+     * guarantees "first element" at some time in the past, which may not
+     * reflect the current state of the container
+     */
+    inline bool IsBegin() const {
+      return is_begin;
+    }
+    
+    /*
+     * GetCurrentKey() - Returns a const pointer to current key asociated with
+     *                   the value
+     *
+     * We need to return constant pointer to avoid caller modifying the key
+     * returned by this method.
+     */
+    inline const RawKeyType *GetCurrentKey() {
+      // OK This is not elegant
+      // but the wrapper insists that
+      return raw_key_p;
+    }
+
+   private:
+    // We need access to the tree in order to traverse down using
+    // a low key to leaf node level
+    BwTree *tree_p;
+
+    // The consolidated version of current leaf node
+    // the following four members all refer to objects inside this
+    // logical node
+    // NOTE: If iterator is copy constructed, then we need to allocate a new
+    // logical node and copy-construct the new logical leaf node using this one
+    // since iterator is responsible for deallocating memory of the logical
+    // leaf node, we need to prevent sharing of logical node pointers.
+    // NOTE 2: However, as an optimization we move the logical leaf node
+    // out of NodeSnapshot to save unnecessary memory (de)allocation
+    LogicalLeafNode *logical_node_p;
+
+    // Pointers tracking current key and value set
+    const RawKeyType *raw_key_p;
+    const ValueSet *value_set_p;
+
+    // Iterators tracking current position inside the bwtree leaf node
+    typename KeyValueSet::iterator key_it;
+    typename ValueSet::iterator value_it;
+
+    // The upper bound of current logical leaf node. Used to access the next
+    // position (i.e. leaf node) inside bwtree
+    // NOTE: We cannot use next_node_id to access next node since
+    // it might become invalid since the logical node was created. The only
+    // pivotal point we could rely on is the high key, which indicates a
+    // lowerbound of keys we have not seen
+    // NOTE 2: This has to be an object rather than pointer. The reason is that
+    // after this iterator is returned to the user, the actual bwtree node
+    // might be recycled by the epoch manager since thread has exited current
+    // epoch. Therefore we need to copy the wrapped key from bwtree physical
+    // node into the iterator
+    KeyType next_key;
+
+    // The flag indicating whether the iterator is the begin() iterator
+    // This flag is set by LoadNextKey() when the function sees next_key being
+    // -Inf (which implies we are scanning pages from the left most one)
+    // And on each ++ or ++(int) operation, this flag is set back to false
+    // since this is a forward iterator, any operation would make it
+    // unqualified for begin iterator
+    bool is_begin;
+    
+    // We use this flag to indicate whether we have reached the end of
+    // iteration.
+    // NOTE: We could not directly check for next_key being +Inf, since
+    // there might still be keys not scanned yet even if next_key is +Inf
+    // LoadNextKey() checks whether the current page has no key >= next_key
+    // and the next key is +Inf for current page. If these two conditions hold
+    // then we know we have reached the last key of the last page
+    bool is_end;
+    
+    // The following two variables are used in copy construction
+    // since copy construction would invaidate the key and value
+    // iterator in the object being copied from for the new object,
+    // we need numerical values to record current position
+    
+    // How many ++ operations have been performed on key-value set map
+    int key_distance;
+    // How many ++ operations have been performed on value set
+    int value_distance;
+
+    /*
+     * LoadNextKey() - Load logical leaf page whose low key <= next_key
+     *
+     * NOTE: Consider the case where there are two nodes [1, 2, 3] [4, 5, 6]
+     * after we have scanned [1, 2, 3] (i.e. got its logical leaf node object)
+     * the node [4, 5, 6] is merged into [1, 2, 3], forming [1, 2, 3, 4, 5, 6]
+     * then when we query again using the saved high key = 4, we would still
+     * be reading [1, 2, 3] first, which is not consistent (duplicated values)
+     *
+     * To address this problem, after loading a logical node, we need to advance
+     * the key iterator to locate the first key that >= next_key
+     */
+    void LoadNextKey() {
+      // Caller needs to guarantee this function not being called if
+      // we have already reached the end
+      assert(is_end == false);
+
+      // Special case: If the next key is NegInf
+      // then we know this is begin() iterator
+      // and the other members are either nullptr or empty
+      if(next_key.IsNegInf() == true) {
+        assert(logical_node_p == nullptr);
+        assert(raw_key_p == nullptr);
+        assert(value_set_p == nullptr);
+        
+        // When we load -Inf then we know it is the first time
+        // we load a page, from the first page
+        is_begin = true;
+      } else {
+        assert(is_begin == false);
+      }
+
+      // First join the epoch to prevent physical nodes being deallocated
+      // too early
+      EpochNode *epoch_node_p = tree_p->epoch_manager.JoinEpoch();
+
+    load_next_key:
+      Context context{next_key};
+
+      // Traverse to the leaf page whose range includes the key
+      // NOTE: We do not collect values associated with the key
+      // by setting the second argument to false
+      // Since we are actually just using the low key to find page
+      // rather than trying to collect its values
+      tree_p->Traverse(&context, false);
+
+      // Then collect all data in the logical leaf node
+      NodeSnapshot *snapshot_p = tree_p->GetLatestNodeSnapshot(&context);
+      if(snapshot_p->has_data == true) {
+        assert(snapshot_p->has_metadata == true);
+      } else {
+        tree_p->CollectAllValuesOnLeaf(snapshot_p);
+
+        assert(snapshot_p->has_data == true);
+        assert(snapshot_p->has_metadata == true);
+      }
+
+      // First move out the logical leaf node from the last snapshot
+      // in path histoty
+      logical_node_p = snapshot_p->MoveLogicalLeafNode();
+
+      // It is a map interator
+      key_it = logical_node_p->key_value_set.begin();
+      key_distance = 0;
+      
+      do {
+        // This way we could hit the end of key value set
+        // Consider the case [1, 2, 3] [4, 5, 6], after we
+        // have scanned [1, 2, 3], all keys were deleted except 1
+        // then we query the tree with next key = 4. In that case
+        // we cannot find a key >= 4 in the page returned
+        // In this case we should proceed to the next page using 
+        // the high key of current page
+        if(key_it == logical_node_p->key_value_set.end()) {
+          if(logical_node_p->ubound_p->IsPosInf() == true) {
+            // Set the flag to direcyly indicate caller that we
+            // have reached the end of iteration
+            is_end = true;
+
+            // NOTE: At this point, raw_key_p is not set
+            // so we cannot compare the iterator with other
+            // iterators using keys
+            // We need to inspect is_end first
+            return;
+          } else {
+            // Need to set next key as the high key of current page, since
+            // in this situation, current node does not contain any key
+            // that >= the next key, so we go to the next page by using high
+            // key as the search key
+            next_key = *logical_node_p->ubound_p;
+
+            goto load_next_key;
+          }
+        }
+        
+        if(tree_p->KeyCmpLess(key_it->first, next_key) == true) {
+          // These two should always be increamented together
+          key_it++;
+          key_distance++;
+        } else {
+          break;
+        }
+      } while(1);
+
+      // It is the first value associated with the key
+      value_it = key_it->second.begin();
+      value_distance = 0;
+
+      // Then prepare for next key
+      // NOTE: Must copy the key, since the key needs to be preserved
+      // across many query sessions
+      // NOTE 2: Once we have reached the last logical leaf page, next_key
+      // would be +Inf. That is the reason we could not check for next_key
+      // being +Inf to decide whether end has been reached
+      next_key = *logical_node_p->ubound_p;
+
+      // Set the two shortcut pointers (they are not really needed
+      // but we keep them as a shortcut)
+      raw_key_p = &key_it->first.key;
+      value_set_p = &key_it->second;
+
+      // Leave the epoch, since we have already had all information
+      // NOTE: Before this point we need to collect all data inside
+      // shared data structure since after this point they might be
+      // deallocated by other threads
+      tree_p->epoch_manager.LeaveEpoch(epoch_node_p);
+
+      return;
+    }
+    
+    /*
+     * IsLastLeafPage() - Return true if the leaf page is the last one
+     *
+     * We check for last page by checking whether the next key is +Inf
+     * If it is true then we know we are now on the last page, and if keys
+     * run out then we further know we are at the end of iteration
+     */
+    bool IsLastLeafPage() {
+      // If the next key is +Inf then we are on the last page
+      return next_key.IsPosInf();
+    }
+    
+    /*
+     * MoveAheadByOne() - Move the iterator ahead by one
+     *
+     * The caller is responsible for checking whether the iterator has reached
+     * its end. If iterator has reached end then assertion fails.
+     */
+    inline void MoveAheadByOne() {
+      // This invalidates the iterator as the begin iterator
+      is_begin = false;
+      
+      value_it++;
+      value_distance++;
+      
+      // If we have reached the last element for a given key,
+      // then change to the next key (in key order)
+      // and readjust value iterator to the first element
+      if(value_it == key_it->second.end()) {
+        // Try to increament the key iterator first, and if we
+        // run out of keys we know this is the end of page
+        key_it++;
+        key_distance++;
+        
+        if(key_it == logical_node_p->key_value_set.end()) {
+          // If we ran out of keys, and we are on the last page
+          if(IsLastLeafPage() == true) {
+            is_end = true;
+            
+            return;
+          } else {
+            // This will set key_it to the first key >= next_key
+            // but not sure about key distance
+            // NOTE: This function could result in reaching the end iterator
+            // in that case key_it is invalid
+            LoadNextKey();
+            
+            // If current page is not last page, but load next key
+            // sets is_end flag, then we know the page after this page
+            // has been merged into current page, and all keys >= next_key
+            // has been deleted
+            // This is an extremely complicated case, and it worth that many
+            // lines of comments to make it clear
+            if(is_end == true) {
+              return;
+            }
+          } // if is last leaf page == true
+        } // if key_it == end()
+        
+        // If we switched to the next key in current page
+        // or we have loaded a new page and readjusted the key to be
+        // the first element in the page, we need also to readjust the
+        // value iterator to the first element for the current key
+        value_it = key_it->second.begin();
+        value_distance = 0;
+      } // if value_it == end()
+      
+      return;
+    }
+  };
 
   /*
    * Interactive Debugger
@@ -7197,10 +8206,12 @@ before_switch:
      */
     struct EpochNode {
       // We need this to be atomic in order to accurately
-      // counter the number of threads
+      // counte the number of threads
       std::atomic<size_t> active_thread_count;
+      
       // We need this to be atomic to be able to
       // add garbage nodes without any race condition
+      // i.e. GC nodes are CASed onto this pointer
       std::atomic<GarbageNode *> garbage_list_p;
 
       // This does not need to be atomic since it is
@@ -7311,6 +8322,8 @@ before_switch:
     void CreateNewEpoch() {
       bwt_printf("Creating new epoch...\n");
 
+      // TODO: There is currently a bug that throws malloc: memory corruption
+      // message on this statement
       EpochNode *epoch_node_p = new EpochNode{};
 
       epoch_node_p->active_thread_count = 0UL;
@@ -7661,5 +8674,4 @@ before_switch:
 }  // End index namespace
 }  // End peloton namespace
 #endif
-
 
