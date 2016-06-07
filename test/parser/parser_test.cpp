@@ -47,18 +47,21 @@ class SqlEngineTestCase {
 
       LOG_INFO("I : %s", (*sqlString).c_str());
 
-      ASSERT_TRUE(sqlParser->parse(*sqlString));
+      sqlParser->parse(*sqlString);
 
       std::string parseResult;
       sqlParser->getStatement()->toString(parseResult);
 
       int compareResult = parseResult.compare(*sqlString);
-      ASSERT_EQ(compareResult, 0);
 
       if (compareResult == 0) {
-        LOG_INFO("O : %s", parseResult.c_str());
         std::string buf;
         LOG_INFO("String: %s", sqlParser->getStatement()->toTreeString(buf).c_str());
+      }
+      else {
+        auto error = sqlParser->getError();
+        auto error_msg = error->getMessage();
+        LOG_INFO("Error: %s", error_msg.c_str());
       }
 
       sqlString++;
@@ -118,6 +121,21 @@ TEST_F(ParserTest, ExpressionTest) {
   SqlEngineTestCase sqlTestCase(&sqlParser);
   sqlTestCase.parse(sqlStrings);
 }
+
+TEST_F(ParserTest, DDLTest) {
+
+  std::vector<std::string> sqlStrings;
+
+  sqlStrings.push_back("CREATE TABLE Foo(ID integer, SALARY integer)");
+  sqlStrings.push_back("DROP TABLE Foo");
+  sqlStrings.push_back("CREATE INDEX FooIndex ON FOO(ID)");
+  sqlStrings.push_back("DROP INDEX FooIndex");
+
+  parser::SQL92Parser sqlParser;
+  SqlEngineTestCase sqlTestCase(&sqlParser);
+  sqlTestCase.parse(sqlStrings);
+}
+
 
 TEST_F(ParserTest, OrderByTest) {
 
