@@ -10,6 +10,30 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// circular_buffer_pool.h
+//
+// Identification: src/include/logging/circular_buffer_pool.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// circular_buffer_pool.h
+//
+// Identification: src/include/logging/circular_buffer_pool.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * circular_buffer_pool.h

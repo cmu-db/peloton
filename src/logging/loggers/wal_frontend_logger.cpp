@@ -22,6 +22,30 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wal_frontend_logger.cpp
+//
+// Identification: src/logging/loggers/wal_frontend_logger.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/mman.h>

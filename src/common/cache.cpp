@@ -12,7 +12,7 @@
 
 #include "common/cache.h"
 
-#include "../include/wire/statement.h"
+#include "common/statement.h"
 #include "common/macros.h"
 #include "planner/abstract_plan.h"
 

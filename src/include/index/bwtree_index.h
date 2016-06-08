@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <functional>
 
 #include "catalog/manager.h"
 #include "common/platform.h"

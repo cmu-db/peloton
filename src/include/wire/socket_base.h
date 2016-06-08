@@ -52,7 +52,9 @@ struct Server {
   int max_connections;
 
   inline Server()
-      : port(FLAGS_port), server_fd(0), max_connections(FLAGS_max_connections) {}
+      : port(FLAGS_port),
+        server_fd(0),
+        max_connections(FLAGS_max_connections) {}
 };
 
 // Buffers used to batch meesages at the socket
@@ -138,7 +140,7 @@ void HandleConnections(Server *server) {
 
     std::unique_ptr<int> clientfd(new int(connfd));
 
-    std::cout << "LAUNCHING NEW THREAD" << std::endl;
+    LOG_INFO("LAUNCHING NEW THREAD");
     std::thread client_thread(ClientHandler<P, B>, std::move(clientfd));
     client_thread.detach();
   }
