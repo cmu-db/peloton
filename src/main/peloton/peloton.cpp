@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Setup signal handlers
-  peloton::RegisterSignalHandlers();
+  //peloton::RegisterSignalHandlers();
 
   // Launch server
   peloton::wire::Server server;
