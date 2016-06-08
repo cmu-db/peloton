@@ -82,13 +82,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
   std::vector<oid_t> column_ids_;
 
- // std::vector<oid_t> key_column_ids_;
-
- // std::vector<ExpressionType> expr_types_;
-
   std::vector<peloton::Value> values_;
-
- // std::vector<expression::AbstractExpression *> runtime_keys_;
 
   std::vector<oid_t> full_column_ids_;
 
