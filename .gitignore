@@ -299,3 +299,6 @@ docs/gathered
 _site
 doxygen
 docs/dev
+
+# Config files
+*.conf
