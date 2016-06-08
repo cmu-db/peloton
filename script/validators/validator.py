@@ -34,8 +34,8 @@ DEFAULT_DIRS.append(PELOTON_TEST_DIR)
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
-VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout",  
-                      " malloc\(", " free\(", " memset\(", " memcpy\(", 
+VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout",
+                      " malloc\(", " free\(", " memset\(", " memcpy\(",
                       " \:\:memset\(", " \:\:memcpy\(", " std\:\:memset\(", " std\:\:memcpy\(",
                       "\_\_attribute\_\_\(\(unused\)\)"]
 
@@ -67,7 +67,7 @@ SKIP_FILES_LIST = [
     "src/include/parser/utils/palloc.h",
     "src/include/parser/utils/hsearch.h",
     "src/include/parser/nodes/memnodes.h",
-    "src/parser/backend/utils/mmgr/mcxt.cpp",    
+    "src/parser/backend/utils/mmgr/mcxt.cpp",
     "src/include/parser/port_config/linux/pg_config.h",
     "src/include/parser/lib/ilist.h",
     "src/include/parser/storage/sinval.h",
@@ -89,7 +89,6 @@ def validate_file(file_path):
     abs_path = os.path.abspath(file_path)
     rel_path_from_peloton_dir = os.path.relpath(abs_path,PELOTON_DIR)
 
-    print(rel_path_from_peloton_dir)
     # Skip some files
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
         return True
