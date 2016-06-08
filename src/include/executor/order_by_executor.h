@@ -90,9 +90,6 @@ class OrderByExecutor : public AbstractExecutor {
   /** Tuples in sort_buffer only contains the sort keys */
   std::unique_ptr<catalog::Schema> sort_key_tuple_schema_;
 
-  /** ASC/DESC flags */
-  std::vector<bool> descend_flags_;
-
   /** How many tuples have been returned to parent */
   size_t num_tuples_returned_ = 0;
 };

@@ -112,7 +112,7 @@ bool OrderByExecutor::DoSort() {
 
   // Grab data from plan node
   const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
-  descend_flags_ = node.GetDescendFlags();
+  std::vector<bool> descend_flags_ = node.GetDescendFlags();
 
   // Extract the schema for sort keys.
   input_schema_.reset(input_tiles_[0]->GetPhysicalSchema());
