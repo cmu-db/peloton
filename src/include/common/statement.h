@@ -4,7 +4,7 @@
 //
 // statement.h
 //
-// Identification: src/include/wire/statement.h
+// Identification: src/include/common/statement.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,14 +15,21 @@
 #include <string>
 #include <vector>
 
-#include <sqlite3.h>
+namespace peloton {
 
-struct Statement {
+class PreparedStatement {
+
+};
+
+class Statement {
+
+ public:
+
   // logical name of statement
   std::string stmt_name;
 
-  // pointer to statement allocated by sqlite
-  sqlite3_stmt *sql_stmt;
+  // pointer to prepared statement
+  PreparedStatement *sql_stmt;
 
   // query string
   std::string query_string;
@@ -32,4 +39,7 @@ struct Statement {
 
   // format codes of the parameters
   std::vector<int32_t> param_types;
+
 };
+
+}  // namespace peloton

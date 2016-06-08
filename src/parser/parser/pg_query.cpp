@@ -9,3 +9,8 @@ void pg_query_init(void)
 	MemoryContextInit();
 	SetDatabaseEncoding(PG_UTF8);
 }
+
+void pg_query_destroy(void)
+{
+  MemoryContextDelete(TopMemoryContext);
+}
