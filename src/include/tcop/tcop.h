@@ -19,6 +19,7 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace tcop {
@@ -40,9 +41,13 @@ class TrafficCop {
   ~TrafficCop();
 
   // PortalExec - Execute query string
-  int PortalExec(const char *query, std::vector<ResType> &res,
-                 std::vector<FieldInfoType> &info, int &rows_change,
-                 std::string &err_msg);
+  Result PortalExec(const std::string& query, std::vector<ResType> &res,
+                    std::vector<FieldInfoType> &info, int &rows_change,
+                    std::string &err_msg);
+
+  // ExecPrepStmt - Execute a statement from a prepared and bound statement
+  Result ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
+                      int &rows_change, std::string &err_msg);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
   int PrepareStmt(const char *query, PreparedStatement **stmt, std::string &err_msg);
@@ -52,10 +57,6 @@ class TrafficCop {
 
   // GetRowDesc - Get RowDescription of a query
   void GetRowDesc(void *stmt, std::vector<FieldInfoType> &info);
-
-  // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  int ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
-                   int &rows_change, std::string &err_msg);
 
   static void CopyFromTo(const char *src, std::vector<unsigned char> &dst);
 
