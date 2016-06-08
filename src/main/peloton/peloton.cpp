@@ -15,13 +15,13 @@
 
 #include "wire/socket_base.h"
 #include "wire/wire.h"
+#include "common/stack_trace.h"
 
 DECLARE_bool(help);
 DECLARE_bool(h);
 
 // Peloton process begins execution here.
 int main(int argc, char *argv[]) {
-
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
   if (FLAGS_help || FLAGS_h) {
@@ -29,6 +29,9 @@ int main(int argc, char *argv[]) {
     ::google::SetUsageMessage("Usage Info: \n");
     ::google::HandleCommandLineHelpFlags();
   }
+
+  // Setup signal handlers
+  peloton::RegisterSignalHandlers();
 
   // Launch server
   peloton::wire::Server server;

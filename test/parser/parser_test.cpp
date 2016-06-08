@@ -4,7 +4,7 @@
 //
 // parser_test.cpp
 //
-// Identification: test/common/parser_test.cpp
+// Identification: test/parser/parser_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -26,31 +26,28 @@ namespace test {
 class ParserTest : public PelotonTest {};
 
 void ParseSQLStrings(const std::vector<std::string>& sql_strings,
-                     const bool expect_failure){
-
+                     const bool expect_failure) {
   // Initialize the postgres memory context
   pg_query_init();
 
-  for(auto sql_string : sql_strings) {
+  for (auto sql_string : sql_strings) {
     PgQueryParseResult result = pg_query_parse(sql_string.c_str());
 
-    if(expect_failure == true){
+    if (expect_failure == true) {
       EXPECT_NE(result.error, nullptr);
       LOG_INFO("input: %s", sql_string.c_str());
-      LOG_ERROR("error: %s at %d", result.error->message, result.error->cursorpos);
-    }
-    else {
+      LOG_ERROR("error: %s at %d", result.error->message,
+                result.error->cursorpos);
+    } else {
       EXPECT_EQ(result.error, nullptr);
-      //LOG_INFO("parse tree: %s", result.parse_tree);
+      // LOG_INFO("parse tree: %s", result.parse_tree);
     }
 
     pg_query_free_parse_result(result);
   }
-
 }
 
 TEST_F(ParserTest, SQL92Test) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("SELECT * FROM SAMPLE1");
@@ -72,7 +69,6 @@ TEST_F(ParserTest, SQL92Test) {
 }
 
 TEST_F(ParserTest, ExpressionTest) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("SELECT * FROM A WHERE age == 18");
@@ -86,20 +82,27 @@ TEST_F(ParserTest, ExpressionTest) {
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35");
   sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35");
 
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10");
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10");
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 OR age <= 10");
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 AND age <= 10");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 AND age <= 35 OR age <= 10");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 OR age <= 35 AND age <= 10");
 
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND age >= 5");
-  sqlStrings.push_back("SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age >= 5");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 AND age <= 35 AND age <= 10 AND "
+      "age >= 5");
+  sqlStrings.push_back(
+      "SELECT * FROM Person WHERE age >= 18 OR age <= 35 OR age <= 10 OR age "
+      ">= 5");
 
   bool expect_failure = false;
   ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 TEST_F(ParserTest, DDLTest) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("CREATE TABLE Foo(ID integer, SALARY integer)");
@@ -111,9 +114,7 @@ TEST_F(ParserTest, DDLTest) {
   ParseSQLStrings(sqlStrings, expect_failure);
 }
 
-
 TEST_F(ParserTest, OrderByTest) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("SELECT id FROM a.b ORDER BY id");
@@ -124,22 +125,26 @@ TEST_F(ParserTest, OrderByTest) {
 }
 
 TEST_F(ParserTest, MoreTest) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("SELECT 1");
   sqlStrings.push_back("SELECT * FROM x WHERE z = 2");
   sqlStrings.push_back("SELECT 5.41414");
   sqlStrings.push_back("SELECT $1");
-  sqlStrings.push_back("SELECT 999999999999999999999::numeric/1000000000000000000000");
-  sqlStrings.push_back("SELECT 4790999999999999999999999999999999999999999999999999999999999999999999999999999999999999 * 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999");
+  sqlStrings.push_back(
+      "SELECT 999999999999999999999::numeric/1000000000000000000000");
+  sqlStrings.push_back(
+      "SELECT "
+      "479099999999999999999999999999999999999999999999999999999999999999999999"
+      "9999999999999999 * "
+      "999999999999999999999999999999999999999999999999999999999999999999999999"
+      "9999999999999999");
 
   bool expect_failure = false;
   ParseSQLStrings(sqlStrings, expect_failure);
 }
 
 TEST_F(ParserTest, FailureTest) {
-
   std::vector<std::string> sqlStrings;
 
   sqlStrings.push_back("SELECT ?");

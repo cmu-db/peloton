@@ -194,7 +194,7 @@ int Sqlite::ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
     sqlite3_reset(sql_stmt);
 
   // TODO: Fix this
-  //sqlite3_db_release_memory(sqlite_db_);
+  // sqlite3_db_release_memory(sqlite_db_);
   // sql_stmt = nullptr;
   if (ret != SQLITE_DONE) {
     LOG_INFO("ret num %d, err is %s", ret, sqlite3_errmsg(sqlite_db_));

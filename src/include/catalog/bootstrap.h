@@ -16,11 +16,11 @@
 
 namespace peloton {
 
-namespace catalog{
+namespace catalog {
 class Schema;
 }
 
-namespace storage{
+namespace storage {
 class DataTable;
 }
 
@@ -30,25 +30,24 @@ namespace catalog {
 // Bootstrap
 //===--------------------------------------------------------------------===//
 
-class Bootstrap{
+class Bootstrap {
+ public:
+  // Bootstrap Catalog
+  void bootstrap();
 
-public:
+  // Initialize Schemas
+  void InitializeCatalogsSchemas();
 
-	// Bootstrap Catalog
-	void bootstrap();
+  // Create Table for pg_class
+  storage::DataTable CreateTableCatalog(oid_t table_oid, std::string table_name,
+                                        catalog::Schema *table_schema);
 
-	// Initialize Schemas
-	void InitializeCatalogsSchemas();
+  // Create Table for pg_database
+  storage::DataTable CreateDatabaseCatalog(oid_t table_oid,
+                                           std::string table_name,
+                                           catalog::Schema *table_schema);
 
-	// Create Table for pg_class
-	storage::DataTable CreateTableCatalog(oid_t table_oid, std::string table_name, catalog::Schema *table_schema);
-
-	// Create Table for pg_database
-	storage::DataTable CreateDatabaseCatalog(oid_t table_oid, std::string table_name, catalog::Schema *table_schema);
-
-	// TODO: Other Catalogs should be added here
-
+  // TODO: Other Catalogs should be added here
 };
-
 }
 }
