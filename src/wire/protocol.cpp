@@ -18,9 +18,10 @@
 #include "common/macros.h"
 
 #include "wire/marshal.h"
-#include "wire/portal.h"
+#include "common/portal.h"
+#include "tcop/tcop.h"
+
 #include <boost/algorithm/string.hpp>
-#include "../include/wire/statement.h"
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
 
@@ -112,7 +113,7 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
   return true;
 }
 
-void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc,
+void PacketManager::PutRowDesc(std::vector<FieldInfoType> &rowdesc,
                                ResponseBuffer &responses) {
   if (!rowdesc.size()) return;
 
@@ -140,7 +141,7 @@ void PacketManager::PutRowDesc(std::vector<wire::FieldInfoType> &rowdesc,
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<wire::ResType> &results,
+void PacketManager::SendDataRows(std::vector<ResType> &results,
                                  int colcount, int &rows_affected,
                                  ResponseBuffer &responses) {
   if (!results.size() || !colcount) return;
@@ -219,8 +220,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
   return true;
 }
 
-// TODO: rewrite this method
-/* The Simple Query Protocol */
+// The Simple Query Protocol
 void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
@@ -229,12 +229,16 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
+
   // just a ';' sent
   if (queries.size() == 1) {
     SendEmptyQueryResponse(responses);
     SendReadyForQuery(txn_state, responses);
     return;
   }
+
+  // Get traffic cop
+  auto &tcop = tcop::TrafficCop::GetInstance();
 
   // iterate till before the trivial string after the last ';'
   for (auto query = queries.begin(); query != queries.end() - 1; query++) {
@@ -244,14 +248,14 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
       return;
     }
 
-    std::vector<wire::ResType> results;
-    std::vector<wire::FieldInfoType> rowdesc;
+    std::vector<ResType> results;
+    std::vector<FieldInfoType> rowdesc;
     std::string err_msg;
     int rows_affected;
 
     // execute the query in Sqlite
     int isfailed =
-        db.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
+        tcop.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
 
     if (isfailed) {
       SendErrorResponse({{'M', err_msg}}, responses);
@@ -280,11 +284,13 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   GetStringToken(pkt, prep_stmt_name);
 
   // Read prepare statement name
-  sqlite3_stmt *stmt = nullptr;
+  PreparedStatement *stmt = nullptr;
   LOG_INFO("Prep stmt: %s", prep_stmt_name.c_str());
   // Read query string
   GetStringToken(pkt, query);
   LOG_INFO("Parse Query: %s", query.c_str());
+
+  auto &tcop = tcop::TrafficCop::GetInstance();
 
   skipped_stmt_ = false;
   query_type = get_query_type(query);
@@ -296,7 +302,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     LOG_INFO("Statement to be skipped");
   } else {
     // Prepare statement
-    int is_failed = db.PrepareStmt(query.c_str(), &stmt, err_msg);
+    int is_failed = tcop.PrepareStmt(query.c_str(), &stmt, err_msg);
     if (is_failed) {
       SendErrorResponse({{'M', err_msg}}, responses);
       SendReadyForQuery(txn_state, responses);
@@ -372,7 +378,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // Get statement info generated in PARSE message
-  sqlite3_stmt *stmt = nullptr;
+  PreparedStatement *stmt = nullptr;
   std::shared_ptr<Statement> entry;
   if (prep_stmt_name.empty()) {
     LOG_INFO("Unnamed statement");
@@ -413,14 +419,14 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // BIND packet NULL parameter case
     if (param_len == -1) {
       // NULL mode
-      bind_parameters.push_back(std::make_pair(WIRE_NULL, std::string("")));
+      bind_parameters.push_back(std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::string("")));
     } else {
       PacketGetBytes(pkt, param_len, param);
 
       if (formats[param_idx] == 0) {
         // TEXT mode
         std::string param_str = std::string(std::begin(param), std::end(param));
-        bind_parameters.push_back(std::make_pair(WIRE_TEXT, param_str));
+        bind_parameters.push_back(std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
       } else {
         // BINARY mode
         switch (entry->param_types[param_idx]) {
@@ -430,7 +436,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters.push_back(
-                std::make_pair(WIRE_INTEGER, std::to_string(int_val)));
+                std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -440,7 +446,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             memcpy(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(
-                std::make_pair(WIRE_FLOAT, std::to_string(float_val)));
+                std::make_pair(ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
             // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
           } break;
           default: {
@@ -453,7 +459,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   std::string err_msg;
-  bool is_failed = db.BindStmt(bind_parameters, &stmt, err_msg);
+  auto &tcop = tcop::TrafficCop::GetInstance();
+  bool is_failed = tcop.BindStmt(bind_parameters, &stmt, err_msg);
   if (is_failed) {
     SendErrorResponse({{'M', err_msg}}, responses);
     SendReadyForQuery(txn_state, responses);
@@ -494,12 +501,13 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto portal_itr = portals_.find(name);
     if (portal_itr == portals_.end()) {
       // TODO: error handling here
-      std::vector<wire::FieldInfoType> rowdesc;
+      std::vector<FieldInfoType> rowdesc;
       PutRowDesc(rowdesc, responses);
       return;
     }
     std::shared_ptr<Portal> p = portal_itr->second;
-    db.GetRowDesc(p->stmt, p->tuple_desc);
+    auto &tcop = tcop::TrafficCop::GetInstance();
+    tcop.GetRowDesc(p->stmt, p->tuple_desc);
     PutRowDesc(p->tuple_desc, responses);
   }
 }
@@ -507,9 +515,9 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
   LOG_INFO("EXECUTE message");
-  std::vector<wire::ResType> results;
+  std::vector<ResType> results;
   std::string err_msg, portal_name;
-  sqlite3_stmt *stmt = nullptr;
+  PreparedStatement *stmt = nullptr;
   int rows_affected = 0, is_failed;
   GetStringToken(pkt, portal_name);
 
@@ -535,10 +543,10 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // acquire the mutex if we are starting a txn
   if (query_string.compare("BEGIN") == 0) {
     LOG_WARN("BEGIN - acquire lock");
-    sqlite_mutex.lock();
   }
 
-  is_failed = db.ExecPrepStmt(stmt, unnamed, results, rows_affected, err_msg);
+  auto &tcop = tcop::TrafficCop::GetInstance();
+  is_failed = tcop.ExecPrepStmt(stmt, unnamed, results, rows_affected, err_msg);
   if (is_failed) {
     LOG_INFO("Failed to execute: %s", err_msg.c_str());
     SendErrorResponse({{'M', err_msg}}, responses);
@@ -548,7 +556,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // release the mutex after a txn commit
   if (query_string.compare("COMMIT") == 0) {
     LOG_WARN("COMMIT - release lock");
-    sqlite_mutex.unlock();
   }
 
   // put_row_desc(portal->rowdesc, responses);

@@ -12,16 +12,17 @@
 
 #pragma once
 
-#include "socket_base.h"
-#include "sqlite.h"
 #include <vector>
 #include <string>
 #include <iostream>
 #include <unordered_map>
+
 #include <boost/assign/list_of.hpp>
 
 #include "common/cache.h"
-#include "statement.h"
+#include "common/statement.h"
+#include "common/portal.h"
+#include "wire/socket_base.h"
 
 // TXN state definitions
 #define BUFFER_INIT_SIZE 100
@@ -80,8 +81,6 @@ class PacketManager {
   std::string skipped_query_;
   std::string skipped_query_type_;
 
-  wire::Sqlite db;  // dbhandler to use sqlite
-
   static const std::unordered_map<std::string, std::string>
       parameter_status_map;
 
@@ -97,11 +96,11 @@ class PacketManager {
   void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
 
   // Sends the attribute headers required by SELECT queries
-  void PutRowDesc(std::vector<wire::FieldInfoType>& rowdesc,
+  void PutRowDesc(std::vector<FieldInfoType>& rowdesc,
                   ResponseBuffer& responses);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<wire::ResType>& results, int colcount,
+  void SendDataRows(std::vector<ResType>& results, int colcount,
                     int& rows_affected, ResponseBuffer& responses);
 
   // Used to send a packet that indicates the completion of a query. Also has
@@ -155,6 +154,7 @@ class PacketManager {
 
   /* Protocol manager */
   void ManagePackets();
+
 };
 
 }  // End wire namespace
