@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "abstract_service.pb.h"
+#include "peloton/proto/abstract_service.pb.h"
 
 #include <memory>
 

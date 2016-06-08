@@ -23,11 +23,11 @@ namespace {}  // anonymous namespace
 //===--------------------------------------------------------------------===//
 // Compatibility with Postgres
 //===--------------------------------------------------------------------===//
-bool ShouldPelotonOptimize(std::string parse) {
+bool ShouldPelotonOptimize(std::string) {
   return false;
 }
 
-std::shared_ptr<Select> PostgresQueryToPelotonQuery(std::string parse) {
+std::shared_ptr<Select> PostgresQueryToPelotonQuery(std::string) {
   return NULL;
 }
 
