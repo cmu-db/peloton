@@ -38,12 +38,23 @@ TrafficCop::~TrafficCop() {
 
 }
 
-int TrafficCop::PortalExec(UNUSED_ATTRIBUTE const char *query,
-                           UNUSED_ATTRIBUTE std::vector<ResType> &res,
-                           UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info,
-                           UNUSED_ATTRIBUTE int &rows_change,
-                           UNUSED_ATTRIBUTE std::string &err_msg){
-  return 0;
+Result TrafficCop::PortalExec(UNUSED_ATTRIBUTE const std::string& query,
+                              UNUSED_ATTRIBUTE std::vector<ResType> &res,
+                              UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info,
+                              UNUSED_ATTRIBUTE int &rows_change,
+                              UNUSED_ATTRIBUTE std::string &err_msg){
+
+  return Result::RESULT_FAILURE;
+}
+
+
+Result TrafficCop::ExecPrepStmt(UNUSED_ATTRIBUTE void *stmt,
+                                UNUSED_ATTRIBUTE bool unnamed,
+                                UNUSED_ATTRIBUTE std::vector<ResType> &res,
+                                UNUSED_ATTRIBUTE int &rows_change,
+                                UNUSED_ATTRIBUTE std::string &err_msg){
+
+  return Result::RESULT_FAILURE;
 }
 
 int TrafficCop::PrepareStmt(UNUSED_ATTRIBUTE const char *query,
@@ -60,14 +71,6 @@ int TrafficCop::BindStmt(UNUSED_ATTRIBUTE std::vector<std::pair<int, std::string
 
 void TrafficCop::GetRowDesc(UNUSED_ATTRIBUTE void *stmt,
                             UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info){
-}
-
-int TrafficCop::ExecPrepStmt(UNUSED_ATTRIBUTE void *stmt,
-                             UNUSED_ATTRIBUTE bool unnamed,
-                             UNUSED_ATTRIBUTE std::vector<ResType> &res,
-                             UNUSED_ATTRIBUTE int &rows_change,
-                             UNUSED_ATTRIBUTE std::string &err_msg){
-  return 0;
 }
 
 void TrafficCop::CopyFromTo(UNUSED_ATTRIBUTE const char *src,
