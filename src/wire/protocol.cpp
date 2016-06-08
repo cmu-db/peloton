@@ -254,10 +254,10 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     int rows_affected;
 
     // execute the query in Sqlite
-    int isfailed =
-        tcop.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
+    auto status = tcop.PortalExec(query->c_str(), results, rowdesc, rows_affected, err_msg);
 
-    if (isfailed) {
+    // check status
+    if (status ==  Result::RESULT_FAILURE) {
       SendErrorResponse({{'M', err_msg}}, responses);
       break;
     }
