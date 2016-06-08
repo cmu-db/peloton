@@ -2,6 +2,10 @@ language: cpp
 compiler:
     - g++
 
+env:
+    global:
+        - NUM_THREADS=4
+
 install:
     # get c++11 support
     - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
