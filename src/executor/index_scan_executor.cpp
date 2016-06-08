@@ -67,19 +67,19 @@ bool IndexScanExecutor::DInit() {
   done_ = false;
 
   column_ids_ = node.GetColumnIds();
-  //key_column_ids_ = node.GetKeyColumnIds();
-  //expr_types_ = node.GetExprTypes();
+  std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
+  std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
-  //runtime_keys_ = node.GetRunTimeKeys();
+  std::vector<expression::AbstractExpression *> runtime_keys_ = node.GetRunTimeKeys();
   predicate_ = node.GetPredicate();
 
-  if (node.GetRunTimeKeys().size() != 0) {
-    PL_ASSERT(node.GetRunTimeKeys().size() == values_.size());
+  if (runtime_keys_.size() != 0) {
+    PL_ASSERT(runtime_keys_.size() == values_.size());
 
     if (!key_ready_) {
       values_.clear();
 
-      for (auto expr : node.GetRunTimeKeys()) {
+      for (auto expr : runtime_keys_) {
         auto value = expr->Evaluate(nullptr, nullptr, executor_context_);
         LOG_TRACE("Evaluated runtime scan key: %s", value.GetInfo().c_str());
         values_.push_back(value);
@@ -140,12 +140,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
+  std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
+  std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
+
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
-  if (0 == node.GetKeyColumnIds().size()) {
+  if (0 == column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, node.GetKeyColumnIds(), node.GetExprTypes(),
+    index_->Scan(values_, key_column_ids_ , expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
