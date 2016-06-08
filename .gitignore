@@ -306,29 +306,3 @@ docs/dev
 # Protobuf files
 *.pb.cc
 *.pb.h
-
-# Misc , needs to be reorganized
-CMakeCache.txt
-CMakeFiles/
-CTestTestfile.cmake
-DartConfiguration.tcl
-Doxyfile
-PelotonConfig.cmake
-PelotonTargets.cmake
-cmake/PelotonConfig.cmake
-cmake_install.cmake
-lib/
-peloton_config.h
-src/CMakeFiles/
-src/CTestTestfile.cmake
-src/cmake_install.cmake
-test/CMakeFiles/
-test/CTestTestfile.cmake
-test/Testing/
-test/cmake_install.cmake
-test/constraints_tests_util
-test/executor_tests_util
-test/harness
-test/join_tests_util
-test/logging_tests_util
-test/transaction_tests_util
