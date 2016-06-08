@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// sqlite.h
+// tcop.h
 //
-// Identification: src/include/wire/sqlite.h
+// Identification: src/include/tcop/tcop.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,38 +15,40 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mutex>
+#include <vector>
 
-#include "wire/portal.h"
-
-struct sqlite3;
+#include "common/portal.h"
+#include "common/statement.h"
 
 namespace peloton {
-namespace wire {
+namespace tcop {
 
-#define WIRE_INTEGER 1
-#define WIRE_TEXT 2
-#define WIRE_FLOAT 3
-#define WIRE_NULL 4
+//===--------------------------------------------------------------------===//
+// TRAFFIC COP
+//===--------------------------------------------------------------------===//
 
-// used to synch sqlite accesses
-extern std::mutex sqlite_mutex;
+class TrafficCop {
 
-class Sqlite {
+  TrafficCop(TrafficCop const &) = delete;
+
  public:
-  Sqlite();
 
-  virtual ~Sqlite();
+  // global singleton
+  static TrafficCop &GetInstance(void);
+
+  TrafficCop();
+  ~TrafficCop();
 
   // PortalExec - Execute query string
-  virtual int PortalExec(const char *query, std::vector<ResType> &res,
-                         std::vector<FieldInfoType> &info, int &rows_change,
-                         std::string &err_msg);
+  int PortalExec(const char *query, std::vector<ResType> &res,
+                 std::vector<FieldInfoType> &info, int &rows_change,
+                 std::string &err_msg);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  int PrepareStmt(const char *query, sqlite3_stmt **stmt, std::string &err_msg);
+  int PrepareStmt(const char *query, PreparedStatement **stmt, std::string &err_msg);
 
   int BindStmt(std::vector<std::pair<int, std::string>> &parameters,
-               sqlite3_stmt **stmt, std::string &err_msg);
+               PreparedStatement **stmt, std::string &err_msg);
 
   // GetRowDesc - Get RowDescription of a query
   void GetRowDesc(void *stmt, std::vector<FieldInfoType> &info);
@@ -59,14 +61,7 @@ class Sqlite {
 
   static int ExecCallback(void *res, int argc, char **argv, char **azColName);
 
-  static int GetSize(const std::string &);
-
-  void Test();
-
- private:
-  // SQLite database
-  struct sqlite3 *sqlite_db_;
 };
 
-}  // End wire namespace
+}  // End tcop namespace
 }  // End peloton namespace

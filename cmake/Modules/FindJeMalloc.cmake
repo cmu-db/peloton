@@ -42,3 +42,5 @@ mark_as_advanced(
     JEMALLOC_LIBRARIES
     JEMALLOC_INCLUDE_DIR
 )
+
+message(STATUS "Found jemalloc (include: ${JEMALLOC_INCLUDE_DIRS}, library: ${JEMALLOC_LIBRARIES})")
