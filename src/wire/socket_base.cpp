@@ -11,56 +11,109 @@
 //===----------------------------------------------------------------------===//
 
 #include "wire/socket_base.h"
+#include "common/exception.h"
 
 #include <sys/un.h>
-
 #include <string>
+
+DECLARE_string(socket_family);
 
 namespace peloton {
 namespace wire {
 
 void StartServer(Server *server) {
-  struct sockaddr_un serv_addr;
   int yes = 1;
   int ret;
-  int len;
 
-  std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
-  LOG_INFO("Socket path : %s", SOCKET_PATH.c_str());
+  // UNIX SOCKET FAMILY
+  if(FLAGS_socket_family == "AF_UNIX") {
+    struct sockaddr_un serv_addr;
+    int len;
 
-  server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (server->server_fd < 0) {
-    LOG_ERROR("Server error: while opening socket");
-    exit(EXIT_FAILURE);
+    std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
+    LOG_INFO("Family : %s", FLAGS_socket_family.c_str());
+    LOG_INFO("Socket path : %s", SOCKET_PATH.c_str());
+
+    server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server->server_fd < 0) {
+      LOG_ERROR("Server error: while opening socket");
+      exit(EXIT_FAILURE);
+    }
+
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sun_family = AF_UNIX;
+    strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
+            sizeof(serv_addr.sun_path) - 1);
+    unlink(serv_addr.sun_path);
+
+    ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                     sizeof(yes));
+    if (ret == -1) {
+      LOG_ERROR("Setsockopt error: can't config reuse addr");
+      exit(EXIT_FAILURE);
+    }
+
+    len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
+    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr, len);
+    if (ret == -1) {
+      LOG_ERROR("Server error: while binding");
+      perror("bind");
+      exit(EXIT_FAILURE);
+    }
+
+    ret = listen(server->server_fd, server->max_connections);
+    if (ret == -1) {
+      LOG_ERROR("Server error: while listening");
+      perror("listen");
+      exit(EXIT_FAILURE);
+    }
+  }
+  // INET SOCKET FAMILY
+  else if(FLAGS_socket_family == "AF_INET") {
+    struct sockaddr_in serv_addr;
+
+    LOG_INFO("Family : %s", FLAGS_socket_family.c_str());
+
+    server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server->server_fd < 0) {
+      LOG_ERROR("Server error: while opening socket");
+      exit(EXIT_FAILURE);
+    }
+
+    memset(&serv_addr, 0, sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(server->port);
+
+
+    ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                     sizeof(yes));
+    if (ret == -1) {
+      LOG_ERROR("Setsockopt error: can't config reuse addr");
+      exit(EXIT_FAILURE);
+    }
+
+    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr));
+    if (ret == -1) {
+      LOG_ERROR("Server error: while binding");
+      perror("bind");
+      exit(EXIT_FAILURE);
+    }
+
+    ret = listen(server->server_fd, server->max_connections);
+    if (ret == -1) {
+      LOG_ERROR("Server error: while listening");
+      perror("listen");
+      exit(EXIT_FAILURE);
+    }
+
+  }
+  // UNKNOWN SOCKET FAMILY
+  else {
+    throw Exception("Unknown socket family: " + FLAGS_socket_family);
   }
 
-  ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                   sizeof(yes));
-  if (ret == -1) {
-    LOG_ERROR("Setsockopt error: can't config reuse addr");
-    exit(EXIT_FAILURE);
-  }
-
-  memset(&serv_addr, 0, sizeof(serv_addr));
-  serv_addr.sun_family = AF_UNIX;
-  strncpy(serv_addr.sun_path, SOCKET_PATH.c_str(),
-          sizeof(serv_addr.sun_path) - 1);
-  unlink(serv_addr.sun_path);
-
-  len = strlen(serv_addr.sun_path) + sizeof(serv_addr.sun_family);
-  ret = bind(server->server_fd, (struct sockaddr *)&serv_addr, len);
-  if (ret == -1) {
-    LOG_ERROR("Server error: while binding");
-    perror("bind");
-    exit(EXIT_FAILURE);
-  }
-
-  ret = listen(server->server_fd, server->max_connections);
-  if (ret == -1) {
-    LOG_ERROR("Server error: while listening");
-    perror("listen");
-    exit(EXIT_FAILURE);
-  }
 }
 
 template <typename B>
