@@ -66,7 +66,7 @@ bool IndexScanExecutor::DInit() {
   result_itr_ = START_OID;
   done_ = false;
 
-  column_ids_ = node.GetColumnIds();
+  std::vector<oid_t> column_ids_ = node.GetColumnIds();
   std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
   std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
@@ -137,9 +137,11 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   PL_ASSERT(!done_);
 
   std::vector<ItemPointer *> tuple_location_ptrs;
-  // Grab info from plan node and check it
+
+  // Grab info from plan node
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
+  std::vector<oid_t> column_ids_ = node.GetColumnIds();
   std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
   std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
 
@@ -304,12 +306,16 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
 
+  std::vector<oid_t> column_ids_ = node.GetColumnIds();
+  std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
+  std::vector<ExpressionType> expr_type_ = node.GetExprTypes();
+
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
-  if (0 == node.GetKeyColumnIds().size()) {
+  if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_locations);
   } else {
-    index_->Scan(values_, node.GetKeyColumnIds(), node.GetExprTypes(),
+    index_->Scan(values_, key_column_ids_, expr_type_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
   }
 
