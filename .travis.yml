@@ -16,18 +16,14 @@ addons:
 
 before_script:
     # setup environment
-    - sudo -H sh ./scripts/installation/packages.sh
-    - export PATH=/usr/local/bin:$PATH
-    - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-    
+    - sudo -H sh ./script/installation/packages.sh
+
 script:
     # first, run validator
     - python ./scripts/validators/validator.py
-    # bootstrap
-    - ./bootstrap
+    # build
+    - mkdir build
     - cd build
-    - ../configure CXXFLAGS="-O0"
+    - cmake -DCMAKE_BUILD_TYPE=Release
     - make
-    - cd tests; make check-valgrind; cd ..;
-    - sudo make install
-    - ../scripts/oltpbenchmark/test_peloton.sh
+    - make check
