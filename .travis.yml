@@ -42,4 +42,4 @@ script:
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - make check
+    - make check CTEST_OUTPUT_ON_FAILURE=TRUE
