@@ -50,7 +50,7 @@ struct Client {
 };
 
 struct Packet {
-  PktBuf buf;  // stores packet contents
+  PktBuf buf;      // stores packet contents
   size_t len;      // size of packet
   size_t ptr;      // PktBuf cursor
   uchar msg_type;  // header

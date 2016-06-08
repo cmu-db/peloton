@@ -10,6 +10,30 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// simple_checkpoint.h
+//
+// Identification: src/include/logging/checkpoint/simple_checkpoint.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// simple_checkpoint.h
+//
+// Identification: src/include/logging/checkpoint/simple_checkpoint.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 /*-------------------------------------------------------------------------
  *
  * simple_checkpoint.h

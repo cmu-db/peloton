@@ -49,4 +49,8 @@ find_package(SQLite3)
 include_directories(SYSTEM ${SQLITE3_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${SQLITE3_LIBRARIES})
 
+# ---[ Libunwind
+find_package(Libunwind REQUIRED)
+include_directories(SYSTEM ${LIBUNWIND_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${LIBUNWIND_LIBRARIES})
 

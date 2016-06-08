@@ -26,7 +26,7 @@ void StartServer(Server *server) {
   int ret;
 
   // UNIX SOCKET FAMILY
-  if(FLAGS_socket_family == "AF_UNIX") {
+  if (FLAGS_socket_family == "AF_UNIX") {
     struct sockaddr_un serv_addr;
     int len;
 
@@ -69,7 +69,7 @@ void StartServer(Server *server) {
     }
   }
   // INET SOCKET FAMILY
-  else if(FLAGS_socket_family == "AF_INET") {
+  else if (FLAGS_socket_family == "AF_INET") {
     struct sockaddr_in serv_addr;
 
     LOG_INFO("Family : %s", FLAGS_socket_family.c_str());
@@ -86,7 +86,6 @@ void StartServer(Server *server) {
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(server->port);
 
-
     ret = setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &yes,
                      sizeof(yes));
     if (ret == -1) {
@@ -94,7 +93,8 @@ void StartServer(Server *server) {
       exit(EXIT_FAILURE);
     }
 
-    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr));
+    ret = bind(server->server_fd, (struct sockaddr *)&serv_addr,
+               sizeof(struct sockaddr));
     if (ret == -1) {
       LOG_ERROR("Server error: while binding");
       perror("bind");
@@ -113,7 +113,6 @@ void StartServer(Server *server) {
   else {
     throw Exception("Unknown socket family: " + FLAGS_socket_family);
   }
-
 }
 
 template <typename B>

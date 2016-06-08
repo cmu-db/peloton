@@ -58,6 +58,7 @@ SKIP_FILES_LIST = [
     "src/wire/socket_base.cpp",
     "src/wire/protocol.cpp",
     "src/include/common/macros.h",
+    "src/common/stack_trace.cpp",
     "src/include/parser/port.h",
     "src/include/parser/c.h",
     "src/include/parser/catalog/pg_type.h",
