@@ -24,19 +24,19 @@ PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.par
 
 #other directory paths used are relative to peloton_dir
 PELOTON_SRC_DIR = os.path.join(PELOTON_DIR, "src")
-PELOTON_SRC_BACKEND_DIR = os.path.join(PELOTON_SRC_DIR, "backend")
-PELOTON_TESTS_DIR = os.path.join(PELOTON_DIR, "tests")
+PELOTON_TEST_DIR = os.path.join(PELOTON_DIR, "test")
 
 # DEFAULT DIRS
 DEFAULT_DIRS = []
-DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
-DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
+DEFAULT_DIRS.append(PELOTON_SRC_DIR)
+DEFAULT_DIRS.append(PELOTON_TEST_DIR)
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
-VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout", " malloc\(", " free\(",
-                      " memset\(", " memcpy\(", " \:\:memset\(", " \:\:memcpy\(", " std\:\:memset\(", " std\:\:memcpy\(",
+VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout",  
+                      " malloc\(", " free\(", " memset\(", " memcpy\(", 
+                      " \:\:memset\(", " \:\:memcpy\(", " std\:\:memset\(", " std\:\:memcpy\(",
                       "\_\_attribute\_\_\(\(unused\)\)"]
 
 ## ==============================================
@@ -54,8 +54,28 @@ LOG.addHandler(LOG_handler)
 LOG.setLevel(logging.INFO)
 
 SKIP_FILES_LIST = [
-    "src/backend/common/allocator.cpp",
-    "src/backend/common/macros.h"
+    "src/common/allocator.cpp",
+    "src/wire/socket_base.cpp",
+    "src/wire/protocol.cpp",
+    "src/include/common/macros.h",
+    "src/include/parser/port.h",
+    "src/include/parser/c.h",
+    "src/include/parser/catalog/pg_type.h",
+    "src/include/parser/catalog/pg_proc.h",
+    "src/include/parser/executor/execdebug.h",
+    "src/include/parser/utils/builtins.h",
+    "src/include/parser/utils/palloc.h",
+    "src/include/parser/utils/hsearch.h",
+    "src/include/parser/nodes/memnodes.h",
+    "src/parser/backend/utils/mmgr/mcxt.cpp",    
+    "src/include/parser/port_config/linux/pg_config.h",
+    "src/include/parser/lib/ilist.h",
+    "src/include/parser/storage/sinval.h",
+    "src/parser/backend/utils/mmgr/aset.cpp",
+    "src/parser/backend/nodes/nodeFuncs.cpp",
+    "src/parser/backend/parser/gram.cpp",
+    "src/parser/parser/pg_query_parse.cpp",
+    "src/parser/port/chklocale.cpp"
 ];
 
 ## ==============================================
@@ -69,10 +89,11 @@ def validate_file(file_path):
     abs_path = os.path.abspath(file_path)
     rel_path_from_peloton_dir = os.path.relpath(abs_path,PELOTON_DIR)
 
+    print(rel_path_from_peloton_dir)
     # Skip some files
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
         return True
-    
+
     file = open(abs_path, "r")
 
     for line in file:
@@ -123,5 +144,5 @@ if __name__ == '__main__':
 
     LOG.info("Validation successful")
     sys.exit(EXIT_SUCCESS)
-            
-            
+
+

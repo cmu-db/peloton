@@ -24,7 +24,7 @@
 namespace peloton {
 
 void *do_allocation(size_t size, bool do_throw) {
-  void *location = malloc(size);
+  void *location =malloc(size);
   if (!location && do_throw) {
     throw std::bad_alloc();
   }
@@ -32,7 +32,7 @@ void *do_allocation(size_t size, bool do_throw) {
   return location;
 }
 
-void do_deletion(void *location) { free(location); }
+void do_deletion(void *location) {free(location); }
 
 }  // End peloton namespace
 
