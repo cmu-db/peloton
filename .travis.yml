@@ -1,22 +1,21 @@
+sudo: required
+dist: trusty
+
 language: cpp
 compiler:
     - g++
 
-env:
-    global:
-        - NUM_THREADS=4
-
 install:
     # get c++11 support
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
 addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
             - boost-latest
         packages:
-            - gcc-4.8
-            - g++-4.8
+            - gcc-4.9
+            - g++-4.9
 
 before_script:
     # setup environment
