@@ -6,4 +6,4 @@ apt-get --ignore-missing -y install \
     libprotobuf-dev protobuf-compiler libevent-dev \
     libboost-dev libboost-filesystem-dev \
     libjemalloc-dev libjsoncpp-dev valgrind \
-    libunwind-dev libgflags-dev
+    libunwind8-dev libgflags-dev
