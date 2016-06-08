@@ -327,7 +327,7 @@ class BwTree {
      * Constructor  - Use RawKeyType object to initialize
      */
     KeyType(const RawKeyType &p_key) :
-      key{p_key},
+      key(p_key),
       type{ExtendedKeyValue::RawKey} // DO NOT FORGET THIS!
     {}
 
@@ -337,7 +337,7 @@ class BwTree {
      * This function assumes RawKeyType being default constructible
      */
     KeyType(ExtendedKeyValue p_type) :
-      key{},
+      key(),
       type{p_type} {
       // If it is raw type then we are having an empty key
       assert(p_type != ExtendedKeyValue::RawKey);
@@ -349,7 +349,7 @@ class BwTree {
      *                    raw key and key type
      */
     KeyType(const KeyType &p_key) :
-      key{p_key.key},
+      key(p_key.key),
       type{p_key.type}
     {}
 
@@ -8361,7 +8361,7 @@ before_switch:
       EpochNode *epoch_p = current_epoch_p;
 
       // These two could be predetermined
-      GarbageNode *garbage_node_p = new GarbageNode{};
+      GarbageNode *garbage_node_p = new GarbageNode;
       garbage_node_p->node_p = node_p;
 
       while(1) {
