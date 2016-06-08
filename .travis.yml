@@ -23,7 +23,7 @@ before_script:
     - sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
 script:
     # first, run validator
-    - python ./scripts/validators/validator.py
+    - python ./script/validators/validator.py
     # build
     - mkdir build
     - cd build
