@@ -81,12 +81,11 @@ BWTREE_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
   return ret;
 }
 
+
 BWTREE_TEMPLATE_ARGUMENTS
 bool
-BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
-                                   const ItemPointer &location,
-                                   std::function<bool(const ItemPointer &)> predicate,
-                                   ItemPointer **itemptr_ptr) {
+BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
+                    std::function<bool(const ItemPointer &)> predicate) {
   KeyType index_key;
   index_key.SetFromKey(key);
   
@@ -103,15 +102,16 @@ BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
 
   // If predicate is not satisfied then we know insertion successes
   if(predicate_satisfied == false) {
-    *itemptr_ptr = item_p;
+    //*itemptr_ptr = item_p;
   } else {
     // Otherwise insertion fails. and we need to delete memory
-    *itemptr_ptr = nullptr;
+    //*itemptr_ptr = nullptr;
     delete item_p;
   }
 
-  return ret;
+  return ret;  
 }
+
 
 BWTREE_TEMPLATE_ARGUMENTS
 void
