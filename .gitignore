@@ -302,3 +302,8 @@ docs/dev
 
 # Config files
 *.conf
+
+# Protobuf files
+*.pb.cc
+*.pb.h
+
