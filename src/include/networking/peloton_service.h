@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "networking/abstract_service.pb.h"
+#include "peloton/proto/abstract_service.pb.h"
 #include "networking/rpc_server.h"
 #include "networking/peloton_endpoint.h"
 

@@ -10,11 +10,6 @@ list(APPEND Peloton_LINKER_LIBS ${Boost_LIBRARIES})
 find_package(Threads REQUIRED)
 list(APPEND Peloton_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
-# ---[ Google-glog
-include("cmake/External/glog.cmake")
-include_directories(SYSTEM ${GLOG_INCLUDE_DIRS})
-list(APPEND Peloton_LINKER_LIBS ${GLOG_LIBRARIES})
-
 # ---[ Google-gflags
 include("cmake/External/gflags.cmake")
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
@@ -49,9 +44,8 @@ find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
 
-# ---[ SQLite3
-find_package(SQLite3)
-include_directories(SYSTEM ${SQLITE3_INCLUDE_DIRS})
-list(APPEND Peloton_LINKER_LIBS ${SQLITE3_LIBRARIES})
-
+# ---[ Libunwind
+find_package(Libunwind REQUIRED)
+include_directories(SYSTEM ${LIBUNWIND_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${LIBUNWIND_LIBRARIES})
 

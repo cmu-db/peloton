@@ -18,7 +18,7 @@
 #include "networking/rpc_server.h"
 #include "networking/tcp_connection.h"
 #include "networking/peloton_service.h"
-#include "networking/abstract_service.pb.h"
+#include "peloton/proto/abstract_service.pb.h"
 
 #include <functional>
 

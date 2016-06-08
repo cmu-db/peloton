@@ -1,33 +1,45 @@
+sudo: required
+dist: trusty
+
 language: cpp
 compiler:
     - g++
 
+before_install:
+    # installing libunwind
+    - cd /tmp
+    - wget http://download.savannah.gnu.org/releases/libunwind/libunwind-1.1.tar.gz
+    - tar -xvf libunwind-1.1.tar.gz
+    - cd libunwind-1.1 && ./configure && make > /dev/null 2>&1
+    - sudo make install
+    - cd $TRAVIS_BUILD_DIR
+
 install:
     # get c++11 support
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
 addons:
     apt:
         sources:
             - ubuntu-toolchain-r-test
             - boost-latest
         packages:
-            - gcc-4.8
-            - g++-4.8
+            - gcc-4.9
+            - g++-4.9
 
 before_script:
     # setup environment
-    - sudo -H sh ./scripts/installation/packages.sh
-    - export PATH=/usr/local/bin:$PATH
-    - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-    
+    - sudo -H sh ./script/installation/packages.sh
+    - wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
+    - sudo dpkg -i libgflags0_2.0-1_amd64.deb
+    - wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
+    - sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
+
 script:
     # first, run validator
-    - python ./scripts/validators/validator.py
-    # bootstrap
-    - ./bootstrap
+    - python ./script/validators/validator.py
+      # build
+    - mkdir build
     - cd build
-    - ../configure CXXFLAGS="-O0"
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
     - make
-    - cd tests; make check-valgrind; cd ..;
-    - sudo make install
-    - ../scripts/oltpbenchmark/test_peloton.sh
+    - make check CTEST_OUTPUT_ON_FAILURE=TRUE
