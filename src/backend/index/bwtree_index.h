@@ -44,7 +44,7 @@ namespace index {
  * @see Index
  */
 template <typename KeyType,
-          typename ValueType,
+          typename ValueType = ItemPointer *,
           typename KeyComparator = std::less<KeyType>,
           typename KeyEqualityChecker = std::equal_to<KeyType>,
           typename ValueEqualityChecker = std::equal_to<ValueType>,
