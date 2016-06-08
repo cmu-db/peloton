@@ -23,7 +23,7 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs}
 
 # --[ Add "make check" target
 
-set(CTEST_FLAGS "--output-on-failure")
+set(CTEST_FLAGS "")
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS})
 
 foreach(test_src ${test_srcs} )
