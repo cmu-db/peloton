@@ -124,7 +124,7 @@ bool HybridScanExecutor::DInit() {
     std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
     std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
     values_ = node.GetValues();
-    std::vector<expression::AbstractExpression>runtime_keys_ = node.GetRunTimeKeys();
+    std::vector<expression::AbstractExpression *> runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
 
     if (runtime_keys_.size() != 0) {
