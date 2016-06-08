@@ -27,10 +27,14 @@
 #include <iostream>
 
 #include "common/logger.h"
+#include <gflags/gflags.h>
 
 #define SOCKET_BUFFER_SIZE 8192
 #define MAX_CONNECTIONS 64
 #define DEFAULT_PORT 5432
+
+DECLARE_uint64(port);
+DECLARE_uint64(max_connections);
 
 namespace peloton {
 namespace wire {
@@ -47,8 +51,8 @@ struct Server {
   int server_fd;
   int max_connections;
 
-  inline Server(int port, int max_conn)
-      : port(port), server_fd(0), max_connections(max_conn) {}
+  inline Server()
+      : port(FLAGS_port), server_fd(0), max_connections(FLAGS_max_connections) {}
 };
 
 // Buffers used to batch meesages at the socket
