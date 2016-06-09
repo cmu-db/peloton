@@ -70,10 +70,10 @@ bool HybridScanExecutor::DInit() {
     index_done_ = false;
 
     column_ids_ = node.GetColumnIds();
-    std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
-    std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
+    auto key_column_ids_ = node.GetKeyColumnIds();
+    auto expr_types_ = node.GetExprTypes();
     values_ = node.GetValues();
-    std::vector<expression::AbstractExpression *> runtime_keys_ = node.GetRunTimeKeys();
+    auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
 
     if (runtime_keys_.size() != 0) {
@@ -121,10 +121,10 @@ bool HybridScanExecutor::DInit() {
     index_done_ = false;
 
     column_ids_ = node.GetColumnIds();
-    std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
-    std::vector<ExpressionType> expr_types_ = node.GetExprTypes();
+    auto key_column_ids_ = node.GetKeyColumnIds();
+    auto expr_types_ = node.GetExprTypes();
     values_ = node.GetValues();
-    std::vector<expression::AbstractExpression *> runtime_keys_ = node.GetRunTimeKeys();
+    auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
 
     if (runtime_keys_.size() != 0) {
@@ -292,8 +292,8 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
 
-  std::vector<oid_t> key_column_ids_ = node.GetKeyColumnIds();
-  std::vector<ExpressionType> expr_type_ = node.GetExprTypes();
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_type_ = node.GetExprTypes();
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
