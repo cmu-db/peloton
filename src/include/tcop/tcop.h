@@ -41,26 +41,26 @@ class TrafficCop {
   ~TrafficCop();
 
   // PortalExec - Execute query string
-  Result PortalExec(const std::string& query, std::vector<ResType> &res,
-                    std::vector<FieldInfoType> &info, int &rows_change,
-                    std::string &err_msg);
+  Result ExecuteStatement(const std::string& query,
+                    std::vector<ResultType> &result,
+                    std::vector<FieldInfoType> &info,
+                    int &rows_changed,
+                    std::string &error_message);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  Result ExecPrepStmt(void *stmt, bool unnamed, std::vector<ResType> &res,
-                      int &rows_change, std::string &err_msg);
+  Result ExecutePreparedStatement(const std::shared_ptr<PreparedStatement>& prepared_statement,
+                                  bool unnamed,
+                                  std::vector<ResultType> &result,
+                                  int &rows_change,
+                                  std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  int PrepareStmt(const char *query, PreparedStatement **stmt, std::string &err_msg);
+  std::shared_ptr<PreparedStatement> PrepareStatement(const std::string& query,
+                                                      std::string &error_message);
 
-  int BindStmt(std::vector<std::pair<int, std::string>> &parameters,
-               PreparedStatement **stmt, std::string &err_msg);
-
-  // GetRowDesc - Get RowDescription of a query
-  void GetRowDesc(void *stmt, std::vector<FieldInfoType> &info);
-
-  static void CopyFromTo(const char *src, std::vector<unsigned char> &dst);
-
-  static int ExecCallback(void *res, int argc, char **argv, char **azColName);
+  int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
+                     PreparedStatement **stmt,
+                     std::string &error_message);
 
 };
 
