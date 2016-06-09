@@ -6,7 +6,7 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:57721/";
+  private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";
   private final String pass = "postgres";
 

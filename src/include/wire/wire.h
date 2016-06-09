@@ -71,14 +71,14 @@ class PacketManager {
   Client client;
 
   // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_entry;
+  std::shared_ptr<Statement> unnamed_statement;
 
   // gloabl txn state
   uchar txn_state;
 
   // state to mang skipped queries
   bool skipped_stmt_ = false;
-  std::string skipped_query_;
+  std::string skipped_query_string_;
   std::string skipped_query_type_;
 
   static const std::unordered_map<std::string, std::string>

@@ -75,6 +75,8 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
                                     UNUSED_ATTRIBUTE int &rows_changed,
                                     UNUSED_ATTRIBUTE std::string &error_message){
 
+  LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
+
   // This will construct an executor tree
 
   return Result::RESULT_FAILURE;
@@ -83,6 +85,8 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(UNUSED_ATTRIBUTE const std::string& query,
                                                         UNUSED_ATTRIBUTE std::string &error_message){
   std::shared_ptr<Statement> statement;
+
+  LOG_INFO("Prepare Statement %s", query.c_str());
 
   // This will construct a plan tree
   // And set the tuple descriptor
