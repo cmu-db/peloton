@@ -26,6 +26,8 @@ namespace optimizer{
 
 		AbstractOptimizer();
 
+		virtual ~AbstractOptimizer();
+
 	};
 } // namespace optimizer
 } // namespace peloton
