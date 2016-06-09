@@ -42,24 +42,24 @@ class TrafficCop {
 
   // PortalExec - Execute query string
   Result ExecuteStatement(const std::string& query,
-                    std::vector<ResultType> &result,
-                    std::vector<FieldInfoType> &info,
-                    int &rows_changed,
-                    std::string &error_message);
+                          std::vector<ResultType> &result,
+                          std::vector<FieldInfoType> &tuple_descriptor,
+                          int &rows_changed,
+                          std::string &error_message);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  Result ExecutePreparedStatement(const std::shared_ptr<PreparedStatement>& prepared_statement,
-                                  bool unnamed,
-                                  std::vector<ResultType> &result,
-                                  int &rows_change,
-                                  std::string &error_message);
+  Result ExecuteStatement(const std::shared_ptr<Statement>& statement,
+                          const bool unnamed,
+                          std::vector<ResultType> &result,
+                          int &rows_change,
+                          std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<PreparedStatement> PrepareStatement(const std::string& query,
-                                                      std::string &error_message);
+  std::shared_ptr<Statement> PrepareStatement(const std::string& query,
+                                              std::string &error_message);
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
-                     PreparedStatement **stmt,
+                     Statement **stmt,
                      std::string &error_message);
 
 };

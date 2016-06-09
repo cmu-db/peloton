@@ -29,7 +29,7 @@ namespace peloton {
 namespace wire {
 
 // Prepares statment cache
-thread_local peloton::Cache<std::string, PreparedStatement> cache_;
+thread_local peloton::Cache<std::string, Statement> cache_;
 
 // Query portal handler
 thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
@@ -287,16 +287,16 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
  */
 void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   LOG_INFO("PARSE message");
-  std::string error_message, prepared_statement_name, query, query_type;
-  GetStringToken(pkt, prepared_statement_name);
+  std::string error_message, statement_name, query, query_type;
+  GetStringToken(pkt, statement_name);
 
   // Read prepare statement name
-  LOG_INFO("Prep stmt: %s", prepared_statement_name.c_str());
+  LOG_INFO("Prep stmt: %s", statement_name.c_str());
   // Read query string
   GetStringToken(pkt, query);
   LOG_INFO("Parse Query: %s", query.c_str());
 
-  std::shared_ptr<PreparedStatement> prepared_statement;
+  std::shared_ptr<Statement> statement;
 
   skipped_stmt_ = false;
   query_type = get_query_type(query);
@@ -309,14 +309,13 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   } else {
     // Prepare statement
     auto &tcop = tcop::TrafficCop::GetInstance();
-    prepared_statement = std::move(tcop.PrepareStatement(query,
+    statement = std::move(tcop.PrepareStatement(query,
                                                          error_message));
 
-    if (prepared_statement.get() == nullptr) {
+    if (statement.get() == nullptr) {
       SendErrorResponse({{'M', error_message}}, responses);
       SendReadyForQuery(txn_state, responses);
     }
-
   }
 
   // Read number of params
@@ -330,18 +329,20 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     param_types[i] = param_type;
   }
 
-  // Cache the received qury
-  std::shared_ptr<PreparedStatement> entry(new PreparedStatement());
-  entry->prepared_statement_name = prepared_statement_name;
-  entry->query_string = query;
-  entry->query_type = std::move(query_type);
-  entry->param_types = std::move(param_types);
+  // Cache the received query
+  bool unnamed_query = statement_name.empty();
+  statement->SetStatementName(statement_name);
+  statement->SetQueryString(query);
+  statement->SetQueryType(query_type);
+  statement->SetParamTypes(param_types);
 
-  if (prepared_statement_name.empty()) {
-    // Unnamed statement
-    unnamed_entry = entry;
-  } else {
-    cache_.insert(std::make_pair(std::move(prepared_statement_name), entry));
+  // Unnamed statement
+  if (unnamed_query) {
+    unnamed_entry = statement;
+  }
+  else {
+    auto entry = std::make_pair(statement_name, statement);
+    cache_.insert(entry);
   }
 
   std::unique_ptr<Packet> response(new Packet());
@@ -352,13 +353,13 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 }
 
 void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
-  std::string portal_name, prepared_statement_name;
+  std::string portal_name, statement_name;
   // BIND message
   LOG_INFO("BIND message");
   GetStringToken(pkt, portal_name);
   LOG_INFO("Portal name: %s", portal_name.c_str());
-  GetStringToken(pkt, prepared_statement_name);
-  LOG_INFO("Prep stmt name: %s", prepared_statement_name.c_str());
+  GetStringToken(pkt, statement_name);
+  LOG_INFO("Prep stmt name: %s", statement_name.c_str());
 
   if (skipped_stmt_) {
     // send bind complete
@@ -387,13 +388,13 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // Get statement info generated in PARSE message
-  std::shared_ptr<PreparedStatement> entry;
-  if (prepared_statement_name.empty()) {
+  std::shared_ptr<Statement> entry;
+  if (statement_name.empty()) {
     LOG_INFO("Unnamed statement");
     entry = unnamed_entry;
   } else {
     // fetch the statement ID from the cache
-    auto itr = cache_.find(prepared_statement_name);
+    auto itr = cache_.find(statement_name);
     if (itr != cache_.end()) {
       entry = *itr;
     } else {
@@ -403,9 +404,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     }
   }
 
-  std::shared_ptr<PreparedStatement> prepared_statement = entry;
-  const auto &query_string = entry->query_string;
-  const auto &query_type = entry->query_type;
+  std::shared_ptr<Statement> statement = entry;
+  const auto &query_string = entry->GetQueryString();
+  const auto &query_type = entry->GetQueryType();
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
@@ -422,6 +423,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Group the parameter types and thae parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters;
+  auto param_types = entry->GetParamTypes();
+
   PktBuf param;
   for (int param_idx = 0; param_idx < num_params; param_idx++) {
     int param_len = PacketGetInt(pkt, 4);
@@ -438,7 +441,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         bind_parameters.push_back(std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
       } else {
         // BINARY mode
-        switch (entry->param_types[param_idx]) {
+        switch (param_types[param_idx]) {
           case POSTGRES_VALUE_TYPE_INTEGER: {
             int int_val = 0;
             for (size_t i = 0; i < sizeof(int); ++i) {
@@ -459,28 +462,25 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
           } break;
           default: {
-            LOG_ERROR("Do not support data type: %d",
-                      entry->param_types[param_idx]);
+            LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
           } break;
         }
       }
     }
   }
 
-  // TODO: replace this with a constructor
-  std::shared_ptr<Portal> portal(new Portal());
-
-  // Shared the statement with the portal
-  portal->prepared_statement = prepared_statement;
-  portal->portal_name = portal_name;
-  portal->bind_parameters = bind_parameters;
+  // Construct a portal
+  auto portal = new Portal(portal_name, statement, bind_parameters);
+  std::shared_ptr<Portal> portal_reference(portal);
 
   auto itr = portals_.find(portal_name);
-  if (itr == portals_.end()) {
-    portals_.insert(std::make_pair(portal_name, portal));
-  } else {
-    std::shared_ptr<Portal> p = itr->second;
-    itr->second = portal;
+  // Found portal name in portal map
+  if (itr != portals_.end()) {
+    itr->second = portal_reference;
+  }
+  // Create a new entry in portal map
+  else {
+    portals_.insert(std::make_pair(portal_name, portal_reference));
   }
 
   // send bind complete
@@ -509,8 +509,8 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     }
 
     std::shared_ptr<Portal> portal = portal_itr->second;
-    auto prepared_statement = portal->prepared_statement;
-    PutTupleDescriptor(prepared_statement->tuple_descriptor, responses);
+    auto statement = portal->GetStatement();
+    PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
 
 }
@@ -533,12 +533,13 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto portal = portals_[portal_name];
-  auto prepared_statement = portal->prepared_statement;
-  PL_ASSERT(prepared_statement.get() != nullptr);
-  const auto &query_string = prepared_statement->query_string;
-  const auto &query_type = prepared_statement->query_type;
+  auto statement = portal->GetStatement();
+  PL_ASSERT(statement.get() != nullptr);
+  const auto &query_string = statement->GetQueryString();
+  const auto &query_type = statement->GetQueryType();
 
-  bool unnamed = prepared_statement->prepared_statement_name.empty();
+  auto statement_name = statement->GetStatementName();
+  bool unnamed = statement_name.empty();
 
   LOG_INFO("Executing query: %s", query_string.c_str());
 
@@ -548,11 +549,12 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecutePreparedStatement(prepared_statement,
+  auto status = tcop.ExecuteStatement(statement,
                                               unnamed,
                                               results,
                                               rows_affected,
                                               error_message);
+
   if (status == Result::RESULT_FAILURE) {
     LOG_INFO("Failed to execute: %s", error_message.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
@@ -565,7 +567,8 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // put_row_desc(portal->rowdesc, responses);
-  SendDataRows(results, portal->prepared_statement->tuple_descriptor.size(), rows_affected, responses);
+  auto tuple_descriptor = statement->GetTupleDescriptor();
+  SendDataRows(results, tuple_descriptor.size(), rows_affected, responses);
   CompleteCommand(query_type, rows_affected, responses);
 }
 

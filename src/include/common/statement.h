@@ -18,8 +18,7 @@
 #include "common/types.h"
 
 namespace peloton {
-
-namespace planner {
+namespace planner{
 class AbstractPlan;
 }
 
@@ -28,12 +27,49 @@ typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>> Result
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
 
-class PreparedStatement {
+class Statement {
 
  public:
 
+  Statement() = delete;
+  Statement(const Statement &) = delete;
+  Statement &operator=(const Statement &) = delete;
+  Statement(Statement &&) = delete;
+  Statement &operator=(Statement &&) = delete;
+
+  Statement(const std::string& statement_name,
+            const std::string& query_string,
+            const std::string& query_type,
+            const std::vector<int32_t>& param_types,
+            const std::vector<FieldInfoType>& tuple_descriptor,
+            std::unique_ptr<planner::AbstractPlan> plan_tree);
+
+  ~Statement();
+
+  std::vector<FieldInfoType> GetTupleDescriptor() const;
+
+  void SetStatementName(const std::string& statement_name);
+
+  std::string GetStatementName() const;
+
+  void SetQueryString(const std::string& query_string);
+
+  std::string GetQueryString() const;
+
+  void SetQueryType(const std::string& query_type);
+
+  std::string GetQueryType() const;
+
+  void SetParamTypes(const std::vector<int32_t>& param_types);
+
+  std::vector<int32_t> GetParamTypes() const;
+
+  void SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
+
+ private:
+
   // logical name of statement
-  std::string prepared_statement_name;
+  std::string statement_name;
 
   // query string
   std::string query_string;
@@ -48,7 +84,7 @@ class PreparedStatement {
   std::vector<FieldInfoType> tuple_descriptor;
 
   // cached plan tree
-  planner::AbstractPlan *plan_tree;
+  std::unique_ptr<planner::AbstractPlan> plan_tree;
 
 };
 
