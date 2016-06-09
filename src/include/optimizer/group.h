@@ -32,6 +32,7 @@ const GroupID UNDEFINED_GROUP = -1;
 class Group {
  public:
   Group(GroupID id);
+  void add_item(Operator op);
 
   void AddExpression(std::shared_ptr<GroupExpression> expr);
 
@@ -44,6 +45,7 @@ class Group {
 
  private:
   GroupID id;
+  std::vector<Operator> items;
   std::vector<std::shared_ptr<GroupExpression>> expressions;
   std::unordered_map<PropertySet,
                      std::tuple<double, std::shared_ptr<GroupExpression>>>

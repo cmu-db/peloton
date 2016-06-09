@@ -70,10 +70,10 @@ bool HybridScanExecutor::DInit() {
     index_done_ = false;
 
     column_ids_ = node.GetColumnIds();
-    key_column_ids_ = node.GetKeyColumnIds();
-    expr_types_ = node.GetExprTypes();
+    auto key_column_ids_ = node.GetKeyColumnIds();
+    auto expr_types_ = node.GetExprTypes();
     values_ = node.GetValues();
-    runtime_keys_ = node.GetRunTimeKeys();
+    auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
 
     if (runtime_keys_.size() != 0) {
@@ -121,10 +121,10 @@ bool HybridScanExecutor::DInit() {
     index_done_ = false;
 
     column_ids_ = node.GetColumnIds();
-    key_column_ids_ = node.GetKeyColumnIds();
-    expr_types_ = node.GetExprTypes();
+    auto key_column_ids_ = node.GetKeyColumnIds();
+    auto expr_types_ = node.GetExprTypes();
     values_ = node.GetValues();
-    runtime_keys_ = node.GetRunTimeKeys();
+    auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
 
     if (runtime_keys_.size() != 0) {
@@ -290,6 +290,11 @@ bool HybridScanExecutor::DExecute() {
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   assert(!index_done_);
 
+  const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
+
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_type_ = node.GetExprTypes();
+
   std::vector<ItemPointer *> tuple_location_ptrs;
 
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
@@ -297,7 +302,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
+    index_->Scan(values_, key_column_ids_, expr_type_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 

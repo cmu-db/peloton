@@ -306,4 +306,3 @@ docs/dev
 # Protobuf files
 *.pb.cc
 *.pb.h
-

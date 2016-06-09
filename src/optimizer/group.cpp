@@ -19,7 +19,10 @@ namespace optimizer {
 // Group
 //===--------------------------------------------------------------------===//
 Group::Group(GroupID id) : id(id) {}
-
+void Group::add_item(Operator op) {
+  // TODO(abpoms): do duplicate checking
+  items.push_back(op);
+}
 void Group::AddExpression(std::shared_ptr<GroupExpression> expr) {
   // Do duplicate detection
   expr->SetGroupID(id);
