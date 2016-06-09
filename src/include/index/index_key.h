@@ -402,7 +402,7 @@ template <std::size_t KeySize> class GenericKey {
   }
 
   const storage::Tuple GetTupleForComparison(
-      const catalog::Schema *key_schema) const {
+      const catalog::Schema *key_schema) {
     return storage::Tuple(key_schema, data);
   }
 
