@@ -71,7 +71,7 @@ class PacketManager {
   Client client;
 
   // Manage standalone queries
-  std::shared_ptr<PreparedStatement> unnamed_entry;
+  std::shared_ptr<Statement> unnamed_entry;
 
   // gloabl txn state
   uchar txn_state;

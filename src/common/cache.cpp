@@ -139,5 +139,5 @@ template class Cache<uint32_t, const planner::AbstractPlan>; /* For testing */
 template class Cache<std::string,
                      const planner::AbstractPlan>; /* Actual in use */
 
-template class Cache<std::string, PreparedStatement>;
+template class Cache<std::string, Statement >;
 }
