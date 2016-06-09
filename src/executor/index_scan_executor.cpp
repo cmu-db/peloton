@@ -66,11 +66,11 @@ bool IndexScanExecutor::DInit() {
   result_itr_ = START_OID;
   done_ = false;
 
-  column_ids_ = node.GetColumnIds();
-  key_column_ids_ = node.GetKeyColumnIds();
-  expr_types_ = node.GetExprTypes();
+  auto column_ids_ = node.GetColumnIds();
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_types_ = node.GetExprTypes();
   values_ = node.GetValues();
-  runtime_keys_ = node.GetRunTimeKeys();
+  auto runtime_keys_ = node.GetRunTimeKeys();
   predicate_ = node.GetPredicate();
 
   if (runtime_keys_.size() != 0) {
@@ -138,12 +138,19 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
+  // Grab info from plan node
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+
+  auto column_ids_ = node.GetColumnIds();
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_types_ = node.GetExprTypes();
+
   PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
-  if (0 == key_column_ids_.size()) {
+  if (0 == column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
+    index_->Scan(values_, key_column_ids_ , expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
@@ -296,12 +303,19 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
 
   std::vector<ItemPointer> tuple_locations;
 
+  // Grab info from plan node and check it
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+
+  auto column_ids_ = node.GetColumnIds();
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_type_ = node.GetExprTypes();
+
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_locations);
   } else {
-    index_->Scan(values_, key_column_ids_, expr_types_,
+    index_->Scan(values_, key_column_ids_, expr_type_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
   }
 
