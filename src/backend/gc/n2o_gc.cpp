@@ -60,9 +60,9 @@ bool N2O_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
 void N2O_GCManager::Running() {
   // Check if we can move anything from the possibly free list to the free list.
 
+  std::this_thread::sleep_for(
+    std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
   while (true) {
-    std::this_thread::sleep_for(
-      std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
 
     LOG_TRACE("Unlink tuple thread...");
 
@@ -174,7 +174,8 @@ void N2O_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
-  unlink_queue_.Enqueue(tuple_metadata);
+  //unlink_queue_.Enqueue(tuple_metadata);
+  
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -201,8 +202,8 @@ ItemPointer N2O_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   //if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     //TupleMetadata tuple_metadata;
     if (recycle_queue->Dequeue(tuple_metadata) == true) {
-      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
-               tuple_metadata.tuple_slot_id, table_id);
+      // LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
+      //          tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
     }

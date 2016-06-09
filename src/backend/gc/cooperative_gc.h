@@ -71,18 +71,15 @@ public:
   }
 
 private:
+  void ClearGarbage();
+  
   void Running();
+
+  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
 
   bool ResetTuple(const TupleMetadata &);
 
 private:
-  //===--------------------------------------------------------------------===//
-  // Private methods
-  //===--------------------------------------------------------------------===//
-  void ClearGarbage();
-
-  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
-
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//

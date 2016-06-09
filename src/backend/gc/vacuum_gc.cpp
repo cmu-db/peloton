@@ -17,11 +17,13 @@ namespace peloton {
 namespace gc {
 
 void Vacuum_GCManager::StartGC() {
+  LOG_TRACE("Starting GC");
   this->is_running_ = true;
   gc_thread_.reset(new std::thread(&Vacuum_GCManager::Running, this));
 }
 
 void Vacuum_GCManager::StopGC() {
+  LOG_TRACE("Stopping GC");
   this->is_running_ = false;
   this->gc_thread_->join();
   ClearGarbage();
@@ -54,18 +56,32 @@ bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
     storage::TileGroupHeader::GetReservedSize());
-  // TODO: set the unused 2 boolean value
+  LOG_TRACE("Garbage tuple(%u, %u) in table %u is reset",
+           tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
+           tuple_metadata.table_id);
   return true;
+}
+
+void Vacuum_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
+  // If the tuple being reset no longer exists, just skip it
+  if (ResetTuple(tuple_metadata) == false) return;
+
+  //recycle_queue_.Enqueue(tuple_metadata);
+
+  // Add to the recycle map
+  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  // if the entry for table_id exists.
+
+  assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
+  recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
 }
 
 void Vacuum_GCManager::Running() {
   // Check if we can move anything from the possibly free list to the free list.
 
+  std::this_thread::sleep_for(
+    std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
   while (true) {
-    std::this_thread::sleep_for(
-      std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
-
-    LOG_TRACE("Unlink tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
@@ -95,11 +111,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
     // if the timestamp of the garbage is older than the current max_cid,
     // recycle it
     if (garbage_ts < max_cid) {
-      ResetTuple(tuple_metadata);
-
-      assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
-      recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
-
+      AddToRecycleMap(tuple_metadata);
       // Add to the recycle map
       //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
 
@@ -132,7 +144,9 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
   // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
 
   std::vector<TupleMetadata> garbages;
+
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
+    
     TupleMetadata tuple_metadata;
     // if there's no more tuples in the queue, then break.
     if (unlink_queue_.Dequeue(tuple_metadata) == false) {
@@ -192,11 +206,8 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = START_CID;
 
   DeleteInvalidTupleFromIndex(tuple_metadata);
-  ResetTuple(tuple_metadata);
 
-  assert(recycle_queue_map_.count(table_id) != 0);
-  recycle_queue_map_[table_id]->Enqueue(tuple_metadata);
-
+  AddToRecycleMap(tuple_metadata);
 
   // Add to the recycle map
   //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
@@ -210,11 +221,6 @@ void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
   //   recycle_queue->Enqueue(tuple_metadata);
   //   recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
   // }
-
-  LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
-           tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
-           tuple_metadata.table_id);
-
 }
 
 

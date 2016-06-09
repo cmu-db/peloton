@@ -79,7 +79,6 @@ bool Cooperative_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
     storage::TileGroupHeader::GetReservedSize());
-  // TODO: set the unused 2 boolean value
   LOG_TRACE("Garbage tuple(%u, %u) in table %u is reset",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -179,7 +178,6 @@ void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   reclaim_queue_.Enqueue(tuple_metadata);
-
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
