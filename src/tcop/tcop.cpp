@@ -12,6 +12,7 @@
 
 #include "tcop/tcop.h"
 #include "common/macros.h"
+#include "common/portal.h"
 
 #include "parser/parser/pg_query.h"
 
@@ -26,63 +27,43 @@ TrafficCop &TrafficCop::GetInstance(void) {
 
 TrafficCop::TrafficCop() {
 
-  // Initialize the postgres memory context
+  // Initialize the postgresult memory context
   pg_query_init();
 
 }
 
 TrafficCop::~TrafficCop() {
 
-  // Destroy the postgres memory context
+  // Destroy the postgresult memory context
   pg_query_destroy();
 
 }
 
-Result TrafficCop::PortalExec(UNUSED_ATTRIBUTE const std::string& query,
-                              UNUSED_ATTRIBUTE std::vector<ResType> &res,
-                              UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info,
-                              UNUSED_ATTRIBUTE int &rows_change,
-                              UNUSED_ATTRIBUTE std::string &err_msg){
-
+Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::string& query,
+                                    UNUSED_ATTRIBUTE std::vector<ResultType> &result,
+                                    UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info,
+                                    UNUSED_ATTRIBUTE int &rows_changed,
+                                    UNUSED_ATTRIBUTE std::string &error_message){
   return Result::RESULT_FAILURE;
 }
 
 
-Result TrafficCop::ExecPrepStmt(UNUSED_ATTRIBUTE void *stmt,
-                                UNUSED_ATTRIBUTE bool unnamed,
-                                UNUSED_ATTRIBUTE std::vector<ResType> &res,
-                                UNUSED_ATTRIBUTE int &rows_change,
-                                UNUSED_ATTRIBUTE std::string &err_msg){
+Result TrafficCop::ExecutePreparedStatement(UNUSED_ATTRIBUTE const std::shared_ptr<PreparedStatement>& prepared_statement,
+                                            UNUSED_ATTRIBUTE bool unnamed,
+                                            UNUSED_ATTRIBUTE std::vector<ResultType> &result,
+                                            UNUSED_ATTRIBUTE int &rows_change,
+                                            UNUSED_ATTRIBUTE std::string &error_message){
 
   return Result::RESULT_FAILURE;
 }
 
-int TrafficCop::PrepareStmt(UNUSED_ATTRIBUTE const char *query,
-                            UNUSED_ATTRIBUTE PreparedStatement **stmt,
-                            UNUSED_ATTRIBUTE std::string &err_msg){
-  return 0;
+std::shared_ptr<PreparedStatement> TrafficCop::PrepareStatement(UNUSED_ATTRIBUTE const std::string& query,
+                                                                UNUSED_ATTRIBUTE std::string &error_message){
+  std::shared_ptr<PreparedStatement> prepared_statement;
+
+  return prepared_statement;
 }
 
-int TrafficCop::BindStmt(UNUSED_ATTRIBUTE std::vector<std::pair<int, std::string>> &parameters,
-                         UNUSED_ATTRIBUTE PreparedStatement **stmt,
-                         UNUSED_ATTRIBUTE std::string &err_msg){
-  return 0;
-}
-
-void TrafficCop::GetRowDesc(UNUSED_ATTRIBUTE void *stmt,
-                            UNUSED_ATTRIBUTE std::vector<FieldInfoType> &info){
-}
-
-void TrafficCop::CopyFromTo(UNUSED_ATTRIBUTE const char *src,
-                            UNUSED_ATTRIBUTE std::vector<unsigned char> &dst){
-}
-
-int TrafficCop::ExecCallback(UNUSED_ATTRIBUTE void *res,
-                             UNUSED_ATTRIBUTE int argc,
-                             UNUSED_ATTRIBUTE char **argv,
-                             UNUSED_ATTRIBUTE char **azColName){
-  return 0;
-}
 
 }  // End tcop namespace
 }  // End peloton namespace
