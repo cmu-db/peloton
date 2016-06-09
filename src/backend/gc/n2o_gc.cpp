@@ -2,26 +2,28 @@
 //
 //                         Peloton
 //
-// n2o_gc.cpp
+// vacuum_gc.cpp
 //
-// Identification: src/backend/gc/n2o_gc.cpp
+// Identification: src/backend/gc/vacuum_gc.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "backend/gc/n2o_gc.h"
+#include "backend/gc/vacuum_gc.h"
 #include "backend/index/index.h"
 #include "backend/concurrency/transaction_manager_factory.h"
 namespace peloton {
 namespace gc {
 
 void N2O_GCManager::StartGC() {
+  LOG_TRACE("Starting GC");
   this->is_running_ = true;
   gc_thread_.reset(new std::thread(&N2O_GCManager::Running, this));
 }
 
 void N2O_GCManager::StopGC() {
+  LOG_TRACE("Stopping GC");
   this->is_running_ = false;
   this->gc_thread_->join();
   ClearGarbage();
@@ -54,7 +56,24 @@ bool N2O_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
     storage::TileGroupHeader::GetReservedSize());
+  LOG_TRACE("Garbage tuple(%u, %u) in table %u is reset",
+           tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
+           tuple_metadata.table_id);
   return true;
+}
+
+void N2O_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
+  // If the tuple being reset no longer exists, just skip it
+  if (ResetTuple(tuple_metadata) == false) return;
+
+  //recycle_queue_.Enqueue(tuple_metadata);
+
+  // Add to the recycle map
+  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  // if the entry for table_id exists.
+
+  assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
+  recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
 }
 
 void N2O_GCManager::Running() {
@@ -63,8 +82,6 @@ void N2O_GCManager::Running() {
   std::this_thread::sleep_for(
     std::chrono::milliseconds(GC_PERIOD_MILLISECONDS));
   while (true) {
-
-    LOG_TRACE("Unlink tuple thread...");
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto max_cid = txn_manager.GetMaxCommittedCid();
@@ -94,11 +111,7 @@ void N2O_GCManager::Reclaim(const cid_t &max_cid) {
     // if the timestamp of the garbage is older than the current max_cid,
     // recycle it
     if (garbage_ts < max_cid) {
-      ResetTuple(tuple_metadata);
-
-      assert(recycle_queue_map_.find(tuple_metadata.table_id) != recycle_queue_map_.end());
-      recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
-
+      AddToRecycleMap(tuple_metadata);
       // Add to the recycle map
       //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
 
@@ -131,7 +144,9 @@ void N2O_GCManager::Unlink(const cid_t &max_cid) {
   // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
 
   std::vector<TupleMetadata> garbages;
+
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
+    
     TupleMetadata tuple_metadata;
     // if there's no more tuples in the queue, then break.
     if (unlink_queue_.Dequeue(tuple_metadata) == false) {
@@ -174,8 +189,7 @@ void N2O_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
-  //unlink_queue_.Enqueue(tuple_metadata);
-  
+  unlink_queue_.Enqueue(tuple_metadata);
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -186,7 +200,6 @@ void N2O_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id __attribute__(
                                            const oid_t &tuple_id __attribute__((unused))) {
   assert(false);
 }
-
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
@@ -202,8 +215,8 @@ ItemPointer N2O_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   //if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     //TupleMetadata tuple_metadata;
     if (recycle_queue->Dequeue(tuple_metadata) == true) {
-      // LOG_INFO("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
-      //          tuple_metadata.tuple_slot_id, table_id);
+      LOG_TRACE("Reuse tuple(%u, %u) in table %u", tuple_metadata.tile_group_id,
+               tuple_metadata.tuple_slot_id, table_id);
       return ItemPointer(tuple_metadata.tile_group_id,
                          tuple_metadata.tuple_slot_id);
     }

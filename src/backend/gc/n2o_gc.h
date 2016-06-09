@@ -73,6 +73,8 @@ private:
   void Reclaim(const cid_t &max_cid);
 
   void Unlink(const cid_t &max_cid);
+  
+  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
 
   bool ResetTuple(const TupleMetadata &);
 
@@ -85,6 +87,7 @@ private:
   std::unique_ptr<std::thread> gc_thread_;
 
   LockfreeQueue<TupleMetadata> unlink_queue_;
+  
   LockfreeQueue<TupleMetadata> free_queue_;
 
   // Map of actual grabage.
