@@ -523,13 +523,20 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 
     // TODO: error handling here
     if (portal_itr == portals_.end()) {
-      LOG_INFO("Did not find portal : %s", portal_name.c_str());
+      LOG_ERROR("Did not find portal : %s", portal_name.c_str());
       std::vector<FieldInfoType> tuple_descriptor;
       PutTupleDescriptor(tuple_descriptor, responses);
       return;
     }
 
-    std::shared_ptr<Portal> portal = portal_itr->second;
+    auto portal = portal_itr->second;
+    if (portal == nullptr) {
+      LOG_ERROR("Portal does not exist : %s", portal_name.c_str());
+      std::vector<FieldInfoType> tuple_descriptor;
+      PutTupleDescriptor(tuple_descriptor, responses);
+      return;
+    }
+
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
@@ -554,8 +561,22 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto portal = portals_[portal_name];
+  if(portal.get() == nullptr){
+    LOG_INFO("Did not find portal : %s", portal_name.c_str());
+    SendErrorResponse({{'M', error_message}}, responses);
+    SendReadyForQuery(txn_state, responses);
+    return;
+  }
+
   auto statement = portal->GetStatement();
-  PL_ASSERT(statement.get() != nullptr);
+
+  if(statement.get() == nullptr){
+    LOG_INFO("Did not find statement in portal : %s", portal_name.c_str());
+    SendErrorResponse({{'M', error_message}}, responses);
+    SendReadyForQuery(txn_state, responses);
+    return;
+  }
+
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
 
