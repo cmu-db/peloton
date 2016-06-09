@@ -10,8 +10,6 @@
 // Copyright (c) 2016, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
- 
-#pragma once
 
 #include "optimizer/abstract_optimizer.h"
 
@@ -23,7 +21,7 @@ namespace optimizer{
 	AbstractOptimizer::~AbstractOptimizer() {}
 
 
-}
-}
+} // namespace optimizer
+} // namespace peloton
 
 
