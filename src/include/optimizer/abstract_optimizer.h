@@ -12,22 +12,46 @@
 
 #pragma once
 
-#include "common/printable.h"
+#include "optimizer/memo.h"
+#include "optimizer/column_manager.h"
+#include "optimizer/query_operators.h"
+#include "optimizer/operator_node.h"
+#include "optimizer/binding.h"
+#include "optimizer/pattern.h"
+#include "optimizer/property.h"
+#include "optimizer/property_set.h"
+#include "optimizer/rule.h"
+#include "planner/abstract_plan.h"
+#include "common/logger.h"
 
-namespace peloton{
-namespace optimizer{
-	class AbstractOptimizer : public Printable {
+#include <memory>
 
-		public:
-		AbstractOptimizer(const AbstractOptimizer &) = delete;
-		AbstractOptimizer &operator=(const AbstractOptimizer &) = delete;
-		AbstractOptimizer(AbstractOptimizer &&) = delete;
-		AbstractOptimizer &operator=(AbstractOptimizer &&) = delete;
+namespace peloton {
+namespace optimizer {
 
-		AbstractOptimizer();
+//===--------------------------------------------------------------------===//
+// Abstract Optimizer
+//===--------------------------------------------------------------------===//
+class AbstractOptimizer {
+ public:
+  AbstractOptimizer(const AbstractOptimizer &) = delete;
+  AbstractOptimizer &operator=(const AbstractOptimizer &) = delete;
+  AbstractOptimizer(AbstractOptimizer &&) = delete;
+  AbstractOptimizer &operator=(AbstractOptimizer &&) = delete;
 
-		virtual ~AbstractOptimizer();
+  AbstractOptimizer();
+  virtual ~AbstractOptimizer();
 
-	};
+  static AbstractOptimizer &GetInstance();
+
+  virtual std::shared_ptr<planner::AbstractPlan> GeneratePlan(
+      std::shared_ptr<std::string> plan_tree);
+
+  virtual bool ShouldOptimize(std::string parse);
+
+  virtual std::shared_ptr<std::string> TransformParseTreeToOptimizerPlanTree(
+      std::string parse);
+};
+
 } // namespace optimizer
 } // namespace peloton
