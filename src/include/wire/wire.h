@@ -71,7 +71,7 @@ class PacketManager {
   Client client;
 
   // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_entry;
+  std::shared_ptr<PreparedStatement> unnamed_entry;
 
   // gloabl txn state
   uchar txn_state;
@@ -96,16 +96,17 @@ class PacketManager {
   void SendReadyForQuery(uchar txn_status, ResponseBuffer& responses);
 
   // Sends the attribute headers required by SELECT queries
-  void PutRowDesc(std::vector<FieldInfoType>& rowdesc,
-                  ResponseBuffer& responses);
+  void PutTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor,
+                          ResponseBuffer& responses);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<ResType>& results, int colcount,
+  void SendDataRows(std::vector<ResultType>& results, int colcount,
                     int& rows_affected, ResponseBuffer& responses);
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type, int rows,
+  void CompleteCommand(const std::string& query_type,
+                       int rows,
                        ResponseBuffer& responses);
 
   // Specific response for empty or NULL queries
