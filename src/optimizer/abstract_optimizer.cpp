@@ -35,14 +35,14 @@ std::shared_ptr<planner::AbstractPlan> AbstractOptimizer::GeneratePlan(
 }
 
 bool AbstractOptimizer::ShouldOptimize(std::string parse) {
-  std::cout << "Just a placeholder for prase string " << parse << std::endl;
+  LOG_INFO("Just a placeholder for parse string %s", parse);
   return false;
 }
 
 std::shared_ptr<std::string> AbstractOptimizer::TransformParseTreeToOptimizerPlanTree(
     std::string parse) {
-  std::cout << "Just a placeholder for prase string " << parse << std::endl;
-  return NULL;
+	LOG_INFO("Just a placeholder for parse string %s", parse);
+	return NULL;
 }
 
 } // namespace optimizer
