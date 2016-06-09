@@ -15,21 +15,25 @@
 #include <string>
 #include <vector>
 
+#include "common/types.h"
+
 namespace peloton {
 
+namespace planner {
+class AbstractPlan;
+}
+
+typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>> ResultType;
+
+// FIELD INFO TYPE : field name, oid (data type), size
+typedef std::tuple<std::string, oid_t, size_t> FieldInfoType;
+
 class PreparedStatement {
-
-};
-
-class Statement {
 
  public:
 
   // logical name of statement
-  std::string stmt_name;
-
-  // pointer to prepared statement
-  PreparedStatement *sql_stmt;
+  std::string prepared_statement_name;
 
   // query string
   std::string query_string;
@@ -39,6 +43,12 @@ class Statement {
 
   // format codes of the parameters
   std::vector<int32_t> param_types;
+
+  // schema of result tuple
+  std::vector<FieldInfoType> tuple_descriptor;
+
+  // cached plan tree
+  planner::AbstractPlan *plan_tree;
 
 };
 
