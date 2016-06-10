@@ -91,13 +91,16 @@ namespace peloton {
 namespace index {
 #endif
 
+// This needs to be always here
+static void dummy(const char*, ...) {}
+
 #ifdef INTERACTIVE_DEBUG
 
 #define idb_assert(cond)                                                \
   do {                                                                  \
     if (!(cond)) {                                                      \
       debug_stop_mutex.lock();                                          \
-      printf("assert, %-24s, line %d\n", __FUNCTION__, __LINE__); \
+      dummy("assert, %-24s, line %d\n", __FUNCTION__, __LINE__); \
       idb.Start();                                                      \
       debug_stop_mutex.unlock();                                        \
     }                                                                   \
@@ -107,7 +110,7 @@ namespace index {
   do {                                                                  \
     if (!(cond)) {                                                      \
       debug_stop_mutex.lock();                                          \
-      printf("assert, %-24s, line %d\n", __FUNCTION__, __LINE__); \
+      dummy("assert, %-24s, line %d\n", __FUNCTION__, __LINE__); \
       idb.key_list.push_back(key);                                      \
       idb.node_id_list.push_back(node_id);                              \
       idb.context_p = context_p;                                        \
@@ -135,7 +138,7 @@ namespace index {
 #define bwt_printf(fmt, ...)                              \
   do {                                                    \
     if(print_flag == false) break;                        \
-    printf("%-24s(%8lX): " fmt, __FUNCTION__, std::hash<std::thread::id>()(std::this_thread::get_id()), ##__VA_ARGS__); \
+    dummy("%-24s(%8lX): " fmt, __FUNCTION__, std::hash<std::thread::id>()(std::this_thread::get_id()), ##__VA_ARGS__); \
     fflush(stdout);                                       \
   } while (0);
 
@@ -145,8 +148,6 @@ namespace index {
   do {                         \
     dummy(fmt, ##__VA_ARGS__); \
   } while (0);
-
-static void dummy(const char*, ...) {}
 
 #endif
 
@@ -158,6 +159,53 @@ static void dummy(const char*, ...) {}
 // it guarantees no SMO would happen before everybody stops
 static std::mutex debug_stop_mutex;
 #endif
+
+/*
+ * class DummyOutObject - Mimics std::cout interface and avoids std::cout
+ *                       appearing in the source
+ *
+ * It is a validation requirement that std::cout should not appear in the
+ * source code, and all output should use logger function
+ */
+class DummyOutObject {
+ public:
+
+  /*
+   * operator<<() - accepts any type and chauin them up
+   *
+   * The template argument can be automatically deducted from the actual
+   * argument, which is done by the compiler
+   */
+  template <typename T>
+  DummyOutObject &operator<<(const T &value) {
+    (void)value;
+    
+    return *this;
+  }
+  
+  /*
+   * operator<<() - The following three are to support std::endl()
+   */
+  DummyOutObject &operator<<(std::ostream& (*f)(std::ostream &)) {
+    (void)f;
+    
+    return *this;
+  }
+
+  DummyOutObject &operator<<(std::ostream& (*f)(std::ios &)) {
+    (void)f;
+
+    return *this;
+  }
+
+  DummyOutObject &operator<<(std::ostream& (*f)(std::ios_base &)) {
+    (void)f;
+
+    return *this;
+  }
+};
+
+static DummyOutObject dummy_out;
 
 using NodeID = uint64_t;
 
@@ -327,7 +375,7 @@ class BwTree {
      * Constructor  - Use RawKeyType object to initialize
      */
     KeyType(const RawKeyType &p_key) :
-      key{p_key},
+      key(p_key),
       type{ExtendedKeyValue::RawKey} // DO NOT FORGET THIS!
     {}
 
@@ -337,7 +385,7 @@ class BwTree {
      * This function assumes RawKeyType being default constructible
      */
     KeyType(ExtendedKeyValue p_type) :
-      key{},
+      key(),
       type{p_type} {
       // If it is raw type then we are having an empty key
       assert(p_type != ExtendedKeyValue::RawKey);
@@ -349,7 +397,7 @@ class BwTree {
      *                    raw key and key type
      */
     KeyType(const KeyType &p_key) :
-      key{p_key.key},
+      key(p_key.key),
       type{p_key.type}
     {}
 
@@ -7237,6 +7285,12 @@ before_switch:
               return;
             }
           } // if is last leaf page == true
+        } else {
+          // NOTE: If we switch key and do not have to load a new page
+          // then we need to update the raw key pointer to reflect
+          // the key change
+          // During iteration this key is very important
+          raw_key_p = &key_it->first.key;
         } // if key_it == end()
         
         // If we switched to the next key in current page
@@ -7401,7 +7455,7 @@ before_switch:
      * PrintPrompt() - Print the debugger prompt
      */
     void PrintPrompt() {
-      std::cout << "[(" << NodeTypeToString(current_type)
+      dummy_out << "[(" << NodeTypeToString(current_type)
                 << ") NodeID=" << current_node_id << "]>> ";
 
       return;
@@ -7526,18 +7580,18 @@ before_switch:
       std::cin >> s;
 
       if (s == "") {
-        std::cout << "Nothing to print!" << std::endl;
+        dummy_out << "Nothing to print!" << std::endl;
         return;
       } else if (s == "node-pointer") {
-        std::cout << current_node_p << std::endl;
+        dummy_out << current_node_p << std::endl;
       } else if (s == "type") {
-        std::cout << static_cast<int>(current_type)
+        dummy_out << static_cast<int>(current_type)
                   << " ("
                   << NodeTypeToString(current_type)
                   << ")"
                   << std::endl;
       } else {
-        std::cout << "Unknown print argument: " << s << std::endl;
+        dummy_out << "Unknown print argument: " << s << std::endl;
       }
 
       return;
@@ -7570,7 +7624,7 @@ before_switch:
         }
         case NodeType::LeafType:
         case NodeType::InnerType:
-          std::cout << "Type (" << NodeTypeToString(current_type)
+          dummy_out << "Type (" << NodeTypeToString(current_type)
                     << ") does not have child node" << std::endl;
           break;
       }
@@ -7595,14 +7649,14 @@ before_switch:
 
         sibling_node_id = split_node_p->split_sibling;
       } else {
-        std::cout << "Type (" << NodeTypeToString(current_type)
+        dummy_out << "Type (" << NodeTypeToString(current_type)
                   << ") does not have split sibling" << std::endl;
         return;
       }
 
       // This should not happen, but just in case
       if(sibling_node_id == INVALID_NODE_ID) {
-        std::cout << "NodeID is INVALID_NODE_ID";
+        dummy_out << "NodeID is INVALID_NODE_ID";
 
         return;
       }
@@ -7629,14 +7683,14 @@ before_switch:
 
         next_node_id = leaf_node_p->next_node_id;
       } else {
-        std::cout << "Type (" << NodeTypeToString(current_type)
+        dummy_out << "Type (" << NodeTypeToString(current_type)
                   << ") does not have sibling node" << std::endl;
         return;
       }
 
       // This should not happen, but just in case
       if(next_node_id == INVALID_NODE_ID) {
-        std::cout << "NodeID is INVALID_NODE_ID";
+        dummy_out << "NodeID is INVALID_NODE_ID";
 
         return;
       }
@@ -7663,7 +7717,7 @@ before_switch:
 
         node_p = merge_node_p->right_merge_p;
       } else {
-        std::cout << "Type (" << NodeTypeToString(current_type)
+        dummy_out << "Type (" << NodeTypeToString(current_type)
                   << ") does not have merge sibling" << std::endl;
         return;
       }
@@ -7679,7 +7733,7 @@ before_switch:
      */
     void ProcessPrintSep() {
       if (current_type != NodeType::InnerType) {
-        std::cout << "Type (" << NodeTypeToString(current_type)
+        dummy_out << "Type (" << NodeTypeToString(current_type)
                   << ") does not have separator array" << std::endl;
         return;
       }
@@ -7687,15 +7741,15 @@ before_switch:
       const InnerNode *inner_node_p = \
         static_cast<const InnerNode *>(current_node_p);
 
-      std::cout << "Number of separators: " << inner_node_p->sep_list.size()
+      dummy_out << "Number of separators: " << inner_node_p->sep_list.size()
                 << std::endl;
 
       for (SepItem it : inner_node_p->sep_list) {
-        std::cout << "[" << GetKeyID(it.key) << ", " << it.node << "]"
+        dummy_out << "[" << GetKeyID(it.key) << ", " << it.node << "]"
                   << ", ";
       }
 
-      std::cout << std::endl;
+      dummy_out << std::endl;
 
       return;
     }
@@ -7708,7 +7762,7 @@ before_switch:
         const InnerNode *inner_node_p = \
           static_cast<const InnerNode *>(current_node_p);
 
-        std::cout << "Lower, Upper: "
+        dummy_out << "Lower, Upper: "
                   << GetKeyID(inner_node_p->lbound)
                   << ", "
                   << GetKeyID(inner_node_p->ubound)
@@ -7717,13 +7771,13 @@ before_switch:
         const LeafNode *leaf_node_p = \
           static_cast<const LeafNode *>(current_node_p);
 
-        std::cout << "Lower, Upper: "
+        dummy_out << "Lower, Upper: "
                   << GetKeyID(leaf_node_p->lbound)
                   << ", "
                   << GetKeyID(leaf_node_p->ubound)
                   << std::endl;
       } else {
-        std::cout << "Type ("
+        dummy_out << "Type ("
                   << NodeTypeToString(current_type)
                   << ") does not have bound key"
                   << std::endl;
@@ -7737,7 +7791,7 @@ before_switch:
      */
     void ProcessPrintLeaf() {
       if (current_type != NodeType::LeafType) {
-        std::cout << "Type ("
+        dummy_out << "Type ("
                   << NodeTypeToString(current_type)
                   << ") does not have leaf array"
                   << std::endl;
@@ -7748,21 +7802,21 @@ before_switch:
       const LeafNode *leaf_node_p = \
         static_cast<const LeafNode *>(current_node_p);
 
-      std::cout << "Node size: "
+      dummy_out << "Node size: "
                 << leaf_node_p->data_list.size()
                 << std::endl;
 
       // Iterate through keys
       for (const DataItem &it : leaf_node_p->data_list) {
-        std::cout << GetKeyID(it.key)
+        dummy_out << GetKeyID(it.key)
                   << ": [";
 
         // Print all values in one line, separated by comma
         for (auto &it2 : it.value_list) {
-          std::cout << GetValueID(it2) << ", ";
+          dummy_out << GetValueID(it2) << ", ";
         }
 
-        std::cout << "], " << std::endl;
+        dummy_out << "], " << std::endl;
       }
 
       return;
@@ -7772,7 +7826,7 @@ before_switch:
      * ProcessPrintDelta() - Print delta node contents
      */
     void ProcessPrintDelta() {
-      std::cout << "Node type: "
+      dummy_out << "Node type: "
                 << static_cast<int>(current_type)
                 << " ("
                 << NodeTypeToString(current_type) << ")"
@@ -7783,7 +7837,7 @@ before_switch:
         case NodeType::InnerType:
         case NodeType::LeafRemoveType:
         case NodeType::InnerRemoveType: {
-          std::cout << "Type ("
+          dummy_out << "Type ("
                     << NodeTypeToString(current_type)
                     << ") does not have record"
                     << std::endl;
@@ -7794,11 +7848,11 @@ before_switch:
           const LeafSplitNode *split_node_p = \
             static_cast<const LeafSplitNode *>(current_node_p);
 
-          std::cout << "Separator key: "
+          dummy_out << "Separator key: "
                     << GetKeyID(split_node_p->split_key)
                     << std::endl;
 
-          std::cout << "Sibling NodeID: "
+          dummy_out << "Sibling NodeID: "
                     << split_node_p->split_sibling
                     << std::endl;
           break;
@@ -7807,11 +7861,11 @@ before_switch:
           const InnerSplitNode *split_node_p = \
             static_cast<const InnerSplitNode *>(current_node_p);
 
-          std::cout << "Separator key: "
+          dummy_out << "Separator key: "
                     << GetKeyID(split_node_p->split_key)
                     << std::endl;
 
-          std::cout << "Sibling NodeID: "
+          dummy_out << "Sibling NodeID: "
                     << split_node_p->split_sibling
                     << std::endl;
           break;
@@ -7820,7 +7874,7 @@ before_switch:
           const LeafMergeNode *merge_node_p = \
             static_cast<const LeafMergeNode *>(current_node_p);
 
-          std::cout << "Separator key: "
+          dummy_out << "Separator key: "
                     << GetKeyID(merge_node_p->merge_key)
                     << std::endl;
 
@@ -7830,7 +7884,7 @@ before_switch:
           const InnerMergeNode *merge_node_p = \
             static_cast<const InnerMergeNode *>(current_node_p);
 
-          std::cout << "Separator key: "
+          dummy_out << "Separator key: "
                     << GetKeyID(merge_node_p->merge_key)
                     << std::endl;
 
@@ -7840,7 +7894,7 @@ before_switch:
           const LeafInsertNode *insert_node_p = \
             static_cast<const LeafInsertNode *>(current_node_p);
 
-          std::cout << "key, value = ["
+          dummy_out << "key, value = ["
                     << GetKeyID(insert_node_p->insert_key)
                     << ", "
                     << GetValueID(insert_node_p->value)
@@ -7853,7 +7907,7 @@ before_switch:
           const LeafDeleteNode *delete_node_p = \
             static_cast<const LeafDeleteNode*>(current_node_p);
 
-          std::cout << "key, value = ["
+          dummy_out << "key, value = ["
                     << GetKeyID(delete_node_p->delete_key)
                     << ", "
                     << GetValueID(delete_node_p->value)
@@ -7866,7 +7920,7 @@ before_switch:
           const LeafUpdateNode *update_node_p = \
             static_cast<const LeafUpdateNode *>(current_node_p);
 
-          std::cout << "key, old value, new value = ["
+          dummy_out << "key, old value, new value = ["
                     << GetKeyID(update_node_p->update_key)
                     << ", "
                     << GetValueID(update_node_p->old_value)
@@ -7881,15 +7935,15 @@ before_switch:
           const InnerInsertNode *insert_node_p = \
               static_cast<const InnerInsertNode *>(current_node_p);
 
-          std::cout << "New split sep: "
+          dummy_out << "New split sep: "
                     << GetKeyID(insert_node_p->insert_key)
                     << std::endl;
 
-          std::cout << "Next split sep: "
+          dummy_out << "Next split sep: "
                     << GetKeyID(insert_node_p->next_key)
                     << std::endl;
 
-          std::cout << "New child PID: "
+          dummy_out << "New child PID: "
                     << insert_node_p->new_node_id
                     << std::endl;
 
@@ -7899,22 +7953,22 @@ before_switch:
           const InnerDeleteNode *delete_node_p =
               static_cast<const InnerDeleteNode *>(current_node_p);
 
-          std::cout << "Deleted key: "
+          dummy_out << "Deleted key: "
                     << GetKeyID(delete_node_p->delete_key)
                     << std::endl;
 
-          std::cout << "Low key: "
+          dummy_out << "Low key: "
                     << GetKeyID(delete_node_p->prev_key)
                     << std::endl;
 
-          std::cout << "High key: "
+          dummy_out << "High key: "
                     << GetKeyID(delete_node_p->next_key)
                     << std::endl;
 
           break;
         }
         default:
-          std::cout << "Node a delta node type: "
+          dummy_out << "Node a delta node type: "
                     << NodeTypeToString(current_type)
                     << std::endl;
 
@@ -7923,7 +7977,7 @@ before_switch:
       }
 
       // We need to print out depth for debugging
-      std::cout << "Delta depth: "
+      dummy_out << "Delta depth: "
                 << static_cast<const DeltaNode *>(current_node_p)->depth
                 << std::endl;
 
@@ -7937,13 +7991,13 @@ before_switch:
       assert(node_id_stack.size() == top_node_p_stack.size());
 
       if (node_p_stack.size() == 0) {
-        std::cout << "Already at root. Cannot go back" << std::endl;
+        dummy_out << "Already at root. Cannot go back" << std::endl;
         return;
       }
 
       // We know we are on top of a PID delta chain
       if (need_switch_stack.top() == true) {
-        std::cout << "Return to previous PID: "
+        dummy_out << "Return to previous PID: "
                   << node_id_stack.top()
                   << std::endl;
 
@@ -7969,27 +8023,27 @@ before_switch:
      */
     void ProcessPrintPath() {
       if(context_p == nullptr) {
-        std::cout << "Context object does not exist" << std::endl;
+        dummy_out << "Context object does not exist" << std::endl;
 
         return;
       } else {
-        std::cout << "Path list length: "
+        dummy_out << "Path list length: "
                   << context_p->path_list.size()
                   << std::endl;
-        std::cout << "Root NodeID: "
+        dummy_out << "Root NodeID: "
                   << tree->root_id.load() << std::endl;
       }
 
       for(auto &snapshot : context_p->path_list) {
-        std::cout << snapshot.node_id;
-        std::cout << "; leftmost = "
+        dummy_out << snapshot.node_id;
+        dummy_out << "; leftmost = "
                   << snapshot.is_leftmost_child;
-        std::cout << "; is_leaf = "
+        dummy_out << "; is_leaf = "
                   << snapshot.is_leaf;
-        std::cout << "; low key: "
+        dummy_out << "; low key: "
                   << GetKeyID(*snapshot.lbound_p);
 
-        std::cout << std::endl;
+        dummy_out << std::endl;
       }
 
       return;
@@ -8007,17 +8061,17 @@ before_switch:
       if(is_leaf == true) {
         tree->CollectAllValuesOnLeaf(&snapshot);
 
-        std::cout << "Value list = [";
+        dummy_out << "Value list = [";
         for(auto &item : snapshot.GetLogicalLeafNode()->GetContainer()) {
-          std::cout << GetKeyID(item.first)
+          dummy_out << GetKeyID(item.first)
                     << ", ";
         }
       } else {
         tree->CollectAllSepsOnInner(&snapshot);
 
-        std::cout << "Sep list = [";
+        dummy_out << "Sep list = [";
         for(auto &item : snapshot.GetLogicalInnerNode()->GetContainer()) {
-          std::cout << "("
+          dummy_out << "("
                     << GetKeyID(item.first)
                     << ", "
                     << item.second
@@ -8026,14 +8080,14 @@ before_switch:
       }
 
       NodeID id = snapshot.GetNextNodeID();
-      std::cout << "]" << std::endl;
-      std::cout << "Low key = "
+      dummy_out << "]" << std::endl;
+      dummy_out << "Low key = "
                 << GetKeyID(*snapshot.GetLowKey())
                 << std::endl;
-      std::cout << "High key = "
+      dummy_out << "High key = "
                 << GetKeyID(*snapshot.GetHighKey())
                 << std::endl;
-      std::cout << "Next ID = "
+      dummy_out << "Next ID = "
                 << ((id == INVALID_NODE_ID) ? "INVALID_ID" : std::to_string(id))
                 << std::endl;
 
@@ -8077,7 +8131,7 @@ before_switch:
       assert(PrepareNodeByID(tree->root_id.load(), true) == true);
       SortKeyMap();
 
-      std::cout << "********* Interactive Debugger *********\n";
+      dummy_out << "********* Interactive Debugger *********\n";
 
       while (1) {
         PrintPrompt();
@@ -8107,7 +8161,7 @@ before_switch:
           // print lower and upper bound for leaf and inenr node
           ProcessPrintBound();
         } else if (opcode == "type") {
-          std::cout << static_cast<int>(current_type)
+          dummy_out << static_cast<int>(current_type)
                     << " ("
                     << NodeTypeToString(current_type)
                     << ")"
@@ -8144,28 +8198,28 @@ before_switch:
           std::cin >> key_index;
 
           if (key_index < 0 || key_index >= key_list.size()) {
-            std::cout << "Key index " << key_index << " invalid!" << std::endl;
+            dummy_out << "Key index " << key_index << " invalid!" << std::endl;
           } else {
-            std::cout << GetKeyID(key_list[key_index]) << std::endl;
+            dummy_out << GetKeyID(key_list[key_index]) << std::endl;
           }
         } else if (opcode == "get-id") {
           int node_id_index;
           std::cin >> node_id_index;
 
           if (node_id_index < 0 || node_id_index >= node_id_list.size()) {
-            std::cout << "PID index " << node_id_index << " invalid!" << std::endl;
+            dummy_out << "PID index " << node_id_index << " invalid!" << std::endl;
           } else {
-            std::cout << "pid_list[" << node_id_index
+            dummy_out << "pid_list[" << node_id_index
                       << "] = " << node_id_list[node_id_index] << std::endl;
           }
         } else if(opcode == "get-thread-id") {
-          printf("%8lX\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
+          dummy_out << std::hash<std::thread::id>()(std::this_thread::get_id()) << std::endl;
         } else if(opcode == "print-path") {
           ProcessPrintPath();
         } else if(opcode == "consolidate") {
           ProcessConsolidate();
         } else {
-          std::cout << "Unknown command: " << opcode << std::endl;
+          dummy_out << "Unknown command: " << opcode << std::endl;
         }
       }
 
@@ -8236,7 +8290,7 @@ before_switch:
 
     std::thread *thread_p;
 
-    // The counter that counts how many free() is called
+    // The counter that counts how many free is called
     // inside the epoch manager
     // NOTE: We cannot precisely count the size of memory freed
     // since sizeof(Node) does not reflect the true size, since
@@ -8361,7 +8415,7 @@ before_switch:
       EpochNode *epoch_p = current_epoch_p;
 
       // These two could be predetermined
-      GarbageNode *garbage_node_p = new GarbageNode{};
+      GarbageNode *garbage_node_p = new GarbageNode;
       garbage_node_p->node_p = node_p;
 
       while(1) {

@@ -165,7 +165,8 @@ BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &values,
       for (auto scan_itr = scan_begin_itr;
            scan_itr.IsEnd() == false;
            scan_itr++) {
-        auto &scan_current_key = *scan_itr.GetCurrentKey();
+        KeyType &scan_current_key = \
+          *const_cast<KeyType *>(scan_itr.GetCurrentKey());
         auto tuple =
             scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
@@ -275,7 +276,9 @@ BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &values,
       for (auto scan_itr = scan_begin_itr;
            scan_itr.IsEnd() == false;
            scan_itr++) {
-        auto &scan_current_key = *scan_itr.GetCurrentKey();
+        KeyType &scan_current_key = \
+          *const_cast<KeyType *>(scan_itr.GetCurrentKey());
+          
         auto tuple =
             scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
