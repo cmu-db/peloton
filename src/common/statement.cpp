@@ -17,25 +17,17 @@
 namespace peloton {
 
 Statement::Statement(const std::string& statement_name,
-          const std::string& query_string,
-          const std::string& query_type,
-          const std::vector<int32_t>& param_types,
-          const std::vector<FieldInfoType>& tuple_descriptor,
-          std::unique_ptr<planner::AbstractPlan> plan_tree)
+                     const std::string& query_string)
 : statement_name(statement_name),
-  query_string(query_string),
-  query_type(query_type),
-  param_types(param_types),
-  tuple_descriptor(tuple_descriptor),
-  plan_tree(std::move(plan_tree)){
+  query_string(query_string) {
 
-  LOG_INFO("Statement created");
+  LOG_INFO("Statement created : %s", statement_name.c_str());
 
 }
 
 Statement::~Statement() {
 
-  LOG_INFO("Statement destroyed");
+  LOG_INFO("Statement destroyed : %s", statement_name.c_str());
 
 }
 

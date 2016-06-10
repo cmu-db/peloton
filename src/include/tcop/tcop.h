@@ -55,7 +55,8 @@ class TrafficCop {
                           std::string &error_message);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
-  std::shared_ptr<Statement> PrepareStatement(const std::string& query,
+  std::shared_ptr<Statement> PrepareStatement(const std::string& statement_name,
+                                              const std::string& query_string,
                                               std::string &error_message);
 
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,

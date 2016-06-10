@@ -232,7 +232,6 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
-
   // just a ';' sent
   if (queries.size() == 1) {
     SendEmptyQueryResponse(responses);
@@ -315,7 +314,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   // Prepare statement
   std::shared_ptr<Statement> statement;
   auto &tcop = tcop::TrafficCop::GetInstance();
-  statement = std::move(tcop.PrepareStatement(query_string,
+  statement = std::move(tcop.PrepareStatement(statement_name,
+                                              query_string,
                                               error_message));
 
   if (statement.get() == nullptr) {
@@ -337,8 +337,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
-  statement->SetStatementName(statement_name);
-  statement->SetQueryString(query_string);
   statement->SetQueryType(query_type);
   statement->SetParamTypes(param_types);
 
