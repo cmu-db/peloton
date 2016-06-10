@@ -132,8 +132,8 @@ public:
   }
 
   // Return nullptr if the tuple is not activated to current txn.
-  // Otherwise return the evident that current tuple is activated
-  inline char* GetActivatedEvidence(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_slot_id) {
+  // Otherwise return the version that current tuple is activated
+  inline char* GetActivatedRB(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_slot_id) {
     cid_t txn_begin_cid = current_txn->GetBeginCommitId();
     cid_t tuple_begin_cid = tile_group_header->GetBeginCommitId(tuple_slot_id);
 
@@ -239,7 +239,7 @@ public:
   static const size_t sindex_ptr = rb_seg_offset + sizeof(char *);
   static const size_t delete_flag_offset = sindex_ptr + sizeof(char *);
   // TODO: add cooperative GC
-  // The RB segment pool that is activlely being used
+  // The RB segment pool that is actively being used
   cuckoohash_map<cid_t, std::shared_ptr<storage::RollbackSegmentPool>> living_pools_;
   // The RB segment pool that has been marked as garbage
   cuckoohash_map<cid_t, std::shared_ptr<storage::RollbackSegmentPool>> garbage_pools_;

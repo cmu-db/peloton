@@ -46,7 +46,8 @@ VisibilityType OptimisticRbTxnManager::IsVisible(
 
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
-    // This is caused by an comitted deletion
+    // This is caused by an committed deletion
+    // visibility_invisible is not possible, as aborted version will not show up in the centralized storage.
     return VISIBILITY_DELETED;
   }
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
@@ -76,10 +77,10 @@ VisibilityType OptimisticRbTxnManager::IsVisible(
       }
     }
 
-    if (GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
+    if (GetActivatedRB(tile_group_header, tuple_id) != nullptr) {
       return VISIBILITY_OK;
     } else {
-      // GetActivatedEvidence return nullptr if the master version is invisible,
+      // GetActivatedRB return nullptr if the master version is invisible,
       // which indicates a delete
       return VISIBILITY_DELETED;
     }
@@ -103,7 +104,7 @@ bool OptimisticRbTxnManager::IsOwnable(
   const storage::TileGroupHeader *const tile_group_header,
   const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-  char *evidence = GetActivatedEvidence(tile_group_header, tuple_id);
+  char *evidence = GetActivatedRB(tile_group_header, tuple_id);
 
   return tuple_txn_id == INITIAL_TXN_ID && 
         evidence == tile_group_header->GetReservedFieldRef(tuple_id);
@@ -271,7 +272,7 @@ void OptimisticRbTxnManager::PerformUpdateWithRb(const ItemPointer &location,
   assert(storage::RollbackSegmentPool::GetNextPtr(new_rb_seg) == nullptr);
   assert(storage::RollbackSegmentPool::GetTimeStamp(new_rb_seg) == MAX_CID);
 
-  // First link it to the old roolback segment
+  // First link it to the old rollback segment
   auto old_rb_seg = GetRbSeg(tile_group_header, tuple_id);
   storage::RollbackSegmentPool::SetNextPtr(new_rb_seg, old_rb_seg);
 
@@ -367,7 +368,7 @@ bool OptimisticRbTxnManager::ValidateRead(const storage::TileGroupHeader *const 
     return false;
   }
 
-  auto evidence = GetActivatedEvidence(tile_group_header, tuple_id);
+  auto evidence = GetActivatedRB(tile_group_header, tuple_id);
 
   if (evidence == tile_group_header->GetReservedFieldRef(tuple_id)) {
     // begin cid is activated on the master version
@@ -411,7 +412,7 @@ Result OptimisticRbTxnManager::CommitTransaction() {
           // T0 now commit, master version has been changed to be visible for (0, 2)
           // Now the master version is no longer visible for T0.
           if (tile_group_header->GetTransactionId(tuple_slot) == INITIAL_TXN_ID &&
-            GetActivatedEvidence(tile_group_header, tuple_slot) != nullptr &&
+            GetActivatedRB(tile_group_header, tuple_slot) != nullptr &&
               tile_group_header->GetEndCommitId(tuple_slot) >=
               current_txn->GetBeginCommitId()) {
             // the version is not owned by other txns and is still visible.

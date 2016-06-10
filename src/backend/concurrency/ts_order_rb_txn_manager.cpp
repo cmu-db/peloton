@@ -47,6 +47,7 @@ VisibilityType TsOrderRbTxnManager::IsVisible(
   if (tuple_txn_id == INVALID_TXN_ID) {
     // the tuple is not available.
     // This is caused by an comitted deletion
+    // visibility_invisible is not possible, as aborted version will never show up in the centralized storage.
     return VISIBILITY_DELETED;
   }
   bool own = (current_txn->GetTransactionId() == tuple_txn_id);
@@ -56,6 +57,8 @@ VisibilityType TsOrderRbTxnManager::IsVisible(
   if (own == true) {
     if (GetDeleteFlag(tile_group_header, tuple_id) == true) {
       // the tuple is deleted by current transaction
+      // we can not tag certain version as deleted using three attributes (ts + txn_id),
+      // as some other transactions still need to check these attributes.
       return VISIBILITY_DELETED;
     } else {
       assert(tuple_end_cid == MAX_CID);
@@ -76,10 +79,10 @@ VisibilityType TsOrderRbTxnManager::IsVisible(
       }
     }
 
-    if (GetActivatedEvidence(tile_group_header, tuple_id) != nullptr) {
+    if (GetActivatedRB(tile_group_header, tuple_id) != nullptr) {
       return VISIBILITY_OK;
     } else {
-      // GetActivatedEvidence return nullptr if the master version is invisible,
+      // GetActivatedRB return nullptr if the master version is invisible,
       // which indicates a delete
       return VISIBILITY_DELETED;
     }
@@ -103,10 +106,9 @@ bool TsOrderRbTxnManager::IsOwnable(
   const storage::TileGroupHeader *const tile_group_header,
   const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-  char *evidence = GetActivatedEvidence(tile_group_header, tuple_id);
+  char *evidence = GetActivatedRB(tile_group_header, tuple_id);
 
-  return tuple_txn_id == INITIAL_TXN_ID && 
-        evidence == tile_group_header->GetReservedFieldRef(tuple_id);
+  return tuple_txn_id == INITIAL_TXN_ID && evidence != nullptr;
 }
 
 // get write lock on a tuple.
@@ -144,8 +146,16 @@ bool TsOrderRbTxnManager::PerformRead(const ItemPointer &location) {
   return true;
 }
 
-bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location) {
+bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location UNUSED_ATTRIBUTE) {
+  assert(false);
 
+  return false;
+}
+
+bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr) {
+  LOG_TRACE("Perform insert in RB with rb_itemptr %p", rb_item_ptr);
+
+  assert(rb_item_ptr != nullptr);
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -165,6 +175,8 @@ bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location) {
   // init the reserved field
   InitTupleReserved(tile_group_header, tuple_id);
 
+  SetSIndexPtr(tile_group_header, tuple_id, rb_item_ptr);
+
   // Add the new tuple into the insert set
   current_txn->RecordInsert(location);
   return true;
@@ -181,7 +193,6 @@ bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location) {
 bool TsOrderRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
   const ItemPointer &location, const storage::Tuple *tuple) {
   // Index checks and updates
-
   int index_count = target_table->GetIndexCount();
 
   std::function<bool(const ItemPointer &)> fn =
@@ -218,14 +229,27 @@ bool TsOrderRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
           return false;
         }
         // Record into the updated index entry set, used when commit
-        to_updated_index_entries.emplace(location, rb_itempointer_ptr);
+        auto itr = to_updated_index_entries.find(location);
+        if (itr != to_updated_index_entries.end()) {
+          index->DeleteEntry(key.get(), *rb_itempointer_ptr);
+          itr->second = rb_itempointer_ptr;
+        } else {
+          to_updated_index_entries.emplace(location, rb_itempointer_ptr);
+        }
+        
         break;
       }
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
         index->InsertEntry(key.get(), location, &rb_itempointer_ptr);
-        to_updated_index_entries.emplace(location, rb_itempointer_ptr);
+        auto itr = to_updated_index_entries.find(location);
+        if (itr != to_updated_index_entries.end()) {
+          index->DeleteEntry(key.get(), *rb_itempointer_ptr);
+          itr->second = rb_itempointer_ptr;
+        } else {
+          to_updated_index_entries.emplace(location, rb_itempointer_ptr);
+        }
         // Record into the updated index entry set, used when commit
         break;
     }
@@ -345,7 +369,7 @@ bool TsOrderRbTxnManager::ValidateRead(const storage::TileGroupHeader *const til
     return false;
   }
 
-  auto evidence = GetActivatedEvidence(tile_group_header, tuple_id);
+  auto evidence = GetActivatedRB(tile_group_header, tuple_id);
 
   if (evidence == tile_group_header->GetReservedFieldRef(tuple_id)) {
     // begin cid is activated on the master version
@@ -389,7 +413,7 @@ Result TsOrderRbTxnManager::CommitTransaction() {
           // T0 now commit, master version has been changed to be visible for (0, 2)
           // Now the master version is no longer visible for T0.
           if (tile_group_header->GetTransactionId(tuple_slot) == INITIAL_TXN_ID &&
-            GetActivatedEvidence(tile_group_header, tuple_slot) != nullptr &&
+            GetActivatedRB(tile_group_header, tuple_slot) != nullptr &&
               tile_group_header->GetEndCommitId(tuple_slot) >=
               current_txn->GetBeginCommitId()) {
             // the version is not owned by other txns and is still visible.
@@ -442,6 +466,17 @@ Result TsOrderRbTxnManager::CommitTransaction() {
   }
   //////////////////////////////////////////////////////////
 
+  for (auto itr = to_updated_index_entries.begin(); itr != to_updated_index_entries.end(); itr++) {
+    auto location = itr->first;
+    oid_t tile_group_id = location.block;
+    oid_t tuple_id = location.offset;
+    auto tile_group_header = manager.GetTileGroup(tile_group_id)->GetHeader();
+    index::RBItemPointer *old_index_ptr = GetSIndexPtr(tile_group_header, tuple_id);
+    assert(old_index_ptr != nullptr);
+    old_index_ptr->timestamp = end_commit_id;
+    SetSIndexPtr(tile_group_header, tuple_id, itr->second);
+  }
+
   // auto &log_manager = logging::LogManager::GetInstance();
   // log_manager.LogBeginTransaction(end_commit_id);
   // install everything.
@@ -486,6 +521,11 @@ Result TsOrderRbTxnManager::CommitTransaction() {
         // Reset the deleted bit for safety
         ClearDeleteFlag(tile_group_header, tuple_slot);
 
+        // Set the timestamp of the entry corresponding to the latest version
+        index::RBItemPointer *index_ptr = GetSIndexPtr(tile_group_header, tuple_slot);
+        if (index_ptr != nullptr)
+          index_ptr->timestamp = end_commit_id;
+
         COMPILER_MEMORY_FENCE;
 
         // Finally we release the write lock
@@ -527,6 +567,12 @@ Result TsOrderRbTxnManager::AbortTransaction() {
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetRWSet();
+
+  // Delete from secondary index here, currently the workaround is just to 
+  // invalidate the index entry by setting its timestamp to 0
+  for (auto itr = to_updated_index_entries.begin(); itr != to_updated_index_entries.end(); itr++) {
+    itr->second->timestamp = 0;
+  }
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;

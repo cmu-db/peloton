@@ -84,7 +84,7 @@ RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *sch
 /**
  * @brief Get a value of a column from the rollback segment
  *
- * @param idx The index of the recored column in the rollback segment
+ * @param idx The index of the recorded column in the rollback segment
  */
 Value RollbackSegmentPool::GetValue(RBSegType rb_seg, const catalog::Schema *schema, int idx) {
   auto col_id = GetIdOffsetPair(rb_seg, idx)->col_id;

@@ -43,7 +43,7 @@ struct ColIdOffsetPair {
 
 typedef char* RBSegType;
 
-/* @brief per transaction rollback segment pool. Rollback segments genereted
+/* @brief per transaction rollback segment pool. Rollback segments generated
  * by each transaction will be allocated from its own pool. The responsibility 
  * of the RollbackSegmentPool is data (de)allocation, and garbage collection.
  */
@@ -63,10 +63,10 @@ public:
     *  the *END* timestamp of the rollback segment, meaning that any transaction
     *  that has a smaller timestamp may be able to read it. The begin timestamp
     *  of a rollback segment is JUST the end timestamp of next rollback segment
-    *  on the rollback segment chain. Everytime the timestamp of a rollback
-    *  segment is copied from the coressponding tuple
+    *  on the rollback segment chain. Every time the timestamp of a rollback
+    *  segment is copied from the coresponding tuple
     * - The next 8 byte field is the number of columns in the rollback segment
-    * - The next column_count * 16 bytes is a serious of pairs, the pairs map
+    * - The next column_count * 16 bytes is a series of pairs, the pairs map
     *  column id of the original tuple to the offset of value in the data area
     *  of the rollback segment
     * - Finally follows is the rollback segment's data
@@ -92,14 +92,20 @@ public:
   /**
    * Public Getters
    */
+  // get the older version
   inline static char *GetNextPtr(char *rb_seg) {
     return *(reinterpret_cast<char**>(rb_seg + next_ptr_offset_));
+  }
+
+  // TODO: get the next version
+  inline static char *GetPrevPtr(char *rb_seg) {
+    return rb_seg;
   }
 
   // The semantics of timestamp on rollback segment:
   //    The timestamp of a rollback segment stands for its "end timestamp".
   //    The "start timestamp" of a rollback segment should be discovered from 
-  //    the next rollback segment
+  //    the next (older) rollback segment
   inline static cid_t GetTimeStamp(char *rb_seg) {
     return *(reinterpret_cast<cid_t*>(rb_seg + timestamp_offset_));
   }
