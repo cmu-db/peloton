@@ -17,8 +17,6 @@
 #include "common/logger.h"
 #include "common/types.h"
 
-#include "parser/parser/pg_query.h"
-
 namespace peloton {
 namespace tcop {
 
@@ -29,16 +27,9 @@ TrafficCop &TrafficCop::GetInstance(void) {
 }
 
 TrafficCop::TrafficCop() {
-
-  // Initialize the postgresult memory context
-  pg_query_init();
-
 }
 
 TrafficCop::~TrafficCop() {
-
-  // Destroy the postgresult memory context
-  pg_query_destroy();
 
 }
 
