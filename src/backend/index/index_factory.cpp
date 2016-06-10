@@ -63,8 +63,10 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 
   if (index_type == INDEX_TYPE_BTREE) {
     if (key_size <= 4) {
-      return new BTreeIndex<GenericKey<4>, ItemPointer *,
-                            GenericComparator<4>, GenericEqualityChecker<4>>(
+      return new BTreeIndex<GenericKey<4>,
+                            ItemPointer *,
+                            GenericComparator<4>,
+                            GenericEqualityChecker<4>>(
           metadata);
     } else if (key_size <= 8) {
       return new BTreeIndex<GenericKey<8>, ItemPointer *,
