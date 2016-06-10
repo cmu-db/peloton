@@ -15,6 +15,7 @@
 #include "backend/gc/cooperative_gc.h"
 #include "backend/gc/vacuum_gc.h"
 #include "backend/gc/off_gc.h"
+#include "backend/gc/n2o_gc.h"
 
 namespace peloton {
 namespace gc {
@@ -27,6 +28,8 @@ class GCManagerFactory {
         return Cooperative_GCManager::GetInstance();
       case GC_TYPE_VACUUM:
         return Vacuum_GCManager::GetInstance();
+      case GC_TYPE_N2O:
+        return N2O_GCManager::GetInstance();
       case GC_TYPE_OFF:
         return Off_GCManager::GetInstance();
       default:

@@ -145,7 +145,7 @@ Value Tile::GetValue(const oid_t tuple_offset, const oid_t column_id) {
       rb_seg = storage::RollbackSegmentPool::GetNextPtr(rb_seg);
     }
     if (traverse_length > 1) {
-      LOG_INFO("traverse length=%d, column_id=%u", traverse_length, column_id);
+      LOG_TRACE("traverse length=%d, column_id=%u", traverse_length, column_id);
     }
     return value;
   }

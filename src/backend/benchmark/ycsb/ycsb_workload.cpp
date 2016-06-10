@@ -224,6 +224,9 @@ void RunWorkload() {
            sizeof(oid_t) * num_threads);
     memcpy(commit_counts_snapshots[round_id], commit_counts,
            sizeof(oid_t) * num_threads);
+    auto& manager = catalog::Manager::GetInstance();
+  
+    state.snapshot_memory.push_back(manager.GetLastTileGroupId());
   }
 
   is_running = false;

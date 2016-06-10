@@ -169,6 +169,8 @@ bool RunUpdate(UpdatePlans &update_plans, ZipfDistribution &zipf) {
 
   values.push_back(ValueFactory::GetIntegerValue(lookup_key));
 
+  // printf("perform update, key = %d\n", (int)lookup_key);
+
   update_plans.index_scan_executor_->SetValues(values);
 
 

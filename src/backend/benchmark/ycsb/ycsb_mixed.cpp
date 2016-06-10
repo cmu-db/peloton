@@ -253,6 +253,7 @@ bool RunMixed(MixedPlans &mixed_plans, ZipfDistribution &zipf, fast_random &rng)
       }
 
       if (ret_result.size() != 1) {
+        LOG_ERROR("result size = %d", (int)ret_result.size());
         assert(false);
       }
     }

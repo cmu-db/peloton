@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Zrs_y on 5/10/16.
+//                         Peloton
 //
+// vacuum_gc.h
+//
+// Identification: src/backend/gc/vacuum_gc.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -48,7 +56,7 @@ public:
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
-  void RegisterTable(oid_t table_id) {
+  virtual void RegisterTable(oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
       LOG_INFO("register table %d to garbage collector", (int)table_id);
@@ -67,6 +75,8 @@ private:
   void Unlink(const cid_t &max_cid);
 
   void DeleteTupleFromIndexes(const TupleMetadata &);
+  
+  void AddToRecycleMap(const TupleMetadata &tuple_metadata);
 
   bool ResetTuple(const TupleMetadata &);
 
@@ -79,6 +89,7 @@ private:
   std::unique_ptr<std::thread> gc_thread_;
 
   LockfreeQueue<TupleMetadata> unlink_queue_;
+
   LockfreeQueue<TupleMetadata> free_queue_;
 
   // Map of actual grabage.

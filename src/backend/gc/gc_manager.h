@@ -23,7 +23,6 @@
 #include "backend/storage/tile_group_factory.h"
 #include "backend/common/lockfree_queue.h"
 #include "backend/common/logger.h"
-#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace gc {
@@ -73,8 +72,10 @@ class GCManager {
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) = 0;
 
+  virtual void RegisterTable(oid_t table_id) = 0;
+
 protected:
-  void DeleteInvalidTupleFromIndex(const TupleMetadata __attribute__((unused))&tuple_metadata) {
+  void DeleteInvalidTupleFromIndex(const TupleMetadata &tuple_metadata) {
     return;
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);

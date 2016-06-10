@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// gc_manager.cpp
+// cooperative_gc.cpp
 //
-// Identification: src/backend/gc/gc_manager.cpp
+// Identification: src/backend/gc/cooperative_gc.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -79,7 +79,6 @@ bool Cooperative_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   std::memset(
     tile_group_header->GetReservedFieldRef(tuple_metadata.tuple_slot_id), 0,
     storage::TileGroupHeader::GetReservedSize());
-  // TODO: set the unused 2 boolean value
   LOG_TRACE("Garbage tuple(%u, %u) in table %u is reset",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -179,7 +178,6 @@ void Cooperative_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   reclaim_queue_.Enqueue(tuple_metadata);
-
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -204,6 +202,7 @@ void Cooperative_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id, const
 // this function returns a free tuple slot, if one exists
 // called by data_table.
 ItemPointer Cooperative_GCManager::ReturnFreeSlot(const oid_t &table_id) {
+  // return INVALID_ITEMPOINTER;
   // if there exists recycle_queue
   assert(recycle_queue_map_.count(table_id) != 0);
   TupleMetadata tuple_metadata;

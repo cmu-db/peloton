@@ -12,13 +12,6 @@
 
 #pragma once
 
-
-
-
-
-
-
-
 #include <atomic>
 #include <iostream>
 

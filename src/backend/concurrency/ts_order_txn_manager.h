@@ -70,10 +70,11 @@ class TsOrderTxnManager : public TransactionManager {
     txn_id_t txn_id = GetNextTransactionId();
     cid_t begin_cid = GetNextCommitId();
     Transaction *txn = new Transaction(txn_id, begin_cid);
-    current_txn = txn;
 
     auto eid = EpochManagerFactory::GetInstance().EnterEpoch(begin_cid);
     txn->SetEpochId(eid);
+
+    current_txn = txn;
 
     return txn;
   }
@@ -87,7 +88,7 @@ class TsOrderTxnManager : public TransactionManager {
 
 
  private:
-
+  
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
 
@@ -100,9 +101,18 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  void SetLastReaderCid(
+  bool SetLastReaderCid(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id, const cid_t &last_read_ts);
+      const oid_t &tuple_id);
+
+  // init reserved area of a tuple
+  void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
+    auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
+
+    new ((reserved_area + LOCK_OFFSET)) Spinlock();
+    *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
+  }
+
 
 };
 }

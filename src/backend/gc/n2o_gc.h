@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// cooperative_gc.h
+// n2o_gc.h
 //
-// Identification: src/backend/gc/cooperative_gc.h
+// Identification: src/backend/gc/n2o_gc.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -25,23 +25,19 @@
 
 namespace peloton {
 namespace gc {
-
-//===--------------------------------------------------------------------===//
-// GC Manager
-//===--------------------------------------------------------------------===//
-
-class Cooperative_GCManager : public GCManager {
+class N2O_GCManager : public GCManager {
 public:
-  Cooperative_GCManager()
+  N2O_GCManager()
     : is_running_(true),
-      reclaim_queue_(MAX_QUEUE_LENGTH) {
+      unlink_queue_(MAX_QUEUE_LENGTH),
+      free_queue_(MAX_QUEUE_LENGTH) {
     StartGC();
   }
 
-  virtual ~Cooperative_GCManager() { StopGC(); }
+  ~N2O_GCManager() { StopGC(); }
 
-  static Cooperative_GCManager &GetInstance() {
-    static Cooperative_GCManager gcManager;
+  static N2O_GCManager& GetInstance() {
+    static N2O_GCManager gcManager;
     return gcManager;
   }
 
@@ -52,19 +48,18 @@ public:
 
   virtual void StopGC();
 
-
   virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                        const oid_t &tuple_id, const cid_t &tuple_end_cid);
+                                const oid_t &tuple_id, const cid_t &tuple_end_cid);
 
-
-  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id, const oid_t &tuple_id);
+  virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                                   const oid_t &tuple_id);
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id);
 
   virtual void RegisterTable(oid_t table_id) {
     // Insert a new entry for the table
     if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
-      LOG_TRACE("register table %d to garbage collector", (int)table_id);
+      LOG_INFO("register table %d to garbage collector", (int)table_id);
       std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
       recycle_queue_map_[table_id] = recycle_queue;
     }
@@ -72,9 +67,13 @@ public:
 
 private:
   void ClearGarbage();
-  
+
   void Running();
 
+  void Reclaim(const cid_t &max_cid);
+
+  void Unlink(const cid_t &max_cid);
+  
   void AddToRecycleMap(const TupleMetadata &tuple_metadata);
 
   bool ResetTuple(const TupleMetadata &);
@@ -87,15 +86,21 @@ private:
 
   std::unique_ptr<std::thread> gc_thread_;
 
+  LockfreeQueue<TupleMetadata> unlink_queue_;
+  
+  LockfreeQueue<TupleMetadata> free_queue_;
+
+  // Map of actual grabage.
+  // The key is the timestamp when the garbage is identified, value is the
+  // metadata of the garbage.
   // TODO: use shared pointer to reduce memory copy
-  LockfreeQueue<TupleMetadata> reclaim_queue_;
+  std::multimap<cid_t, TupleMetadata> reclaim_map_;
 
   // TODO: use shared pointer to reduce memory copy
-  // cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
-
+  // table_id -> queue
+  //cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
   std::unordered_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
-  //std::unordered_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>> recycle_queue_map_;
 };
+}
+}
 
-}  // namespace gc
-}  // namespace peloton

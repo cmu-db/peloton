@@ -126,8 +126,11 @@ bool UpdateExecutor::DExecute() {
         // Overwrite the master copy
         tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
 
+        // Insert into secondary index
+        rb_txn_manager->RBInsertVersion(target_table_, old_location, new_tuple.get());
       } else {
         // Current rb segment is OK, just overwrite the tuple in place
+        // The above comment should be wrong?
         tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
         transaction_manager.PerformUpdate(old_location);
       }
@@ -140,6 +143,7 @@ bool UpdateExecutor::DExecute() {
                                                physical_tuple_id) == false) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        transaction_manager.AddOneAcquireOwnerAbort();
         return false;
       }
       // if it is the latest version and not locked by other threads, then
@@ -164,6 +168,10 @@ bool UpdateExecutor::DExecute() {
 
         // Overwrite the master copy
         tile_group->CopyTuple(new_tuple.get(), old_location.offset);
+
+        // Insert into secondary index. Maybe we can insert index before
+        // CopyTuple? -- RX
+        rb_txn_manager->RBInsertVersion(target_table_, old_location, new_tuple.get());
       } else {
         // finally insert updated tuple into the table
         ItemPointer new_location = target_table_->InsertVersion(new_tuple.get());
@@ -175,6 +183,7 @@ bool UpdateExecutor::DExecute() {
           // First yield ownership
           transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
           transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+          transaction_manager.AddOneNoSpaceAbort();
           return false;
         }
 
@@ -189,6 +198,7 @@ bool UpdateExecutor::DExecute() {
       // transaction should be aborted as we cannot update the latest version.
       LOG_TRACE("Fail to update tuple. Set txn failure.");
       transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+      transaction_manager.AddOneCannotOwnAbort();
       return false;
     }
   }

@@ -16,20 +16,20 @@
 namespace peloton {
 namespace gc {
 
-void Vacuum_GCManager::StartGC() {
+void N2O_GCManager::StartGC() {
   LOG_TRACE("Starting GC");
   this->is_running_ = true;
-  gc_thread_.reset(new std::thread(&Vacuum_GCManager::Running, this));
+  gc_thread_.reset(new std::thread(&N2O_GCManager::Running, this));
 }
 
-void Vacuum_GCManager::StopGC() {
+void N2O_GCManager::StopGC() {
   LOG_TRACE("Stopping GC");
   this->is_running_ = false;
   this->gc_thread_->join();
   ClearGarbage();
 }
 
-bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
+bool N2O_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   auto &manager = catalog::Manager::GetInstance();
   auto tile_group =
     manager.GetTileGroup(tuple_metadata.tile_group_id);
@@ -62,7 +62,7 @@ bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
   return true;
 }
 
-void Vacuum_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
+void N2O_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
   // If the tuple being reset no longer exists, just skip it
   if (ResetTuple(tuple_metadata) == false) return;
 
@@ -76,7 +76,7 @@ void Vacuum_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
   recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
 }
 
-void Vacuum_GCManager::Running() {
+void N2O_GCManager::Running() {
   // Check if we can move anything from the possibly free list to the free list.
 
   std::this_thread::sleep_for(
@@ -99,7 +99,7 @@ void Vacuum_GCManager::Running() {
 }
 
 // executed by a single thread. so no synchronization is required.
-void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
+void N2O_GCManager::Reclaim(const cid_t &max_cid) {
   int tuple_counter = 0;
 
   // we delete garbage in the free list
@@ -137,7 +137,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
   LOG_TRACE("Marked %d tuples as recycled", tuple_counter);
 }
 
-void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
+void N2O_GCManager::Unlink(const cid_t &max_cid) {
   int tuple_counter = 0;
 
   // we check if any possible garbage is actually garbage
@@ -156,7 +156,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
     if (tuple_metadata.tuple_end_cid < max_cid) {
       // Now that we know we need to recycle tuple, we need to delete all
       // tuples from the indexes to which it belongs as well.
-      DeleteTupleFromIndexes(tuple_metadata);
+      //DeleteTupleFromIndexes(tuple_metadata);
 
       // Add to the garbage map
       // reclaim_map_.insert(std::make_pair(getnextcid(), tuple_metadata));
@@ -177,7 +177,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
 }
 
 // called by transaction manager.
-void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
+void N2O_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
                                  const cid_t &tuple_end_cid) {
@@ -195,38 +195,15 @@ void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
            tuple_metadata.table_id);
 }
 
-void Vacuum_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id,
-                                           const oid_t &tile_group_id,
-                                           const oid_t &tuple_id) {
-
-  TupleMetadata tuple_metadata;
-  tuple_metadata.table_id = table_id;
-  tuple_metadata.tile_group_id = tile_group_id;
-  tuple_metadata.tuple_slot_id = tuple_id;
-  tuple_metadata.tuple_end_cid = START_CID;
-
-  DeleteInvalidTupleFromIndex(tuple_metadata);
-
-  AddToRecycleMap(tuple_metadata);
-
-  // Add to the recycle map
-  //std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
-  // if the entry for table_id exists.
-  // if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
-  //   // if the entry for tuple_metadata.table_id exists.
-  //   recycle_queue->Enqueue(tuple_metadata);
-  // } else {
-  //   // if the entry for tuple_metadata.table_id does not exist.
-  //   recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
-  //   recycle_queue->Enqueue(tuple_metadata);
-  //   recycle_queue_map_[tuple_metadata.table_id] = recycle_queue;
-  // }
+void N2O_GCManager::RecycleInvalidTupleSlot(const oid_t &table_id __attribute__((unused)),
+                                           const oid_t &tile_group_id __attribute__((unused)),
+                                           const oid_t &tuple_id __attribute__((unused))) {
+  assert(false);
 }
-
 
 // this function returns a free tuple slot, if one exists
 // called by data_table.
-ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
+ItemPointer N2O_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   // return INVALID_ITEMPOINTER;
   assert(recycle_queue_map_.count(table_id) != 0);
   TupleMetadata tuple_metadata;
@@ -247,85 +224,8 @@ ItemPointer Vacuum_GCManager::ReturnFreeSlot(const oid_t &table_id) {
   return INVALID_ITEMPOINTER;
 }
 
-// delete a tuple from all its indexes it belongs to.
-void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadata) {
-  LOG_TRACE("Deleting index for tuple(%u, %u)", tuple_metadata.tile_group_id,
-           tuple_metadata.tuple_slot_id);
 
-  auto &manager = catalog::Manager::GetInstance();
-  auto tile_group = manager.GetTileGroup(tuple_metadata.tile_group_id);
-
-  assert(tile_group != nullptr);
-  storage::DataTable *table =
-    dynamic_cast<storage::DataTable *>(tile_group->GetAbstractTable());
-  assert(table != nullptr);
-
-  // construct the expired version.
-  std::unique_ptr<storage::Tuple> expired_tuple(
-    new storage::Tuple(table->GetSchema(), true));
-  tile_group->CopyTuple(tuple_metadata.tuple_slot_id, expired_tuple.get());
-
-  // unlink the version from all the indexes.
-  for (size_t idx = 0; idx < table->GetIndexCount(); ++idx) {
-    auto index = table->GetIndex(idx);
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    // build key.
-    std::unique_ptr<storage::Tuple> key(
-      new storage::Tuple(index_schema, true));
-    key->SetFromTuple(expired_tuple.get(), indexed_columns, index->GetPool());
-
-    switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-        LOG_TRACE("Deleting primary index");
-
-        // Do nothing for new to old version chain here
-        if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_N2O || 
-          concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
-          continue;
-        }
-
-        // find next version the index bucket should point to.
-        auto tile_group_header = tile_group->GetHeader();
-        ItemPointer next_version =
-          tile_group_header->GetNextItemPointer(tuple_metadata.tuple_slot_id);
-
-        auto next_tile_group_header = manager.GetTileGroup(next_version.block)->GetHeader();
-        auto next_begin_cid = next_tile_group_header->GetBeginCommitId(next_version.offset);
-        assert(next_version.IsNull() == false);
-
-        assert(next_begin_cid != MAX_CID);
-
-        std::vector<ItemPointer *> item_pointer_containers;
-        // find the bucket.
-        index->ScanKey(key.get(), item_pointer_containers);
-        // as this is primary key, there should be exactly one entry.
-        assert(item_pointer_containers.size() == 1);
-
-
-        auto index_version = *item_pointer_containers[0];
-        auto index_tile_group_header = manager.GetTileGroup(index_version.block)->GetHeader();
-        auto index_begin_cid = index_tile_group_header->GetBeginCommitId(index_version.offset);
-
-        // if next_version is newer than index's version
-        // update index
-        if(index_begin_cid < next_begin_cid) {
-          AtomicUpdateItemPointer(item_pointer_containers[0], next_version);
-        }
-
-      } break;
-      default: {
-        LOG_TRACE("Deleting other index");
-        index->DeleteEntry(key.get(),
-                           ItemPointer(tuple_metadata.tile_group_id,
-                                       tuple_metadata.tuple_slot_id));
-      }
-    }
-  }
-}
-
-void Vacuum_GCManager::ClearGarbage() {
+void N2O_GCManager::ClearGarbage() {
   while(!unlink_queue_.IsEmpty()) {
     Unlink(MAX_CID);
   }
