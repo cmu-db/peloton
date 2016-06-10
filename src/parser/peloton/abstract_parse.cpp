@@ -20,6 +20,9 @@
 #include "common/types.h"
 #include "common/logger.h"
 
+#include "parser/postgres.h"
+#include "parser/nodes/parsenodes.h"
+
 namespace peloton {
 namespace parser {
 
