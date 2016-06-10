@@ -17,19 +17,20 @@
 namespace peloton {
 namespace parser {
 
-class InsertParse : public AbstractParse {
+class DropParse : public AbstractParse {
  public:
-  InsertParse() = delete;
-  InsertParse(const InsertParse &) = delete;
-  InsertParse &operator=(const InsertParse &) = delete;
-  InsertParse(InsertParse &&) = delete;
-  InsertParse &operator=(InsertParse &&) = delete;
+  DropParse() = delete;
+  DropParse(const DropParse &) = delete;
+  DropParse &operator=(const DropParse &) = delete;
+  DropParse(DropParse &&) = delete;
+  DropParse &operator=(DropParse &&) = delete;
 
-  explicit InsertParse(InsertStmt *insert_node) {}
+  explicit DropParse(DropStmt *drop_node) {
+  }
 
-  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_INSERT; }
+  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
 
-  const std::string GetInfo() const { return "InsertParse"; }
+  const std::string GetInfo() const { return "DropParse"; }
 
  private:
 

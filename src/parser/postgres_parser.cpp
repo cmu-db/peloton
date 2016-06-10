@@ -23,6 +23,8 @@
 #include "parser/parser/scanner.h"
 #include "parser/parser/scansup.h"
 
+#include "parser/parse_tree_transformer.h"
+
 namespace peloton {
 namespace parser {
 
@@ -82,8 +84,20 @@ std::unique_ptr<parser::AbstractParse> PostgresParser::BuildParseTree(
     return parse_tree;
   }
 
-  // Transform parse tree to our representation
   LOG_INFO("Parse Tree : %s %s", result.parse_tree, result.stderr_buffer);
+
+  // Transform parse tree to our representation
+  ListCell *parsetree_item;
+  List *parsetree_list = internal_result.tree;
+
+  foreach(parsetree_item, parsetree_list){
+    Node *parsetree = (Node *) lfirst(parsetree_item);
+
+    parse_tree = std::move(ParseTreeTransformer::BuildParseTree(parsetree));
+
+    // Ignore other statements in list
+    break;
+  }
 
   // Exit and clean the temporary query parsing memory context
   pg_query_exit_memory_context(ctx);
