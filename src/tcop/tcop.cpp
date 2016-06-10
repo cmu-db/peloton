@@ -17,6 +17,8 @@
 #include "common/logger.h"
 #include "common/types.h"
 
+#include "parser/postgres_parser.h"
+
 namespace peloton {
 namespace tcop {
 
@@ -27,10 +29,11 @@ TrafficCop &TrafficCop::GetInstance(void) {
 }
 
 TrafficCop::TrafficCop() {
+  // Nothing to do here !
 }
 
 TrafficCop::~TrafficCop() {
-
+  // Nothing to do here !
 }
 
 Result TrafficCop::ExecuteStatement(const std::string& query,
@@ -81,6 +84,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
   LOG_INFO("Prepare Statement %s", query_string.c_str());
 
   statement.reset(new Statement(statement_name, query_string));
+
+  auto& postgres_parser = parser::PostgresParser::GetInstance();
+
+  postgres_parser.BuildParseTree(query_string);
 
   // This will construct a plan tree
   // And set the tuple descriptor

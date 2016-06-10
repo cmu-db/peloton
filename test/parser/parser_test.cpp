@@ -40,11 +40,15 @@ void ParseSQLStrings(const std::vector<std::string>& sql_strings,
                 result.error->cursorpos);
     } else {
       EXPECT_EQ(result.error, nullptr);
-      // LOG_INFO("parse tree: %s", result.parse_tree);
+      LOG_INFO("parse tree: %s", result.parse_tree);
     }
 
     pg_query_free_parse_result(result);
   }
+
+  // Destroy the postgres memory context
+  //pg_query_destroy();
+
 }
 
 TEST_F(ParserTest, SQL92Test) {
@@ -150,6 +154,15 @@ TEST_F(ParserTest, FailureTest) {
   sqlStrings.push_back("SELECT ?");
 
   bool expect_failure = true;
+  ParseSQLStrings(sqlStrings, expect_failure);
+}
+
+TEST_F(ParserTest, DDLTest2) {
+  std::vector<std::string> sqlStrings;
+
+  sqlStrings.push_back("DROP TABLE IF EXISTS B");
+
+  bool expect_failure = false;
   ParseSQLStrings(sqlStrings, expect_failure);
 }
 

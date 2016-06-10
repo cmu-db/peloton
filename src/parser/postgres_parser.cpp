@@ -16,20 +16,26 @@
 #include "common/logger.h"
 
 #include "parser/parser/pg_query.h"
+#include "parser/pg_query_internal.h"
+#include "parser/pg_query_json.h"
+
+#include "parser/parser/parser.h"
+#include "parser/parser/scanner.h"
+#include "parser/parser/scansup.h"
 
 namespace peloton {
 namespace parser {
 
 PostgresParser::PostgresParser(){
 
-  // Initialize the postgresult memory context
+  // Initialize the postgres memory context
   pg_query_init();
 
 }
 
 PostgresParser::~PostgresParser(){
 
-  // Destroy the postgresult memory context
+  // Destroy the postgres memory context
   pg_query_destroy();
 
 }
@@ -43,7 +49,47 @@ std::unique_ptr<parser::AbstractParse> PostgresParser::BuildParseTree(
     const std::string& query_string){
   std::unique_ptr<parser::AbstractParse> parse_tree;
 
-  // TODO: Build parse tree
+  // Get postgres parse tree
+  MemoryContext ctx = NULL;
+  PgQueryInternalParsetreeAndError internal_result;
+  PgQueryParseResult result = {0};
+
+  // Enter the temporary query parsing memory context
+  ctx = pg_query_enter_memory_context("pg_query_parse");
+
+  LOG_INFO("Query string : %s", query_string.c_str());
+
+  internal_result = pg_query_raw_parse(query_string.c_str());
+
+  // Convert parse tree to string representation
+  if (internal_result.tree != NULL) {
+    char *tree_json;
+    tree_json = pg_query_nodes_to_json(internal_result.tree);
+    result.parse_tree = strdup(tree_json);
+    pfree(tree_json);
+  } else {
+    result.parse_tree = strdup("[]");
+  }
+
+  result.stderr_buffer = internal_result.stderr_buffer;
+  result.error = internal_result.error;
+
+  // Parsing error
+  if (result.error != nullptr) {
+    LOG_INFO("input: %s", query_string.c_str());
+    LOG_ERROR("error: %s at %d", result.error->message,
+              result.error->cursorpos);
+    return parse_tree;
+  }
+
+  // Transform parse tree to our representation
+  LOG_INFO("Parse Tree : %s %s", result.parse_tree, result.stderr_buffer);
+
+  // Exit and clean the temporary query parsing memory context
+  pg_query_exit_memory_context(ctx);
+
+  // Clean up the result
+  pg_query_free_parse_result(result);
 
   return parse_tree;
 }
