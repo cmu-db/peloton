@@ -755,6 +755,21 @@ enum TupleSerializationFormat {
 };
 
 // ------------------------------------------------------------------
+// Entity types
+// ------------------------------------------------------------------
+
+enum EntityType {
+  ENTITY_TYPE_INVALID = 0,
+
+  ENTITY_TYPE_TABLE = 1,
+  ENTITY_TYPE_SCHEMA = 2,
+  ENTITY_TYPE_INDEX = 3,
+  ENTITY_TYPE_VIEW = 4,
+  ENTITY_TYPE_PREPARED_STATEMENT = 5,
+
+};
+
+// ------------------------------------------------------------------
 // Endianess
 // ------------------------------------------------------------------
 
