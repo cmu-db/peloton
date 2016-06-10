@@ -2,39 +2,72 @@
 //
 //                         Peloton
 //
-// bootstrap.cpp
+// catalog.cpp
 //
-// Identification: src/catalog/bootstrap.cpp
+// Identification: src/catalog/catalog.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/bootstrap.h"
-#include "catalog/schema.h"
-#include "storage/table_factory.h"
-
-#include <memory>
+#include "catalog/catalog.h"
 
 namespace peloton {
 namespace catalog {
 
-void InitializeCatalogsSchemas();
+Catalog &Catalog::GetInstance(void) {
+  static Catalog global_catalog;
+  return global_catalog;
+}
 
-std::unique_ptr<catalog::Schema> InitializeDatabaseSchema();
-std::unique_ptr<catalog::Schema> InitializeTablesSchema();
+void Catalog::AddDatabase(std::string database_name) {
+{
+  std::lock_guard<std::mutex> lock(catalog_mutex);
+  storage::Database *database = new storage::Database(GetNewID());
+  database->setDBName(database_name);
+  databases.push_back(database);
+}
+}
 
-// Bootstrap Catalog
-void bootstrap() { InitializeCatalogsSchemas(); }
+storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
+  for (auto database : databases)
+    if (database->GetOid() == db_oid) return database;
+  return nullptr;
+}
 
-// Initialize Schemas
-void InitializeCatalogsSchemas() {
-  InitializeTablesSchema();
-  InitializeDatabaseSchema();
+storage::Database *Catalog::GetDatabaseWithName(const std::string database_name) const {
+  for (auto database : databases)
+    if (database->GetDBName() == database_name) return database;
+
+  return nullptr;
+}
+
+// Create Table for pg_class
+storage::DataTable *Catalog::CreateTableCatalog(std::string table_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  auto table_schema = InitializeTablesSchema();
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      INVALID_OID, GetNewID(), table_schema.get(), table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+
+  return table;
+}
+
+// Create Table for pg_database
+storage::DataTable *Catalog::CreateDatabaseCatalog(std::string table_name) {
+  bool own_schema = true;
+  bool adapt_table = false;
+  auto database_schema = InitializeDatabaseSchema();
+  storage::DataTable *table = storage::TableFactory::GetDataTable(
+      INVALID_OID, GetNewID(), database_schema.get(), table_name,
+      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+
+  return table;
 }
 
 // Initialize tables catalog schema
-std::unique_ptr<catalog::Schema> InitializeTablesSchema() {
+std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
   const bool is_inlined = true;
   const std::string not_null_constraint_name = "not_null";
 
@@ -56,7 +89,7 @@ std::unique_ptr<catalog::Schema> InitializeTablesSchema() {
 }
 
 // Initialize database catalog schema
-std::unique_ptr<catalog::Schema> InitializeDatabaseSchema() {
+std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
   const bool is_inlined = true;
   const std::string not_null_constraint_name = "not_null";
 
@@ -77,32 +110,8 @@ std::unique_ptr<catalog::Schema> InitializeDatabaseSchema() {
   return database_schema;
 }
 
-// Create Table for pg_class
-storage::DataTable *CreateTableCatalog(oid_t table_oid,
-                                       std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
 
-  auto table_schema = InitializeTablesSchema();
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, table_oid, table_schema.get(), table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+oid_t Catalog::GetNewID() { return id_cntr++;}
 
-  return table;
-}
-
-// Create Table for pg_database
-storage::DataTable *CreateDatabaseCatalog(oid_t table_oid,
-                                          std::string table_name) {
-  bool own_schema = true;
-  bool adapt_table = false;
-
-  auto database_schema = InitializeDatabaseSchema();
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-      INVALID_OID, table_oid, database_schema.get(), table_name,
-      DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-
-  return table;
-}
 }
 }

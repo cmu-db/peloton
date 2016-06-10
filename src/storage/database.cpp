@@ -146,5 +146,10 @@ const std::string Database::GetInfo() const {
   return os.str();
 }
 
+std::string Database::GetDBName() { return database_name; }
+
+void Database::setDBName(std::string database_name) { Database::database_name = database_name; }
+
+
 }  // End storage namespace
 }  // End peloton namespace
