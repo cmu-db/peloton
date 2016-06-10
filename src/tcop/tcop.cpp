@@ -50,7 +50,8 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
   LOG_INFO("Received %s", query.c_str());
 
   // Prepare the statement
-  auto statement = PrepareStatement(query, error_message);
+  std::string unnamed_statement = "unnamed";
+  auto statement = PrepareStatement(unnamed_statement, query, error_message);
 
   if(statement.get() == nullptr){
     return Result::RESULT_FAILURE;
@@ -68,7 +69,6 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
   return status;
 }
 
-
 Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<Statement>& statement,
                                     UNUSED_ATTRIBUTE const bool unnamed,
                                     UNUSED_ATTRIBUTE std::vector<ResultType> &result,
@@ -82,11 +82,14 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
   return Result::RESULT_FAILURE;
 }
 
-std::shared_ptr<Statement> TrafficCop::PrepareStatement(UNUSED_ATTRIBUTE const std::string& query,
+std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& statement_name,
+                                                        const std::string& query_string,
                                                         UNUSED_ATTRIBUTE std::string &error_message){
   std::shared_ptr<Statement> statement;
 
-  LOG_INFO("Prepare Statement %s", query.c_str());
+  LOG_INFO("Prepare Statement %s", query_string.c_str());
+
+  statement.reset(new Statement(statement_name, query_string));
 
   // This will construct a plan tree
   // And set the tuple descriptor
