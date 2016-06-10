@@ -10,9 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
-#include "parser/peloton/abstract_parse.h"
+#include "parser/abstract_parser.h"
 
 namespace peloton {
 namespace parser {
@@ -21,7 +19,7 @@ namespace parser {
 // Postgres Parser
 //===--------------------------------------------------------------------===//
 
-class PostgresParser {
+class PostgresParser : AbstractParser {
 
  public:
   PostgresParser(const PostgresParser &) = delete;
@@ -32,7 +30,7 @@ class PostgresParser {
   PostgresParser();
   virtual ~PostgresParser();
 
-  PostgresParser &GetInstance();
+  static PostgresParser &GetInstance();
 
   std::unique_ptr<parser::AbstractParse> BuildParseTree(const std::string& query_string);
 
