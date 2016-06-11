@@ -26,6 +26,7 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : tpcc <options> \n"
           "   -h --help              :  Print help message \n"
+          "   -i --index             :  index type could be btree or bwtree\n"
           "   -k --scale_factor      :  scale factor \n"
           "   -d --duration          :  execution duration \n"
           "   -s --snapshot_duration :  snapshot duration \n"
@@ -34,15 +35,16 @@ void Usage(FILE *out) {
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -a --affinity          :  enable client affinity \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, ssi, sread, ewrite, occrb, and to\n"
+          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
-          "                             gc protocol could be off, co, va\n"
+          "                             gc protocol could be off, co, va, and n2o\n"
   );
   exit(EXIT_FAILURE);
 }
 
 static struct option opts[] = {
   { "scale_factor", optional_argument, NULL, 'k' },
+  {"index", optional_argument, NULL, 'i'},
   { "duration", optional_argument, NULL, 'd' },
   { "snapshot_duration", optional_argument, NULL, 's' },
   { "backend_count", optional_argument, NULL, 'b'},
@@ -60,7 +62,7 @@ void ValidateScaleFactor(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "scale_factor", state.scale_factor);
+  LOG_TRACE("%s : %lf", "scale_factor", state.scale_factor);
 }
 
 void ValidateBackendCount(const configuration &state) {
@@ -69,7 +71,7 @@ void ValidateBackendCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "backend_count", state.backend_count);
+  LOG_TRACE("%s : %d", "backend_count", state.backend_count);
 }
 
 void ValidateDuration(const configuration &state) {
@@ -78,7 +80,7 @@ void ValidateDuration(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "execution duration", state.duration);
+  LOG_TRACE("%s : %lf", "execution duration", state.duration);
 }
 
 void ValidateSnapshotDuration(const configuration &state) {
@@ -87,7 +89,7 @@ void ValidateSnapshotDuration(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %lf", "snapshot_duration", state.snapshot_duration);
+  LOG_TRACE("%s : %lf", "snapshot_duration", state.snapshot_duration);
 }
 
 void ValidateWarehouseCount(const configuration &state) {
@@ -96,7 +98,28 @@ void ValidateWarehouseCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "warehouse_count", state.warehouse_count);
+  LOG_TRACE("%s : %d", "warehouse_count", state.warehouse_count);
+}
+
+void ValidateProtocol(const configuration &state) {
+  if (state.protocol != CONCURRENCY_TYPE_TO_N2O && state.protocol != CONCURRENCY_TYPE_OCC_N2O) {
+    if (state.gc_protocol == GC_TYPE_N2O) {
+      LOG_ERROR("Invalid protocol");
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    if (state.gc_protocol != GC_TYPE_OFF && state.gc_protocol != GC_TYPE_N2O) {
+      LOG_ERROR("Invalid protocol");
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
+void ValidateIndex(const configuration &state) {
+  if (state.index != INDEX_TYPE_BTREE && state.index != INDEX_TYPE_BWTREE) {
+    LOG_ERROR("Invalid index");
+    exit(EXIT_FAILURE);
+  }
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -110,11 +133,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
+  state.index = INDEX_TYPE_BWTREE;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aeh:k:w:d:s:b:p:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "aeh:k:w:d:s:b:p:g:i:", opts, &idx);
 
     if (c == -1) break;
 
@@ -156,6 +180,14 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_OCC_RB;
         } else if (strcmp(protocol, "sread") == 0) {
           state.protocol = CONCURRENCY_TYPE_SPECULATIVE_READ;
+        } else if (strcmp(protocol, "occn2o") == 0) {
+          state.protocol = CONCURRENCY_TYPE_OCC_N2O;
+        } else if (strcmp(protocol, "pccopt") == 0) {
+          state.protocol = CONCURRENCY_TYPE_PESSIMISTIC_OPT;
+        } else if (strcmp(protocol, "torb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO_RB;
+        } else if (strcmp(protocol, "ton2o") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO_N2O;
         } else {
           fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
           exit(EXIT_FAILURE);
@@ -170,8 +202,22 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.gc_protocol = GC_TYPE_VACUUM;
         }else if (strcmp(gc_protocol, "co") == 0) {
           state.gc_protocol = GC_TYPE_CO;
-        }else {
+        }else if (strcmp(gc_protocol, "n2o") == 0) {
+          state.gc_protocol = GC_TYPE_N2O;
+        } else {
           fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'i': {
+        char *index = optarg;
+        if (strcmp(index, "btree") == 0) {
+          state.index = INDEX_TYPE_BTREE;
+        } else if (strcmp(index, "bwtree") == 0) {
+          state.index = INDEX_TYPE_BWTREE;
+        } else {
+          fprintf(stderr, "\nUnknown index: %s\n", index);
           exit(EXIT_FAILURE);
         }
         break;
@@ -200,9 +246,11 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateSnapshotDuration(state);
   ValidateWarehouseCount(state);
   ValidateBackendCount(state);
+  ValidateProtocol(state);
+  ValidateIndex(state);
   
-  LOG_INFO("%s : %d", "Run client affinity", state.run_affinity);
-  LOG_INFO("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run client affinity", state.run_affinity);
+  LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
 
 }
 

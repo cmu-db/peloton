@@ -27,6 +27,7 @@ void Usage(FILE *out) {
   fprintf(out,
           "Command line options : ycsb <options> \n"
           "   -h --help              :  Print help message \n"
+          "   -i --index             :  index type could be btree or bwtree\n"
           "   -k --scale_factor      :  # of tuples \n"
           "   -d --duration          :  execution duration \n"
           "   -s --snapshot_duration :  snapshot duration \n"
@@ -49,6 +50,7 @@ void Usage(FILE *out) {
 
 static struct option opts[] = {
     {"scale_factor", optional_argument, NULL, 'k'},
+    {"index", optional_argument, NULL, 'i'},
     {"duration", optional_argument, NULL, 'd'},
     {"snapshot_duration", optional_argument, NULL, 's'},
     {"column_count", optional_argument, NULL, 'c'},
@@ -168,6 +170,13 @@ void ValidateProtocol(const configuration &state) {
   }
 }
 
+void ValidateIndex(const configuration &state) {
+  if (state.index != INDEX_TYPE_BTREE && state.index != INDEX_TYPE_BWTREE) {
+    LOG_ERROR("Invalid index");
+    exit(EXIT_FAILURE);
+  }
+}
+
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
@@ -184,10 +193,12 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
+  state.index = INDEX_TYPE_BTREE;
+
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:i:", opts, &idx);
 
     if (c == -1) break;
 
@@ -268,8 +279,20 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.gc_protocol = GC_TYPE_CO;
         }else if (strcmp(gc_protocol, "n2o") == 0) {
           state.gc_protocol = GC_TYPE_N2O;
-        }else {
+        } else {
           fprintf(stderr, "\nUnknown gc protocol: %s\n", gc_protocol);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
+      case 'i': {
+        char *index = optarg;
+        if (strcmp(index, "btree") == 0) {
+          state.index = INDEX_TYPE_BTREE;
+        } else if (strcmp(index, "bwtree") == 0) {
+          state.index = INDEX_TYPE_BWTREE;
+        } else {
+          fprintf(stderr, "\nUnknown index: %s\n", index);
           exit(EXIT_FAILURE);
         }
         break;
@@ -297,6 +320,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateSnapshotDuration(state);
   ValidateZipfTheta(state);
   ValidateProtocol(state);
+  ValidateIndex(state);
 
   LOG_TRACE("%s : %d", "Run mix query", state.run_mix);
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);

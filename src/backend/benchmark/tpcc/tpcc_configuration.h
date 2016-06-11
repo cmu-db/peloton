@@ -102,6 +102,9 @@ class configuration {
   // gc protocol type
   GCType gc_protocol;
 
+  // index type
+  IndexType index;
+
 };
 
 extern configuration state;
@@ -117,6 +120,10 @@ void ValidateSnapshotDuration(const configuration &state);
 void ValidateBackendCount(const configuration &state);
 
 void ValidateWarehouseCount(const configuration &state);
+
+void ValidateProtocol(const configuration &state);
+
+void ValidateIndex(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 
