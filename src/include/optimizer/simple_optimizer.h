@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// abstract_optimizer.h
+// simple_optimizer.h
 //
 // Identification: src/include/optimizer/abstract_optmizer.h
 //
@@ -12,34 +12,29 @@
 
 #pragma once
 
+#include "optimizer/abstract_optimizer.h"
+
 #include <memory>
 
 namespace peloton {
-namespace planner {
-class AbstractPlan;
-}
-
-namespace parser{
-class AbstractParse;
-}
-
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
-// Abstract Optimizer
+// Simple Optimizer
 //===--------------------------------------------------------------------===//
-class AbstractOptimizer {
+
+class SimpleOptimizer : AbstractOptimizer {
  public:
-  AbstractOptimizer(const AbstractOptimizer &) = delete;
-  AbstractOptimizer &operator=(const AbstractOptimizer &) = delete;
-  AbstractOptimizer(AbstractOptimizer &&) = delete;
-  AbstractOptimizer &operator=(AbstractOptimizer &&) = delete;
+  SimpleOptimizer(const SimpleOptimizer &) = delete;
+  SimpleOptimizer &operator=(const SimpleOptimizer &) = delete;
+  SimpleOptimizer(SimpleOptimizer &&) = delete;
+  SimpleOptimizer &operator=(SimpleOptimizer &&) = delete;
 
-  AbstractOptimizer();
-  virtual ~AbstractOptimizer();
+  SimpleOptimizer();
+  virtual ~SimpleOptimizer();
 
-  virtual std::shared_ptr<planner::AbstractPlan>
-  BuildPlanTree(std::unique_ptr<parser::AbstractParse> parse_tree) = 0;
+  std::shared_ptr<planner::AbstractPlan>
+  BuildPlanTree(std::unique_ptr<parser::AbstractParse> parse_tree);
 
 };
 
