@@ -87,7 +87,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   auto& postgres_parser = parser::PostgresParser::GetInstance();
 
-  postgres_parser.BuildParseTree(query_string);
+  auto parse_tree = postgres_parser.BuildParseTree(query_string);
+
+
 
   // This will construct a plan tree
   // And set the tuple descriptor
