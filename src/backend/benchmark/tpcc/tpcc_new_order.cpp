@@ -371,13 +371,13 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   // PREPARE ARGUMENTS
   /////////////////////////////////////////////////////////
   int warehouse_id = GenerateWarehouseId(thread_id);
-  int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
+  // int district_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
+  // int customer_id = GetRandomInteger(0, state.customers_per_district - 1);
   int o_ol_cnt = GetRandomInteger(orders_min_ol_cnt, orders_max_ol_cnt);
   //auto o_entry_ts = GetTimeStamp();
 
   std::vector<int> i_ids, ol_w_ids, ol_qtys;
-  bool o_all_local = true;
+  // bool o_all_local = true;
 
   for (auto ol_itr = 0; ol_itr < o_ol_cnt; ol_itr++) {
     // in the original TPC-C benchmark, it is possible to read an item that does not exist.
@@ -389,7 +389,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
     if(remote == true) {
       ol_w_ids[ol_itr] = GetRandomIntegerExcluding(0, state.warehouse_count - 1, warehouse_id);
-      o_all_local = false;
+      // o_all_local = false;
     }
 
     ol_qtys.push_back(GetRandomInteger(0, order_line_max_ol_quantity));
@@ -438,299 +438,299 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
   }
 
 
-  LOG_TRACE("getWarehouseTaxRate: SELECT W_TAX FROM WAREHOUSE WHERE W_ID = %d", warehouse_id);
+  // LOG_TRACE("getWarehouseTaxRate: SELECT W_TAX FROM WAREHOUSE WHERE W_ID = %d", warehouse_id);
   
-  new_order_plans.warehouse_index_scan_executor_->ResetState();
+  // new_order_plans.warehouse_index_scan_executor_->ResetState();
 
-  std::vector<Value> warehouse_key_values;
+  // std::vector<Value> warehouse_key_values;
 
-  warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  // warehouse_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
-  new_order_plans.warehouse_index_scan_executor_->SetValues(warehouse_key_values);
+  // new_order_plans.warehouse_index_scan_executor_->SetValues(warehouse_key_values);
 
-  auto gwtr_lists_values = ExecuteReadTest(new_order_plans.warehouse_index_scan_executor_);
+  // auto gwtr_lists_values = ExecuteReadTest(new_order_plans.warehouse_index_scan_executor_);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
-  if (gwtr_lists_values.size() != 1) {
-    LOG_INFO("warehouse_id=%d", warehouse_id);
-    assert(false);
-  }
+  // if (gwtr_lists_values.size() != 1) {
+  //   LOG_INFO("warehouse_id=%d", warehouse_id);
+  //   assert(false);
+  // }
 
-  auto w_tax = gwtr_lists_values[0][0];
+  // auto w_tax = gwtr_lists_values[0][0];
 
-  LOG_TRACE("w_tax: %s", w_tax.GetInfo().c_str());
+  // LOG_TRACE("w_tax: %s", w_tax.GetInfo().c_str());
 
 
-  LOG_TRACE("getDistrict: SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = %d AND D_W_ID = %d", district_id, warehouse_id);
+  // LOG_TRACE("getDistrict: SELECT D_TAX, D_NEXT_O_ID FROM DISTRICT WHERE D_ID = %d AND D_W_ID = %d", district_id, warehouse_id);
 
-  new_order_plans.district_index_scan_executor_->ResetState();
+  // new_order_plans.district_index_scan_executor_->ResetState();
 
-  std::vector<Value> district_key_values;
+  // std::vector<Value> district_key_values;
 
-  district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
-  district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  // district_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  // district_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
-  new_order_plans.district_index_scan_executor_->SetValues(district_key_values);
+  // new_order_plans.district_index_scan_executor_->SetValues(district_key_values);
 
-  auto gd_lists_values = ExecuteReadTest(new_order_plans.district_index_scan_executor_);
+  // auto gd_lists_values = ExecuteReadTest(new_order_plans.district_index_scan_executor_);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
-  if (gd_lists_values.size() != 1) {
-    assert(false);
-  }
+  // if (gd_lists_values.size() != 1) {
+  //   assert(false);
+  // }
 
-  auto d_tax = gd_lists_values[0][0];
-  auto d_next_o_id = gd_lists_values[0][1];
+  // auto d_tax = gd_lists_values[0][0];
+  // auto d_next_o_id = gd_lists_values[0][1];
 
-  LOG_TRACE("d_tax: %s, d_next_o_id: %s", d_tax.GetInfo().c_str(), d_next_o_id.GetInfo().c_str());
+  // LOG_TRACE("d_tax: %s, d_next_o_id: %s", d_tax.GetInfo().c_str(), d_next_o_id.GetInfo().c_str());
   
 
-  LOG_TRACE("getCustomer: SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = %d AND C_D_ID = %d AND C_ID = %d", warehouse_id, district_id, customer_id);
+  // LOG_TRACE("getCustomer: SELECT C_DISCOUNT, C_LAST, C_CREDIT FROM CUSTOMER WHERE C_W_ID = %d AND C_D_ID = %d AND C_ID = %d", warehouse_id, district_id, customer_id);
 
-  new_order_plans.customer_index_scan_executor_->ResetState();
+  // new_order_plans.customer_index_scan_executor_->ResetState();
 
-  std::vector<Value> customer_key_values;
+  // std::vector<Value> customer_key_values;
 
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(customer_id));
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
-  customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
+  // customer_key_values.push_back(ValueFactory::GetIntegerValue(customer_id));
+  // customer_key_values.push_back(ValueFactory::GetIntegerValue(district_id));
+  // customer_key_values.push_back(ValueFactory::GetIntegerValue(warehouse_id));
 
-  new_order_plans.customer_index_scan_executor_->SetValues(customer_key_values);
+  // new_order_plans.customer_index_scan_executor_->SetValues(customer_key_values);
 
-  auto gc_lists_values = ExecuteReadTest(new_order_plans.customer_index_scan_executor_);
+  // auto gc_lists_values = ExecuteReadTest(new_order_plans.customer_index_scan_executor_);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
-  if (gc_lists_values.size() != 1) {
-    assert(false);
-  }
+  // if (gc_lists_values.size() != 1) {
+  //   assert(false);
+  // }
 
-  auto c_last = gc_lists_values[0][0];
-  auto c_credit = gc_lists_values[0][1];
-  auto c_discount = gc_lists_values[0][2];
+  // auto c_last = gc_lists_values[0][0];
+  // auto c_credit = gc_lists_values[0][1];
+  // auto c_discount = gc_lists_values[0][2];
 
-  LOG_TRACE("c_last: %s, c_credit: %s, c_discount: %s", c_last.GetInfo().c_str(), c_credit.GetInfo().c_str(), c_discount.GetInfo().c_str());
+  // LOG_TRACE("c_last: %s, c_credit: %s, c_discount: %s", c_last.GetInfo().c_str(), c_credit.GetInfo().c_str(), c_discount.GetInfo().c_str());
 
 
-  int district_update_value = ValuePeeker::PeekAsInteger(d_next_o_id) + 1;
+  // int district_update_value = ValuePeeker::PeekAsInteger(d_next_o_id) + 1;
 
-  LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = %d WHERE D_ID = %d AND D_W_ID = %d", district_update_value, district_id, warehouse_id);
+  // LOG_TRACE("incrementNextOrderId: UPDATE DISTRICT SET D_NEXT_O_ID = %d WHERE D_ID = %d AND D_W_ID = %d", district_update_value, district_id, warehouse_id);
 
-  new_order_plans.district_update_index_scan_executor_->ResetState();
+  // new_order_plans.district_update_index_scan_executor_->ResetState();
 
-  new_order_plans.district_update_index_scan_executor_->SetValues(district_key_values);
+  // new_order_plans.district_update_index_scan_executor_->SetValues(district_key_values);
 
-  TargetList district_target_list;
+  // TargetList district_target_list;
 
-  Value district_update_val = ValueFactory::GetIntegerValue(district_update_value);
+  // Value district_update_val = ValueFactory::GetIntegerValue(district_update_value);
   
-  district_target_list.emplace_back(
-      10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
+  // district_target_list.emplace_back(
+  //     10, expression::ExpressionUtil::ConstantValueFactory(district_update_val));
 
-  new_order_plans.district_update_executor_->SetTargetList(district_target_list);
+  // new_order_plans.district_update_executor_->SetTargetList(district_target_list);
 
-  ExecuteUpdateTest(new_order_plans.district_update_executor_);
+  // ExecuteUpdateTest(new_order_plans.district_update_executor_);
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
-
-
-
-  LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)"); 
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
 
-  std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
 
-  // O_ID
-  orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
-  // O_C_ID
-  orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_id), nullptr);
-  // O_D_ID
-  orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
-  // O_W_ID
-  orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
-  // O_ENTRY_D
-  //auto o_entry_d = GetTimeStamp();
-  orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(1) , nullptr);
-  // O_CARRIER_ID
-  orders_tuple->SetValue(5, ValueFactory::GetIntegerValue(0), nullptr);
-  // O_OL_CNT
-  orders_tuple->SetValue(6, ValueFactory::GetIntegerValue(o_ol_cnt), nullptr);
-  // O_ALL_LOCAL
-  orders_tuple->SetValue(7, ValueFactory::GetIntegerValue(o_all_local), nullptr);
+  // LOG_TRACE("createOrder: INSERT INTO ORDERS (O_ID, O_D_ID, O_W_ID, O_C_ID, O_ENTRY_D, O_CARRIER_ID, O_OL_CNT, O_ALL_LOCAL)"); 
 
-  planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
-  executor::InsertExecutor orders_executor(&orders_node, context.get());
-  orders_executor.Execute();
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
-    txn_manager.AbortTransaction();
-    return false;
-  } else {
-    LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
-  }
+  // std::unique_ptr<storage::Tuple> orders_tuple(new storage::Tuple(orders_table->GetSchema(), true));
+
+  // // O_ID
+  // orders_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+  // // O_C_ID
+  // orders_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_id), nullptr);
+  // // O_D_ID
+  // orders_tuple->SetValue(2, ValueFactory::GetIntegerValue(district_id), nullptr);
+  // // O_W_ID
+  // orders_tuple->SetValue(3, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  // // O_ENTRY_D
+  // //auto o_entry_d = GetTimeStamp();
+  // orders_tuple->SetValue(4, ValueFactory::GetTimestampValue(1) , nullptr);
+  // // O_CARRIER_ID
+  // orders_tuple->SetValue(5, ValueFactory::GetIntegerValue(0), nullptr);
+  // // O_OL_CNT
+  // orders_tuple->SetValue(6, ValueFactory::GetIntegerValue(o_ol_cnt), nullptr);
+  // // O_ALL_LOCAL
+  // orders_tuple->SetValue(7, ValueFactory::GetIntegerValue(o_all_local), nullptr);
+
+  // planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
+  // executor::InsertExecutor orders_executor(&orders_node, context.get());
+  // orders_executor.Execute();
+
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // } else {
+  //   LOG_TRACE("successfully insert order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
+  // }
   
-  LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
-  std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
+  // LOG_TRACE("createNewOrder: INSERT INTO NEW_ORDER (NO_O_ID, NO_D_ID, NO_W_ID) VALUES (?, ?, ?)");
+  // std::unique_ptr<storage::Tuple> new_order_tuple(new storage::Tuple(new_order_table->GetSchema(), true));
 
-  // NO_O_ID
-  new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
-  // NO_D_ID
-  new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
-  // NO_W_ID
-  new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  // // NO_O_ID
+  // new_order_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+  // // NO_D_ID
+  // new_order_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
+  // // NO_W_ID
+  // new_order_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
 
-  planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
-  executor::InsertExecutor new_order_executor(&new_order_node, context.get());
-  new_order_executor.Execute();
+  // planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
+  // executor::InsertExecutor new_order_executor(&new_order_node, context.get());
+  // new_order_executor.Execute();
 
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction when inserting new order table");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction when inserting new order table");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
-  for (size_t i = 0; i < i_ids.size(); ++i) {
-    int item_id = i_ids.at(i);
-    int ol_w_id = ol_w_ids.at(i);
-    int ol_qty = ol_qtys.at(i);
+  // for (size_t i = 0; i < i_ids.size(); ++i) {
+  //   int item_id = i_ids.at(i);
+  //   int ol_w_id = ol_w_ids.at(i);
+  //   int ol_qty = ol_qtys.at(i);
     
-    LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = %d AND S_W_ID = %d", item_id, ol_w_id);
+  //   LOG_TRACE("getStockInfo: SELECT S_QUANTITY, S_DATA, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DIST_? FROM STOCK WHERE S_I_ID = %d AND S_W_ID = %d", item_id, ol_w_id);
 
-    new_order_plans.stock_index_scan_executor_->ResetState();
+  //   new_order_plans.stock_index_scan_executor_->ResetState();
     
-    std::vector<Value> stock_key_values;
+  //   std::vector<Value> stock_key_values;
     
-    stock_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
-    stock_key_values.push_back(ValueFactory::GetIntegerValue(ol_w_id));
+  //   stock_key_values.push_back(ValueFactory::GetIntegerValue(item_id));
+  //   stock_key_values.push_back(ValueFactory::GetIntegerValue(ol_w_id));
 
-    new_order_plans.stock_index_scan_executor_->SetValues(stock_key_values);
+  //   new_order_plans.stock_index_scan_executor_->SetValues(stock_key_values);
 
-    // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
-    std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; 
+  //   // S_QUANTITY, S_DIST_%02d, S_YTD, S_ORDER_CNT, S_REMOTE_CNT, S_DATA
+  //   std::vector<oid_t> stock_column_ids = {2, oid_t(3 + district_id), 13, 14, 15, 16}; 
 
-    new_order_plans.stock_index_scan_executor_->SetColumnIds(stock_column_ids);
+  //   new_order_plans.stock_index_scan_executor_->SetColumnIds(stock_column_ids);
 
-    auto gsi_lists_values = ExecuteReadTest(new_order_plans.stock_index_scan_executor_);
+  //   auto gsi_lists_values = ExecuteReadTest(new_order_plans.stock_index_scan_executor_);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_TRACE("abort transaction");
-      txn_manager.AbortTransaction();
-      return false;
-    }
+  //   if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //     LOG_TRACE("abort transaction");
+  //     txn_manager.AbortTransaction();
+  //     return false;
+  //   }
 
-    if (gsi_lists_values.size() != 1) {
-      assert(false);
-    }
+  //   if (gsi_lists_values.size() != 1) {
+  //     assert(false);
+  //   }
 
-    int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
+  //   int s_quantity = ValuePeeker::PeekAsInteger(gsi_lists_values[0][0]);
 
-    if (s_quantity >= ol_qty + 10) {
-      s_quantity = s_quantity - ol_qty;
-    } else {
-      s_quantity = s_quantity + 91 - ol_qty;
-    }
+  //   if (s_quantity >= ol_qty + 10) {
+  //     s_quantity = s_quantity - ol_qty;
+  //   } else {
+  //     s_quantity = s_quantity + 91 - ol_qty;
+  //   }
 
-    Value s_data = gsi_lists_values[0][1];
+  //   Value s_data = gsi_lists_values[0][1];
 
-    int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
+  //   int s_ytd = ValuePeeker::PeekAsInteger(gsi_lists_values[0][2]) + ol_qty;
 
-    int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
+  //   int s_order_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][3]) + 1;
 
-    int s_remote_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][4]);
+  //   int s_remote_cnt = ValuePeeker::PeekAsInteger(gsi_lists_values[0][4]);
 
-    if (ol_w_id != warehouse_id) {
-      s_remote_cnt += 1;
-    }
+  //   if (ol_w_id != warehouse_id) {
+  //     s_remote_cnt += 1;
+  //   }
 
-    LOG_TRACE("updateStock: UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?");
+  //   LOG_TRACE("updateStock: UPDATE STOCK SET S_QUANTITY = ?, S_YTD = ?, S_ORDER_CNT = ?, S_REMOTE_CNT = ? WHERE S_I_ID = ? AND S_W_ID = ?");
 
-    new_order_plans.stock_update_index_scan_executor_->ResetState();
+  //   new_order_plans.stock_update_index_scan_executor_->ResetState();
 
-    new_order_plans.stock_update_index_scan_executor_->SetValues(stock_key_values);
+  //   new_order_plans.stock_update_index_scan_executor_->SetValues(stock_key_values);
 
-    TargetList stock_target_list;
+  //   TargetList stock_target_list;
 
-    stock_target_list.emplace_back(
-        2, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_quantity)));
-    stock_target_list.emplace_back(
-        13, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_ytd)));
-    stock_target_list.emplace_back(
-        14, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_order_cnt)));
-    stock_target_list.emplace_back(
-        15, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_remote_cnt)));
+  //   stock_target_list.emplace_back(
+  //       2, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_quantity)));
+  //   stock_target_list.emplace_back(
+  //       13, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_ytd)));
+  //   stock_target_list.emplace_back(
+  //       14, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_order_cnt)));
+  //   stock_target_list.emplace_back(
+  //       15, expression::ExpressionUtil::ConstantValueFactory(ValueFactory::GetIntegerValue(s_remote_cnt)));
 
-    new_order_plans.stock_update_executor_->SetTargetList(stock_target_list);
+  //   new_order_plans.stock_update_executor_->SetTargetList(stock_target_list);
 
-    ExecuteUpdateTest(new_order_plans.stock_update_executor_);
+  //   ExecuteUpdateTest(new_order_plans.stock_update_executor_);
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_TRACE("abort transaction");
-      txn_manager.AbortTransaction();
-      return false;
-    }
+  //   if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //     LOG_TRACE("abort transaction");
+  //     txn_manager.AbortTransaction();
+  //     return false;
+  //   }
 
-    // the original benchmark requires check constraints.
-    // however, we ignored here.
-    // it does not influence the performance.
-    // if i_data.find(constants.ORIGINAL_STRING) != -1 and s_data.find(constants.ORIGINAL_STRING) != -1:
-    // brand_generic = 'B'
-    // else:
-    // brand_generic = 'G'
+  //   // the original benchmark requires check constraints.
+  //   // however, we ignored here.
+  //   // it does not influence the performance.
+  //   // if i_data.find(constants.ORIGINAL_STRING) != -1 and s_data.find(constants.ORIGINAL_STRING) != -1:
+  //   // brand_generic = 'B'
+  //   // else:
+  //   // brand_generic = 'G'
         
-    LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
+  //   LOG_TRACE("createOrderLine: INSERT INTO ORDER_LINE (OL_O_ID, OL_D_ID, OL_W_ID, OL_NUMBER, OL_I_ID, OL_SUPPLY_W_ID, OL_DELIVERY_D, OL_QUANTITY, OL_AMOUNT, OL_DIST_INFO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  //   std::unique_ptr<storage::Tuple> order_line_tuple(new storage::Tuple(order_line_table->GetSchema(), true));
 
-    // OL_O_ID
-    order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
-    // OL_D_ID
-    order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
-    // OL_W_ID
-    order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
-    // OL_NUMBER
-    order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(i), nullptr);
-    // OL_I_ID
-    order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(item_id), nullptr);
-    // OL_SUPPLY_W_ID
-    order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_w_id), nullptr);
-    // OL_DELIVERY_D
-    order_line_tuple->SetValue(6, ValueFactory::GetTimestampValue(1) , nullptr);
-    // OL_QUANTITY
-    order_line_tuple->SetValue(7, ValueFactory::GetIntegerValue(ol_qty), nullptr);
-    // OL_AMOUNT
-    // TODO: workaround!!! I don't know how to get float from Value.
-    order_line_tuple->SetValue(8, ValueFactory::GetDoubleValue(0), nullptr);
-    // OL_DIST_INFO
-    order_line_tuple->SetValue(9, s_data, nullptr);
+  //   // OL_O_ID
+  //   order_line_tuple->SetValue(0, ValueFactory::GetIntegerValue(ValuePeeker::PeekAsInteger(d_next_o_id)), nullptr);
+  //   // OL_D_ID
+  //   order_line_tuple->SetValue(1, ValueFactory::GetIntegerValue(district_id), nullptr);
+  //   // OL_W_ID
+  //   order_line_tuple->SetValue(2, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  //   // OL_NUMBER
+  //   order_line_tuple->SetValue(3, ValueFactory::GetIntegerValue(i), nullptr);
+  //   // OL_I_ID
+  //   order_line_tuple->SetValue(4, ValueFactory::GetIntegerValue(item_id), nullptr);
+  //   // OL_SUPPLY_W_ID
+  //   order_line_tuple->SetValue(5, ValueFactory::GetIntegerValue(ol_w_id), nullptr);
+  //   // OL_DELIVERY_D
+  //   order_line_tuple->SetValue(6, ValueFactory::GetTimestampValue(1) , nullptr);
+  //   // OL_QUANTITY
+  //   order_line_tuple->SetValue(7, ValueFactory::GetIntegerValue(ol_qty), nullptr);
+  //   // OL_AMOUNT
+  //   // TODO: workaround!!! I don't know how to get float from Value.
+  //   order_line_tuple->SetValue(8, ValueFactory::GetDoubleValue(0), nullptr);
+  //   // OL_DIST_INFO
+  //   order_line_tuple->SetValue(9, s_data, nullptr);
 
-    planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
-    executor::InsertExecutor order_line_executor(&order_line_node, context.get());
-    order_line_executor.Execute();
+  //   planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
+  //   executor::InsertExecutor order_line_executor(&order_line_node, context.get());
+  //   order_line_executor.Execute();
 
-    if (txn->GetResult() != Result::RESULT_SUCCESS) {
-      LOG_TRACE("abort transaction when inserting order line table");
-      txn_manager.AbortTransaction();
-      return false;
-    }
-  }
+  //   if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //     LOG_TRACE("abort transaction when inserting order line table");
+  //     txn_manager.AbortTransaction();
+  //     return false;
+  //   }
+  // }
 
   // transaction passed execution.
   assert(txn->GetResult() == Result::RESULT_SUCCESS);

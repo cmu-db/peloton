@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// bwtree_index.h
+// hash_index.h
 //
-// Identification: src/backend/index/bwtree_index.h
+// Identification: src/backend/index/hash_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,55 +14,34 @@
 
 #include <vector>
 #include <string>
-#include <map>
 
 #include "backend/catalog/manager.h"
-#include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 
-#include "backend/index/bwtree.h"
-
-#define BWTREE_INDEX_TYPE BWTreeIndex <KeyType, \
-                                       ValueType, \
-                                       KeyComparator, \
-                                       KeyEqualityChecker, \
-                                       ValueEqualityChecker, \
-                                       ValueHashFunc>
+#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace index {
 
 /**
- * BW tree-based index implementation.
- *
- * NOTE: The template argument list has two more entries, since
- * BwTree is implemented as a multimap, potentially there could
- * be many values mapped by a single key, and we need to distinguish
- * between values.
+ * Using libcuckoo for hash index
  *
  * @see Index
  */
-template <typename KeyType,
-          typename ValueType = ItemPointer *,
-          typename KeyComparator = std::less<KeyType>,
-          typename KeyEqualityChecker = std::equal_to<KeyType>,
-          typename ValueEqualityChecker = std::equal_to<ValueType>,
-          typename ValueHashFunc = std::hash<ValueType>>
-class BWTreeIndex : public Index {
+template <typename KeyType, typename ValueType, class KeyHasher,
+          class KeyComparator, class KeyEqualityChecker>
+class HashIndex : public Index {
   friend class IndexFactory;
 
-  using MapType = BwTree<KeyType,
-                         ValueType,
-                         KeyComparator,
-                         KeyEqualityChecker,
-                         ValueEqualityChecker,
-                         ValueHashFunc>;
+  // Define the container type
+  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher,
+                         KeyEqualityChecker> MapType;
 
  public:
-  BWTreeIndex(IndexMetadata *metadata);
+  HashIndex(IndexMetadata *metadata);
 
-  ~BWTreeIndex();
+  ~HashIndex();
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
@@ -70,7 +49,7 @@ class BWTreeIndex : public Index {
 
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
                        std::function<bool(const ItemPointer &)> predicate,
-                       ItemPointer **itemptr_ptr);
+                       ItemPointer **itempointer_ptr);
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,
@@ -84,7 +63,7 @@ class BWTreeIndex : public Index {
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,
-            const std::vector<ExpressionType> &expr_types,
+            const std::vector<ExpressionType> &exprs,
             const ScanDirectionType &scan_direction,
             std::vector<ItemPointer *> &result);
 
@@ -95,19 +74,20 @@ class BWTreeIndex : public Index {
 
   std::string GetTypeName() const;
 
-  // TODO: Implement this
   bool Cleanup() { return true; }
 
-  // TODO: Implement this
-  size_t GetMemoryFootprint() { return 0; }
+  size_t GetMemoryFootprint() {
+    // TODO: implement it
+    return 0;
+  }
 
  protected:
-  // equality checker and comparator
-  KeyComparator comparator;
-  KeyEqualityChecker equals;
-  
-  // container
   MapType container;
+
+  // equality checker and comparator
+  KeyHasher hasher;
+  KeyEqualityChecker equals;
+  KeyComparator comparator;
 };
 
 }  // End index namespace

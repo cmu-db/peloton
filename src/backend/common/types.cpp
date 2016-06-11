@@ -715,6 +715,8 @@ IndexType StringToIndexType(std::string str) {
     return INDEX_TYPE_BTREE;
   } else if (str == "BWTREE") {
     return INDEX_TYPE_BWTREE;
+  } else if (str == "HASH") {
+    return INDEX_TYPE_HASH;
   }
   return INDEX_TYPE_INVALID;
 }
