@@ -14,6 +14,7 @@
 #include "optimizer/operators.h"
 
 #include <memory>
+#include <cassert>
 
 namespace peloton {
 namespace optimizer {
