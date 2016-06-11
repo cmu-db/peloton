@@ -33,8 +33,8 @@ class SimpleOptimizer : AbstractOptimizer {
   SimpleOptimizer();
   virtual ~SimpleOptimizer();
 
-  std::shared_ptr<planner::AbstractPlan>
-  BuildPlanTree(std::unique_ptr<parser::AbstractParse> parse_tree);
+  static std::shared_ptr<planner::AbstractPlan>
+  BuildPlanTree(const std::unique_ptr<parser::AbstractParse>& parse_tree);
 
 };
 
