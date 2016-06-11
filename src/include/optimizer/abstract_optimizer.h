@@ -38,9 +38,6 @@ class AbstractOptimizer {
   AbstractOptimizer();
   virtual ~AbstractOptimizer();
 
-  virtual std::shared_ptr<planner::AbstractPlan>
-  BuildPlanTree(std::unique_ptr<parser::AbstractParse> parse_tree) = 0;
-
 };
 
 } // namespace optimizer

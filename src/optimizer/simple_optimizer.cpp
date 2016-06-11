@@ -21,7 +21,7 @@ SimpleOptimizer::SimpleOptimizer(){};
 SimpleOptimizer::~SimpleOptimizer(){};
 
 std::shared_ptr<planner::AbstractPlan>
-SimpleOptimizer::BuildPlanTree(std::unique_ptr<parser::AbstractParse>) {
+SimpleOptimizer::BuildPlanTree(const std::unique_ptr<parser::AbstractParse>&) {
   std::shared_ptr<planner::AbstractPlan> plan_tree;
 
   // TODO: Transform the parse tree

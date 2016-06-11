@@ -71,4 +71,12 @@ void Statement::SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descr
   tuple_descriptor = tuple_descriptor_;
 }
 
+void Statement::SetPlanTree(std::shared_ptr<planner::AbstractPlan> plan_tree_){
+  plan_tree = std::move(plan_tree_);
+}
+
+const std::shared_ptr<planner::AbstractPlan>& Statement::GetPlanTree() const {
+  return plan_tree;
+}
+
 }  // namespace peloton
