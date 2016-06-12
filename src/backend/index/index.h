@@ -20,6 +20,7 @@
 #include "backend/common/printable.h"
 #include "backend/common/types.h"
 #include "backend/common/macros.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 
@@ -42,6 +43,14 @@ public:
 
   bool operator==(const RBItemPointer &other) {
     return this->location == other.location && this->timestamp == other.timestamp;
+  }
+};
+
+struct ItemPointerEqualityChecker {
+  ItemPointer arg_;
+  ItemPointerEqualityChecker(ItemPointer arg) : arg_(arg) {}
+  bool operator()(ItemPointer *x) {
+    return x->block == arg_.block && x->offset == arg_.offset;
   }
 };
 
@@ -257,6 +266,10 @@ class Index : public Printable {
   bool IsDirty() const;
 
   void ResetDirty();
+
+  virtual size_t GetIndexSize() const {
+    return SIZE_MAX;
+  }
 
   //===--------------------------------------------------------------------===//
   // Utilities

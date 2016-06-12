@@ -74,6 +74,11 @@ class HashIndex : public Index {
 
   std::string GetTypeName() const;
 
+  virtual size_t GetIndexSize() const {
+    LOG_INFO("hash index size = %lu", container.size());
+    return container.size();
+  }
+
   bool Cleanup() { return true; }
 
   size_t GetMemoryFootprint() {
@@ -92,3 +97,4 @@ class HashIndex : public Index {
 
 }  // End index namespace
 }  // End peloton namespace
+

@@ -26,15 +26,15 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
       container(KeyHasher(metadata), KeyEqualityChecker(metadata)),
       hasher(metadata),
       equals(metadata),
-      comparator(metadata) {}
+      comparator(metadata) { }
 
-struct ItemPointerEqualityChecker {
-  ItemPointer arg_;
-  ItemPointerEqualityChecker(ItemPointer arg) : arg_(arg) {}
-  bool operator()(ItemPointer *x) {
-    return x->block == arg_.block && x->offset == arg_.offset;
-  }
-};
+// struct ItemPointerEqualityChecker {
+//   ItemPointer arg_;
+//   ItemPointerEqualityChecker(ItemPointer arg) : arg_(arg) {}
+//   bool operator()(ItemPointer *x) {
+//     return x->block == arg_.block && x->offset == arg_.offset;
+//   }
+// };
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
@@ -54,9 +54,9 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   }
 }
 
-void insert_helper(std::vector<ItemPointer*> &existing_vector, void *new_location) {
-  existing_vector.push_back((ItemPointer*)new_location);
-}
+// void insert_helper(std::vector<ItemPointer*> &existing_vector, void *new_location) {
+//   existing_vector.push_back((ItemPointer*)new_location);
+// }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
@@ -72,16 +72,13 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   val.push_back(new_location);
   // if there's no key in the hash map, then insert a vector containing location.
   // otherwise, directly insert location into the vector that already exists in the hash map.
-  container.upsert(index_key, insert_helper, (void *)new_location, val);
+  container.upsert(index_key, 
+    [](std::vector<ItemPointer*> &existing_vector, void *new_location){
+        existing_vector.push_back((ItemPointer*)new_location);
+    }, 
+    (void *)new_location, val);
 
   return true;
-}
-
-void delete_helper(std::vector<ItemPointer*> &existing_vector, void *old_location) {
-  // ItemPointer *arg_val = (ItemPointer *)arg;
-  existing_vector.erase(std::remove_if(existing_vector.begin(), existing_vector.end(),
-                               ItemPointerEqualityChecker(*((ItemPointer*)old_location))),
-                existing_vector.end());
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
@@ -95,21 +92,15 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   LOG_DEBUG("location block: %lu offset: %lu", location.block, location.offset);
 
   // TODO: add retry logic
-  container.update_fn(index_key, delete_helper, (void *)&location);
+  container.update_fn(index_key, 
+    [](std::vector<ItemPointer*> &existing_vector, void *old_location) {
+      existing_vector.erase(std::remove_if(existing_vector.begin(), existing_vector.end(),
+                               ItemPointerEqualityChecker(*((ItemPointer*)old_location))),
+      existing_vector.end());
+    },
+    (void *)&location);
 
   return true;
-}
-
-void cond_insert_helper(std::vector<ItemPointer*> &existing_vector, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
-  for (auto entry : existing_vector) {
-    if (predicate((void*)entry)) {
-      arg_ptr = nullptr;
-      return;
-    }
-  }
-  existing_vector.push_back((ItemPointer*)new_location);
-  *arg_ptr = new_location;
-  return;
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
@@ -128,9 +119,20 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   std::vector<ValueType> val;
   val.push_back(new_location);
 
-  *itempointer_ptr = nullptr;
+  *itempointer_ptr = new_location;
 
-  container.upsert(index_key, cond_insert_helper, (void*)new_location, predicate, (void**)itempointer_ptr, val);
+  container.upsert(index_key, 
+    [](std::vector<ItemPointer*> &existing_vector, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
+      for (auto entry : existing_vector) {
+        if (predicate((void*)entry)) {
+          *arg_ptr = nullptr;
+          return;
+        }
+      }
+      existing_vector.push_back((ItemPointer*)new_location);
+      return;
+    }, 
+    (void*)new_location, predicate, (void**)itempointer_ptr, val);
 
   if (*itempointer_ptr == new_location) {
     
@@ -173,6 +175,7 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>::Sca
       }
     }
   }
+  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 /**
@@ -196,6 +199,7 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
   } else {
     assert(result.size() == 0);
   }
+  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 
@@ -207,6 +211,7 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
                                        UNUSED_ATTRIBUTE const std::vector<ExpressionType> &exprs,
                                        UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
                                        UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  LOG_ERROR("hash index does not support scan!");
   assert(false);
 }
 
@@ -221,6 +226,7 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
       result.insert(result.end(), itr.second.begin(), itr.second.end());
     }
   }
+  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 /**
@@ -234,6 +240,7 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
   index_key.SetFromKey(key);
 
   container.find(index_key, result);
+  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 

@@ -155,6 +155,7 @@ bool RunRead(ReadPlans &read_plans, ZipfDistribution &zipf) {
   }
 
   if (ret_result.size() != 1) {
+    //LOG_ERROR("result incorrect: ret_result size = %lu", ret_result.size());
     assert(false);
   }
 
