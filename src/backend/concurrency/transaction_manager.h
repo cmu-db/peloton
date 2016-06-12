@@ -58,7 +58,7 @@ class TransactionManager {
 
   cid_t GetNextCommitId() { return next_cid_++; }
 
-  bool IsOccupied(const ItemPointer &position);
+  bool IsOccupied(const void *position_ptr);
 
   virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,

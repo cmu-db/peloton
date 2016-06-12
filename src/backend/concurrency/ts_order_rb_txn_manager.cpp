@@ -195,7 +195,7 @@ bool TsOrderRbTxnManager::RBInsertVersion(storage::DataTable *target_table,
   // Index checks and updates
   int index_count = target_table->GetIndexCount();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 this, std::placeholders::_1);
 

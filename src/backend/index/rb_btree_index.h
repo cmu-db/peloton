@@ -59,11 +59,11 @@ class RBBTreeIndex : public Index {
   bool DeleteEntry(const storage::Tuple *key, const RBItemPointer &rb_location);
 
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
-                       std::function<bool(const ItemPointer &)> predicate,
+                       std::function<bool(const void *)> predicate,
                        ItemPointer **itempointer_ptr);
 
   bool CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
-                       std::function<bool(const ItemPointer &)> predicate,
+                       std::function<bool(const void *)> predicate,
                        RBItemPointer **rb_itempointer_ptr);
 
   void Scan(const std::vector<Value> &values,

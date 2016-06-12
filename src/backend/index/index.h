@@ -143,7 +143,7 @@ class Index : public Printable {
   // which is nullptr if the insertion fail.
   virtual bool CondInsertEntry(
       const storage::Tuple *key, const ItemPointer &location,
-      std::function<bool(const ItemPointer &)> predicate,
+      std::function<bool(const void *)> predicate,
       ItemPointer **itempointer_ptr) = 0;
 
   //===--------------------------------------------------------------------===//
@@ -194,7 +194,7 @@ class Index : public Printable {
   virtual bool CondInsertEntry(
       UNUSED_ATTRIBUTE const storage::Tuple *key, 
       UNUSED_ATTRIBUTE const ItemPointer &location,
-      UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
+      UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
       UNUSED_ATTRIBUTE RBItemPointer **rb_itempointer_ptr)
   {
     assert(false);

@@ -111,7 +111,7 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 bool BTreeIndex<KeyType, ValueType, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
     const storage::Tuple *key, const ItemPointer &location,
-    std::function<bool(const ItemPointer &)> predicate,
+    std::function<bool(const void *)> predicate,
     ItemPointer **itempointer_ptr) {
 
   KeyType index_key;
@@ -126,9 +126,7 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
     auto entries = container.equal_range(index_key);
     for (auto entry = entries.first; entry != entries.second; ++entry) {
 
-      ItemPointer item_pointer = *(entry->second);
-
-      if (predicate(item_pointer)) {
+      if (predicate((void*)(entry->second))) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
         LOG_TRACE("predicate fails, abort transaction");

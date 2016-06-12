@@ -6041,7 +6041,7 @@ before_switch:
    */
   bool ConditionalInsert(const KeyType &key,
                          const ValueType &value,
-                         std::function<bool(const ItemPointer &)> predicate,
+                         std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied) {
     bwt_printf("Consitional Insert called\n");
 
@@ -6072,7 +6072,7 @@ before_switch:
       if(it != container.end()) {
         // v is a reference to ValueType
         for(auto &v : it->second) {
-          if(predicate(*v) == true) {
+          if(predicate(v) == true) {
             // To notify the caller that predicate
             // has been satisfied and we cannot insert
             *predicate_satisfied = true;

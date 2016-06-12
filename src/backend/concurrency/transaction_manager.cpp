@@ -18,7 +18,8 @@ namespace concurrency {
 // Current transaction for the backend thread
 thread_local Transaction *current_txn;
 
-bool TransactionManager::IsOccupied(const ItemPointer &position) {
+bool TransactionManager::IsOccupied(const void *position_ptr) {
+  ItemPointer &position = *((ItemPointer*)position_ptr);
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(position.block)->GetHeader();
   auto tuple_id = position.offset;

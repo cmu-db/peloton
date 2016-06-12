@@ -85,7 +85,7 @@ BWTREE_TEMPLATE_ARGUMENTS
 bool
 BWTREE_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
                                    const ItemPointer &location,
-                                   std::function<bool(const ItemPointer &)> predicate,
+                                   std::function<bool(const void *)> predicate,
                                    ItemPointer **itemptr_ptr) {
   KeyType index_key;
   index_key.SetFromKey(key);

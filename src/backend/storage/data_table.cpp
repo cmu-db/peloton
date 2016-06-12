@@ -319,7 +319,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, std::placeholders::_1);
 
@@ -382,7 +382,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, std::placeholders::_1);
 
@@ -431,7 +431,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  std::function<bool(const ItemPointer &)> fn =
+  std::function<bool(const void *)> fn =
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, std::placeholders::_1);
 

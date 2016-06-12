@@ -54,8 +54,8 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   }
 }
 
-void insert_helper(std::vector<ItemPointer*> &entries, void *arg) {
-  entries.push_back((ItemPointer*)arg);
+void insert_helper(std::vector<ItemPointer*> &existing_vector, void *new_location) {
+  existing_vector.push_back((ItemPointer*)new_location);
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
@@ -77,11 +77,11 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   return true;
 }
 
-void delete_helper(std::vector<ItemPointer*> &entries, void *arg) {
-  ItemPointer *arg_val = (ItemPointer *)arg;
-  entries.erase(std::remove_if(entries.begin(), entries.end(),
-                               ItemPointerEqualityChecker(*arg_val)),
-                entries.end());
+void delete_helper(std::vector<ItemPointer*> &existing_vector, void *old_location) {
+  // ItemPointer *arg_val = (ItemPointer *)arg;
+  existing_vector.erase(std::remove_if(existing_vector.begin(), existing_vector.end(),
+                               ItemPointerEqualityChecker(*((ItemPointer*)old_location))),
+                existing_vector.end());
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
@@ -100,43 +100,50 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   return true;
 }
 
+void cond_insert_helper(std::vector<ItemPointer*> &entries, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
+  for (auto &entry : entries) {
+    if (predicate(entry)) {
+      arg_ptr = nullptr;
+      return;
+    }
+  }
+  entries.push_back((ItemPointer*)new_location);
+  *arg_ptr = new_location;
+  return;
+}
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
     UNUSED_ATTRIBUTE const storage::Tuple *key, UNUSED_ATTRIBUTE const ItemPointer &location,
-    UNUSED_ATTRIBUTE std::function<bool(const ItemPointer &)> predicate,
+    UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
     UNUSED_ATTRIBUTE ItemPointer **itempointer_ptr) {
 
   // KeyType index_key;
+  
   // index_key.SetFromKey(key);
+
+  // ItemPointer *new_location = new ItemPointer(location);
+  // std::vector<ValueType> val;
+  // val.push_back(new_location);
 
   // *itempointer_ptr = nullptr;
 
-  // // find the <key, location> pair
-  // auto entries = container.equal_range(index_key);
-  // for (auto entry = entries.first; entry != entries.second; ++entry) {
+  // container.upsert(index_key, cond_insert_helper, (void*)new_location, predicate, (void**)itempointer_ptr, val);
 
-  //   ItemPointer item_pointer = *(entry->second);
+  // if (itempointer_ptr == new_location) {
+    
+  //   return true;
 
-  //   if (predicate(item_pointer)) {
-  //     // this key is already visible or dirty in the index
-  //     index_lock.Unlock();
-  //     LOG_TRACE("predicate fails, abort transaction");
-  //     return false;
-  //   }
+  // } else {
+  //   LOG_TRACE("predicate fails, abort transaction");
+    
+  //   delete new_location;
+  //   new_location = nullptr;
+    
+    return false;
   // }
-
-  // // Insert the key, val pair
-  // *itempointer_ptr = new ItemPointer(location);
-  // container.insert(std::pair<KeyType, ValueType>(
-  //     index_key, *itempointer_ptr));
-
-  // index_lock.Unlock();
-
-
-  return true;
 }
 
 
