@@ -65,6 +65,9 @@ public:
     // Peloton's hacking
     typedef std::function<void(mapped_type&, void*)> arg_updater_type;
 
+    // Peloton's hacking
+    typedef std::function<void(mapped_type&, void*, std::function<bool(const void *)> predicate, void **arg_ptr)> arg_cond_updater_type;
+
     //! Class returned by operator[] which wraps an entry in the hash table.
     //! Note that this reference type behave somewhat differently from an STL
     //! map reference. Most importantly, running this operator will not insert a
@@ -344,17 +347,29 @@ private:
         return new_hp;
     }
 
+    // // hashfn returns an instance of the hash function
+    // static hasher hashfn() {
+    //     static hasher hash;
+    //     return hash;
+    // }
+
+    // // eqfn returns an instance of the equality predicate
+    // static key_equal eqfn() {
+    //     static key_equal eq;
+    //     return eq;
+    // }
+
+    // Peloton's hacking
     // hashfn returns an instance of the hash function
-    static hasher hashfn() {
-        static hasher hash;
-        return hash;
+    hasher hashfn() const {
+        return hash_;
     }
 
     // eqfn returns an instance of the equality predicate
-    static key_equal eqfn() {
-        static key_equal eq;
-        return eq;
+    key_equal eqfn() const {
+        return eq_;
     }
+    //!= Peloton's hacking
 
 public:
     /**
@@ -368,9 +383,31 @@ public:
      * @throw std::invalid_argument if the given minimum load factor is invalid,
      * or if the initial space exceeds the maximum hashpower
      */
-    cuckoohash_map(size_t n = DEFAULT_SIZE,
+    // cuckoohash_map(size_t n = DEFAULT_SIZE,
+    //                double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
+    //                size_t mhp = NO_MAXIMUM_HASHPOWER) {
+    //     minimum_load_factor(mlf);
+    //     maximum_hashpower(mhp);
+    //     size_t hp = reserve_calc(n);
+    //     if (mhp != NO_MAXIMUM_HASHPOWER && hp > mhp) {
+    //         throw std::invalid_argument(
+    //             "hashpower for initial size " + std::to_string(hp) +
+    //             " is greater than the maximum hashpower");
+    //     }
+    //     set_hashpower(hp);
+    //     buckets_.resize(hashsize(hp));
+    //     locks_.allocate(std::min(locks_t::size(), hashsize(hp)));
+    //     num_inserts_.resize(kNumCores(), 0);
+    //     num_deletes_.resize(kNumCores(), 0);
+    // }
+
+    // Peloton's hacking
+    cuckoohash_map(hasher hash = hasher(),
+                   key_equal eq = key_equal(),
+                   size_t n = DEFAULT_SIZE,
                    double mlf = DEFAULT_MINIMUM_LOAD_FACTOR,
-                   size_t mhp = NO_MAXIMUM_HASHPOWER) {
+                   size_t mhp = NO_MAXIMUM_HASHPOWER) 
+        : hash_(hash), eq_(eq) {
         minimum_load_factor(mlf);
         maximum_hashpower(mhp);
         size_t hp = reserve_calc(n);
@@ -553,6 +590,18 @@ public:
         return (st == ok);
     }
 
+    //! Peloton's hacking
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgUpdater>
+    typename std::enable_if<
+        std::is_convertible<ArgUpdater, arg_updater_type>::value,
+        bool>::type update_fn(const key_type& key, ArgUpdater fn, void *arg) {
+        size_t hv = hashed_key(key);
+        auto b = snapshot_and_lock_two(hv);
+        const cuckoo_status st = cuckoo_update_fn(key, fn, arg, hv, b.i[0], b.i[1]);
+        return (st == ok);
+    }
+
     //! upsert is a combination of update_fn and insert. It first tries updating
     //! the value associated with \p key using \p fn. If \p key is not in the
     //! table, then it runs an insert with \p key and \p val. It will always
@@ -592,7 +641,7 @@ public:
     }
 
 
-    //! Peloton hacking
+    //! Peloton's hacking
     //! this method passes an argument \p arg for the function \p fn.
     template <typename ArgUpdater, typename K, typename... Args>
     typename std::enable_if<
@@ -604,6 +653,41 @@ public:
             auto b = snapshot_and_lock_two(hv);
             size_t hp = get_hashpower();
             st = cuckoo_update_fn(key, fn, arg, hv, b.i[0], b.i[1]);
+            if (st == ok) {
+                break;
+            }
+
+            // We run an insert, since the update failed. Since we already have
+            // the locks, we don't run cuckoo_insert_loop immediately, to avoid
+            // releasing and re-grabbing the locks. Recall, that the locks will
+            // be released at the end of this call to cuckoo_insert.
+            st = cuckoo_insert(hv, std::move(b), std::forward<K>(key),
+                               std::forward<Args>(val)...);
+            if (st == failure_table_full) {
+                cuckoo_fast_double(hp);
+                // Retry until the insert doesn't fail due to expansion.
+                if (cuckoo_insert_loop(hv, std::forward<K>(key),
+                                       std::forward<Args>(val)...)) {
+                    break;
+                }
+                // The only valid reason for failure is a duplicate key. In this
+                // case, we retry the entire upsert operation.
+            }
+        } while (st != ok);
+    }
+
+    //! Peloton hacking
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgCondUpdater, typename K, typename... Args>
+    typename std::enable_if<
+        std::is_convertible<ArgCondUpdater, arg_cond_updater_type>::value,
+        void>::type upsert(K&& key, ArgCondUpdater fn, void *arg, std::function<bool(const void *)> predicate, void **arg_ptr, Args&&... val) {
+        size_t hv = hashed_key(key);
+        cuckoo_status st;
+        do {
+            auto b = snapshot_and_lock_two(hv);
+            size_t hp = get_hashpower();
+            st = cuckoo_update_fn(key, fn, arg, predicate, arg_ptr, hv, b.i[0], b.i[1]);
             if (st == ok) {
                 break;
             }
@@ -935,7 +1019,13 @@ private:
     }
 
     // hashed_key hashes the given key.
-    static inline size_t hashed_key(const key_type &key) {
+    // static inline size_t hashed_key(const key_type &key) {
+    //     return hashfn()(key);
+    // }
+
+    // Peloton's hacking!
+    // hashed_key hashes the given key.
+    inline size_t hashed_key(const key_type &key) const {
         return hashfn()(key);
     }
 
@@ -1438,7 +1528,7 @@ private:
     // this method passes an argument arg to the function fn.
     template <typename ArgUpdater>
     bool try_update_bucket_fn(const partial_t partial, const key_type &key,
-                              ArgUpdater fn, void *arg, const Bucket& b) {
+                              ArgUpdater fn, void *arg, Bucket& b) {
         for (size_t i = 0; i < slot_per_bucket; ++i) {
             if (!b.occupied(i)) {
                 continue;
@@ -1448,6 +1538,26 @@ private:
             }
             if (eqfn()(b.key(i), key)) {
                 fn(b.val(i), arg);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Peloton's hacking
+    // this method passes an argument arg to the function fn.
+    template <typename ArgCondUpdater>
+    bool try_update_bucket_fn(const partial_t partial, const key_type &key,
+                              ArgCondUpdater fn, void *arg, std::function<bool(const void *)> predicate, void **arg_ptr, Bucket& b) {
+        for (size_t i = 0; i < slot_per_bucket; ++i) {
+            if (!b.occupied(i)) {
+                continue;
+            }
+            if (!is_simple && b.partial(i) != partial) {
+                continue;
+            }
+            if (eqfn()(b.key(i), key)) {
+                fn(b.val(i), arg, predicate, arg_ptr);
                 return true;
             }
         }
@@ -1650,6 +1760,22 @@ private:
         return failure_key_not_found;
     }
 
+    // Peloton's hacking
+    //! this method passes an argument \p arg for the function \p fn.
+    template <typename ArgCondUpdater>
+    cuckoo_status cuckoo_update_fn(const key_type &key, ArgCondUpdater fn,
+                                   void *arg, std::function<bool(const void *)> predicate, void **arg_ptr, const size_t hv,
+                                   const size_t i1, const size_t i2) {
+        const partial_t partial = partial_key(hv);
+        if (try_update_bucket_fn(partial, key, fn, arg, predicate, arg_ptr, buckets_[i1])) {
+            return ok;
+        }
+        if (try_update_bucket_fn(partial, key, fn, arg, predicate, arg_ptr, buckets_[i2])) {
+            return ok;
+        }
+        return failure_key_not_found;
+    }
+
 
     // cuckoo_clear empties the table, calling the destructors of all the
     // elements it removes from the table. It assumes the locks are taken as
@@ -1824,8 +1950,11 @@ private:
 
         // Creates a new hash table with hashpower new_hp and adds all
         // the elements from the old buckets
+        //! Peloton's hacking
         cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
-            hashsize(new_hp) * slot_per_bucket);
+            hash_, eq_, hashsize(new_hp) * slot_per_bucket);
+        // cuckoohash_map<Key, T, Hash, Pred, Alloc, slot_per_bucket> new_map(
+        //     hashsize(new_hp) * slot_per_bucket);
         const size_t threadnum = kNumCores();
         const size_t buckets_per_thread = (
             (hashsize(hp) + threadnum - 1) / threadnum);
@@ -2170,6 +2299,11 @@ private:
     // Even though it's a vector, it should not ever change in size after the
     // initial allocation.
     mutable locks_t locks_;
+
+    // Peloton's hacking
+    hasher hash_;
+    key_equal eq_;
+
 
     // a lock to synchronize expansions
     expansion_lock_t expansion_lock_;

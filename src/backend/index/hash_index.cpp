@@ -100,14 +100,14 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   return true;
 }
 
-void cond_insert_helper(std::vector<ItemPointer*> &entries, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
-  for (auto &entry : entries) {
-    if (predicate(entry)) {
+void cond_insert_helper(std::vector<ItemPointer*> &existing_vector, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
+  for (auto entry : existing_vector) {
+    if (predicate((void*)entry)) {
       arg_ptr = nullptr;
       return;
     }
   }
-  entries.push_back((ItemPointer*)new_location);
+  existing_vector.push_back((ItemPointer*)new_location);
   *arg_ptr = new_location;
   return;
 }
@@ -120,30 +120,30 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
     UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
     UNUSED_ATTRIBUTE ItemPointer **itempointer_ptr) {
 
-  // KeyType index_key;
+  KeyType index_key;
   
-  // index_key.SetFromKey(key);
+  index_key.SetFromKey(key);
 
-  // ItemPointer *new_location = new ItemPointer(location);
-  // std::vector<ValueType> val;
-  // val.push_back(new_location);
+  ItemPointer *new_location = new ItemPointer(location);
+  std::vector<ValueType> val;
+  val.push_back(new_location);
 
-  // *itempointer_ptr = nullptr;
+  *itempointer_ptr = nullptr;
 
-  // container.upsert(index_key, cond_insert_helper, (void*)new_location, predicate, (void**)itempointer_ptr, val);
+  container.upsert(index_key, cond_insert_helper, (void*)new_location, predicate, (void**)itempointer_ptr, val);
 
-  // if (itempointer_ptr == new_location) {
+  if (*itempointer_ptr == new_location) {
     
-  //   return true;
+    return true;
 
-  // } else {
-  //   LOG_TRACE("predicate fails, abort transaction");
+  } else {
+    LOG_TRACE("predicate fails, abort transaction");
     
-  //   delete new_location;
-  //   new_location = nullptr;
+    delete new_location;
+    new_location = nullptr;
     
     return false;
-  // }
+  }
 }
 
 
