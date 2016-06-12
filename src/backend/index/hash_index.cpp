@@ -23,7 +23,7 @@ template <typename KeyType, typename ValueType, class KeyHasher,
 HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
           KeyEqualityChecker>::HashIndex(IndexMetadata *metadata, UNUSED_ATTRIBUTE const size_t &preallocate_size)
     : Index(metadata),
-      container(KeyHasher(metadata), KeyEqualityChecker(metadata)),
+      container(KeyHasher(metadata), KeyEqualityChecker(metadata), preallocate_size),
       hasher(metadata),
       equals(metadata),
       comparator(metadata) { }
@@ -106,9 +106,9 @@ template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
                 KeyEqualityChecker>::CondInsertEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key, UNUSED_ATTRIBUTE const ItemPointer &location,
-    UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
-    UNUSED_ATTRIBUTE ItemPointer **itempointer_ptr) {
+    const storage::Tuple *key, const ItemPointer &location,
+    std::function<bool(const void *)> predicate,
+    ItemPointer **itempointer_ptr) {
 
   KeyType index_key;
   
@@ -151,20 +151,35 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, 
-             KeyEqualityChecker>::Scan(UNUSED_ATTRIBUTE const std::vector<Value> &values,
-                                       UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
-                                       UNUSED_ATTRIBUTE const std::vector<ExpressionType> &exprs,
+             KeyEqualityChecker>::Scan(const std::vector<Value> &values,
+                                       const std::vector<oid_t> &key_column_ids,
+                                       const std::vector<ExpressionType> &expr_types,
                                        UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
-                                       UNUSED_ATTRIBUTE std::vector<ItemPointer> &result) {
-  LOG_ERROR("hash index does not support scan!");
-  assert(false);
+                                       std::vector<ItemPointer> &result) {
+  KeyType index_key;
+  std::unique_ptr<storage::Tuple> start_key;
+  start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+
+  bool all_constraints_are_equal = ConstructLowerBoundTuple(
+          start_key.get(), values, key_column_ids, expr_types);
+  if (all_constraints_are_equal == false) {
+    LOG_ERROR("not all constraints are equal!");
+    assert(false);
+  }
+
+  index_key.SetFromKey(start_key.get());
+  
+  std::vector<ItemPointer*> tmp_result;
+  container.find(index_key, tmp_result);
+  for (auto entry : tmp_result) {
+    result.push_back(ItemPointer(*entry));
+  }
 }
 
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
-void
-HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
+void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>::ScanAllKeys(
     std::vector<ItemPointer> &result) {
   {
     auto lt = container.lock_table();
@@ -203,11 +218,11 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, 
-             KeyEqualityChecker>::Scan(UNUSED_ATTRIBUTE const std::vector<Value> &values,
-                                       UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
-                                       UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
+             KeyEqualityChecker>::Scan(const std::vector<Value> &values,
+                                       const std::vector<oid_t> &key_column_ids,
+                                       const std::vector<ExpressionType> &expr_types,
                                        UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
-                                       UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+                                       std::vector<ItemPointer *> &result) {
 
   KeyType index_key;
   std::unique_ptr<storage::Tuple> start_key;
@@ -250,8 +265,6 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
 
   container.find(index_key, result);
 }
-
-
 
 
 template <typename KeyType, typename ValueType, class KeyHasher,
