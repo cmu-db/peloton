@@ -21,7 +21,7 @@ namespace index {
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
 HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
-          KeyEqualityChecker>::HashIndex(IndexMetadata *metadata)
+          KeyEqualityChecker>::HashIndex(IndexMetadata *metadata, UNUSED_ATTRIBUTE const size_t &preallocate_size)
     : Index(metadata),
       container(KeyHasher(metadata), KeyEqualityChecker(metadata)),
       hasher(metadata),
@@ -89,7 +89,6 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  LOG_DEBUG("location block: %lu offset: %lu", location.block, location.offset);
 
   // TODO: add retry logic
   container.update_fn(index_key, 
@@ -122,14 +121,14 @@ bool HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   *itempointer_ptr = new_location;
 
   container.upsert(index_key, 
-    [](std::vector<ItemPointer*> &existing_vector, void *new_location, std::function<bool(const void *)> predicate, void **arg_ptr) {
+    [](std::vector<ItemPointer*> &existing_vector, void *location, std::function<bool(const void *)> predicate, void **arg_ptr) {
       for (auto entry : existing_vector) {
         if (predicate((void*)entry)) {
           *arg_ptr = nullptr;
           return;
         }
       }
-      existing_vector.push_back((ItemPointer*)new_location);
+      existing_vector.push_back((ItemPointer*)location);
       return;
     }, 
     (void*)new_location, predicate, (void**)itempointer_ptr, val);
@@ -175,7 +174,6 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>::Sca
       }
     }
   }
-  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 /**
@@ -199,7 +197,6 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
   } else {
     assert(result.size() == 0);
   }
-  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 
@@ -208,11 +205,24 @@ template <typename KeyType, typename ValueType, class KeyHasher,
 void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, 
              KeyEqualityChecker>::Scan(UNUSED_ATTRIBUTE const std::vector<Value> &values,
                                        UNUSED_ATTRIBUTE const std::vector<oid_t> &key_column_ids,
-                                       UNUSED_ATTRIBUTE const std::vector<ExpressionType> &exprs,
+                                       UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_types,
                                        UNUSED_ATTRIBUTE const ScanDirectionType &scan_direction,
                                        UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
-  LOG_ERROR("hash index does not support scan!");
-  assert(false);
+
+  KeyType index_key;
+  std::unique_ptr<storage::Tuple> start_key;
+  start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+
+  bool all_constraints_are_equal = ConstructLowerBoundTuple(
+          start_key.get(), values, key_column_ids, expr_types);
+  if (all_constraints_are_equal == false) {
+    LOG_ERROR("not all constraints are equal!");
+    assert(false);
+  }
+
+  index_key.SetFromKey(start_key.get());
+  
+  container.find(index_key, result);
 }
 
 
@@ -226,7 +236,6 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
       result.insert(result.end(), itr.second.begin(), itr.second.end());
     }
   }
-  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 /**
@@ -240,7 +249,6 @@ void HashIndex<KeyType, ValueType, KeyHasher, KeyComparator, KeyEqualityChecker>
   index_key.SetFromKey(key);
 
   container.find(index_key, result);
-  LOG_INFO("scane key called, result size = %lu", result.size());
 }
 
 

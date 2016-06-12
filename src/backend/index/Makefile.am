@@ -7,11 +7,8 @@
 index_FILES = \
 			  backend/index/index.cpp \
 			  backend/index/index_factory.cpp \
-			  backend/index/bwtree.cpp \
-			  backend/index/bwtree_index.cpp \
 			  backend/index/btree_index.cpp \
         backend/index/hash_index.cpp \
-        backend/index/hash_unique_index.cpp \
         backend/index/rb_btree_index.cpp
 
 index_INCLUDES = \

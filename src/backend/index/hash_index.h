@@ -39,7 +39,7 @@ class HashIndex : public Index {
                          KeyEqualityChecker> MapType;
 
  public:
-  HashIndex(IndexMetadata *metadata);
+  HashIndex(IndexMetadata *metadata, const size_t &preallocate_size = 1);
 
   ~HashIndex();
 
@@ -75,7 +75,6 @@ class HashIndex : public Index {
   std::string GetTypeName() const;
 
   virtual size_t GetIndexSize() const {
-    LOG_INFO("hash index size = %lu", container.size());
     return container.size();
   }
 

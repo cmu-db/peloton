@@ -28,13 +28,6 @@ HashUniqueIndex<KeyType, ValueType, KeyHasher, KeyComparator,
       equals(metadata),
       comparator(metadata) { }
 
-// struct ItemPointerEqualityChecker {
-//   ItemPointer arg_;
-//   ItemPointerEqualityChecker(ItemPointer arg) : arg_(arg) {}
-//   bool operator()(ItemPointer *x) {
-//     return x->block == arg_.block && x->offset == arg_.offset;
-//   }
-// };
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
@@ -46,11 +39,9 @@ HashUniqueIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   // as the underlying index is unaware of shared_ptr,
   // memory allocated should be managed carefully by programmers.
   auto lt = container.lock_table();
-  for (const auto &entry_vector : lt) {
-    for (auto entry : entry_vector.second) {
-      delete entry;
-      entry = nullptr;
-    }
+  for (const auto &entry : lt) {
+    delete entry;
+    entry = nullptr;
   }
 }
 
@@ -68,17 +59,20 @@ bool HashUniqueIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   index_key.SetFromKey(key);
 
   ItemPointer *new_location = new ItemPointer(location);
-  std::vector<ValueType> val;
-  val.push_back(new_location);
+  // std::vector<ValueType> val;
+  // val.push_back(new_location);
   // if there's no key in the hash map, then insert a vector containing location.
   // otherwise, directly insert location into the vector that already exists in the hash map.
-  container.upsert(index_key, 
-    [](std::vector<ItemPointer*> &existing_vector, void *new_location){
-        existing_vector.push_back((ItemPointer*)new_location);
-    }, 
-    (void *)new_location, val);
+  
+  bool ret = container.insert(index_key, new_location);
 
-  return true;
+  if (ret == true) {
+    return true;
+  } else {
+    delete new_location;
+    new_location = nullptr;
+    return false;
+  }
 }
 
 template <typename KeyType, typename ValueType, class KeyHasher,
@@ -89,7 +83,8 @@ bool HashUniqueIndex<KeyType, ValueType, KeyHasher, KeyComparator,
   KeyType index_key;
 
   index_key.SetFromKey(key);
-  LOG_DEBUG("location block: %lu offset: %lu", location.block, location.offset);
+
+  return container.erase(index_key);
 
   // TODO: add retry logic
   container.update_fn(index_key, 

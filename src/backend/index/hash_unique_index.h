@@ -35,7 +35,7 @@ class HashUniqueIndex : public Index {
   friend class IndexFactory;
 
   // Define the container type
-  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher,
+  typedef cuckoohash_map<KeyType, ValueType, KeyHasher,
                          KeyEqualityChecker> MapType;
 
  public:
