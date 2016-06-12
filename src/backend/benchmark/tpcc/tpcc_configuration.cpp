@@ -116,7 +116,7 @@ void ValidateProtocol(const configuration &state) {
 }
 
 void ValidateIndex(const configuration &state) {
-  if (state.index != INDEX_TYPE_BTREE && state.index != INDEX_TYPE_BWTREE) {
+  if (state.index != INDEX_TYPE_BTREE && state.index != INDEX_TYPE_BWTREE && state.index != INDEX_TYPE_HASH) {
     LOG_ERROR("Invalid index");
     exit(EXIT_FAILURE);
   }
@@ -216,6 +216,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.index = INDEX_TYPE_BTREE;
         } else if (strcmp(index, "bwtree") == 0) {
           state.index = INDEX_TYPE_BWTREE;
+        } else if (strcmp(index, "hash") == 0) {
+          state.index = INDEX_TYPE_HASH;
         } else {
           fprintf(stderr, "\nUnknown index: %s\n", index);
           exit(EXIT_FAILURE);
