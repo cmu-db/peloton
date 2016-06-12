@@ -14,47 +14,47 @@
 
 namespace peloton {
 
-template<typename ValueType>
-Queue<ValueType>::Queue(const size_t capacity) :
+QUEUE_TEMPLATE_ARGUMENTS
+QUEUE_TYPE::Queue(const size_t capacity) :
 priority_queue(capacity) {
 }
 
-template<typename ValueType>
-Queue<ValueType>::~Queue(){
+QUEUE_TEMPLATE_ARGUMENTS
+QUEUE_TYPE::~Queue(){
 }
 
-template<typename ValueType>
-bool Queue<ValueType>::Push(const ValueType v){
+QUEUE_TEMPLATE_ARGUMENTS
+bool QUEUE_TYPE::Push(const ValueType v){
   return priority_queue.push(v);
 }
 
-template<typename ValueType>
-bool Queue<ValueType>::Pop(ValueType &v){
+QUEUE_TEMPLATE_ARGUMENTS
+bool QUEUE_TYPE::Pop(ValueType &v){
   return priority_queue.pop(v);
 }
 
-template<typename ValueType>
-void Queue<ValueType>::Clear(){
+QUEUE_TEMPLATE_ARGUMENTS
+void QUEUE_TYPE::Clear(){
   priority_queue.clear();
 }
 
-template<typename ValueType>
-bool Queue<ValueType>::IsEmpty() const{
+QUEUE_TEMPLATE_ARGUMENTS
+bool QUEUE_TYPE::IsEmpty() const{
   return priority_queue.empty();
 }
 
-template<typename ValueType>
-bool Queue<ValueType>::IsFull() const{
+QUEUE_TEMPLATE_ARGUMENTS
+bool QUEUE_TYPE::IsFull() const{
   return priority_queue.full();
 }
 
-template<typename ValueType>
-size_t  Queue<ValueType>::GetCapacity() const{
+QUEUE_TEMPLATE_ARGUMENTS
+size_t  QUEUE_TYPE::GetCapacity() const{
   return priority_queue.capacity();
 }
 
-template<typename ValueType>
-size_t Queue<ValueType>::GetSize() const{
+QUEUE_TEMPLATE_ARGUMENTS
+size_t QUEUE_TYPE::GetSize() const{
   return priority_queue.size();
 }
 
