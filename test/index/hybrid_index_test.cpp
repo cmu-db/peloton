@@ -106,7 +106,7 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
+        "primary_index", 123, INDEX_TYPE_BWTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -600,7 +600,7 @@ TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BTREE,
+      "primary_index", 123, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -635,7 +635,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BTREE,
+      "primary_index", 123, INDEX_TYPE_BWTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
