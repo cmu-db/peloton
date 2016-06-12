@@ -16,7 +16,13 @@
 
 namespace peloton {
 
-template<typename ValueType>
+// QUEUE_TEMPLATE_ARGUMENTS
+#define QUEUE_TEMPLATE_ARGUMENTS template <typename ValueType>
+
+// QUEUE_TYPE
+#define QUEUE_TYPE Queue<ValueType>
+
+QUEUE_TEMPLATE_ARGUMENTS
 class Queue {
 
  public:
@@ -50,7 +56,7 @@ class Queue {
  private:
 
   // Michael & Scott array-based lock-based concurrent priority queue heap
-  // http://libcds.sourceforge.net/doc/cds-api/classcds_1_1intrusive_1_1_m_s_priority_queue.html#details
+  // http://libcds.sourceforge.net/doc/cds-api/
   typedef cds::container::MSPriorityQueue<ValueType>  pq_t;
 
   pq_t priority_queue;
