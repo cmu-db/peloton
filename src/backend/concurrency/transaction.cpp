@@ -123,10 +123,10 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   return false;
 }
 
-//const std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> &Transaction::GetRWSet() {
-const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
-  return rw_set_;
-}
+// const std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> &Transaction::GetRWSet() {
+// //const std::map<oid_t, std::map<oid_t, RWType>> &Transaction::GetRWSet() {
+//   return rw_set_;
+// }
 
 const std::string Transaction::GetInfo() const {
   std::ostringstream os;
