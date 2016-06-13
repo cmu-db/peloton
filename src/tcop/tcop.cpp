@@ -17,7 +17,8 @@
 #include "common/logger.h"
 #include "common/types.h"
 
-#include "parser/parser/pg_query.h"
+#include "parser/postgres_parser.h"
+#include "optimizer/simple_optimizer.h"
 
 namespace peloton {
 namespace tcop {
@@ -29,17 +30,11 @@ TrafficCop &TrafficCop::GetInstance(void) {
 }
 
 TrafficCop::TrafficCop() {
-
-  // Initialize the postgresult memory context
-  pg_query_init();
-
+  // Nothing to do here !
 }
 
 TrafficCop::~TrafficCop() {
-
-  // Destroy the postgresult memory context
-  pg_query_destroy();
-
+  // Nothing to do here !
 }
 
 Result TrafficCop::ExecuteStatement(const std::string& query,
@@ -50,7 +45,8 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
   LOG_INFO("Received %s", query.c_str());
 
   // Prepare the statement
-  auto statement = PrepareStatement(query, error_message);
+  std::string unnamed_statement = "unnamed";
+  auto statement = PrepareStatement(unnamed_statement, query, error_message);
 
   if(statement.get() == nullptr){
     return Result::RESULT_FAILURE;
@@ -68,7 +64,6 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
   return status;
 }
 
-
 Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<Statement>& statement,
                                     UNUSED_ATTRIBUTE const bool unnamed,
                                     UNUSED_ATTRIBUTE std::vector<ResultType> &result,
@@ -78,18 +73,24 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
   LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
 
   // This will construct an executor tree
+  // And set the tuple descriptor
 
   return Result::RESULT_FAILURE;
 }
 
-std::shared_ptr<Statement> TrafficCop::PrepareStatement(UNUSED_ATTRIBUTE const std::string& query,
+std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& statement_name,
+                                                        const std::string& query_string,
                                                         UNUSED_ATTRIBUTE std::string &error_message){
   std::shared_ptr<Statement> statement;
 
-  LOG_INFO("Prepare Statement %s", query.c_str());
+  LOG_INFO("Prepare Statement %s", query_string.c_str());
 
-  // This will construct a plan tree
-  // And set the tuple descriptor
+  statement.reset(new Statement(statement_name, query_string));
+
+  auto& postgres_parser = parser::PostgresParser::GetInstance();
+  auto parse_tree = postgres_parser.BuildParseTree(query_string);
+
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
 
   return statement;
 }

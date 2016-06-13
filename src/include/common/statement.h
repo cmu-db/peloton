@@ -38,11 +38,7 @@ class Statement {
   Statement &operator=(Statement &&) = delete;
 
   Statement(const std::string& statement_name,
-            const std::string& query_string,
-            const std::string& query_type,
-            const std::vector<int32_t>& param_types,
-            const std::vector<FieldInfoType>& tuple_descriptor,
-            std::unique_ptr<planner::AbstractPlan> plan_tree);
+            const std::string& query_string);
 
   ~Statement();
 
@@ -66,6 +62,10 @@ class Statement {
 
   void SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
 
+  void SetPlanTree(std::shared_ptr<planner::AbstractPlan> plan_tree);
+
+  const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
+
  private:
 
   // logical name of statement
@@ -84,7 +84,7 @@ class Statement {
   std::vector<FieldInfoType> tuple_descriptor;
 
   // cached plan tree
-  std::unique_ptr<planner::AbstractPlan> plan_tree;
+  std::shared_ptr<planner::AbstractPlan> plan_tree;
 
 };
 

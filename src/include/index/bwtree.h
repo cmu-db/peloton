@@ -7267,6 +7267,8 @@ before_switch:
               return;
             }
           } // if is last leaf page == true
+        } else {
+          raw_key_p = &key_it->first.key;
         } // if key_it == end()
         
         // If we switched to the next key in current page
