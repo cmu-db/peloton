@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/simple_optimizer.h"
+#include "parser/peloton/abstract_parse.h"
 
 #include "common/logger.h"
 
