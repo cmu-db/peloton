@@ -29,7 +29,7 @@ class GCManagerFactory {
       case GC_TYPE_VACUUM:
         return Vacuum_GCManager::GetInstance();
       case GC_TYPE_N2O:
-        return N2O_GCManager::GetInstance();
+        return N2O_GCManager::GetInstance(gc_thread_count_);
       case GC_TYPE_OFF:
         return Off_GCManager::GetInstance();
       default:
@@ -37,7 +37,10 @@ class GCManagerFactory {
     }
   }
 
-  static void Configure(GCType gc_type) { gc_type_ = gc_type; }
+  static void Configure(GCType gc_type, int thread_count = default_gc_thread_count_) {
+    gc_type_ = gc_type;
+    gc_thread_count_ = thread_count;
+  }
 
   static GCType GetGCType() { return gc_type_; }
 
@@ -45,7 +48,10 @@ class GCManagerFactory {
 
   // GC type
   static GCType gc_type_;
-};
 
+  // GC thread count
+  static int gc_thread_count_;
+  const static int default_gc_thread_count_ = 1;
+};
 } // namespace gc
 } // namespace peloton

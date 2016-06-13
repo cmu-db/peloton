@@ -98,7 +98,6 @@ public:
   /**
    * Interfaces for rollback segment
    */
-
   // Add a new rollback segment to the tuple
   void PerformUpdateWithRb(const ItemPointer &location, char *new_rb_seg);
 
@@ -223,6 +222,7 @@ public:
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
     SetRbSeg(tile_group_header, tuple_id, nullptr);
     SetSIndexPtr(tile_group_header, tuple_id, nullptr);
+    ClearDeleteFlag(tile_group_header, tuple_id);
     *(reinterpret_cast<bool*>(reserved_area + DELETE_FLAG_OFFSET)) = false;
   }
 
@@ -285,7 +285,6 @@ public:
   }
 
   inline bool SetLastReaderCid(const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
-
     assert(IsOwner(tile_group_header, tuple_id) == false);
 
     cid_t *ts_ptr = (cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
@@ -308,9 +307,6 @@ public:
       return true;
     }
   }
-
-
-
 };
 }
 }

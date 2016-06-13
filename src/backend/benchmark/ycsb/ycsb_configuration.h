@@ -55,6 +55,10 @@ class configuration {
   // execution duration
   double duration;
 
+  // number of threads used in GC,
+  // Only available when gc type is n2o
+  int gc_thread_count;
+
   // snapshot duration
   double snapshot_duration;
 

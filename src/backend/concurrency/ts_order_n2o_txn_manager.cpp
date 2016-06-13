@@ -588,7 +588,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // std::vector<ItemPointer> aborted_versions;
+  std::vector<ItemPointer> aborted_versions;
 
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -661,7 +661,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
 
         // GC recycle
         //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
-        // aborted_versions.push_back(new_version);
+        aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
         // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
@@ -751,11 +751,11 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
     }
   }
 
-  // cid_t next_commit_id = GetNextCommitId();
+  cid_t next_commit_id = GetNextCommitId();
 
-  // for (auto &item_pointer : aborted_versions) {
-  //   RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
-  // }
+  for (auto &item_pointer : aborted_versions) {
+     RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
+  }
 
   EndTransaction();
   return Result::RESULT_ABORTED;

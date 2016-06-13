@@ -14,6 +14,7 @@
 
 namespace peloton {
 namespace gc { 
-  GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF; 
+  GCType GCManagerFactory::gc_type_ = GC_TYPE_OFF;
+  int GCManagerFactory::gc_thread_count_ = default_gc_thread_count_;
 }
 }

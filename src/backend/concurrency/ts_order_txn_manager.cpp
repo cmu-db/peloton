@@ -20,13 +20,10 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 #include "backend/storage/data_table.h"
-#include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 
 namespace peloton {
 namespace concurrency {
-
-// thread_local cid_t acquire_ownership_ts;
 
 Spinlock *TsOrderTxnManager::GetSpinlockField(
     const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) {
@@ -39,6 +36,8 @@ cid_t TsOrderTxnManager::GetLastReaderCid(
   return *(cid_t*)(tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
 }
 
+// Set the last reader of a tuple, won't change if the tuple has a bigger last
+// reader id, return false if the tuple is owned by others.
 bool TsOrderTxnManager::SetLastReaderCid(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -60,28 +59,10 @@ bool TsOrderTxnManager::SetLastReaderCid(
     if (*ts_ptr < current_cid) {
       *ts_ptr = current_cid;
     }
-
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
     return true;
   }
 }
-
-
-// void TsOrderTxnManager::SetLastReaderCid(
-//     const storage::TileGroupHeader *const tile_group_header,
-//     const oid_t &tuple_id, const cid_t &last_read_ts) {
-//   char *addr = (tile_group_header->GetReservedFieldRef(tuple_id) + LAST_READER_OFFSET);
-  
-//   while(true) {
-//     auto old = *((cid_t*)addr);
-//     if(old > last_read_ts) {
-//       return;
-//     }else if ( __sync_bool_compare_and_swap((cid_t*)addr, old, last_read_ts) ) {
-//       return;
-//     }
-//   }
-// }
-
 
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
   static TsOrderTxnManager txn_manager;
@@ -169,6 +150,7 @@ bool TsOrderTxnManager::IsOwnable(
     const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   auto tuple_end_cid = tile_group_header->GetEndCommitId(tuple_id);
+  // As long as the tuple is valid, and it is visible to the current txn
   return tuple_txn_id == INITIAL_TXN_ID && tuple_end_cid > current_txn->GetBeginCommitId();
 }
 
@@ -181,26 +163,21 @@ bool TsOrderTxnManager::AcquireOwnership(
   // change timestamp
   cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
 
+  // If read by others after the current txn begins, can't acquire ownership
   if (last_reader_cid > current_txn->GetBeginCommitId()) {
     GetSpinlockField(tile_group_header, tuple_id)->Unlock();
-    
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
   } else {
     if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {    
       GetSpinlockField(tile_group_header, tuple_id)->Unlock();
-    
       SetTransactionResult(Result::RESULT_FAILURE);
       return false;
     } else {
-
       GetSpinlockField(tile_group_header, tuple_id)->Unlock();
-
       return true;
     }
-
   }
-
 }
 
 // release write lock on a tuple.
@@ -233,12 +210,6 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
     assert(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
     return true;
   }
-
-  //txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
-
-  // if(tuple_txn_id != INITIAL_TXN_ID && last_reader_cid < current_txn->GetBeginCommitId()) {
-  //   return false;
-  // }
 
   if (SetLastReaderCid(tile_group_header, tuple_id) == true) {
     current_txn->RecordRead(location);
@@ -284,12 +255,7 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  // ATTENTION: this assert may fail some time!
-  // if (GetLastReaderCid(tile_group_header, old_location.offset) > current_txn->GetBeginCommitId()) {
-  //   LOG_ERROR("last read cid = %d, begin commit id = %d\n", int(GetLastReaderCid(tile_group_header, old_location.offset)), int(current_txn->GetBeginCommitId()));
-  // }
   assert(GetLastReaderCid(tile_group_header, old_location.offset) == current_txn->GetBeginCommitId());
-
 
   auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
@@ -301,9 +267,6 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   assert(new_tile_group_header->GetBeginCommitId(new_location.offset) ==
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
-
-  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no one will possibly release the write lock acquired by this txn.
 
   // Set double linked list
   auto old_next = tile_group_header->GetNextItemPointer(old_location.offset);
@@ -331,9 +294,6 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
 
   InitTupleReserved(new_tile_group_header, new_location.offset);
-
-  // set last read
-  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
   
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
@@ -400,8 +360,6 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 
   InitTupleReserved(new_tile_group_header, new_location.offset);
-
-  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
   
   current_txn->RecordDelete(old_location);
 }
@@ -449,7 +407,6 @@ Result TsOrderTxnManager::CommitTransaction() {
   auto &rw_set = current_txn->GetRWSet();
 
   // TODO: Add optimization for read only
-
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);

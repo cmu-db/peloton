@@ -44,6 +44,7 @@ void Usage(FILE *out) {
           "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
+          "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o\n"
   );
   exit(EXIT_FAILURE);
 }
@@ -64,6 +65,7 @@ static struct option opts[] = {
     {"mix_txn", no_argument, NULL, 'm'},
     {"protocol", optional_argument, NULL, 'p'},
     {"gc_protocol", optional_argument, NULL, 'g'},
+    {"gc_thread", optional_argument, NULL, 't'},
     {NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
@@ -194,15 +196,19 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
   state.index = INDEX_TYPE_BTREE;
+  state.gc_thread_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:i:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:i:t:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
+      case 't':
+        state.gc_thread_count = atoi(optarg);
+        break;
       case 'k':
         state.scale_factor = atoi(optarg);
         break;

@@ -223,6 +223,7 @@ public:
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
     SetRbSeg(tile_group_header, tuple_id, nullptr);
     SetSIndexPtr(tile_group_header, tuple_id, nullptr);
+    ClearDeleteFlag(tile_group_header, tuple_id);
     *(reinterpret_cast<bool*>(reserved_area + delete_flag_offset)) = false;
   }
 
