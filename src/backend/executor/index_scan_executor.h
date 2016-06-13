@@ -31,7 +31,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
 
  public:
   explicit IndexScanExecutor(const planner::AbstractPlan *node,
-                             ExecutorContext *executor_context);
+                             ExecutorContext *executor_context, bool is_blind_write = false);
 
   ~IndexScanExecutor();
 
@@ -108,6 +108,8 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<oid_t> full_column_ids_;
 
   bool key_ready_ = false;
+
+  bool is_blind_write_ = false;
 };
 
 }  // namespace executor

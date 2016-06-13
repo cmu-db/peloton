@@ -123,8 +123,11 @@ class Transaction : public Printable {
   // epoch id
   size_t epoch_id_;
 
-  std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
-  //std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> rw_set_;
+  // in the protocols we have implemented, there's no need to maintain an ordered rw-set.
+  // this is because the optimistic mechanism locks writes and handles aborts aggressively.
+  // it does not need to reorder rw-set to guarantee deadlock-free.
+  //std::map<oid_t, std::map<oid_t, RWType>> rw_set_;
+  std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>> rw_set_;
 
   // result of the transaction
   Result result_ = peloton::RESULT_SUCCESS;
