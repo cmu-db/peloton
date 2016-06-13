@@ -5,15 +5,6 @@ language: cpp
 compiler:
     - g++
 
-before_install:
-    # installing libunwind
-    - cd /tmp
-    - wget http://download.savannah.gnu.org/releases/libunwind/libunwind-1.1.tar.gz
-    - tar -xvf libunwind-1.1.tar.gz
-    - cd libunwind-1.1 && ./configure && make > /dev/null 2>&1
-    - sudo make install
-    - cd $TRAVIS_BUILD_DIR
-
 install:
     # get c++11 support
     - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
