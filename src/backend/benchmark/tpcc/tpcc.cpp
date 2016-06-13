@@ -43,7 +43,8 @@ static void WriteOutput() {
         << state.snapshot_duration * round_id << " - " << std::setw(3)
         << std::left << state.snapshot_duration * (round_id + 1)
         << " s]: " << state.snapshot_throughput[round_id] << " "
-        << state.snapshot_abort_rate[round_id] << "\n";
+        << state.snapshot_abort_rate[round_id] << " "
+        << state.snapshot_memory[round_id] << "\n";
   }
 
   out << state.throughput << " ";

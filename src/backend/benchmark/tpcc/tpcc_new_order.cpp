@@ -582,7 +582,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   planner::InsertPlan orders_node(orders_table, std::move(orders_tuple));
   executor::InsertExecutor orders_executor(&orders_node, context.get());
-  orders_executor.Execute();
+  //orders_executor.Execute();
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     LOG_TRACE("abort transaction when inserting order table, thread_id = %d, d_id = %d, next_o_id = %d", (int)thread_id, (int)district_id, (int)ValuePeeker::PeekAsInteger(d_next_o_id));
@@ -604,7 +604,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
   planner::InsertPlan new_order_node(new_order_table, std::move(new_order_tuple));
   executor::InsertExecutor new_order_executor(&new_order_node, context.get());
-  new_order_executor.Execute();
+  //new_order_executor.Execute();
 
   if (txn->GetResult() != Result::RESULT_SUCCESS) {
     LOG_TRACE("abort transaction when inserting new order table");
@@ -728,7 +728,7 @@ bool RunNewOrder(NewOrderPlans &new_order_plans, const size_t &thread_id){
 
     planner::InsertPlan order_line_node(order_line_table, std::move(order_line_tuple));
     executor::InsertExecutor order_line_executor(&order_line_node, context.get());
-    order_line_executor.Execute();
+    //order_line_executor.Execute();
 
     if (txn->GetResult() != Result::RESULT_SUCCESS) {
       LOG_TRACE("abort transaction when inserting order line table");
