@@ -21,11 +21,13 @@
 namespace peloton {
 namespace catalog {
 
+// Get instance of the global catalog
 std::unique_ptr<Catalog> Catalog::GetInstance(void) {
   static std::unique_ptr<Catalog> global_catalog (new Catalog());
   return std::move(global_catalog);
 }
 
+// Creates the catalog database
 void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
@@ -38,45 +40,41 @@ void Catalog::CreateCatalogDatabase() {
   databases.push_back(database);
 }
 
+// Create a database
 void Catalog::CreateDatabase(std::string database_name) {
-{
-  std::lock_guard<std::mutex> lock(catalog_mutex);
-
   oid_t database_id = GetNewID();
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
   databases.push_back(database);
   // Update catalog_db with this database info
-  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
+  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
 		  database_id,
 		  database_name);
-  storage::Tuple *tuple_ptr = tuple.release();
-  databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->InsertTuple(tuple_ptr);
-}
+  InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
 }
 
+// Create a table in a database
 void Catalog::CreateTable(oid_t database_id, std::string table_name, std::unique_ptr<catalog::Schema> schema) {
-{
   bool own_schema = true;
   bool adapt_table = false;
-  std::lock_guard<std::mutex> lock(catalog_mutex);
   oid_t table_id = GetNewID();
   storage::DataTable *table = storage::TableFactory::GetDataTable(
 		  database_id, table_id, schema.get(), table_name,
 		  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
   GetDatabaseWithOid(database_id)->AddTable(table);
   // Update catalog_table with this table info
-  auto tuple = GetTableCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
-  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
-}
+  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
+  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
 }
 
+// Find a database using its id
 storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
   for (auto database : databases)
     if (database->GetOid() == db_oid) return database;
   return nullptr;
 }
 
+// Find a database using its name
 storage::Database *Catalog::GetDatabaseWithName(const std::string database_name) const {
   for (auto database : databases)
     if (database->GetDBName() == database_name) return database;
