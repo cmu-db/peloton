@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
@@ -18,7 +17,6 @@
 #include "common/types.h"
 
 #include "common/logger.h"
-
 
 namespace peloton {
 namespace parser {
@@ -40,21 +38,27 @@ class CreateParse : public AbstractParse {
     List *subobject_list;
 
     // Value
-    foreach(object_item, object_list){
+    foreach(object_item, object_list)
+    {
       subobject_list = lfirst(object_item);
 
-      foreach(subobject_item, subobject_list){
+      foreach(subobject_item, subobject_list)
+      {
         ::Value *value = (::Value *) lfirst(subobject_item);
-        LOG_INFO("Table : %s ", strVal(value));
-        entity_name = std::string(strVal(value));
+        LOG_INFO("Column : %s ", strVal(value));
+        columns.push_back(std::string(strVal(value)));
       }
     }
 
   }
 
-  inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_CREATE; }
+  inline ParseNodeType GetParseNodeType() const {
+    return PARSE_NODE_TYPE_CREATE;
+  }
 
-  const std::string GetInfo() const { return "CreateParse"; }
+  const std::string GetInfo() const {
+    return "CreateParse";
+  }
 
  private:
 
@@ -64,7 +68,7 @@ class CreateParse : public AbstractParse {
   // Name of entity
   std::string entity_name;
 
-  // Table Columns
+  // Table Columns (Column type?)
   std::vector<std::string> columns;
 
   // Table file path. (Since All data in memory , need path?)
