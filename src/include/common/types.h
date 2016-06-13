@@ -417,6 +417,33 @@ enum IndexConstraintType {
 };
 
 //===--------------------------------------------------------------------===//
+// Parse Node Types
+//===--------------------------------------------------------------------===//
+
+enum ParseNodeType {
+  PARSE_NODE_TYPE_INVALID = 0,  // invalid parse node type
+
+  // Scan Nodes
+  PARSE_NODE_TYPE_SCAN = 10,
+
+  // DDL Nodes
+  PARSE_NODE_TYPE_CREATE = 20,
+  PARSE_NODE_TYPE_DROP = 21,
+
+  // Mutator Nodes
+  PARSE_NODE_TYPE_UPDATE = 30,
+  PARSE_NODE_TYPE_INSERT = 31,
+  PARSE_NODE_TYPE_DELETE = 32,
+
+  // Prepared Nodes
+  PARSE_NODE_TYPE_PREPARE = 40,
+  PARSE_NODE_TYPE_EXECUTE = 41,
+
+  // Test
+  PARSE_NODE_TYPE_MOCK = 80
+};
+
+//===--------------------------------------------------------------------===//
 // Plan Node Types
 //===--------------------------------------------------------------------===//
 
@@ -727,6 +754,21 @@ enum TupleSerializationFormat {
 };
 
 // ------------------------------------------------------------------
+// Entity types
+// ------------------------------------------------------------------
+
+enum EntityType {
+  ENTITY_TYPE_INVALID = 0,
+
+  ENTITY_TYPE_TABLE = 1,
+  ENTITY_TYPE_SCHEMA = 2,
+  ENTITY_TYPE_INDEX = 3,
+  ENTITY_TYPE_VIEW = 4,
+  ENTITY_TYPE_PREPARED_STATEMENT = 5,
+
+};
+
+// ------------------------------------------------------------------
 // Endianess
 // ------------------------------------------------------------------
 
@@ -872,22 +914,25 @@ void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 //===--------------------------------------------------------------------===//
 
 std::string BackendTypeToString(BackendType type);
-BackendType StringToBackendType(std::string str);
+BackendType StringToBackendType(const std::string& str);
 
 std::string ValueTypeToString(ValueType type);
-ValueType StringToValueType(std::string str);
+ValueType StringToValueType(const std::string& str);
 
 std::string ExpressionTypeToString(ExpressionType type);
-ExpressionType StringToExpressionType(std::string str);
+ExpressionType StringToExpressionType(const std::string& str);
 
 std::string IndexTypeToString(IndexType type);
-IndexType StringToIndexType(std::string str);
+IndexType StringToIndexType(const std::string& str);
 
 std::string PlanNodeTypeToString(PlanNodeType type);
-PlanNodeType StringToPlanNodeType(std::string str);
+PlanNodeType StringToPlanNodeType(const std::string& str);
+
+std::string ParseNodeTypeToString(ParseNodeType type);
+ParseNodeType StringToParseNodeType(const std::string& str);
 
 std::string ConstraintTypeToString(ConstraintType type);
-ConstraintType StringToConstraintType(std::string str);
+ConstraintType StringToConstraintType(const std::string& str);
 
 std::string LoggingTypeToString(LoggingType type);
 std::string LoggingStatusToString(LoggingStatus type);

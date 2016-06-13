@@ -21,7 +21,7 @@ namespace benchmark {
 namespace sdbench {
 
 void Usage() {
-  LOG_TRACE(
+  LOG_INFO(
       "Command line options : sdbench <options>"
       "   -h --help              :  Print help message"
       "   -o --operator-type     :  Operator type"
@@ -68,16 +68,16 @@ static void ValidateOperator(const configuration &state) {
   } else {
     switch (state.operator_type) {
       case OPERATOR_TYPE_DIRECT:
-        LOG_TRACE("%s : DIRECT", "operator_type ");
+        LOG_INFO("%s : DIRECT", "operator_type ");
         break;
       case OPERATOR_TYPE_AGGREGATE:
-        LOG_TRACE("%s : AGGREGATE", "operator_type ");
+        LOG_INFO("%s : AGGREGATE", "operator_type ");
         break;
       case OPERATOR_TYPE_ARITHMETIC:
-        LOG_TRACE("%s : ARITHMETIC", "operator_type ");
+        LOG_INFO("%s : ARITHMETIC", "operator_type ");
         break;
       case OPERATOR_TYPE_JOIN:
-        LOG_TRACE("%s : JOIN", "operator_type ");
+        LOG_INFO("%s : JOIN", "operator_type ");
         break;
       default:
         break;
@@ -91,7 +91,7 @@ static void ValidateScaleFactor(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %d", "scale_factor", state.scale_factor);
+  LOG_INFO("%s : %d", "scale_factor", state.scale_factor);
 }
 
 static void ValidateLayout(const configuration &state) {
@@ -101,13 +101,13 @@ static void ValidateLayout(const configuration &state) {
   } else {
     switch (state.layout_mode) {
       case LAYOUT_ROW:
-        LOG_TRACE("%s : ROW", "layout ");
+        LOG_INFO("%s : ROW", "layout ");
         break;
       case LAYOUT_COLUMN:
-        LOG_TRACE("%s : COLUMN", "layout ");
+        LOG_INFO("%s : COLUMN", "layout ");
         break;
       case LAYOUT_HYBRID:
-        LOG_TRACE("%s : HYBRID", "layout ");
+        LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
         break;
@@ -117,20 +117,20 @@ static void ValidateLayout(const configuration &state) {
 
 static void ValidateProjectivity(const configuration &state) {
   if (state.projectivity < 0 || state.projectivity > 1) {
-    LOG_ERROR("Invalid projectivity :: %lf", state.projectivity);
+    LOG_ERROR("Invalid projectivity :: %.1lf", state.projectivity);
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %lf", "projectivity", state.projectivity);
+  LOG_INFO("%s : %.1lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
   if (state.selectivity < 0 || state.selectivity > 1) {
-    LOG_ERROR("Invalid selectivity :: %lf", state.selectivity);
+    LOG_ERROR("Invalid selectivity :: %.1lf", state.selectivity);
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %lf", "selectivity", state.selectivity);
+  LOG_INFO("%s : %.1lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
@@ -139,7 +139,7 @@ static void ValidateExperiment(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %d", "experiment_type", state.experiment_type);
+  LOG_INFO("%s : %d", "experiment_type", state.experiment_type);
 }
 
 static void ValidateColumnCount(const configuration &state) {
@@ -148,16 +148,16 @@ static void ValidateColumnCount(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %d", "column_count", state.column_count);
+  LOG_INFO("%s : %d", "column_count", state.column_count);
 }
 
 static void ValidateWriteRatio(const configuration &state) {
   if (state.write_ratio < 0 || state.write_ratio > 1) {
-    LOG_ERROR("Invalid write_ratio :: %lf", state.write_ratio);
+    LOG_ERROR("Invalid write_ratio :: %.1lf", state.write_ratio);
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %lf", "write_ratio", state.write_ratio);
+  LOG_INFO("%s : %.1lf", "write_ratio", state.write_ratio);
 }
 
 static void ValidateTuplesPerTileGroup(const configuration &state) {
@@ -166,14 +166,14 @@ static void ValidateTuplesPerTileGroup(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_TRACE("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
+  LOG_INFO("%s : %d", "tuples_per_tilegroup", state.tuples_per_tilegroup);
 }
 
 int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
-  state.operator_type = OPERATOR_TYPE_INVALID;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
@@ -250,7 +250,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
     ValidateWriteRatio(state);
     ValidateTuplesPerTileGroup(state);
 
-    LOG_TRACE("%s : %lu", "transactions", state.transactions);
+    LOG_INFO("%s : %lu", "transactions", state.transactions);
   } else {
     ValidateExperiment(state);
   }

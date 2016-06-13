@@ -379,7 +379,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -426,7 +426,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -477,7 +477,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
