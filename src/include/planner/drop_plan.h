@@ -40,6 +40,11 @@ class DropPlan : AbstractPlan {
     return "DropPlan";
   }
 
+  std::unique_ptr<AbstractPlan> Copy() const {
+    return std::unique_ptr<AbstractPlan>(
+        new DeletePlan(target_table_));
+  }
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
