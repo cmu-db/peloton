@@ -62,6 +62,10 @@ class Statement {
 
   void SetTupleDescriptor(const std::vector<FieldInfoType>& tuple_descriptor);
 
+  void SetPlanTree(std::shared_ptr<planner::AbstractPlan> plan_tree);
+
+  const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
+
  private:
 
   // logical name of statement
@@ -80,7 +84,7 @@ class Statement {
   std::vector<FieldInfoType> tuple_descriptor;
 
   // cached plan tree
-  std::unique_ptr<planner::AbstractPlan> plan_tree;
+  std::shared_ptr<planner::AbstractPlan> plan_tree;
 
 };
 
