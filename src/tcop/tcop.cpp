@@ -17,7 +17,8 @@
 #include "common/logger.h"
 #include "common/types.h"
 
-#include "parser/parser/pg_query.h"
+#include "parser/postgres_parser.h"
+#include "optimizer/simple_optimizer.h"
 
 namespace peloton {
 namespace tcop {
@@ -29,17 +30,11 @@ TrafficCop &TrafficCop::GetInstance(void) {
 }
 
 TrafficCop::TrafficCop() {
-
-  // Initialize the postgresult memory context
-  pg_query_init();
-
+  // Nothing to do here !
 }
 
 TrafficCop::~TrafficCop() {
-
-  // Destroy the postgresult memory context
-  pg_query_destroy();
-
+  // Nothing to do here !
 }
 
 Result TrafficCop::ExecuteStatement(const std::string& query,
@@ -78,6 +73,7 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
   LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
 
   // This will construct an executor tree
+  // And set the tuple descriptor
 
   return Result::RESULT_FAILURE;
 }
@@ -91,8 +87,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   statement.reset(new Statement(statement_name, query_string));
 
-  // This will construct a plan tree
-  // And set the tuple descriptor
+  auto& postgres_parser = parser::PostgresParser::GetInstance();
+  auto parse_tree = postgres_parser.BuildParseTree(query_string);
+
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
 
   return statement;
 }
