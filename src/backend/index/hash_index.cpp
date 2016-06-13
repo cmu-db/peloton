@@ -27,14 +27,7 @@ HashIndex<KeyType, ValueType, KeyHasher, KeyComparator,
       hasher(metadata),
       equals(metadata),
       comparator(metadata) { }
-
-// struct ItemPointerEqualityChecker {
-//   ItemPointer arg_;
-//   ItemPointerEqualityChecker(ItemPointer arg) : arg_(arg) {}
-//   bool operator()(ItemPointer *x) {
-//     return x->block == arg_.block && x->offset == arg_.offset;
-//   }
-// };
+      
 
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>

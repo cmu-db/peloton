@@ -312,6 +312,7 @@ const bool adapt_table = false;
 const bool is_inlined = true;
 const bool unique_index = false;
 const bool allocate = true;
+const size_t preallocate_scale = 1000;
 
 void CreateWarehouseTable() {
   /*
@@ -373,10 +374,15 @@ void CreateWarehouseTable() {
   bool unique = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "warehouse_pkey", warehouse_table_pkey_index_oid, state.index,
+      "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
   
   warehouse_table->AddIndex(pkey_index);
 }
@@ -447,11 +453,16 @@ void CreateDistrictTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-    "district_pkey", district_table_pkey_index_oid, state.index,
+    "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-
+  index::Index *pkey_index = nullptr;
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+  
   district_table->AddIndex(pkey_index);
 
 }
@@ -504,10 +515,16 @@ void CreateItemTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-    "item_pkey", item_table_pkey_index_oid, state.index,
+    "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.item_count);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   item_table->AddIndex(pkey_index);
 
 }
@@ -613,10 +630,17 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-    "customer_pkey", customer_table_pkey_index_oid, state.index,
+    "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   customer_table->AddIndex(pkey_index);
 
 
@@ -627,10 +651,18 @@ void CreateCustomerTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   index_metadata = new index::IndexMetadata(
-    "customer_skey", customer_table_skey_index_oid, state.index,
+    "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
     INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *skey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    // no one will update the column that is indexed in customer table.
+    skey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district);
+  } else {
+    skey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   customer_table->AddIndex(skey_index);
 
 }
@@ -770,10 +802,18 @@ void CreateStockTable() {
   bool unique = true;
 
   index::IndexMetadata* index_metadata = new index::IndexMetadata(
-    "stock_pkey", stock_table_pkey_index_oid, state.index,
+      "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.item_count);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
+
   stock_table->AddIndex(pkey_index);
 
 }
@@ -844,7 +884,15 @@ void CreateOrdersTable() {
     "orders_pkey", orders_table_pkey_index_oid, state.index,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district * preallocate_scale);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
+
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
@@ -856,7 +904,14 @@ void CreateOrdersTable() {
     "orders_skey", orders_table_skey_index_oid, state.index,
     INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *skey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    skey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district * preallocate_scale);
+  } else {
+    skey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   orders_table->AddIndex(skey_index);
 
 }
@@ -907,7 +962,14 @@ void CreateNewOrderTable() {
     "new_order_pkey", new_order_table_pkey_index_oid, state.index,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *pkey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.new_orders_per_district * preallocate_scale);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   new_order_table->AddIndex(pkey_index);
 
 }
@@ -984,7 +1046,15 @@ void CreateOrderLineTable() {
     "order_line_pkey", order_line_table_pkey_index_oid, state.index,
     INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  index::Index *pkey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district * orders_max_ol_cnt * preallocate_scale);
+  } else {
+    pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
@@ -996,7 +1066,15 @@ void CreateOrderLineTable() {
     "order_line_skey", order_line_table_skey_index_oid, state.index,
     INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *skey_index = nullptr;
+
+  if (state.index == INDEX_TYPE_HASH) {
+    skey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district * orders_max_ol_cnt * preallocate_scale);
+  } else {
+    skey_index = index::IndexFactory::GetInstance(index_metadata);
+  }
+
+
   order_line_table->AddIndex(skey_index);
 
 }
@@ -1568,7 +1646,6 @@ void LoadItems() {
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
-
   for (auto item_itr = 0; item_itr < state.item_count; item_itr++) {
 
     auto item_tuple = BuildItemTuple(item_itr, pool);
@@ -1695,15 +1772,13 @@ void LoadWarehouses() {
 }
 
 void LoadTPCCDatabase() {
-
+  LOG_INFO("============TABLE SIZES==========");
   LoadItems();
+  LOG_INFO("item count = %u", item_table->GetAllCurrentTupleCount());
 
   LoadWarehouses();
-  
-  LOG_INFO("============TABLE SIZES==========");
   LOG_INFO("warehouse count = %u", warehouse_table->GetAllCurrentTupleCount());
   LOG_INFO("district count  = %u", district_table->GetAllCurrentTupleCount());
-  LOG_INFO("item count = %u", item_table->GetAllCurrentTupleCount());
   LOG_INFO("customer count = %u", customer_table->GetAllCurrentTupleCount());
   LOG_INFO("history count = %u", history_table->GetAllCurrentTupleCount());
   LOG_INFO("stock count = %u", stock_table->GetAllCurrentTupleCount());

@@ -1860,6 +1860,7 @@ private:
     // cuckoo_fast_double will double the size of the table by taking advantage
     // of the properties of index_hash and alt_index.
     cuckoo_status cuckoo_fast_double(size_t current_hp) {
+        printf("fast double called!\n");
         size_t new_hp = current_hp + 1;
         size_t mhp = maximum_hashpower();
         if (mhp != NO_MAXIMUM_HASHPOWER && new_hp > mhp) {

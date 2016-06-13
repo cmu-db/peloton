@@ -761,10 +761,9 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 
 
 oid_t DataTable::GetAllCurrentTupleCount() {
-  for (auto index : indexes_) {
-    LOG_INFO("index size = %lu", index->GetIndexSize());
-  }
-
+  // for (auto index : indexes_) {
+  //   LOG_INFO("index size = %lu", index->GetIndexSize());
+  // }
 
   oid_t count = 0;
   for (auto tile_group_id : tile_groups_) {

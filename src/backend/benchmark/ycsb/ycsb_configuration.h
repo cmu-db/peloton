@@ -86,6 +86,9 @@ class configuration {
   // enable exponential backoff
   bool run_backoff;
 
+  // enable blind write
+  bool blind_write;
+
   // protocol type
   ConcurrencyType protocol;
 

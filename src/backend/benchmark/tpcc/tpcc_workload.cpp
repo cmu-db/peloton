@@ -111,7 +111,7 @@ void RunBackend(oid_t thread_id) {
 
 
   NewOrderPlans new_order_plans = PrepareNewOrderPlan();
-  PaymentPlans payment_plans = PreparePaymentPlan();
+  //PaymentPlans payment_plans = PreparePaymentPlan();
   //DeliveryPlans delivery_plans = PrepareDeliveryPlan();
   
   // backoff
@@ -185,24 +185,24 @@ void RunBackend(oid_t thread_id) {
      //   }
      // } else 
      if (rng_val <= 0.55) {
-       while (RunPayment(payment_plans, thread_id) == false) {
-          if (is_running == false) {
-            break;
-          }
-         execution_count_ref++;
-        // backoff
-        if (state.run_backoff) {
-          if (backoff_shifts < 63) {
-            ++backoff_shifts;
-          }
-          uint64_t spins = 1UL << backoff_shifts;
-          spins *= 100;
-          while (spins) {
-            _mm_pause();
-            --spins;
-          }
-        }
-       }
+       // while (RunPayment(payment_plans, thread_id) == false) {
+       //    if (is_running == false) {
+       //      break;
+       //    }
+       //   execution_count_ref++;
+       //  // backoff
+       //  if (state.run_backoff) {
+       //    if (backoff_shifts < 63) {
+       //      ++backoff_shifts;
+       //    }
+       //    uint64_t spins = 1UL << backoff_shifts;
+       //    spins *= 100;
+       //    while (spins) {
+       //      _mm_pause();
+       //      --spins;
+       //    }
+       //  }
+       // }
      } else {
        while (RunNewOrder(new_order_plans, thread_id) == false) {
           if (is_running == false) {

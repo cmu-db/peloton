@@ -133,7 +133,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
-  state.index = INDEX_TYPE_BWTREE;
+  state.index = INDEX_TYPE_HASH;
 
   // Parse args
   while (1) {

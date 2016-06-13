@@ -24,7 +24,7 @@ namespace index {
 class IndexFactory {
  public:
   // Get an index with required attributes
-  static Index *GetInstance(IndexMetadata *metadata);
+  static Index *GetInstance(IndexMetadata *metadata, const size_t &preallocate_size = 1);
 };
 
 }  // End index namespace

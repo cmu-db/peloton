@@ -40,6 +40,7 @@ void Usage(FILE *out) {
           "   -z --zipf_theta        :  theta to control skewness \n"
           "   -m --mix_txn           :  run read/write mix txn \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
+          "   -x --blind_write       :  enable blind write \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
@@ -62,6 +63,7 @@ static struct option opts[] = {
     {"backend_count", optional_argument, NULL, 'b'},
     {"zipf_theta", optional_argument, NULL, 'z'},
     {"exp_backoff", no_argument, NULL, 'e'},
+    {"blind_write", no_argument, NULL, 'x'},
     {"mix_txn", no_argument, NULL, 'm'},
     {"protocol", optional_argument, NULL, 'p'},
     {"gc_protocol", optional_argument, NULL, 'g'},
@@ -193,6 +195,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.zipf_theta = 0.0;
   state.run_mix = false;
   state.run_backoff = false;
+  state.blind_write = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
   state.index = INDEX_TYPE_BTREE;
@@ -201,7 +204,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "ahmek:d:s:c:l:r:o:u:b:z:p:g:i:t:", opts, &idx);
+    int c = getopt_long(argc, argv, "ahmexk:d:s:c:l:r:o:u:b:z:p:g:i:t:", opts, &idx);
 
     if (c == -1) break;
 
@@ -244,6 +247,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
         break;
       case 'e':
         state.run_backoff = true;
+        break;
+      case 'x':
+        state.blind_write = true;
         break;
       case 'p': {
         char *protocol = optarg;
@@ -332,6 +338,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   LOG_TRACE("%s : %d", "Run mix query", state.run_mix);
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);
+  LOG_TRACE("%s : %d", "Run blind write", state.blind_write);
 }
 
 }  // namespace ycsb

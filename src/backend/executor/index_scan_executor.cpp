@@ -192,10 +192,12 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
         if (predicate_ == nullptr) {
           visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-          auto res = transaction_manager.PerformRead(tuple_location);
-          if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
-            return res;
+          if (is_blind_write_ == false) {
+            auto res = transaction_manager.PerformRead(tuple_location);
+            if (!res) {
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
           }
         } else {
           expression::ContainerTuple<storage::TileGroup> tuple(
@@ -203,13 +205,14 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           auto eval =
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples[tuple_location.block]
-              .push_back(tuple_location.offset);
+            visible_tuples[tuple_location.block].push_back(tuple_location.offset);
 
-            auto res = transaction_manager.PerformRead(tuple_location);
-            if (!res) {
-              transaction_manager.SetTransactionResult(RESULT_FAILURE);
-              return res;
+            if (is_blind_write_ == false) {
+              auto res = transaction_manager.PerformRead(tuple_location);
+              if (!res) {
+                transaction_manager.SetTransactionResult(RESULT_FAILURE);
+                return res;
+              }
             }
           }
         }
@@ -416,10 +419,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       // perform predicate evaluation.
       if (predicate_ == nullptr) {
         visible_tuples[tile_group_id].push_back(tuple_id);
-        auto res = transaction_manager.PerformRead(tuple_location);
-        if (!res) {
-          transaction_manager.SetTransactionResult(RESULT_FAILURE);
-          return res;
+
+        if (is_blind_write_ == false) {
+          auto res = transaction_manager.PerformRead(tuple_location);
+          if (!res) {
+            transaction_manager.SetTransactionResult(RESULT_FAILURE);
+            return res;
+          }
         }
       } else {
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
@@ -428,10 +434,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
             predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
         if (eval == true) {
           visible_tuples[tile_group_id].push_back(tuple_id);
-          auto res = transaction_manager.PerformRead(tuple_location);
-          if (!res) {
-            transaction_manager.SetTransactionResult(RESULT_FAILURE);
-            return res;
+          
+          if (is_blind_write_ == false) {
+            auto res = transaction_manager.PerformRead(tuple_location);
+            if (!res) {
+              transaction_manager.SetTransactionResult(RESULT_FAILURE);
+              return res;
+            }
           }
         }
       }

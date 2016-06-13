@@ -135,9 +135,13 @@ MixedPlans PrepareMixedPlan() {
   planner::IndexScanPlan update_index_scan_node(
       user_table, predicate, update_column_ids, index_scan_desc);
   
-  executor::IndexScanExecutor *update_index_scan_executor =
-      new executor::IndexScanExecutor(&index_scan_node, nullptr);
-
+  executor::IndexScanExecutor *update_index_scan_executor = nullptr;
+  if (state.blind_write == true) {
+    update_index_scan_executor = new executor::IndexScanExecutor(&index_scan_node, nullptr, true);
+  } else {
+    update_index_scan_executor = new executor::IndexScanExecutor(&index_scan_node, nullptr, false);
+  }
+    
   TargetList target_list;
   DirectMapList direct_map_list;
 
