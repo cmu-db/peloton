@@ -15,7 +15,7 @@
 #include <type_traits>
 
 #include "libcds/cds/init.h"
-#include "libcds/cds/urcu/general_buffered.h"
+#include "libcds/cds/urcu/general_instant.h"
 #include "libcds/cds/sync/pool_monitor.h"
 #include "libcds/cds/memory/vyukov_queue_pool.h"
 #include "libcds/cds/container/bronson_avltree_map_rcu.h"
@@ -36,13 +36,14 @@ class Map {
   // Stores pointers to values
   typedef ValueType* MappedType;
 
-  typedef typename std::remove_pointer<ValueType*>::type FindMappedType;
-
   // rcu implementation
-  typedef cds::urcu::general_buffered<> RCUImpl;
+  typedef cds::urcu::general_instant<> RCUImpl;
 
   // rcu type
   typedef cds::urcu::gc<RCUImpl> RCUType;
+
+  // find func mapped type
+  typedef typename std::remove_pointer<MappedType>::type FuncMappedType;
 
   Map();
   ~Map();
@@ -57,7 +58,7 @@ class Map {
   bool Erase(const KeyType &key);
 
   // Extracts the corresponding value
-  bool Find(const KeyType &key);
+  bool Find(const KeyType &key, ValueType& value);
 
   // Checks whether the map contains key
   bool Contains(const KeyType &key);

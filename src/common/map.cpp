@@ -13,23 +13,16 @@
 #include <functional>
 
 #include "common/map.h"
+#include "common/logger.h"
 
 namespace peloton {
 
 MAP_TEMPLATE_ARGUMENTS
 MAP_TYPE::Map(){
-
-  // Create URCU general_buffered singleton
-  RCUImpl::Construct();
-
 }
 
 MAP_TEMPLATE_ARGUMENTS
 MAP_TYPE::~Map(){
-
-  // Destroy URCU general_buffered singleton
-  RCUImpl::Destruct();
-
 }
 
 MAP_TEMPLATE_ARGUMENTS
@@ -50,9 +43,14 @@ bool MAP_TYPE::Erase(const KeyType &key){
 }
 
 MAP_TEMPLATE_ARGUMENTS
-bool MAP_TYPE::Find(const KeyType &){
-  return false;
-  //return avl_tree.find(key, [](const KeyType&, FindMappedType&));
+bool MAP_TYPE::Find(const KeyType &key, ValueType& value){
+
+  auto status = avl_tree.find(key, [&value](const KeyType&,
+      FuncMappedType& map_value){
+    value = map_value;
+  });
+
+  return status;
 }
 
 MAP_TEMPLATE_ARGUMENTS
