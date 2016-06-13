@@ -112,8 +112,6 @@ class TsOrderTxnManager : public TransactionManager {
     new ((reserved_area + LOCK_OFFSET)) Spinlock();
     *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
   }
-
-
 };
 }
 }
