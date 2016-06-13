@@ -14,8 +14,6 @@
 
 #include "common/logger.h"
 
-#include <json/json.h>
-
 namespace peloton {
 namespace optimizer {
 
@@ -34,7 +32,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
     return NULL;
   std::shared_ptr<planner::AbstractPlan> plan_tree;
 
-  std::unique_ptr<planner::AbstractPlan> child_plan;
+  //std::unique_ptr<planner::AbstractPlan> child_plan;
 
   // TODO: Transform the parse tree
 
@@ -48,12 +46,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       break;
   }
 
-  if (child_plan != nullptr) {
-      if (plan_tree != nullptr)
-        plan_tree->AddChild(child_plan);
-      else
-        plan_tree = child_plan;
-    }
+//  if (child_plan != nullptr) {
+//      if (plan_tree != nullptr)
+//        plan_tree->AddChild(child_plan);
+//      else
+//        plan_tree = child_plan;
+//    }
   return plan_tree;
 }
 
