@@ -112,8 +112,8 @@ static void WriteOutput(double duration) {
   // Convert to ms
   duration *= 1000;
 
-  LOG_TRACE("----------------------------------------------------------");
-  LOG_TRACE("%d %d %lf %lf %lf %d %d %d %d %lf %lf %d %lf %d :: %lf ms",
+  LOG_INFO("----------------------------------------------------------");
+  LOG_INFO("%d %d %.1lf %.1lf %.1lf %d %d %d %d %.1lf %.1lf %d %.1lf %d :: %.1lf ms",
             state.layout_mode, state.operator_type, state.projectivity,
             state.selectivity, state.write_ratio, state.scale_factor,
             state.column_count, state.subset_experiment_type,

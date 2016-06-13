@@ -592,7 +592,7 @@ std::string ExpressionTypeToString(ExpressionType type) {
   return "INVALID";
 }
 
-ExpressionType StringToExpressionType(std::string str) {
+ExpressionType StringToExpressionType(const std::string& str) {
   if (str == "INVALID") {
     return EXPRESSION_TYPE_INVALID;
   } else if (str == "OPERATOR_PLUS") {
@@ -704,7 +704,7 @@ std::string IndexTypeToString(IndexType type) {
   return "INVALID";
 }
 
-IndexType StringToIndexType(std::string str) {
+IndexType StringToIndexType(const std::string& str) {
   if (str == "INVALID") {
     return INDEX_TYPE_INVALID;
   } else if (str == "BTREE") {
@@ -737,7 +737,7 @@ std::string IndexConstraintTypeToString(IndexConstraintType type) {
   return "INVALID";
 }
 
-IndexConstraintType StringToIndexConstraintType(std::string str) {
+IndexConstraintType StringToIndexConstraintType(const std::string& str) {
   if (str == "INVALID") {
     return INDEX_CONSTRAINT_TYPE_INVALID;
   } else if (str == "NORMAL") {
@@ -843,7 +843,7 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
   return "INVALID";
 }
 
-PlanNodeType StringToPlanNodeType(std::string str) {
+PlanNodeType StringToPlanNodeType(const std::string& str) {
   if (str == "INVALID") {
     return PLAN_NODE_TYPE_INVALID;
   } else if (str == "ABSTRACT_SCAN") {
@@ -887,6 +887,72 @@ PlanNodeType StringToPlanNodeType(std::string str) {
   }
   return PLAN_NODE_TYPE_INVALID;
 }
+
+//===--------------------------------------------------------------------===//
+// Plan Node - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string ParseNodeTypeToString(ParseNodeType type) {
+  switch (type) {
+    case PARSE_NODE_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case PARSE_NODE_TYPE_SCAN: {
+      return "SCAN";
+    }
+    case PARSE_NODE_TYPE_CREATE: {
+      return "CREATE";
+    }
+    case PARSE_NODE_TYPE_DROP: {
+      return "DROP";
+    }
+    case PARSE_NODE_TYPE_UPDATE: {
+      return "UPDATE";
+    }
+    case PARSE_NODE_TYPE_INSERT: {
+      return "INSERT";
+    }
+    case PARSE_NODE_TYPE_DELETE: {
+      return "DELETE";
+    }
+    case PARSE_NODE_TYPE_PREPARE: {
+      return "PREPARE";
+    }
+    case PARSE_NODE_TYPE_EXECUTE: {
+      return "EXECUTE";
+    }
+    case PARSE_NODE_TYPE_MOCK: {
+      return "MOCK";
+    }
+  }
+  return "INVALID";
+}
+
+ParseNodeType StringToParseNodeType(const std::string& str) {
+  if (str == "INVALID") {
+    return PARSE_NODE_TYPE_INVALID;
+  } else if (str == "SCAN") {
+    return PARSE_NODE_TYPE_SCAN;
+  } else if (str == "CREATE") {
+    return PARSE_NODE_TYPE_CREATE;
+  } else if (str == "DROP") {
+    return PARSE_NODE_TYPE_DROP;
+  } else if (str == "UPDATE") {
+    return PARSE_NODE_TYPE_UPDATE;
+  } else if (str == "INSERT") {
+    return PARSE_NODE_TYPE_INSERT;
+  } else if (str == "DELETE") {
+    return PARSE_NODE_TYPE_DELETE;
+  } else if (str == "PREPARE") {
+    return PARSE_NODE_TYPE_PREPARE;
+  } else if (str == "EXECUTE") {
+    return PARSE_NODE_TYPE_EXECUTE;
+  } else if (str == "MOCK") {
+    return PARSE_NODE_TYPE_MOCK;
+  }
+  return PARSE_NODE_TYPE_INVALID;
+}
+
 //===--------------------------------------------------------------------===//
 // Constraint Type - String Utilities
 //===--------------------------------------------------------------------===//
@@ -924,7 +990,7 @@ std::string ConstraintTypeToString(ConstraintType type) {
   return "INVALID";
 }
 
-ConstraintType StringToConstraintType(std::string str) {
+ConstraintType StringToConstraintType(const std::string& str) {
   if (str == "INVALID") {
     return CONSTRAINT_TYPE_INVALID;
   } else if (str == "NULL") {
