@@ -31,6 +31,7 @@ TEST_F(ValueCopyTests, VarcharTest) {
   catalog::Column column1(VALUE_TYPE_VARCHAR, 25, "D", false);
 
   columns.push_back(column1);
+  columns.push_back(column1);
 
   catalog::Schema *schema(new catalog::Schema(columns));
 
@@ -38,13 +39,12 @@ TEST_F(ValueCopyTests, VarcharTest) {
 
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
-  ValueFactory::GetStringValue("hello hello world", pool);
-
   Value val = ValueFactory::GetStringValue("hello hello world", pool);
 
   Value val2 = ValueFactory::GetStringValue("hello hello world", nullptr);
 
-  tuple->SetValue(0, val, pool);
+  tuple->SetValue(0, val2, nullptr);
+  tuple->SetValue(1, val2, nullptr);
 
   Value val3 = tuple->GetValue(0);
 

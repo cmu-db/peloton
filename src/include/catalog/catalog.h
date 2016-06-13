@@ -16,7 +16,10 @@
 #include "catalog/schema.h"
 #include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/tuple.h"
 #include "storage/table_factory.h"
+#include "common/value_factory.h"
+#include "catalog/catalog_util.h"
 
 namespace peloton {
 
@@ -39,31 +42,52 @@ class Catalog {
 public:
 
  // Global Singleton
- static Catalog &GetInstance(void);
+ static std::unique_ptr<Catalog> GetInstance(void);
 
- void AddDatabase(std::string database_name);
+ // Creates the catalog database
+ void CreateCatalogDatabase(void);
 
+ // Create a database
+ void CreateDatabase(std::string database_name);
+
+ // Create a table in a database
+ void CreateTable(oid_t database_id, std::string table_name, std::unique_ptr<catalog::Schema>);
+
+ // Find a database using its id
  storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
 
+ // Find a database using its name
  storage::Database *GetDatabaseWithName(const std::string db_name) const;
 
  // Create Table for pg_class
- storage::DataTable *CreateTableCatalog(std::string table_name);
+ std::unique_ptr<storage::DataTable> CreateTableCatalog(oid_t database_id, std::string table_name);
 
  // Create Table for pg_database
- storage::DataTable *CreateDatabaseCatalog(std::string table_name);
+ std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(oid_t database_id, std::string table_name);
 
+ // Initialize the schema of the database catalog
  std::unique_ptr<Schema> InitializeDatabaseSchema();
+
+ // Initialize the schema of the table catalog
  std::unique_ptr<Schema> InitializeTablesSchema();
 
- oid_t GetDatabaseCount() const;
+ // Get the number of databases currently in the catalog
+ int GetDatabaseCount();
 
+ // Get a new id for database, table, etc.
  oid_t GetNewID();
 
 private:
+ // A vector of the database pointers in the catalog
  std::vector<storage::Database*> databases;
- oid_t id_cntr = START_OID;
+
+ // The id variable that get assigned to objects. Initialized with START_OID
+ oid_t id_cntr = 1;
+
+ // Mutex used for atomic operations
  std::mutex catalog_mutex;
+
+ const size_t max_name_size = 32;
 
 
 

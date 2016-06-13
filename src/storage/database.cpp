@@ -148,7 +148,7 @@ const std::string Database::GetInfo() const {
 
 std::string Database::GetDBName() { return database_name; }
 
-void Database::setDBName(std::string database_name) { Database::database_name = database_name; }
+void Database::setDBName(const std::string& database_name) { Database::database_name = database_name; }
 
 
 }  // End storage namespace

@@ -67,7 +67,7 @@ class Database : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
   std::string GetDBName();
-  void setDBName(std::string database_name);
+  void setDBName(const std::string& database_name);
 
  protected:
   //===--------------------------------------------------------------------===//
