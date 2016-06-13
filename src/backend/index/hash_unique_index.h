@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// hash_index.h
+// hash_unique_index.h
 //
-// Identification: src/backend/index/hash_index.h
+// Identification: src/backend/index/hash_unique_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -31,17 +31,17 @@ namespace index {
  */
 template <typename KeyType, typename ValueType, class KeyHasher,
           class KeyComparator, class KeyEqualityChecker>
-class HashIndex : public Index {
+class HashUniqueIndex : public Index {
   friend class IndexFactory;
 
   // Define the container type
-  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher,
+  typedef cuckoohash_map<KeyType, ValueType, KeyHasher,
                          KeyEqualityChecker> MapType;
 
  public:
-  HashIndex(IndexMetadata *metadata, const size_t &preallocate_size = 1);
+  HashUniqueIndex(IndexMetadata *metadata);
 
-  ~HashIndex();
+  ~HashUniqueIndex();
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
@@ -75,6 +75,7 @@ class HashIndex : public Index {
   std::string GetTypeName() const;
 
   virtual size_t GetIndexSize() const {
+    LOG_INFO("hash index size = %lu", container.size());
     return container.size();
   }
 

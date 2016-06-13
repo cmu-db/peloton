@@ -701,6 +701,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_HASH: {
       return "HASH";
     }
+    case INDEX_TYPE_HASH_UNIQUE: {
+      return "HASH_PRIMARY";
+    }
     case INDEX_TYPE_RBBTREE: {
       return "RBBWTREE";
     }
@@ -717,6 +720,8 @@ IndexType StringToIndexType(std::string str) {
     return INDEX_TYPE_BWTREE;
   } else if (str == "HASH") {
     return INDEX_TYPE_HASH;
+  } else if (str == "HASH_PRIMARY") {
+    return INDEX_TYPE_HASH_UNIQUE;
   }
   return INDEX_TYPE_INVALID;
 }

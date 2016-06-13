@@ -150,6 +150,10 @@ void LoadYCSBDatabase() {
   }
 
   txn_manager.CommitTransaction();
+
+
+  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("user count = %u", user_table->GetAllCurrentTupleCount());
 }
 
 }  // namespace ycsb
