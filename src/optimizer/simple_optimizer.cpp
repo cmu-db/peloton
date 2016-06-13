@@ -40,13 +40,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   // One to one Mapping
   auto parse_item_node_type = parse_tree->GetParseNodeType();
 
-
-  switch(parse_item_node_type){
-    case PARSE_NODE_TYPE_SCAN:
-      child_plan = new planner::SeqScanPlan();
-      break;
-  }
-
 //  if (child_plan != nullptr) {
 //      if (plan_tree != nullptr)
 //        plan_tree->AddChild(child_plan);
