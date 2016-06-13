@@ -60,7 +60,8 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
+void InsertTuple(storage::DataTable *table, VarlenPool *pool,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -77,7 +78,8 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   txn_manager.CommitTransaction();
 }
 
-void UpdateTuple(storage::DataTable *table) {
+void UpdateTuple(storage::DataTable *table,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -133,7 +135,8 @@ void UpdateTuple(storage::DataTable *table) {
   txn_manager.CommitTransaction();
 }
 
-void DeleteTuple(storage::DataTable *table) {
+void DeleteTuple(storage::DataTable *table,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
