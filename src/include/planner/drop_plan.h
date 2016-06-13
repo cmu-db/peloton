@@ -30,6 +30,8 @@ class DropPlan : AbstractPlan {
   DropPlan(DropPlan &&) = delete;
   DropPlan &operator=(DropPlan &&) = delete;
 
+  explicit DropPlan(storage::DataTable *table) : target_table_(table) {}
+
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;
   }
