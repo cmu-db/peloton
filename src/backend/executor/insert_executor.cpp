@@ -95,7 +95,8 @@ bool InsertExecutor::DExecute() {
       index::RBItemPointer *rb_itemptr_ptr = nullptr;
       peloton::ItemPointer location;
       
-      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB
+        || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
         location = target_table->InsertTuple(tuple.get(), &rb_itemptr_ptr);
         assert(rb_itemptr_ptr != nullptr);
       } else {
@@ -116,6 +117,8 @@ bool InsertExecutor::DExecute() {
       } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
         // If we are using TO N2O txn manager, use another form of perform insert
         res = ((concurrency::TsOrderN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
+        res = ((concurrency::TsOrderRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
       } else {
         res = transaction_manager.PerformInsert(location);
       }
@@ -169,7 +172,8 @@ bool InsertExecutor::DExecute() {
       index::RBItemPointer *rb_itemptr_ptr = nullptr;
       peloton::ItemPointer location;
       
-      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+      if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB
+        || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
         location = target_table->InsertTuple(tuple, &rb_itemptr_ptr);
         assert(rb_itemptr_ptr != nullptr);
       } else {
@@ -188,6 +192,8 @@ bool InsertExecutor::DExecute() {
         res = ((concurrency::OptimisticN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);
       } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
         res = ((concurrency::OptimisticRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
+      } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
+        res = ((concurrency::TsOrderRbTxnManager*)&transaction_manager)->PerformInsert(location, rb_itemptr_ptr);
       } else if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_N2O) {
         // If we are using TO N2O txn manager, use another form of perform insert
         res = ((concurrency::TsOrderN2OTxnManager*)&transaction_manager)->PerformInsert(location, itemptr_ptr);

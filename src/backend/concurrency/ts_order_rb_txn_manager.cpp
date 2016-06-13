@@ -21,7 +21,6 @@
 #include "backend/common/logger.h"
 
 namespace peloton {
-
 namespace concurrency {
 
 thread_local storage::RollbackSegmentPool *to_current_segment_pool;
@@ -107,7 +106,6 @@ bool TsOrderRbTxnManager::IsOwnable(
   const oid_t &tuple_id) {
   auto tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
   char *evidence = GetActivatedRB(tile_group_header, tuple_id);
-
   return tuple_txn_id == INITIAL_TXN_ID && evidence != nullptr;
 }
 
@@ -118,12 +116,25 @@ bool TsOrderRbTxnManager::AcquireOwnership(
   const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
   auto txn_id = current_txn->GetTransactionId();
 
-  if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-    LOG_TRACE("Fail to acquire tuple. Set txn failure.");
+  GetSpinlockField(tile_group_header, tuple_id)->Lock();
+  // change timestamp
+  cid_t last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+
+  // If read by others after the current txn begins, can't acquire ownership
+  if (last_reader_cid > current_txn->GetBeginCommitId()) {
+    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
     SetTransactionResult(Result::RESULT_FAILURE);
     return false;
+  } else {
+    if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {    
+      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+      SetTransactionResult(Result::RESULT_FAILURE);
+      return false;
+    } else {
+      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+      return true;
+    }
   }
-  return true;
 }
 
 // release write lock on a tuple.
@@ -142,8 +153,27 @@ void TsOrderRbTxnManager::YieldOwnership(const oid_t &tile_group_id,
 }
 
 bool TsOrderRbTxnManager::PerformRead(const ItemPointer &location) {
-  current_txn->RecordRead(location);
-  return true;
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
+
+  LOG_TRACE("PerformRead (%u, %u)\n", location.block, location.offset);
+  auto &manager = catalog::Manager::GetInstance();
+  auto tile_group = manager.GetTileGroup(tile_group_id);
+  auto tile_group_header = tile_group->GetHeader();
+
+  //auto last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
+  if (IsOwner(tile_group_header, tuple_id) == true) {
+    // it is possible to be a blind write.
+    assert(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
+    return true;
+  }
+
+  if (SetLastReaderCid(tile_group_header, tuple_id) == true) {
+    current_txn->RecordRead(location);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location UNUSED_ATTRIBUTE) {
@@ -436,36 +466,9 @@ Result TsOrderRbTxnManager::CommitTransaction() {
   //*****************************************************
 
   // generate transaction id.
-  cid_t end_commit_id = GetNextCommitId();
-
-  // validate read set.
-  for (auto &tile_group_entry : rw_set) {
-    oid_t tile_group_id = tile_group_entry.first;
-    auto tile_group = manager.GetTileGroup(tile_group_id);
-    auto tile_group_header = tile_group->GetHeader();
-    for (auto &tuple_entry : tile_group_entry.second) {
-      auto tuple_slot = tuple_entry.first;
-      // if this tuple is not newly inserted. Meaning this is either read,
-      // update or deleted.
-      if (tuple_entry.second != RW_TYPE_INSERT &&
-          tuple_entry.second != RW_TYPE_INS_DEL) {
-
-        if (ValidateRead(tile_group_header, tuple_slot, end_commit_id)) {
-          continue;
-        }
-        LOG_TRACE("transaction id=%lu",
-                  tile_group_header->GetTransactionId(tuple_slot));
-        LOG_TRACE("begin commit id=%lu",
-                  tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_TRACE("end commit id=%lu",
-                  tile_group_header->GetEndCommitId(tuple_slot));
-        // otherwise, validation fails. abort transaction.
-        return AbortTransaction();
-      }
-    }
-  }
-  //////////////////////////////////////////////////////////
-
+  cid_t end_commit_id = current_txn->GetBeginCommitId();
+ 
+  // Set secondary index
   for (auto itr = to_updated_index_entries.begin(); itr != to_updated_index_entries.end(); itr++) {
     auto location = itr->first;
     oid_t tile_group_id = location.block;
@@ -486,7 +489,9 @@ Result TsOrderRbTxnManager::CommitTransaction() {
     auto tile_group_header = tile_group->GetHeader();
     for (auto &tuple_entry : tile_group_entry.second) {
       auto tuple_slot = tuple_entry.first;
-      if (tuple_entry.second == RW_TYPE_UPDATE) {
+      if (tuple_entry.second == RW_TYPE_READ) {
+        continue;
+      } else if (tuple_entry.second == RW_TYPE_UPDATE) {
         // // logging.
         // log_manager.LogUpdate(current_txn, end_commit_id, old_version,
         //                       new_version);
