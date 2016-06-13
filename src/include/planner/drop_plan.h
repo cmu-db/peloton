@@ -41,6 +41,7 @@ class DropPlan : AbstractPlan {
   }
 
  private:
+  // Target Table
   storage::DataTable *target_table_ = nullptr;
 
 };
