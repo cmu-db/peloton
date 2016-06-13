@@ -314,7 +314,6 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
         retval.SetObjectLength(length);  // this unSets the null tag.
         break;
       }
-
       // If it isn't inlined the storage area contains a pointer to the
       // Varlen object containing the string's memory
       Varlen *sref = *reinterpret_cast<Varlen **>(const_cast<void *>(storage));
@@ -347,7 +346,6 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
        */
       const char mask =
           ~static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
-
       char *data = sref->Get();
       int32_t length = 0;
       if ((data[0] & OBJECT_CONTINUATION_BIT) != 0) {
@@ -360,7 +358,6 @@ Value Value::InitFromTupleStorage(const void *storage, ValueType type,
       } else {
         length = data[0] & mask;
       }
-
       retval.SetObjectLength(length);  // this unSets the null tag.
       retval.SetSourceInlined(false);
       retval.SetCleanUp(false);
