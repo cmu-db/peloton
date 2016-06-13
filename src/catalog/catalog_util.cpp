@@ -14,8 +14,11 @@
 
 
 namespace peloton {
-namespace catalog {
 
+namespace catalog {
+/**
+ * Inserts a tuple in a table
+ */
 void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tuple) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -26,27 +29,22 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
   txn_manager.CommitTransaction();
 }
 
-std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema,
-		oid_t database_id,
-		std::string database_name){
-
+/**
+ * Generate a database catalog tuple
+ * Input: The database schema, the database id, the database name
+ * Returns: The generated tuple
+ */
+std::unique_ptr<storage::Tuple> GetCatalogTuple(catalog::Schema *schema,
+		oid_t id,
+		std::string name){
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-
-  Value val1 = ValueFactory::GetIntegerValue(database_id);
-  Value val2 = ValueFactory::GetStringValue(database_name, nullptr);
+  Value val1 = ValueFactory::GetIntegerValue(id);
+  Value val2 = ValueFactory::GetStringValue(name, nullptr);
   tuple->SetValue(0, val1, nullptr);
   tuple->SetValue(1, val2, nullptr);
   return tuple;
 }
 
-std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
-		oid_t table_id,
-		std::string table_name){
-	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-	tuple->SetValue(0, ValueFactory::GetIntegerValue(table_id), nullptr);
-	tuple->SetValue(1, ValueFactory::GetStringValue(table_name), nullptr);
-	return tuple;
-}
 
 }
 }
