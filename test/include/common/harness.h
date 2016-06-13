@@ -82,7 +82,7 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 
   // Launch a group of threads
   for (uint64_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
-    thread_group.push_back(std::thread(args...));
+    thread_group.push_back(std::thread(args..., thread_itr));
   }
 
   // Join the threads with the main thread
