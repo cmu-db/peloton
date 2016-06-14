@@ -100,7 +100,7 @@ bool RunStockLevel(const size_t &thread_id) {
   // Prepare random data
   int w_id = GenerateWarehouseId(thread_id);
   int d_id = GetRandomInteger(0, state.districts_per_warehouse - 1);
-  int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
+  //int threshold = GetRandomInteger(stock_min_threshold, stock_max_threshold);
 
   LOG_TRACE("getOId: SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?");
 
@@ -112,9 +112,9 @@ bool RunStockLevel(const size_t &thread_id) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   district_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  district_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
   district_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  district_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+  district_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
 
   auto district_pkey_index = district_table->GetIndexWithOid(district_table_pkey_index_oid);
   planner::IndexScanPlan::IndexScanDesc district_index_scan_desc(
@@ -143,116 +143,116 @@ bool RunStockLevel(const size_t &thread_id) {
 
   Value o_id = districts[0][0];
 
-  LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
+  // LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
 
-  ////////////////////////////////////////////////////////////////
-  /////////// Construct left table index scan ////////////////////
-  ////////////////////////////////////////////////////////////////
-  std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
-  std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID, COL_IDX_OL_O_ID};
-  std::vector<ExpressionType> order_line_expr_types;
-  std::vector<Value> order_line_key_values;
+  // ////////////////////////////////////////////////////////////////
+  // /////////// Construct left table index scan ////////////////////
+  // ////////////////////////////////////////////////////////////////
+  // std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
+  // std::vector<oid_t> order_line_key_column_ids = {COL_IDX_OL_W_ID, COL_IDX_OL_D_ID, COL_IDX_OL_O_ID, COL_IDX_OL_O_ID};
+  // std::vector<ExpressionType> order_line_expr_types;
+  // std::vector<Value> order_line_key_values;
 
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  order_line_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  order_line_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  order_line_key_values.push_back(o_id);
-  order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  order_line_key_values.push_back(ValueFactory::GetIntegerValue(
-    ValuePeeker::PeekInteger(o_id) - 20));
+  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  // order_line_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
+  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  // order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
+  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  // order_line_key_values.push_back(o_id);
+  // order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+  // order_line_key_values.push_back(ValueFactory::GetIntegerValue(
+  //   ValuePeeker::PeekInteger(o_id) - 20));
 
-  auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
-  planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
-    order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
-    order_line_key_values, runtime_keys);
+  // auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
+  // planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
+  //   order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
+  //   order_line_key_values, runtime_keys);
 
-  predicate = nullptr;
+  // predicate = nullptr;
 
-  planner::IndexScanPlan order_line_index_scan_node(order_line_table,
-    predicate, order_line_column_ids, order_line_index_scan_desc);
+  // planner::IndexScanPlan order_line_index_scan_node(order_line_table,
+  //   predicate, order_line_column_ids, order_line_index_scan_desc);
 
-  executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
+  // executor::IndexScanExecutor order_line_index_scan_executor(&order_line_index_scan_node, context.get());
 
-  //////////////////////////////////////////////////////////////////
-  ///////////// Construct right table index scan ///////////////////
-  //////////////////////////////////////////////////////////////////
-  std::vector<oid_t> stock_column_ids = {COL_IDX_S_I_ID};
+  // //////////////////////////////////////////////////////////////////
+  // ///////////// Construct right table index scan ///////////////////
+  // //////////////////////////////////////////////////////////////////
+  // std::vector<oid_t> stock_column_ids = {COL_IDX_S_I_ID};
 
-  std::vector<oid_t> stock_key_column_ids = {COL_IDX_S_W_ID};
-  std::vector<ExpressionType> stock_expr_types;
-  std::vector<Value> stock_key_values;
+  // std::vector<oid_t> stock_key_column_ids = {COL_IDX_S_W_ID};
+  // std::vector<ExpressionType> stock_expr_types;
+  // std::vector<Value> stock_key_values;
 
-  stock_expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  stock_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+  // stock_expr_types.push_back(
+  //     ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
+  // stock_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
 
-  auto stock_pkey_index = stock_table->GetIndexWithOid(
-      stock_table_pkey_index_oid);
+  // auto stock_pkey_index = stock_table->GetIndexWithOid(
+  //     stock_table_pkey_index_oid);
   
-  planner::IndexScanPlan::IndexScanDesc stock_index_scan_desc(
-      stock_pkey_index, stock_key_column_ids, stock_expr_types,
-      stock_key_values, runtime_keys);
+  // planner::IndexScanPlan::IndexScanDesc stock_index_scan_desc(
+  //     stock_pkey_index, stock_key_column_ids, stock_expr_types,
+  //     stock_key_values, runtime_keys);
 
-  // Add predicate S_QUANTITY < threshold
-  auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, COL_IDX_S_QUANTITY);
-  auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
-      ValueFactory::GetIntegerValue(threshold));
-  predicate = expression::ExpressionUtil::ComparisonFactory(
-    EXPRESSION_TYPE_COMPARE_EQUAL, tuple_val_expr, constant_val_expr);
+  // // Add predicate S_QUANTITY < threshold
+  // auto tuple_val_expr = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, COL_IDX_S_QUANTITY);
+  // auto constant_val_expr = expression::ExpressionUtil::ConstantValueFactory(
+  //     ValueFactory::GetIntegerValue(threshold));
+  // predicate = expression::ExpressionUtil::ComparisonFactory(
+  //   EXPRESSION_TYPE_COMPARE_EQUAL, tuple_val_expr, constant_val_expr);
 
-  planner::IndexScanPlan stock_index_scan_node(stock_table, predicate,
-                                               stock_column_ids,
-                                               stock_index_scan_desc);
+  // planner::IndexScanPlan stock_index_scan_node(stock_table, predicate,
+  //                                              stock_column_ids,
+  //                                              stock_index_scan_desc);
 
-  executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node,
-                                                            context.get());
+  // executor::IndexScanExecutor stock_index_scan_executor(&stock_index_scan_node,
+  //                                                           context.get());
 
-  //stock_index_scan_executor.Init();
+  // //stock_index_scan_executor.Init();
 
-  ////////////////////////////////////////////////
-  ////////////// Join ////////////////////////////
-  ////////////////////////////////////////////////
-  // Schema
-  auto order_line_table_schema = order_line_table->GetSchema();
-  std::shared_ptr<const catalog::Schema> join_schema(new catalog::Schema({
-    order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
-  }));
-  // Projection
-  TargetList target_list;
-  DirectMapList direct_map_list = {{0, {0, 0}}}; // ORDER_LINE.OL_I_ID
-  std::unique_ptr<const planner::ProjectInfo> projection(
-      new planner::ProjectInfo(std::move(target_list),
-                               std::move(direct_map_list)));
-  // Predicate left.0 == right.0
-  auto left_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
-  auto right_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 1, 0);
-  std::unique_ptr<const expression::AbstractExpression> join_predicate( expression::ExpressionUtil::ComparisonFactory(
-    EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr0, right_table_attr0));
+  // ////////////////////////////////////////////////
+  // ////////////// Join ////////////////////////////
+  // ////////////////////////////////////////////////
+  // // Schema
+  // auto order_line_table_schema = order_line_table->GetSchema();
+  // std::shared_ptr<const catalog::Schema> join_schema(new catalog::Schema({
+  //   order_line_table_schema->GetColumn(COL_IDX_OL_I_ID)
+  // }));
+  // // Projection
+  // TargetList target_list;
+  // DirectMapList direct_map_list = {{0, {0, 0}}}; // ORDER_LINE.OL_I_ID
+  // std::unique_ptr<const planner::ProjectInfo> projection(
+  //     new planner::ProjectInfo(std::move(target_list),
+  //                              std::move(direct_map_list)));
+  // // Predicate left.0 == right.0
+  // auto left_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
+  // auto right_table_attr0 = expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 1, 0);
+  // std::unique_ptr<const expression::AbstractExpression> join_predicate( expression::ExpressionUtil::ComparisonFactory(
+  //   EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr0, right_table_attr0));
 
-  // Join
-  planner::NestedLoopJoinPlan join_plan(JOIN_TYPE_INNER, std::move(join_predicate), std::move(projection), join_schema);
-  executor::NestedLoopJoinExecutor join_executor(&join_plan, context.get());
-  join_executor.AddChild(&order_line_index_scan_executor);
-  join_executor.AddChild(&stock_index_scan_executor);
+  // // Join
+  // planner::NestedLoopJoinPlan join_plan(JOIN_TYPE_INNER, std::move(join_predicate), std::move(projection), join_schema);
+  // executor::NestedLoopJoinExecutor join_executor(&join_plan, context.get());
+  // join_executor.AddChild(&order_line_index_scan_executor);
+  // join_executor.AddChild(&stock_index_scan_executor);
 
-  // current implementation of aggregation is too costly. workaround.
-  join_executor.Init();
+  // // current implementation of aggregation is too costly. workaround.
+  // join_executor.Init();
 
-  auto join_result = ExecuteReadTest(&join_executor);
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    txn_manager.AbortTransaction();
-    return false;
-  }
-  LOG_TRACE("join result size=%lu", join_result.size());
+  // auto join_result = ExecuteReadTest(&join_executor);
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
+  // LOG_TRACE("join result size=%lu", join_result.size());
   
-  std::unordered_set<int> distinct_items;
-  for (size_t i = 0; i < join_result.size(); ++i) {
-    int join_value = ValuePeeker::PeekAsInteger(join_result[i][0]);
-    distinct_items.insert(join_value);
-  }
-  LOG_TRACE("number of distinct items=%lu", distinct_items.size());
+  // std::unordered_set<int> distinct_items;
+  // for (size_t i = 0; i < join_result.size(); ++i) {
+  //   int join_value = ValuePeeker::PeekAsInteger(join_result[i][0]);
+  //   distinct_items.insert(join_value);
+  // }
+  // LOG_TRACE("number of distinct items=%lu", distinct_items.size());
 
   ////////////////////////////////////////////////
   ////////////// Aggregator //////////////////////

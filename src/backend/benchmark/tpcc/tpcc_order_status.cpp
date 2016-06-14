@@ -153,8 +153,14 @@ bool RunOrderStatus(const size_t &thread_id){
       return false;
     }
 
-    assert(result.size() > 0);
-    assert(result[0].size() > 0);
+    if (result.size() == 0) {
+      LOG_ERROR("wrong result size : %lu", result.size());
+      assert(false);
+    }
+    if (result[0].size() == 0) {
+      LOG_ERROR("wong result[0] size : %lu", result[0].size());
+      assert(false);
+    }
   } else {
     LOG_ERROR("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
     // Construct index scan executor
@@ -215,7 +221,10 @@ bool RunOrderStatus(const size_t &thread_id){
     c_id = ValuePeeker::PeekInteger(customer[0]);
   }
 
-  assert(c_id >= 0);
+  if (c_id < 0) {
+    LOG_ERROR("wrong c_id");
+    assert(false);
+  }
 
   LOG_TRACE("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id");
 
