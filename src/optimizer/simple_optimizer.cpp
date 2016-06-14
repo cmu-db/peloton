@@ -78,7 +78,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 
   auto &children = parse_tree->GetChildren();
   for (auto &child : children) {
-    child_plan = std::move(BuildPlanTree(child));
+    auto child_parse = BuildPlanTree(child);
+    child_plan = std::move(child_parse);
   }
   return plan_tree;
 }
