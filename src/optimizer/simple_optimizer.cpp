@@ -55,7 +55,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       break;
 
     case PARSE_NODE_TYPE_SCAN:
-      std::unique_ptr<planner::AbstractPlan> SeqScanPlan(new planner::SeqScanPlan("department-table"));
+      std::unique_ptr<planner::AbstractPlan> SeqScanPlan(new planner::SeqScanPlan());
       child_plan = std::move(SeqScanPlan);
       break;
 
