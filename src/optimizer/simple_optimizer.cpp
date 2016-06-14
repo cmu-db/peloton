@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/simple_optimizer.h"
+
 #include "parser/peloton/abstract_parse.h"
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
@@ -79,7 +80,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   // Recurse
   auto &children = parse_tree->GetChildren();
   for (auto &child : children) {
-    auto child_parse = std::move(BuildPlanTree(child));
+    std::shared_ptr<planner::AbstractPlan> child_parse = std::move(BuildPlanTree(child));
     child_plan = std::move(child_parse);
   }
   return plan_tree;
