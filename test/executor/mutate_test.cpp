@@ -90,6 +90,7 @@ TEST_F(MutateTests, DroppingTable) {
   executor::DropExecutor executor(&node, context.get());
   executor.Init();
   executor.Execute();
+  txn_manager.CommitTransaction();
   EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 0);
 
 }
@@ -108,7 +109,6 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
-
   txn_manager.CommitTransaction();
 }
 
