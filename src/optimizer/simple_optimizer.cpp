@@ -19,6 +19,9 @@
 #include <memory>
 
 namespace peloton {
+namespace planner{
+class AbstractPlan;
+}
 namespace optimizer {
 
 SimpleOptimizer::SimpleOptimizer() {
