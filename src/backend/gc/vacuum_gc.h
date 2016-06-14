@@ -27,29 +27,45 @@ namespace peloton {
 namespace gc {
 class Vacuum_GCManager : public GCManager {
 public:
-  Vacuum_GCManager()
+  Vacuum_GCManager(int thread_count)
     : is_running_(true),
-      unlink_queue_(MAX_QUEUE_LENGTH),
-      free_queue_(MAX_QUEUE_LENGTH) {
+      gc_thread_count_(thread_count),
+      gc_threads_(thread_count),
+      unlink_queues_(),
+      reclaim_maps_(thread_count){
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      std::shared_ptr<LockfreeQueue<TupleMetadata>> unlink_queue(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+      unlink_queues_.push_back(unlink_queue);
+    }
     StartGC();
   }
 
   ~Vacuum_GCManager() { StopGC(); }
 
-  static Vacuum_GCManager& GetInstance() {
-    static Vacuum_GCManager gcManager;
+  static Vacuum_GCManager& GetInstance(int thread_count = 1) {
+    static Vacuum_GCManager gcManager(thread_count);
     return gcManager;
   }
 
   // Get status of whether GC thread is running or not
   virtual bool GetStatus() { return this->is_running_; }
 
-  virtual void StartGC();
+  virtual void StartGC() {
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      StartGC(i);
+    }
+  };
 
-  virtual void StopGC();
+  virtual void StopGC() {
+    for (int i = 0; i < gc_thread_count_; ++i) {
+      StopGC(i);
+    }
+  };
 
   virtual void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
-                                const oid_t &tuple_id, const cid_t &tuple_end_cid);
+                                const oid_t &tuple_id, const cid_t &tuple_end_cid) {
+    RecycleOldTupleSlot(table_id, tile_group_id, tuple_id, tuple_end_cid, HashToThread(tuple_id));
+  }
 
   virtual void RecycleInvalidTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
                                    const oid_t &tuple_id);
@@ -66,13 +82,24 @@ public:
   }
 
 private:
-  void ClearGarbage();
+  void StartGC(int thread_id);
 
-  void Running();
+  void StopGC(int thread_id);
 
-  void Reclaim(const cid_t &max_cid);
+  void RecycleOldTupleSlot(const oid_t &table_id, const oid_t &tile_group_id,
+                                   const oid_t &tuple_id, const cid_t &tuple_end_cid, int thread_id);
 
-  void Unlink(const cid_t &max_cid);
+  inline int HashToThread(const oid_t &tuple_id) {
+    return tuple_id % gc_thread_count_;
+  }
+
+  void ClearGarbage(int thread_id);
+
+  void Running(int thread_id);
+
+  void Reclaim(int thread_id, const cid_t &max_cid);
+
+  void Unlink(int thread_id, const cid_t &max_cid);
 
   void DeleteTupleFromIndexes(const TupleMetadata &);
   
@@ -86,17 +113,17 @@ private:
   //===--------------------------------------------------------------------===//
   volatile bool is_running_;
 
-  std::unique_ptr<std::thread> gc_thread_;
+  const int gc_thread_count_;
 
-  LockfreeQueue<TupleMetadata> unlink_queue_;
+  std::vector<std::unique_ptr<std::thread>> gc_threads_;
 
-  LockfreeQueue<TupleMetadata> free_queue_;
+  std::vector<std::shared_ptr<LockfreeQueue<TupleMetadata>>> unlink_queues_;
 
   // Map of actual grabage.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
   // TODO: use shared pointer to reduce memory copy
-  std::multimap<cid_t, TupleMetadata> reclaim_map_;
+  std::vector<std::multimap<cid_t, TupleMetadata>> reclaim_maps_;
 
   // TODO: use shared pointer to reduce memory copy
   // table_id -> queue
