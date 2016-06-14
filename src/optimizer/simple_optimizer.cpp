@@ -41,7 +41,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   if (parse_tree.get() == nullptr)
      return plan_tree;
 
- std::unique_ptr<planner::AbstractPlan> child_plan;
+ std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // TODO: Transform the parse tree
 
@@ -50,11 +50,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 
   switch(parse_item_node_type){
     case PARSE_NODE_TYPE_DROP:
-      child_plan = new planner::DropPlan("department-table");
+      child_plan = std::move(new planner::DropPlan("department-table"));
       break;
 
     case PARSE_NODE_TYPE_SCAN:
-      child_plan = new planner::SeqScanPlan();
+      child_plan = std::move(new planner::SeqScanPlan());
       break;
 
     default:
