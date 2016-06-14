@@ -101,14 +101,14 @@ void GCManager::AddToRecycleMap(TupleMetadata tuple_metadata) {
   if (ResetTuple(tuple_metadata) == false) return;
 
   // Add to the recycle map
-  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  std::shared_ptr<Queue<TupleMetadata>> recycle_queue;
   // if the entry for table_id exists.
   if (recycle_queue_map_.find(tuple_metadata.table_id, recycle_queue) == true) {
     // if the entry for tuple_metadata.table_id exists.
     recycle_queue->Dequeue(tuple_metadata);
   } else {
     // if the entry for tuple_metadata.table_id does not exist.
-    recycle_queue.reset(new LockfreeQueue<TupleMetadata>(MAX_QUEUE_LENGTH));
+    recycle_queue.reset(new Queue<TupleMetadata>(MAX_QUEUE_LENGTH));
     bool ret =
         recycle_queue_map_.insert(tuple_metadata.table_id, recycle_queue);
     if (ret == true) {
@@ -222,7 +222,7 @@ ItemPointer GCManager::ReturnFreeSlot(const oid_t &table_id) {
     return INVALID_ITEMPOINTER;
   }
 
-  std::shared_ptr<LockfreeQueue<TupleMetadata>> recycle_queue;
+  std::shared_ptr<Queue<TupleMetadata>> recycle_queue;
   // if there exists recycle_queue
   if (recycle_queue_map_.find(table_id, recycle_queue) == true) {
     TupleMetadata tuple_metadata;

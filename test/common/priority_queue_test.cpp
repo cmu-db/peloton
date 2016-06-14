@@ -10,10 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/priority_queue.h"
+#include "container/priority_queue.h"
 
 #include "common/harness.h"
-
 
 namespace peloton {
 namespace test {

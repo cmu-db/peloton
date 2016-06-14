@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/priority_queue.h"
+#include "container/priority_queue.h"
 
 namespace peloton {
 
