@@ -349,6 +349,10 @@ executor::AbstractExecutor *BuildExecutorTree(
       child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_DROP:
+      child_executor = new executor::DropExecutor(plan, executor_context);
+      break;
+
     default:
       LOG_ERROR("Unsupported plan node type : %d ", plan_node_type);
       break;

@@ -467,6 +467,9 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_INSERT = 31,
   PLAN_NODE_TYPE_DELETE = 32,
 
+  //DDL Nodes
+  PLAN_NODE_TYPE_DROP = 33,
+
   // Communication Nodes
   PLAN_NODE_TYPE_SEND = 40,
   PLAN_NODE_TYPE_RECEIVE = 41,
