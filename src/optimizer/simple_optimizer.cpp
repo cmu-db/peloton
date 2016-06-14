@@ -29,9 +29,9 @@ SimpleOptimizer::~SimpleOptimizer() {
 std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
     const std::unique_ptr<parser::AbstractParse>& parse_tree) {
 
-  if (parse_tree.get() == nullptr)
-    return NULL;
   std::shared_ptr<planner::AbstractPlan> plan_tree;
+  if (parse_tree.get() == nullptr)
+     return plan_tree;
 
 /*  std::unique_ptr<planner::AbstractPlan> child_plan;
 
@@ -41,19 +41,27 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   auto parse_item_node_type = parse_tree->GetParseNodeType();
 
   switch(parse_item_node_type){
-    case PLAN_NODE_TYPE_DROP:
+    case PARSE_NODE_TYPE_DROP:
       child_plan = new planner::DropPlan();
       break;
-    case PLAN_NODE_TYPE_SEQSCAN:
+
+    case PARSE_NODE_TYPE_SCAN:
       child_plan = new planner::SeqScanPlan();
+      break;
+
+    default:
+      LOG_INFO("Unsupported Parse Node Type");
   }
+
+// Need to recurse and give base case. for every child in parse tree.
 
   if (child_plan != nullptr) {
       if (plan_tree != nullptr)
-        plan_tree->AddChild(child_plan);
+        plan_tree->AddChild(std::move(child_plan));
       else
         plan_tree = child_plan;
     }*/
+
   return plan_tree;
 }
 
