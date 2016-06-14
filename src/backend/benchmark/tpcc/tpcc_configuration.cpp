@@ -44,7 +44,7 @@ void Usage(FILE *out) {
 
 static struct option opts[] = {
   { "scale_factor", optional_argument, NULL, 'k' },
-  {"index", optional_argument, NULL, 'i'},
+  { "index", optional_argument, NULL, 'i'},
   { "duration", optional_argument, NULL, 'd' },
   { "snapshot_duration", optional_argument, NULL, 's' },
   { "backend_count", optional_argument, NULL, 'b'},

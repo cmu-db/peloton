@@ -33,9 +33,9 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput() {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf :: %lf tps, %lf", state.scale_factor, state.throughput, state.abort_rate);
+  LOG_INFO("%lf :: %lf tps, %lf, %d", state.scale_factor, state.throughput, state.abort_rate, state.snapshot_memory[state.snapshot_throughput.size() - 1]);
 
-  out << state.scale_factor << "\n";
+  // out << state.scale_factor << "\n";
 
   for (size_t round_id = 0; round_id < state.snapshot_throughput.size();
        ++round_id) {
@@ -48,7 +48,8 @@ static void WriteOutput() {
   }
 
   out << state.throughput << " ";
-  out << state.abort_rate << "\n";
+  out << state.abort_rate << " ";
+  out << state.snapshot_memory[state.snapshot_throughput.size() - 1] <<"\n";
   out.flush();
   out.close();
 }

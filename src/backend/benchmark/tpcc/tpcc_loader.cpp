@@ -646,24 +646,24 @@ void CreateCustomerTable() {
 
   
   // Secondary index on C_W_ID, C_D_ID, C_LAST
-  key_attrs = {1, 2, 5};
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  key_schema->SetIndexedColumns(key_attrs);
+  // key_attrs = {1, 2, 5};
+  // key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  // key_schema->SetIndexedColumns(key_attrs);
 
-  index_metadata = new index::IndexMetadata(
-    "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
-    INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
+  // index_metadata = new index::IndexMetadata(
+  //   "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
+  //   INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, false);
 
-  index::Index *skey_index = nullptr;
+  // index::Index *skey_index = nullptr;
 
-  if (state.index == INDEX_TYPE_HASH) {
-    // no one will update the column that is indexed in customer table.
-    skey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district);
-  } else {
-    skey_index = index::IndexFactory::GetInstance(index_metadata);
-  }
+  // if (state.index == INDEX_TYPE_HASH) {
+  //   // no one will update the column that is indexed in customer table.
+  //   skey_index = index::IndexFactory::GetInstance(index_metadata, state.warehouse_count * state.districts_per_warehouse * state.customers_per_district);
+  // } else {
+  //   skey_index = index::IndexFactory::GetInstance(index_metadata);
+  // }
 
-  customer_table->AddIndex(skey_index);
+  // customer_table->AddIndex(skey_index);
 
 }
 

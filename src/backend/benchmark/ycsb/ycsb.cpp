@@ -58,8 +58,8 @@ extern storage::DataTable *user_table;
 std::ofstream out("outputfile.summary", std::ofstream::out);
 
 static void WriteOutput() {
-  LOG_INFO("%lf %d %d :: %lf tps, %lf", state.update_ratio, state.scale_factor,
-           state.column_count, state.throughput, state.abort_rate);
+  LOG_INFO("%lf %d %d :: %lf tps, %lf, %d", state.update_ratio, state.scale_factor,
+           state.column_count, state.throughput, state.abort_rate, state.snapshot_memory[state.snapshot_throughput.size() - 1]);
 
   // out << state.update_ratio << " ";
   // out << state.scale_factor << " ";
@@ -76,7 +76,8 @@ static void WriteOutput() {
   }
 
   out << state.throughput << " ";
-  out << state.abort_rate << "\n";
+  out << state.abort_rate << " ";
+  out << state.snapshot_memory[state.snapshot_throughput.size() - 1] <<"\n";
   out.flush();
   out.close();
 }

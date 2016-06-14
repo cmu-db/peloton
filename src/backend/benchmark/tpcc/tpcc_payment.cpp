@@ -397,10 +397,10 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
   std::string customer_lastname;
   double h_amount = GetRandomFixedPoint(2, payment_min_amount, payment_max_amount);
   // WARN: Hard code the date as 0. may cause problem
-  int h_date = 0;
+  //int h_date = 0;
 
   int x = GetRandomInteger(1, 100);
-  int y = GetRandomInteger(1, 100);
+  // int y = GetRandomInteger(1, 100);
 
   // 85%: paying through own warehouse ( or there is only 1 warehosue)
   if (state.warehouse_count == 1 || x <= 85) {
@@ -415,15 +415,15 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
   }
 
   // 60%: payment by last name
-  if (y <= 60) {
-    LOG_TRACE("By last name");
-    customer_lastname = GetRandomLastName(state.customers_per_district);
-  }
-  // 40%: payment by id
-  else {
+  // if (y <= 60) {
+  //   LOG_TRACE("By last name");
+  //   customer_lastname = GetRandomLastName(state.customers_per_district);
+  // }
+  // // 40%: payment by id
+  // else {
     LOG_TRACE("By id");
     customer_id = GetRandomInteger(0, state.customers_per_district - 1);
-  }
+  // }
 
   /////////////////////////////////////////////////////////
   // BEGIN TRANSACTION
@@ -704,41 +704,41 @@ bool RunPayment(PaymentPlans &payment_plans, const size_t &thread_id){
     return false;
   }
 
-  LOG_TRACE("insertHistory: INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-  std::unique_ptr<storage::Tuple> history_tuple(new storage::Tuple(history_table->GetSchema(), true));
+  // LOG_TRACE("insertHistory: INSERT INTO HISTORY VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+  // std::unique_ptr<storage::Tuple> history_tuple(new storage::Tuple(history_table->GetSchema(), true));
 
-  // Note: workaround
-  // auto h_data = data_constant;
+  // // Note: workaround
+  // // auto h_data = data_constant;
 
-  // H_C_ID
-  history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
-  // H_C_D_ID
-  history_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_district_id), nullptr);
-  // H_C_W_ID
-  history_tuple->SetValue(2, ValueFactory::GetIntegerValue(customer_warehouse_id), nullptr);
-  // H_D_ID
-  history_tuple->SetValue(3, ValueFactory::GetIntegerValue(district_id), nullptr);
-  // H_W_ID
-  history_tuple->SetValue(4, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
-  // H_DATE
-  history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
-  // H_AMOUNT
-  history_tuple->SetValue(6, ValueFactory::GetDoubleValue(h_amount), nullptr);
-  // H_DATA
-  history_tuple->SetValue(7, ValueFactory::GetStringValue(data_constant), context.get()->GetExecutorContextPool());
+  // // H_C_ID
+  // history_tuple->SetValue(0, ValueFactory::GetIntegerValue(customer_id), nullptr);
+  // // H_C_D_ID
+  // history_tuple->SetValue(1, ValueFactory::GetIntegerValue(customer_district_id), nullptr);
+  // // H_C_W_ID
+  // history_tuple->SetValue(2, ValueFactory::GetIntegerValue(customer_warehouse_id), nullptr);
+  // // H_D_ID
+  // history_tuple->SetValue(3, ValueFactory::GetIntegerValue(district_id), nullptr);
+  // // H_W_ID
+  // history_tuple->SetValue(4, ValueFactory::GetIntegerValue(warehouse_id), nullptr);
+  // // H_DATE
+  // history_tuple->SetValue(5, ValueFactory::GetTimestampValue(h_date), nullptr);
+  // // H_AMOUNT
+  // history_tuple->SetValue(6, ValueFactory::GetDoubleValue(h_amount), nullptr);
+  // // H_DATA
+  // history_tuple->SetValue(7, ValueFactory::GetStringValue(data_constant), context.get()->GetExecutorContextPool());
 
-  planner::InsertPlan history_insert_node(history_table, std::move(history_tuple));
-  executor::InsertExecutor history_insert_executor(&history_insert_node, context.get());
+  // planner::InsertPlan history_insert_node(history_table, std::move(history_tuple));
+  // executor::InsertExecutor history_insert_executor(&history_insert_node, context.get());
 
-  // Execute
-  history_insert_executor.Execute();
+  // // Execute
+  // history_insert_executor.Execute();
 
-  // Check result
-  if (txn->GetResult() != Result::RESULT_SUCCESS) {
-    LOG_TRACE("abort transaction");
-    txn_manager.AbortTransaction();
-    return false;
-  }
+  // // Check result
+  // if (txn->GetResult() != Result::RESULT_SUCCESS) {
+  //   LOG_TRACE("abort transaction");
+  //   txn_manager.AbortTransaction();
+  //   return false;
+  // }
 
   assert(txn->GetResult() == Result::RESULT_SUCCESS);
 
