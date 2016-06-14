@@ -21,7 +21,7 @@ class DataTable;
 }
 
 namespace planner {
-class DropPlan : AbstractPlan {
+class DropPlan : public AbstractPlan {
  public:
 
   DropPlan() = delete;
@@ -32,6 +32,8 @@ class DropPlan : AbstractPlan {
 
   explicit DropPlan(storage::DataTable *table) : target_table_(table) {}
 
+  explicit DropPlan(std::string name) : table_name(name) {}
+
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;
   }
@@ -41,13 +43,15 @@ class DropPlan : AbstractPlan {
   }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(
-        new DeletePlan(target_table_));
+    return std::unique_ptr<AbstractPlan>(new DropPlan(target_table_));
   }
+
+  std::string GetTableName() const { return table_name; }
 
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
+  std::string table_name;
 
 };
 }

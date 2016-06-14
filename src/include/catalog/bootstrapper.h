@@ -31,21 +31,23 @@ class Bootstrapper {
   static Bootstrapper &GetInstance(void);
 
   // Bootstrap Catalog
-  std::unique_ptr<Catalog> bootstrap();
+  Catalog* bootstrap();
 
   // Initialize Global Catalog
-  std::unique_ptr<Catalog> InitializeGlobalCatalog();
+  Catalog* InitializeGlobalCatalog();
 
   // Initialize Schemas
   void InitializeCatalogsSchemas();
 
+  Catalog* GetCatalog();
 
   // TODO: Other Catalogs should be added here
 
-
 private:
-  // The Global Catalog
-  Catalog global_catalog;
+  // The global catalog
+  Catalog* global_catalog;
+  bool bootstrapped = false;
+
 };
 }
 }
