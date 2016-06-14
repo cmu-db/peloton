@@ -16,17 +16,17 @@
 namespace peloton {
 namespace gc {
 
-void Vacuum_GCManager::StartGC() {
+void Vacuum_GCManager::StartGC(int thread_id) {
   LOG_TRACE("Starting GC");
   this->is_running_ = true;
-  gc_thread_.reset(new std::thread(&Vacuum_GCManager::Running, this));
+  gc_threads_[thread_id].reset(new std::thread(&Vacuum_GCManager::Running, this, thread_id));
 }
 
-void Vacuum_GCManager::StopGC() {
+void Vacuum_GCManager::StopGC(int thread_id) {
   LOG_TRACE("Stopping GC");
   this->is_running_ = false;
-  this->gc_thread_->join();
-  ClearGarbage();
+  this->gc_threads_[thread_id]->join();
+  ClearGarbage(thread_id);
 }
 
 bool Vacuum_GCManager::ResetTuple(const TupleMetadata &tuple_metadata) {
@@ -76,7 +76,7 @@ void Vacuum_GCManager::AddToRecycleMap(const TupleMetadata &tuple_metadata) {
   recycle_queue_map_[tuple_metadata.table_id]->Enqueue(tuple_metadata);
 }
 
-void Vacuum_GCManager::Running() {
+void Vacuum_GCManager::Running(int thread_id) {
   // Check if we can move anything from the possibly free list to the free list.
 
   std::this_thread::sleep_for(
@@ -88,9 +88,9 @@ void Vacuum_GCManager::Running() {
 
     assert(max_cid != MAX_CID);
 
-    Reclaim(max_cid);
+    Reclaim(thread_id, max_cid);
 
-    Unlink(max_cid);
+    Unlink(thread_id, max_cid);
 
     if (is_running_ == false) {
       return;
@@ -99,12 +99,12 @@ void Vacuum_GCManager::Running() {
 }
 
 // executed by a single thread. so no synchronization is required.
-void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
+void Vacuum_GCManager::Reclaim(int thread_id, const cid_t &max_cid) {
   int tuple_counter = 0;
 
   // we delete garbage in the free list
-  auto garbage = reclaim_map_.begin();
-  while (garbage != reclaim_map_.end()) {
+  auto garbage = reclaim_maps_[thread_id].begin();
+  while (garbage != reclaim_maps_[thread_id].end()) {
     const cid_t garbage_ts = garbage->first;
     const TupleMetadata &tuple_metadata = garbage->second;
 
@@ -127,7 +127,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
       // }
 
       // Remove from the original map
-      garbage = reclaim_map_.erase(garbage);
+      garbage = reclaim_maps_[thread_id].erase(garbage);
       tuple_counter++;
     } else {
       // Early break since we use an ordered map
@@ -137,7 +137,7 @@ void Vacuum_GCManager::Reclaim(const cid_t &max_cid) {
   LOG_TRACE("Marked %d tuples as recycled", tuple_counter);
 }
 
-void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
+void Vacuum_GCManager::Unlink(int thread_id, const cid_t &max_cid) {
   int tuple_counter = 0;
 
   // we check if any possible garbage is actually garbage
@@ -149,7 +149,7 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
     
     TupleMetadata tuple_metadata;
     // if there's no more tuples in the queue, then break.
-    if (unlink_queue_.Dequeue(tuple_metadata) == false) {
+    if (unlink_queues_[thread_id]->Dequeue(tuple_metadata) == false) {
       break;
     }
 
@@ -165,13 +165,13 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
 
     } else {
       // if a tuple cannot be reclaimed, then add it back to the list.
-      unlink_queue_.Enqueue(tuple_metadata);
+      unlink_queues_[thread_id]->Enqueue(tuple_metadata);
     }
   }  // end for
 
   auto safe_max_cid = concurrency::TransactionManagerFactory::GetInstance().GetNextCommitId();
   for(auto& item : garbages){
-    reclaim_map_.insert(std::make_pair(safe_max_cid, item));
+    reclaim_maps_[thread_id].insert(std::make_pair(safe_max_cid, item));
   }
   LOG_TRACE("Marked %d tuples as garbage", tuple_counter);
 }
@@ -180,7 +180,8 @@ void Vacuum_GCManager::Unlink(const cid_t &max_cid) {
 void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
                                  const oid_t &tile_group_id,
                                  const oid_t &tuple_id,
-                                 const cid_t &tuple_end_cid) {
+                                 const cid_t &tuple_end_cid,
+                                 int thread_id) {
 
   TupleMetadata tuple_metadata;
   tuple_metadata.table_id = table_id;
@@ -189,7 +190,7 @@ void Vacuum_GCManager::RecycleOldTupleSlot(const oid_t &table_id,
   tuple_metadata.tuple_end_cid = tuple_end_cid;
 
   // FIXME: what if the list is full?
-  unlink_queue_.Enqueue(tuple_metadata);
+  unlink_queues_[thread_id]->Enqueue(tuple_metadata);
   LOG_TRACE("Marked tuple(%u, %u) in table %u as possible garbage",
            tuple_metadata.tile_group_id, tuple_metadata.tuple_slot_id,
            tuple_metadata.table_id);
@@ -325,13 +326,13 @@ void Vacuum_GCManager::DeleteTupleFromIndexes(const TupleMetadata &tuple_metadat
   }
 }
 
-void Vacuum_GCManager::ClearGarbage() {
-  while(!unlink_queue_.IsEmpty()) {
-    Unlink(MAX_CID);
+void Vacuum_GCManager::ClearGarbage(int thread_id) {
+  while(!unlink_queues_[thread_id]->IsEmpty()) {
+    Unlink(thread_id, MAX_CID);
   }
 
-  while(reclaim_map_.size() != 0) {
-    Reclaim(MAX_CID);
+  while(reclaim_maps_[thread_id].size() != 0) {
+    Reclaim(thread_id, MAX_CID);
   }
 
   return;

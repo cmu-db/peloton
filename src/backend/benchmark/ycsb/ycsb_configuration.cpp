@@ -45,7 +45,7 @@ void Usage(FILE *out) {
           "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
-          "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o\n"
+          "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o/va\n"
   );
   exit(EXIT_FAILURE);
 }

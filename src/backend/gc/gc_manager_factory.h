@@ -27,7 +27,7 @@ class GCManagerFactory {
       case GC_TYPE_CO:
         return Cooperative_GCManager::GetInstance();
       case GC_TYPE_VACUUM:
-        return Vacuum_GCManager::GetInstance();
+        return Vacuum_GCManager::GetInstance(gc_thread_count_);
       case GC_TYPE_N2O:
         return N2O_GCManager::GetInstance(gc_thread_count_);
       case GC_TYPE_OFF:
