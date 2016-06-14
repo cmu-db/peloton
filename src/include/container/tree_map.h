@@ -29,7 +29,7 @@ namespace peloton {
 // TREE_MAP_TYPE
 #define TREE_MAP_TYPE TreeMap<KeyType, ValueType>
 
-template<typename KeyType, typename ValueType>
+TREE_MAP_TEMPLATE_ARGUMENTS
 class TreeMap {
  public:
 

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// lockfree_queue.h
+// queue.h
 //
-// Identification: src/include/common/lockfree_queue.h
+// Identification: src/include/container/queue.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,33 +17,35 @@
 namespace peloton {
 
 //===--------------------------------------------------------------------===//
-// Lockfree Queue
-// Supports multiple consumers and multiple producers.
+// Queue -- Supports multiple consumers and multiple producers.
 //===--------------------------------------------------------------------===//
 
-template <typename T>
-class LockfreeQueue {
- public:
-  LockfreeQueue(const size_t& size) : queue_(size) {}
+// QUEUE_TEMPLATE_ARGUMENTS
+#define QUEUE_TEMPLATE_ARGUMENTS template <typename ValueType>
 
-  LockfreeQueue(const LockfreeQueue&) = delete;  // disable copying
-  LockfreeQueue& operator=(const LockfreeQueue&) =
-      delete;  // disable assignment
+// QUEUE_MAP_TYPE
+#define QUEUE_TYPE Queue<ValueType>
+
+QUEUE_TEMPLATE_ARGUMENTS
+class Queue {
+ public:
+  Queue() = delete;
+  Queue(const Queue&) = delete;  // disable copying
+  Queue& operator=(const Queue&) = delete;  // disable assignment
+
+  Queue(const size_t& size);
 
   // Enqueues one item, allocating extra space if necessary
-  void Enqueue(T& item) { queue_.enqueue(item); }
-
-  void Enqueue(const T& item) { queue_.enqueue(item); }
+  void Enqueue(ValueType& item);
 
   // Dequeues one item, returning true if an item was found
   // or false if the queue appeared empty
-  bool Dequeue(T& item) { return queue_.try_dequeue(item); }
-
-  bool Dequeue(const T& item) { return queue_.try_dequeue(item); }
+  bool Dequeue(ValueType& item);
 
  private:
+
   // Underlying moodycamel's concurrent queue
-  moodycamel::BlockingConcurrentQueue<T> queue_;
+  moodycamel::BlockingConcurrentQueue<ValueType> queue_;
 };
 
 }  // namespace peloton
