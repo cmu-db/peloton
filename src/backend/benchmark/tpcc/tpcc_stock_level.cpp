@@ -136,7 +136,10 @@ bool RunStockLevel(const size_t &thread_id) {
     txn_manager.AbortTransaction();
     return false;
   }
-  assert(districts.size() == 1);
+  if (districts.size() != 1) {
+    LOG_ERROR("incorrect districts size : %lu", districts.size());
+    assert(false);
+  }
 
   Value o_id = districts[0][0];
 

@@ -145,26 +145,28 @@ void RunBackend(oid_t thread_id) {
      //      }
      //    }
      //   }
-     // } else if (rng_val <= 0.08) {
-     //   while (RunOrderStatus(thread_id) == false) {
-     //      if (is_running == false) {
-     //        break;
-     //      }
-     //     execution_count_ref++;
-     //    // backoff
-     //    if (state.run_backoff) {
-     //      if (backoff_shifts < 63) {
-     //        ++backoff_shifts;
-     //      }
-     //      uint64_t spins = 1UL << backoff_shifts;
-     //      spins *= 100;
-     //      while (spins) {
-     //        _mm_pause();
-     //        --spins;
-     //      }
-     //    }
-     //   }
-     // } else if (rng_val <= 0.12) {
+     // } else 
+    if (rng_val <= 0.08) {
+       while (RunOrderStatus(thread_id) == false) {
+          if (is_running == false) {
+            break;
+          }
+         execution_count_ref++;
+        // backoff
+        if (state.run_backoff) {
+          if (backoff_shifts < 63) {
+            ++backoff_shifts;
+          }
+          uint64_t spins = 1UL << backoff_shifts;
+          spins *= 100;
+          while (spins) {
+            _mm_pause();
+            --spins;
+          }
+        }
+       }
+     } else 
+     // if (rng_val <= 0.12) {
      //   while (RunDelivery(delivery_plans, thread_id) == false) {
      //      if (is_running == false) {
      //        break;
