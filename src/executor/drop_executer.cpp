@@ -4,7 +4,7 @@
 //
 // insert_executor.cpp
 //
-// Identification: src/executor/drop_executor.cpp
+// Identification: src/executor/drop_executer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

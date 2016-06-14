@@ -18,6 +18,7 @@
 #include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 #include "planner/drop_plan.h"
+#include "executor/drop_executer.h"
 
 namespace peloton {
 namespace test {
