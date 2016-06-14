@@ -21,7 +21,7 @@
 #include <memory>
 
 namespace peloton {
-namespace planner{
+namespace planner {
 class AbstractPlan;
 }
 namespace optimizer {
@@ -39,16 +39,16 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 
   std::shared_ptr<planner::AbstractPlan> plan_tree;
   if (parse_tree.get() == nullptr)
-     return plan_tree;
+    return plan_tree;
 
- std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
+  std::unique_ptr<planner::AbstractPlan> child_plan = nullptr;
 
   // TODO: Transform the parse tree
 
   // One to one Mapping
   auto parse_item_node_type = parse_tree->GetParseNodeType();
 
-  switch(parse_item_node_type){
+  switch (parse_item_node_type) {
     case PARSE_NODE_TYPE_DROP:
       child_plan = std::move(new planner::DropPlan("department-table"));
       break;
@@ -64,11 +64,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 // Need to recurse and give base case. for every child in parse tree.
 
   if (child_plan != nullptr) {
-      if (plan_tree != nullptr)
-        plan_tree->AddChild(std::move(child_plan));
-      else
-        plan_tree = std::move(child_plan);
-    }
+    if (plan_tree != nullptr)
+      plan_tree->AddChild(std::move(child_plan));
+    else
+      plan_tree = std::move(child_plan);
+  }
 
   return plan_tree;
 }
