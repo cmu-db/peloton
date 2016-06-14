@@ -13,6 +13,7 @@
 #pragma once
 
 #include <iostream>
+#include <mutex>
 
 #include "common/printable.h"
 #include "storage/data_table.h"
@@ -65,6 +66,8 @@ class Database : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+  std::string GetDBName();
+  void setDBName(const std::string& database_name);
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -73,6 +76,9 @@ class Database : public Printable {
 
   // database oid
   oid_t database_oid = INVALID_OID;
+
+  // database name
+  std::string database_name;
 
   // TABLES
   std::vector<storage::DataTable *> tables;

@@ -21,7 +21,10 @@
 #include "catalog/schema.h"
 #include "common/value_factory.h"
 #include "common/pool.h"
+#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 
+#include "executor/drop_executer.h"
 #include "executor/executor_context.h"
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
@@ -40,6 +43,7 @@
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
+#include "planner/drop_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -60,6 +64,38 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
+TEST_F(MutateTests, DroppingTable) {
+
+	auto &bootstrapper = catalog::Bootstrapper::GetInstance();
+	auto global_catalog = bootstrapper.bootstrap();
+
+  // Insert a table first
+  auto id_column =
+		  catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+						  "dept_id", true);
+  auto name_column =
+	  catalog::Column(VALUE_TYPE_VARCHAR, 32,
+					  "dept_name", false);
+  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
+  global_catalog->CreateDatabase("default_database");
+  global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
+
+  // Now dropping the table using the executer
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  planner::DropPlan node("department_table");
+  executor::DropExecutor executor(&node, context.get());
+  executor.Init();
+  executor.Execute();
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 0);
+
+}
+
+
 void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -73,7 +109,6 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
-
   txn_manager.CommitTransaction();
 }
 
