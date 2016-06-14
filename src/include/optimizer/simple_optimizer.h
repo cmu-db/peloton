@@ -23,7 +23,7 @@ namespace optimizer {
 // Simple Optimizer
 //===--------------------------------------------------------------------===//
 
-class SimpleOptimizer : AbstractOptimizer {
+class SimpleOptimizer : public AbstractOptimizer {
  public:
   SimpleOptimizer(const SimpleOptimizer &) = delete;
   SimpleOptimizer &operator=(const SimpleOptimizer &) = delete;

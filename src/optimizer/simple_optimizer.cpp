@@ -67,7 +67,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       if (plan_tree != nullptr)
         plan_tree->AddChild(std::move(child_plan));
       else
-        plan_tree = child_plan;
+        plan_tree = std::move(child_plan);
     }
 
   return plan_tree;
