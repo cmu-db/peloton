@@ -51,7 +51,10 @@ public:
  void CreateDatabase(std::string database_name);
 
  // Create a table in a database
- void CreateTable(oid_t database_id, std::string table_name, std::unique_ptr<catalog::Schema>);
+ void CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
+
+ // Drop a table
+ void DropTable(std::string database_name, std::string table_name);
 
  // Find a database using its id
  storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;

@@ -24,14 +24,26 @@ Bootstrapper &Bootstrapper::GetInstance(void) {
 }
 
 // Bootstrap Catalog
-std::unique_ptr<Catalog> Bootstrapper::bootstrap() { return InitializeGlobalCatalog(); }
+Catalog* Bootstrapper::bootstrap() {
+  if(bootstrapped) {
+	  return global_catalog;
+  }
+  else{
+    bootstrapped = true;
+    return InitializeGlobalCatalog();
+  }
+}
 
 
 // Initialize Global Catalog
-std::unique_ptr<Catalog> Bootstrapper::InitializeGlobalCatalog() {
-  auto global_catalog = Catalog::GetInstance();
+Catalog* Bootstrapper::InitializeGlobalCatalog() {
+  global_catalog = Catalog::GetInstance().release();
   global_catalog->CreateCatalogDatabase();
   return global_catalog;
+}
+
+Catalog* Bootstrapper::GetCatalog(){
+	return global_catalog;
 }
 
 

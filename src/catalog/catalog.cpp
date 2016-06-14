@@ -42,6 +42,12 @@ void Catalog::CreateCatalogDatabase() {
 
 // Create a database
 void Catalog::CreateDatabase(std::string database_name) {
+  // Check if a database with the same name exists
+  for (auto database : databases) {
+	  if(database->GetDBName() == database_name) {
+		  return;
+	  }
+  }
   oid_t database_id = GetNewID();
   storage::Database *database = new storage::Database(database_id);
   database->setDBName(database_name);
@@ -54,10 +60,11 @@ void Catalog::CreateDatabase(std::string database_name) {
 }
 
 // Create a table in a database
-void Catalog::CreateTable(oid_t database_id, std::string table_name, std::unique_ptr<catalog::Schema> schema) {
+void Catalog::CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema> schema) {
   bool own_schema = true;
   bool adapt_table = false;
   oid_t table_id = GetNewID();
+  oid_t database_id = GetDatabaseWithName(database_name)->GetOid();
   storage::DataTable *table = storage::TableFactory::GetDataTable(
 		  database_id, table_id, schema.get(), table_name,
 		  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
@@ -65,6 +72,16 @@ void Catalog::CreateTable(oid_t database_id, std::string table_name, std::unique
   // Update catalog_table with this table info
   auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
   InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
+}
+
+// Drop a table
+void Catalog::DropTable(std::string database_name, std::string table_name){
+  storage::Database* database = GetDatabaseWithName(database_name);
+  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
+  database->DropTableWithOid(table_id);
+  // TODO: Update catalog_table with the drop
+  // Pending how tuples are removed from tables
+
 }
 
 // Find a database using its id
@@ -76,9 +93,10 @@ storage::Database *Catalog::GetDatabaseWithOid(const oid_t db_oid) const {
 
 // Find a database using its name
 storage::Database *Catalog::GetDatabaseWithName(const std::string database_name) const {
-  for (auto database : databases)
-    if (database->GetDBName() == database_name) return database;
-
+  for (auto database : databases){
+    if (database->GetDBName() == database_name)
+    	return database;
+  }
   return nullptr;
 }
 
