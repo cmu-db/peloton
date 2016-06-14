@@ -30,3 +30,4 @@
 #include "executor/hash_set_op_executor.h"
 #include "executor/append_executor.h"
 #include "executor/projection_executor.h"
+#include "executor/drop_executer.h"
