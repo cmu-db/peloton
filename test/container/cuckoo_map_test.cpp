@@ -75,17 +75,14 @@ TEST_F(CuckooMapTest, SharedPointerTest) {
       status = map.Insert(element, val);
       EXPECT_FALSE(status);
 
-      auto update_status = map.Update(element, val, true);
-      EXPECT_TRUE(update_status.first);
+      auto update_status = map.Update(element, val);
+      EXPECT_TRUE(update_status);
 
-      //auto delete_status = map.Erase(element);
-      //EXPECT_TRUE(delete_status);
+      auto delete_status = map.Erase(element);
+      EXPECT_TRUE(delete_status);
 
-      //update_status = map.Update(element, val, false);
-      //EXPECT_FALSE(update_status.first);
-
-      //update_status = map.Update(element, val, true);
-      //EXPECT_TRUE(update_status.first);
+      update_status = map.Update(element, val);
+      EXPECT_TRUE(update_status);
     }
 
     for (size_t element = 0; element < element_count; ++element ) {
