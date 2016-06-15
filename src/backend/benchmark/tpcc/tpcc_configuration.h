@@ -73,6 +73,8 @@ class configuration {
 
   int new_orders_per_district;
 
+  int order_range;
+
   // execution duration
   double duration;
 
@@ -126,6 +128,8 @@ void ValidateWarehouseCount(const configuration &state);
 void ValidateProtocol(const configuration &state);
 
 void ValidateIndex(const configuration &state);
+
+void ValidateOrderRange(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

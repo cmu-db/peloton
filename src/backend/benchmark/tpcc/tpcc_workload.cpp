@@ -127,7 +127,7 @@ void RunBackend(oid_t thread_id) {
     auto rng_val = rng.next_uniform();
 
      if (rng_val <= 0.04) {
-       while (RunStockLevel(thread_id) == false) {
+       while (RunStockLevel(thread_id, state.order_range) == false) {
           if (is_running == false) {
             break;
           }

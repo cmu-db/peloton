@@ -79,12 +79,11 @@
 #include "backend/storage/table_factory.h"
 
 
-
 namespace peloton {
 namespace benchmark {
 namespace tpcc {
 
-bool RunStockLevel(const size_t &thread_id) {
+bool RunStockLevel(const size_t &thread_id, const int &order_range) {
   /*
      "STOCK_LEVEL": {
      "getOId": "SELECT D_NEXT_O_ID FROM DISTRICT WHERE D_W_ID = ? AND D_ID = ?",
@@ -146,7 +145,7 @@ bool RunStockLevel(const size_t &thread_id) {
   LOG_TRACE("getStockCount: SELECT COUNT(DISTINCT(OL_I_ID)) FROM ORDER_LINE, STOCK  WHERE OL_W_ID = ? AND OL_D_ID = ? AND OL_O_ID < ? AND OL_O_ID >= ? AND S_W_ID = ? AND S_I_ID = OL_I_ID AND S_QUANTITY < ?");
   
   int max_o_id = ValuePeeker::PeekInteger(o_id);
-  int min_o_id = max_o_id - 20;
+  int min_o_id = max_o_id - order_range;
 
   //////////////////////////////////////////////////////////////
   std::vector<oid_t> order_line_column_ids = {COL_IDX_OL_I_ID};
@@ -220,7 +219,7 @@ bool RunStockLevel(const size_t &thread_id) {
     }
 
     if (order_line_values.size() == 0) {
-      LOG_ERROR("order line return size incorrect : %lu", order_line_values.size());
+      LOG_TRACE("order line return size incorrect : %lu", order_line_values.size());
       continue;
     }
 
