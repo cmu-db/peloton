@@ -24,8 +24,11 @@ DropExecutor::DropExecutor(const planner::AbstractPlan *node,
 
 // Initialize executer
 bool DropExecutor::DInit() {
+	LOG_INFO("Initializing Drop Executer...");
   auto &bootstrapper = catalog::Bootstrapper::GetInstance();
+  LOG_INFO("Bootstrapping catalog...");
   global_catalog = bootstrapper.bootstrap();
+  LOG_INFO("Creating default database...");
   global_catalog->CreateDatabase("default_database");
   return true;
 }
