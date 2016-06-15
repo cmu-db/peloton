@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <functional>
+#include <iostream>
 
 #include "container/cuckoo_map.h"
 #include "common/logger.h"
@@ -35,22 +36,26 @@ CUCKOO_MAP_TYPE::~CuckooMap(){
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, const ValueType& value){
-  return cuckoo_map.insert(key, value);
+bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value){
+  auto status = cuckoo_map.insert(key, value);
+  LOG_INFO("insert status : %d", status);
+  return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 std::pair<bool, bool> CUCKOO_MAP_TYPE::Update(const KeyType &key,
-                                              const ValueType &value,
+                                              ValueType value,
                                               bool bInsert){
 
   auto status =  cuckoo_map.update(key, [&value]( bool bNew, map_pair& found_pair) {
     if(bNew == true) {
       // new entry
+      LOG_INFO("New entry");
     }
     else {
       // found existing entry
       found_pair.second = value;
+      LOG_INFO("Updating existing entry");
     }
   }, bInsert);
 
@@ -59,7 +64,11 @@ std::pair<bool, bool> CUCKOO_MAP_TYPE::Update(const KeyType &key,
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
-  return cuckoo_map.erase(key);
+
+  auto status = cuckoo_map.erase(key);
+  LOG_INFO("erase status : %d", status);
+
+  return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
@@ -69,7 +78,7 @@ bool CUCKOO_MAP_TYPE::Find(const KeyType &key,
   auto status = cuckoo_map.find(key, [&value]( map_pair& found_value) {
     value = found_value.second;
   } );
-
+  LOG_INFO("find status : %d", status);
   return status;
 }
 
@@ -96,6 +105,8 @@ bool CUCKOO_MAP_TYPE::IsEmpty() const{
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;
 
-template class CuckooMap<oid_t,  std::shared_ptr<storage::TileGroup>>;
+template class CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>;
+
+template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
 
 }  // End peloton namespace

@@ -36,11 +36,11 @@ class CuckooMap {
   ~CuckooMap();
 
   // Inserts a item
-  bool Insert(const KeyType &key, const ValueType& value);
+  bool Insert(const KeyType &key, ValueType value);
 
   // Extracts item with high priority
   std::pair<bool, bool> Update(const KeyType &key,
-                               const ValueType& value,
+                               ValueType value,
                                bool bInsert=true);
 
   // Extracts the corresponding value
