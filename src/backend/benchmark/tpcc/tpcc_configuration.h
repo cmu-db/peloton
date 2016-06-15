@@ -109,6 +109,10 @@ class configuration {
   // index type
   IndexType index;
 
+  // number of threads used in GC,
+  // Only available when gc type is n2o and va
+  int gc_thread_count;
+
 };
 
 extern configuration state;

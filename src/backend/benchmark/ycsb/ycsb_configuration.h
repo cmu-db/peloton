@@ -55,14 +55,8 @@ class configuration {
   // execution duration
   double duration;
 
-  // number of threads used in GC,
-  // Only available when gc type is n2o
-  int gc_thread_count;
-
   // snapshot duration
   double snapshot_duration;
-
-  unsigned long transaction_count;
 
   // number of backends
   int backend_count;
@@ -97,6 +91,10 @@ class configuration {
 
   // index type
   IndexType index;
+
+  // number of threads used in GC,
+  // Only available when gc type is n2o and va
+  int gc_thread_count;
   
 };
 
