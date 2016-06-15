@@ -13,12 +13,10 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 
-namespace storage{
-class DataTable;
-}
 
 namespace planner {
 class DropPlan : public AbstractPlan {
@@ -39,7 +37,9 @@ class DropPlan : public AbstractPlan {
   }
 
   const std::string GetInfo() const {
-    return "DropPlan";
+    std::string returned_string = "DropPlan:\n";
+	returned_string += "\tTable name: " + table_name + "\n";
+    return returned_string;
   }
 
   std::unique_ptr<AbstractPlan> Copy() const {
