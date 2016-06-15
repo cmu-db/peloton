@@ -71,7 +71,9 @@ void Catalog::CreateTable(std::string database_name, std::string table_name, std
   GetDatabaseWithOid(database_id)->AddTable(table);
   // Update catalog_table with this table info
   auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
-  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
+  //  Another way of insertion using transaction manager
+  //  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
+  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
 }
 
 // Drop a table

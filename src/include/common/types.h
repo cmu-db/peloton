@@ -469,6 +469,7 @@ enum PlanNodeType {
 
   //DDL Nodes
   PLAN_NODE_TYPE_DROP = 33,
+  PLAN_NODE_TYPE_CREATE = 34,
 
   // Communication Nodes
   PLAN_NODE_TYPE_SEND = 40,

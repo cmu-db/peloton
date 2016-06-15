@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// drop_executor.cpp
+// create_executor.cpp
 //
-// Identification: src/executor/drop_executer.cpp
+// Identification: src/executor/create_executer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "executor/drop_executer.h"
+#include "executor/create_executer.h"
 
 
 namespace peloton {
@@ -18,22 +18,23 @@ namespace executor {
 
 
 //Constructor for drop executor
-DropExecutor::DropExecutor(const planner::AbstractPlan *node,
+CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {global_catalog = nullptr;}
 
 // Initialize executer
-bool DropExecutor::DInit() {
+bool CreateExecutor::DInit() {
   auto &bootstrapper = catalog::Bootstrapper::GetInstance();
   global_catalog = bootstrapper.bootstrap();
   global_catalog->CreateDatabase("default_database");
   return true;
 }
 
-bool DropExecutor::DExecute() {
-  const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
+bool CreateExecutor::DExecute() {
+  const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
   std::string table_name = node.GetTableName();
-  global_catalog->DropTable("default_database", table_name);
+  std::unique_ptr<catalog::Schema> schema(node.GetSchema());
+  global_catalog->CreateTable("default_database", table_name, std::move(schema));
   return true;
 }
 

@@ -842,6 +842,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_DROP: {
       return "DROP";
     }
+    case PLAN_NODE_TYPE_CREATE: {
+    	return "CREATE";
+    }
   }
   return "INVALID";
 }
