@@ -2,49 +2,41 @@
 //
 //                         Peloton
 //
-// map_test.cpp
+// cuckoo_map_test.cpp
 //
-// Identification: test/common/map_test.cpp
+// Identification: test/common/cuckoo_map_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "container/tree_map.h"
+#include "container/cuckoo_map.h"
 
 #include "common/harness.h"
-#include "libcds/cds/init.h"
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Tree Map Test
+// Cuckoo Map Test
 //===--------------------------------------------------------------------===//
 
-class TreeMapTest : public PelotonTest {};
+class CuckooMapTest : public PelotonTest {};
 
 // Test basic functionality
-TEST_F(TreeMapTest, BasicTest) {
+TEST_F(CuckooMapTest, BasicTest) {
 
   typedef uint32_t  key_type;
   typedef uint32_t  value_type;
-  typedef uint32_t*  value_ptr_type;
-
-  // Initialize CDS library
-  cds::Initialize();
-
-  // Create URCU general_buffered singleton
-  TreeMap<key_type, value_type>::RCUImpl::Construct();
-
-  cds::threading::Manager::attachThread();
 
   {
-    TreeMap<key_type, value_type> map;
+    CuckooMap<key_type, value_type> map;
+
+    EXPECT_TRUE(map.IsEmpty());
 
     size_t const element_count = 3;
     for (size_t element = 0; element < element_count; ++element ) {
-      value_ptr_type val = new value_type(element);
+      value_type val(element);
       auto status = map.Insert(element, val);
       EXPECT_TRUE(status);
     }
@@ -53,15 +45,10 @@ TEST_F(TreeMapTest, BasicTest) {
     auto status = map.Find(1, value1);
     EXPECT_TRUE(status);
     EXPECT_EQ(value1, 1);
+
+    auto map_size = map.GetSize();
+    EXPECT_EQ(map_size, 3);
   }
-
-  cds::threading::Manager::detachThread();
-
-  // Destroy URCU general_buffered singleton
-  TreeMap<key_type, value_type>::RCUImpl::Destruct();
-
-  // Terminate CDS library
-  cds::Terminate();
 
 }
 

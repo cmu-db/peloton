@@ -21,11 +21,11 @@
 #include "common/macros.h"
 #include "common/types.h"
 #include "common/logger.h"
+#include "common/init.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include <google/protobuf/stubs/common.h>
 
 namespace peloton {
 
@@ -98,11 +98,17 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 // All tests inherit from this class
 class PelotonTest : public ::testing::Test {
  protected:
-  virtual void SetUp() {}
+
+  virtual void SetUp() {
+
+    PelotonInit::Initialize();
+
+  }
 
   virtual void TearDown() {
-    // shutdown protocol buf library
-    google::protobuf::ShutdownProtobufLibrary();
+
+    PelotonInit::Shutdown();
+
   }
 };
 
