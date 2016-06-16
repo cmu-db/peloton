@@ -52,7 +52,7 @@ class CreateParse : public AbstractParse {
       {
         ::Value *value = (::Value *) lfirst(subobject_item);
         LOG_INFO("Column : %s ", strVal(value));
-        catalog::Column *col = new catalog::Column(VALUE_TYPE_INTEGER, INVALID_OID,
+        catalog::Column col = new catalog::Column(VALUE_TYPE_INTEGER, INVALID_OID,
                                                   std::string(strVal(value)),
                                                   false, INVALID_OID);
         columns_name.push_back(col);
@@ -73,7 +73,7 @@ class CreateParse : public AbstractParse {
     return entity_name;
   }
 
-  std::vector<catalog::Column*> GetColumns(){
+  std::vector<catalog::Column> GetColumns(){
     return columns_name;
   }
 
@@ -83,7 +83,7 @@ class CreateParse : public AbstractParse {
   std::string entity_name;
 
   // Table Columns (Column type?)
-  std::vector<catalog::Column*> columns_name;
+  std::vector<catalog::Column> columns_name;
 
   // Schema Name
   std::string schema;
