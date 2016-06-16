@@ -77,6 +77,10 @@ class CreateParse : public AbstractParse {
     return columns_name;
   }
 
+  catalog::Schema GetSchema(){
+    return new catalog::Schema(columns_name);
+  }
+
  private:
 
   // Name of entity
