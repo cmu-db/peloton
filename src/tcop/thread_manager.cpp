@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/thread_manager.h"
+#include "../include/common/thread_pool.h"
 
 namespace peloton {
 

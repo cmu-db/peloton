@@ -142,7 +142,7 @@ void *Connection::ProcessMessage(void *connection) {
     char buf[msg_len + HEADERLEN];
 
     // Get the data
-    conn->GetReadData(buf, sizeof(buf));
+    conn->GetReadData(buf, msg_len + HEADERLEN);
 
     // Get the message type
     uint16_t type = 0;
@@ -205,8 +205,7 @@ void *Connection::ProcessMessage(void *connection) {
 
         // send data
         // Note: if we use raw socket send api, we should loop send
-        PL_ASSERT(sizeof(send_buf) == HEADERLEN + msg_len);
-        conn->AddToWriteBuffer(send_buf, sizeof(send_buf));
+        conn->AddToWriteBuffer(send_buf, HEADERLEN + msg_len);
 
         delete message;
         delete response;
