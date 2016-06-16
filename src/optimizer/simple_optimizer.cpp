@@ -55,8 +55,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   switch (parse_item_node_type) {
     case PARSE_NODE_TYPE_DROP: {
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
-      new planner::DropPlan((parser::DropParse*)parse_tree.get()));
+          new planner::DropPlan((parser::DropParse*) parse_tree.get()));
       child_plan = std::move(child_DropPlan);
+    }
+      break;
+
+    case PARSE_NODE_TYPE_CREATE: {
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
+          new planner::CreatePlan((parser::CreateParse*) parse_tree.get()));
+      child_plan = std::move(child_CreatePlan);
     }
       break;
 
@@ -68,7 +75,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       break;
 
     default:
-      LOG_INFO("Unsupported Parse Node Type");
+      LOG_INFO("Unsupported Parse Node Type")
+      ;
   }
 
   if (child_plan != nullptr) {
@@ -80,10 +88,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 
   // Recurse
   /*auto &children = parse_tree->GetChildren();
-  for (auto &child : children) {
-    std::shared_ptr<planner::AbstractPlan> child_parse = std::move(BuildPlanTree(child));
-    child_plan = std::move(child_parse);
-  }*/
+   for (auto &child : children) {
+   std::shared_ptr<planner::AbstractPlan> child_parse = std::move(BuildPlanTree(child));
+   child_plan = std::move(child_parse);
+   }*/
   return plan_tree;
 }
 

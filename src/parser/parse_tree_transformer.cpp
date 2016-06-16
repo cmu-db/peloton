@@ -78,6 +78,7 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
       break;
 
     case T_CreateStmt:
+    	child_parse_tree.reset(new parser::CreateParse((CreateStmt *) postgres_parse_tree));
       break;
 
     case T_DropStmt:
