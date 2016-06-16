@@ -264,7 +264,9 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
 
     // check status
     if (status ==  Result::RESULT_FAILURE) {
+    	LOG_INFO("Sending Error Response...");
       SendErrorResponse({{'M', error_message}}, responses);
+      LOG_INFO("Error Response Sent!");
       break;
     }
 
@@ -277,7 +279,6 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     // TODO: should change to query_type
     CompleteCommand(query, rows_affected, responses);
   }
-
   SendReadyForQuery('I', responses);
 }
 
