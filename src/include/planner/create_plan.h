@@ -44,7 +44,7 @@ class CreatePlan : public AbstractPlan {
   }
 
   explicit CreatePlan(parser::CreateParse *parse_tree) : table_name(parse_tree->GetTableName()),
-      table_schema(new catalog::Schema(parse_tree->GetColumns())) {}
+      table_schema(new catalog::Schema(&parse_tree->GetColumns())) {}
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_CREATE;
