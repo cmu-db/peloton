@@ -52,7 +52,7 @@ class CreateParse : public AbstractParse {
       {
         ::Value *value = (::Value *) lfirst(subobject_item);
         LOG_INFO("Column : %s ", strVal(value));
-        catalog::Column col = new catalog::Column(VALUE_TYPE_INTEGER,
+        catalog::Column col = new catalog::Column(VALUE_TYPE_INTEGER, INVALID_OID,
                                                   std::string(strVal(value)),
                                                   false, INVALID_OID);
         columns_name.push_back(col);
