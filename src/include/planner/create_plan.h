@@ -15,7 +15,7 @@
 #include "planner/abstract_plan.h"
 
 #include "storage/data_table.h"
-#include "parser/peloton/drop_parse.h"
+#include "parser/peloton/create_parse.h"
 
 namespace peloton {
 
