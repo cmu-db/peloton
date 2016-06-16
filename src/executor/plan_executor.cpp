@@ -126,6 +126,7 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
+    	  LOG_INFO("txn_manager commit id: %d\n", (int)txn_manager.GetCurrentCommitId());
         p_status.m_result = txn_manager.CommitTransaction();
         break;
 
