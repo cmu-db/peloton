@@ -77,7 +77,7 @@ class CreateParse : public AbstractParse {
     return columns_name;
   }
 
-  catalog::Schema GetSchema(){
+  catalog::Schema* GetSchema(){
     catalog::Schema *schema = new catalog::Schema(columns_name);
     return schema;
   }
