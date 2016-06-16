@@ -32,6 +32,7 @@ class CreateParse : public AbstractParse {
   CreateParse &operator=(CreateParse &&) = delete;
 
   explicit CreateParse(CreateStmt *create_node) {
+    entity_type = ENTITY_TYPE_TABLE;
 
     RangeVar* relations = create_node->relation;
 
@@ -83,6 +84,9 @@ class CreateParse : public AbstractParse {
   }
 
  private:
+
+  // Entity Type
+  EntityType entity_type;
 
   // Name of entity
   std::string entity_name;
