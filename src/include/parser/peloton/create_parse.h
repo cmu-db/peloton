@@ -73,7 +73,7 @@ class CreateParse : public AbstractParse {
     return entity_name;
   }
 
-  std::vector<catalog::Column> GetColumns(){
+  std::vector<catalog::Column*> GetColumns(){
     return columns_name;
   }
 
