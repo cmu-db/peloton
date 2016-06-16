@@ -45,7 +45,8 @@ class DropExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-  catalog::Catalog* global_catalog;
+  catalog::Catalog *global_catalog;
+  ExecutorContext *context;
 
 };
 

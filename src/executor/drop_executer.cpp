@@ -20,7 +20,10 @@ namespace executor {
 //Constructor for drop executor
 DropExecutor::DropExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {global_catalog = nullptr;}
+    : AbstractExecutor(node, executor_context) {
+	global_catalog = nullptr;
+     context = executor_context;
+}
 
 // Initialize executer
 bool DropExecutor::DInit() {
@@ -34,7 +37,8 @@ bool DropExecutor::DInit() {
 bool DropExecutor::DExecute() {
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
-  global_catalog->DropTable("default_database", table_name);
+  Result result = global_catalog->DropTable("default_database", table_name);
+  context->GetTransaction()->SetResult(result);
   LOG_INFO("Dropping table succeeded!");
   return false;
 }
