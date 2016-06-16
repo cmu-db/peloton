@@ -50,7 +50,7 @@ TEST_F(CreateTests, CreatingTable) {
   executor::CreateExecutor executor(&node, context.get());
   executor.Init();
   executor.Execute();
-//  txn_manager.CommitTransaction();
+  txn_manager.CommitTransaction();
   EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
 
 }

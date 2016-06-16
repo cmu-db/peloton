@@ -47,7 +47,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   if (plan == nullptr) return p_status;
 
-  LOG_TRACE("PlanExecutor Start ");
+  LOG_INFO("PlanExecutor Start ");
 
   bool status;
   bool init_failure = false;
@@ -62,8 +62,8 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   }
   PL_ASSERT(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_TRACE("Building the executor tree");
+  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_INFO("Building the executor tree");
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
@@ -74,7 +74,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
       BuildExecutorTree(nullptr, plan, executor_context.get()));
 
-  LOG_TRACE("Initializing the executor tree");
+  LOG_INFO("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -86,7 +86,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_TRACE("Running the executor tree");
+  LOG_INFO("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
@@ -115,17 +115,18 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 // final cleanup
 cleanup:
 
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
+  LOG_INFO("About to commit: single stmt: %d, init_failure: %d, status: %d",
             single_statement_txn, init_failure, txn->GetResult());
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
+    LOG_INFO("Status: %d\n", status);
+    LOG_INFO("Txn Info: %s\n", txn->GetInfo().c_str());
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
         p_status.m_result = txn_manager.CommitTransaction();
-
         break;
 
       case Result::RESULT_FAILURE:

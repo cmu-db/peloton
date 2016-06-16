@@ -79,11 +79,13 @@ void Catalog::CreateTable(std::string database_name, std::string table_name, std
 // Drop a table
 void Catalog::DropTable(std::string database_name, std::string table_name){
   storage::Database* database = GetDatabaseWithName(database_name);
-  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
-  database->DropTableWithOid(table_id);
-  // TODO: Update catalog_table with the drop
-  // Pending how tuples are removed from tables
-
+  if(database->GetTableWithName(table_name)){
+	  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
+	  if(table_id)
+		database->DropTableWithOid(table_id);
+	  // TODO: Update catalog_table with the drop
+	  // Pending how tuples are removed from tables
+  }
 }
 
 // Find a database using its id

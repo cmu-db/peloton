@@ -27,20 +27,28 @@ class TransactionManagerFactory {
   static TransactionManager &GetInstance() {
     switch (protocol_) {
       case CONCURRENCY_TYPE_OPTIMISTIC:
+    	  LOG_INFO("CONCURRENCY_TYPE_OPTIMISTIC");
         return OptimisticTxnManager::GetInstance();
       case CONCURRENCY_TYPE_PESSIMISTIC:
+    	  LOG_INFO("CONCURRENCY_TYPE_PESSIMISTIC");
         return PessimisticTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SPECULATIVE_READ:
+    	  LOG_INFO("CONCURRENCY_TYPE_SPECULATIVE_READ");
         return SpeculativeReadTxnManager::GetInstance();
       case CONCURRENCY_TYPE_EAGER_WRITE:
+    	  LOG_INFO("CONCURRENCY_TYPE_EAGER_WRITE");
         return EagerWriteTxnManager::GetInstance();
       case CONCURRENCY_TYPE_SSI:
+    	  LOG_INFO("CONCURRENCY_TYPE_SSI");
         return SsiTxnManager::GetInstance();
       case CONCURRENCY_TYPE_TO:
+    	  LOG_INFO("CONCURRENCY_TYPE_TO");
         return TsOrderTxnManager::GetInstance();
       case CONCURRENCY_TYPE_OCC_RB:
+    	  LOG_INFO("CONCURRENCY_TYPE_OCC_RB");
         return OptimisticRbTxnManager::GetInstance();
       default:
+    	  LOG_INFO("OptimisticRbTxnManager");
         return OptimisticRbTxnManager::GetInstance();
     }
   }

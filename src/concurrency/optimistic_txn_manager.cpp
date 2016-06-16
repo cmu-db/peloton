@@ -261,7 +261,7 @@ void OptimisticTxnManager::PerformDelete(const ItemPointer &location) {
 }
 
 Result OptimisticTxnManager::CommitTransaction() {
-  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_INFO("Committing peloton txn : %lu ", current_txn->GetTransactionId());
 
   auto &manager = catalog::Manager::GetInstance();
 
@@ -270,6 +270,7 @@ Result OptimisticTxnManager::CommitTransaction() {
   //*****************************************************
   // we can optimize read-only transaction.
   if (current_txn->IsReadOnly() == true) {
+	  LOG_INFO("Read Only Transaction");
     // validate read set.
     for (auto &tile_group_entry : rw_set) {
       oid_t tile_group_id = tile_group_entry.first;
@@ -300,6 +301,7 @@ Result OptimisticTxnManager::CommitTransaction() {
     EndTransaction();
     return ret;
   }
+  LOG_INFO("Prepairing logging..");
   //*****************************************************
   // must tell the log manager we are going to log
   auto &log_manager = logging::LogManager::GetInstance();
@@ -307,7 +309,7 @@ Result OptimisticTxnManager::CommitTransaction() {
   // generate transaction id.
   cid_t end_commit_id = GetNextCommitId();
   current_txn->SetEndCommitId(end_commit_id);
-
+  LOG_INFO("Before the loops");
   // validate read set.
   for (auto &tile_group_entry : rw_set) {
     oid_t tile_group_id = tile_group_entry.first;
@@ -333,11 +335,11 @@ Result OptimisticTxnManager::CommitTransaction() {
             continue;
           }
         }
-        LOG_TRACE("transaction id=%lu",
+        LOG_INFO("transaction id=%lu",
                   tile_group_header->GetTransactionId(tuple_slot));
-        LOG_TRACE("begin commit id=%lu",
+        LOG_INFO("begin commit id=%lu",
                   tile_group_header->GetBeginCommitId(tuple_slot));
-        LOG_TRACE("end commit id=%lu",
+        LOG_INFO("end commit id=%lu",
                   tile_group_header->GetEndCommitId(tuple_slot));
         // otherwise, validation fails. abort transaction.
         log_manager.DoneLogging();
