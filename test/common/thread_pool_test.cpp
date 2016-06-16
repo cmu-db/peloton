@@ -2,26 +2,35 @@
 //
 //                         Peloton
 //
-// thread_manager_test.cpp
+// thread_pool_test.cpp
 //
-// Identification: test/common/thread_manager_test.cpp
+// Identification: test/common/thread_pool_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/thread_pool.h"
 #include "common/harness.h"
-#include "common/thread_manager.h"
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Thread Manager Test
+// Thread Pool Test
 //===--------------------------------------------------------------------===//
 
-class ThreadManagerTests : public PelotonTest {};
+class ThreadPoolTests : public PelotonTest {};
 
+
+TEST_F(ThreadPoolTests, BasicTest) {
+
+  ThreadPool thread_pool;
+
+  auto num_threads = thread_pool.GetNumThreads();
+  LOG_INFO("Num threads : %lu", num_threads);
+
+}
 
 }  // End test namespace
 }  // End peloton namespace

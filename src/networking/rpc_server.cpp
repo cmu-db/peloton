@@ -14,13 +14,12 @@
 #include "networking/rpc_controller.h"
 #include "networking/connection_manager.h"
 #include "common/logger.h"
-#include "common/thread_manager.h"
-
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/stubs/common.h>
 
 #include <iostream>
 #include <functional>
+#include "../include/common/thread_pool.h"
 
 namespace peloton {
 namespace networking {
