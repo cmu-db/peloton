@@ -54,7 +54,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   switch (parse_item_node_type) {
     case PARSE_NODE_TYPE_DROP: {
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
-          new planner::DropPlan("department-table"));
+          new planner::DropPlan(parse_tree->GetTableName()));
       child_plan = std::move(child_DropPlan);
     }
       break;

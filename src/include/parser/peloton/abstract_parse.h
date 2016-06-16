@@ -59,6 +59,7 @@ class AbstractParse : public Printable {
   // This is better than having to store redundant types in all the objects
   virtual ParseNodeType GetParseNodeType() const = 0;
 
+  virtual std::string GetTableName();
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//

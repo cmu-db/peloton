@@ -60,6 +60,8 @@ class CreateParse : public AbstractParse {
     return "CreateParse";
   }
 
+  std::string GetTableName() { return entity_name; }
+
  private:
 
   // Type of entity

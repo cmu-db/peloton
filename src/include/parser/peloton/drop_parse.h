@@ -52,6 +52,8 @@ class DropParse : public AbstractParse {
 
   const std::string GetInfo() const { return "DropParse"; }
 
+  std::string GetTableName() { return entity_name; }
+
  private:
 
   // Type of entity
