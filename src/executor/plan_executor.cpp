@@ -121,12 +121,9 @@ cleanup:
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
-    LOG_INFO("Status: %d\n", status);
-    LOG_INFO("Txn Info: %s\n", txn->GetInfo().c_str());
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
-    	  LOG_INFO("txn_manager commit id: %d\n", (int)txn_manager.GetCurrentCommitId());
         p_status.m_result = txn_manager.CommitTransaction();
         break;
 

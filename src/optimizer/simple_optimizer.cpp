@@ -60,6 +60,13 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
     }
       break;
 
+/*    case PARSE_NODE_TYPE_CREATE: {
+      std::unique_ptr<planner::AbstractPlan> child_DropPlan(
+      new planner::CreatePlan((parser::CreateParse*)parse_tree.get()));
+      child_plan = std::move(child_DropPlan);
+    }
+      break;*/
+
     case PARSE_NODE_TYPE_SCAN: {
       std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan(
           new planner::SeqScanPlan());

@@ -56,7 +56,7 @@ void Catalog::CreateDatabase(std::string database_name) {
   auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
 		  database_id,
 		  database_name);
-  InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
+  databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->InsertTuple(tuple.get());
 }
 
 // Create a table in a database
@@ -64,27 +64,32 @@ void Catalog::CreateTable(std::string database_name, std::string table_name, std
   bool own_schema = true;
   bool adapt_table = false;
   oid_t table_id = GetNewID();
-  oid_t database_id = GetDatabaseWithName(database_name)->GetOid();
-  storage::DataTable *table = storage::TableFactory::GetDataTable(
-		  database_id, table_id, schema.get(), table_name,
-		  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
-  GetDatabaseWithOid(database_id)->AddTable(table);
-  // Update catalog_table with this table info
-  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
-  //  Another way of insertion using transaction manager
-  //  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
-  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
+  storage::Database *database = GetDatabaseWithName(database_name);
+  if(database){
+	  oid_t database_id = database->GetOid();
+	  storage::DataTable *table = storage::TableFactory::GetDataTable(
+			  database_id, table_id, schema.get(), table_name,
+			  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
+	  GetDatabaseWithOid(database_id)->AddTable(table);
+	  // Update catalog_table with this table info
+	  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
+	  //  Another way of insertion using transaction manager
+	  //  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
+	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
+  }
 }
 
 // Drop a table
 void Catalog::DropTable(std::string database_name, std::string table_name){
   storage::Database* database = GetDatabaseWithName(database_name);
-  if(database->GetTableWithName(table_name)){
-	  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
-	  if(table_id)
-		database->DropTableWithOid(table_id);
-	  // TODO: Update catalog_table with the drop
-	  // Pending how tuples are removed from tables
+  if(database){
+	  if(database->GetTableWithName(table_name)){
+		  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
+		  if(table_id)
+			database->DropTableWithOid(table_id);
+		  // TODO: Update catalog_table with the drop
+		  // Pending how tuples are removed from tables
+	  }
   }
 }
 
