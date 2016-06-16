@@ -12,6 +12,7 @@
 
 #include <functional>
 #include <iostream>
+#include <mutex>
 
 #include "container/skip_list_map.h"
 #include "common/logger.h"
@@ -22,10 +23,16 @@ namespace peloton {
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 SKIP_LIST_MAP_TYPE::SkipListMap(){
+
+  LOG_INFO("Creating Skip List Map");
+
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 SKIP_LIST_MAP_TYPE::~SkipListMap(){
+
+  LOG_INFO("Destroying Skip List Map");
+
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS

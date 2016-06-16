@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/init.h"
+#include "container/skip_list_map.h"
+
+#include "libcds/cds/init.h"
 
 #include <google/protobuf/stubs/common.h>
-#include "libcds/cds/init.h"
 
 namespace peloton {
 
@@ -21,6 +23,11 @@ void PelotonInit::Initialize() {
 
   // Initialize CDS library
   cds::Initialize();
+
+  // RCU
+
+  // Create URCU general_buffered singleton
+  SkipListMap<uint32_t, uint32_t>::RCUImpl::Construct();
 
 }
 
@@ -31,6 +38,12 @@ void PelotonInit::Shutdown() {
 
   // shutdown protocol buf library
   google::protobuf::ShutdownProtobufLibrary();
+
+  // RCU
+
+  // Destroy URCU general_buffered singleton
+  SkipListMap<uint32_t, uint32_t>::RCUImpl::Destruct();
+
 }
 
 void PelotonInit::SetUpThread() {
