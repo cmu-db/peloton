@@ -27,6 +27,7 @@ bool DropExecutor::DInit() {
   auto &bootstrapper = catalog::Bootstrapper::GetInstance();
   global_catalog = bootstrapper.bootstrap();
   global_catalog->CreateDatabase("default_database");
+  LOG_INFO("Drop Executer initialized!");
   return true;
 }
 
@@ -34,7 +35,7 @@ bool DropExecutor::DExecute() {
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
   global_catalog->DropTable("default_database", table_name);
-  LOG_INFO("Dropping table succeeded...");
+  LOG_INFO("Dropping table succeeded!");
   return false;
 }
 
