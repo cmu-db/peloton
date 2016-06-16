@@ -60,5 +60,7 @@ const std::string AbstractParse::GetInfo() const {
   return os.str();
 }
 
+std::string AbstractParse::GetTableName() { return "NoTable"; }
+
 }  // namespace parser
 }  // namespace peloton
