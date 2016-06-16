@@ -270,7 +270,6 @@ Result OptimisticTxnManager::CommitTransaction() {
   //*****************************************************
   // we can optimize read-only transaction.
   if (current_txn->IsReadOnly() == true) {
-	  LOG_INFO("Read Only Transaction");
     // validate read set.
     for (auto &tile_group_entry : rw_set) {
       oid_t tile_group_id = tile_group_entry.first;
