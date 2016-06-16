@@ -69,7 +69,7 @@ class CreateParse : public AbstractParse {
     return "CreateParse";
   }
 
-  std::string GetTableName() {
+  std::string GetEntityName() {
     return entity_name;
   }
 
