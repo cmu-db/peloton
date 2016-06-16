@@ -35,7 +35,8 @@ bool CreateExecutor::DExecute() {
   std::string table_name = node.GetTableName();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
   global_catalog->CreateTable("default_database", table_name, std::move(schema));
-  return true;
+  LOG_INFO("Creating table succeeded...");
+  return false;
 }
 
 }

@@ -16,6 +16,8 @@
 
 #include "common/types.h"
 
+#include "common/logger.h"
+
 namespace peloton {
 namespace parser {
 
@@ -37,7 +39,7 @@ class DropParse : public AbstractParse {
 
     // Value
     foreach(object_item, object_list){
-      subobject_list = lfirst(object_item);
+      subobject_list = (List *)lfirst(object_item);
 
       foreach(subobject_item, subobject_list){
         ::Value *value = (::Value *) lfirst(subobject_item);
@@ -49,6 +51,8 @@ class DropParse : public AbstractParse {
   }
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
+
+  const std::string GetEntityName() { return entity_name; }
 
   const std::string GetInfo() const { return "DropParse"; }
 

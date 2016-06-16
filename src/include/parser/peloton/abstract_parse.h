@@ -23,6 +23,9 @@
 #include "common/types.h"
 #include "common/serializer.h"
 
+#include "parser/postgres.h"
+#include "parser/nodes/parsenodes.h"
+
 namespace peloton {
 namespace parser {
 

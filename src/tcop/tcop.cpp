@@ -72,13 +72,12 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
                                     UNUSED_ATTRIBUTE std::string &error_message){
 
   LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
-
   std::vector<Value> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Shit");
-  bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed!");
+  return status.m_result;
 
-
-  return Result::RESULT_FAILURE;
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& statement_name,

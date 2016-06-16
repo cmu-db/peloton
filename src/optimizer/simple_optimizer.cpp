@@ -13,6 +13,7 @@
 #include "optimizer/simple_optimizer.h"
 
 #include "parser/peloton/abstract_parse.h"
+#include "parser/peloton/drop_parse.h"
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -54,7 +55,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   switch (parse_item_node_type) {
     case PARSE_NODE_TYPE_DROP: {
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
-          new planner::DropPlan("department-table"));
+          new planner::DropPlan((parser::DropParse*)parse_tree.get()));
       child_plan = std::move(child_DropPlan);
     }
       break;

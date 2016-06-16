@@ -14,6 +14,7 @@
 
 #include "planner/abstract_plan.h"
 #include "storage/data_table.h"
+#include "parser/peloton/drop_parse.h"
 
 namespace peloton {
 
@@ -31,6 +32,8 @@ class DropPlan : public AbstractPlan {
   explicit DropPlan(storage::DataTable *table) : target_table_(table) {}
 
   explicit DropPlan(std::string name) : table_name(name) {}
+
+  explicit DropPlan(parser::DropParse *parse_tree) : table_name(parse_tree->GetEntityName()) {}
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;
