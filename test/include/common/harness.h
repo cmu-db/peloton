@@ -103,9 +103,13 @@ class PelotonTest : public ::testing::Test {
 
     PelotonInit::Initialize();
 
+    PelotonInit::SetUpThread();
+
   }
 
   virtual void TearDown() {
+
+    PelotonInit::TearDownThread();
 
     PelotonInit::Shutdown();
 

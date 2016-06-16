@@ -29,11 +29,6 @@ TEST_F(SkipListMapTest, BasicTest) {
   typedef uint32_t  key_type;
   typedef uint32_t  value_type;
 
-  // Create URCU general_buffered singleton
-  SkipListMap<key_type, value_type>::RCUImpl::Construct();
-
-  cds::threading::Manager::attachThread();
-
   {
     SkipListMap<key_type, value_type> map;
 
@@ -56,11 +51,6 @@ TEST_F(SkipListMapTest, BasicTest) {
     }
 
   }
-
-  cds::threading::Manager::detachThread();
-
-  // Destroy URCU general_buffered singleton
-  SkipListMap<key_type, value_type>::RCUImpl::Destruct();
 
 }
 
