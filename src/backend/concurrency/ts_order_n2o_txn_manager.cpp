@@ -751,7 +751,7 @@ Result TsOrderN2OTxnManager::AbortTransaction() {
     }
   }
 
-  cid_t next_commit_id = GetNextCommitId();
+  //cid_t next_commit_id = GetNextCommitId();
 
   // for (auto &item_pointer : aborted_versions) {
   //    RecycleOldTupleSlot(item_pointer.block, item_pointer.offset, next_commit_id);
