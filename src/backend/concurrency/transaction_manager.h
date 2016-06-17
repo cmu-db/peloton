@@ -74,7 +74,7 @@ class TransactionManager {
 
   virtual bool AcquireOwnership(
       const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+      const oid_t &tile_group_id, const oid_t &tuple_id, const bool is_blind_write = false) = 0;
 
   // This method is used by executor to yield ownership after the acquired ownership.
   virtual void YieldOwnership(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;

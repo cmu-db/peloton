@@ -170,7 +170,7 @@ bool TsOrderN2OTxnManager::IsOwnable(
 
 bool TsOrderN2OTxnManager::AcquireOwnership(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id) {
+    const oid_t &tile_group_id __attribute__((unused)), const oid_t &tuple_id, UNUSED_ATTRIBUTE const bool is_blind_write) {
   auto txn_id = current_txn->GetTransactionId();
 
   GetSpinlockField(tile_group_header, tuple_id)->Lock();
