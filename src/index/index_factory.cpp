@@ -18,6 +18,7 @@
 #include "index/index_factory.h"
 #include "index/index_key.h"
 #include "index/btree_index.h"
+#include "index/skip_list_index.h"
 
 namespace peloton {
 namespace index {
@@ -56,6 +57,33 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
                             TupleKeyEqualityChecker>(metadata);
     }
   }
+
+  if (index_type == INDEX_TYPE_SKIPLIST) {
+
+    if (key_size <= 4) {
+      return new SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+                            GenericEqualityChecker<4>>(metadata);
+    } else if (key_size <= 8) {
+      return new SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+                            GenericEqualityChecker<8>>(metadata);
+    } else if (key_size <= 16) {
+      return new SkipListIndex<GenericKey<16>, ItemPointer *,
+                            GenericComparator<16>, GenericEqualityChecker<16>>(
+          metadata);
+    } else if (key_size <= 64) {
+      return new SkipListIndex<GenericKey<64>, ItemPointer *,
+                            GenericComparator<64>, GenericEqualityChecker<64>>(
+          metadata);
+    } else if (key_size <= 256) {
+      return new SkipListIndex<GenericKey<256>, ItemPointer *,
+                            GenericComparator<256>,
+                            GenericEqualityChecker<256>>(metadata);
+    } else {
+      return new SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparator,
+                            TupleKeyEqualityChecker>(metadata);
+    }
+  }
+
 
   throw IndexException("Unsupported index scheme.");
   return NULL;
