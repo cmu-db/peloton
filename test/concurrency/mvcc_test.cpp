@@ -36,9 +36,7 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 // 3. Timestamp consistence
 // 4. Version doubly linked list consistency
 static void ValidateMVCC_OldToNew(storage::DataTable *table) {
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
-  gc_manager.StopGC();
   LOG_INFO("Validating MVCC storage");
   int tile_group_count = table->GetTileGroupCount();
   LOG_INFO("The table has %d tile groups in the table", tile_group_count);
@@ -166,7 +164,6 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
     LOG_INFO("[OK] oldest-to-newest version chain validated");
   }
 
-  gc_manager.StartGC();
 }
 
 TEST_F(MVCCTest, SingleThreadVersionChainTest) {
