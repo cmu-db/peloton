@@ -14,9 +14,11 @@
 
 #include "parser/peloton/abstract_parse.h"
 #include "parser/peloton/drop_parse.h"
+#include "parser/peloton/create_parse.h"
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/create_plan.h"
 
 #include "common/logger.h"
 
