@@ -90,5 +90,37 @@ TEST_F(SkipListMapTest, BasicTest) {
   delete schema;
 }
 
+class SkipListMap<uint32_t, uint32_t, std::less<uint32_t>> test_skip_list_map;
+
+const std::size_t base_scale = 1000;
+const std::size_t max_scale_factor = 10000;
+
+// INSERT HELPER FUNCTION
+void InsertTest(size_t scale_factor, uint64_t thread_itr) {
+
+  uint32_t base = thread_itr * base_scale * max_scale_factor;
+  uint32_t tuple_count = scale_factor * base_scale;
+
+  for (uint32_t tuple_itr = 1; tuple_itr <= tuple_count; tuple_itr++) {
+    uint32_t tuple_offset = base + tuple_itr;
+
+    auto status = test_skip_list_map.Insert(tuple_offset, tuple_offset);
+    EXPECT_TRUE(status);
+  }
+
+}
+
+// Test multithreaded functionality
+TEST_F(SkipListMapTest, MultithreadedTest) {
+
+  // Parallel Test
+  size_t num_threads = 1;
+  size_t scale_factor = 10;
+
+  std::vector<std::thread> thread_group;
+
+  LaunchParallelTest(num_threads, InsertTest, scale_factor);
+}
+
 }  // End test namespace
 }  // End peloton namespace
