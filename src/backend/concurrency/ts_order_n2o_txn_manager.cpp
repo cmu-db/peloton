@@ -274,7 +274,7 @@ bool TsOrderN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPointe
 }
 
 void TsOrderN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                      const ItemPointer &new_location) {
+                                      const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   LOG_TRACE("Performing Write old tuple %u %u", old_location.block, old_location.offset);
   LOG_TRACE("Performing Write new tuple %u %u", new_location.block, new_location.offset);
 

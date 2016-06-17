@@ -182,7 +182,7 @@ bool OptimisticTxnManager::PerformInsert(const ItemPointer &location) {
 // this function is invoked when it is the first time to update the tuple.
 // the tuple passed into this function is the global version.
 void OptimisticTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                         const ItemPointer &new_location) {
+                                         const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   LOG_TRACE("PerformUpdate (%u, %u)->(%u, %u)\n", old_location.block, old_location.offset,
              new_location.block, new_location.offset );
   auto transaction_id = current_txn->GetTransactionId();

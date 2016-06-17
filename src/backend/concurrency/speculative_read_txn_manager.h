@@ -95,7 +95,7 @@ class SpeculativeReadTxnManager : public TransactionManager {
   virtual bool PerformRead(const ItemPointer &location);
 
   virtual void PerformUpdate(const ItemPointer &old_location,
-                             const ItemPointer &new_location);
+                             const ItemPointer &new_location, const bool is_blind_write = false);
 
   virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location);

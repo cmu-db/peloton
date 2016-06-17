@@ -88,7 +88,7 @@ public:
   virtual bool PerformRead(const ItemPointer &location);
 
   virtual void PerformUpdate(const ItemPointer &old_location __attribute__((unused)),
-                             const ItemPointer &new_location __attribute__((unused))) { assert(false); }
+                             const ItemPointer &new_location __attribute__((unused)), UNUSED_ATTRIBUTE const bool is_blind_write = false) { assert(false); }
 
   virtual void PerformDelete(const ItemPointer &old_location  __attribute__((unused)),
                              const ItemPointer &new_location __attribute__((unused))) { assert(false); }

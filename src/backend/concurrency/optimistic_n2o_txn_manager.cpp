@@ -192,7 +192,7 @@ bool OptimisticN2OTxnManager::PerformInsert(const ItemPointer &location, ItemPoi
 // this function is invoked when it is the first time to update the tuple.
 // the tuple passed into this function is the global version.
 void OptimisticN2OTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                         const ItemPointer &new_location) {
+                                         const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()
