@@ -139,7 +139,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
   state.duration = 10;
-  state.snapshot_duration = 0.1;
+  state.snapshot_duration = 1;
   state.backend_count = 1;
   state.warehouse_count = 1;
   state.order_range = 20;
