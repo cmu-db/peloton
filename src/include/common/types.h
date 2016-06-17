@@ -371,15 +371,44 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
-  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
+  CONCURRENCY_TYPE_INVALID = 0,
+
   CONCURRENCY_TYPE_TO = 4                // timestamp ordering
 };
 
+//===--------------------------------------------------------------------===//
+// Visibility Types
+//===--------------------------------------------------------------------===//
+
+enum VisibilityType {
+  VISIBILITY_INVALID = 0,
+
+  VISIBILITY_INVISIBLE = 1,
+  VISIBILITY_DELETED = 2,
+  VISIBILITY_OK = 3
+};
+
+//===--------------------------------------------------------------------===//
+// Isolation Levels
+//===--------------------------------------------------------------------===//
+
 enum IsolationLevelType {
-  ISOLATION_LEVEL_TYPE_FULL = 0,            // full serializability
-  ISOLATION_LEVEL_TYPE_SNAPSHOT = 1,        // snapshot isolation
-  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2  // repeatable read
+  ISOLATION_LEVEL_TYPE_INVALID = 0,
+
+  ISOLATION_LEVEL_TYPE_FULL = 1,            // full serializability
+  ISOLATION_LEVEL_TYPE_SNAPSHOT = 2,        // snapshot isolation
+  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 3  // repeatable read
+};
+
+//===--------------------------------------------------------------------===//
+// Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+enum GCType {
+  GC_TYPE_INVALID = 0,
+
+  GC_TYPE_OFF = 1,                // turn off GC
+  GC_TYPE_COOPERATIVE = 2         // cooperative GC
 };
 
 enum BackendType {

@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include "concurrency/optimistic_txn_manager.h"
-#include "concurrency/pessimistic_txn_manager.h"
 #include "concurrency/ts_order_txn_manager.h"
 
 namespace peloton {
@@ -22,11 +20,6 @@ class TransactionManagerFactory {
  public:
   static TransactionManager &GetInstance() {
     switch (protocol_) {
-      case CONCURRENCY_TYPE_OPTIMISTIC:
-        return OptimisticTxnManager::GetInstance();
-
-      case CONCURRENCY_TYPE_PESSIMISTIC:
-        return PessimisticTxnManager::GetInstance();
 
       case CONCURRENCY_TYPE_TO:
         return TsOrderTxnManager::GetInstance();
