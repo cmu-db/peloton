@@ -51,7 +51,7 @@ public:
  void CreateDatabase(std::string database_name);
 
  // Create a table in a database
- void CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
+ Result CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
 
  // Drop a table
  Result DropTable(std::string database_name, std::string table_name);
