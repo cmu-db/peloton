@@ -20,6 +20,8 @@
 
 #include "catalog/column.h"
 
+#include "catalog/schema.h"
+
 namespace peloton {
 namespace parser {
 
@@ -33,33 +35,13 @@ class CreateParse : public AbstractParse {
 
   explicit CreateParse(CreateStmt *create_node) {
     entity_type = ENTITY_TYPE_TABLE;
+	RangeVar* rv = create_node->relation;
+	entity_name = std::string(rv->relname);
 
-    RangeVar* relations = create_node->relation;
-
-    schema = std::string(relations->schemaname);
-    database_name = std::string(relations->catalogname);
-
-    ListCell *object_item;
-    List *object_list = create_node->tableElts;
-    ListCell *subobject_item;
-    List *subobject_list;
-
-    // Value
-    foreach(object_item, object_list)
-    {
-      subobject_list = lfirst(object_item);
-
-      foreach(subobject_item, subobject_list)
-      {
-        ::Value *value = (::Value *) lfirst(subobject_item);
-        LOG_INFO("Column : %s ", strVal(value));
-        auto col = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                                   std::string(strVal(value)), false);
-        columns_name.push_back(col);
-      }
+        auto col = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),"dept_id", true);
+        
+	columns_name.push_back(col);
     }
-
-  }
 
   inline ParseNodeType GetParseNodeType() const {
     return PARSE_NODE_TYPE_CREATE;
@@ -85,7 +67,7 @@ class CreateParse : public AbstractParse {
  private:
 
   // Entity Type
-  EntityType entity_type;
+  EntityType entity_type = ENTITY_TYPE_INVALID;
 
   // Name of entity
   std::string entity_name;
