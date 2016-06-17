@@ -14,6 +14,7 @@
 #include "container/skip_list_map.h"
 
 #include "libcds/cds/init.h"
+#include "index/index_key.h"
 
 #include <google/protobuf/stubs/common.h>
 
