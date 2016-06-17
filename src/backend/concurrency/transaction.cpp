@@ -68,9 +68,11 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
     type = RW_TYPE_UPDATE;
     // record write.
     is_written_ = true;
-
-
   }
+  // as an optimization, it is possible that a tuple is recorded as update without been recorded as read before.
+  rw_set_[tile_group_id][tuple_id] = RW_TYPE_UPDATE;
+  // record write.
+  is_written_ = true;
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
