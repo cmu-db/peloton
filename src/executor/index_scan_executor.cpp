@@ -267,13 +267,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   }
 
   // Add all garbage tuples to GC manager
-  if (garbage_tuples.size() != 0) {
-    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-    for (auto garbage : garbage_tuples) {
-      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-          table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
-    }
-  }
+//  if (garbage_tuples.size() != 0) {
+//    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+//    for (auto garbage : garbage_tuples) {
+//      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+//          table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
+//    }
+//  }
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {

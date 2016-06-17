@@ -18,6 +18,10 @@
 
 #include "common/logger.h"
 
+#include "catalog/column.h"
+
+#include "catalog/schema.h"
+
 namespace peloton {
 namespace parser {
 
@@ -31,26 +35,13 @@ class CreateParse : public AbstractParse {
 
   explicit CreateParse(CreateStmt *create_node) {
     entity_type = ENTITY_TYPE_TABLE;
+	RangeVar* rv = create_node->relation;
+	entity_name = std::string(rv->relname);
 
-    ListCell *object_item;
-    List *object_list = create_node->tableElts;
-    ListCell *subobject_item;
-    List *subobject_list;
-
-    // Value
-    foreach(object_item, object_list)
-    {
-      subobject_list = lfirst(object_item);
-
-      foreach(subobject_item, subobject_list)
-      {
-        ::Value *value = (::Value *) lfirst(subobject_item);
-        LOG_INFO("Column : %s ", strVal(value));
-        columns.push_back(std::string(strVal(value)));
-      }
+        auto col = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),"dept_id", true);
+        
+	columns_name.push_back(col);
     }
-
-  }
 
   inline ParseNodeType GetParseNodeType() const {
     return PARSE_NODE_TYPE_CREATE;
@@ -60,18 +51,35 @@ class CreateParse : public AbstractParse {
     return "CreateParse";
   }
 
-  std::string GetTableName() { return entity_name; }
+  std::string GetTableName() {
+    return entity_name;
+  }
+
+  std::vector<catalog::Column> GetColumns(){
+    return columns_name;
+  }
+
+  catalog::Schema* GetSchema(){
+    catalog::Schema *schema = new catalog::Schema(columns_name);
+    return schema;
+  }
 
  private:
 
-  // Type of entity
+  // Entity Type
   EntityType entity_type = ENTITY_TYPE_INVALID;
 
   // Name of entity
   std::string entity_name;
 
   // Table Columns (Column type?)
-  std::vector<std::string> columns;
+  std::vector<catalog::Column> columns_name;
+
+  // Schema Name
+  std::string schema;
+
+  // catalog name
+  std::string database_name;
 
   // Table file path. (Since All data in memory , need path?)
   std::string filePath;
