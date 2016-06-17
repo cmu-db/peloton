@@ -84,7 +84,7 @@ class TransactionManager {
   virtual bool PerformRead(const ItemPointer &location) = 0;
 
   virtual void PerformUpdate(const ItemPointer &old_location,
-                             const ItemPointer &new_location) = 0;
+                             const ItemPointer &new_location, const bool is_blind_write = false) = 0;
 
   virtual void PerformDelete(const ItemPointer &old_location,
                              const ItemPointer &new_location) = 0;

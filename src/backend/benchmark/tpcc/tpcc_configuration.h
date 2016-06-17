@@ -73,6 +73,8 @@ class configuration {
 
   int new_orders_per_district;
 
+  int order_range;
+
   // execution duration
   double duration;
 
@@ -107,6 +109,10 @@ class configuration {
   // index type
   IndexType index;
 
+  // number of threads used in GC,
+  // Only available when gc type is n2o and va
+  int gc_thread_count;
+
 };
 
 extern configuration state;
@@ -126,6 +132,8 @@ void ValidateWarehouseCount(const configuration &state);
 void ValidateProtocol(const configuration &state);
 
 void ValidateIndex(const configuration &state);
+
+void ValidateOrderRange(const configuration &state);
 
 void ParseArguments(int argc, char *argv[], configuration &state);
 

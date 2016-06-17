@@ -351,7 +351,7 @@ bool SsiTxnManager::PerformInsert(const ItemPointer &location) {
 }
 
 void SsiTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                  const ItemPointer &new_location) {
+                                  const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   auto transaction_id = current_txn->GetTransactionId();
 
   auto tile_group_header = catalog::Manager::GetInstance()

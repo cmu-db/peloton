@@ -331,7 +331,7 @@ bool RunDelivery(DeliveryPlans &delivery_plans, const size_t &thread_id);
 
 bool RunOrderStatus(const size_t &thread_id);
 
-bool RunStockLevel(const size_t &thread_id);
+bool RunStockLevel(const size_t &thread_id, const int &order_range);
 
 
 

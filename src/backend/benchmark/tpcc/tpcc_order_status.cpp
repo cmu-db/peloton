@@ -107,11 +107,11 @@ bool RunOrderStatus(const size_t &thread_id){
   int c_id = -1;
   std::string c_last;
 
-  if (GetRandomInteger(1, 100) <= 60) {
-    c_last = GetRandomLastName(state.customers_per_district);
-  } else {
+  // if (GetRandomInteger(1, 100) <= 60) {
+  //   c_last = GetRandomLastName(state.customers_per_district);
+  // } else {
     c_id = GetNURand(1023, 0, state.customers_per_district - 1);
-  }
+  // }
 
   // Run queries
   if (c_id != -1) {
@@ -126,10 +126,10 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+    customer_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
@@ -153,10 +153,16 @@ bool RunOrderStatus(const size_t &thread_id){
       return false;
     }
 
-    assert(result.size() > 0);
-    assert(result[0].size() > 0);
+    if (result.size() == 0) {
+      LOG_ERROR("wrong result size : %lu", result.size());
+      assert(false);
+    }
+    if (result[0].size() == 0) {
+      LOG_ERROR("wong result[0] size : %lu", result[0].size());
+      assert(false);
+    }
   } else {
-    LOG_TRACE("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
+    LOG_ERROR("getCustomersByLastName: SELECT C_ID, C_FIRST, C_MIDDLE, C_LAST, C_BALANCE FROM CUSTOMER WHERE C_W_ID = ? AND C_D_ID = ? AND C_LAST = ? ORDER BY C_FIRST, # w_id, d_id, c_last");
     // Construct index scan executor
     std::vector<oid_t> customer_column_ids = 
       {COL_IDX_C_ID, COL_IDX_C_FIRST, COL_IDX_C_MIDDLE, 
@@ -167,10 +173,10 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<expression::AbstractExpression *> runtime_keys;
 
     customer_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+    customer_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    customer_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    customer_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     customer_expr_types.push_back(
       ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     customer_key_values.push_back(ValueFactory::GetStringValue(c_last));
@@ -215,7 +221,10 @@ bool RunOrderStatus(const size_t &thread_id){
     c_id = ValuePeeker::PeekInteger(customer[0]);
   }
 
-  assert(c_id >= 0);
+  if (c_id < 0) {
+    LOG_ERROR("wrong c_id");
+    assert(false);
+  }
 
   LOG_TRACE("getLastOrder: SELECT O_ID, O_CARRIER_ID, O_ENTRY_D FROM ORDERS WHERE O_W_ID = ? AND O_D_ID = ? AND O_C_ID = ? ORDER BY O_ID DESC LIMIT 1, # w_id, d_id, c_id");
 
@@ -228,9 +237,9 @@ bool RunOrderStatus(const size_t &thread_id){
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  orders_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+  orders_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-  orders_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+  orders_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
   orders_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
   orders_key_values.push_back(ValueFactory::GetIntegerValue(c_id));
 
@@ -283,15 +292,15 @@ bool RunOrderStatus(const size_t &thread_id){
     std::vector<Value> order_line_key_values;
 
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetSmallIntValue(w_id));
+    order_line_key_values.push_back(ValueFactory::GetIntegerValue(w_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
-    order_line_key_values.push_back(ValueFactory::GetTinyIntValue(d_id));
+    order_line_key_values.push_back(ValueFactory::GetIntegerValue(d_id));
     order_line_expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQUAL);
     order_line_key_values.push_back(orders[0][0]);
 
-    auto order_line_pkey_index = order_line_table->GetIndexWithOid(order_line_table_pkey_index_oid);
+    auto order_line_skey_index = order_line_table->GetIndexWithOid(order_line_table_skey_index_oid);
     planner::IndexScanPlan::IndexScanDesc order_line_index_scan_desc(
-      order_line_pkey_index, order_line_key_column_ids, order_line_expr_types,
+      order_line_skey_index, order_line_key_column_ids, order_line_expr_types,
       order_line_key_values, runtime_keys);
 
     predicate = nullptr;

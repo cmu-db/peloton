@@ -32,12 +32,14 @@ void Usage(FILE *out) {
           "   -s --snapshot_duration :  snapshot duration \n"
           "   -b --backend_count     :  # of backends \n"
           "   -w --warehouse_count   :  # of warehouses \n"
+          "   -r --order_range       :  order range \n"
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -a --affinity          :  enable client affinity \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
           "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
+          "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o/va\n"
   );
   exit(EXIT_FAILURE);
 }
@@ -49,10 +51,12 @@ static struct option opts[] = {
   { "snapshot_duration", optional_argument, NULL, 's' },
   { "backend_count", optional_argument, NULL, 'b'},
   { "warehouse_count", optional_argument, NULL, 'w' },
+  { "order_range", optional_argument, NULL, 'r' },
   { "exp_backoff", no_argument, NULL, 'e'},
   { "affinity", no_argument, NULL, 'a'},
   { "protocol", optional_argument, NULL, 'p'},
   { "gc_protocol", optional_argument, NULL, 'g'},
+  {"gc_thread", optional_argument, NULL, 't'},
   { NULL, 0, NULL, 0 }
 };
 
@@ -101,6 +105,15 @@ void ValidateWarehouseCount(const configuration &state) {
   LOG_TRACE("%s : %d", "warehouse_count", state.warehouse_count);
 }
 
+void ValidateOrderRange(const configuration &state) {
+  if (state.warehouse_count <= 0) {
+    LOG_ERROR("Invalid order_range :: %d", state.order_range);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_TRACE("%s : %d", "order range", state.order_range);
+}
+
 void ValidateProtocol(const configuration &state) {
   if (state.protocol != CONCURRENCY_TYPE_TO_N2O && state.protocol != CONCURRENCY_TYPE_OCC_N2O) {
     if (state.gc_protocol == GC_TYPE_N2O) {
@@ -126,28 +139,35 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
   state.scale_factor = 1;
   state.duration = 10;
-  state.snapshot_duration = 0.1;
+  state.snapshot_duration = 1;
   state.backend_count = 1;
   state.warehouse_count = 1;
+  state.order_range = 20;
   state.run_affinity = false;
   state.run_backoff = false;
   state.protocol = CONCURRENCY_TYPE_OPTIMISTIC;
   state.gc_protocol = GC_TYPE_OFF;
   state.index = INDEX_TYPE_HASH;
+  state.gc_thread_count = 1;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aeh:k:w:d:s:b:p:g:i:", opts, &idx);
+    int c = getopt_long(argc, argv, "aeh:r:k:w:d:s:b:p:g:i:t:", opts, &idx);
 
     if (c == -1) break;
 
     switch (c) {
+      case 't':
+        state.gc_thread_count = atoi(optarg);
       case 'k':
         state.scale_factor = atof(optarg);
         break;
       case 'w':
         state.warehouse_count = atoi(optarg);
+        break;
+      case 'r':
+        state.order_range = atoi(optarg);
         break;
       case 'd':
         state.duration = atof(optarg);
@@ -250,6 +270,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateBackendCount(state);
   ValidateProtocol(state);
   ValidateIndex(state);
+  ValidateOrderRange(state);
   
   LOG_TRACE("%s : %d", "Run client affinity", state.run_affinity);
   LOG_TRACE("%s : %d", "Run exponential backoff", state.run_backoff);

@@ -300,7 +300,7 @@ bool SpeculativeReadTxnManager::PerformInsert(const ItemPointer &location) {
 // this function is invoked when it is the first time to update the tuple.
 // the tuple passed into this function is the global version.
 void SpeculativeReadTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                              const ItemPointer &new_location) {
+                                              const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   auto transaction_id = current_txn->GetTransactionId();
   auto txn_begin_id = current_txn->GetBeginCommitId();
 

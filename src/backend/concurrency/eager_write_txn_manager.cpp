@@ -294,7 +294,7 @@ bool EagerWriteTxnManager::PerformInsert(const ItemPointer &location) {
 }
 
 void EagerWriteTxnManager::PerformUpdate(const ItemPointer &old_location,
-                                         const ItemPointer &new_location) {
+                                         const ItemPointer &new_location, UNUSED_ATTRIBUTE const bool is_blind_write) {
   LOG_TRACE("Performing Write %u %u", old_location.block, old_location.offset);
 
   auto transaction_id = current_txn->GetTransactionId();

@@ -188,19 +188,19 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = FillInEmptyTupleSlot(tuple, false);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated when inserting secondary index");
+    LOG_TRACE("Index constraint violated when inserting secondary index");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -214,19 +214,19 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = FillInEmptyTupleSlot(tuple, true);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
-    LOG_WARN("Index constraint violated when inserting secondary index");
+    LOG_TRACE("Index constraint violated when inserting secondary index");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -247,7 +247,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
 
   ItemPointer location = FillInEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
@@ -255,13 +255,13 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location, itemptr_ptr) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -280,7 +280,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, index::RBItemPoi
 
   ItemPointer location = FillInEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
-    LOG_WARN("Failed to get tuple slot.");
+    LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
@@ -288,13 +288,13 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, index::RBItemPoi
 
   // Index checks and updates
   if (InsertInIndexes(tuple, location, rb_itemptr_ptr) == false) {
-    LOG_WARN("Index constraint violated");
+    LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_WARN("ForeignKey constraint violated");
+    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
