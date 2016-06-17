@@ -35,7 +35,7 @@ namespace executor {
  */
 DeleteExecutor::DeleteExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -115,34 +115,26 @@ bool DeleteExecutor::DExecute() {
         return false;
       }
 
-      if (concurrency::TransactionManagerFactory::GetProtocol() ==
-          CONCURRENCY_TYPE_OCC_RB) {
-        // If we are using rollback segment, what we need to do is flip the
-        // delete
-        // flag in the master copy.
-        transaction_manager.PerformDelete(old_location);
+      // if it is the latest version and not locked by other threads, then
+      // insert a new version.
+      std::unique_ptr<storage::Tuple> new_tuple(
+          new storage::Tuple(target_table_->GetSchema(), true));
 
-      } else {
-        // if it is the latest version and not locked by other threads, then
-        // insert a new version.
-        std::unique_ptr<storage::Tuple> new_tuple(
-            new storage::Tuple(target_table_->GetSchema(), true));
+      // Make a copy of the original tuple and allocate a new tuple
+      expression::ContainerTuple<storage::TileGroup> old_tuple(
+          tile_group, physical_tuple_id);
 
-        // Make a copy of the original tuple and allocate a new tuple
-        expression::ContainerTuple<storage::TileGroup> old_tuple(
-            tile_group, physical_tuple_id);
+      // finally insert updated tuple into the table
+      ItemPointer new_location =
+          target_table_->InsertEmptyVersion(new_tuple.get());
 
-        // finally insert updated tuple into the table
-        ItemPointer new_location =
-            target_table_->InsertEmptyVersion(new_tuple.get());
-
-        if (new_location.IsNull() == true) {
-          LOG_TRACE("Fail to insert new tuple. Set txn failure.");
-          transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-          return false;
-        }
-        transaction_manager.PerformDelete(old_location, new_location);
+      if (new_location.IsNull() == true) {
+        LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        return false;
       }
+      transaction_manager.PerformDelete(old_location, new_location);
+
       executor_context_->num_processed += 1;  // deleted one
 
     } else {
