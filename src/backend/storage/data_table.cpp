@@ -310,7 +310,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, index::RBItemPoi
 // For RB
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location, index::RBItemPointer **rb_itempointer_ptr) {
-  
   *rb_itempointer_ptr = nullptr;
 
   ItemPointer *temp_itemptr = nullptr;
@@ -353,7 +352,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
 
       case INDEX_CONSTRAINT_TYPE_DEFAULT:
       default:
-        index->InsertEntry(key.get(), location);
+        index->InsertEntry(key.get(), location, rb_itempointer_ptr);
         break;
     }
     LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());

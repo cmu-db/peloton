@@ -175,7 +175,8 @@ bool InsertExecutor::DExecute() {
       if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB
         || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
         location = target_table->InsertTuple(tuple, &rb_itemptr_ptr);
-        //assert(rb_itemptr_ptr != nullptr);
+        if (target_table->GetIndexCount() > 1)
+          assert(rb_itemptr_ptr != nullptr);
       } else {
         location = target_table->InsertTuple(tuple, &itemptr_ptr);
       }

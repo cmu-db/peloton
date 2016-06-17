@@ -185,7 +185,7 @@ bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location UNUSED_ATTRI
 bool TsOrderRbTxnManager::PerformInsert(const ItemPointer &location, index::RBItemPointer *rb_item_ptr) {
   LOG_TRACE("Perform insert in RB with rb_itemptr %p", rb_item_ptr);
 
-  assert(rb_item_ptr != nullptr);
+  // assert(rb_item_ptr != nullptr);
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 

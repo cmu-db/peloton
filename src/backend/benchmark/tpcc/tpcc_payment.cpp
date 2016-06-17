@@ -128,6 +128,7 @@ PaymentPlans PreparePaymentPlan() {
   std::vector<Value> customer_key_values;
 
   auto customer_skey_index = customer_table->GetIndexWithOid(customer_table_skey_index_oid);
+  assert(customer_skey_index != nullptr);
 
   planner::IndexScanPlan::IndexScanDesc customer_index_scan_desc(
     customer_skey_index, customer_key_column_ids, customer_expr_types,
