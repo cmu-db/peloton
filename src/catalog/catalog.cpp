@@ -74,7 +74,6 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
 	  // Update catalog_table with this table info
 	  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
 	  //  Another way of insertion using transaction manager
-	  //  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
 	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
 	  return Result::RESULT_SUCCESS;
   }
@@ -90,6 +89,11 @@ Result Catalog::DropTable(std::string database_name, std::string table_name){
 		  storage::DataTable *table = database->GetTableWithName(table_name);
 		  if(table){
 			  oid_t table_id = table->GetOid();
+			  std::cout << "Deleting tuple..." << std::endl;
+			  std::cout << "Table Info before delete: " << GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(TABLE_CATALOG_NAME)->GetInfo() << std::endl;
+			  catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(TABLE_CATALOG_NAME), table_id);
+			  std::cout << "Tuple deleted!" << std::endl;
+			  std::cout << "Table Info after delete: " << GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(TABLE_CATALOG_NAME)->GetInfo() << std::endl;
 			  database->DropTableWithOid(table_id);
 			  // TODO: Update catalog_table with the drop
 			  // Pending how tuples are removed from tables
@@ -155,7 +159,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
 
   auto id_column =
       catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                      "table_id", true);
+                      "id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column =
@@ -176,7 +180,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
   auto id_column =
       catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                      "database_id", true);
+                      "id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column =

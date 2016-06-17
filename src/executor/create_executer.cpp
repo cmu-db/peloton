@@ -27,7 +27,7 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
 
 // Initialize executer
 bool CreateExecutor::DInit() {
-	LOG_INFO("Initializing Create Executer...");
+  LOG_INFO("Initializing Create Executer...");
   auto &bootstrapper = catalog::Bootstrapper::GetInstance();
   global_catalog = bootstrapper.bootstrap();
   global_catalog->CreateDatabase("default_database");
