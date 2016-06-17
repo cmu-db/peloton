@@ -22,6 +22,7 @@
 #include "parser/peloton/abstract_parse.h"
 #include "parser/peloton/insert_parse.h"
 #include "parser/peloton/drop_parse.h"
+#include "parser/peloton/create_parse.h"
 
 namespace peloton {
 namespace parser {
@@ -78,6 +79,8 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
       break;
 
     case T_CreateStmt:
+	LOG_INFO("Move on Up");
+    	child_parse_tree.reset(new parser::CreateParse((CreateStmt *) postgres_parse_tree));
       break;
 
     case T_DropStmt:

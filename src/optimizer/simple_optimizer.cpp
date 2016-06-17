@@ -14,9 +14,11 @@
 
 #include "parser/peloton/abstract_parse.h"
 #include "parser/peloton/drop_parse.h"
+#include "parser/peloton/create_parse.h"
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/create_plan.h"
 
 #include "common/logger.h"
 
@@ -55,11 +57,21 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
   switch (parse_item_node_type) {
     case PARSE_NODE_TYPE_DROP: {
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
-      new planner::DropPlan((parser::DropParse*)parse_tree.get()));
+          new planner::DropPlan((parser::DropParse*) parse_tree.get()));
       child_plan = std::move(child_DropPlan);
     }
       break;
 
+<<<<<<< HEAD
+=======
+    case PARSE_NODE_TYPE_CREATE: {
+      std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
+          new planner::CreatePlan((parser::CreateParse*) parse_tree.get()));
+      child_plan = std::move(child_CreatePlan);
+    }
+      break;
+
+>>>>>>> 3bd40e0d5c10b30c4e2eb34bdd34280863c065df
     case PARSE_NODE_TYPE_SCAN: {
       std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan(
           new planner::SeqScanPlan());
@@ -68,7 +80,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       break;
 
     default:
-      LOG_INFO("Unsupported Parse Node Type");
+      LOG_INFO("Unsupported Parse Node Type")
+      ;
   }
 
   if (child_plan != nullptr) {
@@ -80,10 +93,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
 
   // Recurse
   /*auto &children = parse_tree->GetChildren();
-  for (auto &child : children) {
-    std::shared_ptr<planner::AbstractPlan> child_parse = std::move(BuildPlanTree(child));
-    child_plan = std::move(child_parse);
-  }*/
+   for (auto &child : children) {
+   std::shared_ptr<planner::AbstractPlan> child_parse = std::move(BuildPlanTree(child));
+   child_plan = std::move(child_parse);
+   }*/
   return plan_tree;
 }
 
