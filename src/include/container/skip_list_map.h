@@ -60,13 +60,18 @@ class SkipListMap {
   // Checks if the skip_list_map is empty
   bool IsEmpty() const;
 
-public:
+ public:
 
   // rcu implementation
   typedef cds::urcu::general_instant<> RCUImpl;
 
   // rcu type
   typedef cds::urcu::gc<RCUImpl> RCUType;
+
+  struct skip_list_map_traits: public cds::container::skip_list::traits {
+    typedef std::equal_to<KeyType> equal_to;
+
+  };
 
   // concurrent skip list algorithm
   // http://libcds.sourceforge.net/doc/cds-api/
@@ -75,7 +80,37 @@ public:
   // map pair <key, value>
   typedef typename skip_list_map_t::value_type map_pair;
 
-private:
+  typedef typename skip_list_map_t::iterator map_iterator;
+
+  typedef typename skip_list_map_t::const_iterator map_const_iterator;
+
+  // Iterators
+
+  map_iterator begin(){
+    return skip_list_map.begin();
+  }
+
+  map_const_iterator begin() const{
+    return skip_list_map.begin();
+  }
+
+  map_const_iterator cbegin() const{
+    return skip_list_map.cbegin();
+  }
+
+  map_iterator end(){
+    return skip_list_map.end();
+  }
+
+  map_const_iterator end() const{
+    return skip_list_map.end();
+  }
+
+  map_const_iterator cend() const{
+    return skip_list_map.cend();
+  }
+
+  private:
 
   skip_list_map_t skip_list_map;
 
