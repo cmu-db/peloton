@@ -197,13 +197,6 @@ void FuzzyReadTest() {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
 
-  if (concurrency::TransactionManagerFactory::GetProtocol() ==
-      CONCURRENCY_TYPE_EAGER_WRITE) {
-    // Bypass eager write
-    LOG_INFO("Bypass eager write");
-    return;
-  }
-
   // The constraints are the value of 0 and 1 should be equal
   {
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
@@ -249,12 +242,6 @@ void PhantomTest() {
       TransactionTestsUtil::CreateTable());
 
   {
-    if (concurrency::TransactionManagerFactory::GetProtocol() ==
-        CONCURRENCY_TYPE_EAGER_WRITE) {
-      // Bypass eager write
-      LOG_INFO("Bypass eager write");
-      return;
-    }
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Scan(0);
     scheduler.Txn(1).Insert(5, 0);
@@ -341,13 +328,6 @@ void ReadSkewTest() {
   std::unique_ptr<storage::DataTable> table(
       TransactionTestsUtil::CreateTable());
   {
-    if (concurrency::TransactionManagerFactory::GetProtocol() ==
-        CONCURRENCY_TYPE_EAGER_WRITE) {
-      // Bypass eager write
-      LOG_INFO("Bypass eager write");
-      return;
-    }
-
     TransactionScheduler scheduler(2, table.get(), &txn_manager);
     scheduler.Txn(0).Read(0);
     scheduler.Txn(1).Update(0, 1);
@@ -384,12 +364,6 @@ void SIAnomalyTest1() {
     EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[0].txn_result);
   }
   {
-    if (concurrency::TransactionManagerFactory::GetProtocol() ==
-        CONCURRENCY_TYPE_EAGER_WRITE) {
-      // Bypass eager write
-      LOG_INFO("Bypass eager write");
-      return;
-    }
     TransactionScheduler scheduler(4, table.get(), &txn_manager);
     // Test against anomaly
     scheduler.Txn(1).ReadStore(current_batch_key, 0);
