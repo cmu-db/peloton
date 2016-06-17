@@ -24,11 +24,10 @@ namespace test {
 class TransactionTests : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OPTIMISTIC,  CONCURRENCY_TYPE_PESSIMISTIC,
-    CONCURRENCY_TYPE_SSI,
-    // CONCURRENCY_TYPE_SPECULATIVE_READ,
-    CONCURRENCY_TYPE_EAGER_WRITE, CONCURRENCY_TYPE_TO,
-    CONCURRENCY_TYPE_OCC_RB};
+    CONCURRENCY_TYPE_OPTIMISTIC,
+    CONCURRENCY_TYPE_PESSIMISTIC,
+    CONCURRENCY_TYPE_TO
+};
 
 void TransactionTest(concurrency::TransactionManager *txn_manager,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
@@ -174,23 +173,6 @@ TEST_F(TransactionTests, SingleTransactionTest) {
       EXPECT_EQ(3, scheduler.schedules[0].results[3]);
     }
 
-    // // Deadlock detection test for eager write
-    // // T0:  R0      W0      C0
-    // // T1:      R1      W1      C1
-    if (concurrency::TransactionManagerFactory::GetProtocol() ==
-        CONCURRENCY_TYPE_EAGER_WRITE) {
-      TransactionScheduler scheduler(2, table.get(), &txn_manager);
-      scheduler.Txn(0).Read(2);
-      scheduler.Txn(1).Read(3);
-      scheduler.Txn(0).Update(3, 1);
-      scheduler.Txn(1).Update(2, 2);
-      scheduler.Txn(0).Commit();
-      scheduler.Txn(1).Commit();
-
-      scheduler.Run();
-      EXPECT_EQ(RESULT_SUCCESS, scheduler.schedules[1].txn_result);
-      EXPECT_EQ(RESULT_ABORTED, scheduler.schedules[0].txn_result);
-    }
   }
 }
 

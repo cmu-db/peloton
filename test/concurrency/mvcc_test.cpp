@@ -216,32 +216,6 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
       ValidateMVCC_OldToNew(table.get());
     }
 
-    // delete not exist, delete exist, read deleted, update deleted,
-    // read deleted, insert back, update inserted, read newly updated,
-    // delete inserted, read deleted
-    {
-      if (concurrency::TransactionManagerFactory::GetProtocol() !=
-          CONCURRENCY_TYPE_OCC_RB) {
-        // Bypass RB
-        TransactionScheduler scheduler(1, table.get(), &txn_manager);
-        scheduler.Txn(0).Delete(100);
-        scheduler.Txn(0).Delete(0);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Update(0, 1);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Insert(0, 2);
-        scheduler.Txn(0).Update(0, 3);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Delete(0);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Commit();
-
-        scheduler.Run();
-
-        ValidateMVCC_OldToNew(table.get());
-      }
-    }
-
     // insert, delete inserted, read deleted, insert again, delete again
     // read deleted, insert again, read inserted, update inserted, read updated
     {
