@@ -60,7 +60,7 @@ void Catalog::CreateDatabase(std::string database_name) {
 }
 
 // Create a table in a database
-void Catalog::CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema> schema) {
+Result Catalog::CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema> schema) {
   bool own_schema = true;
   bool adapt_table = false;
   oid_t table_id = GetNewID();
@@ -76,7 +76,9 @@ void Catalog::CreateTable(std::string database_name, std::string table_name, std
 	  //  Another way of insertion using transaction manager
 	  //  InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
 	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
+	  return Result::RESULT_SUCCESS;
   }
+  return Result::RESULT_FAILURE;
 }
 
 // Drop a table

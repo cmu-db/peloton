@@ -46,6 +46,7 @@ class CreateExecutor : public AbstractExecutor {
 
  private:
   catalog::Catalog* global_catalog;
+  ExecutorContext *context;
 
 };
 
