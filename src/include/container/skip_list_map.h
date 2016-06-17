@@ -24,10 +24,10 @@ namespace peloton {
 
 // SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 #define SKIP_LIST_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType>
+    typename ValueType, typename KeyComparator>
 
 // SKIP_LIST_MAP_TYPE
-#define SKIP_LIST_MAP_TYPE SkipListMap<KeyType, ValueType>
+#define SKIP_LIST_MAP_TYPE SkipListMap<KeyType, ValueType, KeyComparator>
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 class SkipListMap {
@@ -69,13 +69,14 @@ class SkipListMap {
   typedef cds::urcu::gc<RCUImpl> RCUType;
 
   struct skip_list_map_traits: public cds::container::skip_list::traits {
-    typedef std::equal_to<KeyType> equal_to;
+    typedef KeyComparator compare;
+    typedef KeyComparator less;
 
   };
 
   // concurrent skip list algorithm
   // http://libcds.sourceforge.net/doc/cds-api/
-  typedef cds::container::SkipListMap<RCUType, KeyType, ValueType> skip_list_map_t;
+  typedef cds::container::SkipListMap<RCUType, KeyType, ValueType, skip_list_map_traits> skip_list_map_t;
 
   // map pair <key, value>
   typedef typename skip_list_map_t::value_type map_pair;
