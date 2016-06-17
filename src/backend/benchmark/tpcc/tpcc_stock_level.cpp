@@ -247,7 +247,7 @@ bool RunStockLevel(const size_t &thread_id, const int &order_range) {
     }
 
     if (stock_values.size() == 0) {
-      LOG_ERROR("stock return size incorrect : %lu", order_line_values.size());
+      //LOG_ERROR("stock return size incorrect : %lu", order_line_values.size());
       continue;
     }
 
