@@ -27,6 +27,7 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
 
 // Initialize executer
 bool CreateExecutor::DInit() {
+	LOG_INFO("Initializing Create Executer...");
   auto &bootstrapper = catalog::Bootstrapper::GetInstance();
   global_catalog = bootstrapper.bootstrap();
   global_catalog->CreateDatabase("default_database");
@@ -35,6 +36,7 @@ bool CreateExecutor::DInit() {
 }
 
 bool CreateExecutor::DExecute() {
+	LOG_INFO("Executing Create...");
   const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
   std::string table_name = node.GetTableName();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());

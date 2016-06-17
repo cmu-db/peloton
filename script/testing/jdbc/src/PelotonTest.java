@@ -65,8 +65,8 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
-//    stmt.execute(DROP);
     stmt.execute(DDL);
+    stmt.execute(DROP);
     System.out.println("Test db created.");
   }
 

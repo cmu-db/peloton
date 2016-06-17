@@ -42,9 +42,20 @@ TEST_F(DropTests, DroppingTable) {
 	  catalog::Column(VALUE_TYPE_VARCHAR, 32,
 					  "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
+  std::unique_ptr<catalog::Schema> table_schema2(new catalog::Schema({id_column, name_column}));
+
   global_catalog->CreateDatabase("default_database");
+
+  std:: cout << "Database info before adding first table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
   global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
+  std::cout << "First table added!" << std::endl;
+
+  std:: cout << "Database info after adding first table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
+  global_catalog->CreateTable("default_database", "department_table_2", std::move(table_schema2));
+  std::cout << "Second table added!" << std::endl;
+  std:: cout << "Database info after adding second table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
+
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 2);
 
   // Now dropping the table using the executer
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -56,6 +67,10 @@ TEST_F(DropTests, DroppingTable) {
   executor.Init();
   executor.Execute();
   txn_manager.CommitTransaction();
+  planner::DropPlan node2("department_table_2");
+  executor::DropExecutor executor2(&node2, context.get());
+  executor2.Init();
+  executor2.Execute();
   EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 0);
 
 }
