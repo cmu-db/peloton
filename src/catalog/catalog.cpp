@@ -68,7 +68,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
   if(database){
 	  oid_t database_id = database->GetOid();
 	  storage::DataTable *table = storage::TableFactory::GetDataTable(
-			  database_id, table_id, schema.get(), table_name,
+			  database_id, table_id, schema.release(), table_name,
 			  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 	  GetDatabaseWithOid(database_id)->AddTable(table);
 	  // Update catalog_table with this table info
@@ -83,15 +83,20 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
 
 // Drop a table
 Result Catalog::DropTable(std::string database_name, std::string table_name){
+
   storage::Database* database = GetDatabaseWithName(database_name);
   if(database){
 	  if(database->GetTableWithName(table_name)){
-		  oid_t table_id = database->GetTableWithName(table_name)->GetOid();
-		  if(table_id)
-			database->DropTableWithOid(table_id);
-		  // TODO: Update catalog_table with the drop
-		  // Pending how tuples are removed from tables
-		  return Result::RESULT_SUCCESS;
+		  storage::DataTable *table = database->GetTableWithName(table_name);
+		  if(table){
+			  oid_t table_id = table->GetOid();
+			  database->DropTableWithOid(table_id);
+			  // TODO: Update catalog_table with the drop
+			  // Pending how tuples are removed from tables
+			  return Result::RESULT_SUCCESS;
+		  }
+		  else
+			  return Result::RESULT_FAILURE;
 	  }
 	  else
 		  return Result::RESULT_FAILURE;

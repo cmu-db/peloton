@@ -80,7 +80,6 @@ DataTable::~DataTable() {
   for (auto index : indexes_) {
     delete index;
   }
-
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
