@@ -20,6 +20,8 @@
 #include "common/macros.h"
 #include "common/types.h"
 
+#include "index/index_key.h"
+
 namespace peloton {
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
@@ -104,6 +106,13 @@ bool SKIP_LIST_MAP_TYPE::IsEmpty() const{
 }
 
 // Explicit template instantiation
-template class SkipListMap<uint32_t, uint32_t>;
+
+template class SkipListMap<index::GenericKey<4>, ItemPointer *, index::GenericComparator<4>>;
+template class SkipListMap<index::GenericKey<8>, ItemPointer *, index::GenericComparator<8>>;
+template class SkipListMap<index::GenericKey<16>, ItemPointer *, index::GenericComparator<16>>;
+template class SkipListMap<index::GenericKey<64>, ItemPointer *, index::GenericComparator<64>>;
+template class SkipListMap<index::GenericKey<256>, ItemPointer *, index::GenericComparator<256>>;
+
+template class SkipListMap<index::TupleKey, ItemPointer *, index::TupleKeyComparator>;
 
 }  // End peloton namespace

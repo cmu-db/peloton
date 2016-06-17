@@ -203,10 +203,12 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
-    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
-    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.PerformInsert(tuple_slot_id);
+    bool status = txn_manager.PerformInsert(tuple_slot_id);
+    PL_ASSERT(status == true);
   }
 }
 
