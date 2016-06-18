@@ -36,7 +36,6 @@ class SkipListMap {
 
   struct skip_list_map_traits: public cds::container::skip_list::traits {
     typedef KeyComparator compare;
-    typedef KeyComparator less;
 
   };
 
@@ -109,5 +108,21 @@ class SkipListMap {
   skip_list_map_t skip_list_map;
 
 };
+
+struct IntComparator{
+
+  int operator()(uint32_t const& a, uint32_t const& b) const {
+    if(a < b) {
+      return -1;
+    }
+    else if(a > b) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+};
+
 
 }  // namespace peloton
