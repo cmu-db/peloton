@@ -68,7 +68,6 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:339  */
 
 /*#define YYDEBUG 1 */
 /*-------------------------------------------------------------------------
@@ -248,7 +247,6 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 
-#line 252 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -1164,7 +1162,6 @@ extern int base_yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 190 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:355  */
 
 	core_YYSTYPE		core_yystype;
 	/* these fields must match core_YYSTYPE: */
@@ -1204,7 +1201,6 @@ union YYSTYPE
 	InsertStmt			*istmt;
 	VariableSetStmt		*vsetstmt;
 
-#line 1208 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -1232,7 +1228,6 @@ int base_yyparse (core_yyscan_t yyscanner);
 
 /* Copy the second part of user declarations.  */
 
-#line 1236 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -23339,43 +23334,34 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 734 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				pg_yyget_extra(yyscanner)->parsetree = (yyvsp[0].list);
 			}
-#line 23347 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 741 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].node) != NULL)
 						(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 					else
 						(yyval.list) = (yyvsp[-2].list);
 				}
-#line 23358 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 748 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].node) != NULL)
 						(yyval.list) = list_make1((yyvsp[0].node));
 					else
 						(yyval.list) = NIL;
 				}
-#line 23369 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 127:
-#line 880 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 23375 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 128:
-#line 891 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_ROLE;
@@ -23383,120 +23369,88 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23387 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 129:
-#line 901 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 23393 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 130:
-#line 902 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 23399 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 131:
-#line 903 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 23405 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 132:
-#line 912 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 23411 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 133:
-#line 913 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 23417 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 134:
-#line 917 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 23423 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 135:
-#line 918 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 23429 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 136:
-#line 923 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("password",
 									 (Node *)makeString((yyvsp[0].str)));
 				}
-#line 23438 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 137:
-#line 928 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("password", NULL);
 				}
-#line 23446 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 138:
-#line 932 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("encryptedPassword",
 									 (Node *)makeString((yyvsp[0].str)));
 				}
-#line 23455 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 139:
-#line 937 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("unencryptedPassword",
 									 (Node *)makeString((yyvsp[0].str)));
 				}
-#line 23464 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 140:
-#line 942 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("inherit", (Node *)makeInteger(TRUE));
 				}
-#line 23472 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 141:
-#line 946 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("connectionlimit", (Node *)makeInteger((yyvsp[0].ival)));
 				}
-#line 23480 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 142:
-#line 950 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("validUntil", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 23488 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 143:
-#line 955 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[0].list));
 				}
-#line 23496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 144:
-#line 959 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * We handle identifiers that aren't parser keywords with
@@ -23551,57 +23505,43 @@ yyreduce:
 								 errmsg("unrecognized role option \"%s\"", (yyvsp[0].str)),
 									 parser_errposition((yylsp[0]))));
 				}
-#line 23555 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 145:
-#line 1016 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = (yyvsp[0].defelt); }
-#line 23561 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 146:
-#line 1019 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("sysid", (Node *)makeInteger((yyvsp[0].ival)));
 				}
-#line 23569 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 147:
-#line 1023 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("adminmembers", (Node *)(yyvsp[0].list));
 				}
-#line 23577 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 148:
-#line 1027 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("rolemembers", (Node *)(yyvsp[0].list));
 				}
-#line 23585 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 149:
-#line 1031 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[0].list));
 				}
-#line 23593 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 150:
-#line 1035 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("addroleto", (Node *)(yyvsp[0].list));
 				}
-#line 23601 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 151:
-#line 1049 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_USER;
@@ -23609,11 +23549,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23613 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 152:
-#line 1067 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = (yyvsp[-2].node);
@@ -23621,23 +23559,17 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
-#line 23625 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 153:
-#line 1077 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 23631 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 154:
-#line 1078 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 23637 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 155:
-#line 1083 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = (yyvsp[-2].node);
@@ -23645,11 +23577,9 @@ yyreduce:
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 23649 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 156:
-#line 1091 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = NULL;
@@ -23657,11 +23587,9 @@ yyreduce:
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 23661 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 157:
-#line 1109 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = (yyvsp[-2].node);
@@ -23669,11 +23597,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
-#line 23673 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 158:
-#line 1121 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = (yyvsp[-1].node);
@@ -23681,55 +23607,45 @@ yyreduce:
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 23685 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 159:
-#line 1142 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
 					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23696 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 160:
-#line 1149 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = TRUE;
 					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23707 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 161:
-#line 1168 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
 					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23718 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 162:
-#line 1175 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->roles = (yyvsp[0].list);
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 23729 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 163:
-#line 1192 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateRoleStmt *n = makeNode(CreateRoleStmt);
 					n->stmt_type = ROLESTMT_GROUP;
@@ -23737,11 +23653,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23741 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 164:
-#line 1210 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = (yyvsp[-3].node);
@@ -23750,45 +23664,35 @@ yyreduce:
 														(Node *)(yyvsp[0].list)));
 					(yyval.node) = (Node *)n;
 				}
-#line 23754 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 165:
-#line 1220 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = +1; }
-#line 23760 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 166:
-#line 1221 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = -1; }
-#line 23766 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 167:
-#line 1234 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
 					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23777 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 168:
-#line 1241 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = TRUE;
 					n->roles = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 23788 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 169:
-#line 1258 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* One can omit the schema name or the authorization id. */
@@ -23798,11 +23702,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 23802 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 170:
-#line 1268 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* ...but not both */
@@ -23812,11 +23714,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 23816 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 171:
-#line 1278 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* schema name can be omitted here, too */
@@ -23831,11 +23731,9 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 23835 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 172:
-#line 1293 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* ...but not here */
@@ -23850,69 +23748,53 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 23854 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 173:
-#line 1310 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 23860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 174:
-#line 1311 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 23866 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 175:
-#line 1316 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyloc) < 0)			/* see comments for YYLLOC_DEFAULT */
 						(yyloc) = (yylsp[0]);
 					(yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node));
 				}
-#line 23876 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 176:
-#line 1322 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 23882 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 183:
-#line 1350 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 23892 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 184:
-#line 1356 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = true;
 					(yyval.node) = (Node *) n;
 				}
-#line 23902 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 185:
-#line 1362 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = (yyvsp[0].vsetstmt);
 					n->is_local = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 23912 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 186:
-#line 1371 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
@@ -23920,11 +23802,9 @@ yyreduce:
 					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
-#line 23924 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 187:
-#line 1379 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
@@ -23932,11 +23812,9 @@ yyreduce:
 					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
-#line 23936 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 189:
-#line 1391 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -23944,11 +23822,9 @@ yyreduce:
 					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
-#line 23948 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 190:
-#line 1399 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -23956,50 +23832,40 @@ yyreduce:
 					n->args = (yyvsp[0].list);
 					(yyval.vsetstmt) = n;
 				}
-#line 23960 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 191:
-#line 1407 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_DEFAULT;
 					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
-#line 23971 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 192:
-#line 1414 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_DEFAULT;
 					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
-#line 23982 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 193:
-#line 1422 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {(yyval.vsetstmt) = (yyvsp[0].vsetstmt);}
-#line 23988 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 194:
-#line 1424 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_CURRENT;
 					n->name = (yyvsp[-2].str);
 					(yyval.vsetstmt) = n;
 				}
-#line 23999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 195:
-#line 1432 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24010,11 +23876,9 @@ yyreduce:
 						n->kind = VAR_SET_DEFAULT;
 					(yyval.vsetstmt) = n;
 				}
-#line 24014 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 196:
-#line 1443 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -24022,11 +23886,9 @@ yyreduce:
 							 parser_errposition((yylsp[0]))));
 					(yyval.vsetstmt) = NULL; /*not reached*/
 				}
-#line 24026 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 197:
-#line 1451 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24034,11 +23896,9 @@ yyreduce:
 					n->args = list_make1(makeStringConst((yyvsp[0].str), (yylsp[0])));
 					(yyval.vsetstmt) = n;
 				}
-#line 24038 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 198:
-#line 1459 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24049,11 +23909,9 @@ yyreduce:
 						n->kind = VAR_SET_DEFAULT;
 					(yyval.vsetstmt) = n;
 				}
-#line 24053 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 199:
-#line 1470 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24061,11 +23919,9 @@ yyreduce:
 					n->args = list_make1(makeStringConst((yyvsp[0].str), (yylsp[0])));
 					(yyval.vsetstmt) = n;
 				}
-#line 24065 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 200:
-#line 1478 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24073,22 +23929,18 @@ yyreduce:
 					n->args = list_make1(makeStringConst((yyvsp[0].str), (yylsp[0])));
 					(yyval.vsetstmt) = n;
 				}
-#line 24077 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 201:
-#line 1486 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_DEFAULT;
 					n->name = "session_authorization";
 					(yyval.vsetstmt) = n;
 				}
-#line 24088 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 202:
-#line 1493 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
@@ -24096,11 +23948,9 @@ yyreduce:
 					n->args = list_make1(makeStringConst((yyvsp[0].ival) == XMLOPTION_DOCUMENT ? static_cast<char *>("DOCUMENT") : static_cast<char *>("CONTENT"), (yylsp[0])));
 					(yyval.vsetstmt) = n;
 				}
-#line 24100 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 203:
-#line 1502 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
@@ -24108,111 +23958,77 @@ yyreduce:
 					n->args = list_make1(makeStringConst((yyvsp[0].str), (yylsp[0])));
 					(yyval.vsetstmt) = n;
 				}
-#line 24112 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 204:
-#line 1511 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 24118 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 205:
-#line 1513 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = psprintf("%s.%s", (yyvsp[-2].str), (yyvsp[0].str)); }
-#line 24124 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 206:
-#line 1516 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 24130 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 207:
-#line 1517 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 24136 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 208:
-#line 1521 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeStringConst((yyvsp[0].str), (yylsp[0])); }
-#line 24142 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 209:
-#line 1523 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeAConst((yyvsp[0].value), (yylsp[0])); }
-#line 24148 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 210:
-#line 1526 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "read uncommitted"; }
-#line 24154 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 211:
-#line 1527 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "read committed"; }
-#line 24160 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 212:
-#line 1528 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "repeatable read"; }
-#line 24166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 213:
-#line 1529 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "serializable"; }
-#line 24172 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 214:
-#line 1533 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "true"; }
-#line 24178 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 215:
-#line 1534 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "false"; }
-#line 24184 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 216:
-#line 1535 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "on"; }
-#line 24190 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 217:
-#line 1541 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 24196 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 218:
-#line 1554 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeStringConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 24204 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 219:
-#line 1558 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeStringConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 24212 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 220:
-#line 1562 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TypeName *t = (yyvsp[-2].typnam);
 					if ((yyvsp[0].list) != NIL)
@@ -24227,304 +24043,230 @@ yyreduce:
 					t->typmods = (yyvsp[0].list);
 					(yyval.node) = makeStringConstCast((yyvsp[-1].str), (yylsp[-1]), t);
 				}
-#line 24231 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 221:
-#line 1577 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TypeName *t = (yyvsp[-4].typnam);
 					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
 											makeIntConst((yyvsp[-2].ival), (yylsp[-2])));
 					(yyval.node) = makeStringConstCast((yyvsp[0].str), (yylsp[0]), t);
 				}
-#line 24242 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 222:
-#line 1583 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeAConst((yyvsp[0].value), (yylsp[0])); }
-#line 24248 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 223:
-#line 1584 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 24254 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 224:
-#line 1585 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 24260 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 225:
-#line 1589 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 24266 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 226:
-#line 1590 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 24272 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 227:
-#line 1591 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 24278 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 228:
-#line 1595 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 24284 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 229:
-#line 1596 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 24290 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 230:
-#line 1600 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[0].vsetstmt); }
-#line 24296 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 231:
-#line 1604 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.vsetstmt) = (yyvsp[0].vsetstmt); }
-#line 24302 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 232:
-#line 1606 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET;
 					n->name = "timezone";
 					(yyval.vsetstmt) = n;
 				}
-#line 24313 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 233:
-#line 1613 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET;
 					n->name = "transaction_isolation";
 					(yyval.vsetstmt) = n;
 				}
-#line 24324 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 234:
-#line 1620 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET;
 					n->name = "session_authorization";
 					(yyval.vsetstmt) = n;
 				}
-#line 24335 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 235:
-#line 1630 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET;
 					n->name = (yyvsp[0].str);
 					(yyval.vsetstmt) = n;
 				}
-#line 24346 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 236:
-#line 1637 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_RESET_ALL;
 					(yyval.vsetstmt) = n;
 				}
-#line 24356 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 237:
-#line 1646 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.vsetstmt) = (yyvsp[0].vsetstmt); }
-#line 24362 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 238:
-#line 1647 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.vsetstmt) = (VariableSetStmt *) (yyvsp[0].node); }
-#line 24368 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 239:
-#line 1652 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.vsetstmt) = (yyvsp[0].vsetstmt); }
-#line 24374 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 240:
-#line 1653 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.vsetstmt) = (VariableSetStmt *) (yyvsp[0].node); }
-#line 24380 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 241:
-#line 1659 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 24390 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 242:
-#line 1665 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = "timezone";
 					(yyval.node) = (Node *) n;
 				}
-#line 24400 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 243:
-#line 1671 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = "transaction_isolation";
 					(yyval.node) = (Node *) n;
 				}
-#line 24410 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 244:
-#line 1677 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = "session_authorization";
 					(yyval.node) = (Node *) n;
 				}
-#line 24420 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 245:
-#line 1683 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name = "all";
 					(yyval.node) = (Node *) n;
 				}
-#line 24430 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 246:
-#line 1693 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ConstraintsSetStmt *n = makeNode(ConstraintsSetStmt);
 					n->constraints = (yyvsp[-1].list);
 					n->deferred = (yyvsp[0].boolean);
 					(yyval.node) = (Node *) n;
 				}
-#line 24441 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 247:
-#line 1702 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 24447 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 248:
-#line 1703 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 24453 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 249:
-#line 1707 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 24459 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 250:
-#line 1708 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 24465 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 251:
-#line 1717 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CheckPointStmt *n = makeNode(CheckPointStmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 24474 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 252:
-#line 1732 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
 					n->target = DISCARD_ALL;
 					(yyval.node) = (Node *) n;
 				}
-#line 24484 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 253:
-#line 1738 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
 					n->target = DISCARD_TEMP;
 					(yyval.node) = (Node *) n;
 				}
-#line 24494 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 254:
-#line 1744 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
 					n->target = DISCARD_TEMP;
 					(yyval.node) = (Node *) n;
 				}
-#line 24504 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 255:
-#line 1750 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
 					n->target = DISCARD_PLANS;
 					(yyval.node) = (Node *) n;
 				}
-#line 24514 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 256:
-#line 1756 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DiscardStmt *n = makeNode(DiscardStmt);
 					n->target = DISCARD_SEQUENCES;
 					(yyval.node) = (Node *) n;
 				}
-#line 24524 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 257:
-#line 1775 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24533,11 +24275,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 24537 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 258:
-#line 1784 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24546,11 +24286,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 24550 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 259:
-#line 1793 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24561,11 +24299,9 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24565 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 260:
-#line 1804 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24576,11 +24312,9 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24580 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 261:
-#line 1815 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24589,11 +24323,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 24593 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 262:
-#line 1824 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24602,11 +24334,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 24606 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 263:
-#line 1833 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24617,11 +24347,9 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24621 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 264:
-#line 1844 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24632,11 +24360,9 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24636 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 265:
-#line 1855 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24645,11 +24371,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 24649 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 266:
-#line 1864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24658,11 +24382,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 24662 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 267:
-#line 1873 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24671,11 +24393,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 24675 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 268:
-#line 1882 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24684,11 +24404,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 24688 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 269:
-#line 1891 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24697,11 +24415,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 24701 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 270:
-#line 1900 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -24710,11 +24426,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 24714 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 271:
-#line 1909 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24725,11 +24439,9 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24729 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 272:
-#line 1920 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableMoveAllStmt *n =
 						makeNode(AlterTableMoveAllStmt);
@@ -24740,45 +24452,35 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 24744 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 273:
-#line 1933 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 24750 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 274:
-#line 1934 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 24756 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 275:
-#line 1940 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 24767 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 276:
-#line 1948 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 24778 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 277:
-#line 1956 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ColumnDefault;
@@ -24786,33 +24488,27 @@ yyreduce:
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 24790 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 278:
-#line 1965 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropNotNull;
 					n->name = (yyvsp[-3].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 24801 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 279:
-#line 1973 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetNotNull;
 					n->name = (yyvsp[-3].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 24812 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 280:
-#line 1981 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetStatistics;
@@ -24820,11 +24516,9 @@ yyreduce:
 					n->def = (Node *) makeInteger((yyvsp[0].ival));
 					(yyval.node) = (Node *)n;
 				}
-#line 24824 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 281:
-#line 1990 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetOptions;
@@ -24832,11 +24526,9 @@ yyreduce:
 					n->def = (Node *) (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 24836 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 282:
-#line 1999 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ResetOptions;
@@ -24844,11 +24536,9 @@ yyreduce:
 					n->def = (Node *) (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 24848 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 283:
-#line 2008 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetStorage;
@@ -24856,11 +24546,9 @@ yyreduce:
 					n->def = (Node *) makeString((yyvsp[0].str));
 					(yyval.node) = (Node *)n;
 				}
-#line 24860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 284:
-#line 2017 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
@@ -24869,11 +24557,9 @@ yyreduce:
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 24873 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 285:
-#line 2027 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
@@ -24882,11 +24568,9 @@ yyreduce:
 					n->missing_ok = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 24886 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 286:
-#line 2040 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					ColumnDef *def = makeNode(ColumnDef);
@@ -24900,11 +24584,9 @@ yyreduce:
 					def->location = (yylsp[-5]);
 					(yyval.node) = (Node *)n;
 				}
-#line 24904 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 287:
-#line 2055 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AlterColumnGenericOptions;
@@ -24912,22 +24594,18 @@ yyreduce:
 					n->def = (Node *) (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 24916 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 288:
-#line 2064 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddConstraint;
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 24927 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 289:
-#line 2072 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					Constraint *c = makeNode(Constraint);
@@ -24941,22 +24619,18 @@ yyreduce:
 									NULL, NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 24945 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 290:
-#line 2087 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ValidateConstraint;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 24956 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 291:
-#line 2095 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropConstraint;
@@ -24965,11 +24639,9 @@ yyreduce:
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 24969 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 292:
-#line 2105 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropConstraint;
@@ -24978,223 +24650,181 @@ yyreduce:
 					n->missing_ok = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 24982 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 293:
-#line 2115 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddOids;
 					(yyval.node) = (Node *)n;
 				}
-#line 24992 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 294:
-#line 2122 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropOids;
 					(yyval.node) = (Node *)n;
 				}
-#line 25002 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 295:
-#line 2129 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ClusterOn;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25013 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 296:
-#line 2137 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropCluster;
 					n->name = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 25024 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 297:
-#line 2145 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetLogged;
 					(yyval.node) = (Node *)n;
 				}
-#line 25034 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 298:
-#line 2152 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetUnLogged;
 					(yyval.node) = (Node *)n;
 				}
-#line 25044 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 299:
-#line 2159 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableTrig;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25055 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 300:
-#line 2167 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableAlwaysTrig;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25066 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 301:
-#line 2175 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableReplicaTrig;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25077 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 302:
-#line 2183 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableTrigAll;
 					(yyval.node) = (Node *)n;
 				}
-#line 25087 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 303:
-#line 2190 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableTrigUser;
 					(yyval.node) = (Node *)n;
 				}
-#line 25097 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 304:
-#line 2197 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableTrig;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25108 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 305:
-#line 2205 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableTrigAll;
 					(yyval.node) = (Node *)n;
 				}
-#line 25118 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 306:
-#line 2212 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableTrigUser;
 					(yyval.node) = (Node *)n;
 				}
-#line 25128 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 307:
-#line 2219 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableRule;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25139 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 308:
-#line 2227 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableAlwaysRule;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25150 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 309:
-#line 2235 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableReplicaRule;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25161 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 310:
-#line 2243 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableRule;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25172 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 311:
-#line 2251 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddInherit;
 					n->def = (Node *) (yyvsp[0].range);
 					(yyval.node) = (Node *)n;
 				}
-#line 25183 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 312:
-#line 2259 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropInherit;
 					n->def = (Node *) (yyvsp[0].range);
 					(yyval.node) = (Node *)n;
 				}
-#line 25194 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 313:
-#line 2267 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					TypeName *def = makeTypeNameFromNameList((yyvsp[0].list));
@@ -25203,137 +24833,107 @@ yyreduce:
 					n->def = (Node *) def;
 					(yyval.node) = (Node *)n;
 				}
-#line 25207 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 314:
-#line 2277 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropOf;
 					(yyval.node) = (Node *)n;
 				}
-#line 25217 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 315:
-#line 2284 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ChangeOwner;
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 25228 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 316:
-#line 2292 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetTableSpace;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25239 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 317:
-#line 2300 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_SetRelOptions;
 					n->def = (Node *)(yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 25250 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 318:
-#line 2308 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ResetRelOptions;
 					n->def = (Node *)(yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 25261 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 319:
-#line 2316 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_ReplicaIdentity;
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 25272 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 320:
-#line 2324 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_EnableRowSecurity;
 					(yyval.node) = (Node *)n;
 				}
-#line 25282 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 321:
-#line 2331 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DisableRowSecurity;
 					(yyval.node) = (Node *)n;
 				}
-#line 25292 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 322:
-#line 2337 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_GenericOptions;
 					n->def = (Node *)(yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 25303 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 323:
-#line 2346 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 25309 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 324:
-#line 2347 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 25315 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 325:
-#line 2351 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.dbehavior) = DROP_CASCADE; }
-#line 25321 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 326:
-#line 2352 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.dbehavior) = DROP_RESTRICT; }
-#line 25327 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 327:
-#line 2353 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.dbehavior) = DROP_RESTRICT; /* default */ }
-#line 25333 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 328:
-#line 2358 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CollateClause *n = makeNode(CollateClause);
 					n->arg = NULL;
@@ -25341,136 +24941,102 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *) n;
 				}
-#line 25345 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 329:
-#line 2365 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 25351 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 330:
-#line 2369 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 25357 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 331:
-#line 2370 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 25363 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 332:
-#line 2375 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
 					n->identity_type = REPLICA_IDENTITY_NOTHING;
 					n->name = NULL;
 					(yyval.node) = (Node *) n;
 				}
-#line 25374 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 333:
-#line 2382 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
 					n->identity_type = REPLICA_IDENTITY_FULL;
 					n->name = NULL;
 					(yyval.node) = (Node *) n;
 				}
-#line 25385 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 334:
-#line 2389 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
 					n->identity_type = REPLICA_IDENTITY_DEFAULT;
 					n->name = NULL;
 					(yyval.node) = (Node *) n;
 				}
-#line 25396 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 335:
-#line 2396 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReplicaIdentityStmt *n = makeNode(ReplicaIdentityStmt);
 					n->identity_type = REPLICA_IDENTITY_INDEX;
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 25407 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 336:
-#line 2405 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 25413 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 337:
-#line 2408 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 25419 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 338:
-#line 2409 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 25425 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 339:
-#line 2413 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 25431 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 340:
-#line 2414 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
-#line 25437 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 341:
-#line 2420 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *) (yyvsp[0].node));
 				}
-#line 25445 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 342:
-#line 2424 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[0].str), NULL);
 				}
-#line 25453 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 343:
-#line 2428 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElemExtended((yyvsp[-4].str), (yyvsp[-2].str), (Node *) (yyvsp[0].node),
 											 DEFELEM_UNSPEC);
 				}
-#line 25462 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 344:
-#line 2433 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElemExtended((yyvsp[-2].str), (yyvsp[0].str), NULL, DEFELEM_UNSPEC);
 				}
-#line 25470 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 345:
-#line 2448 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 
@@ -25480,23 +25046,17 @@ yyreduce:
 					n->relkind = OBJECT_TYPE;
 					(yyval.node) = (Node *)n;
 				}
-#line 25484 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 346:
-#line 2460 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 25490 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 347:
-#line 2461 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 25496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 348:
-#line 2467 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_AddColumn;
@@ -25504,11 +25064,9 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 25508 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 349:
-#line 2476 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
@@ -25517,11 +25075,9 @@ yyreduce:
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 25521 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 350:
-#line 2486 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					n->subtype = AT_DropColumn;
@@ -25530,11 +25086,9 @@ yyreduce:
 					n->missing_ok = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 25534 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 351:
-#line 2496 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableCmd *n = makeNode(AlterTableCmd);
 					ColumnDef *def = makeNode(ColumnDef);
@@ -25549,31 +25103,25 @@ yyreduce:
 					def->location = (yylsp[-5]);
 					(yyval.node) = (Node *)n;
 				}
-#line 25553 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 352:
-#line 2522 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
 					n->portalname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 25563 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 353:
-#line 2528 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
 					n->portalname = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 25573 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 354:
-#line 2559 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = (yyvsp[-8].range);
@@ -25601,11 +25149,9 @@ yyreduce:
 						n->options = list_concat(n->options, (yyvsp[0].list));
 					(yyval.node) = (Node *)n;
 				}
-#line 25605 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 355:
-#line 2587 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CopyStmt *n = makeNode(CopyStmt);
 					n->relation = NULL;
@@ -25624,319 +25170,229 @@ yyreduce:
 
 					(yyval.node) = (Node *)n;
 				}
-#line 25628 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 356:
-#line 2608 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 25634 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 357:
-#line 2609 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 25640 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 358:
-#line 2613 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 25646 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 359:
-#line 2614 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 25652 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 360:
-#line 2623 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 25658 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 361:
-#line 2624 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 25664 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 362:
-#line 2625 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 25670 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 363:
-#line 2628 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 25676 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 364:
-#line 2629 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 25682 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 365:
-#line 2634 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 25688 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 366:
-#line 2635 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 25694 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 367:
-#line 2640 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("binary"));
 				}
-#line 25702 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 368:
-#line 2644 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("oids", (Node *)makeInteger(TRUE));
 				}
-#line 25710 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 369:
-#line 2648 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("freeze", (Node *)makeInteger(TRUE));
 				}
-#line 25718 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 370:
-#line 2652 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25726 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 371:
-#line 2656 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("null", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25734 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 372:
-#line 2660 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("csv"));
 				}
-#line 25742 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 373:
-#line 2664 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("header", (Node *)makeInteger(TRUE));
 				}
-#line 25750 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 374:
-#line 2668 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("quote", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25758 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 375:
-#line 2672 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("escape", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25766 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 376:
-#line 2676 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("force_quote", (Node *)(yyvsp[0].list));
 				}
-#line 25774 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 377:
-#line 2680 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("force_quote", (Node *)makeNode(A_Star));
 				}
-#line 25782 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 378:
-#line 2684 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("force_not_null", (Node *)(yyvsp[0].list));
 				}
-#line 25790 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 379:
-#line 2688 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("force_null", (Node *)(yyvsp[0].list));
 				}
-#line 25798 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 380:
-#line 2692 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("encoding", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25806 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 381:
-#line 2701 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("format", (Node *)makeString("binary"));
 				}
-#line 25814 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 382:
-#line 2704 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = NULL; }
-#line 25820 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 383:
-#line 2709 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("oids", (Node *)makeInteger(TRUE));
 				}
-#line 25828 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 384:
-#line 2712 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = NULL; }
-#line 25834 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 385:
-#line 2717 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("delimiter", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 25842 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 386:
-#line 2720 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = NULL; }
-#line 25848 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 387:
-#line 2724 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 25854 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 388:
-#line 2725 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 25860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 389:
-#line 2731 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].defelt));
 				}
-#line 25868 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 390:
-#line 2735 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt));
 				}
-#line 25876 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 391:
-#line 2742 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-1].str), (yyvsp[0].node));
 				}
-#line 25884 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 392:
-#line 2748 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeString((yyvsp[0].str)); }
-#line 25890 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 393:
-#line 2749 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[0].value); }
-#line 25896 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 394:
-#line 2750 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeNode(A_Star); }
-#line 25902 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 395:
-#line 2751 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[-1].list); }
-#line 25908 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 396:
-#line 2752 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 25914 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 397:
-#line 2757 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 25922 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 398:
-#line 2761 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 25930 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 399:
-#line 2768 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeString((yyvsp[0].str)); }
-#line 25936 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 400:
-#line 2781 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateStmt *n = makeNode(CreateStmt);
 					(yyvsp[-7].range)->relpersistence = (yyvsp[-9].ival);
@@ -25951,11 +25407,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 25955 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 401:
-#line 2798 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateStmt *n = makeNode(CreateStmt);
 					(yyvsp[-7].range)->relpersistence = (yyvsp[-12].ival);
@@ -25970,11 +25424,9 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 25974 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 402:
-#line 2814 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateStmt *n = makeNode(CreateStmt);
 					(yyvsp[-6].range)->relpersistence = (yyvsp[-8].ival);
@@ -25990,11 +25442,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 25994 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 403:
-#line 2831 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateStmt *n = makeNode(CreateStmt);
 					(yyvsp[-6].range)->relpersistence = (yyvsp[-11].ival);
@@ -26010,155 +25460,111 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 26014 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 404:
-#line 2859 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_TEMP; }
-#line 26020 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 405:
-#line 2860 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_TEMP; }
-#line 26026 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 406:
-#line 2861 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_TEMP; }
-#line 26032 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 407:
-#line 2862 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_TEMP; }
-#line 26038 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 408:
-#line 2864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ereport(WARNING,
 							(errmsg("GLOBAL is deprecated in temporary table creation"),
 							 parser_errposition((yylsp[-1]))));
 					(yyval.ival) = RELPERSISTENCE_TEMP;
 				}
-#line 26049 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 409:
-#line 2871 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ereport(WARNING,
 							(errmsg("GLOBAL is deprecated in temporary table creation"),
 							 parser_errposition((yylsp[-1]))));
 					(yyval.ival) = RELPERSISTENCE_TEMP;
 				}
-#line 26060 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 410:
-#line 2877 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_UNLOGGED; }
-#line 26066 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 411:
-#line 2878 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_PERMANENT; }
-#line 26072 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 412:
-#line 2882 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 26078 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 413:
-#line 2883 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26084 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 414:
-#line 2887 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 26090 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 415:
-#line 2888 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26096 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 416:
-#line 2893 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 26104 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 417:
-#line 2897 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 26112 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 418:
-#line 2904 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 26120 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 419:
-#line 2908 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 26128 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 420:
-#line 2914 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26134 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 421:
-#line 2915 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26140 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 422:
-#line 2916 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26146 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 423:
-#line 2920 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26152 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 424:
-#line 2921 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26158 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 425:
-#line 2925 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = (yyvsp[-3].str);
@@ -26177,11 +25583,9 @@ yyreduce:
 					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26181 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 426:
-#line 2946 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = (yyvsp[-3].str);
@@ -26199,23 +25603,17 @@ yyreduce:
 					n->location = (yylsp[-3]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26203 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 427:
-#line 2966 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
-#line 26209 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 428:
-#line 2967 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26215 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 429:
-#line 2972 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = (Constraint *) (yyvsp[0].node);
 					Assert(IsA(n, Constraint));
@@ -26223,23 +25621,17 @@ yyreduce:
 					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *) n;
 				}
-#line 26227 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 430:
-#line 2979 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26233 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 431:
-#line 2980 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26239 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 432:
-#line 2982 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Note: the CollateClause is momentarily included in
@@ -26252,33 +25644,27 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *) n;
 				}
-#line 26256 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 433:
-#line 3013 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_NOTNULL;
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26267 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 434:
-#line 3020 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_NULL;
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26278 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 435:
-#line 3027 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -26289,11 +25675,9 @@ yyreduce:
 					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 26293 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 436:
-#line 3038 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -26304,11 +25688,9 @@ yyreduce:
 					n->indexspace = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 26308 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 437:
-#line 3049 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
@@ -26318,11 +25700,9 @@ yyreduce:
 					n->cooked_expr = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 26322 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 438:
-#line 3059 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_DEFAULT;
@@ -26331,11 +25711,9 @@ yyreduce:
 					n->cooked_expr = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 26335 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 439:
-#line 3068 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_FOREIGN;
@@ -26350,120 +25728,90 @@ yyreduce:
 					n->initially_valid  = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 26354 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 440:
-#line 3101 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_DEFERRABLE;
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26365 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 441:
-#line 3108 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_NOT_DEFERRABLE;
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26376 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 442:
-#line 3115 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_DEFERRED;
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26387 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 443:
-#line 3122 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_ATTR_IMMEDIATE;
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 26398 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 444:
-#line 3133 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TableLikeClause *n = makeNode(TableLikeClause);
 					n->relation = (yyvsp[-1].range);
 					n->options = (yyvsp[0].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 26409 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 445:
-#line 3142 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-2].ival) | (yyvsp[0].ival); }
-#line 26415 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 446:
-#line 3143 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-2].ival) & ~(yyvsp[0].ival); }
-#line 26421 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 447:
-#line 3144 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 26427 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 448:
-#line 3148 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_DEFAULTS; }
-#line 26433 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 449:
-#line 3149 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_CONSTRAINTS; }
-#line 26439 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 450:
-#line 3150 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_INDEXES; }
-#line 26445 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 451:
-#line 3151 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_STORAGE; }
-#line 26451 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 452:
-#line 3152 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_COMMENTS; }
-#line 26457 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 453:
-#line 3153 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CREATE_TABLE_LIKE_ALL; }
-#line 26463 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 454:
-#line 3163 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = (Constraint *) (yyvsp[0].node);
 					Assert(IsA(n, Constraint));
@@ -26471,17 +25819,13 @@ yyreduce:
 					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *) n;
 				}
-#line 26475 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 455:
-#line 3170 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 26481 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 456:
-#line 3175 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
@@ -26494,11 +25838,9 @@ yyreduce:
 					n->initially_valid = !n->skip_validation;
 					(yyval.node) = (Node *)n;
 				}
-#line 26498 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 457:
-#line 3189 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -26512,11 +25854,9 @@ yyreduce:
 								   NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 26516 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 458:
-#line 3203 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
@@ -26530,11 +25870,9 @@ yyreduce:
 								   NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 26534 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 459:
-#line 3218 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -26548,11 +25886,9 @@ yyreduce:
 								   NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 26552 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 460:
-#line 3232 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_PRIMARY;
@@ -26566,11 +25902,9 @@ yyreduce:
 								   NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 26570 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 461:
-#line 3248 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_EXCLUSION;
@@ -26586,11 +25920,9 @@ yyreduce:
 								   NULL, yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 26590 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 462:
-#line 3265 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_FOREIGN;
@@ -26608,63 +25940,45 @@ yyreduce:
 					n->initially_valid = !n->skip_validation;
 					(yyval.node) = (Node *)n;
 				}
-#line 26612 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 463:
-#line 3284 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {  (yyval.boolean) = TRUE; }
-#line 26618 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 464:
-#line 3285 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {  (yyval.boolean) = FALSE; }
-#line 26624 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 465:
-#line 3289 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 26630 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 466:
-#line 3290 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26636 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 467:
-#line 3294 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 26642 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 468:
-#line 3295 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 26648 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 469:
-#line 3299 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeString((yyvsp[0].str));
 				}
-#line 26656 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 470:
-#line 3305 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.ival) = FKCONSTR_MATCH_FULL;
 			}
-#line 26664 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 471:
-#line 3309 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -26672,229 +25986,157 @@ yyreduce:
 						 parser_errposition((yylsp[-1]))));
 				(yyval.ival) = FKCONSTR_MATCH_PARTIAL;
 			}
-#line 26676 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 472:
-#line 3317 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.ival) = FKCONSTR_MATCH_SIMPLE;
 			}
-#line 26684 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 473:
-#line 3321 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.ival) = FKCONSTR_MATCH_SIMPLE;
 			}
-#line 26692 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 474:
-#line 3327 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].list)); }
-#line 26698 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 475:
-#line 3329 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].list)); }
-#line 26704 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 476:
-#line 3333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.list) = list_make2((yyvsp[-2].ielem), (yyvsp[0].list));
 			}
-#line 26712 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 477:
-#line 3338 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.list) = list_make2((yyvsp[-5].ielem), (yyvsp[-1].list));
 			}
-#line 26720 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 478:
-#line 3344 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 26726 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 479:
-#line 3345 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 26732 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 480:
-#line 3356 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ((yyvsp[0].ival) << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
-#line 26738 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 481:
-#line 3358 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | ((yyvsp[0].ival) & 0xFF); }
-#line 26744 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 482:
-#line 3360 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ((yyvsp[-1].ival) << 8) | ((yyvsp[0].ival) & 0xFF); }
-#line 26750 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 483:
-#line 3362 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ((yyvsp[0].ival) << 8) | ((yyvsp[-1].ival) & 0xFF); }
-#line 26756 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 484:
-#line 3364 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (FKCONSTR_ACTION_NOACTION << 8) | (FKCONSTR_ACTION_NOACTION & 0xFF); }
-#line 26762 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 485:
-#line 3367 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 26768 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 486:
-#line 3370 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 26774 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 487:
-#line 3374 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FKCONSTR_ACTION_NOACTION; }
-#line 26780 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 488:
-#line 3375 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FKCONSTR_ACTION_RESTRICT; }
-#line 26786 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 489:
-#line 3376 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FKCONSTR_ACTION_CASCADE; }
-#line 26792 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 490:
-#line 3377 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FKCONSTR_ACTION_SETNULL; }
-#line 26798 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 491:
-#line 3378 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FKCONSTR_ACTION_SETDEFAULT; }
-#line 26804 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 492:
-#line 3381 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 26810 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 493:
-#line 3382 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26816 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 494:
-#line 3387 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 26822 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 495:
-#line 3388 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(defWithOids(true)); }
-#line 26828 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 496:
-#line 3389 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(defWithOids(false)); }
-#line 26834 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 497:
-#line 3390 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 26840 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 498:
-#line 3393 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.oncommit) = ONCOMMIT_DROP; }
-#line 26846 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 499:
-#line 3394 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.oncommit) = ONCOMMIT_DELETE_ROWS; }
-#line 26852 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 500:
-#line 3395 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.oncommit) = ONCOMMIT_PRESERVE_ROWS; }
-#line 26858 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 501:
-#line 3396 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.oncommit) = ONCOMMIT_NOOP; }
-#line 26864 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 502:
-#line 3399 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 26870 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 503:
-#line 3400 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 26876 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 504:
-#line 3403 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 26882 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 505:
-#line 3404 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 26888 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 506:
-#line 3407 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 26894 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 507:
-#line 3423 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ctas->query = (yyvsp[-1].node);
@@ -26907,11 +26149,9 @@ yyreduce:
 					(yyvsp[-3].into)->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) ctas;
 				}
-#line 26911 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 508:
-#line 3436 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ctas->query = (yyvsp[-1].node);
@@ -26924,11 +26164,9 @@ yyreduce:
 					(yyvsp[-3].into)->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) ctas;
 				}
-#line 26928 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 509:
-#line 3452 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.into) = makeNode(IntoClause);
 					(yyval.into)->rel = (yyvsp[-4].range);
@@ -26939,29 +26177,21 @@ yyreduce:
 					(yyval.into)->viewQuery = NULL;
 					(yyval.into)->skipData = false;		/* might get changed later */
 				}
-#line 26943 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 510:
-#line 3465 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 26949 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 511:
-#line 3466 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 26955 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 512:
-#line 3467 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 26961 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 513:
-#line 3480 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ctas->query = (yyvsp[-1].node);
@@ -26974,11 +26204,9 @@ yyreduce:
 					(yyvsp[-3].into)->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) ctas;
 				}
-#line 26978 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 514:
-#line 3493 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ctas->query = (yyvsp[-1].node);
@@ -26991,11 +26219,9 @@ yyreduce:
 					(yyvsp[-3].into)->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) ctas;
 				}
-#line 26995 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 515:
-#line 3509 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.into) = makeNode(IntoClause);
 					(yyval.into)->rel = (yyvsp[-3].range);
@@ -27006,23 +26232,17 @@ yyreduce:
 					(yyval.into)->viewQuery = NULL;		/* filled at analysis time */
 					(yyval.into)->skipData = false;		/* might get changed later */
 				}
-#line 27010 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 516:
-#line 3521 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_UNLOGGED; }
-#line 27016 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 517:
-#line 3522 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RELPERSISTENCE_PERMANENT; }
-#line 27022 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 518:
-#line 3535 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RefreshMatViewStmt *n = makeNode(RefreshMatViewStmt);
 					n->concurrent = (yyvsp[-2].boolean);
@@ -27030,11 +26250,9 @@ yyreduce:
 					n->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) n;
 				}
-#line 27034 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 519:
-#line 3555 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					(yyvsp[-1].range)->relpersistence = (yyvsp[-3].ival);
@@ -27044,11 +26262,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 27048 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 520:
-#line 3565 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateSeqStmt *n = makeNode(CreateSeqStmt);
 					(yyvsp[-1].range)->relpersistence = (yyvsp[-6].ival);
@@ -27058,11 +26274,9 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 27062 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 521:
-#line 3578 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterSeqStmt *n = makeNode(AlterSeqStmt);
 					n->sequence = (yyvsp[-1].range);
@@ -27070,11 +26284,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 27074 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 522:
-#line 3586 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterSeqStmt *n = makeNode(AlterSeqStmt);
 					n->sequence = (yyvsp[-1].range);
@@ -27082,176 +26294,128 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 27086 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 523:
-#line 3596 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 27092 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 524:
-#line 3597 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27098 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 525:
-#line 3600 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 27104 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 526:
-#line 3601 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 27110 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 527:
-#line 3605 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("cache", (Node *)(yyvsp[0].value));
 				}
-#line 27118 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 528:
-#line 3609 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("cycle", (Node *)makeInteger(TRUE));
 				}
-#line 27126 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 529:
-#line 3613 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("cycle", (Node *)makeInteger(FALSE));
 				}
-#line 27134 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 530:
-#line 3617 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("increment", (Node *)(yyvsp[0].value));
 				}
-#line 27142 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 531:
-#line 3621 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("maxvalue", (Node *)(yyvsp[0].value));
 				}
-#line 27150 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 532:
-#line 3625 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("minvalue", (Node *)(yyvsp[0].value));
 				}
-#line 27158 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 533:
-#line 3629 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("maxvalue", NULL);
 				}
-#line 27166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 534:
-#line 3633 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("minvalue", NULL);
 				}
-#line 27174 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 535:
-#line 3637 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("owned_by", (Node *)(yyvsp[0].list));
 				}
-#line 27182 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 536:
-#line 3641 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("start", (Node *)(yyvsp[0].value));
 				}
-#line 27190 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 537:
-#line 3645 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("restart", NULL);
 				}
-#line 27198 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 538:
-#line 3649 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("restart", (Node *)(yyvsp[0].value));
 				}
-#line 27206 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 539:
-#line 3654 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 27212 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 540:
-#line 3655 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 27218 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 541:
-#line 3659 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.value) = makeFloat((yyvsp[0].str)); }
-#line 27224 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 542:
-#line 3661 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.value) = makeFloat((yyvsp[0].str));
 					doNegateFloat((yyval.value));
 				}
-#line 27233 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 543:
-#line 3665 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.value) = makeInteger((yyvsp[0].ival)); }
-#line 27239 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 544:
-#line 3668 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].value)); }
-#line 27245 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 545:
-#line 3669 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].value)); }
-#line 27251 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 546:
-#line 3682 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->replace = (yyvsp[-4].boolean);
@@ -27263,11 +26427,9 @@ yyreduce:
 				n->pltrusted = false;
 				(yyval.node) = (Node *)n;
 			}
-#line 27267 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 547:
-#line 3695 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
 				n->replace = (yyvsp[-8].boolean);
@@ -27278,71 +26440,49 @@ yyreduce:
 				n->pltrusted = (yyvsp[-7].boolean);
 				(yyval.node) = (Node *)n;
 			}
-#line 27282 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 548:
-#line 3708 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 27288 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 549:
-#line 3709 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 27294 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 550:
-#line 3717 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 27300 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 551:
-#line 3718 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list)); }
-#line 27306 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 552:
-#line 3722 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 27312 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 553:
-#line 3723 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27318 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 554:
-#line 3727 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 27324 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 555:
-#line 3728 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27330 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 556:
-#line 3732 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 27336 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 557:
-#line 3733 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27342 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 558:
-#line 3738 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_LANGUAGE;
@@ -27353,11 +26493,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 27357 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 559:
-#line 3749 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_LANGUAGE;
@@ -27367,23 +26505,17 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 27371 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 560:
-#line 3761 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 27377 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 561:
-#line 3762 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 27383 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 562:
-#line 3773 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableSpaceStmt *n = makeNode(CreateTableSpaceStmt);
 					n->tablespacename = (yyvsp[-4].str);
@@ -27392,45 +26524,35 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27396 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 563:
-#line 3783 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 27402 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 564:
-#line 3784 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 27408 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 565:
-#line 3798 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
 					n->tablespacename = (yyvsp[0].str);
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 27419 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 566:
-#line 3805 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
 					n->tablespacename = (yyvsp[0].str);
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
 				}
-#line 27430 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 567:
-#line 3822 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateExtensionStmt *n = makeNode(CreateExtensionStmt);
 					n->extname = (yyvsp[-2].str);
@@ -27438,11 +26560,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27442 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 568:
-#line 3830 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateExtensionStmt *n = makeNode(CreateExtensionStmt);
 					n->extname = (yyvsp[-2].str);
@@ -27450,78 +26570,58 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27454 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 569:
-#line 3841 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 27460 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 570:
-#line 3843 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27466 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 571:
-#line 3848 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("schema", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 27474 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 572:
-#line 3852 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("new_version", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 27482 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 573:
-#line 3856 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("old_version", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 27490 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 574:
-#line 3868 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionStmt *n = makeNode(AlterExtensionStmt);
 					n->extname = (yyvsp[-2].str);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27501 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 575:
-#line 3878 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 27507 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 576:
-#line 3880 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27513 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 577:
-#line 3885 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("new_version", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 27521 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 578:
-#line 3898 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27531,11 +26631,9 @@ yyreduce:
 					n->objargs = extractAggrArgTypes((yyvsp[0].list));
 					(yyval.node) = (Node *)n;
 				}
-#line 27535 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 579:
-#line 3908 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-7].str);
@@ -27545,11 +26643,9 @@ yyreduce:
 					n->objargs = list_make1((yyvsp[-1].typnam));
 					(yyval.node) = (Node *) n;
 				}
-#line 27549 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 580:
-#line 3918 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27558,11 +26654,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27562 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 581:
-#line 3927 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27571,11 +26665,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27575 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 582:
-#line 3936 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27584,11 +26676,9 @@ yyreduce:
 					n->objname = list_make1((yyvsp[0].typnam));
 					(yyval.node) = (Node *)n;
 				}
-#line 27588 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 583:
-#line 3945 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27598,11 +26688,9 @@ yyreduce:
 					n->objargs = (yyvsp[0].funwithargs)->funcargs;
 					(yyval.node) = (Node *)n;
 				}
-#line 27602 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 584:
-#line 3955 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27611,11 +26699,9 @@ yyreduce:
 					n->objname = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27615 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 585:
-#line 3964 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27625,11 +26711,9 @@ yyreduce:
 					n->objargs = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27629 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 586:
-#line 3974 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-6].str);
@@ -27638,11 +26722,9 @@ yyreduce:
 					n->objname = lcons(makeString((yyvsp[0].str)), (yyvsp[-2].list));
 					(yyval.node) = (Node *)n;
 				}
-#line 27642 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 587:
-#line 3983 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-6].str);
@@ -27651,11 +26733,9 @@ yyreduce:
 					n->objname = lcons(makeString((yyvsp[0].str)), (yyvsp[-2].list));
 					(yyval.node) = (Node *)n;
 				}
-#line 27655 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 588:
-#line 3992 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27664,11 +26744,9 @@ yyreduce:
 					n->objname = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27668 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 589:
-#line 4001 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27677,11 +26755,9 @@ yyreduce:
 					n->objname = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27681 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 590:
-#line 4010 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27690,11 +26766,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27694 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 591:
-#line 4019 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-5].str);
@@ -27703,11 +26777,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27707 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 592:
-#line 4028 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-5].str);
@@ -27716,11 +26788,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27720 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 593:
-#line 4037 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-5].str);
@@ -27729,11 +26799,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27733 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 594:
-#line 4046 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-5].str);
@@ -27742,11 +26810,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27746 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 595:
-#line 4055 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27755,11 +26821,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27759 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 596:
-#line 4064 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27768,11 +26832,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27772 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 597:
-#line 4073 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27781,11 +26843,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27785 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 598:
-#line 4082 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-4].str);
@@ -27794,11 +26854,9 @@ yyreduce:
 					n->objname = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 27798 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 599:
-#line 4091 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-5].str);
@@ -27807,11 +26865,9 @@ yyreduce:
 					n->objname = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27811 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 600:
-#line 4100 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27820,11 +26876,9 @@ yyreduce:
 					n->objname = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27824 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 601:
-#line 4109 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-6].str);
@@ -27834,11 +26888,9 @@ yyreduce:
 					n->objargs = list_make1(makeString((yyvsp[0].str)));
 					(yyval.node) = (Node *)n;
 				}
-#line 27838 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 602:
-#line 4119 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = (yyvsp[-3].str);
@@ -27847,11 +26899,9 @@ yyreduce:
 					n->objname = list_make1((yyvsp[0].typnam));
 					(yyval.node) = (Node *)n;
 				}
-#line 27851 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 603:
-#line 4137 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateFdwStmt *n = makeNode(CreateFdwStmt);
 					n->fdwname = (yyvsp[-2].str);
@@ -27859,59 +26909,41 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27863 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 604:
-#line 4147 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("handler", (Node *)(yyvsp[0].list)); }
-#line 27869 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 605:
-#line 4148 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("handler", NULL); }
-#line 27875 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 606:
-#line 4149 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("validator", (Node *)(yyvsp[0].list)); }
-#line 27881 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 607:
-#line 4150 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("validator", NULL); }
-#line 27887 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 608:
-#line 4154 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 27893 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 609:
-#line 4155 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 27899 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 610:
-#line 4159 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 27905 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 611:
-#line 4160 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27911 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 612:
-#line 4171 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FDW;
@@ -27922,11 +26954,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 27926 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 613:
-#line 4182 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FDW;
@@ -27937,11 +26967,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 27941 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 614:
-#line 4202 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
 					n->fdwname = (yyvsp[-2].str);
@@ -27949,11 +26977,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 27953 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 615:
-#line 4210 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterFdwStmt *n = makeNode(AlterFdwStmt);
 					n->fdwname = (yyvsp[-1].str);
@@ -27961,115 +26987,85 @@ yyreduce:
 					n->options = NIL;
 					(yyval.node) = (Node *) n;
 				}
-#line 27965 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 616:
-#line 4221 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 27971 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 617:
-#line 4222 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 27977 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 618:
-#line 4227 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].defelt));
 				}
-#line 27985 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 619:
-#line 4231 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt));
 				}
-#line 27993 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 620:
-#line 4238 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 27999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 621:
-#line 4243 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].defelt));
 				}
-#line 28007 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 622:
-#line 4247 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt));
 				}
-#line 28015 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 623:
-#line 4254 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = (yyvsp[0].defelt);
 				}
-#line 28023 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 624:
-#line 4258 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = (yyvsp[0].defelt);
 					(yyval.defelt)->defaction = DEFELEM_SET;
 				}
-#line 28032 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 625:
-#line 4263 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = (yyvsp[0].defelt);
 					(yyval.defelt)->defaction = DEFELEM_ADD;
 				}
-#line 28041 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 626:
-#line 4268 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElemExtended(NULL, (yyvsp[0].str), NULL, DEFELEM_DROP);
 				}
-#line 28049 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 627:
-#line 4275 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-1].str), (yyvsp[0].node));
 				}
-#line 28057 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 628:
-#line 4281 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 28063 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 629:
-#line 4286 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeString((yyvsp[0].str)); }
-#line 28069 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 630:
-#line 4298 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateForeignServerStmt *n = makeNode(CreateForeignServerStmt);
 					n->servername = (yyvsp[-7].str);
@@ -28079,47 +27075,33 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28083 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 631:
-#line 4310 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 28089 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 632:
-#line 4311 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 28095 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 633:
-#line 4316 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 28101 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 634:
-#line 4317 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 28107 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 635:
-#line 4321 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 28113 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 636:
-#line 4322 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 28119 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 637:
-#line 4333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FOREIGN_SERVER;
@@ -28130,11 +27112,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28134 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 638:
-#line 4344 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FOREIGN_SERVER;
@@ -28145,11 +27125,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28149 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 639:
-#line 4364 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
 					n->servername = (yyvsp[-2].str);
@@ -28158,11 +27136,9 @@ yyreduce:
 					n->has_version = true;
 					(yyval.node) = (Node *) n;
 				}
-#line 28162 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 640:
-#line 4373 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
 					n->servername = (yyvsp[-1].str);
@@ -28170,22 +27146,18 @@ yyreduce:
 					n->has_version = true;
 					(yyval.node) = (Node *) n;
 				}
-#line 28174 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 641:
-#line 4381 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterForeignServerStmt *n = makeNode(AlterForeignServerStmt);
 					n->servername = (yyvsp[-1].str);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28185 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 642:
-#line 4400 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
 					(yyvsp[-7].range)->relpersistence = RELPERSISTENCE_PERMANENT;
@@ -28203,11 +27175,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28207 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 643:
-#line 4420 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateForeignTableStmt *n = makeNode(CreateForeignTableStmt);
 					(yyvsp[-7].range)->relpersistence = RELPERSISTENCE_PERMANENT;
@@ -28225,11 +27195,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28229 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 644:
-#line 4448 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -28238,11 +27206,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 28242 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 645:
-#line 4457 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = (yyvsp[-1].range);
@@ -28251,11 +27217,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 28255 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 646:
-#line 4479 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				ImportForeignSchemaStmt *n = makeNode(ImportForeignSchemaStmt);
 				n->server_name = (yyvsp[-3].str);
@@ -28266,45 +27230,35 @@ yyreduce:
 				n->options = (yyvsp[0].list);
 				(yyval.node) = (Node *) n;
 			}
-#line 28270 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 647:
-#line 4492 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FDW_IMPORT_SCHEMA_LIMIT_TO; }
-#line 28276 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 648:
-#line 4493 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = FDW_IMPORT_SCHEMA_EXCEPT; }
-#line 28282 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 649:
-#line 4498 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				ImportQual *n = (ImportQual *) palloc(sizeof(ImportQual));
 				n->type = static_cast<ImportForeignSchemaType>((yyvsp[-3].ival));
 				n->table_names = (yyvsp[-1].list);
 				(yyval.importqual) = n;
 			}
-#line 28293 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 650:
-#line 4505 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				ImportQual *n = (ImportQual *) palloc(sizeof(ImportQual));
 				n->type = FDW_IMPORT_SCHEMA_ALL;
 				n->table_names = NIL;
 				(yyval.importqual) = n;
 			}
-#line 28304 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 651:
-#line 4521 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateUserMappingStmt *n = makeNode(CreateUserMappingStmt);
 					n->user = (yyvsp[-3].node);
@@ -28312,23 +27266,17 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28316 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 652:
-#line 4531 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 28322 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 653:
-#line 4532 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeRoleSpec(ROLESPEC_CURRENT_USER, (yylsp[0])); }
-#line 28328 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 654:
-#line 4543 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
 					n->user = (yyvsp[-2].node);
@@ -28336,11 +27284,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28340 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 655:
-#line 4551 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
 					n->user = (yyvsp[-2].node);
@@ -28348,11 +27294,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *) n;
 				}
-#line 28352 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 656:
-#line 4568 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterUserMappingStmt *n = makeNode(AlterUserMappingStmt);
 					n->user = (yyvsp[-3].node);
@@ -28360,11 +27304,9 @@ yyreduce:
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 28364 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 657:
-#line 4592 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreatePolicyStmt *n = makeNode(CreatePolicyStmt);
 					n->policy_name = (yyvsp[-6].str);
@@ -28375,11 +27317,9 @@ yyreduce:
 					n->with_check = (yyvsp[0].node);
 					(yyval.node) = (Node *) n;
 				}
-#line 28379 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 658:
-#line 4607 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterPolicyStmt *n = makeNode(AlterPolicyStmt);
 					n->policy_name = (yyvsp[-5].str);
@@ -28389,11 +27329,9 @@ yyreduce:
 					n->with_check = (yyvsp[0].node);
 					(yyval.node) = (Node *) n;
 				}
-#line 28393 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 659:
-#line 4620 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_POLICY;
@@ -28404,11 +27342,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28408 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 660:
-#line 4631 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_POLICY;
@@ -28419,101 +27355,69 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28423 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 661:
-#line 4644 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 28429 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 662:
-#line 4645 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 28435 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 663:
-#line 4649 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 28441 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 664:
-#line 4650 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 28447 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 665:
-#line 4654 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 28453 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 666:
-#line 4655 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeRoleSpec(ROLESPEC_PUBLIC, -1)); }
-#line 28459 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 667:
-#line 4659 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 28465 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 668:
-#line 4660 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NULL; }
-#line 28471 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 669:
-#line 4664 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 28477 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 670:
-#line 4665 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "all"; }
-#line 28483 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 671:
-#line 4669 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "all"; }
-#line 28489 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 672:
-#line 4670 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "select"; }
-#line 28495 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 673:
-#line 4671 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "insert"; }
-#line 28501 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 674:
-#line 4672 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "update"; }
-#line 28507 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 675:
-#line 4673 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "delete"; }
-#line 28513 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 676:
-#line 4688 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = (yyvsp[-12].str);
@@ -28531,11 +27435,9 @@ yyreduce:
 					n->constrrel = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 28535 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 677:
-#line 4709 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = (yyvsp[-16].str);
@@ -28554,35 +27456,25 @@ yyreduce:
 					n->constrrel = (yyvsp[-11].range);
 					(yyval.node) = (Node *)n;
 				}
-#line 28558 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 678:
-#line 4730 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = TRIGGER_TYPE_BEFORE; }
-#line 28564 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 679:
-#line 4731 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = TRIGGER_TYPE_AFTER; }
-#line 28570 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 680:
-#line 4732 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = TRIGGER_TYPE_INSTEAD; }
-#line 28576 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 681:
-#line 4737 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 28582 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 682:
-#line 4739 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					int		events1 = intVal(linitial((yyvsp[-2].list)));
 					int		events2 = intVal(linitial((yyvsp[0].list)));
@@ -28601,49 +27493,35 @@ yyreduce:
 					(yyval.list) = list_make2(makeInteger(events1 | events2),
 									list_concat(columns1, columns2));
 				}
-#line 28605 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 683:
-#line 4761 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_INSERT), NIL); }
-#line 28611 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 684:
-#line 4763 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_DELETE), NIL); }
-#line 28617 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 685:
-#line 4765 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), NIL); }
-#line 28623 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 686:
-#line 4767 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_UPDATE), (yyvsp[0].list)); }
-#line 28629 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 687:
-#line 4769 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(makeInteger(TRIGGER_TYPE_TRUNCATE), NIL); }
-#line 28635 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 688:
-#line 4774 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.boolean) = (yyvsp[0].boolean);
 				}
-#line 28643 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 689:
-#line 4778 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * If ROW/STATEMENT not specified, default to
@@ -28651,109 +27529,75 @@ yyreduce:
 					 */
 					(yyval.boolean) = FALSE;
 				}
-#line 28655 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 690:
-#line 4788 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 28661 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 691:
-#line 4789 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 28667 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 692:
-#line 4793 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 28673 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 693:
-#line 4794 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 28679 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 694:
-#line 4798 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 28685 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 695:
-#line 4799 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 28691 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 696:
-#line 4803 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].value)); }
-#line 28697 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 697:
-#line 4804 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].value)); }
-#line 28703 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 698:
-#line 4805 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 28709 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 699:
-#line 4810 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.value) = makeString(psprintf("%d", (yyvsp[0].ival)));
 				}
-#line 28717 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 700:
-#line 4813 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.value) = makeString((yyvsp[0].str)); }
-#line 28723 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 701:
-#line 4814 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.value) = makeString((yyvsp[0].str)); }
-#line 28729 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 702:
-#line 4815 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.value) = makeString((yyvsp[0].str)); }
-#line 28735 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 703:
-#line 4819 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.range) = (yyvsp[0].range); }
-#line 28741 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 704:
-#line 4820 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.range) = NULL; }
-#line 28747 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 705:
-#line 4825 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 28753 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 706:
-#line 4827 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * We must complain about conflicting options.
@@ -28777,47 +27621,33 @@ yyreduce:
 								 parser_errposition((yylsp[0]))));
 					(yyval.ival) = newspec;
 				}
-#line 28781 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 707:
-#line 4853 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_NOT_DEFERRABLE; }
-#line 28787 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 708:
-#line 4854 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_DEFERRABLE; }
-#line 28793 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 709:
-#line 4855 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_INITIALLY_IMMEDIATE; }
-#line 28799 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 710:
-#line 4856 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_INITIALLY_DEFERRED; }
-#line 28805 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 711:
-#line 4857 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_NOT_VALID; }
-#line 28811 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 712:
-#line 4858 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CAS_NO_INHERIT; }
-#line 28817 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 713:
-#line 4864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TRIGGER;
@@ -28828,11 +27658,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28832 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 714:
-#line 4875 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TRIGGER;
@@ -28843,11 +27671,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 28847 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 715:
-#line 4899 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateEventTrigStmt *n = makeNode(CreateEventTrigStmt);
 					n->trigname = (yyvsp[-7].str);
@@ -28856,11 +27682,9 @@ yyreduce:
 					n->funcname = (yyvsp[-2].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 28860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 716:
-#line 4910 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateEventTrigStmt *n = makeNode(CreateEventTrigStmt);
 					n->trigname = (yyvsp[-9].str);
@@ -28869,76 +27693,54 @@ yyreduce:
 					n->funcname = (yyvsp[-2].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 28873 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 717:
-#line 4922 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 28879 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 718:
-#line 4924 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
-#line 28885 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 719:
-#line 4929 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem((yyvsp[-4].str), (Node *) (yyvsp[-1].list)); }
-#line 28891 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 720:
-#line 4934 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 28897 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 721:
-#line 4936 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
-#line 28903 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 722:
-#line 4941 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterEventTrigStmt *n = makeNode(AlterEventTrigStmt);
 					n->trigname = (yyvsp[-1].str);
 					n->tgenabled = (yyvsp[0].chr);
 					(yyval.node) = (Node *) n;
 				}
-#line 28914 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 723:
-#line 4950 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.chr) = TRIGGER_FIRES_ON_ORIGIN; }
-#line 28920 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 724:
-#line 4951 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.chr) = TRIGGER_FIRES_ON_REPLICA; }
-#line 28926 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 725:
-#line 4952 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.chr) = TRIGGER_FIRES_ALWAYS; }
-#line 28932 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 726:
-#line 4953 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.chr) = TRIGGER_DISABLED; }
-#line 28938 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 727:
-#line 4967 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTrigStmt *n = makeNode(CreateTrigStmt);
 					n->trigname = (yyvsp[-5].str);
@@ -28954,11 +27756,9 @@ yyreduce:
 
 					(yyval.node) = (Node *)n;
 				}
-#line 28958 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 728:
-#line 4986 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = NIL;
@@ -28970,11 +27770,9 @@ yyreduce:
 							 errmsg("DROP ASSERTION is not yet implemented")));
 					(yyval.node) = (Node *) n;
 				}
-#line 28974 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 729:
-#line 5009 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_AGGREGATE;
@@ -28984,11 +27782,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 28988 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 730:
-#line 5019 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* old-style (pre-8.2) syntax for CREATE AGGREGATE */
 					DefineStmt *n = makeNode(DefineStmt);
@@ -28999,11 +27795,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29003 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 731:
-#line 5030 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_OPERATOR;
@@ -29013,11 +27807,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29017 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 732:
-#line 5040 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TYPE;
@@ -29027,11 +27819,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29031 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 733:
-#line 5050 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* Shell type (identified by lack of definition) */
 					DefineStmt *n = makeNode(DefineStmt);
@@ -29042,11 +27832,9 @@ yyreduce:
 					n->definition = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 29046 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 734:
-#line 5061 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CompositeTypeStmt *n = makeNode(CompositeTypeStmt);
 
@@ -29055,33 +27843,27 @@ yyreduce:
 					n->coldeflist = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29059 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 735:
-#line 5070 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateEnumStmt *n = makeNode(CreateEnumStmt);
 					n->typeName = (yyvsp[-5].list);
 					n->vals = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29070 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 736:
-#line 5077 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateRangeStmt *n = makeNode(CreateRangeStmt);
 					n->typeName = (yyvsp[-3].list);
 					n->params	= (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29081 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 737:
-#line 5084 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSPARSER;
@@ -29090,11 +27872,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29094 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 738:
-#line 5093 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSDICTIONARY;
@@ -29103,11 +27883,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29107 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 739:
-#line 5102 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSTEMPLATE;
@@ -29116,11 +27894,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29120 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 740:
-#line 5111 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSCONFIGURATION;
@@ -29129,11 +27905,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29133 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 741:
-#line 5120 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_COLLATION;
@@ -29142,11 +27916,9 @@ yyreduce:
 					n->definition = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 29146 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 742:
-#line 5129 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_COLLATION;
@@ -29155,125 +27927,87 @@ yyreduce:
 					n->definition = list_make1(makeDefElem("from", (Node *) (yyvsp[0].list)));
 					(yyval.node) = (Node *)n;
 				}
-#line 29159 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 743:
-#line 5139 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 29165 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 744:
-#line 5142 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 29171 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 745:
-#line 5143 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
-#line 29177 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 746:
-#line 5147 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *) (yyvsp[0].node));
 				}
-#line 29185 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 747:
-#line 5151 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[0].str), NULL);
 				}
-#line 29193 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 748:
-#line 5157 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)(yyvsp[0].typnam); }
-#line 29199 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 749:
-#line 5158 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)makeString(pstrdup((yyvsp[0].keyword))); }
-#line 29205 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 750:
-#line 5159 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)(yyvsp[0].list); }
-#line 29211 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 751:
-#line 5160 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)(yyvsp[0].value); }
-#line 29217 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 752:
-#line 5161 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)makeString((yyvsp[0].str)); }
-#line 29223 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 753:
-#line 5164 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 29229 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 754:
-#line 5167 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 29235 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 755:
-#line 5168 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
-#line 29241 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 756:
-#line 5177 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *)(yyvsp[0].node));
 				}
-#line 29249 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 757:
-#line 5183 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 29255 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 758:
-#line 5184 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 29261 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 759:
-#line 5188 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 29267 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 760:
-#line 5190 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
-#line 29273 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 761:
-#line 5201 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = (yyvsp[-4].list);
@@ -29283,11 +28017,9 @@ yyreduce:
 				n->skipIfExists = (yyvsp[-1].boolean);
 				(yyval.node) = (Node *) n;
 			}
-#line 29287 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 762:
-#line 5211 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = (yyvsp[-6].list);
@@ -29297,11 +28029,9 @@ yyreduce:
 				n->skipIfExists = (yyvsp[-3].boolean);
 				(yyval.node) = (Node *) n;
 			}
-#line 29301 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 763:
-#line 5221 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = (yyvsp[-6].list);
@@ -29311,23 +28041,17 @@ yyreduce:
 				n->skipIfExists = (yyvsp[-3].boolean);
 				(yyval.node) = (Node *) n;
 			}
-#line 29315 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 764:
-#line 5232 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = true; }
-#line 29321 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 765:
-#line 5233 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = false; }
-#line 29327 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 766:
-#line 5251 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassStmt *n = makeNode(CreateOpClassStmt);
 					n->opclassname = (yyvsp[-9].list);
@@ -29338,23 +28062,17 @@ yyreduce:
 					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29342 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 767:
-#line 5264 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 29348 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 768:
-#line 5265 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 29354 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 769:
-#line 5270 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
@@ -29364,11 +28082,9 @@ yyreduce:
 					n->order_family = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29368 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 770:
-#line 5281 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
@@ -29378,11 +28094,9 @@ yyreduce:
 					n->order_family = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29382 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 771:
-#line 5291 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
@@ -29391,11 +28105,9 @@ yyreduce:
 					n->number = (yyvsp[-2].ival);
 					(yyval.node) = (Node *) n;
 				}
-#line 29395 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 772:
-#line 5300 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
@@ -29405,64 +28117,46 @@ yyreduce:
 					n->class_args = (yyvsp[-3].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29409 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 773:
-#line 5310 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_STORAGETYPE;
 					n->storedtype = (yyvsp[0].typnam);
 					(yyval.node) = (Node *) n;
 				}
-#line 29420 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 774:
-#line 5318 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 29426 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 775:
-#line 5319 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 29432 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 776:
-#line 5322 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 29438 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 777:
-#line 5323 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 29444 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 778:
-#line 5326 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 29450 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 779:
-#line 5327 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 29456 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 780:
-#line 5328 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 29462 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 781:
-#line 5332 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * RECHECK no longer does anything in opclass definitions,
@@ -29476,28 +28170,22 @@ yyreduce:
 							 parser_errposition((yylsp[0]))));
 					(yyval.boolean) = TRUE;
 				}
-#line 29480 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 782:
-#line 5345 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 29486 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 783:
-#line 5351 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpFamilyStmt *n = makeNode(CreateOpFamilyStmt);
 					n->opfamilyname = (yyvsp[-2].list);
 					n->amname = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29497 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 784:
-#line 5361 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
 					n->opfamilyname = (yyvsp[-4].list);
@@ -29506,11 +28194,9 @@ yyreduce:
 					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29510 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 785:
-#line 5370 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
 					n->opfamilyname = (yyvsp[-4].list);
@@ -29519,23 +28205,17 @@ yyreduce:
 					n->items = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29523 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 786:
-#line 5381 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 29529 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 787:
-#line 5382 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 29535 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 788:
-#line 5387 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
@@ -29543,11 +28223,9 @@ yyreduce:
 					n->args = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29547 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 789:
-#line 5395 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
@@ -29555,11 +28233,9 @@ yyreduce:
 					n->args = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 29559 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 790:
-#line 5407 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString((yyvsp[-1].str)), (yyvsp[-3].list)));
@@ -29569,11 +28245,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29573 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 791:
-#line 5417 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString((yyvsp[-1].str)), (yyvsp[-3].list)));
@@ -29583,11 +28257,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29587 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 792:
-#line 5430 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString((yyvsp[-1].str)), (yyvsp[-3].list)));
@@ -29597,11 +28269,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29601 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 793:
-#line 5440 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString((yyvsp[-1].str)), (yyvsp[-3].list)));
@@ -29611,33 +28281,27 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29615 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 794:
-#line 5462 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropOwnedStmt *n = makeNode(DropOwnedStmt);
 					n->roles = (yyvsp[-1].list);
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 29626 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 795:
-#line 5472 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReassignOwnedStmt *n = makeNode(ReassignOwnedStmt);
 					n->roles = (yyvsp[-2].list);
 					n->newrole = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 29637 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 796:
-#line 5490 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = (yyvsp[-4].objtype);
@@ -29648,11 +28312,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 29652 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 797:
-#line 5501 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = (yyvsp[-2].objtype);
@@ -29663,11 +28325,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 29667 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 798:
-#line 5512 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TYPE;
@@ -29677,11 +28337,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29681 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 799:
-#line 5522 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TYPE;
@@ -29691,11 +28349,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29695 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 800:
-#line 5532 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_DOMAIN;
@@ -29705,11 +28361,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29709 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 801:
-#line 5542 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_DOMAIN;
@@ -29719,11 +28373,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 29723 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 802:
-#line 5552 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_INDEX;
@@ -29734,11 +28386,9 @@ yyreduce:
 					n->concurrent = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 29738 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 803:
-#line 5563 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_INDEX;
@@ -29749,149 +28399,101 @@ yyreduce:
 					n->concurrent = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 29753 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 804:
-#line 5576 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TABLE; }
-#line 29759 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 805:
-#line 5577 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SEQUENCE; }
-#line 29765 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 806:
-#line 5578 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_VIEW; }
-#line 29771 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 807:
-#line 5579 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_MATVIEW; }
-#line 29777 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 808:
-#line 5580 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_INDEX; }
-#line 29783 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 809:
-#line 5581 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_FOREIGN_TABLE; }
-#line 29789 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 810:
-#line 5582 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_EVENT_TRIGGER; }
-#line 29795 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 811:
-#line 5583 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_COLLATION; }
-#line 29801 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 812:
-#line 5584 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_CONVERSION; }
-#line 29807 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 813:
-#line 5585 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SCHEMA; }
-#line 29813 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 814:
-#line 5586 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_EXTENSION; }
-#line 29819 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 815:
-#line 5587 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSPARSER; }
-#line 29825 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 816:
-#line 5588 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSDICTIONARY; }
-#line 29831 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 817:
-#line 5589 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSTEMPLATE; }
-#line 29837 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 818:
-#line 5590 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSCONFIGURATION; }
-#line 29843 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 819:
-#line 5594 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].list)); }
-#line 29849 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 820:
-#line 5595 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].list)); }
-#line 29855 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 821:
-#line 5598 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 29861 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 822:
-#line 5599 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list)); }
-#line 29867 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 823:
-#line 5603 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 29873 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 824:
-#line 5605 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
-#line 29879 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 825:
-#line 5609 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(list_make1((yyvsp[0].typnam))); }
-#line 29885 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 826:
-#line 5610 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), list_make1((yyvsp[0].typnam))); }
-#line 29891 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 827:
-#line 5621 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TruncateStmt *n = makeNode(TruncateStmt);
 					n->relations = (yyvsp[-2].list);
@@ -29899,29 +28501,21 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 29903 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 828:
-#line 5631 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = false; }
-#line 29909 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 829:
-#line 5632 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = true; }
-#line 29915 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 830:
-#line 5633 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = false; }
-#line 29921 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 831:
-#line 5667 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = (yyvsp[-3].objtype);
@@ -29930,11 +28524,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29934 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 832:
-#line 5676 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TYPE;
@@ -29943,11 +28535,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29947 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 833:
-#line 5685 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_DOMAIN;
@@ -29956,11 +28546,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29960 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 834:
-#line 5694 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_AGGREGATE;
@@ -29969,11 +28557,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29973 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 835:
-#line 5703 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_FUNCTION;
@@ -29982,11 +28568,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29986 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 836:
-#line 5712 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPERATOR;
@@ -29995,11 +28579,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 29999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 837:
-#line 5721 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TABCONSTRAINT;
@@ -30008,11 +28590,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30012 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 838:
-#line 5730 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_DOMCONSTRAINT;
@@ -30026,11 +28606,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30030 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 839:
-#line 5744 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_POLICY;
@@ -30039,11 +28617,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30043 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 840:
-#line 5753 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_RULE;
@@ -30052,11 +28628,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30056 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 841:
-#line 5762 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* Obsolete syntax supported for awhile for compatibility */
 					CommentStmt *n = makeNode(CommentStmt);
@@ -30066,11 +28640,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30070 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 842:
-#line 5772 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TRANSFORM;
@@ -30079,11 +28651,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30083 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 843:
-#line 5781 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TRIGGER;
@@ -30092,11 +28662,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30096 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 844:
-#line 5790 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPCLASS;
@@ -30104,11 +28672,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30108 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 845:
-#line 5798 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPFAMILY;
@@ -30117,11 +28683,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30121 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 846:
-#line 5807 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_LARGEOBJECT;
@@ -30130,11 +28694,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30134 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 847:
-#line 5816 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_CAST;
@@ -30143,11 +28705,9 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30147 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 848:
-#line 5825 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_LANGUAGE;
@@ -30156,149 +28716,101 @@ yyreduce:
 					n->comment = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30160 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 849:
-#line 5836 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_COLUMN; }
-#line 30166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 850:
-#line 5837 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_DATABASE; }
-#line 30172 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 851:
-#line 5838 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SCHEMA; }
-#line 30178 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 852:
-#line 5839 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_INDEX; }
-#line 30184 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 853:
-#line 5840 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SEQUENCE; }
-#line 30190 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 854:
-#line 5841 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TABLE; }
-#line 30196 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 855:
-#line 5842 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_VIEW; }
-#line 30202 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 856:
-#line 5843 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_MATVIEW; }
-#line 30208 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 857:
-#line 5844 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_COLLATION; }
-#line 30214 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 858:
-#line 5845 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_CONVERSION; }
-#line 30220 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 859:
-#line 5846 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TABLESPACE; }
-#line 30226 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 860:
-#line 5847 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_EXTENSION; }
-#line 30232 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 861:
-#line 5848 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_ROLE; }
-#line 30238 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 862:
-#line 5849 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_FOREIGN_TABLE; }
-#line 30244 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 863:
-#line 5850 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_FOREIGN_SERVER; }
-#line 30250 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 864:
-#line 5851 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_FDW; }
-#line 30256 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 865:
-#line 5852 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_EVENT_TRIGGER; }
-#line 30262 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 866:
-#line 5853 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSCONFIGURATION; }
-#line 30268 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 867:
-#line 5854 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSDICTIONARY; }
-#line 30274 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 868:
-#line 5855 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSPARSER; }
-#line 30280 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 869:
-#line 5856 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TSTEMPLATE; }
-#line 30286 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 870:
-#line 5860 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 30292 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 871:
-#line 5861 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 30298 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 872:
-#line 5877 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-5].str);
@@ -30308,11 +28820,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30312 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 873:
-#line 5888 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-5].str);
@@ -30322,11 +28832,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30326 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 874:
-#line 5899 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-5].str);
@@ -30336,11 +28844,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30340 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 875:
-#line 5910 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-6].str);
@@ -30350,11 +28856,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30354 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 876:
-#line 5921 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-6].str);
@@ -30364,11 +28868,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30368 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 877:
-#line 5932 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-6].str);
@@ -30378,11 +28880,9 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30382 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 878:
-#line 5943 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = (yyvsp[-6].str);
@@ -30392,121 +28892,85 @@ yyreduce:
 					n->label = (yyvsp[0].str);
 					(yyval.node) = (Node *) n;
 				}
-#line 30396 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 879:
-#line 5954 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 30402 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 880:
-#line 5955 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 30408 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 881:
-#line 5959 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_COLUMN; }
-#line 30414 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 882:
-#line 5960 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_DATABASE; }
-#line 30420 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 883:
-#line 5961 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_EVENT_TRIGGER; }
-#line 30426 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 884:
-#line 5962 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_FOREIGN_TABLE; }
-#line 30432 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 885:
-#line 5963 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SCHEMA; }
-#line 30438 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 886:
-#line 5964 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_SEQUENCE; }
-#line 30444 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 887:
-#line 5965 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TABLE; }
-#line 30450 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 888:
-#line 5966 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_ROLE; }
-#line 30456 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 889:
-#line 5967 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_TABLESPACE; }
-#line 30462 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 890:
-#line 5968 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_VIEW; }
-#line 30468 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 891:
-#line 5969 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.objtype) = OBJECT_MATVIEW; }
-#line 30474 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 892:
-#line 5972 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 30480 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 893:
-#line 5973 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 30486 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 894:
-#line 5984 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = (FetchStmt *) (yyvsp[0].node);
 					n->ismove = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 30496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 895:
-#line 5990 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = (FetchStmt *) (yyvsp[0].node);
 					n->ismove = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 30506 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 896:
-#line 5998 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30514,11 +28978,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30518 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 897:
-#line 6006 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30526,11 +28988,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30530 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 898:
-#line 6014 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30538,11 +28998,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30542 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 899:
-#line 6022 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30550,11 +29008,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30554 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 900:
-#line 6030 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30562,11 +29018,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30566 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 901:
-#line 6038 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30574,11 +29028,9 @@ yyreduce:
 					n->howMany = -1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30578 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 902:
-#line 6046 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30586,11 +29038,9 @@ yyreduce:
 					n->howMany = (yyvsp[-2].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 30590 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 903:
-#line 6054 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30598,11 +29048,9 @@ yyreduce:
 					n->howMany = (yyvsp[-2].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 30602 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 904:
-#line 6062 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30610,11 +29058,9 @@ yyreduce:
 					n->howMany = (yyvsp[-2].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 30614 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 905:
-#line 6070 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30622,11 +29068,9 @@ yyreduce:
 					n->howMany = FETCH_ALL;
 					(yyval.node) = (Node *)n;
 				}
-#line 30626 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 906:
-#line 6078 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30634,11 +29078,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30638 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 907:
-#line 6086 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30646,11 +29088,9 @@ yyreduce:
 					n->howMany = (yyvsp[-2].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 30650 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 908:
-#line 6094 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30658,11 +29098,9 @@ yyreduce:
 					n->howMany = FETCH_ALL;
 					(yyval.node) = (Node *)n;
 				}
-#line 30662 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 909:
-#line 6102 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30670,11 +29108,9 @@ yyreduce:
 					n->howMany = 1;
 					(yyval.node) = (Node *)n;
 				}
-#line 30674 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 910:
-#line 6110 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30682,11 +29118,9 @@ yyreduce:
 					n->howMany = (yyvsp[-2].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 30686 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 911:
-#line 6118 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FetchStmt *n = makeNode(FetchStmt);
 					n->portalname = (yyvsp[0].str);
@@ -30694,35 +29128,25 @@ yyreduce:
 					n->howMany = FETCH_ALL;
 					(yyval.node) = (Node *)n;
 				}
-#line 30698 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 912:
-#line 6127 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 30704 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 913:
-#line 6128 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 30710 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 914:
-#line 6131 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 30716 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 915:
-#line 6132 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 30722 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 916:
-#line 6144 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
@@ -30734,11 +29158,9 @@ yyreduce:
 					n->grant_option = (yyvsp[0].boolean);
 					(yyval.node) = (Node*)n;
 				}
-#line 30738 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 917:
-#line 6160 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -30751,11 +29173,9 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 30755 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 918:
-#line 6174 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -30768,107 +29188,83 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 30772 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 919:
-#line 6199 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 30778 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 920:
-#line 6201 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 30784 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 921:
-#line 6203 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 30790 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 922:
-#line 6205 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AccessPriv *n = makeNode(AccessPriv);
 					n->priv_name = NULL;
 					n->cols = (yyvsp[-1].list);
 					(yyval.list) = list_make1(n);
 				}
-#line 30801 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 923:
-#line 6212 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AccessPriv *n = makeNode(AccessPriv);
 					n->priv_name = NULL;
 					n->cols = (yyvsp[-1].list);
 					(yyval.list) = list_make1(n);
 				}
-#line 30812 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 924:
-#line 6220 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].accesspriv)); }
-#line 30818 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 925:
-#line 6221 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].accesspriv)); }
-#line 30824 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 926:
-#line 6225 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AccessPriv *n = makeNode(AccessPriv);
 				n->priv_name = pstrdup((yyvsp[-1].keyword));
 				n->cols = (yyvsp[0].list);
 				(yyval.accesspriv) = n;
 			}
-#line 30835 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 927:
-#line 6232 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AccessPriv *n = makeNode(AccessPriv);
 				n->priv_name = pstrdup((yyvsp[-1].keyword));
 				n->cols = (yyvsp[0].list);
 				(yyval.accesspriv) = n;
 			}
-#line 30846 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 928:
-#line 6239 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AccessPriv *n = makeNode(AccessPriv);
 				n->priv_name = pstrdup((yyvsp[-1].keyword));
 				n->cols = (yyvsp[0].list);
 				(yyval.accesspriv) = n;
 			}
-#line 30857 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 929:
-#line 6246 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				AccessPriv *n = makeNode(AccessPriv);
 				n->priv_name = (yyvsp[-1].str);
 				n->cols = (yyvsp[0].list);
 				(yyval.accesspriv) = n;
 			}
-#line 30868 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 930:
-#line 6260 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30876,11 +29272,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30880 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 931:
-#line 6268 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30888,11 +29282,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30892 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 932:
-#line 6276 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30900,11 +29292,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30904 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 933:
-#line 6284 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30912,11 +29302,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30916 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 934:
-#line 6292 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30924,11 +29312,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30928 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 935:
-#line 6300 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30936,11 +29322,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30940 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 936:
-#line 6308 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30948,11 +29332,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30952 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 937:
-#line 6316 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30960,11 +29342,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30964 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 938:
-#line 6324 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30972,11 +29352,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30976 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 939:
-#line 6332 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30984,11 +29362,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 30988 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 940:
-#line 6340 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -30996,11 +29372,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31000 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 941:
-#line 6348 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -31008,11 +29382,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31012 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 942:
-#line 6356 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
@@ -31020,11 +29392,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31024 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 943:
-#line 6364 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
@@ -31032,11 +29402,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31036 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 944:
-#line 6372 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
@@ -31044,11 +29412,9 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31048 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 945:
-#line 6380 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_ALL_IN_SCHEMA;
@@ -31056,70 +29422,50 @@ yyreduce:
 					n->objs = (yyvsp[0].list);
 					(yyval.privtarget) = n;
 				}
-#line 31060 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 946:
-#line 6391 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 31066 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 947:
-#line 6392 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 31072 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 948:
-#line 6396 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 31078 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 949:
-#line 6397 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 31084 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 950:
-#line 6402 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 31090 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 951:
-#line 6403 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 31096 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 952:
-#line 6407 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].funwithargs)); }
-#line 31102 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 953:
-#line 6409 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].funwithargs)); }
-#line 31108 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 954:
-#line 6414 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncWithArgs *n = makeNode(FuncWithArgs);
 					n->funcname = (yyvsp[-1].list);
 					n->funcargs = extractArgTypes((yyvsp[0].list));
 					(yyval.funwithargs) = n;
 				}
-#line 31119 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 955:
-#line 6430 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = true;
@@ -31129,11 +29475,9 @@ yyreduce:
 					n->grantor = (yyvsp[0].node);
 					(yyval.node) = (Node*)n;
 				}
-#line 31133 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 956:
-#line 6443 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
@@ -31143,11 +29487,9 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node*)n;
 				}
-#line 31147 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 957:
-#line 6453 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 					n->is_grant = false;
@@ -31157,82 +29499,60 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node*)n;
 				}
-#line 31161 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 958:
-#line 6464 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 31167 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 959:
-#line 6465 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 31173 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 960:
-#line 6468 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 31179 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 961:
-#line 6469 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 31185 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 962:
-#line 6480 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDefaultPrivilegesStmt *n = makeNode(AlterDefaultPrivilegesStmt);
 					n->options = (yyvsp[-1].list);
 					n->action = (GrantStmt *) (yyvsp[0].node);
 					(yyval.node) = (Node*)n;
 				}
-#line 31196 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 963:
-#line 6489 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 31202 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 964:
-#line 6490 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 31208 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 965:
-#line 6495 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("schemas", (Node *)(yyvsp[0].list));
 				}
-#line 31216 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 966:
-#line 6499 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("roles", (Node *)(yyvsp[0].list));
 				}
-#line 31224 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 967:
-#line 6503 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("roles", (Node *)(yyvsp[0].list));
 				}
-#line 31232 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 968:
-#line 6515 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = true;
@@ -31244,11 +29564,9 @@ yyreduce:
 					n->grant_option = (yyvsp[0].boolean);
 					(yyval.node) = (Node*)n;
 				}
-#line 31248 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 969:
-#line 6528 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -31261,11 +29579,9 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 31265 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 970:
-#line 6542 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					GrantStmt *n = makeNode(GrantStmt);
 					n->is_grant = false;
@@ -31278,35 +29594,25 @@ yyreduce:
 					n->behavior = (yyvsp[0].dbehavior);
 					(yyval.node) = (Node *)n;
 				}
-#line 31282 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 971:
-#line 6557 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ACL_OBJECT_RELATION; }
-#line 31288 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 972:
-#line 6558 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ACL_OBJECT_FUNCTION; }
-#line 31294 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 973:
-#line 6559 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ACL_OBJECT_SEQUENCE; }
-#line 31300 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 974:
-#line 6560 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ACL_OBJECT_TYPE; }
-#line 31306 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 975:
-#line 6575 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = (yyvsp[-12].boolean);
@@ -31330,11 +29636,9 @@ yyreduce:
 					n->if_not_exists = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 31334 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 976:
-#line 6601 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = (yyvsp[-15].boolean);
@@ -31358,71 +29662,49 @@ yyreduce:
 					n->if_not_exists = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 31362 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 977:
-#line 6627 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 31368 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 978:
-#line 6628 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 31374 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 979:
-#line 6632 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 31380 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 980:
-#line 6633 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 31386 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 981:
-#line 6637 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 31392 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 982:
-#line 6638 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 31398 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 983:
-#line 6642 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 31404 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 984:
-#line 6643 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = DEFAULT_INDEX_TYPE; }
-#line 31410 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 985:
-#line 6646 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].ielem)); }
-#line 31416 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 986:
-#line 6647 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].ielem)); }
-#line 31422 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 987:
-#line 6656 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.ielem) = makeNode(IndexElem);
 					(yyval.ielem)->name = (yyvsp[-4].str);
@@ -31433,11 +29715,9 @@ yyreduce:
 					(yyval.ielem)->ordering = static_cast<SortByDir>((yyvsp[-1].ival));
 					(yyval.ielem)->nulls_ordering = static_cast<SortByNulls>((yyvsp[0].ival));
 				}
-#line 31437 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 988:
-#line 6667 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.ielem) = makeNode(IndexElem);
 					(yyval.ielem)->name = NULL;
@@ -31448,11 +29728,9 @@ yyreduce:
 					(yyval.ielem)->ordering = static_cast<SortByDir>((yyvsp[-1].ival));
 					(yyval.ielem)->nulls_ordering = static_cast<SortByNulls>((yyvsp[0].ival));
 				}
-#line 31452 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 989:
-#line 6678 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.ielem) = makeNode(IndexElem);
 					(yyval.ielem)->name = NULL;
@@ -31463,77 +29741,53 @@ yyreduce:
 					(yyval.ielem)->ordering = static_cast<SortByDir>((yyvsp[-1].ival));
 					(yyval.ielem)->nulls_ordering = static_cast<SortByNulls>((yyvsp[0].ival));
 				}
-#line 31467 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 990:
-#line 6690 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 31473 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 991:
-#line 6691 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 31479 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 992:
-#line 6694 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 31485 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 993:
-#line 6695 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 31491 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 994:
-#line 6696 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 31497 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 995:
-#line 6699 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_ASC; }
-#line 31503 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 996:
-#line 6700 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_DESC; }
-#line 31509 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 997:
-#line 6701 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_DEFAULT; }
-#line 31515 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 998:
-#line 6704 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_NULLS_FIRST; }
-#line 31521 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 999:
-#line 6705 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_NULLS_LAST; }
-#line 31527 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1000:
-#line 6706 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = SORTBY_NULLS_DEFAULT; }
-#line 31533 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1001:
-#line 6724 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = (yyvsp[-7].boolean);
@@ -31544,11 +29798,9 @@ yyreduce:
 					n->withClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 31548 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1002:
-#line 6736 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = (yyvsp[-10].boolean);
@@ -31560,11 +29812,9 @@ yyreduce:
 					n->withClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 31564 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1003:
-#line 6749 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = (yyvsp[-5].boolean);
@@ -31575,71 +29825,49 @@ yyreduce:
 					n->withClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 31579 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1004:
-#line 6762 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 31585 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1005:
-#line 6763 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 31591 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1006:
-#line 6766 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 31597 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1007:
-#line 6767 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 31603 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1008:
-#line 6771 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].fun_param)); }
-#line 31609 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1009:
-#line 6772 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].fun_param)); }
-#line 31615 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1010:
-#line 6780 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 31621 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1011:
-#line 6781 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 31627 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1012:
-#line 6785 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].fun_param)); }
-#line 31633 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1013:
-#line 6787 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].fun_param)); }
-#line 31639 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1014:
-#line 6802 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = (yyvsp[-1].str);
@@ -31648,11 +29876,9 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 31652 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1015:
-#line 6811 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = (yyvsp[-2].str);
@@ -31661,11 +29887,9 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 31665 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1016:
-#line 6820 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = (yyvsp[-1].str);
@@ -31674,11 +29898,9 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 31678 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1017:
-#line 6829 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = NULL;
@@ -31687,11 +29909,9 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 31691 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1018:
-#line 6838 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = NULL;
@@ -31700,41 +29920,29 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 31704 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1019:
-#line 6849 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.fun_param_mode) = FUNC_PARAM_IN; }
-#line 31710 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1020:
-#line 6850 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.fun_param_mode) = FUNC_PARAM_OUT; }
-#line 31716 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1021:
-#line 6851 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.fun_param_mode) = FUNC_PARAM_INOUT; }
-#line 31722 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1022:
-#line 6852 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.fun_param_mode) = FUNC_PARAM_INOUT; }
-#line 31728 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1023:
-#line 6853 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.fun_param_mode) = FUNC_PARAM_VARIADIC; }
-#line 31734 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1025:
-#line 6864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* We can catch over-specified results here if we want to,
 					 * but for now better to silently swallow typmod, etc.
@@ -31742,64 +29950,50 @@ yyreduce:
 					 */
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 31746 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1026:
-#line 6878 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 31752 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1027:
-#line 6880 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-3].str)), (yyvsp[-2].list)));
 					(yyval.typnam)->pct_type = true;
 					(yyval.typnam)->location = (yylsp[-3]);
 				}
-#line 31762 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1028:
-#line 6886 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-3].str)), (yyvsp[-2].list)));
 					(yyval.typnam)->pct_type = true;
 					(yyval.typnam)->setof = TRUE;
 					(yyval.typnam)->location = (yylsp[-3]);
 				}
-#line 31773 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1029:
-#line 6896 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.fun_param) = (yyvsp[0].fun_param);
 				}
-#line 31781 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1030:
-#line 6900 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.fun_param) = (yyvsp[-2].fun_param);
 					(yyval.fun_param)->defexpr = (yyvsp[0].node);
 				}
-#line 31790 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1031:
-#line 6905 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.fun_param) = (yyvsp[-2].fun_param);
 					(yyval.fun_param)->defexpr = (yyvsp[0].node);
 				}
-#line 31799 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1032:
-#line 6913 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if (!((yyvsp[0].fun_param)->mode == FUNC_PARAM_IN ||
 						  (yyvsp[0].fun_param)->mode == FUNC_PARAM_VARIADIC))
@@ -31809,267 +30003,197 @@ yyreduce:
 								 parser_errposition((yylsp[0]))));
 					(yyval.fun_param) = (yyvsp[0].fun_param);
 				}
-#line 31813 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1033:
-#line 6954 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(NIL, makeInteger(-1));
 				}
-#line 31821 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1034:
-#line 6958 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[-1].list), makeInteger(-1));
 				}
-#line 31829 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1035:
-#line 6962 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[-1].list), makeInteger(0));
 				}
-#line 31837 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1036:
-#line 6966 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* this is the only case requiring consistency checking */
 					(yyval.list) = makeOrderedSetArgs((yyvsp[-4].list), (yyvsp[-1].list), yyscanner);
 				}
-#line 31846 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1037:
-#line 6973 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].fun_param)); }
-#line 31852 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1038:
-#line 6974 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].fun_param)); }
-#line 31858 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1039:
-#line 6979 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 31864 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1040:
-#line 6980 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 31870 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1041:
-#line 6988 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(FALSE));
 				}
-#line 31878 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1042:
-#line 6992 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
-#line 31886 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1043:
-#line 6996 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("strict", (Node *)makeInteger(TRUE));
 				}
-#line 31894 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1044:
-#line 7000 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("immutable"));
 				}
-#line 31902 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1045:
-#line 7004 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("stable"));
 				}
-#line 31910 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1046:
-#line 7008 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("volatility", (Node *)makeString("volatile"));
 				}
-#line 31918 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1047:
-#line 7012 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(TRUE));
 				}
-#line 31926 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1048:
-#line 7016 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(FALSE));
 				}
-#line 31934 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1049:
-#line 7020 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(TRUE));
 				}
-#line 31942 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1050:
-#line 7024 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("security", (Node *)makeInteger(FALSE));
 				}
-#line 31950 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1051:
-#line 7028 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("leakproof", (Node *)makeInteger(TRUE));
 				}
-#line 31958 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1052:
-#line 7032 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("leakproof", (Node *)makeInteger(FALSE));
 				}
-#line 31966 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1053:
-#line 7036 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("cost", (Node *)(yyvsp[0].value));
 				}
-#line 31974 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1054:
-#line 7040 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("rows", (Node *)(yyvsp[0].value));
 				}
-#line 31982 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1055:
-#line 7044 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* we abuse the normal content of a DefElem here */
 					(yyval.defelt) = makeDefElem("set", (Node *)(yyvsp[0].vsetstmt));
 				}
-#line 31991 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1056:
-#line 7052 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("as", (Node *)(yyvsp[0].list));
 				}
-#line 31999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1057:
-#line 7056 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 32007 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1058:
-#line 7060 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("transform", (Node *)(yyvsp[0].list));
 				}
-#line 32015 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1059:
-#line 7064 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("window", (Node *)makeInteger(TRUE));
 				}
-#line 32023 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1060:
-#line 7068 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = (yyvsp[0].defelt);
 				}
-#line 32031 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1061:
-#line 7073 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 32037 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1062:
-#line 7075 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(makeString((yyvsp[-2].str)), makeString((yyvsp[0].str)));
 				}
-#line 32045 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1063:
-#line 7081 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].typnam)); }
-#line 32051 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1064:
-#line 7082 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-4].list), (yyvsp[0].typnam)); }
-#line 32057 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1065:
-#line 7086 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 32063 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1066:
-#line 7087 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 32069 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1067:
-#line 7091 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FunctionParameter *n = makeNode(FunctionParameter);
 					n->name = (yyvsp[-1].str);
@@ -32078,50 +30202,38 @@ yyreduce:
 					n->defexpr = NULL;
 					(yyval.fun_param) = n;
 				}
-#line 32082 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1068:
-#line 7103 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].fun_param));
 				}
-#line 32090 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1069:
-#line 7107 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].fun_param));
 				}
-#line 32098 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1070:
-#line 7122 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterFunctionStmt *n = makeNode(AlterFunctionStmt);
 					n->func = (yyvsp[-2].funwithargs);
 					n->actions = (yyvsp[-1].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 32109 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1071:
-#line 7132 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 32115 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1072:
-#line 7133 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 32121 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1075:
-#line 7155 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
@@ -32132,11 +30244,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32136 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1076:
-#line 7166 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_FUNCTION;
@@ -32147,11 +30257,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32151 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1077:
-#line 7180 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
@@ -32162,11 +30270,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1078:
-#line 7191 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_AGGREGATE;
@@ -32177,11 +30283,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32181 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1079:
-#line 7205 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_OPERATOR;
@@ -32192,11 +30296,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32196 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1080:
-#line 7216 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_OPERATOR;
@@ -32207,11 +30309,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32211 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1081:
-#line 7230 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				   ereport(ERROR,
 						   (errcode(ERRCODE_SYNTAX_ERROR),
@@ -32219,79 +30319,57 @@ yyreduce:
 							errhint("Use NONE to denote the missing argument of a unary operator."),
 							parser_errposition((yylsp[0]))));
 				}
-#line 32223 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1082:
-#line 7238 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[-3].typnam), (yyvsp[-1].typnam)); }
-#line 32229 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1083:
-#line 7240 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(NULL, (yyvsp[-1].typnam)); }
-#line 32235 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1084:
-#line 7242 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[-3].typnam), NULL); }
-#line 32241 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1085:
-#line 7247 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 32247 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1086:
-#line 7249 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lcons(makeString((yyvsp[-2].str)), (yyvsp[0].list)); }
-#line 32253 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1087:
-#line 7262 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DoStmt *n = makeNode(DoStmt);
 					n->args = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 32263 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1088:
-#line 7270 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 32269 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1089:
-#line 7271 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 32275 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1090:
-#line 7276 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("as", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 32283 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1091:
-#line 7280 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem("language", (Node *)makeString((yyvsp[0].str)));
 				}
-#line 32291 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1092:
-#line 7293 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = (yyvsp[-7].typnam);
@@ -32301,11 +30379,9 @@ yyreduce:
 					n->inout = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32305 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1093:
-#line 7304 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = (yyvsp[-6].typnam);
@@ -32315,11 +30391,9 @@ yyreduce:
 					n->inout = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32319 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1094:
-#line 7315 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateCastStmt *n = makeNode(CreateCastStmt);
 					n->sourcetype = (yyvsp[-6].typnam);
@@ -32329,29 +30403,21 @@ yyreduce:
 					n->inout = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32333 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1095:
-#line 7326 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = COERCION_IMPLICIT; }
-#line 32339 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1096:
-#line 7327 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = COERCION_ASSIGNMENT; }
-#line 32345 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1097:
-#line 7328 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = COERCION_EXPLICIT; }
-#line 32351 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1098:
-#line 7333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_CAST;
@@ -32362,23 +30428,17 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32366 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1099:
-#line 7345 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 32372 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1100:
-#line 7346 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 32378 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1101:
-#line 7357 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTransformStmt *n = makeNode(CreateTransformStmt);
 					n->replace = (yyvsp[-8].boolean);
@@ -32388,43 +30448,33 @@ yyreduce:
 					n->tosql = static_cast<FuncWithArgs *>(lsecond((yyvsp[-1].list)));
 					(yyval.node) = (Node *)n;
 				}
-#line 32392 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1102:
-#line 7369 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[-6].funwithargs), (yyvsp[0].funwithargs));
 				}
-#line 32400 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1103:
-#line 7373 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[0].funwithargs), (yyvsp[-6].funwithargs));
 				}
-#line 32408 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1104:
-#line 7377 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[0].funwithargs), NULL);
 				}
-#line 32416 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1105:
-#line 7381 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(NULL, (yyvsp[0].funwithargs));
 				}
-#line 32424 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1106:
-#line 7388 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_TRANSFORM;
@@ -32434,11 +30484,9 @@ yyreduce:
 					n->missing_ok = (yyvsp[-5].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 32438 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1107:
-#line 7409 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = static_cast<ReindexObjectType>((yyvsp[-1].ival));
@@ -32447,11 +30495,9 @@ yyreduce:
 					n->options = 0;
 					(yyval.node) = (Node *)n;
 				}
-#line 32451 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1108:
-#line 7418 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = static_cast<ReindexObjectType>((yyvsp[-1].ival));
@@ -32460,11 +30506,9 @@ yyreduce:
 					n->options = 0;
 					(yyval.node) = (Node *)n;
 				}
-#line 32464 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1109:
-#line 7427 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = static_cast<ReindexObjectType>((yyvsp[-1].ival));
@@ -32473,11 +30517,9 @@ yyreduce:
 					n->options = (yyvsp[-3].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 32477 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1110:
-#line 7436 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ReindexStmt *n = makeNode(ReindexStmt);
 					n->kind = static_cast<ReindexObjectType>((yyvsp[-1].ival));
@@ -32486,59 +30528,41 @@ yyreduce:
 					n->options = (yyvsp[-3].ival);
 					(yyval.node) = (Node *)n;
 				}
-#line 32490 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1111:
-#line 7446 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEX_OBJECT_INDEX; }
-#line 32496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1112:
-#line 7447 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEX_OBJECT_TABLE; }
-#line 32502 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1113:
-#line 7450 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEX_OBJECT_SCHEMA; }
-#line 32508 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1114:
-#line 7451 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEX_OBJECT_SYSTEM; }
-#line 32514 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1115:
-#line 7452 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEX_OBJECT_DATABASE; }
-#line 32520 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1116:
-#line 7455 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 32526 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1117:
-#line 7456 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-2].ival) | (yyvsp[0].ival); }
-#line 32532 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1118:
-#line 7459 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = REINDEXOPT_VERBOSE; }
-#line 32538 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1119:
-#line 7470 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableSpaceOptionsStmt *n =
 						makeNode(AlterTableSpaceOptionsStmt);
@@ -32547,11 +30571,9 @@ yyreduce:
 					n->isReset = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 32551 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1120:
-#line 7479 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTableSpaceOptionsStmt *n =
 						makeNode(AlterTableSpaceOptionsStmt);
@@ -32560,11 +30582,9 @@ yyreduce:
 					n->isReset = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 32564 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1121:
-#line 7496 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_AGGREGATE;
@@ -32574,11 +30594,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32578 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1122:
-#line 7506 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLLATION;
@@ -32587,11 +30605,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32591 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1123:
-#line 7515 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_CONVERSION;
@@ -32600,11 +30616,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32604 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1124:
-#line 7524 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_DATABASE;
@@ -32613,11 +30627,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32617 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1125:
-#line 7533 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_DOMAIN;
@@ -32626,11 +30638,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32630 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1126:
-#line 7542 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_DOMCONSTRAINT;
@@ -32639,11 +30649,9 @@ yyreduce:
 					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 32643 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1127:
-#line 7551 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FDW;
@@ -32652,11 +30660,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32656 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1128:
-#line 7560 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FUNCTION;
@@ -32666,11 +30672,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32670 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1129:
-#line 7570 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
@@ -32679,11 +30683,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32683 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1130:
-#line 7579 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_LANGUAGE;
@@ -32692,11 +30694,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32696 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1131:
-#line 7588 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPCLASS;
@@ -32705,11 +30705,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32709 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1132:
-#line 7597 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPFAMILY;
@@ -32718,11 +30716,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32722 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1133:
-#line 7606 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_POLICY;
@@ -32732,11 +30728,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32736 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1134:
-#line 7616 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_POLICY;
@@ -32746,11 +30740,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32750 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1135:
-#line 7626 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SCHEMA;
@@ -32759,11 +30751,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32763 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1136:
-#line 7635 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FOREIGN_SERVER;
@@ -32772,11 +30762,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32776 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1137:
-#line 7644 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLE;
@@ -32786,11 +30774,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32790 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1138:
-#line 7654 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLE;
@@ -32800,11 +30786,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32804 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1139:
-#line 7664 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SEQUENCE;
@@ -32814,11 +30798,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32818 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1140:
-#line 7674 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SEQUENCE;
@@ -32828,11 +30810,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32832 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1141:
-#line 7684 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_VIEW;
@@ -32842,11 +30822,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32846 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1142:
-#line 7694 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_VIEW;
@@ -32856,11 +30834,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1143:
-#line 7704 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_MATVIEW;
@@ -32870,11 +30846,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32874 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1144:
-#line 7714 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_MATVIEW;
@@ -32884,11 +30858,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32888 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1145:
-#line 7724 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_INDEX;
@@ -32898,11 +30870,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32902 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1146:
-#line 7734 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_INDEX;
@@ -32912,11 +30882,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32916 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1147:
-#line 7744 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FOREIGN_TABLE;
@@ -32926,11 +30894,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32930 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1148:
-#line 7754 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FOREIGN_TABLE;
@@ -32940,11 +30906,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32944 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1149:
-#line 7764 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -32955,11 +30919,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32959 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1150:
-#line 7775 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -32970,11 +30932,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 32974 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1151:
-#line 7786 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -32985,11 +30945,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 32989 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1152:
-#line 7797 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -33000,11 +30958,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33004 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1153:
-#line 7808 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABCONSTRAINT;
@@ -33014,11 +30970,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33018 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1154:
-#line 7818 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABCONSTRAINT;
@@ -33028,11 +30982,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33032 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1155:
-#line 7828 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -33043,11 +30995,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33047 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1156:
-#line 7839 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_COLUMN;
@@ -33058,11 +31008,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33062 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1157:
-#line 7850 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_RULE;
@@ -33072,11 +31020,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33076 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1158:
-#line 7860 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TRIGGER;
@@ -33086,11 +31032,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33090 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1159:
-#line 7870 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_EVENT_TRIGGER;
@@ -33098,11 +31042,9 @@ yyreduce:
 					n->newname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 33102 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1160:
-#line 7878 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
@@ -33111,11 +31053,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33115 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1161:
-#line 7887 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ROLE;
@@ -33124,11 +31064,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33128 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1162:
-#line 7896 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TABLESPACE;
@@ -33137,11 +31075,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33141 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1163:
-#line 7905 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSPARSER;
@@ -33150,11 +31086,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33154 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1164:
-#line 7914 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSDICTIONARY;
@@ -33163,11 +31097,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33167 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1165:
-#line 7923 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSTEMPLATE;
@@ -33176,11 +31108,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33180 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1166:
-#line 7932 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSCONFIGURATION;
@@ -33189,11 +31119,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33193 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1167:
-#line 7941 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TYPE;
@@ -33202,11 +31130,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33206 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1168:
-#line 7950 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_ATTRIBUTE;
@@ -33218,35 +31144,25 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33222 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1169:
-#line 7963 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = COLUMN; }
-#line 33228 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1170:
-#line 7964 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 33234 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1171:
-#line 7967 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 1; }
-#line 33240 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1172:
-#line 7968 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 33246 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1173:
-#line 7979 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_AGGREGATE;
@@ -33256,11 +31172,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33260 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1174:
-#line 7989 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_COLLATION;
@@ -33269,11 +31183,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33273 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1175:
-#line 7998 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_CONVERSION;
@@ -33282,11 +31194,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33286 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1176:
-#line 8007 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_DOMAIN;
@@ -33295,11 +31205,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33299 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1177:
-#line 8016 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_EXTENSION;
@@ -33308,11 +31216,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33312 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1178:
-#line 8025 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_FUNCTION;
@@ -33322,11 +31228,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33326 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1179:
-#line 8035 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPERATOR;
@@ -33336,11 +31240,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33340 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1180:
-#line 8045 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPCLASS;
@@ -33349,11 +31251,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33353 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1181:
-#line 8054 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPFAMILY;
@@ -33362,11 +31262,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33366 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1182:
-#line 8063 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TABLE;
@@ -33375,11 +31273,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33379 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1183:
-#line 8072 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TABLE;
@@ -33388,11 +31284,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33392 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1184:
-#line 8081 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TSPARSER;
@@ -33401,11 +31295,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33405 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1185:
-#line 8090 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TSDICTIONARY;
@@ -33414,11 +31306,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33418 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1186:
-#line 8099 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TSTEMPLATE;
@@ -33427,11 +31317,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33431 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1187:
-#line 8108 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TSCONFIGURATION;
@@ -33440,11 +31328,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33444 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1188:
-#line 8117 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_SEQUENCE;
@@ -33453,11 +31339,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33457 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1189:
-#line 8126 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_SEQUENCE;
@@ -33466,11 +31350,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33470 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1190:
-#line 8135 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_VIEW;
@@ -33479,11 +31361,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33483 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1191:
-#line 8144 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_VIEW;
@@ -33492,11 +31372,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1192:
-#line 8153 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_MATVIEW;
@@ -33505,11 +31383,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33509 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1193:
-#line 8162 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_MATVIEW;
@@ -33518,11 +31394,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33522 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1194:
-#line 8171 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_FOREIGN_TABLE;
@@ -33531,11 +31405,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33535 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1195:
-#line 8180 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_FOREIGN_TABLE;
@@ -33544,11 +31416,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 33548 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1196:
-#line 8189 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_TYPE;
@@ -33557,11 +31427,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 33561 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1197:
-#line 8206 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_AGGREGATE;
@@ -33570,11 +31438,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33574 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1198:
-#line 8215 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_COLLATION;
@@ -33582,11 +31448,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33586 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1199:
-#line 8223 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_CONVERSION;
@@ -33594,11 +31458,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33598 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1200:
-#line 8231 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_DATABASE;
@@ -33606,11 +31468,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33610 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1201:
-#line 8239 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_DOMAIN;
@@ -33618,11 +31478,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33622 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1202:
-#line 8247 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_FUNCTION;
@@ -33631,11 +31489,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33635 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1203:
-#line 8256 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_LANGUAGE;
@@ -33643,11 +31499,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33647 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1204:
-#line 8264 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_LARGEOBJECT;
@@ -33655,11 +31509,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33659 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1205:
-#line 8272 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPERATOR;
@@ -33668,11 +31520,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33672 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1206:
-#line 8281 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPCLASS;
@@ -33680,11 +31530,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33684 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1207:
-#line 8289 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPFAMILY;
@@ -33692,11 +31540,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33696 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1208:
-#line 8297 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_SCHEMA;
@@ -33704,11 +31550,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33708 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1209:
-#line 8305 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TYPE;
@@ -33716,11 +31560,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33720 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1210:
-#line 8313 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TABLESPACE;
@@ -33728,11 +31570,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33732 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1211:
-#line 8321 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSDICTIONARY;
@@ -33740,11 +31580,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33744 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1212:
-#line 8329 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSCONFIGURATION;
@@ -33752,11 +31590,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33756 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1213:
-#line 8337 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_FDW;
@@ -33764,11 +31600,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33768 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1214:
-#line 8345 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_FOREIGN_SERVER;
@@ -33776,11 +31610,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33780 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1215:
-#line 8353 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_EVENT_TRIGGER;
@@ -33788,11 +31620,9 @@ yyreduce:
 					n->newowner = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 33792 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1216:
-#line 8372 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RuleStmt *n = makeNode(RuleStmt);
 					n->replace = (yyvsp[-11].boolean);
@@ -33804,103 +31634,73 @@ yyreduce:
 					n->actions = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 33808 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1217:
-#line 8386 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 33814 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1218:
-#line 8387 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 33820 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1219:
-#line 8388 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 33826 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1220:
-#line 8394 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { if ((yyvsp[0].node) != NULL)
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				  else
 					(yyval.list) = (yyvsp[-2].list);
 				}
-#line 33836 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1221:
-#line 8400 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { if ((yyvsp[0].node) != NULL)
 					(yyval.list) = list_make1((yyvsp[0].node));
 				  else
 					(yyval.list) = NIL;
 				}
-#line 33846 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1227:
-#line 8416 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 33852 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1228:
-#line 8417 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 33858 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1229:
-#line 8420 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CMD_SELECT; }
-#line 33864 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1230:
-#line 8421 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CMD_UPDATE; }
-#line 33870 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1231:
-#line 8422 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CMD_DELETE; }
-#line 33876 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1232:
-#line 8423 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CMD_INSERT; }
-#line 33882 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1233:
-#line 8427 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 33888 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1234:
-#line 8428 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 33894 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1235:
-#line 8429 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 33900 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1236:
-#line 8435 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_RULE;
@@ -33911,11 +31711,9 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 33915 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1237:
-#line 8446 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_RULE;
@@ -33926,130 +31724,104 @@ yyreduce:
 					n->concurrent = false;
 					(yyval.node) = (Node *) n;
 				}
-#line 33930 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1238:
-#line 8468 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NotifyStmt *n = makeNode(NotifyStmt);
 					n->conditionname = (yyvsp[-1].str);
 					n->payload = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 33941 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1239:
-#line 8477 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 33947 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1240:
-#line 8478 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 33953 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1241:
-#line 8482 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ListenStmt *n = makeNode(ListenStmt);
 					n->conditionname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 33963 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1242:
-#line 8491 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					UnlistenStmt *n = makeNode(UnlistenStmt);
 					n->conditionname = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 33973 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1243:
-#line 8497 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					UnlistenStmt *n = makeNode(UnlistenStmt);
 					n->conditionname = NULL;
 					(yyval.node) = (Node *)n;
 				}
-#line 33983 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1244:
-#line 8516 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 33994 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1245:
-#line 8523 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_BEGIN;
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34005 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1246:
-#line 8530 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_START;
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34016 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1247:
-#line 8537 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34027 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1248:
-#line 8544 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT;
 					n->options = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34038 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1249:
-#line 8551 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK;
 					n->options = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34049 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1250:
-#line 8558 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_SAVEPOINT;
@@ -34057,11 +31829,9 @@ yyreduce:
 														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
-#line 34061 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1251:
-#line 8566 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
@@ -34069,11 +31839,9 @@ yyreduce:
 														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
-#line 34073 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1252:
-#line 8574 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_RELEASE;
@@ -34081,11 +31849,9 @@ yyreduce:
 														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
-#line 34085 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1253:
-#line 8582 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
@@ -34093,11 +31859,9 @@ yyreduce:
 														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
-#line 34097 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1254:
-#line 8590 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_TO;
@@ -34105,121 +31869,89 @@ yyreduce:
 														(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				}
-#line 34109 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1255:
-#line 8598 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_PREPARE;
 					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 34120 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1256:
-#line 8605 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_COMMIT_PREPARED;
 					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 34131 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1257:
-#line 8612 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_ROLLBACK_PREPARED;
 					n->gid = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 34142 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1258:
-#line 8620 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34148 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1259:
-#line 8621 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34154 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1260:
-#line 8622 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34160 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1261:
-#line 8627 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("transaction_isolation",
 									   makeStringConst((yyvsp[0].str), (yylsp[0]))); }
-#line 34167 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1262:
-#line 8630 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("transaction_read_only",
 									   makeIntConst(TRUE, (yylsp[-1]))); }
-#line 34174 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1263:
-#line 8633 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("transaction_read_only",
 									   makeIntConst(FALSE, (yylsp[-1]))); }
-#line 34181 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1264:
-#line 8636 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("transaction_deferrable",
 									   makeIntConst(TRUE, (yylsp[0]))); }
-#line 34188 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1265:
-#line 8639 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.defelt) = makeDefElem("transaction_deferrable",
 									   makeIntConst(FALSE, (yylsp[-1]))); }
-#line 34195 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1266:
-#line 8646 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 34201 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1267:
-#line 8648 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt)); }
-#line 34207 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1268:
-#line 8650 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 34213 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1270:
-#line 8656 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 34219 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1271:
-#line 8670 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = (yyvsp[-5].range);
@@ -34231,11 +31963,9 @@ yyreduce:
 					n->withCheckOption = static_cast<ViewCheckOption>((yyvsp[0].ival));
 					(yyval.node) = (Node *) n;
 				}
-#line 34235 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1272:
-#line 8683 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = (yyvsp[-5].range);
@@ -34247,11 +31977,9 @@ yyreduce:
 					n->withCheckOption = static_cast<ViewCheckOption>((yyvsp[0].ival));
 					(yyval.node) = (Node *) n;
 				}
-#line 34251 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1273:
-#line 8696 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = (yyvsp[-7].range);
@@ -34268,11 +31996,9 @@ yyreduce:
 								 parser_errposition((yylsp[0]))));
 					(yyval.node) = (Node *) n;
 				}
-#line 34272 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1274:
-#line 8714 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ViewStmt *n = makeNode(ViewStmt);
 					n->view = (yyvsp[-7].range);
@@ -34289,180 +32015,130 @@ yyreduce:
 								 parser_errposition((yylsp[0]))));
 					(yyval.node) = (Node *) n;
 				}
-#line 34293 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1275:
-#line 8733 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CASCADED_CHECK_OPTION; }
-#line 34299 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1276:
-#line 8734 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CASCADED_CHECK_OPTION; }
-#line 34305 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1277:
-#line 8735 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LOCAL_CHECK_OPTION; }
-#line 34311 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1278:
-#line 8736 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = NO_CHECK_OPTION; }
-#line 34317 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1279:
-#line 8747 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					LoadStmt *n = makeNode(LoadStmt);
 					n->filename = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 34327 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1280:
-#line 8763 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = (yyvsp[-2].str);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34338 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1281:
-#line 8772 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 34344 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1282:
-#line 8773 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 34350 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1283:
-#line 8777 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].defelt)); }
-#line 34356 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1284:
-#line 8778 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 34362 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1285:
-#line 8783 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *)makeInteger((yyvsp[0].ival)));
 				}
-#line 34370 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1286:
-#line 8787 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), (Node *)makeString((yyvsp[0].str)));
 				}
-#line 34378 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1287:
-#line 8791 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-2].str), NULL);
 				}
-#line 34386 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1288:
-#line 8808 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 34392 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1289:
-#line 8809 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup("connection_limit"); }
-#line 34398 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1290:
-#line 8810 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 34404 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1291:
-#line 8811 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 34410 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1292:
-#line 8812 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 34416 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1293:
-#line 8813 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 34422 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1294:
-#line 8814 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 34428 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1295:
-#line 8821 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34434 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1296:
-#line 8822 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34440 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1297:
-#line 8834 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = (yyvsp[-2].str);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
-#line 34451 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1298:
-#line 8841 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = (yyvsp[-1].str);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				 }
-#line 34462 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1299:
-#line 8848 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = (yyvsp[-3].str);
@@ -34470,64 +32146,52 @@ yyreduce:
 													(Node *)makeString((yyvsp[0].str))));
 					(yyval.node) = (Node *)n;
 				 }
-#line 34474 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1300:
-#line 8859 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
 					n->dbname = (yyvsp[-1].str);
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 34485 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1301:
-#line 8876 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = (yyvsp[0].str);
 					n->missing_ok = FALSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 34496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1302:
-#line 8883 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = (yyvsp[0].str);
 					n->missing_ok = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 34507 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1303:
-#line 8901 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterSystemStmt *n = makeNode(AlterSystemStmt);
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 34517 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1304:
-#line 8907 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterSystemStmt *n = makeNode(AlterSystemStmt);
 					n->setstmt = (yyvsp[0].vsetstmt);
 					(yyval.node) = (Node *)n;
 				}
-#line 34527 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1305:
-#line 8923 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
 					n->domainname = (yyvsp[-3].list);
@@ -34536,11 +32200,9 @@ yyreduce:
 									 yyscanner);
 					(yyval.node) = (Node *)n;
 				}
-#line 34540 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1306:
-#line 8936 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'T';
@@ -34548,33 +32210,27 @@ yyreduce:
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 34552 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1307:
-#line 8945 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'N';
 					n->typeName = (yyvsp[-3].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34563 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1308:
-#line 8953 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'O';
 					n->typeName = (yyvsp[-3].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34574 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1309:
-#line 8961 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'C';
@@ -34582,11 +32238,9 @@ yyreduce:
 					n->def = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 34586 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1310:
-#line 8970 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'X';
@@ -34596,11 +32250,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node *)n;
 				}
-#line 34600 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1311:
-#line 8981 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'X';
@@ -34610,11 +32262,9 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node *)n;
 				}
-#line 34614 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1312:
-#line 8992 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterDomainStmt *n = makeNode(AlterDomainStmt);
 					n->subtype = 'V';
@@ -34622,34 +32272,26 @@ yyreduce:
 					n->name = (yyvsp[0].str);
 					(yyval.node) = (Node *)n;
 				}
-#line 34626 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1313:
-#line 9001 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34632 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1314:
-#line 9002 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34638 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1315:
-#line 9014 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSDictionaryStmt *n = makeNode(AlterTSDictionaryStmt);
 					n->dictname = (yyvsp[-1].list);
 					n->options = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34649 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1316:
-#line 9024 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_ADD_MAPPING;
@@ -34660,11 +32302,9 @@ yyreduce:
 					n->replace = false;
 					(yyval.node) = (Node*)n;
 				}
-#line 34664 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1317:
-#line 9035 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_ALTER_MAPPING_FOR_TOKEN;
@@ -34675,11 +32315,9 @@ yyreduce:
 					n->replace = false;
 					(yyval.node) = (Node*)n;
 				}
-#line 34679 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1318:
-#line 9046 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_REPLACE_DICT;
@@ -34690,11 +32328,9 @@ yyreduce:
 					n->replace = true;
 					(yyval.node) = (Node*)n;
 				}
-#line 34694 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1319:
-#line 9057 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_REPLACE_DICT_FOR_TOKEN;
@@ -34705,11 +32341,9 @@ yyreduce:
 					n->replace = true;
 					(yyval.node) = (Node*)n;
 				}
-#line 34709 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1320:
-#line 9068 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_DROP_MAPPING;
@@ -34718,11 +32352,9 @@ yyreduce:
 					n->missing_ok = false;
 					(yyval.node) = (Node*)n;
 				}
-#line 34722 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1321:
-#line 9077 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->kind = ALTER_TSCONFIG_DROP_MAPPING;
@@ -34731,23 +32363,17 @@ yyreduce:
 					n->missing_ok = true;
 					(yyval.node) = (Node*)n;
 				}
-#line 34735 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1322:
-#line 9088 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34741 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1323:
-#line 9089 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34747 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1324:
-#line 9105 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				CreateConversionStmt *n = makeNode(CreateConversionStmt);
 				n->conversion_name = (yyvsp[-6].list);
@@ -34757,11 +32383,9 @@ yyreduce:
 				n->def = (yyvsp[-8].boolean);
 				(yyval.node) = (Node *)n;
 			}
-#line 34761 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1325:
-#line 9127 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = (yyvsp[-1].range);
@@ -34769,11 +32393,9 @@ yyreduce:
 					n->verbose = (yyvsp[-2].boolean);
 					(yyval.node) = (Node*)n;
 				}
-#line 34773 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1326:
-#line 9135 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = NULL;
@@ -34781,11 +32403,9 @@ yyreduce:
 					n->verbose = (yyvsp[0].boolean);
 					(yyval.node) = (Node*)n;
 				}
-#line 34785 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1327:
-#line 9144 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = (yyvsp[0].range);
@@ -34793,23 +32413,17 @@ yyreduce:
 					n->verbose = (yyvsp[-3].boolean);
 					(yyval.node) = (Node*)n;
 				}
-#line 34797 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1328:
-#line 9154 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 34803 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1329:
-#line 9155 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 34809 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1330:
-#line 9168 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_VACUUM;
@@ -34823,11 +32437,9 @@ yyreduce:
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34827 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1331:
-#line 9182 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_VACUUM;
@@ -34841,11 +32453,9 @@ yyreduce:
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34845 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1332:
-#line 9196 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = (VacuumStmt *) (yyvsp[0].node);
 					n->options |= VACOPT_VACUUM;
@@ -34857,11 +32467,9 @@ yyreduce:
 						n->options |= VACOPT_VERBOSE;
 					(yyval.node) = (Node *)n;
 				}
-#line 34861 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1333:
-#line 9208 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_VACUUM | (yyvsp[-1].ival);
@@ -34869,11 +32477,9 @@ yyreduce:
 					n->va_cols = NIL;
 					(yyval.node) = (Node *) n;
 				}
-#line 34873 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1334:
-#line 9216 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_VACUUM | (yyvsp[-3].ival);
@@ -34883,47 +32489,33 @@ yyreduce:
 						n->options |= VACOPT_ANALYZE;
 					(yyval.node) = (Node *) n;
 				}
-#line 34887 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1335:
-#line 9228 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 34893 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1336:
-#line 9229 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-2].ival) | (yyvsp[0].ival); }
-#line 34899 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1337:
-#line 9233 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = VACOPT_ANALYZE; }
-#line 34905 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1338:
-#line 9234 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = VACOPT_VERBOSE; }
-#line 34911 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1339:
-#line 9235 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = VACOPT_FREEZE; }
-#line 34917 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1340:
-#line 9236 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = VACOPT_FULL; }
-#line 34923 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1341:
-#line 9241 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_ANALYZE;
@@ -34933,11 +32525,9 @@ yyreduce:
 					n->va_cols = NIL;
 					(yyval.node) = (Node *)n;
 				}
-#line 34937 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1342:
-#line 9251 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->options = VACOPT_ANALYZE;
@@ -34947,82 +32537,58 @@ yyreduce:
 					n->va_cols = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 34951 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1343:
-#line 9263 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34957 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1344:
-#line 9264 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 34963 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1345:
-#line 9268 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 34969 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1346:
-#line 9269 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 34975 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1347:
-#line 9272 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 34981 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1348:
-#line 9273 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 34987 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1349:
-#line 9276 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 34993 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1350:
-#line 9277 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 34999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1351:
-#line 9281 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 35005 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1352:
-#line 9282 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 35011 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1353:
-#line 9296 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = (yyvsp[0].node);
 					n->options = NIL;
 					(yyval.node) = (Node *) n;
 				}
-#line 35022 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1354:
-#line 9303 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = (yyvsp[0].node);
@@ -35032,87 +32598,65 @@ yyreduce:
 											 makeDefElem("verbose", NULL));
 					(yyval.node) = (Node *) n;
 				}
-#line 35036 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1355:
-#line 9313 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = (yyvsp[0].node);
 					n->options = list_make1(makeDefElem("verbose", NULL));
 					(yyval.node) = (Node *) n;
 				}
-#line 35047 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1356:
-#line 9320 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ExplainStmt *n = makeNode(ExplainStmt);
 					n->query = (yyvsp[0].node);
 					n->options = (yyvsp[-2].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 35058 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1366:
-#line 9342 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].defelt));
 				}
-#line 35066 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1367:
-#line 9346 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt));
 				}
-#line 35074 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1368:
-#line 9353 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-1].str), (yyvsp[0].node));
 				}
-#line 35082 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1369:
-#line 9359 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 35088 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1370:
-#line 9360 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "analyze"; }
-#line 35094 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1371:
-#line 9364 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeString((yyvsp[0].str)); }
-#line 35100 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1372:
-#line 9365 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[0].value); }
-#line 35106 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1373:
-#line 9366 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 35112 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1374:
-#line 9377 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					PrepareStmt *n = makeNode(PrepareStmt);
 					n->name = (yyvsp[-3].str);
@@ -35120,34 +32664,26 @@ yyreduce:
 					n->query = (yyvsp[0].node);
 					(yyval.node) = (Node *) n;
 				}
-#line 35124 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1375:
-#line 9386 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 35130 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1376:
-#line 9387 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 35136 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1381:
-#line 9405 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ExecuteStmt *n = makeNode(ExecuteStmt);
 					n->name = (yyvsp[-1].str);
 					n->params = (yyvsp[0].list);
 					(yyval.node) = (Node *) n;
 				}
-#line 35147 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1382:
-#line 9413 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ExecuteStmt *n = makeNode(ExecuteStmt);
@@ -35162,63 +32698,49 @@ yyreduce:
 					(yyvsp[-5].into)->skipData = !((yyvsp[0].boolean));
 					(yyval.node) = (Node *) ctas;
 				}
-#line 35166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1383:
-#line 9429 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 35172 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1384:
-#line 9430 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 35178 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1385:
-#line 9441 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
 						n->name = (yyvsp[0].str);
 						(yyval.node) = (Node *) n;
 					}
-#line 35188 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1386:
-#line 9447 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
 						n->name = (yyvsp[0].str);
 						(yyval.node) = (Node *) n;
 					}
-#line 35198 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1387:
-#line 9453 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
 						n->name = NULL;
 						(yyval.node) = (Node *) n;
 					}
-#line 35208 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1388:
-#line 9459 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						DeallocateStmt *n = makeNode(DeallocateStmt);
 						n->name = NULL;
 						(yyval.node) = (Node *) n;
 					}
-#line 35218 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1389:
-#line 9476 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyvsp[-2].istmt)->relation = (yyvsp[-3].range);
 					(yyvsp[-2].istmt)->onConflictClause = (yyvsp[-1].onconflict);
@@ -35226,70 +32748,54 @@ yyreduce:
 					(yyvsp[-2].istmt)->withClause = (yyvsp[-6].with);
 					(yyval.node) = (Node *) (yyvsp[-2].istmt);
 				}
-#line 35230 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1390:
-#line 9493 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 				}
-#line 35238 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1391:
-#line 9497 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyvsp[-2].range)->alias = makeAlias((yyvsp[0].str), NIL);
 					(yyval.range) = (yyvsp[-2].range);
 				}
-#line 35247 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1392:
-#line 9505 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.istmt) = makeNode(InsertStmt);
 					(yyval.istmt)->cols = NIL;
 					(yyval.istmt)->selectStmt = (yyvsp[0].node);
 				}
-#line 35257 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1393:
-#line 9511 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.istmt) = makeNode(InsertStmt);
 					(yyval.istmt)->cols = (yyvsp[-2].list);
 					(yyval.istmt)->selectStmt = (yyvsp[0].node);
 				}
-#line 35267 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1394:
-#line 9517 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.istmt) = makeNode(InsertStmt);
 					(yyval.istmt)->cols = NIL;
 					(yyval.istmt)->selectStmt = NULL;
 				}
-#line 35277 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1395:
-#line 9526 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].target)); }
-#line 35283 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1396:
-#line 9528 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
-#line 35289 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1397:
-#line 9533 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = (yyvsp[-1].str);
@@ -35297,11 +32803,9 @@ yyreduce:
 					(yyval.target)->val = NULL;
 					(yyval.target)->location = (yylsp[-1]);
 				}
-#line 35301 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1398:
-#line 9544 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.onconflict) = makeNode(OnConflictClause);
 					(yyval.onconflict)->action = ONCONFLICT_UPDATE;
@@ -35310,11 +32814,9 @@ yyreduce:
 					(yyval.onconflict)->whereClause = (yyvsp[0].node);
 					(yyval.onconflict)->location = (yylsp[-7]);
 				}
-#line 35314 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1399:
-#line 9554 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.onconflict) = makeNode(OnConflictClause);
 					(yyval.onconflict)->action = ONCONFLICT_NOTHING;
@@ -35323,19 +32825,15 @@ yyreduce:
 					(yyval.onconflict)->whereClause = NULL;
 					(yyval.onconflict)->location = (yylsp[-4]);
 				}
-#line 35327 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1400:
-#line 9563 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.onconflict) = NULL;
 				}
-#line 35335 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1401:
-#line 9570 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.infer) = makeNode(InferClause);
 					(yyval.infer)->indexElems = (yyvsp[-2].list);
@@ -35343,11 +32841,9 @@ yyreduce:
 					(yyval.infer)->conname = NULL;
 					(yyval.infer)->location = (yylsp[-3]);
 				}
-#line 35347 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1402:
-#line 9579 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.infer) = makeNode(InferClause);
 					(yyval.infer)->indexElems = NIL;
@@ -35355,31 +32851,23 @@ yyreduce:
 					(yyval.infer)->conname = (yyvsp[0].str);
 					(yyval.infer)->location = (yylsp[-2]);
 				}
-#line 35359 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1403:
-#line 9587 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.infer) = NULL;
 				}
-#line 35367 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1404:
-#line 9593 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 35373 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1405:
-#line 9594 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 35379 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1406:
-#line 9607 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = (yyvsp[-3].range);
@@ -35389,23 +32877,17 @@ yyreduce:
 					n->withClause = (yyvsp[-6].with);
 					(yyval.node) = (Node *)n;
 				}
-#line 35393 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1407:
-#line 9619 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 35399 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1408:
-#line 9620 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 35405 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1409:
-#line 9632 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					LockStmt *n = makeNode(LockStmt);
 
@@ -35414,101 +32896,69 @@ yyreduce:
 					n->nowait = (yyvsp[0].boolean);
 					(yyval.node) = (Node *)n;
 				}
-#line 35418 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1410:
-#line 9642 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival); }
-#line 35424 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1411:
-#line 9643 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = AccessExclusiveLock; }
-#line 35430 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1412:
-#line 9646 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = AccessShareLock; }
-#line 35436 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1413:
-#line 9647 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RowShareLock; }
-#line 35442 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1414:
-#line 9648 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = RowExclusiveLock; }
-#line 35448 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1415:
-#line 9649 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ShareUpdateExclusiveLock; }
-#line 35454 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1416:
-#line 9650 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ShareLock; }
-#line 35460 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1417:
-#line 9651 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ShareRowExclusiveLock; }
-#line 35466 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1418:
-#line 9652 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ExclusiveLock; }
-#line 35472 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1419:
-#line 9653 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = AccessExclusiveLock; }
-#line 35478 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1420:
-#line 9656 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 35484 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1421:
-#line 9657 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 35490 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1422:
-#line 9661 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LockWaitError; }
-#line 35496 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1423:
-#line 9662 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LockWaitSkip; }
-#line 35502 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1424:
-#line 9663 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LockWaitBlock; }
-#line 35508 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1425:
-#line 9679 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = (yyvsp[-5].range);
@@ -35519,44 +32969,32 @@ yyreduce:
 					n->withClause = (yyvsp[-7].with);
 					(yyval.node) = (Node *)n;
 				}
-#line 35523 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1426:
-#line 9692 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 35529 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1427:
-#line 9693 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_concat((yyvsp[-2].list),(yyvsp[0].list)); }
-#line 35535 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1428:
-#line 9697 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].target)); }
-#line 35541 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1429:
-#line 9698 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 35547 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1430:
-#line 9703 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = (yyvsp[-2].target);
 					(yyval.target)->val = (Node *) (yyvsp[0].node);
 				}
-#line 35556 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1431:
-#line 9719 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ListCell *col_cell;
 					ListCell *val_cell;
@@ -35582,11 +33020,9 @@ yyreduce:
 
 					(yyval.list) = (yyvsp[-3].list);
 				}
-#line 35586 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1432:
-#line 9745 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *sl = makeNode(SubLink);
 					int ncolumns = list_length((yyvsp[-3].list));
@@ -35616,11 +33052,9 @@ yyreduce:
 
 					(yyval.list) = (yyvsp[-3].list);
 				}
-#line 35620 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1433:
-#line 9778 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = (yyvsp[-1].str);
@@ -35628,23 +33062,17 @@ yyreduce:
 					(yyval.target)->val = NULL;	/* upper production sets this */
 					(yyval.target)->location = (yylsp[-1]);
 				}
-#line 35632 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1434:
-#line 9788 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].target)); }
-#line 35638 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1435:
-#line 9789 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list),(yyvsp[0].target)); }
-#line 35644 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1436:
-#line 9800 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					DeclareCursorStmt *n = makeNode(DeclareCursorStmt);
 					n->portalname = (yyvsp[-5].str);
@@ -35653,94 +33081,66 @@ yyreduce:
 					n->query = (yyvsp[0].node);
 					(yyval.node) = (Node *)n;
 				}
-#line 35657 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1437:
-#line 9810 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 35663 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1438:
-#line 9813 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 35669 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1439:
-#line 9814 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-2].ival) | CURSOR_OPT_NO_SCROLL; }
-#line 35675 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1440:
-#line 9815 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_SCROLL; }
-#line 35681 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1441:
-#line 9816 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_BINARY; }
-#line 35687 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1442:
-#line 9817 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[-1].ival) | CURSOR_OPT_INSENSITIVE; }
-#line 35693 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1443:
-#line 9820 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 35699 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1444:
-#line 9821 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = CURSOR_OPT_HOLD; }
-#line 35705 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1445:
-#line 9822 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 35711 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1448:
-#line 9875 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 35717 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1449:
-#line 9876 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 35723 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1450:
-#line 9891 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 35729 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1451:
-#line 9893 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-1].node), (yyvsp[0].list), NIL,
 										NULL, NULL, NULL,
 										yyscanner);
 					(yyval.node) = (yyvsp[-1].node);
 				}
-#line 35740 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1452:
-#line 9900 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[-1].list),
 										static_cast<Node *>(list_nth((yyvsp[0].list), 0)), static_cast<Node *>(list_nth((yyvsp[0].list), 1)),
@@ -35748,11 +33148,9 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[-3].node);
 				}
-#line 35752 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1453:
-#line 9908 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[0].list),
 										static_cast<Node *>(list_nth((yyvsp[-1].list), 0)), static_cast<Node *>(list_nth((yyvsp[-1].list), 1)),
@@ -35760,11 +33158,9 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[-3].node);
 				}
-#line 35764 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1454:
-#line 9916 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[0].node), NULL, NIL,
 										NULL, NULL,
@@ -35772,11 +33168,9 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[0].node);
 				}
-#line 35776 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1455:
-#line 9924 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-1].node), (yyvsp[0].list), NIL,
 										NULL, NULL,
@@ -35784,11 +33178,9 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[-1].node);
 				}
-#line 35788 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1456:
-#line 9932 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[-1].list),
 										static_cast<Node *>(list_nth((yyvsp[0].list), 0)), static_cast<Node *>(list_nth((yyvsp[0].list), 1)),
@@ -35796,11 +33188,9 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[-3].node);
 				}
-#line 35800 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1457:
-#line 9940 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					insertSelectOptions((SelectStmt *) (yyvsp[-3].node), (yyvsp[-2].list), (yyvsp[0].list),
 										static_cast<Node *>(list_nth((yyvsp[-1].list), 0)), static_cast<Node *>(list_nth((yyvsp[-1].list), 1)),
@@ -35808,23 +33198,17 @@ yyreduce:
 										yyscanner);
 					(yyval.node) = (yyvsp[-3].node);
 				}
-#line 35812 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1458:
-#line 9950 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 35818 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1459:
-#line 9951 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 35824 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1460:
-#line 9981 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->targetList = (yyvsp[-6].list);
@@ -35836,11 +33220,9 @@ yyreduce:
 					n->windowClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 35840 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1461:
-#line 9995 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = (yyvsp[-7].list);
@@ -35853,17 +33235,13 @@ yyreduce:
 					n->windowClause = (yyvsp[0].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 35857 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1462:
-#line 10007 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 35863 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1463:
-#line 10009 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* same as SELECT * FROM relation_expr */
 					ColumnRef *cr = makeNode(ColumnRef);
@@ -35882,80 +33260,62 @@ yyreduce:
 					n->fromClause = list_make1((yyvsp[0].range));
 					(yyval.node) = (Node *)n;
 				}
-#line 35886 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1464:
-#line 10028 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeSetOp(SETOP_UNION, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
-#line 35894 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1465:
-#line 10032 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeSetOp(SETOP_INTERSECT, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
-#line 35902 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1466:
-#line 10036 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeSetOp(SETOP_EXCEPT, (yyvsp[-1].boolean), (yyvsp[-3].node), (yyvsp[0].node));
 				}
-#line 35910 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1467:
-#line 10053 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.with) = makeNode(WithClause);
 				(yyval.with)->ctes = (yyvsp[0].list);
 				(yyval.with)->recursive = false;
 				(yyval.with)->location = (yylsp[-1]);
 			}
-#line 35921 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1468:
-#line 10060 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.with) = makeNode(WithClause);
 				(yyval.with)->ctes = (yyvsp[0].list);
 				(yyval.with)->recursive = false;
 				(yyval.with)->location = (yylsp[-1]);
 			}
-#line 35932 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1469:
-#line 10067 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				(yyval.with) = makeNode(WithClause);
 				(yyval.with)->ctes = (yyvsp[0].list);
 				(yyval.with)->recursive = true;
 				(yyval.with)->location = (yylsp[-2]);
 			}
-#line 35943 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1470:
-#line 10076 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 35949 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1471:
-#line 10077 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 35955 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1472:
-#line 10081 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				CommonTableExpr *n = makeNode(CommonTableExpr);
 				n->ctename = (yyvsp[-5].str);
@@ -35964,23 +33324,17 @@ yyreduce:
 				n->location = (yylsp[-5]);
 				(yyval.node) = (Node *) n;
 			}
-#line 35968 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1473:
-#line 10092 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.with) = (yyvsp[0].with); }
-#line 35974 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1474:
-#line 10093 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.with) = NULL; }
-#line 35980 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1475:
-#line 10098 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.into) = makeNode(IntoClause);
 					(yyval.into)->rel = (yyvsp[0].range);
@@ -35991,53 +33345,41 @@ yyreduce:
 					(yyval.into)->viewQuery = NULL;
 					(yyval.into)->skipData = false;
 				}
-#line 35995 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1476:
-#line 10109 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.into) = NULL; }
-#line 36001 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1477:
-#line 10118 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36010 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1478:
-#line 10123 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36019 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1479:
-#line 10128 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36028 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1480:
-#line 10133 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36037 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1481:
-#line 10138 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ereport(WARNING,
 							(errmsg("GLOBAL is deprecated in temporary table creation"),
@@ -36045,11 +33387,9 @@ yyreduce:
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36049 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1482:
-#line 10146 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ereport(WARNING,
 							(errmsg("GLOBAL is deprecated in temporary table creation"),
@@ -36057,122 +33397,86 @@ yyreduce:
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_TEMP;
 				}
-#line 36061 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1483:
-#line 10154 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_UNLOGGED;
 				}
-#line 36070 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1484:
-#line 10159 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_PERMANENT;
 				}
-#line 36079 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1485:
-#line 10164 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->relpersistence = RELPERSISTENCE_PERMANENT;
 				}
-#line 36088 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1486:
-#line 10170 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 36094 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1487:
-#line 10171 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {}
-#line 36100 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1488:
-#line 10175 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 36106 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1489:
-#line 10176 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 36112 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1490:
-#line 10177 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 36118 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1491:
-#line 10184 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(NIL); }
-#line 36124 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1492:
-#line 10185 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 36130 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1493:
-#line 10189 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL;}
-#line 36136 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1494:
-#line 10190 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36142 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1495:
-#line 10194 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list);}
-#line 36148 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1496:
-#line 10195 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36154 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1497:
-#line 10199 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36160 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1498:
-#line 10203 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].sortby)); }
-#line 36166 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1499:
-#line 10204 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].sortby)); }
-#line 36172 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1500:
-#line 10208 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.sortby) = makeNode(SortBy);
 					(yyval.sortby)->node = (yyvsp[-3].node);
@@ -36181,11 +33485,9 @@ yyreduce:
 					(yyval.sortby)->useOp = (yyvsp[-1].list);
 					(yyval.sortby)->location = (yylsp[-1]);
 				}
-#line 36185 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1501:
-#line 10217 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.sortby) = makeNode(SortBy);
 					(yyval.sortby)->node = (yyvsp[-2].node);
@@ -36194,53 +33496,37 @@ yyreduce:
 					(yyval.sortby)->useOp = NIL;
 					(yyval.sortby)->location = -1;		/* no operator */
 				}
-#line 36198 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1502:
-#line 10229 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[0].node), (yyvsp[-1].node)); }
-#line 36204 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1503:
-#line 10230 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[-1].node), (yyvsp[0].node)); }
-#line 36210 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1504:
-#line 10231 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(NULL, (yyvsp[0].node)); }
-#line 36216 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1505:
-#line 10232 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[0].node), NULL); }
-#line 36222 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1506:
-#line 10236 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36228 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1507:
-#line 10237 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2(NULL,NULL); }
-#line 36234 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1508:
-#line 10242 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36240 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1509:
-#line 10244 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
 					ereport(ERROR,
@@ -36249,232 +33535,160 @@ yyreduce:
 							 errhint("Use separate LIMIT and OFFSET clauses."),
 							 parser_errposition((yylsp[-3]))));
 				}
-#line 36253 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1510:
-#line 10254 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-2].node); }
-#line 36259 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1511:
-#line 10259 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36265 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1512:
-#line 10262 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 36271 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1513:
-#line 10266 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36277 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1514:
-#line 10268 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* LIMIT ALL is represented as a NULL constant */
 					(yyval.node) = makeNullAConst((yylsp[0]));
 				}
-#line 36286 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1515:
-#line 10275 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36292 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1516:
-#line 10285 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst((yyvsp[0].ival), (yylsp[0])); }
-#line 36298 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1517:
-#line 10286 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 36304 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1518:
-#line 10287 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst(1, -1); }
-#line 36310 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1519:
-#line 10295 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36316 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1520:
-#line 10299 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 36322 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1521:
-#line 10300 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 36328 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1522:
-#line 10303 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 36334 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1523:
-#line 10304 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 36340 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1524:
-#line 10329 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36346 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1525:
-#line 10330 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36352 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1526:
-#line 10334 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 36358 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1527:
-#line 10335 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list),(yyvsp[0].node)); }
-#line 36364 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1528:
-#line 10339 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36370 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1529:
-#line 10340 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36376 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1530:
-#line 10341 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36382 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1531:
-#line 10342 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36388 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1532:
-#line 10343 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36394 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1533:
-#line 10348 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeGroupingSet(GROUPING_SET_EMPTY, NIL, (yylsp[-1]));
 				}
-#line 36402 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1534:
-#line 10361 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeGroupingSet(GROUPING_SET_ROLLUP, (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 36410 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1535:
-#line 10368 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeGroupingSet(GROUPING_SET_CUBE, (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 36418 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1536:
-#line 10375 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeGroupingSet(GROUPING_SET_SETS, (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 36426 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1537:
-#line 10381 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36432 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1538:
-#line 10382 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 36438 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1539:
-#line 10386 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36444 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1540:
-#line 10387 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36450 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1541:
-#line 10391 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36456 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1542:
-#line 10392 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36462 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1543:
-#line 10396 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 36468 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1544:
-#line 10397 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
-#line 36474 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1545:
-#line 10402 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					LockingClause *n = makeNode(LockingClause);
 					n->lockedRels = (yyvsp[-1].list);
@@ -36482,119 +33696,87 @@ yyreduce:
 					n->waitPolicy = static_cast<LockWaitPolicy>((yyvsp[0].ival));
 					(yyval.node) = (Node *) n;
 				}
-#line 36486 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1546:
-#line 10412 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LCS_FORUPDATE; }
-#line 36492 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1547:
-#line 10413 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LCS_FORNOKEYUPDATE; }
-#line 36498 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1548:
-#line 10414 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LCS_FORSHARE; }
-#line 36504 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1549:
-#line 10415 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = LCS_FORKEYSHARE; }
-#line 36510 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1550:
-#line 10419 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36516 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1551:
-#line 10420 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36522 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1552:
-#line 10426 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SelectStmt *n = makeNode(SelectStmt);
 					n->valuesLists = list_make1((yyvsp[0].list));
 					(yyval.node) = (Node *) n;
 				}
-#line 36532 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1553:
-#line 10432 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SelectStmt *n = (SelectStmt *) (yyvsp[-2].node);
 					n->valuesLists = lappend(n->valuesLists, (yyvsp[0].list));
 					(yyval.node) = (Node *) n;
 				}
-#line 36542 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1554:
-#line 10449 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 36548 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1555:
-#line 10450 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 36554 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1556:
-#line 10454 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 36560 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1557:
-#line 10455 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 36566 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1558:
-#line 10462 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyvsp[-1].range)->alias = (yyvsp[0].alias);
 					(yyval.node) = (Node *) (yyvsp[-1].range);
 				}
-#line 36575 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1559:
-#line 10467 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) (yyvsp[0].node);
 				}
-#line 36583 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1560:
-#line 10471 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeFunction *n = (RangeFunction *) (yyvsp[-1].node);
 					n->alias = static_cast<Alias *>(linitial((yyvsp[0].list)));
 					n->coldeflist = static_cast<List *>(lsecond((yyvsp[0].list)));
 					(yyval.node) = (Node *) n;
 				}
-#line 36594 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1561:
-#line 10478 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeFunction *n = (RangeFunction *) (yyvsp[-1].node);
 					n->lateral = true;
@@ -36602,11 +33784,9 @@ yyreduce:
 					n->coldeflist = static_cast<List *>(lsecond((yyvsp[0].list)));
 					(yyval.node) = (Node *) n;
 				}
-#line 36606 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1562:
-#line 10486 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeSubselect *n = makeNode(RangeSubselect);
 					n->lateral = false;
@@ -36641,11 +33821,9 @@ yyreduce:
 					}
 					(yyval.node) = (Node *) n;
 				}
-#line 36645 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1563:
-#line 10521 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeSubselect *n = makeNode(RangeSubselect);
 					n->lateral = true;
@@ -36670,36 +33848,28 @@ yyreduce:
 					}
 					(yyval.node) = (Node *) n;
 				}
-#line 36674 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1564:
-#line 10546 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) (yyvsp[0].jexpr);
 				}
-#line 36682 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1565:
-#line 10550 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyvsp[-2].jexpr)->alias = (yyvsp[0].alias);
 					(yyval.node) = (Node *) (yyvsp[-2].jexpr);
 				}
-#line 36691 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1566:
-#line 10576 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.jexpr) = (yyvsp[-1].jexpr);
 				}
-#line 36699 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1567:
-#line 10580 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* CROSS JOIN is same as unqualified inner join */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -36711,11 +33881,9 @@ yyreduce:
 					n->quals = NULL;
 					(yyval.jexpr) = n;
 				}
-#line 36715 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1568:
-#line 10592 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					JoinExpr *n = makeNode(JoinExpr);
 					n->jointype = (yyvsp[-3].jtype);
@@ -36728,11 +33896,9 @@ yyreduce:
 						n->quals = (yyvsp[0].node); /* ON clause */
 					(yyval.jexpr) = n;
 				}
-#line 36732 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1569:
-#line 10605 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* letting join_type reduce to empty doesn't work */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -36746,11 +33912,9 @@ yyreduce:
 						n->quals = (yyvsp[0].node); /* ON clause */
 					(yyval.jexpr) = n;
 				}
-#line 36750 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1570:
-#line 10619 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					JoinExpr *n = makeNode(JoinExpr);
 					n->jointype = (yyvsp[-2].jtype);
@@ -36761,11 +33925,9 @@ yyreduce:
 					n->quals = NULL; /* fill later */
 					(yyval.jexpr) = n;
 				}
-#line 36765 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1571:
-#line 10630 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* letting join_type reduce to empty doesn't work */
 					JoinExpr *n = makeNode(JoinExpr);
@@ -36777,250 +33939,190 @@ yyreduce:
 					n->quals = NULL; /* fill later */
 					(yyval.jexpr) = n;
 				}
-#line 36781 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1572:
-#line 10645 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.alias) = makeNode(Alias);
 					(yyval.alias)->aliasname = (yyvsp[-3].str);
 					(yyval.alias)->colnames = (yyvsp[-1].list);
 				}
-#line 36791 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1573:
-#line 10651 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.alias) = makeNode(Alias);
 					(yyval.alias)->aliasname = (yyvsp[0].str);
 				}
-#line 36800 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1574:
-#line 10656 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.alias) = makeNode(Alias);
 					(yyval.alias)->aliasname = (yyvsp[-3].str);
 					(yyval.alias)->colnames = (yyvsp[-1].list);
 				}
-#line 36810 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1575:
-#line 10662 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.alias) = makeNode(Alias);
 					(yyval.alias)->aliasname = (yyvsp[0].str);
 				}
-#line 36819 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1576:
-#line 10668 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.alias) = (yyvsp[0].alias); }
-#line 36825 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1577:
-#line 10669 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.alias) = NULL; }
-#line 36831 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1578:
-#line 10678 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[0].alias), NIL);
 				}
-#line 36839 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1579:
-#line 10682 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(NULL, (yyvsp[-1].list));
 				}
-#line 36847 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1580:
-#line 10686 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Alias *a = makeNode(Alias);
 					a->aliasname = (yyvsp[-3].str);
 					(yyval.list) = list_make2(a, (yyvsp[-1].list));
 				}
-#line 36857 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1581:
-#line 10692 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Alias *a = makeNode(Alias);
 					a->aliasname = (yyvsp[-3].str);
 					(yyval.list) = list_make2(a, (yyvsp[-1].list));
 				}
-#line 36867 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1582:
-#line 10698 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(NULL, NIL);
 				}
-#line 36875 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1583:
-#line 10703 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.jtype) = JOIN_FULL; }
-#line 36881 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1584:
-#line 10704 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.jtype) = JOIN_LEFT; }
-#line 36887 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1585:
-#line 10705 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.jtype) = JOIN_RIGHT; }
-#line 36893 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1586:
-#line 10706 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.jtype) = JOIN_INNER; }
-#line 36899 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1587:
-#line 10710 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 36905 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1588:
-#line 10711 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 36911 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1589:
-#line 10723 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[-1].list); }
-#line 36917 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1590:
-#line 10724 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 36923 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1591:
-#line 10730 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* default inheritance */
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->inhOpt = INH_DEFAULT;
 					(yyval.range)->alias = NULL;
 				}
-#line 36934 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1592:
-#line 10737 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* inheritance query */
 					(yyval.range) = (yyvsp[-1].range);
 					(yyval.range)->inhOpt = INH_YES;
 					(yyval.range)->alias = NULL;
 				}
-#line 36945 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1593:
-#line 10744 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* no inheritance */
 					(yyval.range) = (yyvsp[0].range);
 					(yyval.range)->inhOpt = INH_NO;
 					(yyval.range)->alias = NULL;
 				}
-#line 36956 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1594:
-#line 10751 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* no inheritance, SQL99-style syntax */
 					(yyval.range) = (yyvsp[-1].range);
 					(yyval.range)->inhOpt = INH_NO;
 					(yyval.range)->alias = NULL;
 				}
-#line 36967 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1595:
-#line 10761 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].range)); }
-#line 36973 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1596:
-#line 10762 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].range)); }
-#line 36979 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1597:
-#line 10776 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = (yyvsp[0].range);
 				}
-#line 36987 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1598:
-#line 10780 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Alias *alias = makeNode(Alias);
 					alias->aliasname = (yyvsp[0].str);
 					(yyvsp[-1].range)->alias = alias;
 					(yyval.range) = (yyvsp[-1].range);
 				}
-#line 36998 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1599:
-#line 10787 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					Alias *alias = makeNode(Alias);
 					alias->aliasname = (yyvsp[0].str);
 					(yyvsp[-2].range)->alias = alias;
 					(yyval.range) = (yyvsp[-2].range);
 				}
-#line 37009 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1600:
-#line 10797 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeTableSample *n = (RangeTableSample *) (yyvsp[0].node);
 					n->relation = (yyvsp[-2].range);
 					n->relation->alias = (yyvsp[-1].alias);
 					(yyval.node) = (Node *) n;
 				}
-#line 37020 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1601:
-#line 10807 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeTableSample *n = makeNode(RangeTableSample);
 					n->method = (yyvsp[-4].str);
@@ -37028,23 +34130,17 @@ yyreduce:
 					n->repeatable = (yyvsp[0].node);
 					(yyval.node) = (Node *) n;
 				}
-#line 37032 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1602:
-#line 10817 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[-1].node); }
-#line 37038 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1603:
-#line 10818 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 37044 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1604:
-#line 10834 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = false;
@@ -37054,11 +34150,9 @@ yyreduce:
 					/* alias and coldeflist are set by table_ref production */
 					(yyval.node) = (Node *) n;
 				}
-#line 37058 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1605:
-#line 10844 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RangeFunction *n = makeNode(RangeFunction);
 					n->lateral = false;
@@ -37068,71 +34162,49 @@ yyreduce:
 					/* alias and coldeflist are set by table_ref production */
 					(yyval.node) = (Node *) n;
 				}
-#line 37072 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1606:
-#line 10856 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[-1].node), (yyvsp[0].list)); }
-#line 37078 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1607:
-#line 10860 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].list)); }
-#line 37084 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1608:
-#line 10861 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].list)); }
-#line 37090 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1609:
-#line 10864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 37096 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1610:
-#line 10865 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 37102 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1611:
-#line 10868 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = true; }
-#line 37108 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1612:
-#line 10869 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = false; }
-#line 37114 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1613:
-#line 10874 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 37120 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1614:
-#line 10875 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 37126 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1615:
-#line 10880 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 37132 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1616:
-#line 10882 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CurrentOfExpr *n = makeNode(CurrentOfExpr);
 					/* cvarno is filled in by parse analysis */
@@ -37140,45 +34212,33 @@ yyreduce:
 					n->cursor_param = 0;
 					(yyval.node) = (Node *) n;
 				}
-#line 37144 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1617:
-#line 10889 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 37150 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1618:
-#line 10894 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 37156 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1619:
-#line 10895 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 37162 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1620:
-#line 10900 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 37170 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1621:
-#line 10904 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 37178 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1622:
-#line 10910 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = (yyvsp[-2].str);
@@ -37196,293 +34256,221 @@ yyreduce:
 					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *)n;
 				}
-#line 37200 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1623:
-#line 10940 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-1].typnam);
 					(yyval.typnam)->arrayBounds = (yyvsp[0].list);
 				}
-#line 37209 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1624:
-#line 10945 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-1].typnam);
 					(yyval.typnam)->arrayBounds = (yyvsp[0].list);
 					(yyval.typnam)->setof = TRUE;
 				}
-#line 37219 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1625:
-#line 10952 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-4].typnam);
 					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[-1].ival)));
 				}
-#line 37228 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1626:
-#line 10957 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-4].typnam);
 					(yyval.typnam)->arrayBounds = list_make1(makeInteger((yyvsp[-1].ival)));
 					(yyval.typnam)->setof = TRUE;
 				}
-#line 37238 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1627:
-#line 10963 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-1].typnam);
 					(yyval.typnam)->arrayBounds = list_make1(makeInteger(-1));
 				}
-#line 37247 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1628:
-#line 10968 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-1].typnam);
 					(yyval.typnam)->arrayBounds = list_make1(makeInteger(-1));
 					(yyval.typnam)->setof = TRUE;
 				}
-#line 37257 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1629:
-#line 10977 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {  (yyval.list) = lappend((yyvsp[-2].list), makeInteger(-1)); }
-#line 37263 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1630:
-#line 10979 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {  (yyval.list) = lappend((yyvsp[-3].list), makeInteger((yyvsp[-1].ival))); }
-#line 37269 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1631:
-#line 10981 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {  (yyval.list) = NIL; }
-#line 37275 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1632:
-#line 10985 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37281 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1633:
-#line 10986 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37287 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1634:
-#line 10987 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37293 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1635:
-#line 10988 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37299 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1636:
-#line 10989 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37305 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1637:
-#line 10991 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-1].typnam);
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 				}
-#line 37314 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1638:
-#line 10996 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[-3].typnam);
 					(yyval.typnam)->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
 											 makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 				}
-#line 37324 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1639:
-#line 11015 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37330 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1640:
-#line 11016 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37336 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1641:
-#line 11017 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37342 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1642:
-#line 11018 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.typnam) = (yyvsp[0].typnam); }
-#line 37348 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1643:
-#line 11030 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = makeTypeName((yyvsp[-1].str));
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37358 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1644:
-#line 11036 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = makeTypeNameFromNameList(lcons(makeString((yyvsp[-2].str)), (yyvsp[-1].list)));
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 					(yyval.typnam)->location = (yylsp[-2]);
 				}
-#line 37368 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1645:
-#line 11043 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 37374 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1646:
-#line 11044 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 37380 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1647:
-#line 11051 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("int4");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37389 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1648:
-#line 11056 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("int4");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37398 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1649:
-#line 11061 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("int2");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37407 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1650:
-#line 11066 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("int8");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37416 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1651:
-#line 11071 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("float4");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37425 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1652:
-#line 11076 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37434 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1653:
-#line 11081 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("float8");
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37443 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1654:
-#line 11086 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("numeric");
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37453 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1655:
-#line 11092 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("numeric");
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37463 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1656:
-#line 11098 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("numeric");
 					(yyval.typnam)->typmods = (yyvsp[0].list);
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37473 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1657:
-#line 11104 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("bool");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37482 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1658:
-#line 11111 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Check FLOAT() precision limits assuming IEEE floating
@@ -37503,52 +34491,40 @@ yyreduce:
 								 errmsg("precision for type float must be less than 54 bits"),
 								 parser_errposition((yylsp[-1]))));
 				}
-#line 37507 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1659:
-#line 11132 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("float8");
 				}
-#line 37515 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1660:
-#line 11142 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37523 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1661:
-#line 11146 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37531 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1662:
-#line 11154 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37539 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1663:
-#line 11158 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 					(yyval.typnam)->typmods = NIL;
 				}
-#line 37548 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1664:
-#line 11166 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					char *typname;
 
@@ -37557,11 +34533,9 @@ yyreduce:
 					(yyval.typnam)->typmods = (yyvsp[-1].list);
 					(yyval.typnam)->location = (yylsp[-4]);
 				}
-#line 37561 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1665:
-#line 11178 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* bit defaults to bit(1), varbit to no limit */
 					if ((yyvsp[0].boolean))
@@ -37575,35 +34549,27 @@ yyreduce:
 					}
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37579 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1666:
-#line 11199 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37587 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1667:
-#line 11203 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37595 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1668:
-#line 11209 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = (yyvsp[0].typnam);
 				}
-#line 37603 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1669:
-#line 11213 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* Length was not specified so allow to be unrestricted.
 					 * This handles problems with fixed-length (bpchar) strings
@@ -37614,11 +34580,9 @@ yyreduce:
 					(yyval.typnam) = (yyvsp[0].typnam);
 					(yyval.typnam)->typmods = NIL;
 				}
-#line 37618 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1670:
-#line 11226 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if (((yyvsp[0].str) != NULL) && (strcmp((yyvsp[0].str), "sql_text") != 0))
 						(yyvsp[-4].str) = psprintf("%s_%s", (yyvsp[-4].str), (yyvsp[0].str));
@@ -37627,11 +34591,9 @@ yyreduce:
 					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival), (yylsp[-2])));
 					(yyval.typnam)->location = (yylsp[-4]);
 				}
-#line 37631 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1671:
-#line 11237 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if (((yyvsp[0].str) != NULL) && (strcmp((yyvsp[0].str), "sql_text") != 0))
 						(yyvsp[-1].str) = psprintf("%s_%s", (yyvsp[-1].str), (yyvsp[0].str));
@@ -37644,71 +34606,49 @@ yyreduce:
 
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37648 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1672:
-#line 11252 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].boolean) ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
-#line 37654 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1673:
-#line 11254 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].boolean) ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
-#line 37660 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1674:
-#line 11256 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = static_cast<char *>("varchar"); }
-#line 37666 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1675:
-#line 11258 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].boolean) ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
-#line 37672 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1676:
-#line 11260 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].boolean) ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
-#line 37678 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1677:
-#line 11262 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].boolean) ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
-#line 37684 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1678:
-#line 11266 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 37690 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1679:
-#line 11267 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 37696 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1680:
-#line 11271 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 37702 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1681:
-#line 11272 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 37708 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1682:
-#line 11280 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timestamptz");
@@ -37717,11 +34657,9 @@ yyreduce:
 					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival), (yylsp[-2])));
 					(yyval.typnam)->location = (yylsp[-4]);
 				}
-#line 37721 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1683:
-#line 11289 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timestamptz");
@@ -37729,11 +34667,9 @@ yyreduce:
 						(yyval.typnam) = SystemTypeName("timestamp");
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37733 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1684:
-#line 11297 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timetz");
@@ -37742,11 +34678,9 @@ yyreduce:
 					(yyval.typnam)->typmods = list_make1(makeIntConst((yyvsp[-2].ival), (yylsp[-2])));
 					(yyval.typnam)->location = (yylsp[-4]);
 				}
-#line 37746 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1685:
-#line 11306 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].boolean))
 						(yyval.typnam) = SystemTypeName("timetz");
@@ -37754,102 +34688,74 @@ yyreduce:
 						(yyval.typnam) = SystemTypeName("time");
 					(yyval.typnam)->location = (yylsp[-1]);
 				}
-#line 37758 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1686:
-#line 11317 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.typnam) = SystemTypeName("interval");
 					(yyval.typnam)->location = (yylsp[0]);
 				}
-#line 37767 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1687:
-#line 11324 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 37773 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1688:
-#line 11325 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 37779 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1689:
-#line 11326 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 37785 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1690:
-#line 11331 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(YEAR), (yylsp[0]))); }
-#line 37791 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1691:
-#line 11333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(MONTH), (yylsp[0]))); }
-#line 37797 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1692:
-#line 11335 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY), (yylsp[0]))); }
-#line 37803 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1693:
-#line 11337 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(HOUR), (yylsp[0]))); }
-#line 37809 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1694:
-#line 11339 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(MINUTE), (yylsp[0]))); }
-#line 37815 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1695:
-#line 11341 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 37821 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1696:
-#line 11343 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(YEAR) |
 												 INTERVAL_MASK(MONTH), (yylsp[-2])));
 				}
-#line 37830 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1697:
-#line 11348 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
 												 INTERVAL_MASK(HOUR), (yylsp[-2])));
 				}
-#line 37839 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1698:
-#line 11353 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(DAY) |
 												 INTERVAL_MASK(HOUR) |
 												 INTERVAL_MASK(MINUTE), (yylsp[-2])));
 				}
-#line 37849 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1699:
-#line 11359 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = (yyvsp[0].list);
 					linitial((yyval.list)) = makeIntConst(INTERVAL_MASK(DAY) |
@@ -37857,76 +34763,58 @@ yyreduce:
 												INTERVAL_MASK(MINUTE) |
 												INTERVAL_MASK(SECOND), (yylsp[-2]));
 				}
-#line 37861 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1700:
-#line 11367 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(HOUR) |
 												 INTERVAL_MASK(MINUTE), (yylsp[-2])));
 				}
-#line 37870 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1701:
-#line 11372 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = (yyvsp[0].list);
 					linitial((yyval.list)) = makeIntConst(INTERVAL_MASK(HOUR) |
 												INTERVAL_MASK(MINUTE) |
 												INTERVAL_MASK(SECOND), (yylsp[-2]));
 				}
-#line 37881 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1702:
-#line 11379 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = (yyvsp[0].list);
 					linitial((yyval.list)) = makeIntConst(INTERVAL_MASK(MINUTE) |
 												INTERVAL_MASK(SECOND), (yylsp[-2]));
 				}
-#line 37891 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1703:
-#line 11385 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 37897 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1704:
-#line 11390 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1(makeIntConst(INTERVAL_MASK(SECOND), (yylsp[0])));
 				}
-#line 37905 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1705:
-#line 11394 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(makeIntConst(INTERVAL_MASK(SECOND), (yylsp[-3])),
 									makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 				}
-#line 37914 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1706:
-#line 11429 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 37920 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1707:
-#line 11431 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeTypeCast((yyvsp[-2].node), (yyvsp[0].typnam), (yylsp[-1])); }
-#line 37926 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1708:
-#line 11433 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CollateClause *n = makeNode(CollateClause);
 					n->arg = (yyvsp[-2].node);
@@ -37934,156 +34822,108 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *) n;
 				}
-#line 37938 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1709:
-#line 11441 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("timezone"),
 											   list_make2((yyvsp[0].node), (yyvsp[-4].node)),
 											   (yylsp[-3]));
 				}
-#line 37948 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1710:
-#line 11456 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[0].node), (yylsp[-1])); }
-#line 37954 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1711:
-#line 11458 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = doNegate((yyvsp[0].node), (yylsp[-1])); }
-#line 37960 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1712:
-#line 11460 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37966 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1713:
-#line 11462 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37972 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1714:
-#line 11464 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37978 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1715:
-#line 11466 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37984 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1716:
-#line 11468 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37990 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1717:
-#line 11470 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 37996 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1718:
-#line 11472 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38002 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1719:
-#line 11474 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38008 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1720:
-#line 11476 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38014 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1721:
-#line 11478 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38020 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1722:
-#line 11480 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38026 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1723:
-#line 11482 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<>", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38032 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1724:
-#line 11485 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38038 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1725:
-#line 11487 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), NULL, (yyvsp[0].node), (yylsp[-1])); }
-#line 38044 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1726:
-#line 11489 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[0].list), (yyvsp[-1].node), NULL, (yylsp[0])); }
-#line 38050 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1727:
-#line 11492 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeAndExpr((yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38056 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1728:
-#line 11494 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeOrExpr((yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38062 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1729:
-#line 11496 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeNotExpr((yyvsp[0].node), (yylsp[-1])); }
-#line 38068 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1730:
-#line 11498 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeNotExpr((yyvsp[0].node), (yylsp[-1])); }
-#line 38074 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1731:
-#line 11501 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "~~",
 												   (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1]));
 				}
-#line 38083 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1732:
-#line 11506 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38091,20 +34931,16 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "~~",
 												   (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
-#line 38095 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1733:
-#line 11514 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "!~~",
 												   (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2]));
 				}
-#line 38104 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1734:
-#line 11519 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38112,20 +34948,16 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_LIKE, "!~~",
 												   (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
-#line 38116 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1735:
-#line 11527 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "~~*",
 												   (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1]));
 				}
-#line 38125 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1736:
-#line 11532 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38133,20 +34965,16 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "~~*",
 												   (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
-#line 38137 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1737:
-#line 11540 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "!~~*",
 												   (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2]));
 				}
-#line 38146 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1738:
-#line 11545 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("like_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38154,11 +34982,9 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_ILIKE, "!~~*",
 												   (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
-#line 38158 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1739:
-#line 11554 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2((yyvsp[0].node), makeNullAConst(-1)),
@@ -38166,11 +34992,9 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
 												   (yyvsp[-3].node), (Node *) n, (yylsp[-2]));
 				}
-#line 38170 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1740:
-#line 11562 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38178,11 +35002,9 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "~",
 												   (yyvsp[-5].node), (Node *) n, (yylsp[-4]));
 				}
-#line 38182 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1741:
-#line 11570 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2((yyvsp[0].node), makeNullAConst(-1)),
@@ -38190,11 +35012,9 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
 												   (yyvsp[-4].node), (Node *) n, (yylsp[-3]));
 				}
-#line 38194 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1742:
-#line 11578 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall(SystemFuncName("similar_escape"),
 											   list_make2((yyvsp[-2].node), (yyvsp[0].node)),
@@ -38202,11 +35022,9 @@ yyreduce:
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_SIMILAR, "!~",
 												   (yyvsp[-6].node), (Node *) n, (yylsp[-5]));
 				}
-#line 38206 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1743:
-#line 11596 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NullTest *n = makeNode(NullTest);
 					n->arg = (Expr *) (yyvsp[-2].node);
@@ -38214,11 +35032,9 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38218 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1744:
-#line 11604 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NullTest *n = makeNode(NullTest);
 					n->arg = (Expr *) (yyvsp[-1].node);
@@ -38226,11 +35042,9 @@ yyreduce:
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38230 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1745:
-#line 11612 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NullTest *n = makeNode(NullTest);
 					n->arg = (Expr *) (yyvsp[-3].node);
@@ -38238,11 +35052,9 @@ yyreduce:
 					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38242 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1746:
-#line 11620 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NullTest *n = makeNode(NullTest);
 					n->arg = (Expr *) (yyvsp[-1].node);
@@ -38250,11 +35062,9 @@ yyreduce:
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38254 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1747:
-#line 11628 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if (list_length((yyvsp[-2].list)) != 2)
 						ereport(ERROR,
@@ -38270,11 +35080,9 @@ yyreduce:
 											   list_concat((yyvsp[-2].list), (yyvsp[0].list)),
 											   (yylsp[-1]));
 				}
-#line 38274 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1748:
-#line 11644 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-2].node);
@@ -38282,11 +35090,9 @@ yyreduce:
 					b->location = (yylsp[-1]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38286 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1749:
-#line 11652 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-3].node);
@@ -38294,11 +35100,9 @@ yyreduce:
 					b->location = (yylsp[-2]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38298 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1750:
-#line 11660 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-2].node);
@@ -38306,11 +35110,9 @@ yyreduce:
 					b->location = (yylsp[-1]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38310 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1751:
-#line 11668 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-3].node);
@@ -38318,11 +35120,9 @@ yyreduce:
 					b->location = (yylsp[-2]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38322 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1752:
-#line 11676 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-2].node);
@@ -38330,11 +35130,9 @@ yyreduce:
 					b->location = (yylsp[-1]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38334 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1753:
-#line 11684 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					BooleanTest *b = makeNode(BooleanTest);
 					b->arg = (Expr *) (yyvsp[-3].node);
@@ -38342,45 +35140,35 @@ yyreduce:
 					b->location = (yylsp[-2]);
 					(yyval.node) = (Node *)b;
 				}
-#line 38346 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1754:
-#line 11692 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[-4].node), (yyvsp[0].node), (yylsp[-3]));
 				}
-#line 38354 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1755:
-#line 11696 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeNotExpr((Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
 															   "=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
 									 (yylsp[-4]));
 				}
-#line 38364 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1756:
-#line 11702 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[-5].node), (Node *) (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 38372 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1757:
-#line 11706 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[-6].node), (Node *) (yyvsp[-1].list), (yylsp[-5]));
 				}
-#line 38380 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1758:
-#line 11710 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_BETWEEN,
 												   "BETWEEN",
@@ -38388,11 +35176,9 @@ yyreduce:
 												   (Node *) list_make2((yyvsp[-2].node), (yyvsp[0].node)),
 												   (yylsp[-4]));
 				}
-#line 38392 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1759:
-#line 11718 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NOT_BETWEEN,
 												   "NOT BETWEEN",
@@ -38400,11 +35186,9 @@ yyreduce:
 												   (Node *) list_make2((yyvsp[-2].node), (yyvsp[0].node)),
 												   (yylsp[-5]));
 				}
-#line 38404 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1760:
-#line 11726 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_BETWEEN_SYM,
 												   "BETWEEN SYMMETRIC",
@@ -38412,11 +35196,9 @@ yyreduce:
 												   (Node *) list_make2((yyvsp[-2].node), (yyvsp[0].node)),
 												   (yylsp[-4]));
 				}
-#line 38416 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1761:
-#line 11734 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NOT_BETWEEN_SYM,
 												   "NOT BETWEEN SYMMETRIC",
@@ -38424,11 +35206,9 @@ yyreduce:
 												   (Node *) list_make2((yyvsp[-2].node), (yyvsp[0].node)),
 												   (yylsp[-5]));
 				}
-#line 38428 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1762:
-#line 11742 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA((yyvsp[0].node), SubLink))
@@ -38448,11 +35228,9 @@ yyreduce:
 						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1]));
 					}
 				}
-#line 38452 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1763:
-#line 11762 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA((yyvsp[0].node), SubLink))
@@ -38474,11 +35252,9 @@ yyreduce:
 						(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_IN, "<>", (yyvsp[-3].node), (yyvsp[0].node), (yylsp[-2]));
 					}
 				}
-#line 38478 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1764:
-#line 11784 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = static_cast<SubLinkType>((yyvsp[-1].ival));
@@ -38489,22 +35265,18 @@ yyreduce:
 					n->location = (yylsp[-2]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38493 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1765:
-#line 11795 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[-3].ival) == ANY_SUBLINK)
 						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ANY, (yyvsp[-4].list), (yyvsp[-5].node), (yyvsp[-1].node), (yylsp[-4]));
 					else
 						(yyval.node) = (Node *) makeA_Expr(AEXPR_OP_ALL, (yyvsp[-4].list), (yyvsp[-5].node), (yyvsp[-1].node), (yylsp[-4]));
 				}
-#line 38504 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1766:
-#line 11802 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* Not sure how to get rid of the parentheses
 					 * but there are lots of shift/reduce errors without them.
@@ -38520,209 +35292,149 @@ yyreduce:
 							 errmsg("UNIQUE predicate is not yet implemented"),
 							 parser_errposition((yylsp[-1]))));
 				}
-#line 38524 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1767:
-#line 11818 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL,
 									 list_make1((yyvsp[-2].node)), (yylsp[-1]));
 				}
-#line 38533 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1768:
-#line 11823 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeNotExpr(makeXmlExpr(IS_DOCUMENT, NULL, NIL,
 												 list_make1((yyvsp[-3].node)), (yylsp[-2])),
 									 (yylsp[-2]));
 				}
-#line 38543 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1769:
-#line 11840 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 38549 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1770:
-#line 11842 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeTypeCast((yyvsp[-2].node), (yyvsp[0].typnam), (yylsp[-1])); }
-#line 38555 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1771:
-#line 11844 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, (yyvsp[0].node), (yylsp[-1])); }
-#line 38561 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1772:
-#line 11846 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = doNegate((yyvsp[0].node), (yylsp[-1])); }
-#line 38567 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1773:
-#line 11848 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38573 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1774:
-#line 11850 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "-", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38579 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1775:
-#line 11852 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "*", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38585 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1776:
-#line 11854 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "/", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38591 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1777:
-#line 11856 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38597 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1778:
-#line 11858 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38603 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1779:
-#line 11860 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38609 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1780:
-#line 11862 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38615 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1781:
-#line 11864 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38621 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1782:
-#line 11866 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38627 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1783:
-#line 11868 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38633 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1784:
-#line 11870 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OP, "<>", (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38639 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1785:
-#line 11872 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), (yyvsp[-2].node), (yyvsp[0].node), (yylsp[-1])); }
-#line 38645 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1786:
-#line 11874 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[-1].list), NULL, (yyvsp[0].node), (yylsp[-1])); }
-#line 38651 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1787:
-#line 11876 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeA_Expr(AEXPR_OP, (yyvsp[0].list), (yyvsp[-1].node), NULL, (yylsp[0])); }
-#line 38657 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1788:
-#line 11878 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_DISTINCT, "=", (yyvsp[-4].node), (yyvsp[0].node), (yylsp[-3]));
 				}
-#line 38665 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1789:
-#line 11882 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeNotExpr((Node *) makeSimpleA_Expr(AEXPR_DISTINCT,
 															   "=", (yyvsp[-5].node), (yyvsp[0].node), (yylsp[-4])),
 									 (yylsp[-4]));
 				}
-#line 38675 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1790:
-#line 11888 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "=", (yyvsp[-5].node), (Node *) (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 38683 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1791:
-#line 11892 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_OF, "<>", (yyvsp[-6].node), (Node *) (yyvsp[-1].list), (yylsp[-5]));
 				}
-#line 38691 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1792:
-#line 11896 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_DOCUMENT, NULL, NIL,
 									 list_make1((yyvsp[-2].node)), (yylsp[-1]));
 				}
-#line 38700 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1793:
-#line 11901 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeNotExpr(makeXmlExpr(IS_DOCUMENT, NULL, NIL,
 												 list_make1((yyvsp[-3].node)), (yylsp[-2])),
 									 (yylsp[-2]));
 				}
-#line 38710 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1794:
-#line 11916 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 38716 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1795:
-#line 11917 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 38722 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1796:
-#line 11919 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ParamRef *p = makeNode(ParamRef);
 					p->number = (yyvsp[-1].ival);
@@ -38737,11 +35449,9 @@ yyreduce:
 					else
 						(yyval.node) = (Node *) p;
 				}
-#line 38741 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1797:
-#line 11934 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					if ((yyvsp[0].list))
 					{
@@ -38771,23 +35481,17 @@ yyreduce:
 					else
 						(yyval.node) = (yyvsp[-2].node);
 				}
-#line 38775 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1798:
-#line 11964 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 38781 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1799:
-#line 11966 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 38787 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1800:
-#line 11968 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXPR_SUBLINK;
@@ -38798,11 +35502,9 @@ yyreduce:
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38802 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1801:
-#line 11979 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Because the select_with_parens nonterminal is designed
@@ -38826,11 +35528,9 @@ yyreduce:
 					a->indirection = check_indirection((yyvsp[0].list), yyscanner);
 					(yyval.node) = (Node *)a;
 				}
-#line 38830 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1802:
-#line 12003 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = EXISTS_SUBLINK;
@@ -38841,11 +35541,9 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38845 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1803:
-#line 12014 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = ARRAY_SUBLINK;
@@ -38856,11 +35554,9 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38860 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1804:
-#line 12025 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					A_ArrayExpr *n = (A_ArrayExpr *) (yyvsp[0].node);
 					Assert(IsA(n, A_ArrayExpr));
@@ -38868,11 +35564,9 @@ yyreduce:
 					n->location = (yylsp[-1]);
 					(yyval.node) = (Node *)n;
 				}
-#line 38872 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1805:
-#line 12033 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RowExpr *r = makeNode(RowExpr);
 					r->args = (yyvsp[0].list);
@@ -38882,11 +35576,9 @@ yyreduce:
 					r->location = (yylsp[0]);
 					(yyval.node) = (Node *)r;
 				}
-#line 38886 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1806:
-#line 12043 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RowExpr *r = makeNode(RowExpr);
 					r->args = (yyvsp[0].list);
@@ -38896,62 +35588,50 @@ yyreduce:
 					r->location = (yylsp[0]);
 					(yyval.node) = (Node *)r;
 				}
-#line 38900 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1807:
-#line 12053 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 				  GroupingFunc *g = makeNode(GroupingFunc);
 				  g->args = (yyvsp[-1].list);
 				  g->location = (yylsp[-3]);
 				  (yyval.node) = (Node *)g;
 			  }
-#line 38911 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1808:
-#line 12062 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall((yyvsp[-2].list), NIL, (yylsp[-2]));
 				}
-#line 38919 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1809:
-#line 12066 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall((yyvsp[-4].list), (yyvsp[-2].list), (yylsp[-4]));
 					n->agg_order = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 38929 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1810:
-#line 12072 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall((yyvsp[-5].list), list_make1((yyvsp[-2].node)), (yylsp[-5]));
 					n->func_variadic = TRUE;
 					n->agg_order = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 38940 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1811:
-#line 12079 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall((yyvsp[-7].list), lappend((yyvsp[-5].list), (yyvsp[-2].node)), (yylsp[-7]));
 					n->func_variadic = TRUE;
 					n->agg_order = (yyvsp[-1].list);
 					(yyval.node) = (Node *)n;
 				}
-#line 38951 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1812:
-#line 12086 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall((yyvsp[-5].list), (yyvsp[-2].list), (yylsp[-5]));
 					n->agg_order = (yyvsp[-1].list);
@@ -38961,22 +35641,18 @@ yyreduce:
 					 */
 					(yyval.node) = (Node *)n;
 				}
-#line 38965 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1813:
-#line 12096 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = makeFuncCall((yyvsp[-5].list), (yyvsp[-2].list), (yylsp[-5]));
 					n->agg_order = (yyvsp[-1].list);
 					n->agg_distinct = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 38976 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1814:
-#line 12103 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * We consider AGGREGATE(*) to invoke a parameterless
@@ -38992,11 +35668,9 @@ yyreduce:
 					n->agg_star = TRUE;
 					(yyval.node) = (Node *)n;
 				}
-#line 38996 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1815:
-#line 12131 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					FuncCall *n = (FuncCall *) (yyvsp[-3].node);
 					/*
@@ -39031,39 +35705,29 @@ yyreduce:
 					n->over = (yyvsp[0].windef);
 					(yyval.node) = (Node *) n;
 				}
-#line 39035 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1816:
-#line 12166 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 39041 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1817:
-#line 12176 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 39047 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1818:
-#line 12177 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 39053 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1819:
-#line 12185 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("pg_collation_for"),
 											   list_make1((yyvsp[-1].node)),
 											   (yylsp[-4]));
 				}
-#line 39063 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1820:
-#line 12191 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::date".
@@ -39089,11 +35753,9 @@ yyreduce:
 					n = makeStringConstCast("now", -1, SystemTypeName("text"));
 					(yyval.node) = makeTypeCast(n, SystemTypeName("date"), (yylsp[0]));
 				}
-#line 39093 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1821:
-#line 12217 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::timetz".
@@ -39103,11 +35765,9 @@ yyreduce:
 					n = makeStringConstCast("now", -1, SystemTypeName("text"));
 					(yyval.node) = makeTypeCast(n, SystemTypeName("timetz"), (yylsp[0]));
 				}
-#line 39107 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1822:
-#line 12227 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::timetz(n)".
@@ -39120,11 +35780,9 @@ yyreduce:
 					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 					(yyval.node) = makeTypeCast(n, d, (yylsp[-3]));
 				}
-#line 39124 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1823:
-#line 12240 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "now()", since we have a function that
@@ -39132,11 +35790,9 @@ yyreduce:
 					 */
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("now"), NIL, (yylsp[0]));
 				}
-#line 39136 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1824:
-#line 12248 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::timestamptz(n)".
@@ -39149,11 +35805,9 @@ yyreduce:
 					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 					(yyval.node) = makeTypeCast(n, d, (yylsp[-3]));
 				}
-#line 39153 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1825:
-#line 12261 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::time".
@@ -39163,11 +35817,9 @@ yyreduce:
 					n = makeStringConstCast("now", -1, SystemTypeName("text"));
 					(yyval.node) = makeTypeCast((Node *)n, SystemTypeName("time"), (yylsp[0]));
 				}
-#line 39167 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1826:
-#line 12271 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::time(n)".
@@ -39180,11 +35832,9 @@ yyreduce:
 					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 					(yyval.node) = makeTypeCast((Node *)n, d, (yylsp[-3]));
 				}
-#line 39184 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1827:
-#line 12284 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::timestamp".
@@ -39194,11 +35844,9 @@ yyreduce:
 					n = makeStringConstCast("now", -1, SystemTypeName("text"));
 					(yyval.node) = makeTypeCast(n, SystemTypeName("timestamp"), (yylsp[0]));
 				}
-#line 39198 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1828:
-#line 12294 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Translate as "'now'::text::timestamp(n)".
@@ -39211,73 +35859,55 @@ yyreduce:
 					d->typmods = list_make1(makeIntConst((yyvsp[-1].ival), (yylsp[-1])));
 					(yyval.node) = makeTypeCast(n, d, (yylsp[-3]));
 				}
-#line 39215 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1829:
-#line 12307 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, (yylsp[0]));
 				}
-#line 39223 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1830:
-#line 12311 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, (yylsp[0]));
 				}
-#line 39231 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1831:
-#line 12315 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("session_user"), NIL, (yylsp[0]));
 				}
-#line 39239 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1832:
-#line 12319 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("current_user"), NIL, (yylsp[0]));
 				}
-#line 39247 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1833:
-#line 12323 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("current_database"), NIL, (yylsp[0]));
 				}
-#line 39255 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1834:
-#line 12327 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("current_schema"), NIL, (yylsp[0]));
 				}
-#line 39263 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1835:
-#line 12331 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeTypeCast((yyvsp[-3].node), (yyvsp[-1].typnam), (yylsp[-5])); }
-#line 39269 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1836:
-#line 12333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("date_part"), (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39277 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1837:
-#line 12337 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* overlay(A PLACING B FROM C FOR D) is converted to
 					 * overlay(A, B, C, D)
@@ -39286,31 +35916,25 @@ yyreduce:
 					 */
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("overlay"), (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39290 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1838:
-#line 12346 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* position(A in B) is converted to position(B, A) */
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("position"), (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39299 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1839:
-#line 12351 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* substring(A from B for C) is converted to
 					 * substring(A, B, C) - thomas 2000-11-28
 					 */
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("substring"), (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39310 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1840:
-#line 12358 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* TREAT(expr AS target) converts expr of a particular type to target,
 					 * which is defined to be a subtype of the original expression.
@@ -39325,65 +35949,51 @@ yyreduce:
 												list_make1((yyvsp[-3].node)),
 												(yylsp[-5]));
 				}
-#line 39329 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1841:
-#line 12373 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* various trim expressions are defined in SQL
 					 * - thomas 1997-07-19
 					 */
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("btrim"), (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 39340 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1842:
-#line 12380 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("ltrim"), (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 39348 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1843:
-#line 12384 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("rtrim"), (yyvsp[-1].list), (yylsp[-4]));
 				}
-#line 39356 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1844:
-#line 12388 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("btrim"), (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39364 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1845:
-#line 12392 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", (yyvsp[-3].node), (yyvsp[-1].node), (yylsp[-5]));
 				}
-#line 39372 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1846:
-#line 12396 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CoalesceExpr *c = makeNode(CoalesceExpr);
 					c->args = (yyvsp[-1].list);
 					c->location = (yylsp[-3]);
 					(yyval.node) = (Node *)c;
 				}
-#line 39383 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1847:
-#line 12403 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
 					v->args = (yyvsp[-1].list);
@@ -39391,11 +36001,9 @@ yyreduce:
 					v->location = (yylsp[-3]);
 					(yyval.node) = (Node *)v;
 				}
-#line 39395 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1848:
-#line 12411 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					MinMaxExpr *v = makeNode(MinMaxExpr);
 					v->args = (yyvsp[-1].list);
@@ -39403,69 +36011,53 @@ yyreduce:
 					v->location = (yylsp[-3]);
 					(yyval.node) = (Node *)v;
 				}
-#line 39407 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1849:
-#line 12419 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, (yyvsp[-1].list), (yylsp[-3]));
 				}
-#line 39415 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1850:
-#line 12423 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-1].str), NIL, NIL, (yylsp[-4]));
 				}
-#line 39423 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1851:
-#line 12427 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-3].str), (yyvsp[-1].list), NIL, (yylsp[-6]));
 				}
-#line 39431 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1852:
-#line 12431 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-3].str), NIL, (yyvsp[-1].list), (yylsp[-6]));
 				}
-#line 39439 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1853:
-#line 12435 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLELEMENT, (yyvsp[-5].str), (yyvsp[-3].list), (yyvsp[-1].list), (yylsp[-8]));
 				}
-#line 39447 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1854:
-#line 12439 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* xmlexists(A PASSING [BY REF] B [BY REF]) is
 					 * converted to xmlexists(A, B)*/
 					(yyval.node) = (Node *) makeFuncCall(SystemFuncName("xmlexists"), list_make2((yyvsp[-2].node), (yyvsp[-1].node)), (yylsp[-4]));
 				}
-#line 39457 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1855:
-#line 12445 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLFOREST, NULL, (yyvsp[-1].list), NIL, (yylsp[-3]));
 				}
-#line 39465 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1856:
-#line 12449 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					XmlExpr *x = (XmlExpr *)
 						makeXmlExpr(IS_XMLPARSE, NULL, NIL,
@@ -39474,36 +36066,28 @@ yyreduce:
 					x->xmloption = static_cast<XmlOptionType>((yyvsp[-3].ival));
 					(yyval.node) = (Node *)x;
 				}
-#line 39478 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1857:
-#line 12458 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[-1].str), NULL, NIL, (yylsp[-4]));
 				}
-#line 39486 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1858:
-#line 12462 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLPI, (yyvsp[-3].str), NULL, list_make1((yyvsp[-1].node)), (yylsp[-6]));
 				}
-#line 39494 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1859:
-#line 12466 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeXmlExpr(IS_XMLROOT, NULL, NIL,
 									 list_make3((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[-1].node)), (yylsp[-6]));
 				}
-#line 39503 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1860:
-#line 12471 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					XmlSerialize *n = makeNode(XmlSerialize);
 					n->xmloption = static_cast<XmlOptionType>((yyvsp[-4].ival));
@@ -39512,65 +36096,45 @@ yyreduce:
 					n->location = (yylsp[-6]);
 					(yyval.node) = (Node *)n;
 				}
-#line 39516 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1861:
-#line 12485 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 39522 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1862:
-#line 12487 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeNullAConst(-1); }
-#line 39528 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1863:
-#line 12491 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst(XML_STANDALONE_YES, -1); }
-#line 39534 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1864:
-#line 12493 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst(XML_STANDALONE_NO, -1); }
-#line 39540 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1865:
-#line 12495 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst(XML_STANDALONE_NO_VALUE, -1); }
-#line 39546 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1866:
-#line 12497 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = makeIntConst(XML_STANDALONE_OMITTED, -1); }
-#line 39552 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1867:
-#line 12500 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 39558 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1868:
-#line 12503 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].target)); }
-#line 39564 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1869:
-#line 12504 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
-#line 39570 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1870:
-#line 12508 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = (yyvsp[0].str);
@@ -39578,11 +36142,9 @@ yyreduce:
 					(yyval.target)->val = (Node *) (yyvsp[-2].node);
 					(yyval.target)->location = (yylsp[-2]);
 				}
-#line 39582 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1871:
-#line 12516 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = NULL;
@@ -39590,137 +36152,97 @@ yyreduce:
 					(yyval.target)->val = (Node *) (yyvsp[0].node);
 					(yyval.target)->location = (yylsp[0]);
 				}
-#line 39594 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1872:
-#line 12525 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = XMLOPTION_DOCUMENT; }
-#line 39600 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1873:
-#line 12526 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = XMLOPTION_CONTENT; }
-#line 39606 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1874:
-#line 12529 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = TRUE; }
-#line 39612 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1875:
-#line 12530 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 39618 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1876:
-#line 12531 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.boolean) = FALSE; }
-#line 39624 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1877:
-#line 12537 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (yyvsp[0].node);
 				}
-#line 39632 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1878:
-#line 12541 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (yyvsp[-2].node);
 				}
-#line 39640 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1879:
-#line 12545 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (yyvsp[0].node);
 				}
-#line 39648 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1880:
-#line 12549 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (yyvsp[-2].node);
 				}
-#line 39656 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1881:
-#line 12559 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 39662 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1882:
-#line 12560 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 39668 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1883:
-#line 12564 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 39674 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1884:
-#line 12565 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 39680 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1885:
-#line 12573 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 39686 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1886:
-#line 12574 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 39692 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1887:
-#line 12578 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].windef)); }
-#line 39698 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1888:
-#line 12580 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].windef)); }
-#line 39704 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1889:
-#line 12585 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = (yyvsp[0].windef);
 					n->name = (yyvsp[-2].str);
 					(yyval.windef) = n;
 				}
-#line 39714 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1890:
-#line 12593 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.windef) = (yyvsp[0].windef); }
-#line 39720 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1891:
-#line 12595 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->name = (yyvsp[0].str);
@@ -39733,17 +36255,13 @@ yyreduce:
 					n->location = (yylsp[0]);
 					(yyval.windef) = n;
 				}
-#line 39737 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1892:
-#line 12608 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.windef) = NULL; }
-#line 39743 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1893:
-#line 12613 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->name = NULL;
@@ -39757,35 +36275,25 @@ yyreduce:
 					n->location = (yylsp[-5]);
 					(yyval.windef) = n;
 				}
-#line 39761 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1894:
-#line 12638 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 39767 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1895:
-#line 12639 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 39773 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1896:
-#line 12642 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 39779 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1897:
-#line 12643 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 39785 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1898:
-#line 12655 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = (yyvsp[0].windef);
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_RANGE;
@@ -39803,21 +36311,17 @@ yyreduce:
 								 parser_errposition((yylsp[-1]))));
 					(yyval.windef) = n;
 				}
-#line 39807 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1899:
-#line 12673 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = (yyvsp[0].windef);
 					n->frameOptions |= FRAMEOPTION_NONDEFAULT | FRAMEOPTION_ROWS;
 					(yyval.windef) = n;
 				}
-#line 39817 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1900:
-#line 12679 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_DEFAULTS;
@@ -39825,11 +36329,9 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39829 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1901:
-#line 12689 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = (yyvsp[0].windef);
 					/* reject invalid cases */
@@ -39846,11 +36348,9 @@ yyreduce:
 					n->frameOptions |= FRAMEOPTION_END_CURRENT_ROW;
 					(yyval.windef) = n;
 				}
-#line 39850 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1902:
-#line 12706 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n1 = (yyvsp[-2].windef);
 					WindowDef *n2 = (yyvsp[0].windef);
@@ -39887,11 +36387,9 @@ yyreduce:
 					n1->endOffset = n2->startOffset;
 					(yyval.windef) = n1;
 				}
-#line 39891 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1903:
-#line 12751 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_START_UNBOUNDED_PRECEDING;
@@ -39899,11 +36397,9 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39903 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1904:
-#line 12759 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_START_UNBOUNDED_FOLLOWING;
@@ -39911,11 +36407,9 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39915 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1905:
-#line 12767 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_START_CURRENT_ROW;
@@ -39923,11 +36417,9 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39927 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1906:
-#line 12775 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_START_VALUE_PRECEDING;
@@ -39935,11 +36427,9 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39939 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1907:
-#line 12783 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					WindowDef *n = makeNode(WindowDef);
 					n->frameOptions = FRAMEOPTION_START_VALUE_FOLLOWING;
@@ -39947,249 +36437,171 @@ yyreduce:
 					n->endOffset = NULL;
 					(yyval.windef) = n;
 				}
-#line 39951 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1908:
-#line 12803 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 39957 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1909:
-#line 12804 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 39963 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1910:
-#line 12805 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-3].list), (yyvsp[-1].node)); }
-#line 39969 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1911:
-#line 12808 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 39975 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1912:
-#line 12809 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 39981 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1913:
-#line 12812 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-3].list), (yyvsp[-1].node)); }
-#line 39987 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1914:
-#line 12815 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ANY_SUBLINK; }
-#line 39993 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1915:
-#line 12816 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ANY_SUBLINK; }
-#line 39999 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1916:
-#line 12817 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = ALL_SUBLINK; }
-#line 40005 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1917:
-#line 12820 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40011 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1918:
-#line 12821 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40017 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1919:
-#line 12824 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "+"; }
-#line 40023 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1920:
-#line 12825 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "-"; }
-#line 40029 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1921:
-#line 12826 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "*"; }
-#line 40035 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1922:
-#line 12827 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "/"; }
-#line 40041 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1923:
-#line 12828 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "%"; }
-#line 40047 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1924:
-#line 12829 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "^"; }
-#line 40053 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1925:
-#line 12830 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "<"; }
-#line 40059 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1926:
-#line 12831 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = ">"; }
-#line 40065 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1927:
-#line 12832 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "="; }
-#line 40071 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1928:
-#line 12833 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "<="; }
-#line 40077 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1929:
-#line 12834 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = ">="; }
-#line 40083 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1930:
-#line 12835 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "<>"; }
-#line 40089 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1931:
-#line 12839 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 40095 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1932:
-#line 12841 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 40101 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1933:
-#line 12846 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 40107 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1934:
-#line 12848 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 40113 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1935:
-#line 12853 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 40119 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1936:
-#line 12855 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 40125 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1937:
-#line 12857 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString("~~")); }
-#line 40131 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1938:
-#line 12859 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString("!~~")); }
-#line 40137 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1939:
-#line 12861 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString("~~*")); }
-#line 40143 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1940:
-#line 12863 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString("!~~*")); }
-#line 40149 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1941:
-#line 12875 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 40157 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1942:
-#line 12879 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 40165 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1943:
-#line 12886 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make1((yyvsp[0].node));
 				}
-#line 40173 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1944:
-#line 12890 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node));
 				}
-#line 40181 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1945:
-#line 12896 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (yyvsp[0].node);
 				}
-#line 40189 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1946:
-#line 12900 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NamedArgExpr *na = makeNode(NamedArgExpr);
 					na->name = (yyvsp[-2].str);
@@ -40198,11 +36610,9 @@ yyreduce:
 					na->location = (yylsp[-2]);
 					(yyval.node) = (Node *) na;
 				}
-#line 40202 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1947:
-#line 12909 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					NamedArgExpr *na = makeNode(NamedArgExpr);
 					na->name = (yyvsp[-2].str);
@@ -40211,180 +36621,128 @@ yyreduce:
 					na->location = (yylsp[-2]);
 					(yyval.node) = (Node *) na;
 				}
-#line 40215 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1948:
-#line 12919 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].typnam)); }
-#line 40221 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1949:
-#line 12920 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].typnam)); }
-#line 40227 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1950:
-#line 12924 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeAArrayExpr((yyvsp[-1].list), (yylsp[-2]));
 				}
-#line 40235 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1951:
-#line 12928 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeAArrayExpr((yyvsp[-1].list), (yylsp[-2]));
 				}
-#line 40243 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1952:
-#line 12932 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeAArrayExpr(NIL, (yylsp[-1]));
 				}
-#line 40251 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1953:
-#line 12937 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 40257 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1954:
-#line 12938 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 40263 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1955:
-#line 12944 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2(makeStringConst((yyvsp[-2].str), (yylsp[-2])), (yyvsp[0].node));
 				}
-#line 40271 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1956:
-#line 12947 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 40277 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1957:
-#line 12954 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40283 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1958:
-#line 12955 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "year"; }
-#line 40289 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1959:
-#line 12956 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "month"; }
-#line 40295 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1960:
-#line 12957 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "day"; }
-#line 40301 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1961:
-#line 12958 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "hour"; }
-#line 40307 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1962:
-#line 12959 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "minute"; }
-#line 40313 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1963:
-#line 12960 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = "second"; }
-#line 40319 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1964:
-#line 12961 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40325 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1965:
-#line 12972 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make4((yyvsp[-3].node), (yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
-#line 40333 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1966:
-#line 12976 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
-#line 40341 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1967:
-#line 12983 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 40347 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1968:
-#line 12989 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make2((yyvsp[0].node), (yyvsp[-2].node)); }
-#line 40353 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1969:
-#line 12990 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 40359 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1970:
-#line 13007 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
 				}
-#line 40367 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1971:
-#line 13011 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* not legal per SQL99, but might as well allow it */
 					(yyval.list) = list_make3((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-1].node));
 				}
-#line 40376 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1972:
-#line 13016 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = list_make2((yyvsp[-1].node), (yyvsp[0].node));
 				}
-#line 40384 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1973:
-#line 13020 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/*
 					 * Since there are no cases where this syntax allows
@@ -40399,72 +36757,52 @@ yyreduce:
 									makeTypeCast((yyvsp[0].node),
 												 SystemTypeName("int4"), -1));
 				}
-#line 40403 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1974:
-#line 13035 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.list) = (yyvsp[0].list);
 				}
-#line 40411 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1975:
-#line 13039 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 40417 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1976:
-#line 13043 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 40423 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1977:
-#line 13046 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 40429 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1978:
-#line 13049 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[0].list), (yyvsp[-2].node)); }
-#line 40435 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1979:
-#line 13050 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 40441 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1980:
-#line 13051 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 40447 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1981:
-#line 13055 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SubLink *n = makeNode(SubLink);
 					n->subselect = (yyvsp[0].node);
 					/* other fields will be filled later */
 					(yyval.node) = (Node *)n;
 				}
-#line 40458 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1982:
-#line 13061 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *)(yyvsp[-1].list); }
-#line 40464 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1983:
-#line 13072 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CaseExpr *c = makeNode(CaseExpr);
 					c->casetype = InvalidOid; /* not analyzed yet */
@@ -40474,23 +36812,17 @@ yyreduce:
 					c->location = (yylsp[-4]);
 					(yyval.node) = (Node *)c;
 				}
-#line 40478 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1984:
-#line 13085 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 40484 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1985:
-#line 13086 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
-#line 40490 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1986:
-#line 13091 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					CaseWhen *w = makeNode(CaseWhen);
 					w->expr = (Expr *) (yyvsp[-2].node);
@@ -40498,171 +36830,123 @@ yyreduce:
 					w->location = (yylsp[-3]);
 					(yyval.node) = (Node *)w;
 				}
-#line 40502 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1987:
-#line 13101 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 40508 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1988:
-#line 13102 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 40514 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1989:
-#line 13105 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 40520 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1990:
-#line 13106 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 40526 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1991:
-#line 13110 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeColumnRef((yyvsp[0].str), NIL, (yylsp[0]), yyscanner);
 				}
-#line 40534 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1992:
-#line 13114 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeColumnRef((yyvsp[-1].str), (yyvsp[0].list), (yylsp[-1]), yyscanner);
 				}
-#line 40542 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1993:
-#line 13121 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeString((yyvsp[0].str));
 				}
-#line 40550 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1994:
-#line 13125 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = (Node *) makeNode(A_Star);
 				}
-#line 40558 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1995:
-#line 13129 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = NULL;
 					ai->uidx = (yyvsp[-1].node);
 					(yyval.node) = (Node *) ai;
 				}
-#line 40569 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1996:
-#line 13136 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					A_Indices *ai = makeNode(A_Indices);
 					ai->lidx = (yyvsp[-3].node);
 					ai->uidx = (yyvsp[-1].node);
 					(yyval.node) = (Node *) ai;
 				}
-#line 40580 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1997:
-#line 13145 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 40586 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1998:
-#line 13146 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
-#line 40592 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 1999:
-#line 13150 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 40598 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2000:
-#line 13151 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].node)); }
-#line 40604 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2003:
-#line 13166 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.node) = (Node *) (yyvsp[0].node); }
-#line 40610 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2004:
-#line 13168 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					SetToDefault *n = makeNode(SetToDefault);
 					n->location = (yylsp[0]);
 					(yyval.node) = (Node *) n;
 				}
-#line 40620 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2005:
-#line 13176 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 40626 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2006:
-#line 13177 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 40632 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2007:
-#line 13185 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 40638 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2008:
-#line 13195 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[0].list); }
-#line 40644 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2009:
-#line 13196 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 40650 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2010:
-#line 13200 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].target)); }
-#line 40656 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2011:
-#line 13201 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].target)); }
-#line 40662 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2012:
-#line 13205 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = (yyvsp[0].str);
@@ -40670,11 +36954,9 @@ yyreduce:
 					(yyval.target)->val = (Node *)(yyvsp[-2].node);
 					(yyval.target)->location = (yylsp[-2]);
 				}
-#line 40674 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2013:
-#line 13221 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = (yyvsp[0].str);
@@ -40682,11 +36964,9 @@ yyreduce:
 					(yyval.target)->val = (Node *)(yyvsp[-1].node);
 					(yyval.target)->location = (yylsp[-1]);
 				}
-#line 40686 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2014:
-#line 13229 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.target) = makeNode(ResTarget);
 					(yyval.target)->name = NULL;
@@ -40694,11 +36974,9 @@ yyreduce:
 					(yyval.target)->val = (Node *)(yyvsp[0].node);
 					(yyval.target)->location = (yylsp[0]);
 				}
-#line 40698 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2015:
-#line 13237 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					ColumnRef *n = makeNode(ColumnRef);
 					n->fields = list_make1(makeNode(A_Star));
@@ -40710,31 +36988,23 @@ yyreduce:
 					(yyval.target)->val = (Node *)n;
 					(yyval.target)->location = (yylsp[0]);
 				}
-#line 40714 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2016:
-#line 13258 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].range)); }
-#line 40720 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2017:
-#line 13259 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].range)); }
-#line 40726 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2018:
-#line 13271 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.range) = makeRangeVar(NULL, (yyvsp[0].str), (yylsp[0]));
 				}
-#line 40734 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2019:
-#line 13275 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					check_qualified_name((yyvsp[0].list), yyscanner);
 					(yyval.range) = makeRangeVar(NULL, NULL, (yylsp[-1]));
@@ -40759,106 +37029,76 @@ yyreduce:
 							break;
 					}
 				}
-#line 40763 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2020:
-#line 13302 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 40769 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2021:
-#line 13304 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), makeString((yyvsp[0].str))); }
-#line 40775 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2022:
-#line 13308 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40781 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2023:
-#line 13311 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40787 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2024:
-#line 13314 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40793 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2025:
-#line 13316 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40799 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2026:
-#line 13318 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40805 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2027:
-#line 13320 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40811 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2028:
-#line 13331 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1(makeString((yyvsp[0].str))); }
-#line 40817 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2029:
-#line 13333 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						(yyval.list) = check_func_name(lcons(makeString((yyvsp[-1].str)), (yyvsp[0].list)),
 											 yyscanner);
 					}
-#line 40826 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2030:
-#line 13344 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeIntConst((yyvsp[0].ival), (yylsp[0]));
 				}
-#line 40834 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2031:
-#line 13348 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeFloatConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 40842 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2032:
-#line 13352 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeStringConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 40850 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2033:
-#line 13356 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeBitStringConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 40858 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2034:
-#line 13360 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* This is a bit constant per SQL99:
 					 * Without Feature F511, "BIT data type",
@@ -40867,22 +37107,18 @@ yyreduce:
 					 */
 					(yyval.node) = makeBitStringConst((yyvsp[0].str), (yylsp[0]));
 				}
-#line 40871 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2035:
-#line 13369 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* generic type 'literal' syntax */
 					TypeName *t = makeTypeNameFromNameList((yyvsp[-1].list));
 					t->location = (yylsp[-1]);
 					(yyval.node) = makeStringConstCast((yyvsp[0].str), (yylsp[0]), t);
 				}
-#line 40882 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2036:
-#line 13376 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					/* generic syntax with a type modifier */
 					TypeName *t = makeTypeNameFromNameList((yyvsp[-5].list));
@@ -40914,94 +37150,70 @@ yyreduce:
 					t->location = (yylsp[-5]);
 					(yyval.node) = makeStringConstCast((yyvsp[0].str), (yylsp[0]), t);
 				}
-#line 40918 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2037:
-#line 13408 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeStringConstCast((yyvsp[0].str), (yylsp[0]), (yyvsp[-1].typnam));
 				}
-#line 40926 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2038:
-#line 13412 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TypeName *t = (yyvsp[-2].typnam);
 					t->typmods = (yyvsp[0].list);
 					(yyval.node) = makeStringConstCast((yyvsp[-1].str), (yylsp[-1]), t);
 				}
-#line 40936 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2039:
-#line 13418 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					TypeName *t = (yyvsp[-4].typnam);
 					t->typmods = list_make2(makeIntConst(INTERVAL_FULL_RANGE, -1),
 											makeIntConst((yyvsp[-2].ival), (yylsp[-2])));
 					(yyval.node) = makeStringConstCast((yyvsp[0].str), (yylsp[0]), t);
 				}
-#line 40947 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2040:
-#line 13425 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeBoolAConst(TRUE, (yylsp[0]));
 				}
-#line 40955 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2041:
-#line 13429 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeBoolAConst(FALSE, (yylsp[0]));
 				}
-#line 40963 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2042:
-#line 13433 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					(yyval.node) = makeNullAConst((yylsp[0]));
 				}
-#line 40971 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2043:
-#line 13438 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 40977 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2044:
-#line 13439 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 40983 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2045:
-#line 13441 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = (yyvsp[0].ival); }
-#line 40989 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2046:
-#line 13442 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = + (yyvsp[0].ival); }
-#line 40995 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2047:
-#line 13443 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.ival) = - (yyvsp[0].ival); }
-#line 41001 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2048:
-#line 13448 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 					RoleSpec *spc = (RoleSpec *) (yyvsp[0].node);
 					switch (spc->roletype)
@@ -41029,11 +37241,9 @@ yyreduce:
 									 parser_errposition((yylsp[0]))));
 					}
 				}
-#line 41033 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2049:
-#line 13478 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						/*
 						 * "public" and "none" are not keywords, but they must
@@ -41060,129 +37270,89 @@ yyreduce:
 						}
 						(yyval.node) = (Node *) n;
 					}
-#line 41064 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2050:
-#line 13505 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						(yyval.node) = makeRoleSpec(ROLESPEC_CURRENT_USER, (yylsp[0]));
 					}
-#line 41072 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2051:
-#line 13509 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     {
 						(yyval.node) = makeRoleSpec(ROLESPEC_SESSION_USER, (yylsp[0]));
 					}
-#line 41080 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2052:
-#line 13515 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].node)); }
-#line 41086 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2053:
-#line 13517 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].node)); }
-#line 41092 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2054:
-#line 13533 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 41098 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2055:
-#line 13534 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41104 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2056:
-#line 13535 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41110 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2057:
-#line 13540 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 41116 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2058:
-#line 13541 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41122 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2059:
-#line 13542 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41128 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2060:
-#line 13547 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 41134 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2061:
-#line 13548 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41140 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2062:
-#line 13549 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41146 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2063:
-#line 13550 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41152 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2064:
-#line 13556 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 41158 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2065:
-#line 13557 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41164 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2066:
-#line 13558 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41170 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2067:
-#line 13559 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41176 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
   case 2068:
-#line 13560 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1646  */
     { (yyval.str) = pstrdup((yyvsp[0].keyword)); }
-#line 41182 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 41186 "../../src/postgres/backend/parser/gram.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -41417,7 +37587,6 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 14033 "../../src/postgres/backend/parser/gram.ypp" /* yacc.c:1906  */
 
 
 /*
@@ -42235,7 +38404,6 @@ parser_init(base_yy_extra_type *yyext)
 #undef yylloc
 
 
-#line 3 "scan.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -43044,8 +39212,6 @@ static yyconst flex_int16_t yy_chk[1202] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "../../src/postgres/backend/parser/scan.lpp"
-#line 2 "../../src/postgres/backend/parser/scan.lpp"
 /*-------------------------------------------------------------------------
  *
  * scan.l
@@ -43317,7 +39483,6 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
-#line 1084 "scan.cpp"
 
 #define INITIAL 0
 #define xb 1
@@ -43573,10 +39738,8 @@ YY_DECL
   register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 391 "../../src/postgres/backend/parser/scan.lpp"
 
 
-#line 1343 "scan.cpp"
 
     yylval = yylval_param;
 
@@ -43662,14 +39825,12 @@ do_action:  /* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 393 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 397 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Set location in case of syntax error in comment */
           SET_YYLLOC();
@@ -43681,7 +39842,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 406 "../../src/postgres/backend/parser/scan.lpp"
 {
           (yyextra->xcdepth)++;
           /* Put back any characters past slash-star; see above */
@@ -43690,7 +39850,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 412 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (yyextra->xcdepth <= 0)
             BEGIN(INITIAL);
@@ -43701,32 +39860,27 @@ YY_RULE_SETUP
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 419 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 423 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 427 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case YY_STATE_EOF(xc):
-#line 431 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated /* comment"); }
   YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 433 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Binary bit type.
            * At some point we should simply pass the string
@@ -43742,11 +39896,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 9:
 /* rule 9 can match eol */
-#line 446 "../../src/postgres/backend/parser/scan.lpp"
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 446 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43756,33 +39908,27 @@ YY_RULE_SETUP
   YY_BREAK
 case 11:
 /* rule 11 can match eol */
-#line 453 "../../src/postgres/backend/parser/scan.lpp"
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 453 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 13:
 /* rule 13 can match eol */
-#line 457 "../../src/postgres/backend/parser/scan.lpp"
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 457 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case YY_STATE_EOF(xb):
-#line 460 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated bit string literal"); }
   YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 462 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Hexadecimal bit type.
            * At some point we should simply pass the string
@@ -43798,11 +39944,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 16:
 /* rule 16 can match eol */
-#line 475 "../../src/postgres/backend/parser/scan.lpp"
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 475 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43811,12 +39955,10 @@ YY_RULE_SETUP
         }
   YY_BREAK
 case YY_STATE_EOF(xh):
-#line 481 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated hexadecimal string literal"); }
   YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 483 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* National character.
            * We will pass this along as a normal character string,
@@ -43845,7 +39987,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 509 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyextra->warn_on_first_escape = true;
           yyextra->saw_non_ascii = false;
@@ -43859,7 +40000,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 519 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyextra->warn_on_first_escape = false;
           yyextra->saw_non_ascii = false;
@@ -43870,7 +40010,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 526 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           if (!yyextra->standard_conforming_strings)
@@ -43885,11 +40024,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 22:
 /* rule 22 can match eol */
-#line 538 "../../src/postgres/backend/parser/scan.lpp"
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 538 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43907,11 +40044,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 24:
 /* rule 24 can match eol */
-#line 553 "../../src/postgres/backend/parser/scan.lpp"
 case 25:
 /* rule 25 can match eol */
 YY_RULE_SETUP
-#line 553 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back all but the quote */
           yyless(1);
@@ -43922,16 +40057,12 @@ YY_RULE_SETUP
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 559 "../../src/postgres/backend/parser/scan.lpp"
 { /* stay in xusend state over whitespace */ }
   YY_BREAK
 case 27:
-#line 561 "../../src/postgres/backend/parser/scan.lpp"
 case 28:
 /* rule 28 can match eol */
-#line 562 "../../src/postgres/backend/parser/scan.lpp"
 case YY_STATE_EOF(xusend):
-#line 562 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* no UESCAPE after the quote, throw back everything */
           yyless(0);
@@ -43943,7 +40074,6 @@ case YY_STATE_EOF(xusend):
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 569 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* found UESCAPE after the end quote */
           BEGIN(INITIAL);
@@ -43959,7 +40089,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 581 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlitchar('\'', yyscanner);
         }
@@ -43967,7 +40096,6 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 584 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
@@ -43975,14 +40103,12 @@ YY_RULE_SETUP
 case 32:
 /* rule 32 can match eol */
 YY_RULE_SETUP
-#line 587 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 590 "../../src/postgres/backend/parser/scan.lpp"
 {
           pg_wchar c = strtoul(yytext+2, NULL, 16);
 
@@ -44001,7 +40127,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 605 "../../src/postgres/backend/parser/scan.lpp"
 {
           pg_wchar c = strtoul(yytext+2, NULL, 16);
 
@@ -44017,22 +40142,18 @@ YY_RULE_SETUP
   YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 617 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case 36:
 /* rule 36 can match eol */
 YY_RULE_SETUP
-#line 618 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case YY_STATE_EOF(xeu):
-#line 619 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 620 "../../src/postgres/backend/parser/scan.lpp"
 {
             ereport(ERROR,
                 (errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
@@ -44044,7 +40165,6 @@ YY_RULE_SETUP
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 627 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (yytext[1] == '\'')
           {
@@ -44064,7 +40184,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 643 "../../src/postgres/backend/parser/scan.lpp"
 {
           unsigned char c = strtoul(yytext+1, NULL, 8);
 
@@ -44076,7 +40195,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 651 "../../src/postgres/backend/parser/scan.lpp"
 {
           unsigned char c = strtoul(yytext+2, NULL, 16);
 
@@ -44089,14 +40207,12 @@ YY_RULE_SETUP
 case 41:
 /* rule 41 can match eol */
 YY_RULE_SETUP
-#line 659 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 662 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* This is only needed for \ just before EOF */
           addlitchar(yytext[0], yyscanner);
@@ -44105,12 +40221,10 @@ YY_RULE_SETUP
 case YY_STATE_EOF(xq):
 case YY_STATE_EOF(xe):
 case YY_STATE_EOF(xus):
-#line 666 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated quoted string"); }
   YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 668 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yyextra->dolqstart = pstrdup(yytext);
@@ -44120,7 +40234,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 674 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           /* throw back all but the initial "$" */
@@ -44131,7 +40244,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 681 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (strcmp(yytext, yyextra->dolqstart) == 0)
           {
@@ -44156,33 +40268,28 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 701 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 704 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 707 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* This is only needed for $ inside the quoted text */
           addlitchar(yytext[0], yyscanner);
         }
   YY_BREAK
 case YY_STATE_EOF(xdolq):
-#line 711 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated dollar-quoted string"); }
   YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 713 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           BEGIN(xd);
@@ -44191,7 +40298,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 718 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           BEGIN(xui);
@@ -44200,7 +40306,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 723 "../../src/postgres/backend/parser/scan.lpp"
 {
           char       *ident;
 
@@ -44216,7 +40321,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 735 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           /* xuiend state looks for possible UESCAPE */
@@ -44226,16 +40330,12 @@ YY_RULE_SETUP
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
-#line 740 "../../src/postgres/backend/parser/scan.lpp"
 { /* stay in xuiend state over whitespace */ }
   YY_BREAK
 case 54:
-#line 742 "../../src/postgres/backend/parser/scan.lpp"
 case 55:
 /* rule 55 can match eol */
-#line 743 "../../src/postgres/backend/parser/scan.lpp"
 case YY_STATE_EOF(xuiend):
-#line 743 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* no UESCAPE after the quote, throw back everything */
           char     *ident;
@@ -44257,7 +40357,6 @@ case YY_STATE_EOF(xuiend):
 case 56:
 /* rule 56 can match eol */
 YY_RULE_SETUP
-#line 760 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* found UESCAPE after the end quote */
           char     *ident;
@@ -44282,7 +40381,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 781 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlitchar('"', yyscanner);
         }
@@ -44290,19 +40388,16 @@ YY_RULE_SETUP
 case 58:
 /* rule 58 can match eol */
 YY_RULE_SETUP
-#line 784 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case YY_STATE_EOF(xd):
 case YY_STATE_EOF(xui):
-#line 787 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated quoted identifier"); }
   YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 789 "../../src/postgres/backend/parser/scan.lpp"
 {
           char       *ident;
 
@@ -44317,7 +40412,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 801 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return TYPECAST;
@@ -44325,7 +40419,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 806 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return DOT_DOT;
@@ -44333,7 +40426,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 811 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return COLON_EQUALS;
@@ -44341,7 +40433,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 816 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return EQUALS_GREATER;
@@ -44349,7 +40440,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 821 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return LESS_EQUALS;
@@ -44357,7 +40447,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 826 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return GREATER_EQUALS;
@@ -44365,7 +40454,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 831 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* We accept both "<>" and "!=" as meaning NOT_EQUALS */
           SET_YYLLOC();
@@ -44374,7 +40462,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 837 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* We accept both "<>" and "!=" as meaning NOT_EQUALS */
           SET_YYLLOC();
@@ -44383,7 +40470,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 843 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return yytext[0];
@@ -44391,7 +40477,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 848 "../../src/postgres/backend/parser/scan.lpp"
 {
           /*
            * Check for embedded slash-star or dash-dash; those
@@ -44470,7 +40555,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 924 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->ival = atol(yytext + 1);
@@ -44479,7 +40563,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 930 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return process_integer_literal(yytext, yylval);
@@ -44487,7 +40570,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 934 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->str = pstrdup(yytext);
@@ -44496,7 +40578,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 939 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back the .., and treat as integer */
           yyless(yyleng-2);
@@ -44506,7 +40587,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 945 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->str = pstrdup(yytext);
@@ -44515,7 +40595,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 950 "../../src/postgres/backend/parser/scan.lpp"
 {
           /*
            * throw back the [Ee], and treat as {decimal}.  Note
@@ -44531,7 +40610,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 962 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back the [Ee][+-], and proceed as above */
           yyless(yyleng-2);
@@ -44542,7 +40620,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 971 "../../src/postgres/backend/parser/scan.lpp"
 {
           const ScanKeyword *keyword;
           char       *ident;
@@ -44570,14 +40647,12 @@ YY_RULE_SETUP
   YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 996 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return yytext[0];
         }
   YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1001 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yyterminate();
@@ -44585,10 +40660,8 @@ case YY_STATE_EOF(INITIAL):
   YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 1006 "../../src/postgres/backend/parser/scan.lpp"
 YY_FATAL_ERROR( "flex scanner jammed" );
   YY_BREAK
-#line 2355 "scan.cpp"
 
   case YY_END_OF_BUFFER:
     {
@@ -45702,7 +41775,6 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 1006 "../../src/postgres/backend/parser/scan.lpp"
 
 
 
