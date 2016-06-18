@@ -418,7 +418,8 @@ enum IndexType {
   INDEX_TYPE_BWTREE = 2,  // bwtree
   INDEX_TYPE_HASH = 3,    // hash
   INDEX_TYPE_HASH_UNIQUE = 4, // hash for primary index
-  INDEX_TYPE_RBBTREE = 5  // rollback segment btree
+  INDEX_TYPE_RBBTREE = 5,  // rollback segment btree index
+  INDEX_TYPE_RBHASH = 6 // rollback segment hash index
 };
 
 enum IndexConstraintType {

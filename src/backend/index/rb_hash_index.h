@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// btree_index.h
+// hash_index.h
 //
-// Identification: src/backend/index/btree_index.h
+// Identification: src/backend/index/hash_index.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,38 +16,32 @@
 #include <string>
 
 #include "backend/catalog/manager.h"
-#include "backend/common/platform.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 
-#include "stx/btree_multimap.h"
+#include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
 namespace index {
 
 /**
- * STX B+tree-based index implementation.
+ * Using libcuckoo for hash index
  *
  * @see Index
  */
-template <typename KeyType, typename ValueType, class KeyComparator,
-          class KeyEqualityChecker>
-class RBBTreeIndex : public Index {
+template <typename KeyType, typename ValueType, class KeyHasher,
+          class KeyComparator, class KeyEqualityChecker>
+class RBHashIndex : public Index {
   friend class IndexFactory;
 
   // Define the container type
-  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
-
-  class Dummylock {
-  public:
-    void Lock() {}
-    void Unlock() {}
-  };
+  typedef cuckoohash_map<KeyType, std::vector<ValueType>, KeyHasher,
+                         KeyEqualityChecker> MapType;
 
  public:
-  RBBTreeIndex(IndexMetadata *metadata);
+  RBHashIndex(IndexMetadata *metadata, const size_t &preallocate_size = 1);
 
-  ~RBBTreeIndex();
+  ~RBHashIndex();
 
   bool InsertEntry(const storage::Tuple *key, const ItemPointer &location);
 
@@ -86,7 +80,6 @@ class RBBTreeIndex : public Index {
   void ScanKey(const storage::Tuple *key,
                std::vector<ItemPointer *> &result);
 
-  ////////////////////////////////////////////////////////////////////////
   // Used by RB
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,
@@ -111,21 +104,26 @@ class RBBTreeIndex : public Index {
 
   std::string GetTypeName() const;
 
+  virtual size_t GetIndexSize() const {
+    return container.size();
+  }
+
   bool Cleanup() { return true; }
 
-  size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
+  size_t GetMemoryFootprint() {
+    // TODO: implement it
+    return 0;
+  }
 
  protected:
   MapType container;
 
   // equality checker and comparator
+  KeyHasher hasher;
   KeyEqualityChecker equals;
   KeyComparator comparator;
-
-  // synch helper
-  // Spinlock index_lock;
-  Dummylock index_lock;
 };
 
 }  // End index namespace
 }  // End peloton namespace
+

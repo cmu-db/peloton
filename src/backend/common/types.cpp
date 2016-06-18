@@ -701,6 +701,9 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_HASH: {
       return "HASH";
     }
+    case INDEX_TYPE_RBHASH: {
+      return "RBHASH";
+    }
     case INDEX_TYPE_HASH_UNIQUE: {
       return "HASH_PRIMARY";
     }
