@@ -67,7 +67,6 @@ function(peloton_pickup_peloton_sources root)
   file(GLOB_RECURSE hdrs ${root}/include/*/*.h*)
   file(GLOB_RECURSE srcs ${root}/src/*/*.cpp)
   file(GLOB_RECURSE main_srcs ${root}/src/main/*.cpp)
-  file(GLOB_RECURSE murmur_srcs ${root}/third_party/murmur3/*.cpp)
 
   # convert to absolute paths
   peloton_convert_absolute_paths(srcs)
@@ -79,6 +78,14 @@ function(peloton_pickup_peloton_sources root)
   list(REMOVE_ITEM  hdrs ${test_hdrs})
   list(REMOVE_ITEM  srcs ${test_srcs})
   list(REMOVE_ITEM  srcs ${main_srcs})
+
+  # murmur3
+  file(GLOB_RECURSE murmur_srcs ${root}/third_party/murmur3/*.cpp)
+
+  # libcds
+  file(GLOB_RECURSE libcds_srcs ${root}/third_party/libcds/src/*.cpp)  
+  set(libcds_hdrs ${root}/third_party/libcds/)
+  include_directories(SYSTEM "${libcds_hdrs}")
     
   # adding headers to make the visible in some IDEs (Qt, VS, Xcode)
   list(APPEND srcs ${hdrs} ${PROJECT_BINARY_DIR}/peloton_config.h)
@@ -86,7 +93,7 @@ function(peloton_pickup_peloton_sources root)
 
   # add proto to make them editable in IDEs too
   file(GLOB_RECURSE proto_files ${root}/src/peloton/*.proto)
-  list(APPEND srcs ${proto_files} ${murmur_srcs})
+  list(APPEND srcs ${proto_files} ${murmur_srcs} ${libcds_srcs})
 
   # propogate to parent scope
   set(srcs ${srcs} PARENT_SCOPE)

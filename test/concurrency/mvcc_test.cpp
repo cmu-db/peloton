@@ -26,11 +26,10 @@ namespace test {
 class MVCCTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OPTIMISTIC,  CONCURRENCY_TYPE_PESSIMISTIC,
-    CONCURRENCY_TYPE_SSI,
-    // CONCURRENCY_TYPE_SPECULATIVE_READ,
-    CONCURRENCY_TYPE_EAGER_WRITE, CONCURRENCY_TYPE_TO,
-    CONCURRENCY_TYPE_OCC_RB};
+    CONCURRENCY_TYPE_OPTIMISTIC,
+    CONCURRENCY_TYPE_PESSIMISTIC,
+    CONCURRENCY_TYPE_TO
+};
 
 // Validate that MVCC storage is correct, it assumes an old-to-new chain
 // Invariants
@@ -173,6 +172,8 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
 }
 
 TEST_F(MVCCTest, SingleThreadVersionChainTest) {
+  LOG_INFO("SingleThreadVersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
@@ -266,6 +267,8 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
 }
 
 TEST_F(MVCCTest, AbortVersionChainTest) {
+  LOG_INFO("AbortVersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
@@ -300,14 +303,16 @@ TEST_F(MVCCTest, AbortVersionChainTest) {
 }
 
 TEST_F(MVCCTest, VersionChainTest) {
+  LOG_INFO("VersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     LOG_INFO("Validating %d", protocol);
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
 
-    const int num_txn = 5;
-    const int scale = 20;
-    const int num_key = 256;
+    const int num_txn = 2;    // 5
+    const int scale = 1;      // 20
+    const int num_key = 2;    // 256
     srand(15721);
 
     std::unique_ptr<storage::DataTable> table(
