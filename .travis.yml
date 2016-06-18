@@ -1,6 +1,12 @@
 sudo: required
 dist: trusty
 
+env:
+    global:
+        # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+        #   via the "travis encrypt" command using the project repo's public key
+        - secure: "RpDP8QA0s4T0U1+XOWUjaQFTfdmhoF/Bj63p/u1P0V29SSz4xMe8aA/nbojT7JiL7VqNudOcVcOqA+3HPoEjMsOF9X641spzv5CCwYwezXIqZsH6M56wN+XJsAPWWfr+USpbHLZqHDZ9STNzceiOdwxbxvRBmnz79qS3gXywnxg="
+
 language: cpp
 compiler:
     - g++
@@ -17,6 +23,15 @@ addons:
             - gcc-4.9
             - g++-4.9
 
+    coverity_scan:
+        project:
+          name: "cmu-db/peloton"
+          description: "Build submitted via Travis CI"
+        notification_email: jarulraj@cs.cmu.edu
+        build_command_prepend: "rm -rf build &> /dev/null || true; mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug"
+        build_command:   "make -j 4"
+        branch_pattern: coverity_scan
+
 before_script:
     # setup environment
     - sudo -H sh ./script/installation/packages.sh
@@ -32,9 +47,8 @@ script:
       # build
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Coverage ..
+    - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - make check
+    - make coveralls
 
-after_success:
-      - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
