@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_file.cpp
-//
-// Identification: src/logging/log_file.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_file.cpp
-//
-// Identification: src/logging/log_file.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/logger.h
- *
- *-------------------------------------------------------------------------
- */
-
 #include "common/types.h"
 #include "common/logger.h"
 #include "logging/log_file.h"
