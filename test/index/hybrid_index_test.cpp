@@ -106,7 +106,7 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
+        "primary_index", 123, INDEX_TYPE_SKIPLIST,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -293,6 +293,8 @@ void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
     double time_per_transaction = timer.GetDuration();
     LOG_INFO("%f", time_per_transaction);
   }
+
+  LOG_INFO("Tuple counts : %lu", tuple_counts);
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
             (tile_group * tuples_per_tile_group * scalar));
@@ -600,7 +602,7 @@ TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BTREE,
+      "primary_index", 123, INDEX_TYPE_SKIPLIST,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -635,7 +637,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BTREE,
+      "primary_index", 123, INDEX_TYPE_SKIPLIST,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);

@@ -158,11 +158,11 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
       end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-      LOG_TRACE("%s", "Constructing start/end keys\n");
+      LOG_TRACE("%s", "Constructing start/end keys");
 
-      LOG_TRACE("left bound %s\t\t right bound %s\n",
-                interval.first.GetInfo().c_str(),
-                interval.second.GetInfo().c_str());
+      LOG_TRACE("left bound %s\t\t right bound %s",
+               interval.first.GetInfo().c_str(),
+               interval.second.GetInfo().c_str());
 
       start_key->SetValue(leading_column_id, interval.first, GetPool());
       end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -170,9 +170,9 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       for (const auto &k_v : non_leading_columns) {
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
         end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-        LOG_TRACE("left bound %s\t\t right bound %s\n",
-                  k_v.second.first.GetInfo().c_str(),
-                  k_v.second.second.GetInfo().c_str());
+        LOG_TRACE("left bound %s\t\t right bound %s",
+                 k_v.second.first.GetInfo().c_str(),
+                 k_v.second.second.GetInfo().c_str());
       }
 
       KeyType start_index_key;
@@ -205,7 +205,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
-          throw Exception("Invalid scan direction \n");
+          throw Exception("Invalid scan direction ");
           break;
       }
     }
@@ -235,7 +235,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
       case SCAN_DIRECTION_TYPE_INVALID:
       default:
-        throw Exception("Invalid scan direction \n");
+        throw Exception("Invalid scan direction ");
         break;
     }
   }
@@ -349,7 +349,7 @@ FindMaxMinInColumns(
     const std::vector<ExpressionType> &expr_types,
     std::map<oid_t, std::pair<Value, Value>> &non_leading_columns) {
   // find extreme nums on each column.
-  LOG_TRACE("FindMinMax leading column %d\n", leading_column_id);
+  LOG_TRACE("FindMinMax leading column %d", leading_column_id);
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     oid_t column_id = key_column_ids[i];
     if (column_id == leading_column_id) {
@@ -367,20 +367,20 @@ FindMaxMinInColumns(
                                              Value::GetNullValue(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
-      LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
-                non_leading_columns[column_id].first.GetInfo().size(),
-                non_leading_columns[column_id].second.GetInfo().c_str());
+      LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
+               non_leading_columns[column_id].first.GetInfo().size(),
+               non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
     if (IfForwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      LOG_TRACE("min cur %lu compare with %s\n",
-                non_leading_columns[column_id].first.GetInfo().size(),
-                values[i].GetInfo().c_str());
+      LOG_TRACE("min cur %lu compare with %s",
+               non_leading_columns[column_id].first.GetInfo().size(),
+               values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].first.Compare(values[i]) ==
               VALUE_COMPARE_GREATERTHAN) {
-        LOG_TRACE("Update min\n");
+        LOG_TRACE("Update min");
         non_leading_columns[column_id].first =
             ValueFactory::Clone(values[i], nullptr);
       }
@@ -388,13 +388,13 @@ FindMaxMinInColumns(
 
     if (IfBackwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
-      LOG_TRACE("max cur %s compare with %s\n",
-                non_leading_columns[column_id].second.GetInfo().c_str(),
-                values[i].GetInfo().c_str());
+      LOG_TRACE("max cur %s compare with %s",
+               non_leading_columns[column_id].second.GetInfo().c_str(),
+               values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.Compare(values[i]) ==
               VALUE_COMPARE_LESSTHAN) {
-        LOG_TRACE("Update max\n");
+        LOG_TRACE("Update max");
         non_leading_columns[column_id].second =
             ValueFactory::Clone(values[i], nullptr);
       }
@@ -492,11 +492,12 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
       end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-      LOG_TRACE("%s", "Constructing start/end keys\n");
+      LOG_TRACE("%s", "Constructing start/end keys");
 
-      LOG_TRACE("left bound %s\t\t right bound %s\n",
-                interval.first.GetInfo().c_str(),
-                interval.second.GetInfo().c_str());
+      LOG_TRACE("Leading Column: column id : %u left bound %s\t\t right bound %s",
+               leading_column_id,
+               interval.first.GetInfo().c_str(),
+               interval.second.GetInfo().c_str());
 
       start_key->SetValue(leading_column_id, interval.first, GetPool());
       end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -504,9 +505,10 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       for (const auto &k_v : non_leading_columns) {
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
         end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-        LOG_TRACE("left bound %s\t\t right bound %s\n",
-                  k_v.second.first.GetInfo().c_str(),
-                  k_v.second.second.GetInfo().c_str());
+        LOG_TRACE("Non Leading Column: column id : %u left bound %s\t\t right bound %s",
+                 k_v.first,
+                 k_v.second.first.GetInfo().c_str(),
+                 k_v.second.second.GetInfo().c_str());
       }
 
       KeyType start_index_key;
@@ -514,8 +516,25 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       start_index_key.SetFromKey(start_key.get());
       end_index_key.SetFromKey(end_key.get());
 
+      LOG_TRACE("Start key : %s", start_key->GetInfo().c_str());
+      LOG_TRACE("End key : %s", end_key->GetInfo().c_str());
+
       scan_begin_itr = container.Contains(start_index_key);
       scan_end_itr = container.Contains(end_index_key);
+
+      if(scan_begin_itr == container.end()){
+        LOG_TRACE("Did not find start key -- so setting to lower bound");
+        scan_begin_itr = container.begin();
+      }
+      else {
+        LOG_TRACE("Found start key");
+      }
+      if(scan_end_itr == container.end()){
+        LOG_TRACE("Did not find end key");
+      }
+      else {
+        LOG_TRACE("Found end key");
+      }
 
       switch (scan_direction) {
         case SCAN_DIRECTION_TYPE_FORWARD:
@@ -539,7 +558,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
-          throw Exception("Invalid scan direction \n");
+          throw Exception("Invalid scan direction ");
           break;
       }
     }
@@ -569,10 +588,12 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
       case SCAN_DIRECTION_TYPE_INVALID:
       default:
-        throw Exception("Invalid scan direction \n");
+        throw Exception("Invalid scan direction ");
         break;
     }
   }
+
+  LOG_TRACE("Scan matched tuple count : %lu", result.size());
 
 }
 
@@ -621,18 +642,18 @@ KeyEqualityChecker>::GetTypeName() const {
 // Explicit template instantiation
 
 template class SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparatorRaw<4>,
-                          GenericEqualityChecker<4>>;
+GenericEqualityChecker<4>>;
 template class SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparatorRaw<8>,
-                          GenericEqualityChecker<8>>;
+GenericEqualityChecker<8>>;
 template class SkipListIndex<GenericKey<16>, ItemPointer *, GenericComparatorRaw<16>,
-                          GenericEqualityChecker<16>>;
+GenericEqualityChecker<16>>;
 template class SkipListIndex<GenericKey<64>, ItemPointer *, GenericComparatorRaw<64>,
-                          GenericEqualityChecker<64>>;
+GenericEqualityChecker<64>>;
 template class SkipListIndex<GenericKey<256>, ItemPointer *,
-                          GenericComparatorRaw<256>, GenericEqualityChecker<256>>;
+GenericComparatorRaw<256>, GenericEqualityChecker<256>>;
 
 template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
-                          TupleKeyEqualityChecker>;
+TupleKeyEqualityChecker>;
 
 
 }  // End index namespace
