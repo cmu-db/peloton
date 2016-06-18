@@ -16,18 +16,16 @@
 #include <cstring>
 #include <cstdio>
 
-#include "libcds/cds/init.h"
-#include "libcds/cds/urcu/general_instant.h"
-#include "libcds/cds/container/skip_list_map_rcu.h"
+#include "libcds/cds/container/skip_list_map_nogc.h"
 
 namespace peloton {
 
 // SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 #define SKIP_LIST_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType>
+    typename ValueType, typename KeyComparator>
 
 // SKIP_LIST_MAP_TYPE
-#define SKIP_LIST_MAP_TYPE SkipListMap<KeyType, ValueType>
+#define SKIP_LIST_MAP_TYPE SkipListMap<KeyType, ValueType, KeyComparator>
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 class SkipListMap {
@@ -35,6 +33,23 @@ class SkipListMap {
 
   SkipListMap();
   ~SkipListMap();
+
+  struct skip_list_map_traits: public cds::container::skip_list::traits {
+    typedef KeyComparator compare;
+    typedef KeyComparator less;
+
+  };
+
+  // concurrent skip list algorithm
+  // http://libcds.sourceforge.net/doc/cds-api/
+  typedef cds::container::SkipListMap<cds::gc::nogc, KeyType, ValueType, skip_list_map_traits> skip_list_map_t;
+
+  // map pair <key, value>
+  typedef typename skip_list_map_t::value_type map_pair;
+
+  typedef typename skip_list_map_t::iterator map_iterator;
+
+  typedef typename skip_list_map_t::const_iterator map_const_iterator;
 
   // Inserts a item
   bool Insert(const KeyType &key, ValueType value);
@@ -49,7 +64,9 @@ class SkipListMap {
   bool Erase(const KeyType &key);
 
   // Checks whether the skip_list_map contains key
-  bool Contains(const KeyType &key);
+  map_iterator Contains(const KeyType &key) {
+    return skip_list_map.contains(key);
+  }
 
   // Clears the tree (thread safe, not atomic)
   void Clear();
@@ -61,29 +78,6 @@ class SkipListMap {
   bool IsEmpty() const;
 
  public:
-
-  // rcu implementation
-  typedef cds::urcu::general_instant<> RCUImpl;
-
-  // rcu type
-  typedef cds::urcu::gc<RCUImpl> RCUType;
-
-  struct skip_list_map_traits: public cds::container::skip_list::traits {
-    typedef std::equal_to<KeyType> equal_to;
-
-  };
-
-  // concurrent skip list algorithm
-  // http://libcds.sourceforge.net/doc/cds-api/
-  typedef cds::container::SkipListMap<RCUType, KeyType, ValueType> skip_list_map_t;
-
-  // map pair <key, value>
-  typedef typename skip_list_map_t::value_type map_pair;
-
-  typedef typename skip_list_map_t::iterator map_iterator;
-
-  typedef typename skip_list_map_t::const_iterator map_const_iterator;
-
   // Iterators
 
   map_iterator begin(){

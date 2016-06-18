@@ -323,8 +323,6 @@ template <std::size_t KeySize> class IntsKey {
 /** comparator for Int specialized indexes. */
 template <std::size_t KeySize> class IntsComparator {
  public:
-  IntsComparator(index::IndexMetadata *metadata)
-      : key_schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const IntsKey<KeySize> &lhs,
                          const IntsKey<KeySize> &rhs) const {
@@ -344,7 +342,6 @@ template <std::size_t KeySize> class IntsComparator {
     return false;
   }
 
-  const catalog::Schema *key_schema;
 };
 
 /**
@@ -352,8 +349,6 @@ template <std::size_t KeySize> class IntsComparator {
  */
 template <std::size_t KeySize> class IntsEqualityChecker {
  public:
-  IntsEqualityChecker(index::IndexMetadata *metadata)
-      : key_schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const IntsKey<KeySize> &lhs,
                          const IntsKey<KeySize> &rhs) const {
@@ -368,7 +363,6 @@ template <std::size_t KeySize> class IntsEqualityChecker {
     return true;
   }
 
-  const catalog::Schema *key_schema;
 };
 
 /**
@@ -399,6 +393,7 @@ template <std::size_t KeySize> class GenericKey {
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_ASSERT(tuple);
     PL_MEMCPY(data, tuple->GetData(), KeySize);
+    schema = tuple->GetSchema();
   }
 
   const storage::Tuple GetTupleForComparison(
@@ -418,6 +413,8 @@ template <std::size_t KeySize> class GenericKey {
   // actual location of data, extends past the end.
   char data[KeySize];
 
+  const catalog::Schema *schema;
+
  private:
 };
 
@@ -426,21 +423,10 @@ template <std::size_t KeySize> class GenericKey {
  */
 template <std::size_t KeySize> class GenericComparator {
  public:
-  /** Type information passed to the constuctor as it's not in the key itself */
-  GenericComparator(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const GenericKey<KeySize> &lhs,
                          const GenericKey<KeySize> &rhs) const {
-    /*
-    storage::Tuple lhTuple(schema);
-    lhTuple.MoveToTuple(reinterpret_cast<const void *>(&lhs));
-    storage::Tuple rhTuple(schema);
-    rhTuple.MoveToTuple(reinterpret_cast<const void *>(&rhs));
-    // lexicographical compare could be faster for fixed N
-    int diff = lhTuple.Compare(rhTuple);
-    return diff < 0;
-    */
+    auto schema = lhs.schema;
 
     for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
          column_itr++) {
@@ -458,7 +444,6 @@ template <std::size_t KeySize> class GenericComparator {
     return false;
   }
 
-  const catalog::Schema *schema;
 };
 
 /**
@@ -466,12 +451,11 @@ template <std::size_t KeySize> class GenericComparator {
  */
 template <std::size_t KeySize> class GenericEqualityChecker {
  public:
-  /** Type information passed to the constuctor as it's not in the key itself */
-  GenericEqualityChecker(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const GenericKey<KeySize> &lhs,
                          const GenericKey<KeySize> &rhs) const {
+    auto schema = lhs.schema;
+
     storage::Tuple lhTuple(schema);
     lhTuple.MoveToTuple(reinterpret_cast<const void *>(&lhs));
     storage::Tuple rhTuple(schema);
@@ -479,7 +463,6 @@ template <std::size_t KeySize> class GenericEqualityChecker {
     return lhTuple.EqualsNoSchemaCheck(rhTuple);
   }
 
-  const catalog::Schema *schema;
 };
 
 /**
@@ -487,18 +470,16 @@ template <std::size_t KeySize> class GenericEqualityChecker {
  */
 template <std::size_t KeySize>
 struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
-  /** Type information passed to the constuctor as it's not in the key itself */
-  GenericHasher(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   /** Generate a 64-bit number for the key value */
   inline size_t operator()(GenericKey<KeySize> const &p) const {
+    auto schema = p.schema;
+
     storage::Tuple pTuple(schema);
     pTuple.MoveToTuple(reinterpret_cast<const void *>(&p));
     return pTuple.HashCode();
   }
 
-  const catalog::Schema *schema;
 };
 
 /*
@@ -576,9 +557,6 @@ class TupleKey {
 };
 
 struct TupleKeyHasher {
-  /** Type information passed to the constuctor as it's not in the key itself */
-  TupleKeyHasher(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   /** Generate a 64-bit number for the key value */
   inline size_t operator()(const TupleKey &p) const {
@@ -586,19 +564,17 @@ struct TupleKeyHasher {
     return pTuple.HashCode();
   }
 
-  const catalog::Schema *schema;
 };
 
 class TupleKeyComparator {
  public:
-  TupleKeyComparator(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   // return true if lhs < rhs
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
+    auto schema = lhs.key_tuple_schema;
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
@@ -615,19 +591,17 @@ class TupleKeyComparator {
     return false;
   }
 
-  const catalog::Schema *schema;
 };
 
 class TupleKeyEqualityChecker {
  public:
-  TupleKeyEqualityChecker(index::IndexMetadata *metadata)
-      : schema(metadata->GetKeySchema()) {}
 
   // return true if lhs == rhs
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
     storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
     storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
+    auto schema = lhs.key_tuple_schema;
 
     for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
          ++col_itr) {
@@ -641,7 +615,6 @@ class TupleKeyEqualityChecker {
     return true;
   }
 
-  const catalog::Schema *schema;
 };
 
 }  // End index namespace

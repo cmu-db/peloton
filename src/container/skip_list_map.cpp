@@ -20,6 +20,8 @@
 #include "common/macros.h"
 #include "common/types.h"
 
+#include "index/index_key.h"
+
 namespace peloton {
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
@@ -38,54 +40,46 @@ SKIP_LIST_MAP_TYPE::~SkipListMap(){
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 bool SKIP_LIST_MAP_TYPE::Insert(const KeyType &key, ValueType value){
-  auto status = skip_list_map.insert(key, value);
+  auto iterator = skip_list_map.insert(key, value);
+  auto status = (iterator != skip_list_map.end());
   LOG_TRACE("insert status : %d", status);
   return status;
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 bool SKIP_LIST_MAP_TYPE::Update(const KeyType &key, ValueType value){
-
   const bool bInsert = true;
-  auto status =  skip_list_map.update(key, [&value]( bool bNew, map_pair& found_pair) {
-    if(bNew == true) {
-      // new entry
-      LOG_INFO("New entry");
-    }
-    else {
-      // found existing entry
-      found_pair.second = value;
-      LOG_INFO("Updating existing entry");
-    }
-  }, bInsert);
+  auto status =  skip_list_map.update(key, bInsert);
+  auto iterator = status.first;
 
-  return status.first;
+  // found
+  if(iterator != skip_list_map.end()){
+    iterator->second = value;
+  }
+
+  return status.second;
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
-bool SKIP_LIST_MAP_TYPE::Erase(const KeyType &key){
-
-  auto status = skip_list_map.erase(key);
+bool SKIP_LIST_MAP_TYPE::Erase(const KeyType &){
+  const bool status = false;
   LOG_TRACE("erase status : %d", status);
-
   return status;
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 bool SKIP_LIST_MAP_TYPE::Find(const KeyType &key,
                               ValueType& value){
+  auto iterator = skip_list_map.contains(key);
+  auto status = (iterator != skip_list_map.end());
 
-  auto status = skip_list_map.find(key, [&value]( map_pair& found_value) {
-    value = found_value.second;
-  } );
+  // found
+  if(status == true){
+    value = iterator->second;
+  }
 
   LOG_TRACE("find status : %d", status);
   return status;
-}
-
-SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
-bool SKIP_LIST_MAP_TYPE::Contains(const KeyType &key){
-  return skip_list_map.contains(key);
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
@@ -104,6 +98,15 @@ bool SKIP_LIST_MAP_TYPE::IsEmpty() const{
 }
 
 // Explicit template instantiation
-template class SkipListMap<uint32_t, uint32_t>;
+
+template class SkipListMap<index::GenericKey<4>, ItemPointer *, index::GenericComparator<4>>;
+template class SkipListMap<index::GenericKey<8>, ItemPointer *, index::GenericComparator<8>>;
+template class SkipListMap<index::GenericKey<16>, ItemPointer *, index::GenericComparator<16>>;
+template class SkipListMap<index::GenericKey<64>, ItemPointer *, index::GenericComparator<64>>;
+template class SkipListMap<index::GenericKey<256>, ItemPointer *, index::GenericComparator<256>>;
+
+template class SkipListMap<index::TupleKey, ItemPointer *, index::TupleKeyComparator>;
+
+template class SkipListMap<uint32_t, uint32_t, std::less<uint32_t>>;
 
 }  // End peloton namespace
