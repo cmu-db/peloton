@@ -22,6 +22,7 @@
 #include "backend/index/hash_index.h"
 // #include "backend/index/hash_unique_index.h"
 #include "backend/index/rb_btree_index.h"
+#include "backend/index/rb_hash_index.h"
 
 namespace peloton {
 namespace index {
@@ -359,6 +360,88 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata, const size_t &prealloc
       return new RBBTreeIndex<TupleKey, RBItemPointer *,
                              TupleKeyComparator, TupleKeyEqualityChecker>(
           metadata);
+    }
+  }
+
+  if (ints_only && (index_type == INDEX_TYPE_RBHASH)) {
+    if (key_size <= sizeof(uint64_t)) {
+      return new RBHashIndex<IntsKey<1>, RBItemPointer *, IntsHasher<1>,
+                            IntsComparator<1>, IntsEqualityChecker<1>>(
+          metadata, preallocate_size);
+    } else if (key_size <= sizeof(int64_t) * 2) {
+      return new RBHashIndex<IntsKey<2>, RBItemPointer *, IntsHasher<2>,
+                            IntsComparator<2>, IntsEqualityChecker<2>>(
+          metadata, preallocate_size);
+    } else if (key_size <= sizeof(int64_t) * 3) {
+      return new RBHashIndex<IntsKey<3>, RBItemPointer *, IntsHasher<3>,
+                            IntsComparator<3>, IntsEqualityChecker<3>>(
+          metadata, preallocate_size);
+    } else if (key_size <= sizeof(int64_t) * 4) {
+      return new RBHashIndex<IntsKey<4>, RBItemPointer *, IntsHasher<4>,
+                            IntsComparator<4>, IntsEqualityChecker<4>>(
+          metadata, preallocate_size);
+    } else {
+      throw IndexException("We currently only support tree index on non-unique "
+                           "integer keys of size 32 bytes or smaller...");
+    }
+  }
+
+  if (index_type == INDEX_TYPE_RBHASH) {
+    if (key_size <= 4) {
+      return new RBHashIndex<GenericKey<4>,
+                            RBItemPointer *,
+                            GenericHasher<4>,
+                            GenericComparator<4>,
+                            GenericEqualityChecker<4>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 8) {
+      return new RBHashIndex<GenericKey<8>, RBItemPointer *, GenericHasher<8>,
+                            GenericComparator<8>, GenericEqualityChecker<8>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 12) {
+      return new RBHashIndex<GenericKey<12>, RBItemPointer *, GenericHasher<12>,
+                            GenericComparator<12>, GenericEqualityChecker<12>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 16) {
+      return new RBHashIndex<GenericKey<16>, RBItemPointer *, GenericHasher<16>,
+                            GenericComparator<16>, GenericEqualityChecker<16>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 24) {
+      return new RBHashIndex<GenericKey<24>, RBItemPointer *, GenericHasher<24>,
+                            GenericComparator<24>, GenericEqualityChecker<24>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 32) {
+      return new RBHashIndex<GenericKey<32>, RBItemPointer *, GenericHasher<32>,
+                            GenericComparator<32>, GenericEqualityChecker<32>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 48) {
+      return new RBHashIndex<GenericKey<48>, RBItemPointer *, GenericHasher<48>,
+                            GenericComparator<48>, GenericEqualityChecker<48>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 64) {
+      return new RBHashIndex<GenericKey<64>, RBItemPointer *, GenericHasher<64>,
+                            GenericComparator<64>, GenericEqualityChecker<64>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 96) {
+      return new RBHashIndex<GenericKey<96>, RBItemPointer *, GenericHasher<96>,
+                            GenericComparator<96>, GenericEqualityChecker<96>>(
+          metadata, preallocate_size);
+    } else if (key_size <= 128) {
+      return new RBHashIndex<GenericKey<128>, RBItemPointer *, GenericHasher<128>,
+                            GenericComparator<128>,
+                            GenericEqualityChecker<128>>(metadata, preallocate_size);
+    } else if (key_size <= 256) {
+      return new RBHashIndex<GenericKey<256>, RBItemPointer *, GenericHasher<256>,
+                            GenericComparator<256>,
+                            GenericEqualityChecker<256>>(metadata, preallocate_size);
+    } else if (key_size <= 512) {
+      return new RBHashIndex<GenericKey<512>, RBItemPointer *, GenericHasher<512>,
+                            GenericComparator<512>,
+                            GenericEqualityChecker<512>>(metadata, preallocate_size);
+    } else {
+      return new RBHashIndex<TupleKey, RBItemPointer *, TupleKeyHasher,
+                            TupleKeyComparator, TupleKeyEqualityChecker>(
+          metadata, preallocate_size);
     }
   }
 
