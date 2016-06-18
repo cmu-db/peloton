@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_buffer.cpp
-//
-// Identification: src/logging/log_buffer.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// log_buffer.cpp
-//
-// Identification: src/logging/log_buffer.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * log_buffer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/log_buffer.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "logging/log_buffer.h"
 #include "logging/log_manager.h"
 #include "common/logger.h"

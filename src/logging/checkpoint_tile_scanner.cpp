@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint_tile_scanner.cpp
-//
-// Identification: src/logging/checkpoint_tile_scanner.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint_tile_scanner.cpp
-//
-// Identification: src/logging/checkpoint_tile_scanner.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * checkpoint_tile_scanner.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/checkpoint_tile_scanner.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "common/macros.h"
 #include "logging/checkpoint_tile_scanner.h"
 #include "storage/tile_group_header.h"

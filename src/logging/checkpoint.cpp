@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint.cpp
-//
-// Identification: src/logging/checkpoint.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint.cpp
-//
-// Identification: src/logging/checkpoint.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * checkpoint.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/checkpoint.cpp
- *
- *-------------------------------------------------------------------------
- */
-
 #include "common/pool.h"
 #include "logging/checkpoint.h"
 #include "logging/logging_util.h"
