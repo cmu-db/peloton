@@ -12,4 +12,5 @@ apt-get --ignore-missing -y install \
     libjsoncpp-dev \
     valgrind \
     libunwind8-dev \
-    libgflags-dev
+    libgflags-dev \
+    lcov
