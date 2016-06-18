@@ -64,39 +64,8 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-TEST_F(MutateTests, DroppingTable) {
-
-	auto &bootstrapper = catalog::Bootstrapper::GetInstance();
-	auto global_catalog = bootstrapper.bootstrap();
-
-  // Insert a table first
-  auto id_column =
-		  catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-						  "dept_id", true);
-  auto name_column =
-	  catalog::Column(VALUE_TYPE_VARCHAR, 32,
-					  "dept_name", false);
-  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
-  global_catalog->CreateDatabase("default_database");
-  global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
-
-  // Now dropping the table using the executer
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::DropPlan node("department_table");
-  executor::DropExecutor executor(&node, context.get());
-  executor.Init();
-  executor.Execute();
-  txn_manager.CommitTransaction();
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 0);
-
-}
-
-
-void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
+void InsertTuple(storage::DataTable *table, VarlenPool *pool,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -112,7 +81,8 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool) {
   txn_manager.CommitTransaction();
 }
 
-void UpdateTuple(storage::DataTable *table) {
+void UpdateTuple(storage::DataTable *table,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -168,7 +138,8 @@ void UpdateTuple(storage::DataTable *table) {
   txn_manager.CommitTransaction();
 }
 
-void DeleteTuple(storage::DataTable *table) {
+void DeleteTuple(storage::DataTable *table,
+                 UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(

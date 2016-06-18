@@ -30,7 +30,8 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
     CONCURRENCY_TYPE_EAGER_WRITE, CONCURRENCY_TYPE_TO,
     CONCURRENCY_TYPE_OCC_RB};
 
-void TransactionTest(concurrency::TransactionManager *txn_manager) {
+void TransactionTest(concurrency::TransactionManager *txn_manager,
+                     UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   for (oid_t txn_itr = 1; txn_itr <= 50; txn_itr++) {

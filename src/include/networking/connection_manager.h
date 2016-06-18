@@ -26,8 +26,6 @@ namespace networking {
 //===--------------------------------------------------------------------===//
 
 class ConnectionManager {
-  ConnectionManager& operator=(const ThreadManager&) = delete;
-  ConnectionManager& operator=(ThreadManager&&) = delete;
 
  public:
   // global singleton
