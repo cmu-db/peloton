@@ -88,6 +88,28 @@ include_directories(BEFORE src) # This is needed for gtest.
 add_subdirectory(src)
 add_subdirectory(test)
 
+# -- [ Coverage
+option(COVERALLS "Generate coveralls data" OFF)
+
+if (COVERALLS)
+	include(Coveralls)
+	coveralls_turn_on_coverage()
+	
+	# Create the coveralls target.
+	file(GLOB_RECURSE srcs ${PROJECT_SOURCE_DIR}/src/*/*.cpp)	  	
+	file(GLOB_RECURSE parser_srcs ${PROJECT_SOURCE_DIR}/src/parser/backend/*/*.cpp)
+	
+	peloton_convert_absolute_paths(srcs)
+	peloton_convert_absolute_paths(parser_srcs)
+	
+	list(REMOVE_ITEM  srcs ${parser_srcs})
+	
+	message(STATUS "Coverage srcs : ${srcs}" )
+	set(COVERAGE_SRCS ${srcs})
+	
+    coveralls_setup("${COVERAGE_SRCS}" ON)
+endif()
+
 # -- [ Doxygen
 include(doxygen)
 
