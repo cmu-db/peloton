@@ -26,9 +26,8 @@ addons:
     coverity_scan:
         project:
           name: "cmu-db/peloton"
-        description: "Build submitted via Travis CI"
+          description: "Build submitted via Travis CI"
         notification_email: jarulraj@cs.cmu.edu
-        build_command_prepend: "cmake -DCMAKE_BUILD_TYPE=Coverage .."
         build_command:   "make -j 4"
         branch_pattern: master
 
@@ -52,5 +51,5 @@ script:
     - make check
 
 after_success:
-    - coveralls --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
+    - coveralls --extension .cpp --extension .h --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
     - tail -n 100 coveralls.txt

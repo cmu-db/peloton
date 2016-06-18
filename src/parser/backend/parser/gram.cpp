@@ -43044,8 +43044,6 @@ static yyconst flex_int16_t yy_chk[1202] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "../../src/postgres/backend/parser/scan.lpp"
-#line 2 "../../src/postgres/backend/parser/scan.lpp"
 /*-------------------------------------------------------------------------
  *
  * scan.l
@@ -43573,7 +43571,6 @@ YY_DECL
   register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 391 "../../src/postgres/backend/parser/scan.lpp"
 
 
 #line 1343 "scan.cpp"
@@ -43662,14 +43659,12 @@ do_action:  /* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 393 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 397 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Set location in case of syntax error in comment */
           SET_YYLLOC();
@@ -43681,7 +43676,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 406 "../../src/postgres/backend/parser/scan.lpp"
 {
           (yyextra->xcdepth)++;
           /* Put back any characters past slash-star; see above */
@@ -43690,7 +43684,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 412 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (yyextra->xcdepth <= 0)
             BEGIN(INITIAL);
@@ -43701,32 +43694,27 @@ YY_RULE_SETUP
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 419 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 423 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 427 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case YY_STATE_EOF(xc):
-#line 431 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated /* comment"); }
   YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 433 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Binary bit type.
            * At some point we should simply pass the string
@@ -43742,11 +43730,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 9:
 /* rule 9 can match eol */
-#line 446 "../../src/postgres/backend/parser/scan.lpp"
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 446 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43756,33 +43742,27 @@ YY_RULE_SETUP
   YY_BREAK
 case 11:
 /* rule 11 can match eol */
-#line 453 "../../src/postgres/backend/parser/scan.lpp"
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 453 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 13:
 /* rule 13 can match eol */
-#line 457 "../../src/postgres/backend/parser/scan.lpp"
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 457 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case YY_STATE_EOF(xb):
-#line 460 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated bit string literal"); }
   YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 462 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* Hexadecimal bit type.
            * At some point we should simply pass the string
@@ -43798,11 +43778,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 16:
 /* rule 16 can match eol */
-#line 475 "../../src/postgres/backend/parser/scan.lpp"
 case 17:
 /* rule 17 can match eol */
 YY_RULE_SETUP
-#line 475 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43811,12 +43789,10 @@ YY_RULE_SETUP
         }
   YY_BREAK
 case YY_STATE_EOF(xh):
-#line 481 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated hexadecimal string literal"); }
   YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 483 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* National character.
            * We will pass this along as a normal character string,
@@ -43845,7 +43821,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 509 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyextra->warn_on_first_escape = true;
           yyextra->saw_non_ascii = false;
@@ -43859,7 +43834,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 519 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyextra->warn_on_first_escape = false;
           yyextra->saw_non_ascii = false;
@@ -43870,7 +43844,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 526 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           if (!yyextra->standard_conforming_strings)
@@ -43885,11 +43858,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 22:
 /* rule 22 can match eol */
-#line 538 "../../src/postgres/backend/parser/scan.lpp"
 case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
-#line 538 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           BEGIN(INITIAL);
@@ -43907,11 +43878,9 @@ YY_RULE_SETUP
   YY_BREAK
 case 24:
 /* rule 24 can match eol */
-#line 553 "../../src/postgres/backend/parser/scan.lpp"
 case 25:
 /* rule 25 can match eol */
 YY_RULE_SETUP
-#line 553 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back all but the quote */
           yyless(1);
@@ -43922,16 +43891,12 @@ YY_RULE_SETUP
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 559 "../../src/postgres/backend/parser/scan.lpp"
 { /* stay in xusend state over whitespace */ }
   YY_BREAK
 case 27:
-#line 561 "../../src/postgres/backend/parser/scan.lpp"
 case 28:
 /* rule 28 can match eol */
-#line 562 "../../src/postgres/backend/parser/scan.lpp"
 case YY_STATE_EOF(xusend):
-#line 562 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* no UESCAPE after the quote, throw back everything */
           yyless(0);
@@ -43943,7 +43908,6 @@ case YY_STATE_EOF(xusend):
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 569 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* found UESCAPE after the end quote */
           BEGIN(INITIAL);
@@ -43959,7 +43923,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 581 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlitchar('\'', yyscanner);
         }
@@ -43967,7 +43930,6 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 584 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
@@ -43975,14 +43937,12 @@ YY_RULE_SETUP
 case 32:
 /* rule 32 can match eol */
 YY_RULE_SETUP
-#line 587 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 590 "../../src/postgres/backend/parser/scan.lpp"
 {
           pg_wchar c = strtoul(yytext+2, NULL, 16);
 
@@ -44001,7 +43961,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 605 "../../src/postgres/backend/parser/scan.lpp"
 {
           pg_wchar c = strtoul(yytext+2, NULL, 16);
 
@@ -44017,22 +43976,18 @@ YY_RULE_SETUP
   YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 617 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case 36:
 /* rule 36 can match eol */
 YY_RULE_SETUP
-#line 618 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case YY_STATE_EOF(xeu):
-#line 619 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("invalid Unicode surrogate pair"); }
   YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 620 "../../src/postgres/backend/parser/scan.lpp"
 {
             ereport(ERROR,
                 (errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
@@ -44044,7 +43999,6 @@ YY_RULE_SETUP
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 627 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (yytext[1] == '\'')
           {
@@ -44064,7 +44018,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 643 "../../src/postgres/backend/parser/scan.lpp"
 {
           unsigned char c = strtoul(yytext+1, NULL, 8);
 
@@ -44076,7 +44029,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 651 "../../src/postgres/backend/parser/scan.lpp"
 {
           unsigned char c = strtoul(yytext+2, NULL, 16);
 
@@ -44089,14 +44041,12 @@ YY_RULE_SETUP
 case 41:
 /* rule 41 can match eol */
 YY_RULE_SETUP
-#line 659 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* ignore */
         }
   YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 662 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* This is only needed for \ just before EOF */
           addlitchar(yytext[0], yyscanner);
@@ -44105,12 +44055,10 @@ YY_RULE_SETUP
 case YY_STATE_EOF(xq):
 case YY_STATE_EOF(xe):
 case YY_STATE_EOF(xus):
-#line 666 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated quoted string"); }
   YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 668 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yyextra->dolqstart = pstrdup(yytext);
@@ -44120,7 +44068,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 674 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           /* throw back all but the initial "$" */
@@ -44131,7 +44078,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 681 "../../src/postgres/backend/parser/scan.lpp"
 {
           if (strcmp(yytext, yyextra->dolqstart) == 0)
           {
@@ -44156,33 +44102,28 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 701 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 704 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 707 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* This is only needed for $ inside the quoted text */
           addlitchar(yytext[0], yyscanner);
         }
   YY_BREAK
 case YY_STATE_EOF(xdolq):
-#line 711 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated dollar-quoted string"); }
   YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 713 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           BEGIN(xd);
@@ -44191,7 +44132,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 718 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           BEGIN(xui);
@@ -44200,7 +44140,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 723 "../../src/postgres/backend/parser/scan.lpp"
 {
           char       *ident;
 
@@ -44216,7 +44155,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 735 "../../src/postgres/backend/parser/scan.lpp"
 {
           yyless(1);
           /* xuiend state looks for possible UESCAPE */
@@ -44226,16 +44164,12 @@ YY_RULE_SETUP
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
-#line 740 "../../src/postgres/backend/parser/scan.lpp"
 { /* stay in xuiend state over whitespace */ }
   YY_BREAK
 case 54:
-#line 742 "../../src/postgres/backend/parser/scan.lpp"
 case 55:
 /* rule 55 can match eol */
-#line 743 "../../src/postgres/backend/parser/scan.lpp"
 case YY_STATE_EOF(xuiend):
-#line 743 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* no UESCAPE after the quote, throw back everything */
           char     *ident;
@@ -44257,7 +44191,6 @@ case YY_STATE_EOF(xuiend):
 case 56:
 /* rule 56 can match eol */
 YY_RULE_SETUP
-#line 760 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* found UESCAPE after the end quote */
           char     *ident;
@@ -44282,7 +44215,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 781 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlitchar('"', yyscanner);
         }
@@ -44290,19 +44222,16 @@ YY_RULE_SETUP
 case 58:
 /* rule 58 can match eol */
 YY_RULE_SETUP
-#line 784 "../../src/postgres/backend/parser/scan.lpp"
 {
           addlit(yytext, yyleng, yyscanner);
         }
   YY_BREAK
 case YY_STATE_EOF(xd):
 case YY_STATE_EOF(xui):
-#line 787 "../../src/postgres/backend/parser/scan.lpp"
 { yyerror("unterminated quoted identifier"); }
   YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 789 "../../src/postgres/backend/parser/scan.lpp"
 {
           char       *ident;
 
@@ -44317,7 +44246,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 801 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return TYPECAST;
@@ -44325,7 +44253,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 806 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return DOT_DOT;
@@ -44333,7 +44260,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 811 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return COLON_EQUALS;
@@ -44341,7 +44267,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 816 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return EQUALS_GREATER;
@@ -44349,7 +44274,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 821 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return LESS_EQUALS;
@@ -44357,7 +44281,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 826 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return GREATER_EQUALS;
@@ -44365,7 +44288,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 831 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* We accept both "<>" and "!=" as meaning NOT_EQUALS */
           SET_YYLLOC();
@@ -44374,7 +44296,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 837 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* We accept both "<>" and "!=" as meaning NOT_EQUALS */
           SET_YYLLOC();
@@ -44383,7 +44304,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 843 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return yytext[0];
@@ -44391,7 +44311,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 848 "../../src/postgres/backend/parser/scan.lpp"
 {
           /*
            * Check for embedded slash-star or dash-dash; those
@@ -44470,7 +44389,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 924 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->ival = atol(yytext + 1);
@@ -44479,7 +44397,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 930 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return process_integer_literal(yytext, yylval);
@@ -44487,7 +44404,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 934 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->str = pstrdup(yytext);
@@ -44496,7 +44412,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 939 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back the .., and treat as integer */
           yyless(yyleng-2);
@@ -44506,7 +44421,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 945 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yylval->str = pstrdup(yytext);
@@ -44515,7 +44429,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 950 "../../src/postgres/backend/parser/scan.lpp"
 {
           /*
            * throw back the [Ee], and treat as {decimal}.  Note
@@ -44531,7 +44444,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 962 "../../src/postgres/backend/parser/scan.lpp"
 {
           /* throw back the [Ee][+-], and proceed as above */
           yyless(yyleng-2);
@@ -44542,7 +44454,6 @@ YY_RULE_SETUP
   YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 971 "../../src/postgres/backend/parser/scan.lpp"
 {
           const ScanKeyword *keyword;
           char       *ident;
@@ -44570,14 +44481,12 @@ YY_RULE_SETUP
   YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 996 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           return yytext[0];
         }
   YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1001 "../../src/postgres/backend/parser/scan.lpp"
 {
           SET_YYLLOC();
           yyterminate();
@@ -44585,7 +44494,6 @@ case YY_STATE_EOF(INITIAL):
   YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 1006 "../../src/postgres/backend/parser/scan.lpp"
 YY_FATAL_ERROR( "flex scanner jammed" );
   YY_BREAK
 #line 2355 "scan.cpp"
@@ -45702,7 +45610,6 @@ static int yy_flex_strlen (yyconst char * s , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 1006 "../../src/postgres/backend/parser/scan.lpp"
 
 
 
