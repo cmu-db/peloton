@@ -656,18 +656,18 @@ KeyEqualityChecker>::GetTypeName() const {
 
 // Explicit template instantiation
 
-template class SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
+template class SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparatorRaw<4>,
                           GenericEqualityChecker<4>>;
-template class SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparator<8>,
+template class SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparatorRaw<8>,
                           GenericEqualityChecker<8>>;
-template class SkipListIndex<GenericKey<16>, ItemPointer *, GenericComparator<16>,
+template class SkipListIndex<GenericKey<16>, ItemPointer *, GenericComparatorRaw<16>,
                           GenericEqualityChecker<16>>;
-template class SkipListIndex<GenericKey<64>, ItemPointer *, GenericComparator<64>,
+template class SkipListIndex<GenericKey<64>, ItemPointer *, GenericComparatorRaw<64>,
                           GenericEqualityChecker<64>>;
 template class SkipListIndex<GenericKey<256>, ItemPointer *,
-                          GenericComparator<256>, GenericEqualityChecker<256>>;
+                          GenericComparatorRaw<256>, GenericEqualityChecker<256>>;
 
-template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparator,
+template class SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
                           TupleKeyEqualityChecker>;
 
 

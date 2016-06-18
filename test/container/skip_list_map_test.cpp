@@ -30,6 +30,10 @@ class SkipListMapTest : public PelotonTest {};
 ItemPointer foo(23, 47);
 ItemPointer bar;
 
+typedef index::GenericKey<4>  key_type;
+typedef ItemPointer *  value_type;
+typedef index::GenericComparatorRaw<4> key_comparator;
+
 // Test basic functionality
 TEST_F(SkipListMapTest, BasicTest) {
 
@@ -51,10 +55,6 @@ TEST_F(SkipListMapTest, BasicTest) {
   tuples.push_back(tuple3);
 
   LOG_INFO("%s", tuple1->GetInfo().c_str());
-
-  typedef index::GenericKey<4>  key_type;
-  typedef ItemPointer *  value_type;
-  typedef index::GenericComparator<4> key_comparator;
 
   SkipListMap<key_type, value_type, key_comparator> map;
 
@@ -90,13 +90,13 @@ TEST_F(SkipListMapTest, BasicTest) {
   delete schema;
 }
 
-class SkipListMap<uint32_t, uint32_t, IntComparator> test_skip_list_map;
+class SkipListMap<key_type, value_type, key_comparator> test_skip_list_map;
 
 const std::size_t base_scale = 1000;
 const std::size_t max_scale_factor = 10000;
 
 // INSERT HELPER FUNCTION
-void InsertTest(size_t scale_factor, uint64_t thread_itr) {
+void InsertTest(size_t scale_factor, catalog::Schema *schema, uint64_t thread_itr) {
 
   uint32_t base = thread_itr * base_scale * max_scale_factor;
   uint32_t tuple_count = scale_factor * base_scale;
@@ -104,8 +104,18 @@ void InsertTest(size_t scale_factor, uint64_t thread_itr) {
   for (uint32_t tuple_itr = 1; tuple_itr <= tuple_count; tuple_itr++) {
     uint32_t tuple_offset = base + tuple_itr;
 
-    auto status = test_skip_list_map.Insert(tuple_offset, tuple_offset);
+    storage::Tuple *tuple(new storage::Tuple(schema, true));
+    tuple->SetValue(0, ValueFactory::GetIntegerValue(tuple_offset), nullptr);
+
+    key_type key;
+    key.SetFromKey(tuple);
+
+    value_type val = &foo;
+
+    auto status = test_skip_list_map.Insert(key, val);
     EXPECT_TRUE(status);
+
+    delete tuple;
   }
 
 }
@@ -113,13 +123,20 @@ void InsertTest(size_t scale_factor, uint64_t thread_itr) {
 // Test multithreaded functionality
 TEST_F(SkipListMapTest, MultithreadedTest) {
 
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  columns.push_back(column1);
+  catalog::Schema *schema(new catalog::Schema(columns));
+  std::vector<storage::Tuple*> tuples;
+
   // Parallel Test
   size_t num_threads = 4;
   size_t scale_factor = 100;
 
   std::vector<std::thread> thread_group;
 
-  LaunchParallelTest(num_threads, InsertTest, scale_factor);
+  LaunchParallelTest(num_threads, InsertTest, scale_factor, schema);
 
   size_t num_entries = 0;
   for (auto iterator = test_skip_list_map.begin();

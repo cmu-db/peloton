@@ -344,6 +344,32 @@ template <std::size_t KeySize> class IntsComparator {
 
 };
 
+/** comparator for Int specialized indexes. */
+template <std::size_t KeySize> class IntsComparatorRaw {
+ public:
+
+  inline int operator()(const IntsKey<KeySize> &lhs,
+                         const IntsKey<KeySize> &rhs) const {
+    // lexicographical compare could be faster for fixed N
+    /*
+     * Hopefully the compiler can unroll this loop
+     */
+    for (unsigned int ii = 0; ii < KeySize; ii++) {
+      const uint64_t *lvalue = &lhs.data[ii];
+      const uint64_t *rvalue = &rhs.data[ii];
+      if (*lvalue < *rvalue) {
+        return VALUE_COMPARE_LESSTHAN;
+      } else if (*lvalue > *rvalue) {
+        return VALUE_COMPARE_GREATERTHAN;
+      }
+    }
+
+    /* equal */
+    return VALUE_COMPARE_EQUAL;
+  }
+
+};
+
 /**
  *
  */
@@ -442,6 +468,34 @@ template <std::size_t KeySize> class GenericComparator {
 
     /* equal */
     return false;
+  }
+
+};
+
+/**
+ * Function object returns true if lhs < rhs, used for trees
+ */
+template <std::size_t KeySize> class GenericComparatorRaw {
+ public:
+
+  inline int operator()(const GenericKey<KeySize> &lhs,
+                         const GenericKey<KeySize> &rhs) const {
+    auto schema = lhs.schema;
+
+    for (oid_t column_itr = 0; column_itr < schema->GetColumnCount();
+         column_itr++) {
+      const Value lhs_value = lhs.ToValueFast(schema, column_itr);
+      const Value rhs_value = rhs.ToValueFast(schema, column_itr);
+
+      int diff = lhs_value.Compare(rhs_value);
+
+      if (diff) {
+        return diff;
+      }
+    }
+
+    /* equal */
+    return VALUE_COMPARE_EQUAL;
   }
 
 };
@@ -589,6 +643,33 @@ class TupleKeyComparator {
       }
     }
     return false;
+  }
+
+};
+
+class TupleKeyComparatorRaw {
+ public:
+
+  // return -1 if a < b ;  0 if a == b ;  1 if a > b
+  inline int operator()(const TupleKey &lhs, const TupleKey &rhs) const {
+    storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
+    storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
+    Value lhValue, rhValue;
+    auto schema = lhs.key_tuple_schema;
+
+    for (unsigned int col_itr = 0; col_itr < schema->GetColumnCount();
+         ++col_itr) {
+      lhValue = lhTuple.GetValue(lhs.ColumnForIndexColumn(col_itr));
+      rhValue = rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
+      int comparison = lhValue.Compare(rhValue);
+
+      if (comparison != VALUE_COMPARE_EQUAL) {
+        return comparison;
+      }
+    }
+
+    /* equal */
+    return VALUE_COMPARE_EQUAL;
   }
 
 };
