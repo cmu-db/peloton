@@ -54,6 +54,22 @@ struct ItemPointerEqualityChecker {
   }
 };
 
+struct RBItemPointerEqualityCheckerWithTS {
+  RBItemPointer arg_;
+  RBItemPointerEqualityCheckerWithTS(RBItemPointer arg) : arg_(arg) {}
+  bool operator()(RBItemPointer *x) {
+    return *x == arg_;
+  }
+};
+
+struct RBItemPointerEqualityChecker {
+  RBItemPointer arg_;
+  RBItemPointerEqualityChecker(RBItemPointer arg) : arg_(arg) {}
+  bool operator()(RBItemPointer *x) {
+    return x->location == arg_.location;
+  }
+};
+
 //===--------------------------------------------------------------------===//
 // IndexMetadata
 //===--------------------------------------------------------------------===//
