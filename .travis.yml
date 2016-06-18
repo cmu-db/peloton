@@ -47,11 +47,8 @@ script:
       # build
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Coverage ..
+    - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
     - make
     - make check
+    - make coveralls
 
-after_success:
-    #- coveralls --extension .cpp --extension .h --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
-    - coveralls &> coveralls.txt
-    - tail -n 100 coveralls.txt
