@@ -30,7 +30,7 @@ addons:
         notification_email: jarulraj@cs.cmu.edu
         build_command_prepend: "cmake -DCMAKE_BUILD_TYPE=Coverage .."
         build_command:   "make -j 4"
-        branch_pattern: coverity_scan
+        branch_pattern: master
 
 before_script:
     # setup environment
