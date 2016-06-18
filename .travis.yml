@@ -52,5 +52,5 @@ script:
     - make check
 
 after_success:
-    - coveralls --exclude lib --exclude test --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
+    - coveralls --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
     - tail -n 100 coveralls.txt
