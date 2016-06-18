@@ -5,6 +5,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/cmu-db/peloton/badge.svg?branch=master)](https://coveralls.io/github/cmu-db/peloton?branch=master)
 [![Jenkins Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
 
+<a href="https://scan.coverity.com/projects/cmu-db-peloton">
+  <img alt="Coverity Scan Build Status"
+  src="https://scan.coverity.com/projects/9194/badge.svg"/>
+</a>
+
 ## What Is Peloton?
 
 Peloton is an in-memory DBMS designed for real-time analytics. It can handle both fast ACID transactions and complex analytical queries on the same database. 
