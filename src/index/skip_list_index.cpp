@@ -32,15 +32,18 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 class KeyEqualityChecker>
 SkipListIndex<KeyType, ValueType, KeyComparator,
 KeyEqualityChecker>::~SkipListIndex() {
+
   // we should not rely on shared_ptr to reclaim memory.
   // this is because the underlying index can split or merge leaf nodes,
   // which invokes data data copy and deletes.
   // as the underlying index is unaware of shared_ptr,
   // memory allocated should be managed carefully by programmers.
-  for (auto iterator = container.begin(); iterator != container.end(); ++iterator) {
+  auto iterator = container.begin();
+  for (; iterator != container.end(); ++iterator) {
     delete iterator->second;
     iterator->second = nullptr;
   }
+
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
@@ -49,47 +52,20 @@ bool SkipListIndex<KeyType, ValueType, KeyComparator,
 KeyEqualityChecker>::InsertEntry(const storage::Tuple *key,
                                  const ItemPointer &location) {
   KeyType index_key;
-
   index_key.SetFromKey(key);
 
   // Insert the key, val pair
-  container.Insert(index_key, new ItemPointer(location));
-  // TODO: Check status and return
+  auto status = container.Insert(index_key, new ItemPointer(location));
 
-  return true;
+  return status;
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
 class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator,
-KeyEqualityChecker>::DeleteEntry(const storage::Tuple *key,
-                                 const ItemPointer &location) {
-  KeyType index_key;
-  index_key.SetFromKey(key);
-
-  // Delete the < key, location > pair
-  bool try_again = true;
-  while (try_again == true) {
-    // Unset try again
-    try_again = false;
-
-    // Lookup matching entries
-    auto iterator = container.Contains(index_key);
-    for(; iterator != container.end(); ++iterator) {
-      ItemPointer value = *(iterator->second);
-
-      if ((value.block == location.block) &&
-          (value.offset == location.offset)) {
-        delete iterator->second;
-        iterator->second = nullptr;
-        container.Erase(iterator->first);
-        // Set try again
-        try_again = true;
-        break;
-      }
-    }
-  }
-
+KeyEqualityChecker>::DeleteEntry(const storage::Tuple *,
+                                 const ItemPointer&) {
+  // Dummy erase
   return true;
 }
 
@@ -97,25 +73,15 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 class KeyEqualityChecker>
 bool SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
 CondInsertEntry(const storage::Tuple *key, const ItemPointer &location,
-                std::function<bool(const ItemPointer &)> predicate) {
+                std::function<bool(const ItemPointer &)>) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  // find the <key, location> pair
-  auto iterator = container.Contains(index_key);
-  for (; iterator != container.end(); ++iterator) {
-    ItemPointer item_pointer = *(iterator->second);
+  // Insert the key if it does not exist
+  const bool bInsert = false;
+  auto status = container.Update(index_key, new ItemPointer(location), bInsert);
 
-    if (predicate(item_pointer)) {
-      // this key is already visible or dirty in the index
-      return false;
-    }
-  }
-
-  // Insert the key, val pair
-  container.Insert(index_key, new ItemPointer(location));
-
-  return true;
+  return status;
 }
 
 template <typename KeyType, typename ValueType, class KeyComparator,
@@ -286,7 +252,6 @@ KeyEqualityChecker>::ScanAllKeys(std::vector<ItemPointer> &
   auto iterator = container.begin();
   for (; iterator != container.end(); ++iterator) {
     ItemPointer item_pointer = *(iterator->second);
-
     result.push_back(std::move(item_pointer));
   }
 
@@ -301,9 +266,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanK
 
   // find the <key, location> pair
   auto iterator = container.Contains(index_key);
-  for (; iterator != container.end(); ++iterator) {
+  if(iterator != container.end()) {
     ItemPointer item_pointer = *(iterator->second);
-
     result.push_back(item_pointer);
   }
 
@@ -639,7 +603,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::ScanK
 
   // find the <key, location> pair
   auto iterator = container.Contains(index_key);
-  for (; iterator != container.end(); ++iterator) {
+  if(iterator != container.end()) {
     result.push_back(iterator->second);
   }
 

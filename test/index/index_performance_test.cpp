@@ -131,7 +131,7 @@ static void TestIndexPerformance(const IndexType& index_type) {
 }
 
 TEST_F(IndexPerformanceTests, MultiThreadedTest) {
-  std::vector<IndexType> index_types = {INDEX_TYPE_BTREE};
+  std::vector<IndexType> index_types = {INDEX_TYPE_BTREE, INDEX_TYPE_SKIPLIST};
 
   for(auto index_type : index_types) {
     TestIndexPerformance(index_type);

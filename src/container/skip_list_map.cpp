@@ -47,8 +47,7 @@ bool SKIP_LIST_MAP_TYPE::Insert(const KeyType &key, ValueType value){
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
-bool SKIP_LIST_MAP_TYPE::Update(const KeyType &key, ValueType value){
-  const bool bInsert = true;
+bool SKIP_LIST_MAP_TYPE::Update(const KeyType &key, ValueType value, const bool bInsert){
   auto status =  skip_list_map.update(key, bInsert);
   auto iterator = status.first;
 
