@@ -3,6 +3,7 @@
 [![Build Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon?style=flat)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
 [![GitHub license](https://img.shields.io/badge/license-apache-blue.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Build Status](https://travis-ci.org/cmu-db/peloton.svg?branch=master)](https://travis-ci.org/cmu-db/peloton)
+[![Coverage Status](https://coveralls.io/repos/github/cmu-db/peloton/badge.svg?branch=master)](https://coveralls.io/github/cmu-db/peloton?branch=master)
 
 ## What Is Peloton?
 
