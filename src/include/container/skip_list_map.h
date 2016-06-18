@@ -53,8 +53,8 @@ class SkipListMap {
   // Inserts a item
   bool Insert(const KeyType &key, ValueType value);
 
-  // Extracts item with high priority
-  bool Update(const KeyType &key, ValueType value);
+  // Updates the key
+  bool Update(const KeyType &key, ValueType value, const bool bInsert = true);
 
   // Extracts the corresponding value
   bool Find(const KeyType &key, ValueType& value);
