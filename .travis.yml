@@ -28,8 +28,9 @@ addons:
           name: "cmu-db/peloton"
           description: "Build submitted via Travis CI"
         notification_email: jarulraj@cs.cmu.edu
+        build_command_prepend: "rm -rf build &> /dev/null || true; mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug"
         build_command:   "make -j 4"
-        branch_pattern: master
+        branch_pattern: coverity_scan
 
 before_script:
     # setup environment
@@ -51,5 +52,6 @@ script:
     - make check
 
 after_success:
-    - coveralls --extension .cpp --extension .h --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
+    #- coveralls --extension .cpp --extension .h --exclude lib --exclude test --exclude src/parser --exclude third_party --exclude CMakeFiles --gcov-options '\-lp' &> coveralls.txt
+    - coveralls &> coveralls.txt
     - tail -n 100 coveralls.txt
