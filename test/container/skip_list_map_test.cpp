@@ -90,7 +90,7 @@ TEST_F(SkipListMapTest, BasicTest) {
   delete schema;
 }
 
-class SkipListMap<uint32_t, uint32_t, std::less<uint32_t>> test_skip_list_map;
+class SkipListMap<uint32_t, uint32_t, IntComparator> test_skip_list_map;
 
 const std::size_t base_scale = 1000;
 const std::size_t max_scale_factor = 10000;
@@ -114,12 +114,24 @@ void InsertTest(size_t scale_factor, uint64_t thread_itr) {
 TEST_F(SkipListMapTest, MultithreadedTest) {
 
   // Parallel Test
-  size_t num_threads = 1;
-  size_t scale_factor = 10;
+  size_t num_threads = 4;
+  size_t scale_factor = 100;
 
   std::vector<std::thread> thread_group;
 
   LaunchParallelTest(num_threads, InsertTest, scale_factor);
+
+  size_t num_entries = 0;
+  for (auto iterator = test_skip_list_map.begin();
+      iterator != test_skip_list_map.end();
+      ++iterator) {
+    num_entries++;
+  }
+
+  LOG_INFO("Num Entries : %lu", num_entries);
+
+  EXPECT_EQ(num_entries, num_threads * scale_factor * base_scale);
+
 }
 
 }  // End test namespace

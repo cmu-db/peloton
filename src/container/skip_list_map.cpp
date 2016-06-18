@@ -107,6 +107,6 @@ template class SkipListMap<index::GenericKey<256>, ItemPointer *, index::Generic
 
 template class SkipListMap<index::TupleKey, ItemPointer *, index::TupleKeyComparator>;
 
-template class SkipListMap<uint32_t, uint32_t, std::less<uint32_t>>;
+template class SkipListMap<uint32_t, uint32_t, IntComparator>;
 
 }  // End peloton namespace
