@@ -52,7 +52,11 @@ class SelectParse : public AbstractParse {
   void accept(ParseNodeVisitor *v) const;
 
  private:
+  // Join tree of the select statement
+  // A join node can be either a JoinExprParse or a TableParse.
   std::unique_ptr<AbstractParse> join_tree_;
+
+  // where clause of the select statement
   std::unique_ptr<AbstractExpressionParse> where_predicate_;
 
   // TODO: support them later!
