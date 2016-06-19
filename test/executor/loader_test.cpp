@@ -79,7 +79,7 @@ static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
-  auto &txn_manager = concurrency::OptimisticTxnManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   oid_t tuple_count = tilegroup_count_per_loader * DEFAULT_TUPLES_PER_TILEGROUP;
 

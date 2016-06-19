@@ -23,9 +23,9 @@ template <typename KeyType, typename ValueType, class KeyComparator,
 BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::BTreeIndex(
     IndexMetadata *metadata)
     : Index(metadata),
-      container(KeyComparator(metadata)),
-      equals(metadata),
-      comparator(metadata),
+      container(KeyComparator()),
+      equals(),
+      comparator(),
       indexed_tile_group_offset_(-1) {}
 
 template <typename KeyType, typename ValueType, class KeyComparator,
