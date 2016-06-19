@@ -42,7 +42,7 @@ void Usage(FILE *out) {
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -x --blind_write       :  enable blind write \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
+          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, tofullrb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
           "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o/va\n"
@@ -275,6 +275,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_TO_RB;
         } else if (strcmp(protocol, "ton2o") == 0) {
           state.protocol = CONCURRENCY_TYPE_TO_N2O;
+        } else if (strcmp(protocol, "tofullrb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO_FULL_RB;
         } else {
           fprintf(stderr, "\nUnknown protocol: %s\n", protocol);
           exit(EXIT_FAILURE);

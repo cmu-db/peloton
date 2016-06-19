@@ -168,6 +168,14 @@ public:
                             const TargetList &target_list,
                             const AbstractTuple *tuple);
 
+  RBSegType CreateSegmentFromTuple(const catalog::Schema *schema,
+                            const AbstractTuple *tuple);
+
+  void UpdateSegmentFromTuple(RBSegType rb_seg, 
+                            const catalog::Schema *schema,
+                            const TargetList &target_list,
+                            const AbstractTuple *tuple);
+
   inline static void SetColIdOffsetPair(char *rb_seg,
                                  size_t idx, oid_t col_id, size_t off) {
     auto pair = GetIdOffsetPair(rb_seg, idx);

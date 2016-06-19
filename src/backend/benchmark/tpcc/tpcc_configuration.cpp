@@ -36,7 +36,7 @@ void Usage(FILE *out) {
           "   -e --exp_backoff       :  enable exponential backoff \n"
           "   -a --affinity          :  enable client affinity \n"
           "   -p --protocol          :  choose protocol, default OCC\n"
-          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, and ton2o\n"
+          "                             protocol could be occ, pcc, pccopt, ssi, sread, ewrite, occrb, occn2o, to, torb, tofullrb, and ton2o\n"
           "   -g --gc_protocol       :  choose gc protocol, default OFF\n"
           "                             gc protocol could be off, co, va, and n2o\n"
           "   -t --gc_thread         :  number of thread used in gc, only used for gc type n2o/va\n"
@@ -56,7 +56,7 @@ static struct option opts[] = {
   { "affinity", no_argument, NULL, 'a'},
   { "protocol", optional_argument, NULL, 'p'},
   { "gc_protocol", optional_argument, NULL, 'g'},
-  {"gc_thread", optional_argument, NULL, 't'},
+  { "gc_thread", optional_argument, NULL, 't'},
   { NULL, 0, NULL, 0 }
 };
 
@@ -206,6 +206,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
           state.protocol = CONCURRENCY_TYPE_PESSIMISTIC_OPT;
         } else if (strcmp(protocol, "torb") == 0) {
           state.protocol = CONCURRENCY_TYPE_TO_RB;
+        } else if (strcmp(protocol, "tofullrb") == 0) {
+          state.protocol = CONCURRENCY_TYPE_TO_FULL_RB;
         } else if (strcmp(protocol, "ton2o") == 0) {
           state.protocol = CONCURRENCY_TYPE_TO_N2O;
         } else {

@@ -316,7 +316,8 @@ const size_t preallocate_scale = 1000;
 
 static IndexType GetSKeyIndexType() {
   if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB
-    || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB) {
+    || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB
+    || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_FULL_RB) {
     if (state.index == INDEX_TYPE_BTREE)
       return INDEX_TYPE_RBBTREE;
     if (state.index == INDEX_TYPE_HASH)

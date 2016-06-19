@@ -122,7 +122,9 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
   index::IndexMetadata *index_metadata2;
-  if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB) {
+  if (concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_OCC_RB
+    || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_RB
+    || concurrency::TransactionManagerFactory::GetProtocol() == CONCURRENCY_TYPE_TO_FULL_RB) {
     LOG_TRACE("Create RBBtree index");
     index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, INDEX_TYPE_RBBTREE,

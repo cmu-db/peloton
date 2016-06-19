@@ -17,6 +17,79 @@
 namespace peloton {
 namespace storage {
 
+
+RBSegType RollbackSegmentPool::CreateSegmentFromTuple(const catalog::Schema *schema,
+                                                      const AbstractTuple *tuple) {
+  PL_ASSERT(schema);
+  PL_ASSERT(target_list.size() != 0);
+
+  size_t col_count = schema->GetColumnCount();
+  size_t header_size = pairs_start_offset + col_count * sizeof(ColIdOffsetPair);
+  size_t data_size = 0;
+  RBSegType rb_seg = nullptr;
+
+  // First figure out the total size of the rollback segment data area
+  for (oid_t col_id = 0; col_id < col_count; ++col_id) {
+    data_size += schema->GetLength(col_id);
+  }
+
+  // Allocate the RBSeg
+  rb_seg = (RBSegType)pool_.AllocateZeroes(header_size + data_size);
+  PL_ASSERT(rb_seg);
+
+  // Fill in the header
+  SetNextPtr(rb_seg, nullptr);
+  SetTimeStamp(rb_seg, MAX_CID);
+  SetColCount(rb_seg, col_count);
+
+  // Fill in the col_id & offset pair and set the data field
+  size_t offset = 0;
+  for (oid_t col_id = 0; col_id < col_count; ++col_id) {
+    const bool is_inlined = schema->IsInlined(col_id);
+    const bool is_inbytes = false;
+
+    size_t inline_col_size = schema->GetLength(col_id);
+    size_t allocate_col_size = (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
+
+    SetColIdOffsetPair(rb_seg, col_id, col_id, offset);
+
+    // Set the value
+    char *value_location = GetColDataLocation(rb_seg, col_id);
+    Value value = tuple->GetValue(col_id);
+    PL_ASSERT(schema->GetType(col_id) == value.GetValueType());
+    value.SerializeToTupleStorageAllocateForObjects(
+                value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
+
+    // Update the offset
+    offset += inline_col_size;
+  }
+
+  return rb_seg;
+}
+
+void RollbackSegmentPool::UpdateSegmentFromTuple(RBSegType rb_seg, 
+                            const catalog::Schema *schema,
+                            const TargetList &target_list,
+                            const AbstractTuple *tuple) {
+  for (size_t idx = 0; idx < target_list.size(); ++idx) {
+    auto &target = target_list[idx];
+    auto col_id = target.first;
+
+    const bool is_inlined = schema->IsInlined(col_id);
+    const bool is_inbytes = false;
+
+    size_t inline_col_size = schema->GetLength(col_id);
+    size_t allocate_col_size = (is_inlined) ? inline_col_size : schema->GetVariableLength(col_id);
+
+    // Set the value
+    char *value_location = GetColDataLocation(rb_seg, col_id);
+    Value value = tuple->GetValue(col_id);
+    PL_ASSERT(schema->GetType(col_id) == value.GetValueType());
+    value.SerializeToTupleStorageAllocateForObjects(
+                value_location, is_inlined, allocate_col_size, is_inbytes, &pool_);
+  }
+}
+
 /**
  * @brief create a rollback segment by selecting columns from a tuple
  * @param target_list The columns to be selected
