@@ -15,17 +15,10 @@
 namespace peloton {
 namespace parser {
 
-class Variable;
-class Constant;
-class OperatorExpression;
-class AndOperator;
-class OrOperator;
-class NotOperator;
-class Attribute;
-class Table;
-class Join;
-class OrderBy;
-class Select;
+class CreateParse;
+class DropParse;
+class InsertParse;
+class SelectParse;
 
 //===--------------------------------------------------------------------===//
 // Parse Node Visitor
@@ -46,7 +39,6 @@ class ParseNodeVisitor {
   virtual void visit(const Table *) = 0;
   virtual void visit(const Join *) = 0;
   virtual void visit(const OrderBy *) = 0;
-  virtual void visit(const Select *) = 0;
   */
   virtual void visit(const CreateParse *) = 0;
   virtual void visit(const DropParse *) = 0;

@@ -21,8 +21,6 @@
 #include "common/portal.h"
 #include "tcop/tcop.h"
 
-#include "parser/postgres_parser.h"
-
 #include <boost/algorithm/string.hpp>
 
 #define PROTO_MAJOR_VERSION(x) x >> 16
@@ -293,8 +291,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   // Read query string
   GetStringToken(pkt, query_string);
   LOG_INFO("Parse Query: %s", query_string.c_str());
-
-  peloton::parser::PostgresParser::GetInstance().BuildParseTree(query_string);
 
   skipped_stmt_ = false;
   query_type = get_query_type(query_string);
