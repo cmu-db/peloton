@@ -71,6 +71,7 @@ class JoinExprParse : public AbstractParse {
     LOG_INFO("Converting JoinExpr succeed.");
   }
 
+  // transform a postgres parsed join_node to our own parse representation
   static std::unique_ptr<AbstractParse> TransformJoinNode(Node *join_node) {
     std::unique_ptr<AbstractParse> abstract_join_node;
 
@@ -95,6 +96,7 @@ class JoinExprParse : public AbstractParse {
     return abstract_join_node;
   }
 
+  // Transfrom postgres join type to our own join type.
   static PelotonJoinType TransformJoinType(const JoinType type) {
     switch (type) {
       case JOIN_INNER:
@@ -112,6 +114,7 @@ class JoinExprParse : public AbstractParse {
     }
   }
 
+  // Get all base relation tables in a join node.
   static void GetJoinNodeTables(std::vector<TableParse *> &tables,
                                 AbstractParse *expr) {
     if (expr->GetParseNodeType() == PARSE_NODE_TYPE_TABLE) {
@@ -136,8 +139,10 @@ class JoinExprParse : public AbstractParse {
  private:
   PelotonJoinType join_type_;
 
+  // left child of the join tree
   std::unique_ptr<AbstractParse> left_node_;
 
+  // right child of the join tree
   std::unique_ptr<AbstractParse> right_node_;
 
   AbstractExpressionParse *predicate_;
