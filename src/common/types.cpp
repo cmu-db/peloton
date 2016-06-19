@@ -725,6 +725,8 @@ std::string ParseNodeTypeToString(ParseNodeType type) {
     case PARSE_NODE_TYPE_PREPARE: { return "PREPARE"; }
     case PARSE_NODE_TYPE_EXECUTE: { return "EXECUTE"; }
     case PARSE_NODE_TYPE_SELECT: { return "SELECT"; }
+    case PARSE_NODE_TYPE_JOIN_EXPR: { return "JOIN_EXPR"; }
+    case PARSE_NODE_TYPE_TABLE: { return "TABLE"; }
     case PARSE_NODE_TYPE_MOCK: { return "MOCK"; }
   }
   return "INVALID";
@@ -751,6 +753,10 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
     return PARSE_NODE_TYPE_EXECUTE;
   } else if (str == "SELECT") {
     return PARSE_NODE_TYPE_SELECT;
+  } else if (str == "JOIN_EXPR") {
+    return PARSE_NODE_TYPE_JOIN_EXPR;
+  } else if (str == "TABLE") {
+    return PARSE_NODE_TYPE_TABLE;
   } else if (str == "MOCK") {
     return PARSE_NODE_TYPE_MOCK;
   }

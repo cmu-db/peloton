@@ -435,6 +435,8 @@ enum ParseNodeType {
 
   // Select Nodes
   PARSE_NODE_TYPE_SELECT = 50,
+  PARSE_NODE_TYPE_JOIN_EXPR = 51,  // a join tree
+  PARSE_NODE_TYPE_TABLE = 52,      // a single table
 
   // Test
   PARSE_NODE_TYPE_MOCK = 80
