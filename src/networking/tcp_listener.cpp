@@ -16,13 +16,13 @@
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/thread_manager.h"
 #include "networking/connection_manager.h"
 
 #include <event2/thread.h>
 #include <pthread.h>
 
 #include <functional>
+#include "../include/common/thread_pool.h"
 
 namespace peloton {
 namespace networking {

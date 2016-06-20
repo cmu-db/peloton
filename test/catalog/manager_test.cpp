@@ -27,7 +27,8 @@ namespace test {
 
 class ManagerTests : public PelotonTest {};
 
-void AddTileGroup() {
+void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
+
   // TILES
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;

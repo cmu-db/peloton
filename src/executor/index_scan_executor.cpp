@@ -266,7 +266,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
   }
 
-  // Add all garbage tuples to GC manager
+// Add all garbage tuples to GC manager
 //  if (garbage_tuples.size() != 0) {
 //    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
 //    for (auto garbage : garbage_tuples) {

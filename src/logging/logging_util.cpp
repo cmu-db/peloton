@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// logging_util.cpp
-//
-// Identification: src/logging/logging_util.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// logging_util.cpp
-//
-// Identification: src/logging/logging_util.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * logger.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/logger.h
- *
- *-------------------------------------------------------------------------
- */
-
 #include <sys/stat.h>
 #include <dirent.h>
 #include <cstring>
@@ -128,7 +92,7 @@ size_t LoggingUtil::GetNextFrameSize(FileHandle &file_handle) {
   }
 
   // Otherwise, read the frame size
-  size_t ret = fread(buffer, 1, sizeof(buffer), file_handle.file);
+  size_t ret = fread(buffer, 1, sizeof(int32_t), file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Error occured in fread ");
   }
@@ -195,7 +159,7 @@ bool LoggingUtil::ReadTransactionRecordHeader(TransactionRecord &txn_record,
 
   // Read header
   char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  size_t ret = fread(header, 1, header_size, file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Error occured in fread ");
   }
@@ -217,7 +181,7 @@ bool LoggingUtil::ReadTupleRecordHeader(TupleRecord &tuple_record,
 
   // Read header
   char header[header_size];
-  size_t ret = fread(header, 1, sizeof(header), file_handle.file);
+  size_t ret = fread(header, 1, header_size, file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Error occured in fread");
   }
@@ -240,7 +204,7 @@ storage::Tuple *LoggingUtil::ReadTupleRecordBody(catalog::Schema *schema,
 
   // Read Body
   char body[body_size];
-  int ret = fread(body, 1, sizeof(body), file_handle.file);
+  int ret = fread(body, 1, body_size, file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Error occured in fread ");
   }
@@ -263,7 +227,7 @@ void LoggingUtil::SkipTupleRecordBody(FileHandle &file_handle) {
 
   // Read Body
   char body[body_size];
-  int ret = fread(body, 1, sizeof(body), file_handle.file);
+  int ret = fread(body, 1, body_size, file_handle.file);
   if (ret <= 0) {
     LOG_ERROR("Error occured in fread ");
   }

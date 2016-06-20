@@ -56,11 +56,19 @@ void operator delete(void *location) throw() {
   return peloton::do_deletion(location);
 }
 
+void operator delete(void *location, __attribute__ ((unused)) size_t size) throw() {
+  return peloton::do_deletion(location);
+}
+
 void operator delete(void *location, const std::nothrow_t &) throw() {
   return peloton::do_deletion(location);
 }
 
 void operator delete[](void *location) throw() {
+  return peloton::do_deletion(location);
+}
+
+void operator delete[](void *location, __attribute__ ((unused)) size_t size) throw() {
   return peloton::do_deletion(location);
 }
 
