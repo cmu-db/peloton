@@ -10,42 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint.h
-//
-// Identification: src/include/logging/checkpoint.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint.h
-//
-// Identification: src/include/logging/checkpoint.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-/*-------------------------------------------------------------------------
- *
- * checkpoint.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/logging/checkpoint.h
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include <string>
