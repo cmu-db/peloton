@@ -110,7 +110,8 @@ TEST_F(IndexTests, BasicTest) {
 }
 
 // INSERT HELPER FUNCTION
-void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
+void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
+                UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
     // Insert a bunch of keys based on scale itr
@@ -182,7 +183,8 @@ void InsertTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
 }
 
 // DELETE HELPER FUNCTION
-void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor) {
+void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
+                UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // Loop based on scale factor
   for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
     // Delete a bunch of keys based on scale itr

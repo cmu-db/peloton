@@ -21,7 +21,7 @@
 
 #include "common/macros.h"
 #include "common/types.h"
-#include "libcuckoo/cuckoohash_map.hh"
+#include "container/cuckoo_map.h"
 
 namespace peloton {
 
@@ -40,7 +40,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef cuckoohash_map<oid_t, std::shared_ptr<storage::TileGroup>> lookup_dir;
+typedef CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> lookup_dir;
 
 class Manager {
  public:
@@ -60,7 +60,7 @@ class Manager {
   void SetNextOid(oid_t next_oid) { oid = next_oid; }
 
   void AddTileGroup(const oid_t oid,
-                    const std::shared_ptr<storage::TileGroup> &location);
+                    std::shared_ptr<storage::TileGroup> location);
 
   void DropTileGroup(const oid_t oid);
 

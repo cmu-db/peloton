@@ -30,34 +30,36 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::AddTileGroup(
-    const oid_t oid, const std::shared_ptr<storage::TileGroup> &location) {
-  // drop the catalog reference to the old tile group
-  locator.erase(oid);
+void Manager::AddTileGroup(const oid_t oid,
+                           std::shared_ptr<storage::TileGroup> location) {
 
-  // add a catalog reference to the tile group
-  locator[oid] = location;
+  // drop any existing catalog reference to the tile group
+  locator.Erase(oid);
+
+  // add a new catalog reference to the tile group
+  locator.Insert(oid, location);
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
   LOG_TRACE("Dropping tile group %u", oid);
 
-  // TODO: Replace cuckoo hash map
   // drop the catalog reference to the tile group
-  //locator.erase(oid);
+  locator.Erase(oid);
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
-  locator.find(oid, location);
+  locator.Find(oid, location);
 
   return location;
 }
 
 // used for logging test
-void Manager::ClearTileGroup() { locator.clear(); }
+void Manager::ClearTileGroup() {
+  locator.Clear();
+}
 
 //===--------------------------------------------------------------------===//
 // DATABASE

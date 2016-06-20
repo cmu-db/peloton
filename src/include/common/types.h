@@ -42,7 +42,6 @@ enum LoggingType {
   LOGGING_TYPE_NVM_WBL = 4,
   LOGGING_TYPE_SSD_WBL = 5,
   LOGGING_TYPE_HDD_WBL = 6
-
 };
 
 enum LoggerMappingStrategyType {
@@ -57,7 +56,10 @@ enum CheckpointType {
   CHECKPOINT_TYPE_NORMAL = 1,
 };
 
-enum GCType { GC_TYPE_OFF = 0, GC_TYPE_ON = 1 };
+enum GCType {
+  GC_TYPE_OFF = 0,
+  GC_TYPE_ON = 1
+};
 
 //===--------------------------------------------------------------------===//
 // Filesystem directories
@@ -157,33 +159,25 @@ extern int DEFAULT_TUPLES_PER_TILEGROUP;
 enum PostgresValueType {
   POSTGRES_VALUE_TYPE_INVALID = -1,
   POSTGRES_VALUE_TYPE_BOOLEAN = 16,
-
   POSTGRES_VALUE_TYPE_SMALLINT = 21,
   POSTGRES_VALUE_TYPE_INTEGER = 23,
   POSTGRES_VALUE_TYPE_BIGINT = 20,
   POSTGRES_VALUE_TYPE_REAL = 700,
   POSTGRES_VALUE_TYPE_DOUBLE = 701,
-
   POSTGRES_VALUE_TYPE_TEXT = 25,
-
   POSTGRES_VALUE_TYPE_BPCHAR = 1042,
   POSTGRES_VALUE_TYPE_BPCHAR2 = 1014,
-
   POSTGRES_VALUE_TYPE_VARCHAR = 1015,
   POSTGRES_VALUE_TYPE_VARCHAR2 = 1043,
-
   POSTGRES_VALUE_TYPE_DATE = 1082,
   POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114,
   POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184,
-
   POSTGRES_VALUE_TYPE_TEXT_ARRAY = 1009,     // TEXTARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_INT2_ARRAY = 1005,     // INT2ARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_INT4_ARRAY = 1007,     // INT4ARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_OID_ARRAY = 1028,      // OIDARRAYOID in postgres code
   POSTGRES_VALUE_TYPE_FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
-
   POSTGRES_VALUE_TYPE_DECIMAL = 1700
-
 };
 
 enum ValueType {
@@ -354,7 +348,6 @@ enum ExpressionType {
   //===--------------------------------------------------------------------===//
   // Parser
   //===--------------------------------------------------------------------===//
-
   EXPRESSION_TYPE_STAR = 700,
   EXPRESSION_TYPE_PLACEHOLDER = 701,
   EXPRESSION_TYPE_COLUMN_REF = 702,
@@ -371,28 +364,52 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum ConcurrencyType {
-  CONCURRENCY_TYPE_OPTIMISTIC = 0,        // optimistic
-  CONCURRENCY_TYPE_PESSIMISTIC = 1,       // pessimistic
-  CONCURRENCY_TYPE_SPECULATIVE_READ = 2,  // optimistic + speculative read
-  CONCURRENCY_TYPE_EAGER_WRITE = 3,       // pessimistic + eager write
-  CONCURRENCY_TYPE_TO = 4,                // timestamp ordering
-  CONCURRENCY_TYPE_SSI = 5,               // serializable snapshot isolation
-  CONCURRENCY_TYPE_OCC_RB = 6             // optimistic + rollback segment
+  CONCURRENCY_TYPE_INVALID = 0,
+
+  CONCURRENCY_TYPE_TO = 4                // timestamp ordering
 };
 
+//===--------------------------------------------------------------------===//
+// Visibility Types
+//===--------------------------------------------------------------------===//
+
+enum VisibilityType {
+  VISIBILITY_INVALID = 0,
+
+  VISIBILITY_INVISIBLE = 1,
+  VISIBILITY_DELETED = 2,
+  VISIBILITY_OK = 3
+};
+
+//===--------------------------------------------------------------------===//
+// Isolation Levels
+//===--------------------------------------------------------------------===//
+
 enum IsolationLevelType {
-  ISOLATION_LEVEL_TYPE_FULL = 0,            // full serializability
-  ISOLATION_LEVEL_TYPE_SNAPSHOT = 1,        // snapshot isolation
-  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 2  // repeatable read
+  ISOLATION_LEVEL_TYPE_INVALID = 0,
+
+  ISOLATION_LEVEL_TYPE_FULL = 1,            // full serializability
+  ISOLATION_LEVEL_TYPE_SNAPSHOT = 2,        // snapshot isolation
+  ISOLATION_LEVEL_TYPE_REPEATABLE_READ = 3  // repeatable read
+};
+
+//===--------------------------------------------------------------------===//
+// Garbage Collection Types
+//===--------------------------------------------------------------------===//
+
+enum GCType {
+  GC_TYPE_INVALID = 0,
+
+  GC_TYPE_OFF = 1,                // turn off GC
+  GC_TYPE_COOPERATIVE = 2         // cooperative GC
 };
 
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
-
-  BACKEND_TYPE_MM = 1,   // on volatile memory
-  BACKEND_TYPE_NVM = 2,  // on non-volatile memory
-  BACKEND_TYPE_SSD = 3,  // on ssd
-  BACKEND_TYPE_HDD = 4   // on hdd
+  BACKEND_TYPE_MM = 1,       // on volatile memory
+  BACKEND_TYPE_NVM = 2,      // on non-volatile memory
+  BACKEND_TYPE_SSD = 3,      // on ssd
+  BACKEND_TYPE_HDD = 4       // on hdd
 };
 
 //===--------------------------------------------------------------------===//
@@ -402,14 +419,15 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1,   // btree
-  INDEX_TYPE_BWTREE = 2,  // bwtree
-  INDEX_TYPE_HASH = 3     // hash
+  INDEX_TYPE_BTREE = 1,    // btree
+  INDEX_TYPE_BWTREE = 2,   // bwtree
+  INDEX_TYPE_SKIPLIST = 3, // skip list
+  INDEX_TYPE_HASH = 4      // hash
+
 };
 
 enum IndexConstraintType {
   INDEX_CONSTRAINT_TYPE_INVALID = 0,  // invalid index constraint type
-
   INDEX_CONSTRAINT_TYPE_DEFAULT =
       1,  // default type - not used to enforce constraints
   INDEX_CONSTRAINT_TYPE_PRIMARY_KEY =
@@ -440,6 +458,11 @@ enum ParseNodeType {
   PARSE_NODE_TYPE_PREPARE = 40,
   PARSE_NODE_TYPE_EXECUTE = 41,
 
+  // Select Nodes
+  PARSE_NODE_TYPE_SELECT = 50,
+  PARSE_NODE_TYPE_JOIN_EXPR = 51,  // a join tree
+  PARSE_NODE_TYPE_TABLE = 52,      // a single table
+
   // Test
   PARSE_NODE_TYPE_MOCK = 80
 };
@@ -467,7 +490,7 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_INSERT = 31,
   PLAN_NODE_TYPE_DELETE = 32,
 
-  //DDL Nodes
+  // DDL Nodes
   PLAN_NODE_TYPE_DROP = 33,
   PLAN_NODE_TYPE_CREATE = 34,
 
@@ -487,7 +510,6 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_DISTINCT = 57,
   PLAN_NODE_TYPE_SETOP = 58,   // set operation
   PLAN_NODE_TYPE_APPEND = 59,  // append
-
   PLAN_NODE_TYPE_AGGREGATE_V2 = 61,
   PLAN_NODE_TYPE_HASH = 62,
 
@@ -503,13 +525,11 @@ enum PlanNodeType {
 //===--------------------------------------------------------------------===//
 
 enum CreateType {
-  CREATE_TYPE_INVALID = 0,  // invalid create type
-
+  CREATE_TYPE_INVALID = 0,    // invalid create type
   CREATE_TYPE_DB = 1,         // db create type
   CREATE_TYPE_TABLE = 2,      // table create type
   CREATE_TYPE_INDEX = 3,      // index create type
   CREATE_TYPE_CONSTRAINT = 4  // constraint create type
-
 };
 
 //===--------------------------------------------------------------------===//
@@ -517,8 +537,7 @@ enum CreateType {
 //===--------------------------------------------------------------------===//
 
 enum StatementType {
-  STATEMENT_TYPE_INVALID = 0,  // invalid statement type
-
+  STATEMENT_TYPE_INVALID = 0,       // invalid statement type
   STATEMENT_TYPE_SELECT = 1,        // select statement type
   STATEMENT_TYPE_INSERT = 3,        // insert statement type
   STATEMENT_TYPE_UPDATE = 4,        // update statement type
@@ -540,7 +559,6 @@ enum StatementType {
 
 enum ScanDirectionType {
   SCAN_DIRECTION_TYPE_INVALID = 0,  // invalid scan direction
-
   SCAN_DIRECTION_TYPE_FORWARD = 1,  // forward
   SCAN_DIRECTION_TYPE_BACKWARD = 2  // backward
 };
@@ -551,12 +569,11 @@ enum ScanDirectionType {
 
 enum PelotonJoinType {
   JOIN_TYPE_INVALID = 0,  // invalid join type
-
-  JOIN_TYPE_LEFT = 1,   // left
-  JOIN_TYPE_RIGHT = 2,  // right
-  JOIN_TYPE_INNER = 3,  // inner
-  JOIN_TYPE_OUTER = 4,  // outer
-  JOIN_TYPE_SEMI = 5    // IN+Subquery is SEMI
+  JOIN_TYPE_LEFT = 1,     // left
+  JOIN_TYPE_RIGHT = 2,    // right
+  JOIN_TYPE_INNER = 3,    // inner
+  JOIN_TYPE_OUTER = 4,    // outer
+  JOIN_TYPE_SEMI = 5      // IN+Subquery is SEMI
 };
 
 //===--------------------------------------------------------------------===//
@@ -583,8 +600,7 @@ enum QuantifierType {
 //===--------------------------------------------------------------------===//
 
 enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID = 0,  // invalid table reference type
-
+  TABLE_REFERENCE_TYPE_INVALID = 0,       // invalid table reference type
   TABLE_REFERENCE_TYPE_NAME = 1,          // table name
   TABLE_REFERENCE_TYPE_SELECT = 2,        // output of select
   TABLE_REFERENCE_TYPE_JOIN = 3,          // output of join
@@ -597,9 +613,8 @@ enum TableReferenceType {
 
 enum InsertType {
   INSERT_TYPE_INVALID = 0,  // invalid insert type
-
-  INSERT_TYPE_VALUES = 1,  // values
-  INSERT_TYPE_SELECT = 2   // select
+  INSERT_TYPE_VALUES = 1,   // values
+  INSERT_TYPE_SELECT = 2    // select
 };
 
 //===--------------------------------------------------------------------===//
@@ -607,8 +622,7 @@ enum InsertType {
 //===--------------------------------------------------------------------===//
 
 enum PayloadType {
-  PAYLOAD_TYPE_INVALID = 0,  // invalid message type
-
+  PAYLOAD_TYPE_INVALID = 0,          // invalid message type
   PAYLOAD_TYPE_CLIENT_REQUEST = 1,   // request
   PAYLOAD_TYPE_CLIENT_RESPONSE = 2,  // response
   PAYLOAD_TYPE_STOP = 3              // stop loop
@@ -620,7 +634,6 @@ enum PayloadType {
 
 enum TaskPriorityType {
   TASK_PRIORTY_TYPE_INVALID = 0,  // invalid priority
-
   TASK_PRIORTY_TYPE_LOW = 10,
   TASK_PRIORTY_TYPE_NORMAL = 11,
   TASK_PRIORTY_TYPE_HIGH = 12
@@ -632,7 +645,6 @@ enum TaskPriorityType {
 
 enum Result {
   RESULT_INVALID = 0,  // invalid result type
-
   RESULT_SUCCESS = 1,
   RESULT_FAILURE = 2,
   RESULT_ABORTED = 3,  // aborted
@@ -647,7 +659,6 @@ enum Result {
 enum PostgresConstraintType {
   POSTGRES_CONSTRAINT_NULL, /* not standard SQL, but a lot of people * expect it
                                */
-
   POSTGRES_CONSTRAINT_NOTNULL,
   POSTGRES_CONSTRAINT_DEFAULT,
   POSTGRES_CONSTRAINT_CHECK,
@@ -663,8 +674,7 @@ enum PostgresConstraintType {
 };
 
 enum ConstraintType {
-  CONSTRAINT_TYPE_INVALID = 0,  // invalid
-
+  CONSTRAINT_TYPE_INVALID = 0,   // invalid
   CONSTRAINT_TYPE_NULL = 1,      // notnull
   CONSTRAINT_TYPE_NOTNULL = 2,   // notnull
   CONSTRAINT_TYPE_DEFAULT = 3,   // default
@@ -680,7 +690,6 @@ enum ConstraintType {
 //===--------------------------------------------------------------------===//
 enum SetOpType {
   SETOP_TYPE_INVALID = 0,
-
   SETOP_TYPE_INTERSECT = 1,
   SETOP_TYPE_INTERSECT_ALL = 2,
   SETOP_TYPE_EXCEPT = 3,
@@ -693,7 +702,6 @@ enum SetOpType {
 
 enum LoggingStatus {
   LOGGING_STATUS_TYPE_INVALID = 0,
-
   LOGGING_STATUS_TYPE_STANDBY = 1,
   LOGGING_STATUS_TYPE_RECOVERY = 2,
   LOGGING_STATUS_TYPE_LOGGING = 3,
@@ -703,10 +711,8 @@ enum LoggingStatus {
 
 enum LoggerType {
   LOGGER_TYPE_INVALID = 0,
-
   LOGGER_TYPE_FRONTEND = 1,
   LOGGER_TYPE_BACKEND = 2
-
 };
 
 enum LogRecordType {
@@ -764,20 +770,21 @@ enum TupleSerializationFormat {
 
 enum EntityType {
   ENTITY_TYPE_INVALID = 0,
-
   ENTITY_TYPE_TABLE = 1,
   ENTITY_TYPE_SCHEMA = 2,
   ENTITY_TYPE_INDEX = 3,
   ENTITY_TYPE_VIEW = 4,
   ENTITY_TYPE_PREPARED_STATEMENT = 5,
-
 };
 
 // ------------------------------------------------------------------
 // Endianess
 // ------------------------------------------------------------------
 
-enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
+enum Endianess {
+  BYTE_ORDER_BIG_ENDIAN = 0,
+  BYTE_ORDER_LITTLE_ENDIAN = 1
+};
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
@@ -919,25 +926,25 @@ void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 //===--------------------------------------------------------------------===//
 
 std::string BackendTypeToString(BackendType type);
-BackendType StringToBackendType(const std::string& str);
+BackendType StringToBackendType(const std::string &str);
 
 std::string ValueTypeToString(ValueType type);
-ValueType StringToValueType(const std::string& str);
+ValueType StringToValueType(const std::string &str);
 
 std::string ExpressionTypeToString(ExpressionType type);
-ExpressionType StringToExpressionType(const std::string& str);
+ExpressionType StringToExpressionType(const std::string &str);
 
 std::string IndexTypeToString(IndexType type);
-IndexType StringToIndexType(const std::string& str);
+IndexType StringToIndexType(const std::string &str);
 
 std::string PlanNodeTypeToString(PlanNodeType type);
-PlanNodeType StringToPlanNodeType(const std::string& str);
+PlanNodeType StringToPlanNodeType(const std::string &str);
 
 std::string ParseNodeTypeToString(ParseNodeType type);
-ParseNodeType StringToParseNodeType(const std::string& str);
+ParseNodeType StringToParseNodeType(const std::string &str);
 
 std::string ConstraintTypeToString(ConstraintType type);
-ConstraintType StringToConstraintType(const std::string& str);
+ConstraintType StringToConstraintType(const std::string &str);
 
 std::string LoggingTypeToString(LoggingType type);
 std::string LoggingStatusToString(LoggingStatus type);

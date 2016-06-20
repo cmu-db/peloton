@@ -106,7 +106,7 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BWTREE,
+        "primary_index", 123, INDEX_TYPE_BTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -298,8 +298,8 @@ void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
             (tile_group * tuples_per_tile_group * scalar));
 }
 
-void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor, bool
-                              print_time) {
+void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor,
+                              bool print_time) {
   Timer<> timer;
 
   size_t tuple_counts = 0;
@@ -379,7 +379,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -426,7 +426,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -477,7 +477,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, false);
+  ExecuteTest(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -534,7 +534,7 @@ void LaunchHybridScanTwoPredicates(std::unique_ptr<storage::DataTable>&
   executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTestTwoPredicates(&Hybrid_scan_executor, false);
+  ExecuteTestTwoPredicates(&Hybrid_scan_executor, true);
 
   txn_manager.CommitTransaction();
 }
@@ -600,7 +600,7 @@ TEST_F(HybridIndexTests, HybridScanOnePredicateTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BWTREE,
+      "primary_index", 123, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -635,7 +635,7 @@ TEST_F(HybridIndexTests, HybridScanTwoPredicatesTest) {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", 123, INDEX_TYPE_BWTREE,
+      "primary_index", 123, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);

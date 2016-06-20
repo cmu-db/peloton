@@ -26,11 +26,8 @@ namespace test {
 class MVCCTest : public PelotonTest {};
 
 static std::vector<ConcurrencyType> TEST_TYPES = {
-    CONCURRENCY_TYPE_OPTIMISTIC,  CONCURRENCY_TYPE_PESSIMISTIC,
-    CONCURRENCY_TYPE_SSI,
-    // CONCURRENCY_TYPE_SPECULATIVE_READ,
-    CONCURRENCY_TYPE_EAGER_WRITE, CONCURRENCY_TYPE_TO,
-    CONCURRENCY_TYPE_OCC_RB};
+    CONCURRENCY_TYPE_TO
+};
 
 // Validate that MVCC storage is correct, it assumes an old-to-new chain
 // Invariants
@@ -39,9 +36,7 @@ static std::vector<ConcurrencyType> TEST_TYPES = {
 // 3. Timestamp consistence
 // 4. Version doubly linked list consistency
 static void ValidateMVCC_OldToNew(storage::DataTable *table) {
-//  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
-//  gc_manager.StopGC();
   LOG_INFO("Validating MVCC storage");
   int tile_group_count = table->GetTileGroupCount();
   LOG_INFO("The table has %d tile groups in the table", tile_group_count);
@@ -168,11 +163,11 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
     }
     LOG_INFO("[OK] oldest-to-newest version chain validated");
   }
-
-//  gc_manager.StartGC();
 }
 
 TEST_F(MVCCTest, SingleThreadVersionChainTest) {
+  LOG_INFO("SingleThreadVersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
@@ -215,32 +210,6 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
       ValidateMVCC_OldToNew(table.get());
     }
 
-    // delete not exist, delete exist, read deleted, update deleted,
-    // read deleted, insert back, update inserted, read newly updated,
-    // delete inserted, read deleted
-    {
-      if (concurrency::TransactionManagerFactory::GetProtocol() !=
-          CONCURRENCY_TYPE_OCC_RB) {
-        // Bypass RB
-        TransactionScheduler scheduler(1, table.get(), &txn_manager);
-        scheduler.Txn(0).Delete(100);
-        scheduler.Txn(0).Delete(0);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Update(0, 1);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Insert(0, 2);
-        scheduler.Txn(0).Update(0, 3);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Delete(0);
-        scheduler.Txn(0).Read(0);
-        scheduler.Txn(0).Commit();
-
-        scheduler.Run();
-
-        ValidateMVCC_OldToNew(table.get());
-      }
-    }
-
     // insert, delete inserted, read deleted, insert again, delete again
     // read deleted, insert again, read inserted, update inserted, read updated
     {
@@ -266,6 +235,8 @@ TEST_F(MVCCTest, SingleThreadVersionChainTest) {
 }
 
 TEST_F(MVCCTest, AbortVersionChainTest) {
+  LOG_INFO("AbortVersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
@@ -300,14 +271,16 @@ TEST_F(MVCCTest, AbortVersionChainTest) {
 }
 
 TEST_F(MVCCTest, VersionChainTest) {
+  LOG_INFO("VersionChainTest");
+
   for (auto protocol : TEST_TYPES) {
     LOG_INFO("Validating %d", protocol);
     concurrency::TransactionManagerFactory::Configure(
         protocol, ISOLATION_LEVEL_TYPE_FULL);
 
-    const int num_txn = 5;
-    const int scale = 20;
-    const int num_key = 256;
+    const int num_txn = 2;    // 5
+    const int scale = 1;      // 20
+    const int num_key = 2;    // 256
     srand(15721);
 
     std::unique_ptr<storage::DataTable> table(
@@ -344,5 +317,6 @@ TEST_F(MVCCTest, VersionChainTest) {
     ValidateMVCC_OldToNew(table.get());
   }
 }
+
 }  // End test namespace
 }  // End peloton namespace

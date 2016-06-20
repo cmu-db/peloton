@@ -139,7 +139,8 @@ TEST_F(TileGroupTests, BasicTest) {
 }
 
 void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
-                     catalog::Schema *schema) {
+                     catalog::Schema *schema,
+                     UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);

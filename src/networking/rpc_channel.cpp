@@ -16,7 +16,6 @@
 #include "networking/rpc_controller.h"
 #include "networking/tcp_connection.h"
 #include "networking/connection_manager.h"
-#include "common/thread_manager.h"
 #include "common/logger.h"
 #include "common/macros.h"
 
@@ -24,6 +23,7 @@
 
 #include <iostream>
 #include <functional>
+#include "../include/common/thread_pool.h"
 
 namespace peloton {
 namespace networking {
@@ -113,7 +113,7 @@ void RpcChannel::CallMethod(
 
   /* write data into sending buffer, when using libevent we don't need loop send
    */
-  if (conn->AddToWriteBuffer(buf, sizeof(buf)) == false) {
+  if (conn->AddToWriteBuffer(buf, HEADERLEN + msg_len) == false) {
     LOG_TRACE("Write data Error");
     return;
   }
