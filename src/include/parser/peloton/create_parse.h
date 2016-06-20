@@ -34,11 +34,45 @@ class CreateParse : public AbstractParse {
   CreateParse &operator=(CreateParse &&) = delete;
 
   explicit CreateParse(CreateStmt *create_node) {
-    entity_type = ENTITY_TYPE_TABLE;
-	RangeVar* rv = create_node->relation;
-	entity_name = std::string(rv->relname);
+    
+    // Get Table name
+    RangeVar* rv = create_node->relation;
+    entity_name = std::string(rv->relname);
+    
+    // Get Table Elements from Parse node
+    List *object_list = create_node->tableElts;
+    ListCell *object_item;
 
-        auto col = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),"dept_id", true);
+    foreach(object_item, object_list){
+      
+      LOG_INFO("Got Something from tableElts");
+      ::Value *value = (::Value *)lfirst(object_item);
+
+      LOG_INFO("Column Name: %s ", strVal(value));
+      std::string column_name = std::string(strVal(value));
+
+      // Cast to ColumnDef to access the Column type IDs
+      ColumnDef *element = (ColumnDef *)lfirst(object_item);
+
+      // Get the Name
+      char* type_name =  strVal(linitial(element->typeName->names));
+
+      // Flag to discard using type "pg_catalog"
+      if(strcmp(type_name, "pg_catalog") == 0){
+        LOG_INFO("Yes it was pg_catalog");
+
+        type_name = strVal(llast(element->typeName->names));
+      }
+
+      LOG_INFO("Column type is: %s" , type_name);
+
+      //TODO: Convert to ValueType
+
+      }
+    
+
+    
+    auto col = catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),"dept_id", true);
         
 	columns_name.push_back(col);
     }
