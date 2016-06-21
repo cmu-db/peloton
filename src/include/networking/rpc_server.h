@@ -17,7 +17,6 @@
 #include <thread>
 #include <map>
 
-#include "common/thread_manager.h"
 #include "common/logger.h"
 #include "networking/rpc_method.h"
 #include "networking/tcp_listener.h"

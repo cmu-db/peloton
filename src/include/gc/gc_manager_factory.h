@@ -13,6 +13,7 @@
 #pragma once
 
 #include "gc/gc_manager.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace gc {
@@ -20,7 +21,7 @@ namespace gc {
 class GCManagerFactory {
  public:
   static GCManager &GetInstance() {
-    static GCManager gc_manager(GC_TYPE_ON);
+    static GCManager gc_manager(GC_TYPE_OFF);
     return gc_manager;
   }
 

@@ -81,10 +81,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
     } break;
 
     case 3: {
-      auto column = catalog::Column(VALUE_TYPE_VARCHAR,
-                                    25,  // Column length.
-                                    "COL_D",
-                                    !is_inlined);  // inlined.
+      auto column = catalog::Column(VALUE_TYPE_VARCHAR, 25,  // Column length.
+                                    "COL_D", !is_inlined);   // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL,
                                                not_null_constraint_name));
@@ -203,10 +201,13 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer tuple_slot_id = table->InsertTuple(&tuple);
-    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
-    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+    PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    txn_manager.PerformInsert(tuple_slot_id);
+    __attribute__((unused)) bool status =
+        txn_manager.PerformInsert(tuple_slot_id);
+    PL_ASSERT(status == true);
   }
 }
 
@@ -271,9 +272,8 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   EXPECT_TRUE(executor->Init());
 
   // Where the main work takes place...
-  EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
+  EXPECT_CALL(child_executor, DExecute()).WillOnce(Return(true)).WillOnce(
+      Return(false));
 
   EXPECT_CALL(child_executor, GetOutput())
       .WillOnce(Return(source_logical_tile));

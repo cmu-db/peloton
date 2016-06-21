@@ -16,6 +16,7 @@
 #include "wire/socket_base.h"
 #include "wire/wire.h"
 #include "common/stack_trace.h"
+#include "common/init.h"
 
 DECLARE_bool(help);
 DECLARE_bool(h);
@@ -30,6 +31,9 @@ int main(int argc, char *argv[]) {
     ::google::HandleCommandLineHelpFlags();
   }
 
+  // Setup
+  peloton::PelotonInit::Initialize();
+
   // Setup signal handlers
   //peloton::RegisterSignalHandlers();
 
@@ -38,6 +42,11 @@ int main(int argc, char *argv[]) {
   peloton::wire::StartServer(&server);
   peloton::wire::HandleConnections<peloton::wire::PacketManager,
                                    peloton::wire::PktBuf>(&server);
+
+
+
+  // Teardown
+  peloton::PelotonInit::Shutdown();
 
   return 0;
 }

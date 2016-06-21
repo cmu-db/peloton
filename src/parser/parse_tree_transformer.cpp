@@ -23,6 +23,7 @@
 #include "parser/peloton/insert_parse.h"
 #include "parser/peloton/drop_parse.h"
 #include "parser/peloton/create_parse.h"
+#include "parser/peloton/select_parse.h"
 
 namespace peloton {
 namespace parser {
@@ -32,8 +33,9 @@ namespace parser {
  * @param The parse tree
  * @return none.
  */
-void ParseTreeTransformer::PrintParseTree(const std::unique_ptr<parser::AbstractParse>& parse_tree,
-                                          std::string prefix) {
+void ParseTreeTransformer::PrintParseTree(
+    const std::unique_ptr<parser::AbstractParse> &parse_tree,
+    std::string prefix) {
   if (parse_tree.get() == nullptr) {
     LOG_INFO("Done printing");
     return;
@@ -41,7 +43,8 @@ void ParseTreeTransformer::PrintParseTree(const std::unique_ptr<parser::Abstract
 
   prefix += "  ";
 
-  LOG_INFO("%s->Parse Type :: %d ", prefix.c_str(), parse_tree->GetParseNodeType());
+  LOG_INFO("%s->Parse Type :: %d ", prefix.c_str(),
+           parse_tree->GetParseNodeType());
 
   auto &children = parse_tree->GetChildren();
 
@@ -56,9 +59,9 @@ void ParseTreeTransformer::PrintParseTree(const std::unique_ptr<parser::Abstract
  * @param The postgres parse tree
  * @return The updated peloton parse tree.
  */
-std::unique_ptr<parser::AbstractParse>
-TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
-                   const Node *postgres_parse_tree) {
+std::unique_ptr<parser::AbstractParse> TransformParseTree(
+    std::unique_ptr<parser::AbstractParse> &root,
+    const Node *postgres_parse_tree) {
 
   LOG_INFO("Transform Parse Tree : %p ", postgres_parse_tree);
 
@@ -84,7 +87,8 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
       break;
 
     case T_DropStmt:
-      child_parse_tree.reset(new parser::DropParse((DropStmt *) postgres_parse_tree));
+      child_parse_tree.reset(
+          new parser::DropParse((DropStmt *)postgres_parse_tree));
       break;
 
     case T_CreatedbStmt:
@@ -94,6 +98,8 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
       break;
 
     case T_SelectStmt:
+      child_parse_tree.reset(
+          new parser::SelectParse((SelectStmt *)postgres_parse_tree));
       break;
 
     case T_InsertStmt:
@@ -122,8 +128,7 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
     if (root.get() != nullptr) {
       LOG_INFO("Attach child");
       root->AddChild(std::move(child_parse_tree));
-    }
-    else {
+    } else {
       LOG_INFO("Set root");
       root = std::move(child_parse_tree);
     }
@@ -132,8 +137,8 @@ TransformParseTree(std::unique_ptr<parser::AbstractParse>& root,
   return std::move(root);
 }
 
-std::unique_ptr<parser::AbstractParse>
-ParseTreeTransformer::BuildParseTree(Node *postgres_parse_tree) {
+std::unique_ptr<parser::AbstractParse> ParseTreeTransformer::BuildParseTree(
+    Node *postgres_parse_tree) {
 
   std::unique_ptr<parser::AbstractParse> parse_tree;
 
@@ -145,7 +150,6 @@ ParseTreeTransformer::BuildParseTree(Node *postgres_parse_tree) {
 
   return parse_tree;
 }
-
 
 }  // namespace parser
 }  // namespace peloton

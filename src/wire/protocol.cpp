@@ -36,13 +36,13 @@ thread_local std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
 
 // Hardcoded authentication strings used during session startup. To be removed
 const std::unordered_map<std::string, std::string>
-PacketManager::parameter_status_map =
-    boost::assign::map_list_of("application_name", "psql")(
-        "client_encoding", "UTF8")("DateStyle", "ISO, MDY")(
+    PacketManager::parameter_status_map =
+        boost::assign::map_list_of("application_name", "psql")(
+            "client_encoding", "UTF8")("DateStyle", "ISO, MDY")(
             "integer_datetimes", "on")("IntervalStyle", "postgres")(
-                "is_superuser", "on")("server_encoding", "UTF8")(
-                    "server_version", "9.5devel")("session_authorization", "postgres")(
-                        "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
+            "is_superuser", "on")("server_encoding", "UTF8")(
+            "server_version", "9.5devel")("session_authorization", "postgres")(
+            "standard_conforming_strings", "on")("TimeZone", "US/Eastern");
 
 /*
  * close_client - Close the socket of the underlying client
@@ -104,7 +104,7 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
 
   // Send the parameterStatus map ('S')
   for (auto it = parameter_status_map.begin(); it != parameter_status_map.end();
-      it++) {
+       it++) {
     MakeHardcodedParameterStatus(responses, *it);
   }
 
@@ -113,11 +113,11 @@ bool PacketManager::ProcessStartupPacket(Packet *pkt,
   return true;
 }
 
-void PacketManager::PutTupleDescriptor(const std::vector<FieldInfoType> &tuple_descriptor,
-                                       ResponseBuffer &responses) {
+void PacketManager::PutTupleDescriptor(
+    const std::vector<FieldInfoType> &tuple_descriptor,
+    ResponseBuffer &responses) {
 
-  if (tuple_descriptor.empty())
-    return;
+  if (tuple_descriptor.empty()) return;
 
   LOG_INFO("Put TupleDescriptor");
 
@@ -144,8 +144,8 @@ void PacketManager::PutTupleDescriptor(const std::vector<FieldInfoType> &tuple_d
   responses.push_back(std::move(pkt));
 }
 
-void PacketManager::SendDataRows(std::vector<ResultType> &results,
-                                 int colcount, int &rows_affected,
+void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
+                                 int &rows_affected,
                                  ResponseBuffer &responses) {
   if (!results.size() || !colcount) return;
 
@@ -256,15 +256,11 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     int rows_affected;
 
     // execute the query in Sqlite
-    auto status = tcop.ExecuteStatement(query,
-                                        result,
-                                        tuple_descriptor,
-                                        rows_affected,
-                                        error_message);
+    auto status = tcop.ExecuteStatement(query, result, tuple_descriptor,
+                                        rows_affected, error_message);
 
     // check status
-    if (status ==  Result::RESULT_FAILURE) {
-    	LOG_INFO("Sending Error Response...");
+    if (status == Result::RESULT_FAILURE) {
       SendErrorResponse({{'M', error_message}}, responses);
       LOG_INFO("Error Response Sent!");
       break;
@@ -315,9 +311,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   // Prepare statement
   std::shared_ptr<Statement> statement;
   auto &tcop = tcop::TrafficCop::GetInstance();
-  statement = std::move(tcop.PrepareStatement(statement_name,
-                                              query_string,
-                                              error_message));
+  statement = std::move(
+      tcop.PrepareStatement(statement_name, query_string, error_message));
 
   if (statement.get() == nullptr) {
     SendErrorResponse({{'M', error_message}}, responses);
@@ -345,8 +340,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   if (unnamed_query) {
     LOG_INFO("Setting unnamed statement");
     unnamed_statement = statement;
-  }
-  else {
+  } else {
     LOG_INFO("Setting named statement with name : %s", statement_name.c_str());
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
@@ -401,14 +395,13 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     statement = unnamed_statement;
 
     // Check unnamed statement
-    if(statement.get() == nullptr){
+    if (statement.get() == nullptr) {
       std::string error_message = "Invalid unnamed statement";
       LOG_ERROR("%s", error_message.c_str());
       SendErrorResponse({{'M', error_message}}, responses);
       return;
     }
-  }
-  else {
+  } else {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     // Did not find statement with same name
     if (statement_cache_itr != statement_cache_.end()) {
@@ -449,14 +442,16 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     // BIND packet NULL parameter case
     if (param_len == -1) {
       // NULL mode
-      bind_parameters.push_back(std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::string("")));
+      bind_parameters.push_back(
+          std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::string("")));
     } else {
       PacketGetBytes(pkt, param_len, param);
 
       if (formats[param_idx] == 0) {
         // TEXT mode
         std::string param_str = std::string(std::begin(param), std::end(param));
-        bind_parameters.push_back(std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
+        bind_parameters.push_back(
+            std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -465,8 +460,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             for (size_t i = 0; i < sizeof(int); ++i) {
               int_val = (int_val << 8) | param[i];
             }
-            bind_parameters.push_back(
-                std::make_pair(ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
+            bind_parameters.push_back(std::make_pair(
+                ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -475,8 +470,8 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
               buf = (buf << 8) | param[i];
             }
             memcpy(&float_val, &buf, sizeof(double));
-            bind_parameters.push_back(
-                std::make_pair(ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
+            bind_parameters.push_back(std::make_pair(
+                ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
             // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
           } break;
           default: {
@@ -539,7 +534,6 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     auto statement = portal->GetStatement();
     PutTupleDescriptor(statement->GetTupleDescriptor(), responses);
   }
-
 }
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
@@ -560,7 +554,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto portal = portals_[portal_name];
-  if(portal.get() == nullptr){
+  if (portal.get() == nullptr) {
     LOG_INFO("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
     SendReadyForQuery(txn_state, responses);
@@ -569,7 +563,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   auto statement = portal->GetStatement();
 
-  if(statement.get() == nullptr){
+  if (statement.get() == nullptr) {
     LOG_INFO("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse({{'M', error_message}}, responses);
     SendReadyForQuery(txn_state, responses);
@@ -590,11 +584,8 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto &tcop = tcop::TrafficCop::GetInstance();
-  auto status = tcop.ExecuteStatement(statement,
-                                      unnamed,
-                                      results,
-                                      rows_affected,
-                                      error_message);
+  auto status = tcop.ExecuteStatement(statement, unnamed, results,
+                                      rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
     LOG_INFO("Failed to execute: %s", error_message.c_str());
