@@ -48,7 +48,7 @@ public:
  void CreateCatalogDatabase(void);
 
  // Create a database
- void CreateDatabase(std::string database_name);
+ Result CreateDatabase(std::string database_name);
 
  // Create a table in a database
  Result CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
