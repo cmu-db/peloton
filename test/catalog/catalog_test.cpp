@@ -34,15 +34,19 @@ auto global_catalog2 = bootstrapper2.GetCatalog();
 
 TEST_F(CatalogTests, BootstrappingCatalog) {
   EXPECT_EQ(global_catalog->GetDatabaseCount(), 1);
-  LOG_INFO("Database name: %s", global_catalog->GetDatabaseWithOid(0)->GetDBName().c_str());
 }
 
 TEST_F(CatalogTests, CreatingDatabase) {
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
 	global_catalog2->CreateDatabase("EMP_DB");
+	txn_manager.CommitTransaction();
   EXPECT_EQ(global_catalog2->GetDatabaseWithName("EMP_DB")->GetDBName(), "EMP_DB");
 }
 
 TEST_F(CatalogTests, CreatingTable) {
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
   auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
 	                      "dept_id", true);
@@ -51,14 +55,20 @@ TEST_F(CatalogTests, CreatingTable) {
                       "dept_name", false);
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   global_catalog->CreateTable("EMP_DB", "department_table", std::move(table_schema));
+  txn_manager.CommitTransaction();
   EXPECT_EQ(global_catalog->GetDatabaseWithName("EMP_DB")->GetTableWithName("department_table")->GetSchema()->GetColumn(1).GetName(), "dept_name");
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 1);
+
 }
 
 TEST_F(CatalogTests, DroppingTable) {
   EXPECT_EQ(global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
   global_catalog->DropTable("EMP_DB", "department_table");
+  txn_manager.CommitTransaction();
   EXPECT_EQ(global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 0);
-
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 0);
 }
 
 }  // End test namespace

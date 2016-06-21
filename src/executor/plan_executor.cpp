@@ -68,7 +68,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
-  // auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
@@ -124,12 +123,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
+    	LOG_INFO("Commit Transaction");
         p_status.m_result = txn_manager.CommitTransaction();
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
+    	LOG_INFO("Abort Transaction");
         p_status.m_result = txn_manager.AbortTransaction();
     }
   }

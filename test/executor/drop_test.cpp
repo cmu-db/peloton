@@ -34,6 +34,8 @@ TEST_F(DropTests, DroppingTable) {
 	auto &bootstrapper = catalog::Bootstrapper::GetInstance();
 	auto global_catalog = bootstrapper.bootstrap();
 
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+		txn_manager.BeginTransaction();
   // Insert a table first
   auto id_column =
 		  catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
@@ -45,33 +47,23 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema2(new catalog::Schema({id_column, name_column}));
 
   global_catalog->CreateDatabase("default_database");
+ txn_manager.CommitTransaction();
 
-  std:: cout << "Database info before adding first table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
+ txn_manager.BeginTransaction();
   global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
-  std::cout << "First table added!" << std::endl;
+  txn_manager.CommitTransaction();
 
-  std:: cout << "Database info after adding first table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
+  txn_manager.BeginTransaction();
   global_catalog->CreateTable("default_database", "department_table_2", std::move(table_schema2));
-  std::cout << "Second table added!" << std::endl;
-  std:: cout << "Database info after adding second table: " << global_catalog->GetDatabaseWithName("default_database")->GetInfo() << std::endl;
+  txn_manager.CommitTransaction();
 
   EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 2);
 
   // Now dropping the table using the executer
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::DropPlan node("department_table");
-  executor::DropExecutor executor(&node, context.get());
-  executor.Init();
-  executor.Execute();
+  txn_manager.BeginTransaction();
+  global_catalog->DropTable("default_database", "department_table");
   txn_manager.CommitTransaction();
-  planner::DropPlan node2("department_table_2");
-  executor::DropExecutor executor2(&node2, context.get());
-  executor2.Init();
-  executor2.Execute();
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 0);
+  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
 
 }
 
