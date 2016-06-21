@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "common/types.h"
-#include "common/lockfree_queue.h"
 #include "common/logger.h"
+#include "container/queue.h"
 #include "libcuckoo/cuckoohash_map.hh"
 
 namespace peloton {
@@ -94,10 +94,10 @@ class GCManager {
   std::unique_ptr<std::thread> gc_thread_;
 
   // TODO: use shared pointer to reduce memory copy
-  LockfreeQueue<TupleMetadata> reclaim_queue_;
+  Queue<TupleMetadata> reclaim_queue_;
 
   // TODO: use shared pointer to reduce memory copy
-  cuckoohash_map<oid_t, std::shared_ptr<LockfreeQueue<TupleMetadata>>>
+  cuckoohash_map<oid_t, std::shared_ptr<Queue<TupleMetadata>>>
       recycle_queue_map_;
 };
 

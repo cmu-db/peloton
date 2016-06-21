@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// insert_parse.h
+// drop_parse.h
 //
-// Identification: src/include/parser/insert_parse.h
+// Identification: src/include/parser/drop_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -41,13 +41,12 @@ class DropParse : public AbstractParse {
     foreach(object_item, object_list){
       subobject_list = (List *)lfirst(object_item);
 
-      foreach(subobject_item, subobject_list){
-        ::Value *value = (::Value *) lfirst(subobject_item);
+      foreach(subobject_item, subobject_list) {
+        ::Value *value = (::Value *)lfirst(subobject_item);
         LOG_INFO("Table : %s ", strVal(value));
         entity_name = std::string(strVal(value));
       }
     }
-
   }
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
@@ -59,7 +58,6 @@ class DropParse : public AbstractParse {
   std::string GetTableName() { return entity_name; }
 
  private:
-
   // Type of entity
   EntityType entity_type = ENTITY_TYPE_INVALID;
 
