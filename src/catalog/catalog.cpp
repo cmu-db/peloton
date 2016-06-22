@@ -161,7 +161,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, max_name_size,
-                      "table_name", false);
+                      "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
@@ -182,7 +182,7 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, max_name_size,
-                      "database_name", false);
+                      "database_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
