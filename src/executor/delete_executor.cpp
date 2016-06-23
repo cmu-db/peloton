@@ -66,7 +66,6 @@ bool DeleteExecutor::DInit() {
  */
 bool DeleteExecutor::DExecute() {
   PL_ASSERT(target_table_);
-  LOG_INFO("Table %s info inside executer: %s", target_table_->GetName().c_str(), target_table_->GetInfo().c_str());
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
     return false;
@@ -84,6 +83,8 @@ bool DeleteExecutor::DExecute() {
 
   LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
+
+  LOG_INFO("Source tile info: %s", source_tile->GetInfo().c_str());
 
   LOG_INFO("Transaction ID: %lu",
             executor_context_->GetTransaction()->GetTransactionId());

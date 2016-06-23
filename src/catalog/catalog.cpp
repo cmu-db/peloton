@@ -86,24 +86,29 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
 // Drop a table
 Result Catalog::DropTable(std::string database_name, std::string table_name){
 
+  LOG_INFO("Dropping table %s from database %s", table_name.c_str(), database_name.c_str());
   storage::Database* database = GetDatabaseWithName(database_name);
   if(database){
-	  if(database->GetTableWithName(table_name)){
-		  storage::DataTable *table = database->GetTableWithName(table_name);
-		  if(table){
-			  oid_t table_id = table->GetOid();
-			  catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(TABLE_CATALOG_NAME), table_id);
-			  database->DropTableWithOid(table_id);
-			  return Result::RESULT_SUCCESS;
-		  }
-		  else
-			  return Result::RESULT_FAILURE;
+	  LOG_INFO("Found database!");
+	  storage::DataTable *table = database->GetTableWithName(table_name);
+	  if(table){
+		  LOG_INFO("Found table!");
+		  oid_t table_id = table->GetOid();
+		  LOG_INFO("Deleting tuple from catalog!");
+		  catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(TABLE_CATALOG_NAME), table_id);
+		  LOG_INFO("Deleting table!");
+		  database->DropTableWithOid(table_id);
+		  return Result::RESULT_SUCCESS;
 	  }
-	  else
+	  else{
+		  LOG_INFO("Could not find table");
 		  return Result::RESULT_FAILURE;
+	  }
   }
-  else
+  else{
+	  LOG_INFO("Could not find database");
 	  return Result::RESULT_FAILURE;
+  }
 }
 
 // Find a database using its id
@@ -190,6 +195,10 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
       new catalog::Schema({id_column, name_column}));
 
   return database_schema;
+}
+
+void Catalog::PrintCatalogs(){
+
 }
 
 int Catalog::GetDatabaseCount() { return databases.size(); }
