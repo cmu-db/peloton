@@ -276,7 +276,7 @@ ValueType PostgresStringToValueType(std::string str) {
   else if(str == "numeric" || str == "decimal") return VALUE_TYPE_DECIMAL;
   else return VALUE_TYPE_INVALID;
 
-  return "";
+  return VALUE_TYPE_INVALID;
 }
 
 /** takes in 0-F, returns 0-15 */
