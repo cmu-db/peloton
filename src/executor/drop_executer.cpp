@@ -41,7 +41,15 @@ bool DropExecutor::DExecute() {
   std::string table_name = node.GetTableName();
   Result result = catalog::Bootstrapper::global_catalog->DropTable("default_database", table_name);
   context->GetTransaction()->SetResult(result);
-  LOG_INFO("Dropping table succeeded!");
+  if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
+	  LOG_INFO("Dropping table succeeded!");
+  }
+  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
+	  LOG_INFO("Dropping table failed!");
+  }
+  else {
+	  LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());
+  }
   return false;
 }
 
