@@ -13,8 +13,6 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
-#include "catalog/catalog.h"
-#include "catalog/bootstrapper.h"
 #include "planner/create_plan.h"
 
 #include <vector>
@@ -45,7 +43,6 @@ class CreateExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-  catalog::Catalog* global_catalog;
   ExecutorContext *context;
 
 };

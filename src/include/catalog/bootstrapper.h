@@ -27,26 +27,21 @@ namespace catalog {
 class Bootstrapper {
  public:
 
-  // Global Singleton
-  static Bootstrapper &GetInstance(void);
+  static Catalog* global_catalog;
+  static bool bootstrapped;
+
 
   // Bootstrap Catalog
-  Catalog* bootstrap();
+  static Catalog* bootstrap();
 
   // Initialize Global Catalog
-  Catalog* InitializeGlobalCatalog();
+  static Catalog* InitializeGlobalCatalog();
 
   // Initialize Schemas
-  void InitializeCatalogsSchemas();
+  static void InitializeCatalogsSchemas();
 
-  Catalog* GetCatalog();
+  static Catalog* GetCatalog();
 
-  // TODO: Other Catalogs should be added here
-
-private:
-  // The global catalog
-  Catalog* global_catalog;
-  bool bootstrapped = false;
 
 };
 }

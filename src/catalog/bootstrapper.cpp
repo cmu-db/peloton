@@ -17,11 +17,8 @@
 namespace peloton {
 namespace catalog {
 
-
-Bootstrapper &Bootstrapper::GetInstance(void) {
-  static Bootstrapper bootstrapper;
-  return bootstrapper;
-}
+bool Bootstrapper::bootstrapped = false;
+Catalog* Bootstrapper::global_catalog = nullptr;
 
 // Bootstrap Catalog
 Catalog* Bootstrapper::bootstrap() {
