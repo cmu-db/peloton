@@ -77,6 +77,8 @@ public:
  // Get the number of databases currently in the catalog
  int GetDatabaseCount();
 
+ void PrintCatalogs();
+
  // Get a new id for database, table, etc.
  oid_t GetNewID();
 
