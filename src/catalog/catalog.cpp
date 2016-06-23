@@ -91,7 +91,6 @@ Result Catalog::DropDatabase(std::string database_name) {
     LOG_INFO("Found database!");
     LOG_INFO("Deleting tuple from catalog");
     catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(DATABASE_CATALOG_NAME), database->GetOid());
-    LOG_INFO("Deleting database");
     oid_t database_offset = 0;
     for (auto database : databases){
       if (database->GetDBName() == database_name){
