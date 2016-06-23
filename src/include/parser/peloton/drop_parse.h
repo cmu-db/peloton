@@ -45,6 +45,7 @@ class DropParse : public AbstractParse {
         ::Value *value = (::Value *)lfirst(subobject_item);
         LOG_INFO("Table : %s ", strVal(value));
         entity_name = std::string(strVal(value));
+        missing = drop_node->missing_ok;
       }
     }
   }
@@ -57,12 +58,16 @@ class DropParse : public AbstractParse {
 
   std::string GetTableName() { return entity_name; }
 
+  bool IsMissing() { return missing; }
+
  private:
   // Type of entity
   EntityType entity_type = ENTITY_TYPE_INVALID;
 
   // Name of entity
   std::string entity_name;
+
+  bool missing;
 };
 
 }  // namespace parser

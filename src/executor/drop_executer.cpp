@@ -44,8 +44,12 @@ bool DropExecutor::DExecute() {
   if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
 	  LOG_INFO("Dropping table succeeded!");
   }
-  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
-	  LOG_INFO("Dropping table failed!");
+  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && node.IsMissing()) {
+	  context->GetTransaction()->SetResult(Result::RESULT_SUCCESS);
+	  LOG_INFO("Dropping table Succeeded!");
+  }
+  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && !node.IsMissing()){
+	  LOG_INFO("Dropping table Failed!");
   }
   else {
 	  LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());

@@ -79,7 +79,7 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
   std::vector<Value> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Shit");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
-  LOG_INFO("Statement executed!");
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
   return status.m_result;
 
 }

@@ -79,6 +79,12 @@ TEST_F(CatalogTests, DroppingTable) {
   txn_manager.CommitTransaction();
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
+  // Drop a table that does not exist
+  txn_manager.BeginTransaction();
+  catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "void_table");
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
+
   // Drop the other table
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "emp_table");

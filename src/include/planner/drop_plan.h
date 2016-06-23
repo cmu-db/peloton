@@ -29,11 +29,17 @@ class DropPlan : public AbstractPlan {
   DropPlan(DropPlan &&) = delete;
   DropPlan &operator=(DropPlan &&) = delete;
 
-  explicit DropPlan(storage::DataTable *table) : target_table_(table) {}
+  explicit DropPlan(storage::DataTable *table) : target_table_(table) {
+	  missing = false;
+  }
 
-  explicit DropPlan(std::string name) : table_name(name) {}
+  explicit DropPlan(std::string name) : table_name(name) {
+	  missing = false;
+  }
 
-  explicit DropPlan(parser::DropParse *parse_tree) : table_name(parse_tree->GetEntityName()) {}
+  explicit DropPlan(parser::DropParse *parse_tree) : table_name(parse_tree->GetEntityName()) {
+	  missing = parse_tree->IsMissing();
+  }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;
@@ -51,10 +57,13 @@ class DropPlan : public AbstractPlan {
 
   std::string GetTableName() const { return table_name; }
 
+  bool IsMissing() const { return missing; }
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+  bool missing;
 
 };
 }
