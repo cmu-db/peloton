@@ -45,6 +45,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
   // Check if a database with the same name exists
   for (auto database : databases) {
 	  if(database->GetDBName() == database_name) {
+		  LOG_INFO("Database already exists. Returning RESULT_FAILURE.");
 		  return Result::RESULT_FAILURE;
 	  }
   }
@@ -58,6 +59,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
 		  database_name);
   catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
 //  databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->InsertTuple(tuple.get());
+  LOG_INFO("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
 }
 
@@ -68,6 +70,10 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
   oid_t table_id = GetNewID();
   storage::Database *database = GetDatabaseWithName(database_name);
   if(database){
+	  if(database->GetTableWithName(table_name)){
+		  LOG_INFO("Found a table with the same name. Returning RESULT_FAILURE");
+		  return Result::RESULT_FAILURE;
+	  }
 	  oid_t database_id = database->GetOid();
 	  storage::DataTable *table = storage::TableFactory::GetDataTable(
 			  database_id, table_id, schema.release(), table_name,
@@ -80,7 +86,10 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
 //	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
 	  return Result::RESULT_SUCCESS;
   }
-  return Result::RESULT_FAILURE;
+  else{
+	  LOG_INFO("Could not find a database with name %s", database_name.c_str());
+      return Result::RESULT_FAILURE;
+  }
 }
 
 // Drop a database

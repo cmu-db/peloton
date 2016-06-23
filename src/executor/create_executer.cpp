@@ -42,7 +42,15 @@ bool CreateExecutor::DExecute() {
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
   Result result = catalog::Bootstrapper::global_catalog->CreateTable("default_database", table_name, std::move(schema));
   context->GetTransaction()->SetResult(result);
-  LOG_INFO("Create table succeeded!");
+  if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
+	  LOG_INFO("Creating table succeeded!");
+  }
+  else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
+	  LOG_INFO("Creating table failed!");
+  }
+  else {
+	  LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());
+  }
   return false;
 }
 
