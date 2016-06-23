@@ -12,6 +12,8 @@
 
 #include "executor/drop_executer.h"
 
+#include "catalog/bootstrapper.h"
+
 
 namespace peloton {
 namespace executor {
@@ -21,16 +23,14 @@ namespace executor {
 DropExecutor::DropExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
-	global_catalog = nullptr;
      context = executor_context;
 }
 
 // Initialize executer
 bool DropExecutor::DInit() {
-	LOG_INFO("Initializing Drop Executer...");
-  auto &bootstrapper = catalog::Bootstrapper::GetInstance();
-  global_catalog = bootstrapper.bootstrap();
-  global_catalog->CreateDatabase("default_database");
+  LOG_INFO("Initializing Drop Executer...");
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
   LOG_INFO("Drop Executer initialized!");
   return true;
 }
@@ -39,7 +39,7 @@ bool DropExecutor::DExecute() {
 	LOG_INFO("Executing Drop...");
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
-  Result result = global_catalog->DropTable("default_database", table_name);
+  Result result = catalog::Bootstrapper::global_catalog->DropTable("default_database", table_name);
   context->GetTransaction()->SetResult(result);
   LOG_INFO("Dropping table succeeded!");
   return false;

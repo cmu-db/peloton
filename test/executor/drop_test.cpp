@@ -31,8 +31,7 @@ class DropTests : public PelotonTest {};
 
 TEST_F(DropTests, DroppingTable) {
 
-	auto &bootstrapper = catalog::Bootstrapper::GetInstance();
-	auto global_catalog = bootstrapper.bootstrap();
+	catalog::Bootstrapper::bootstrap();
 
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 		txn_manager.BeginTransaction();
@@ -46,24 +45,24 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema2(new catalog::Schema({id_column, name_column}));
 
-  global_catalog->CreateDatabase("default_database");
+  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
  txn_manager.CommitTransaction();
 
  txn_manager.BeginTransaction();
-  global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
+ catalog::Bootstrapper::global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
   txn_manager.CommitTransaction();
 
   txn_manager.BeginTransaction();
-  global_catalog->CreateTable("default_database", "department_table_2", std::move(table_schema2));
+  catalog::Bootstrapper::global_catalog->CreateTable("default_database", "department_table_2", std::move(table_schema2));
   txn_manager.CommitTransaction();
 
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 2);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 2);
 
   // Now dropping the table using the executer
   txn_manager.BeginTransaction();
-  global_catalog->DropTable("default_database", "department_table");
+  catalog::Bootstrapper::global_catalog->DropTable("default_database", "department_table");
   txn_manager.CommitTransaction();
-  EXPECT_EQ(global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
 
 }
 
