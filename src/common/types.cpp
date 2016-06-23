@@ -266,6 +266,19 @@ ValueType StringToValueType(std::string str) {
   return VALUE_TYPE_INVALID;
 }
 
+ValueType PostgresStringToValueType(std::string str) {
+  if(str == "int4" || str=="int") return VALUE_TYPE_INTEGER;
+  else if(str == "int2" || str=="smallint") return VALUE_TYPE_SMALLINT;
+  else if(str == "date") return VALUE_TYPE_DATE;
+  else if(str == "timestamp" || str == "timestamptz") return VALUE_TYPE_TIMESTAMP;
+  else if(str == "float" || str=="float4" || str == "float8" || str == "double") return VALUE_TYPE_DOUBLE;
+  else if(str == "text" || str == "varchar"|| str == "char") return VALUE_TYPE_VARCHAR;
+  else if(str == "numeric" || str == "decimal") return VALUE_TYPE_DECIMAL;
+  else return VALUE_TYPE_INVALID;
+
+  return "";
+}
+
 /** takes in 0-F, returns 0-15 */
 int32_t HexCharToInt(char c) {
   c = static_cast<char>(toupper(c));

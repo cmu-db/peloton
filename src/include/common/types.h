@@ -930,6 +930,7 @@ BackendType StringToBackendType(const std::string &str);
 
 std::string ValueTypeToString(ValueType type);
 ValueType StringToValueType(const std::string &str);
+ValueType PostgresStringToValueType(std::string str);
 
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(const std::string &str);
