@@ -67,7 +67,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
     }
     PL_ASSERT(table_offset < tables.size());
 
-    // Drop the database
+    // Drop the table
     tables.erase(tables.begin() + table_offset);
   }
 }

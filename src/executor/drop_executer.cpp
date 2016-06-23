@@ -36,7 +36,7 @@ bool DropExecutor::DInit() {
 }
 
 bool DropExecutor::DExecute() {
-	LOG_INFO("Executing Drop...");
+  LOG_INFO("Executing Drop...");
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
   Result result = catalog::Bootstrapper::global_catalog->DropTable("default_database", table_name);

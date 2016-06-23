@@ -59,7 +59,11 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
                                  result, rows_changed, error_message);
 
   if(status == Result::RESULT_SUCCESS) {
+	  LOG_INFO("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
+  }
+  else{
+	  LOG_INFO("Execution failed!");
   }
 
   return status;

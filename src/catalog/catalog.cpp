@@ -83,8 +83,38 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
   return Result::RESULT_FAILURE;
 }
 
+// Drop a database
+Result Catalog::DropDatabase(std::string database_name) {
+  LOG_INFO("Dropping database %s", database_name.c_str());
+  storage::Database* database = GetDatabaseWithName(database_name);
+  if(database){
+    LOG_INFO("Found database!");
+    LOG_INFO("Deleting tuple from catalog");
+    catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)->GetTableWithName(DATABASE_CATALOG_NAME), database->GetOid());
+    LOG_INFO("Deleting database");
+    oid_t database_offset = 0;
+    for (auto database : databases){
+      if (database->GetDBName() == database_name){
+    	LOG_INFO("Deleting database object in database vector");
+      	delete database;
+      	break;
+      }
+      database_offset++;
+    }
+    PL_ASSERT(database_offset < databases.size());
+	// Drop the database
+    LOG_INFO("Deleting database from database vector");
+	databases.erase(databases.begin() + database_offset);
+  }
+  else{
+	  LOG_INFO("Database is not found!");
+	  return Result::RESULT_FAILURE;
+  }
+  return Result::RESULT_SUCCESS;
+}
+
 // Drop a table
-Result Catalog::DropTable(std::string database_name, std::string table_name){
+Result Catalog::DropTable(std::string database_name, std::string table_name) {
 
   LOG_INFO("Dropping table %s from database %s", table_name.c_str(), database_name.c_str());
   storage::Database* database = GetDatabaseWithName(database_name);

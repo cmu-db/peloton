@@ -52,34 +52,46 @@ TEST_F(CatalogTests, CreatingTable) {
                       "dept_name", true);
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema_2(new catalog::Schema({id_column, name_column}));
+  std::unique_ptr<catalog::Schema> table_schema_3(new catalog::Schema({id_column, name_column}));
+
   catalog::Bootstrapper::global_catalog->CreateTable("EMP_DB", "emp_table", std::move(table_schema));
   catalog::Bootstrapper::global_catalog->CreateTable("EMP_DB", "department_table", std::move(table_schema_2));
+  catalog::Bootstrapper::global_catalog->CreateTable("EMP_DB", "salary_table", std::move(table_schema_3));
+
   txn_manager.CommitTransaction();
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableWithName("department_table")->GetSchema()->GetColumn(1).GetName(), "dept_name");
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 2);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 3);
 
 }
 
 TEST_F(CatalogTests, DroppingTable) {
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 3);
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 	txn_manager.BeginTransaction();
 	catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "department_table");
   txn_manager.CommitTransaction();
   catalog::Bootstrapper::global_catalog->PrintCatalogs();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
   // Try to drop again
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "department_table");
   txn_manager.CommitTransaction();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 2);
 
   // Drop the other table
   txn_manager.BeginTransaction();
   catalog::Bootstrapper::global_catalog->DropTable("EMP_DB", "emp_table");
   txn_manager.CommitTransaction();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 0);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableCount(), 1);
+}
+
+TEST_F(CatalogTests, DroppingDatabase){
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
+	catalog::Bootstrapper::global_catalog->DropDatabase("EMP_DB");
+	EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB"), nullptr);
+	txn_manager.CommitTransaction();
 }
 
 }  // End test namespace

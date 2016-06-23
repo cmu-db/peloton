@@ -53,6 +53,9 @@ public:
  // Create a table in a database
  Result CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
 
+ // Drop a database
+ Result DropDatabase(std::string database_name);
+
  // Drop a table
  Result DropTable(std::string database_name, std::string table_name);
 
