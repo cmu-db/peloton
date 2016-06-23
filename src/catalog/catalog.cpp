@@ -54,7 +54,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
   database->setDBName(database_name);
   databases.push_back(database);
   // Update catalog_db with this database info
-  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
+  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
 		  database_id,
 		  database_name);
   catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
@@ -80,7 +80,8 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name, s
 			  DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table);
 	  GetDatabaseWithOid(database_id)->AddTable(table);
 	  // Update catalog_table with this table info
-	  auto tuple = GetCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(), table_id, table_name);
+	  auto tuple = GetTableCatalogTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->GetSchema(),
+			  table_id, table_name, database_id, database->GetDBName());
 	  //  Another way of insertion using transaction manager
 	  catalog::InsertTuple(databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME), std::move(tuple));
 //	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
@@ -202,14 +203,27 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeTablesSchema() {
                       "table_id", true);
   id_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, max_name_size,
                       "table_name", true);
   name_column.AddConstraint(
       catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
 
+  auto database_id_column =
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                      "database_id", true);
+  database_id_column.AddConstraint(
+	      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
+  auto database_name_column =
+      catalog::Column(VALUE_TYPE_VARCHAR, max_name_size,
+                      "database_name", true);
+  database_name_column.AddConstraint(
+	      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, not_null_constraint_name));
+
   std::unique_ptr<catalog::Schema> table_schema(
-      new catalog::Schema({id_column, name_column}));
+      new catalog::Schema({id_column, name_column, database_id_column, database_name_column}));
 
   return table_schema;
 }

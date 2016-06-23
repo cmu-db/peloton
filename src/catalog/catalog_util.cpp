@@ -69,20 +69,38 @@ void DeleteTuple(storage::DataTable *table, oid_t id){
 
 /**
  * Generate a database catalog tuple
- * Input: The database schema, the database id, the database name
+ * Input: The table schema, the database id, the database name
  * Returns: The generated tuple
  */
-std::unique_ptr<storage::Tuple> GetCatalogTuple(catalog::Schema *schema,
-		oid_t id,
-		std::string name){
+std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema,
+		oid_t database_id,
+		std::string database_name){
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-  Value val1 = ValueFactory::GetIntegerValue(id);
-  Value val2 = ValueFactory::GetStringValue(name, nullptr);
+  Value val1 = ValueFactory::GetIntegerValue(database_id);
+  Value val2 = ValueFactory::GetStringValue(database_name, nullptr);
   tuple->SetValue(0, val1, nullptr);
   tuple->SetValue(1, val2, nullptr);
   return std::move(tuple);
 }
 
+/**
+ * Generate a table catalog tuple
+ * Input: The table schema, the table id, the table name, the database id, and the database name
+ * Returns: The generated tuple
+ */
+std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema,
+		oid_t table_id, std::string table_name, oid_t database_id, std::string database_name){
+	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+	Value val1 = ValueFactory::GetIntegerValue(table_id);
+	Value val2 = ValueFactory::GetStringValue(table_name, nullptr);
+	Value val3 = ValueFactory::GetIntegerValue(database_id);
+	Value val4 = ValueFactory::GetStringValue(database_name, nullptr);
+	tuple->SetValue(0, val1, nullptr);
+	tuple->SetValue(1, val2, nullptr);
+	tuple->SetValue(2, val3, nullptr);
+	tuple->SetValue(3, val4, nullptr);
+	return std::move(tuple);
+}
 
 }
 }

@@ -50,6 +50,7 @@ TEST_F(CatalogTests, CreatingTable) {
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, 32,
                       "dept_name", true);
+
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema_2(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema_3(new catalog::Schema({id_column, name_column}));
