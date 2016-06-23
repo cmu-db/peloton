@@ -39,7 +39,10 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
 
 void DeleteTuple(storage::DataTable *table, oid_t id);
 
-std::unique_ptr<storage::Tuple> GetCatalogTuple(catalog::Schema *schema, oid_t database_id, std::string database_name);
+std::unique_ptr<storage::Tuple> GetDatabaseCatalogTuple(catalog::Schema *schema, oid_t database_id, std::string database_name);
+
+std::unique_ptr<storage::Tuple> GetTableCatalogTuple(catalog::Schema *schema, oid_t table_id, std::string table_name,
+		oid_t database_id, std::string database_name);
 
 }
 }
