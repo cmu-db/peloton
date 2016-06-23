@@ -10,7 +10,8 @@ public class PelotonTest {
   private final String username = "postgres";
   private final String pass = "postgres";
 
-  private final String DROP = "DROP TABLE IF EXISTS A;" + "DROP TABLE A;" + "DROP TABLE IF EXISTS A;";
+  private final String DROP = "DROP TABLE IF EXISTS A;" +
+          "DROP TABLE IF EXISTS B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
