@@ -8,23 +8,23 @@ compiler:
 matrix:
     include:
         - compiler: gcc
-            addons:
-                apt:
-                    sources:
-                        - ubuntu-toolchain-r-test
-                        - boost-latest
+          addons:
+              apt:
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
                 packages:
                     - g++-4.9
-            env: COMPILER=g++-4.9
+          env: COMPILER=g++-4.9
         - compiler: gcc
-            addons:
+          addons:
                 apt:
                     sources:
                         - ubuntu-toolchain-r-test
                         - boost-latest
                 packages:
                     - g++-5
-            env: COMPILER=g++-5
+          env: COMPILER=g++-5
 
 before_script:
     # setup environment
