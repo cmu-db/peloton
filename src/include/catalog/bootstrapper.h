@@ -13,16 +13,10 @@
 #pragma once
 
 #include "common/types.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 
-namespace catalog {
-class Schema;
-}
-
-namespace storage {
-class DataTable;
-}
 
 namespace catalog {
 
@@ -30,24 +24,25 @@ namespace catalog {
 // Bootstrap
 //===--------------------------------------------------------------------===//
 
-class Bootstrap {
+class Bootstrapper {
  public:
+
+  static Catalog* global_catalog;
+  static bool bootstrapped;
+
+
   // Bootstrap Catalog
-  void bootstrap();
+  static Catalog* bootstrap();
+
+  // Initialize Global Catalog
+  static Catalog* InitializeGlobalCatalog();
 
   // Initialize Schemas
-  void InitializeCatalogsSchemas();
+  static void InitializeCatalogsSchemas();
 
-  // Create Table for pg_class
-  storage::DataTable CreateTableCatalog(oid_t table_oid, std::string table_name,
-                                        catalog::Schema *table_schema);
+  static Catalog* GetCatalog();
 
-  // Create Table for pg_database
-  storage::DataTable CreateDatabaseCatalog(oid_t table_oid,
-                                           std::string table_name,
-                                           catalog::Schema *table_schema);
 
-  // TODO: Other Catalogs should be added here
 };
 }
 }

@@ -34,32 +34,27 @@ Tuple::~Tuple() {
 Value Tuple::GetValue(const oid_t column_id) const {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
-
   const ValueType column_type = tuple_schema->GetType(column_id);
-
   const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema->IsInlined(column_id);
-
   return Value::InitFromTupleStorage(data_ptr, column_type, is_inlined);
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValue(const oid_t column_id, const Value &value,
+void Tuple::SetValue(const oid_t column_offset, const Value &value,
                      VarlenPool *data_pool) {
   PL_ASSERT(tuple_schema);
   PL_ASSERT(tuple_data);
 
-  const ValueType type = tuple_schema->GetType(column_id);
+  const ValueType type = tuple_schema->GetType(column_offset);
 
-  const bool is_inlined = tuple_schema->IsInlined(column_id);
-  char *value_location = GetDataPtr(column_id);
-  int32_t column_length = tuple_schema->GetLength(column_id);
-
+  const bool is_inlined = tuple_schema->IsInlined(column_offset);
+  char *value_location = GetDataPtr(column_offset);
+  int32_t column_length = tuple_schema->GetLength(column_offset);
   if (is_inlined == false)
-    column_length = tuple_schema->GetVariableLength(column_id);
+    column_length = tuple_schema->GetVariableLength(column_offset);
 
   const bool is_in_bytes = false;
-
   // Allocate in heap or given data pool depending on whether a pool is provided
   if (data_pool == nullptr) {
     // Skip casting if type is same

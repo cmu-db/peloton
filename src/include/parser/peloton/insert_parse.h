@@ -31,7 +31,12 @@ class InsertParse : public AbstractParse {
 
   const std::string GetInfo() const { return "InsertParse"; }
 
+  std::string GetTableName() { return entity_name; }
+
  private:
+
+ // Table Name
+ std::string entity_name;
 
 };
 

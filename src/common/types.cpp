@@ -168,15 +168,15 @@ std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
   switch (type) {
-    case (BACKEND_TYPE_MM):
+    case(BACKEND_TYPE_MM) :
       return "MM";
-    case (BACKEND_TYPE_NVM):
+    case(BACKEND_TYPE_NVM) :
       return "NVM";
-    case (BACKEND_TYPE_SSD):
+    case(BACKEND_TYPE_SSD) :
       return "SSD";
-    case (BACKEND_TYPE_HDD):
+    case(BACKEND_TYPE_HDD) :
       return "HDD";
-    case (BACKEND_TYPE_INVALID):
+    case(BACKEND_TYPE_INVALID) :
       return "INVALID";
     default: { return "UNKNOWN " + std::to_string(type); }
   }
@@ -263,6 +263,19 @@ ValueType StringToValueType(std::string str) {
   } else {
     throw ConversionException("No conversion from string :" + str);
   }
+  return VALUE_TYPE_INVALID;
+}
+
+ValueType PostgresStringToValueType(std::string str) {
+  if(str == "int4" || str=="int") return VALUE_TYPE_INTEGER;
+  else if(str == "int2" || str=="smallint") return VALUE_TYPE_SMALLINT;
+  else if(str == "date") return VALUE_TYPE_DATE;
+  else if(str == "timestamp" || str == "timestamptz") return VALUE_TYPE_TIMESTAMP;
+  else if(str == "float" || str=="float4" || str == "float8" || str == "double") return VALUE_TYPE_DOUBLE;
+  else if(str == "text" || str == "varchar"|| str == "char") return VALUE_TYPE_VARCHAR;
+  else if(str == "numeric" || str == "decimal") return VALUE_TYPE_DECIMAL;
+  else return VALUE_TYPE_INVALID;
+
   return VALUE_TYPE_INVALID;
 }
 
@@ -378,100 +391,44 @@ void AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
 
 std::string ExpressionTypeToString(ExpressionType type) {
   switch (type) {
-    case EXPRESSION_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case EXPRESSION_TYPE_OPERATOR_PLUS: {
-      return "OPERATOR_PLUS";
-    }
-    case EXPRESSION_TYPE_OPERATOR_MINUS: {
-      return "OPERATOR_MINUS";
-    }
+    case EXPRESSION_TYPE_INVALID: { return "INVALID"; }
+    case EXPRESSION_TYPE_OPERATOR_PLUS: { return "OPERATOR_PLUS"; }
+    case EXPRESSION_TYPE_OPERATOR_MINUS: { return "OPERATOR_MINUS"; }
     case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
       return "OPERATOR_UNARY_MINUS";
     }
 
-    case EXPRESSION_TYPE_OPERATOR_CASE_EXPR: {
-      return "OPERATOR_CASE_EXPR";
-    }
-    case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
-      return "OPERATOR_MULTIPLY";
-    }
-    case EXPRESSION_TYPE_OPERATOR_DIVIDE: {
-      return "OPERATOR_DIVIDE";
-    }
-    case EXPRESSION_TYPE_OPERATOR_CONCAT: {
-      return "OPERATOR_CONCAT";
-    }
-    case EXPRESSION_TYPE_OPERATOR_MOD: {
-      return "OPERATOR_MOD";
-    }
-    case EXPRESSION_TYPE_OPERATOR_CAST: {
-      return "OPERATOR_CAST";
-    }
-    case EXPRESSION_TYPE_OPERATOR_NOT: {
-      return "OPERATOR_NOT";
-    }
-    case EXPRESSION_TYPE_OPERATOR_IS_NULL: {
-      return "OPERATOR_IS_NULL";
-    }
-    case EXPRESSION_TYPE_OPERATOR_EXISTS: {
-      return "OPERATOR_EXISTS";
-    }
-    case EXPRESSION_TYPE_COMPARE_EQUAL: {
-      return "COMPARE_EQUAL";
-    }
-    case EXPRESSION_TYPE_COMPARE_NOTEQUAL: {
-      return "COMPARE_NOT_EQUAL";
-    }
-    case EXPRESSION_TYPE_COMPARE_LESSTHAN: {
-      return "COMPARE_LESSTHAN";
-    }
-    case EXPRESSION_TYPE_COMPARE_GREATERTHAN: {
-      return "COMPARE_GREATERTHAN";
-    }
+    case EXPRESSION_TYPE_OPERATOR_CASE_EXPR: { return "OPERATOR_CASE_EXPR"; }
+    case EXPRESSION_TYPE_OPERATOR_MULTIPLY: { return "OPERATOR_MULTIPLY"; }
+    case EXPRESSION_TYPE_OPERATOR_DIVIDE: { return "OPERATOR_DIVIDE"; }
+    case EXPRESSION_TYPE_OPERATOR_CONCAT: { return "OPERATOR_CONCAT"; }
+    case EXPRESSION_TYPE_OPERATOR_MOD: { return "OPERATOR_MOD"; }
+    case EXPRESSION_TYPE_OPERATOR_CAST: { return "OPERATOR_CAST"; }
+    case EXPRESSION_TYPE_OPERATOR_NOT: { return "OPERATOR_NOT"; }
+    case EXPRESSION_TYPE_OPERATOR_IS_NULL: { return "OPERATOR_IS_NULL"; }
+    case EXPRESSION_TYPE_OPERATOR_EXISTS: { return "OPERATOR_EXISTS"; }
+    case EXPRESSION_TYPE_COMPARE_EQUAL: { return "COMPARE_EQUAL"; }
+    case EXPRESSION_TYPE_COMPARE_NOTEQUAL: { return "COMPARE_NOT_EQUAL"; }
+    case EXPRESSION_TYPE_COMPARE_LESSTHAN: { return "COMPARE_LESSTHAN"; }
+    case EXPRESSION_TYPE_COMPARE_GREATERTHAN: { return "COMPARE_GREATERTHAN"; }
     case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
       return "COMPARE_LESSTHANOREQUALTO";
     }
     case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO: {
       return "COMPARE_GREATERTHANOREQUALTO";
     }
-    case EXPRESSION_TYPE_COMPARE_LIKE: {
-      return "COMPARE_LIKE";
-    }
-    case EXPRESSION_TYPE_COMPARE_NOTLIKE: {
-      return "COMPARE_NOT_LIKE";
-    }
-    case EXPRESSION_TYPE_COMPARE_IN: {
-      return "COMPARE_IN";
-    }
-    case EXPRESSION_TYPE_CONJUNCTION_AND: {
-      return "CONJUNCTION_AND";
-    }
-    case EXPRESSION_TYPE_CONJUNCTION_OR: {
-      return "CONJUNCTION_OR";
-    }
-    case EXPRESSION_TYPE_VALUE_CONSTANT: {
-      return "VALUE_CONSTANT";
-    }
-    case EXPRESSION_TYPE_VALUE_PARAMETER: {
-      return "VALUE_PARAMETER";
-    }
-    case EXPRESSION_TYPE_VALUE_TUPLE: {
-      return "VALUE_TUPLE";
-    }
-    case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: {
-      return "VALUE_TUPLE_ADDRESS";
-    }
-    case EXPRESSION_TYPE_VALUE_SCALAR: {
-      return "VALUE_SCALAR";
-    }
-    case EXPRESSION_TYPE_VALUE_NULL: {
-      return "VALUE_NULL";
-    }
-    case EXPRESSION_TYPE_AGGREGATE_COUNT: {
-      return "AGGREGATE_COUNT";
-    }
+    case EXPRESSION_TYPE_COMPARE_LIKE: { return "COMPARE_LIKE"; }
+    case EXPRESSION_TYPE_COMPARE_NOTLIKE: { return "COMPARE_NOT_LIKE"; }
+    case EXPRESSION_TYPE_COMPARE_IN: { return "COMPARE_IN"; }
+    case EXPRESSION_TYPE_CONJUNCTION_AND: { return "CONJUNCTION_AND"; }
+    case EXPRESSION_TYPE_CONJUNCTION_OR: { return "CONJUNCTION_OR"; }
+    case EXPRESSION_TYPE_VALUE_CONSTANT: { return "VALUE_CONSTANT"; }
+    case EXPRESSION_TYPE_VALUE_PARAMETER: { return "VALUE_PARAMETER"; }
+    case EXPRESSION_TYPE_VALUE_TUPLE: { return "VALUE_TUPLE"; }
+    case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: { return "VALUE_TUPLE_ADDRESS"; }
+    case EXPRESSION_TYPE_VALUE_SCALAR: { return "VALUE_SCALAR"; }
+    case EXPRESSION_TYPE_VALUE_NULL: { return "VALUE_NULL"; }
+    case EXPRESSION_TYPE_AGGREGATE_COUNT: { return "AGGREGATE_COUNT"; }
     case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR: {
       return "AGGREGATE_COUNT_STAR";
     }
@@ -484,110 +441,42 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD: {
       return "AGGREGATE_HYPERLOGLOGS_TO_CARD";
     }
-    case EXPRESSION_TYPE_AGGREGATE_SUM: {
-      return "AGGREGATE_SUM";
-    }
-    case EXPRESSION_TYPE_AGGREGATE_MIN: {
-      return "AGGREGATE_MIN";
-    }
-    case EXPRESSION_TYPE_AGGREGATE_MAX: {
-      return "AGGREGATE_MAX";
-    }
-    case EXPRESSION_TYPE_AGGREGATE_AVG: {
-      return "AGGREGATE_AVG";
-    }
-    case EXPRESSION_TYPE_FUNCTION: {
-      return "FUNCTION";
-    }
-    case EXPRESSION_TYPE_VALUE_VECTOR: {
-      return "VALUE_VECTOR";
-    }
-    case EXPRESSION_TYPE_HASH_RANGE: {
-      return "HASH_RANGE";
-    }
-    case EXPRESSION_TYPE_OPERATOR_NULLIF: {
-      return "NULLIF";
-    }
-    case EXPRESSION_TYPE_OPERATOR_COALESCE: {
-      return "COALESCE";
-    }
-    case EXPRESSION_TYPE_ROW_SUBQUERY: {
-      return "ROW_SUBQUERY";
-    }
-    case EXPRESSION_TYPE_SELECT_SUBQUERY: {
-      return "SELECT_SUBQUERY";
-    }
+    case EXPRESSION_TYPE_AGGREGATE_SUM: { return "AGGREGATE_SUM"; }
+    case EXPRESSION_TYPE_AGGREGATE_MIN: { return "AGGREGATE_MIN"; }
+    case EXPRESSION_TYPE_AGGREGATE_MAX: { return "AGGREGATE_MAX"; }
+    case EXPRESSION_TYPE_AGGREGATE_AVG: { return "AGGREGATE_AVG"; }
+    case EXPRESSION_TYPE_FUNCTION: { return "FUNCTION"; }
+    case EXPRESSION_TYPE_VALUE_VECTOR: { return "VALUE_VECTOR"; }
+    case EXPRESSION_TYPE_HASH_RANGE: { return "HASH_RANGE"; }
+    case EXPRESSION_TYPE_OPERATOR_NULLIF: { return "NULLIF"; }
+    case EXPRESSION_TYPE_OPERATOR_COALESCE: { return "COALESCE"; }
+    case EXPRESSION_TYPE_ROW_SUBQUERY: { return "ROW_SUBQUERY"; }
+    case EXPRESSION_TYPE_SELECT_SUBQUERY: { return "SELECT_SUBQUERY"; }
 
     // TODO: Added by us
-    case EXPRESSION_TYPE_PLACEHOLDER: {
-      return "PLACEHOLDER";
-    }
-    case EXPRESSION_TYPE_COLUMN_REF: {
-      return "COLUMN_REF";
-    }
-    case EXPRESSION_TYPE_FUNCTION_REF: {
-      return "FUNCTION_REF";
-    }
-    case EXPRESSION_TYPE_CAST: {
-      return "CAST";
-    }
-    case EXPRESSION_TYPE_STAR: {
-      return "STAR";
-    }
-    case EXPRESSION_TYPE_SUBSTR: {
-      return "SUBSTRING";
-    }
-    case EXPRESSION_TYPE_ASCII: {
-      return "ASCII";
-    }
-    case EXPRESSION_TYPE_OCTET_LEN: {
-      return "OCTET_LENGTH";
-    }
-    case EXPRESSION_TYPE_CHAR: {
-      return "CHAR";
-    }
-    case EXPRESSION_TYPE_CHAR_LEN: {
-      return "CHAR_LEN";
-    }
-    case EXPRESSION_TYPE_SPACE: {
-      return "SPACE";
-    }
-    case EXPRESSION_TYPE_REPEAT: {
-      return "REPEAT";
-    }
-    case EXPRESSION_TYPE_POSITION: {
-      return "POSITION";
-    }
-    case EXPRESSION_TYPE_LEFT: {
-      return "LEFT";
-    }
-    case EXPRESSION_TYPE_RIGHT: {
-      return "RIGHT";
-    }
-    case EXPRESSION_TYPE_CONCAT: {
-      return "CONCAT";
-    }
-    case EXPRESSION_TYPE_LTRIM: {
-      return "L_TRIM";
-    }
-    case EXPRESSION_TYPE_RTRIM: {
-      return "R_TRIM";
-    }
-    case EXPRESSION_TYPE_BTRIM: {
-      return "B_TRIM";
-    }
-    case EXPRESSION_TYPE_REPLACE: {
-      return "REPLACE";
-    }
-    case EXPRESSION_TYPE_OVERLAY: {
-      return "OVERLAY";
-    }
-    case EXPRESSION_TYPE_EXTRACT: {
-      return "EXTRACT";
-    }
-    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP: {
-      return "DATE_TO_TIMESTAMP";
-    }
+    case EXPRESSION_TYPE_PLACEHOLDER: { return "PLACEHOLDER"; }
+    case EXPRESSION_TYPE_COLUMN_REF: { return "COLUMN_REF"; }
+    case EXPRESSION_TYPE_FUNCTION_REF: { return "FUNCTION_REF"; }
+    case EXPRESSION_TYPE_CAST: { return "CAST"; }
+    case EXPRESSION_TYPE_STAR: { return "STAR"; }
+    case EXPRESSION_TYPE_SUBSTR: { return "SUBSTRING"; }
+    case EXPRESSION_TYPE_ASCII: { return "ASCII"; }
+    case EXPRESSION_TYPE_OCTET_LEN: { return "OCTET_LENGTH"; }
+    case EXPRESSION_TYPE_CHAR: { return "CHAR"; }
+    case EXPRESSION_TYPE_CHAR_LEN: { return "CHAR_LEN"; }
+    case EXPRESSION_TYPE_SPACE: { return "SPACE"; }
+    case EXPRESSION_TYPE_REPEAT: { return "REPEAT"; }
+    case EXPRESSION_TYPE_POSITION: { return "POSITION"; }
+    case EXPRESSION_TYPE_LEFT: { return "LEFT"; }
+    case EXPRESSION_TYPE_RIGHT: { return "RIGHT"; }
+    case EXPRESSION_TYPE_CONCAT: { return "CONCAT"; }
+    case EXPRESSION_TYPE_LTRIM: { return "L_TRIM"; }
+    case EXPRESSION_TYPE_RTRIM: { return "R_TRIM"; }
+    case EXPRESSION_TYPE_BTRIM: { return "B_TRIM"; }
+    case EXPRESSION_TYPE_REPLACE: { return "REPLACE"; }
+    case EXPRESSION_TYPE_OVERLAY: { return "OVERLAY"; }
+    case EXPRESSION_TYPE_EXTRACT: { return "EXTRACT"; }
+    case EXPRESSION_TYPE_DATE_TO_TIMESTAMP: { return "DATE_TO_TIMESTAMP"; }
   }
   return "INVALID";
 }
@@ -728,18 +617,10 @@ IndexType StringToIndexType(const std::string& str) {
 
 std::string IndexConstraintTypeToString(IndexConstraintType type) {
   switch (type) {
-    case INDEX_CONSTRAINT_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case INDEX_CONSTRAINT_TYPE_DEFAULT: {
-      return "NORMAL";
-    }
-    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-      return "PRIMARY_KEY";
-    }
-    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-      return "UNIQUE";
-    }
+    case INDEX_CONSTRAINT_TYPE_INVALID: { return "INVALID"; }
+    case INDEX_CONSTRAINT_TYPE_DEFAULT: { return "NORMAL"; }
+    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: { return "PRIMARY_KEY"; }
+    case INDEX_CONSTRAINT_TYPE_UNIQUE: { return "UNIQUE"; }
   }
   return "INVALID";
 }
@@ -762,90 +643,36 @@ IndexConstraintType StringToIndexConstraintType(const std::string& str) {
 
 std::string PlanNodeTypeToString(PlanNodeType type) {
   switch (type) {
-    case PLAN_NODE_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case PLAN_NODE_TYPE_ABSTRACT_SCAN: {
-      return "ABSTRACT_SCAN";
-    }
-    case PLAN_NODE_TYPE_SEQSCAN: {
-      return "SEQSCAN";
-    }
-    case PLAN_NODE_TYPE_INDEXSCAN: {
-      return "INDEXSCAN";
-    }
-    case PLAN_NODE_TYPE_NESTLOOP: {
-      return "NESTLOOP";
-    }
-    case PLAN_NODE_TYPE_NESTLOOPINDEX: {
-      return "NESTLOOPINDEX";
-    }
-    case PLAN_NODE_TYPE_MERGEJOIN: {
-      return "MERGEJOIN";
-    }
-    case PLAN_NODE_TYPE_HASHJOIN: {
-      return "HASHJOIN";
-    }
-    case PLAN_NODE_TYPE_UPDATE: {
-      return "UPDATE";
-    }
-    case PLAN_NODE_TYPE_INSERT: {
-      return "DELETE";
-    }
-    case PLAN_NODE_TYPE_DELETE: {
-      return "DELETE";
-    }
-    case PLAN_NODE_TYPE_SEND: {
-      return "SEND";
-    }
-    case PLAN_NODE_TYPE_RECEIVE: {
-      return "RECEIVE";
-    }
-    case PLAN_NODE_TYPE_PRINT: {
-      return "PRINT";
-    }
-    case PLAN_NODE_TYPE_AGGREGATE: {
-      return "AGGREGATE";
-    }
-    case PLAN_NODE_TYPE_HASHAGGREGATE: {
-      return "HASHAGGREGATE";
-    }
-    case PLAN_NODE_TYPE_UNION: {
-      return "UNION";
-    }
-    case PLAN_NODE_TYPE_ORDERBY: {
-      return "RECEIVE";
-    }
-    case PLAN_NODE_TYPE_PROJECTION: {
-      return "PROJECTION";
-    }
-    case PLAN_NODE_TYPE_MATERIALIZE: {
-      return "MATERIALIZE";
-    }
-    case PLAN_NODE_TYPE_LIMIT: {
-      return "LIMIT";
-    }
-    case PLAN_NODE_TYPE_DISTINCT: {
-      return "DISTINCT";
-    }
-    case PLAN_NODE_TYPE_SETOP: {
-      return "SETOP";
-    }
-    case PLAN_NODE_TYPE_APPEND: {
-      return "APPEND";
-    }
-    case PLAN_NODE_TYPE_RESULT: {
-      return "RESULT";
-    }
-    case PLAN_NODE_TYPE_AGGREGATE_V2: {
-      return "AGGREGATE_V2";
-    }
-    case PLAN_NODE_TYPE_MOCK: {
-      return "MOCK";
-    }
-    case PLAN_NODE_TYPE_HASH: {
-      return "HASH";
-    }
+    case PLAN_NODE_TYPE_INVALID: { return "INVALID"; }
+    case PLAN_NODE_TYPE_ABSTRACT_SCAN: { return "ABSTRACT_SCAN"; }
+    case PLAN_NODE_TYPE_SEQSCAN: { return "SEQSCAN"; }
+    case PLAN_NODE_TYPE_INDEXSCAN: { return "INDEXSCAN"; }
+    case PLAN_NODE_TYPE_NESTLOOP: { return "NESTLOOP"; }
+    case PLAN_NODE_TYPE_NESTLOOPINDEX: { return "NESTLOOPINDEX"; }
+    case PLAN_NODE_TYPE_MERGEJOIN: { return "MERGEJOIN"; }
+    case PLAN_NODE_TYPE_HASHJOIN: { return "HASHJOIN"; }
+    case PLAN_NODE_TYPE_UPDATE: { return "UPDATE"; }
+    case PLAN_NODE_TYPE_INSERT: { return "DELETE"; }
+    case PLAN_NODE_TYPE_DELETE: { return "DELETE"; }
+    case PLAN_NODE_TYPE_SEND: { return "SEND"; }
+    case PLAN_NODE_TYPE_RECEIVE: { return "RECEIVE"; }
+    case PLAN_NODE_TYPE_PRINT: { return "PRINT"; }
+    case PLAN_NODE_TYPE_AGGREGATE: { return "AGGREGATE"; }
+    case PLAN_NODE_TYPE_HASHAGGREGATE: { return "HASHAGGREGATE"; }
+    case PLAN_NODE_TYPE_UNION: { return "UNION"; }
+    case PLAN_NODE_TYPE_ORDERBY: { return "RECEIVE"; }
+    case PLAN_NODE_TYPE_PROJECTION: { return "PROJECTION"; }
+    case PLAN_NODE_TYPE_MATERIALIZE: { return "MATERIALIZE"; }
+    case PLAN_NODE_TYPE_LIMIT: { return "LIMIT"; }
+    case PLAN_NODE_TYPE_DISTINCT: { return "DISTINCT"; }
+    case PLAN_NODE_TYPE_SETOP: { return "SETOP"; }
+    case PLAN_NODE_TYPE_APPEND: { return "APPEND"; }
+    case PLAN_NODE_TYPE_RESULT: { return "RESULT"; }
+    case PLAN_NODE_TYPE_AGGREGATE_V2: { return "AGGREGATE_V2"; }
+    case PLAN_NODE_TYPE_MOCK: { return "MOCK"; }
+    case PLAN_NODE_TYPE_HASH: { return "HASH"; }
+    case PLAN_NODE_TYPE_DROP: { return "DROP"; }
+    case PLAN_NODE_TYPE_CREATE: { return "CREATE"; }
   }
   return "INVALID";
 }
@@ -901,36 +728,19 @@ PlanNodeType StringToPlanNodeType(const std::string& str) {
 
 std::string ParseNodeTypeToString(ParseNodeType type) {
   switch (type) {
-    case PARSE_NODE_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case PARSE_NODE_TYPE_SCAN: {
-      return "SCAN";
-    }
-    case PARSE_NODE_TYPE_CREATE: {
-      return "CREATE";
-    }
-    case PARSE_NODE_TYPE_DROP: {
-      return "DROP";
-    }
-    case PARSE_NODE_TYPE_UPDATE: {
-      return "UPDATE";
-    }
-    case PARSE_NODE_TYPE_INSERT: {
-      return "INSERT";
-    }
-    case PARSE_NODE_TYPE_DELETE: {
-      return "DELETE";
-    }
-    case PARSE_NODE_TYPE_PREPARE: {
-      return "PREPARE";
-    }
-    case PARSE_NODE_TYPE_EXECUTE: {
-      return "EXECUTE";
-    }
-    case PARSE_NODE_TYPE_MOCK: {
-      return "MOCK";
-    }
+    case PARSE_NODE_TYPE_INVALID: { return "INVALID"; }
+    case PARSE_NODE_TYPE_SCAN: { return "SCAN"; }
+    case PARSE_NODE_TYPE_CREATE: { return "CREATE"; }
+    case PARSE_NODE_TYPE_DROP: { return "DROP"; }
+    case PARSE_NODE_TYPE_UPDATE: { return "UPDATE"; }
+    case PARSE_NODE_TYPE_INSERT: { return "INSERT"; }
+    case PARSE_NODE_TYPE_DELETE: { return "DELETE"; }
+    case PARSE_NODE_TYPE_PREPARE: { return "PREPARE"; }
+    case PARSE_NODE_TYPE_EXECUTE: { return "EXECUTE"; }
+    case PARSE_NODE_TYPE_SELECT: { return "SELECT"; }
+    case PARSE_NODE_TYPE_JOIN_EXPR: { return "JOIN_EXPR"; }
+    case PARSE_NODE_TYPE_TABLE: { return "TABLE"; }
+    case PARSE_NODE_TYPE_MOCK: { return "MOCK"; }
   }
   return "INVALID";
 }
@@ -954,6 +764,12 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
     return PARSE_NODE_TYPE_PREPARE;
   } else if (str == "EXECUTE") {
     return PARSE_NODE_TYPE_EXECUTE;
+  } else if (str == "SELECT") {
+    return PARSE_NODE_TYPE_SELECT;
+  } else if (str == "JOIN_EXPR") {
+    return PARSE_NODE_TYPE_JOIN_EXPR;
+  } else if (str == "TABLE") {
+    return PARSE_NODE_TYPE_TABLE;
   } else if (str == "MOCK") {
     return PARSE_NODE_TYPE_MOCK;
   }
@@ -966,33 +782,15 @@ ParseNodeType StringToParseNodeType(const std::string& str) {
 
 std::string ConstraintTypeToString(ConstraintType type) {
   switch (type) {
-    case CONSTRAINT_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case CONSTRAINT_TYPE_NULL: {
-      return "NULL";
-    }
-    case CONSTRAINT_TYPE_NOTNULL: {
-      return "NOTNULL";
-    }
-    case CONSTRAINT_TYPE_DEFAULT: {
-      return "DEFAULT";
-    }
-    case CONSTRAINT_TYPE_CHECK: {
-      return "CHECK";
-    }
-    case CONSTRAINT_TYPE_PRIMARY: {
-      return "PRIMARY_KEY";
-    }
-    case CONSTRAINT_TYPE_UNIQUE: {
-      return "UNIQUE";
-    }
-    case CONSTRAINT_TYPE_FOREIGN: {
-      return "FOREIGN_KEY";
-    }
-    case CONSTRAINT_TYPE_EXCLUSION: {
-      return "EXCLUSION";
-    }
+    case CONSTRAINT_TYPE_INVALID: { return "INVALID"; }
+    case CONSTRAINT_TYPE_NULL: { return "NULL"; }
+    case CONSTRAINT_TYPE_NOTNULL: { return "NOTNULL"; }
+    case CONSTRAINT_TYPE_DEFAULT: { return "DEFAULT"; }
+    case CONSTRAINT_TYPE_CHECK: { return "CHECK"; }
+    case CONSTRAINT_TYPE_PRIMARY: { return "PRIMARY_KEY"; }
+    case CONSTRAINT_TYPE_UNIQUE: { return "UNIQUE"; }
+    case CONSTRAINT_TYPE_FOREIGN: { return "FOREIGN_KEY"; }
+    case CONSTRAINT_TYPE_EXCLUSION: { return "EXCLUSION"; }
   }
   return "INVALID";
 }
@@ -1055,48 +853,32 @@ std::string LoggingTypeToString(LoggingType type) {
 
 std::string LoggingStatusToString(LoggingStatus type) {
   switch (type) {
-    case LOGGING_STATUS_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case LOGGING_STATUS_TYPE_STANDBY: {
-      return "LOGGING_STATUS_TYPE_STANDBY";
-    }
+    case LOGGING_STATUS_TYPE_INVALID: { return "INVALID"; }
+    case LOGGING_STATUS_TYPE_STANDBY: { return "LOGGING_STATUS_TYPE_STANDBY"; }
     case LOGGING_STATUS_TYPE_RECOVERY: {
       return "LOGGING_STATUS_TYPE_RECOVERY";
     }
-    case LOGGING_STATUS_TYPE_LOGGING: {
-      return "LOGGING_STATUS_TYPE_ONGOING";
-    }
+    case LOGGING_STATUS_TYPE_LOGGING: { return "LOGGING_STATUS_TYPE_ONGOING"; }
     case LOGGING_STATUS_TYPE_TERMINATE: {
       return "LOGGING_STATUS_TYPE_TERMINATE";
     }
-    case LOGGING_STATUS_TYPE_SLEEP: {
-      return "LOGGING_STATUS_TYPE_SLEEP";
-    }
+    case LOGGING_STATUS_TYPE_SLEEP: { return "LOGGING_STATUS_TYPE_SLEEP"; }
   }
   return "INVALID";
 }
 
 std::string LoggerTypeToString(LoggerType type) {
   switch (type) {
-    case LOGGER_TYPE_INVALID: {
-      return "INVALID";
-    }
-    case LOGGER_TYPE_FRONTEND: {
-      return "LOGGER_TYPE_FRONTEND";
-    }
-    case LOGGER_TYPE_BACKEND: {
-      return "LOGGER_TYPE_BACKEND";
-    }
+    case LOGGER_TYPE_INVALID: { return "INVALID"; }
+    case LOGGER_TYPE_FRONTEND: { return "LOGGER_TYPE_FRONTEND"; }
+    case LOGGER_TYPE_BACKEND: { return "LOGGER_TYPE_BACKEND"; }
   }
   return "INVALID";
 }
 
 std::string LogRecordTypeToString(LogRecordType type) {
   switch (type) {
-    case LOGRECORD_TYPE_INVALID: {
-      return "INVALID";
-    }
+    case LOGRECORD_TYPE_INVALID: { return "INVALID"; }
     case LOGRECORD_TYPE_TRANSACTION_BEGIN: {
       return "LOGRECORD_TYPE_TRANSACTION_BEGIN";
     }
@@ -1112,15 +894,9 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LOGRECORD_TYPE_TRANSACTION_DONE: {
       return "LOGRECORD_TYPE_TRANSACTION_DONE";
     }
-    case LOGRECORD_TYPE_TUPLE_INSERT: {
-      return "LOGRECORD_TYPE_TUPLE_INSERT";
-    }
-    case LOGRECORD_TYPE_TUPLE_DELETE: {
-      return "LOGRECORD_TYPE_TUPLE_DELETE";
-    }
-    case LOGRECORD_TYPE_TUPLE_UPDATE: {
-      return "LOGRECORD_TYPE_TUPLE_UPDATE";
-    }
+    case LOGRECORD_TYPE_TUPLE_INSERT: { return "LOGRECORD_TYPE_TUPLE_INSERT"; }
+    case LOGRECORD_TYPE_TUPLE_DELETE: { return "LOGRECORD_TYPE_TUPLE_DELETE"; }
+    case LOGRECORD_TYPE_TUPLE_UPDATE: { return "LOGRECORD_TYPE_TUPLE_UPDATE"; }
     case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
       return "LOGRECORD_TYPE_WAL_TUPLE_INSERT";
     }
@@ -1254,15 +1030,9 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
 
 std::string QuantifierTypeToString(QuantifierType type) {
   switch (type) {
-    case QUANTIFIER_TYPE_NONE: {
-      return "NONE";
-    }
-    case QUANTIFIER_TYPE_ANY: {
-      return "ANY";
-    }
-    case QUANTIFIER_TYPE_ALL: {
-      return "ALL";
-    }
+    case QUANTIFIER_TYPE_NONE: { return "NONE"; }
+    case QUANTIFIER_TYPE_ANY: { return "ANY"; }
+    case QUANTIFIER_TYPE_ALL: { return "ALL"; }
   }
   return "INVALID";
 }

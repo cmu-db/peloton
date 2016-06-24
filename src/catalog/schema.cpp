@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 #include "catalog/schema.h"
 #include "common/macros.h"
