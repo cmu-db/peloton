@@ -26,8 +26,7 @@ Check out the [installation instructions](https://github.com/cmu-db/peloton/wiki
 
 ## Development / Contributing
 
-We invite you to help us build the future of self-driving DBMSs. This is the best moment to participate, as everyone can make an impact.<br>
-Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
+We invite you to help us build the future of self-driving DBMSs. This is the best moment to participate, as everyone can make an impact. Please look up the [contributing guide](https://github.com/cmu-db/peloton/blob/master/CONTRIBUTING.md#development) for details.
 
 ## Issues
 
