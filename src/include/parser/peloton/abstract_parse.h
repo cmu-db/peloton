@@ -23,6 +23,9 @@
 #include "common/types.h"
 #include "common/serializer.h"
 
+#include "parser/postgres.h"
+#include "parser/nodes/parsenodes.h"
+
 namespace peloton {
 namespace parser {
 
@@ -59,6 +62,7 @@ class AbstractParse : public Printable {
   // This is better than having to store redundant types in all the objects
   virtual ParseNodeType GetParseNodeType() const = 0;
 
+  virtual std::string GetTableName();
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//

@@ -31,8 +31,7 @@ void Column::SetInlined() {
   switch (column_type) {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-      is_inlined = false;
-      break;
+      break;  // No change of inlined setting
 
     default:
       is_inlined = true;

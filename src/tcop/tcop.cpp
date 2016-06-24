@@ -4,7 +4,7 @@
 //
 // thread_manager.cpp
 //
-// Identification: src/common/thread_manager.cpp
+// Identification: src/common/tcop.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,6 +19,7 @@
 
 #include "parser/postgres_parser.h"
 #include "optimizer/simple_optimizer.h"
+#include "executor/plan_executor.h"
 
 namespace peloton {
 namespace tcop {
@@ -58,7 +59,11 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
                                  result, rows_changed, error_message);
 
   if(status == Result::RESULT_SUCCESS) {
+	  LOG_INFO("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
+  }
+  else{
+	  LOG_INFO("Execution failed!");
   }
 
   return status;
@@ -71,11 +76,12 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
                                     UNUSED_ATTRIBUTE std::string &error_message){
 
   LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
+  std::vector<Value> params;
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Shit");
+  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  return status.m_result;
 
-  // This will construct an executor tree
-  // And set the tuple descriptor
-
-  return Result::RESULT_FAILURE;
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& statement_name,
@@ -97,4 +103,4 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
 
 }  // End tcop namespace
-}  // End peloton namespace
+} // End peloton namespace

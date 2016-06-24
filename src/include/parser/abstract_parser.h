@@ -33,8 +33,7 @@ class AbstractParser {
   virtual ~AbstractParser();
 
   virtual std::unique_ptr<parser::AbstractParse> BuildParseTree(
-      const std::string& query_string) = 0;
-
+      const std::string &query_string) = 0;
 };
 
 }  // End parser namespace
