@@ -14,13 +14,15 @@
 
 #include "planner/abstract_plan.h"
 
-#include "storage/data_table.h"
-#include "parser/peloton/create_parse.h"
-
 namespace peloton {
-
+namespace catalog {
+class Schema;
+}
 namespace storage{
 class DataTable;
+}
+namespace parser{
+class CreateParse;
 }
 
 namespace planner {
@@ -33,21 +35,11 @@ class CreatePlan : public AbstractPlan {
   CreatePlan(CreatePlan &&) = delete;
   CreatePlan &operator=(CreatePlan &&) = delete;
 
-  explicit CreatePlan(storage::DataTable *table) {
-	  target_table_ = table;
-	  table_schema = nullptr;
-  }
+  explicit CreatePlan(storage::DataTable *table);
 
-  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema) {
-    table_name = name;
-    table_schema = schema.release();
-  }
+  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema);
 
-  explicit CreatePlan(parser::CreateParse *parse_tree){
-    table_name = parse_tree->GetTableName();
-	 std::unique_ptr<catalog::Schema> table_schemas(new catalog::Schema(parse_tree->GetColumns()));
-    table_schema = table_schemas.release();
-  }
+  explicit CreatePlan(parser::CreateParse *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_CREATE;
@@ -64,7 +56,7 @@ class CreatePlan : public AbstractPlan {
   std::string GetTableName() const { return table_name; }
 
   catalog::Schema* GetSchema() const {
-	  return table_schema;
+    return table_schema;
   }
 
  private:

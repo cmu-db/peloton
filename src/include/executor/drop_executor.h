@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// create_executor.h
+// drop_executor.h
 //
-// Identification: src/include/executor/create_executor.h
+// Identification: src/include/executor/drop_executor.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,9 +13,7 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
-#include "planner/create_plan.h"
-
-#include <vector>
+#include "planner/drop_plan.h"
 
 namespace peloton {
 
@@ -25,17 +23,17 @@ class DataTable;
 
 namespace executor {
 
-class CreateExecutor : public AbstractExecutor {
+class DropExecutor : public AbstractExecutor {
  public:
-	CreateExecutor(const CreateExecutor &) = delete;
-	CreateExecutor &operator=(const CreateExecutor &) = delete;
-	CreateExecutor(CreateExecutor &&) = delete;
-	CreateExecutor &operator=(CreateExecutor &&) = delete;
+	DropExecutor(const DropExecutor &) = delete;
+	DropExecutor &operator=(const DropExecutor &) = delete;
+	DropExecutor(DropExecutor &&) = delete;
+	DropExecutor &operator=(DropExecutor &&) = delete;
 
-	CreateExecutor(const planner::AbstractPlan *node,
+	DropExecutor(const planner::AbstractPlan *node,
                  ExecutorContext *executor_context);
 
-  ~CreateExecutor() {}
+  ~DropExecutor() {}
 
  protected:
   bool DInit();
