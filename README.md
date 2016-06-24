@@ -8,8 +8,6 @@
 
 ## What Is Peloton?
 
-[![Join the chat at https://gitter.im/cmu-db/peloton](https://badges.gitter.im/cmu-db/peloton.svg)](https://gitter.im/cmu-db/peloton?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 Peloton is an in-memory DBMS designed for real-time analytics. It can handle both fast ACID transactions and complex analytical queries on the same database. 
 
 ## What Problem Does Peloton Solve?
