@@ -13,11 +13,17 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
-#include "storage/data_table.h"
-#include "parser/peloton/drop_parse.h"
 
 namespace peloton {
-
+namespace storage {
+class DataTable;
+}
+namespace parser {
+class DropParse;
+}
+namespace catalog {
+class Schema;
+}
 
 namespace planner {
 class DropPlan : public AbstractPlan {
@@ -29,17 +35,11 @@ class DropPlan : public AbstractPlan {
   DropPlan(DropPlan &&) = delete;
   DropPlan &operator=(DropPlan &&) = delete;
 
-  explicit DropPlan(storage::DataTable *table) : target_table_(table) {
-	  missing = false;
-  }
+  explicit DropPlan(storage::DataTable *table);
 
-  explicit DropPlan(std::string name) : table_name(name) {
-	  missing = false;
-  }
+  explicit DropPlan(std::string name);
 
-  explicit DropPlan(parser::DropParse *parse_tree) : table_name(parse_tree->GetEntityName()) {
-	  missing = parse_tree->IsMissing();
-  }
+  explicit DropPlan(parser::DropParse *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;

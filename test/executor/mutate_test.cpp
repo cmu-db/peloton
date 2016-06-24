@@ -16,6 +16,7 @@
 #include <vector>
 #include <atomic>
 
+#include "executor/drop_executor.h"
 #include "common/harness.h"
 
 #include "catalog/schema.h"
@@ -24,7 +25,6 @@
 #include "catalog/bootstrapper.h"
 #include "catalog/catalog.h"
 
-#include "executor/drop_executer.h"
 #include "executor/executor_context.h"
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"

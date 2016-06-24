@@ -16,7 +16,6 @@
 #include "common/types.h"
 
 namespace peloton {
-
 namespace storage {
 class DataTable;
 }

@@ -14,6 +14,8 @@
 
 // This is just for convenience
 
+#include "create_executor.h"
+#include "drop_executor.h"
 #include "executor/aggregate_executor.h"
 #include "executor/limit_executor.h"
 #include "executor/materialization_executor.h"
@@ -30,5 +32,3 @@
 #include "executor/hash_set_op_executor.h"
 #include "executor/append_executor.h"
 #include "executor/projection_executor.h"
-#include "executor/drop_executer.h"
-#include "executor/create_executer.h"
