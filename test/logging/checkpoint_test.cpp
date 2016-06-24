@@ -40,7 +40,6 @@ namespace test {
 
 class CheckpointTests : public PelotonTest {};
 
-/*
 oid_t GetTotalTupleCount(size_t table_tile_group_count, cid_t next_cid) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -242,7 +241,6 @@ TEST_F(CheckpointTests, CheckpointModeTransitionTest) {
   checkpoint_manager.SetCheckpointStatus(CHECKPOINT_STATUS_INVALID);
   thread.join();
 }
-*/
 
 }  // End test namespace
 }  // End peloton namespace
