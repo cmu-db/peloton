@@ -54,10 +54,10 @@ class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static int columncount = 4;
-static size_t tuples_per_tile_group = 100;
+static size_t tuples_per_tile_group = 1000;
 static size_t tile_group = 10;
 static float scalar = 0.4;
-static size_t iter = 10;
+static size_t iter = 100;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table, bool
                  indexes) {
@@ -264,6 +264,10 @@ void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
                                                      tile_group *
                                                      tuples_per_tile_group * (1.0 - scalar));
 
+  LOG_TRACE("Lower bound : %s Upper bound : %s",
+            lower_bound.GetInfo().c_str(),
+            higher_bound.GetInfo().c_str());
+
   while (executor->Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(
         executor->GetOutput());
@@ -294,7 +298,7 @@ void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
     LOG_INFO("%f", time_per_transaction);
   }
 
-  LOG_INFO("Tuple counts : %lu", tuple_counts);
+  LOG_TRACE("Tuple counts : %lu", tuple_counts);
   EXPECT_EQ(tuple_counts,
             tile_group * tuples_per_tile_group -
             (tile_group * tuples_per_tile_group * scalar));
