@@ -21,7 +21,10 @@
 #include "catalog/schema.h"
 #include "common/value_factory.h"
 #include "common/pool.h"
+#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
 
+#include "executor/drop_executer.h"
 #include "executor/executor_context.h"
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
@@ -40,6 +43,7 @@
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
+#include "planner/drop_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -60,6 +64,7 @@ class MutateTests : public PelotonTest {};
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
+
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -74,7 +79,6 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
     executor::InsertExecutor executor(&node, context.get());
     executor.Execute();
   }
-
   txn_manager.CommitTransaction();
 }
 

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "abstract_plan.h"
+#include "planner/abstract_plan.h"
 #include "common/types.h"
 
 namespace peloton {

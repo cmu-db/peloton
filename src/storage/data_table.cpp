@@ -80,7 +80,6 @@ DataTable::~DataTable() {
   for (auto index : indexes_) {
     delete index;
   }
-
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
@@ -113,6 +112,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
+	  LOG_INFO("Not NULL constraint violated");
     throw ConstraintException("Not NULL constraint violated : " +
                               std::string(tuple->GetInfo()));
     return false;
@@ -136,11 +136,11 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   }
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+/*  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
     return free_item_pointer;
-  }
+  }*/
   //====================================================
 
   std::shared_ptr<storage::TileGroup> tile_group;
@@ -257,7 +257,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
-
   return location;
 }
 

@@ -23,7 +23,7 @@ namespace optimizer {
 // Simple Optimizer
 //===--------------------------------------------------------------------===//
 
-class SimpleOptimizer : AbstractOptimizer {
+class SimpleOptimizer : public AbstractOptimizer {
  public:
   SimpleOptimizer(const SimpleOptimizer &) = delete;
   SimpleOptimizer &operator=(const SimpleOptimizer &) = delete;
@@ -33,10 +33,10 @@ class SimpleOptimizer : AbstractOptimizer {
   SimpleOptimizer();
   virtual ~SimpleOptimizer();
 
-  static std::shared_ptr<planner::AbstractPlan>
-  BuildPlanTree(const std::unique_ptr<parser::AbstractParse>& parse_tree);
+  static std::shared_ptr<planner::AbstractPlan> BuildPlanTree(
+      const std::unique_ptr<parser::AbstractParse>& parse_tree);
 
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

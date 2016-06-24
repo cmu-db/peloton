@@ -66,12 +66,10 @@ bool DeleteExecutor::DInit() {
  */
 bool DeleteExecutor::DExecute() {
   PL_ASSERT(target_table_);
-
   // Retrieve next tile.
   if (!children_[0]->Execute()) {
     return false;
   }
-
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   auto &pos_lists = source_tile.get()->GetPositionLists();
@@ -83,10 +81,12 @@ bool DeleteExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  LOG_TRACE("Source tile : %p Tuples : %lu ", source_tile.get(),
+  LOG_INFO("Source tile : %p Tuples : %lu ", source_tile.get(),
             source_tile->GetTupleCount());
 
-  LOG_TRACE("Transaction ID: %lu",
+  LOG_INFO("Source tile info: %s", source_tile->GetInfo().c_str());
+
+  LOG_INFO("Transaction ID: %lu",
             executor_context_->GetTransaction()->GetTransactionId());
 
   // Delete each tuple
@@ -95,26 +95,25 @@ bool DeleteExecutor::DExecute() {
 
     ItemPointer old_location(tile_group_id, physical_tuple_id);
 
-    LOG_TRACE("Visible Tuple id : %u, Physical Tuple id : %u ",
+    LOG_INFO("Visible Tuple id : %u, Physical Tuple id : %u ",
               visible_tuple_id, physical_tuple_id);
 
     if (transaction_manager.IsOwner(tile_group_header, physical_tuple_id) ==
         true) {
       // if the thread is the owner of the tuple, then directly update in place.
-
+      LOG_INFO("Thread is owner of the tuple");
       transaction_manager.PerformDelete(old_location);
 
     } else if (transaction_manager.IsOwnable(tile_group_header,
                                              physical_tuple_id) == true) {
       // if the tuple is not owned by any transaction and is visible to current
       // transaction.
-
+    	LOG_INFO("Thread is not the owner of the tuple, but still visible");
       if (transaction_manager.AcquireOwnership(tile_group_header, tile_group_id,
                                                physical_tuple_id) == false) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return false;
       }
-
       // if it is the latest version and not locked by other threads, then
       // insert a new version.
       std::unique_ptr<storage::Tuple> new_tuple(

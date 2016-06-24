@@ -163,7 +163,6 @@ static void ValidateMVCC_OldToNew(storage::DataTable *table) {
     }
     LOG_INFO("[OK] oldest-to-newest version chain validated");
   }
-
 }
 
 TEST_F(MVCCTest, SingleThreadVersionChainTest) {
