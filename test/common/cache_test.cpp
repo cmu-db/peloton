@@ -169,7 +169,7 @@ TEST_F(CacheTest, EvictionByInsert) {
  * Try to insert 2 times of the capacity of the cache
  * The cache should keep the most recent half
  */
-/* TODO: Fix this
+/* TODO: Fix this test
 TEST_F(CacheTest, EvictionWithAccessing) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
