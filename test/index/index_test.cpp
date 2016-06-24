@@ -47,7 +47,7 @@ index::Index *BuildIndex(const bool unique_keys) {
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024, "B", true);
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024, "B", false);
   catalog::Column column3(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
                           "C", true);
   catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),

@@ -125,7 +125,7 @@ TEST_F(BufferPoolTests, LargeTupleRecordTest) {
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "A", true);
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024 * 1024 * 20, "B", true);
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 1024 * 1024 * 20, "B", false);
 
   columns.push_back(column1);
   columns.push_back(column2);
