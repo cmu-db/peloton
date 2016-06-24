@@ -43,9 +43,3 @@ endif()
 find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
-
-# ---[ Libunwind
-find_package(Libunwind REQUIRED)
-include_directories(SYSTEM ${LIBUNWIND_INCLUDE_DIRS})
-list(APPEND Peloton_LINKER_LIBS ${LIBUNWIND_LIBRARIES})
-
