@@ -47,7 +47,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
   if (plan == nullptr) return p_status;
 
-  LOG_TRACE("PlanExecutor Start ");
+  LOG_INFO("PlanExecutor Start ");
 
   bool status;
   bool init_failure = false;
@@ -62,19 +62,18 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   }
   PL_ASSERT(txn);
 
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
-  LOG_TRACE("Building the executor tree");
+  LOG_INFO("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_INFO("Building the executor tree");
 
   // Use const std::vector<Value> &params to make it more elegant for network
   std::unique_ptr<executor::ExecutorContext> executor_context(
       BuildExecutorContext(params, txn));
-  // auto executor_context = BuildExecutorContext(param_list, txn);
 
   // Build the executor tree
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
       BuildExecutorTree(nullptr, plan, executor_context.get()));
 
-  LOG_TRACE("Initializing the executor tree");
+  LOG_INFO("Initializing the executor tree");
 
   // Initialize the executor tree
   status = executor_tree->Init();
@@ -86,7 +85,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
     goto cleanup;
   }
 
-  LOG_TRACE("Running the executor tree");
+  LOG_INFO("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
   for (;;) {
@@ -115,7 +114,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 // final cleanup
 cleanup:
 
-  LOG_TRACE("About to commit: single stmt: %d, init_failure: %d, status: %d",
+  LOG_INFO("About to commit: single stmt: %d, init_failure: %d, status: %d",
             single_statement_txn, init_failure, txn->GetResult());
 
   // should we commit or abort ?
@@ -124,13 +123,14 @@ cleanup:
     switch (status) {
       case Result::RESULT_SUCCESS:
         // Commit
+    	LOG_INFO("Commit Transaction");
         p_status.m_result = txn_manager.CommitTransaction();
-
         break;
 
       case Result::RESULT_FAILURE:
       default:
         // Abort
+    	LOG_INFO("Abort Transaction");
         p_status.m_result = txn_manager.AbortTransaction();
     }
   }
@@ -249,13 +249,19 @@ cleanup:
  */
 void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
                              std::string prefix) {
-  if (plan == nullptr) return;
+  if (plan == nullptr) {
+	  LOG_INFO("Plan is null");
+	  return;
+  }
 
   prefix += "  ";
 
-  LOG_TRACE("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
+  LOG_INFO("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
+  LOG_INFO("%s->Plan Info :: %s ", prefix.c_str(), plan->GetInfo().c_str());
 
   auto &children = plan->GetChildren();
+
+  LOG_INFO("Number of children in plan: %d ", (int)children.size());
 
   for (auto &child : children) {
     PrintPlan(child.get(), prefix);
@@ -347,6 +353,14 @@ executor::AbstractExecutor *BuildExecutorTree(
 
     case PLAN_NODE_TYPE_ORDERBY:
       child_executor = new executor::OrderByExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_DROP:
+      child_executor = new executor::DropExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_CREATE:
+      child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
 
     default:

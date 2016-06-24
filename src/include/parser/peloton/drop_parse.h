@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// insert_parse.h
+// drop_parse.h
 //
-// Identification: src/include/parser/insert_parse.h
+// Identification: src/include/parser/drop_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,6 +15,8 @@
 #include "parser/peloton/abstract_parse.h"
 
 #include "common/types.h"
+
+#include "common/logger.h"
 
 namespace peloton {
 namespace parser {
@@ -37,28 +39,35 @@ class DropParse : public AbstractParse {
 
     // Value
     foreach(object_item, object_list){
-      subobject_list = lfirst(object_item);
+      subobject_list = (List *)lfirst(object_item);
 
-      foreach(subobject_item, subobject_list){
-        ::Value *value = (::Value *) lfirst(subobject_item);
+      foreach(subobject_item, subobject_list) {
+        ::Value *value = (::Value *)lfirst(subobject_item);
         LOG_INFO("Table : %s ", strVal(value));
         entity_name = std::string(strVal(value));
+        missing = drop_node->missing_ok;
       }
     }
-
   }
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
 
+  const std::string GetEntityName() { return entity_name; }
+
   const std::string GetInfo() const { return "DropParse"; }
 
- private:
+  std::string GetTableName() { return entity_name; }
 
+  bool IsMissing() { return missing; }
+
+ private:
   // Type of entity
   EntityType entity_type = ENTITY_TYPE_INVALID;
 
   // Name of entity
   std::string entity_name;
+
+  bool missing;
 };
 
 }  // namespace parser

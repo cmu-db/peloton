@@ -57,7 +57,6 @@ storage::DataTable *Database::GetTableWithName(
 void Database::DropTableWithOid(const oid_t table_oid) {
   {
     std::lock_guard<std::mutex> lock(database_mutex);
-
     oid_t table_offset = 0;
     for (auto table : tables) {
       if (table->GetOid() == table_oid) {
@@ -68,7 +67,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
     }
     PL_ASSERT(table_offset < tables.size());
 
-    // Drop the database
+    // Drop the table
     tables.erase(tables.begin() + table_offset);
   }
 }
@@ -145,6 +144,11 @@ const std::string Database::GetInfo() const {
 
   return os.str();
 }
+
+std::string Database::GetDBName() { return database_name; }
+
+void Database::setDBName(const std::string& database_name) { Database::database_name = database_name; }
+
 
 }  // End storage namespace
 }  // End peloton namespace
