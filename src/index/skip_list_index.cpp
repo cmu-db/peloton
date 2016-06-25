@@ -14,6 +14,7 @@
 #include "index/skip_list_index.h"
 #include "index/index_key.h"
 #include "common/logger.h"
+#include "common/timer.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -202,6 +203,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               result.push_back(location_header);
             }
           }
+
         } break;
 
         case SCAN_DIRECTION_TYPE_INVALID:
@@ -355,6 +357,7 @@ FindMaxMinInColumns(
     std::map<oid_t, std::pair<Value, Value>> &non_leading_columns) {
   // find extreme nums on each column.
   LOG_TRACE("FindMinMax leading column %d", leading_column_id);
+
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     oid_t column_id = key_column_ids[i];
     if (column_id == leading_column_id) {
@@ -479,18 +482,26 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                         non_leading_columns);
 
-    for (auto key_column_id : metadata->GetKeySchema()->GetIndexedColumns()) {
-      if (non_leading_columns.find(key_column_id) ==
-          non_leading_columns.end()) {
+    auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
+    for (auto key_column_id : indexed_columns) {
+      if (key_column_id == leading_column_id) {
+        LOG_TRACE("Leading column : %u", key_column_id);
+        continue;
+      }
+
+      if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
         auto type =
             metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
         std::pair<Value, Value> range(Value::GetMinValue(type),
                                       Value::GetMaxValue(type));
         std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id,
                                                             range);
+
         non_leading_columns.insert(key_value);
       }
     }
+
+    LOG_TRACE("Non leading columns size : %lu", non_leading_columns.size());
 
     assert(intervals.size() != 0);
     // Search each interval of leading_column.
@@ -549,6 +560,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       switch (scan_direction) {
         case SCAN_DIRECTION_TYPE_FORWARD:
         case SCAN_DIRECTION_TYPE_BACKWARD: {
+
           // Scan the index entries in forward direction
           for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
               ++scan_itr) {
@@ -564,7 +576,10 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               result.push_back(location_header);
             }
           }
-        } break;
+
+        }
+        break;
+
 
         case SCAN_DIRECTION_TYPE_INVALID:
         default:
