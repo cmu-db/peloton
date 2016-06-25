@@ -182,10 +182,10 @@ void LoggingService::UpdateTuple(TupleRecord *record,
 // implements LoggingService ------------------------------------------
 
 void LoggingService::LogRecordReplay(
-    __attribute__((unused))::google::protobuf::RpcController *controller,
-    __attribute__((unused)) const networking::LogRecordReplayRequest *request,
-    __attribute__((unused)) networking::LogRecordReplayResponse *response,
-    __attribute__((unused))::google::protobuf::Closure *done) {
+    ::google::protobuf::RpcController *,
+    const networking::LogRecordReplayRequest *request,
+    networking::LogRecordReplayResponse *response,
+    ::google::protobuf::Closure *) {
   LogManager &manager = LogManager::GetInstance();
   if (request == nullptr) {
     manager.GetFrontendLogger(0)->RemoteDone(response->sequence_number());
