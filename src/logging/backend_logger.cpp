@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/logger.h"
 #include "logging/backend_logger.h"
 #include "logging/loggers/wal_backend_logger.h"

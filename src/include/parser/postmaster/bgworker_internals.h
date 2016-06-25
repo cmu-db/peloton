@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// bgworker_internals.h
+//
+// Identification: src/include/parser/postmaster/bgworker_internals.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*--------------------------------------------------------------------
  * bgworker_internals.h
  *		POSTGRES pluggable background workers internals

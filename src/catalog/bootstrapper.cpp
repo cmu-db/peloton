@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// bootstrap.cpp
+// bootstrapper.cpp
 //
-// Identification: src/catalog/bootstrap.cpp
+// Identification: src/catalog/bootstrapper.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "catalog/bootstrapper.h"
 #include "storage/table_factory.h"

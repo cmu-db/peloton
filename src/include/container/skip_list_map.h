@@ -1,14 +1,15 @@
 //===----------------------------------------------------------------------===//
 //
-//       Peloton
+//                         Peloton
 //
 // skip_list_map.h
 //
-// Identification: src/include/common/skip_list_map.h
+// Identification: src/include/container/skip_list_map.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

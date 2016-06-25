@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "executor/insert_executor.h"
 
 #include "catalog/manager.h"

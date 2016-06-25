@@ -10,29 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint_tile_scanner.h
-//
-// Identification: src/include/logging/checkpoint_tile_scanner.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// checkpoint_tile_scanner.h
-//
-// Identification: src/include/logging/checkpoint_tile_scanner.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 
 /*-------------------------------------------------------------------------
  *

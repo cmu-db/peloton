@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/portal.h"
 #include "common/logger.h"
 #include "common/statement.h"

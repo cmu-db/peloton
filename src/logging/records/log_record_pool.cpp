@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "logging/records/log_record_pool.h"
 
 namespace peloton {

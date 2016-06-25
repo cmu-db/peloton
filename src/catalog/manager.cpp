@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/exception.h"
 #include "common/logger.h"
 #include "catalog/manager.h"

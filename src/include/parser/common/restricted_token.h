@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// restricted_token.h
+//
+// Identification: src/include/parser/common/restricted_token.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  *	restricted_token.h
  *		helper routine to ensure restricted token on Windows

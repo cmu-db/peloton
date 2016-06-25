@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "storage/table_factory.h"
 
 #include "common/exception.h"

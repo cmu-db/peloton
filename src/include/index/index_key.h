@@ -4,11 +4,12 @@
 //
 // index_key.h
 //
-// Identification: src/backend/index/index_key.h
+// Identification: src/include/index/index_key.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

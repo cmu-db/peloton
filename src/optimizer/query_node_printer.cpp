@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/query_node_printer.h"
 #include "optimizer/query_operators.h"
 #include "common/types.h"

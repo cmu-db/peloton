@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "logging/records/tuple_record.h"
 #include "common/logger.h"
 #include "common/macros.h"

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/macros.h"
 #include "logging/checkpoint_tile_scanner.h"
 #include "storage/tile_group_header.h"

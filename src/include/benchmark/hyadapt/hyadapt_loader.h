@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include "benchmark/hyadapt/hyadapt_configuration.h"

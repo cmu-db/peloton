@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_config_os.h
+//
+// Identification: src/include/parser/port_config/linux/pg_config_os.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /* src/include/port/linux.h */
 
 /*

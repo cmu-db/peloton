@@ -55,7 +55,7 @@ header_comment_5 = header_comment_line_6 + header_comment_line_7 + header_commen
 						+ header_comment_line_9
 
 #regular expresseion used to track header
-header_regex = re.compile("(\/\/===-*===\/\/\n(\/\/.*\n)*\/\/===-*===\/\/[\n]*)(#include|#pragma|#ifndef)")
+header_regex = re.compile("((\/\/===-*===\/\/\n(\/\/.*\n)*\/\/===-*===\/\/[\n]*)\n\n)*")
 
 ## ==============================================
 ## 			LOGGING CONFIGURATION
@@ -100,12 +100,18 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 
 		elif strip_header:
 
+			LOG.info("Strip %s", file_name)
+			
 			header_match = header_regex.match(file_data)
 			if header_match is None:
-				return
+			  return
 
-			header_comment = header_match.group(1)
+			LOG.info("Header match ")
 
+			header_comment = header_match.group()
+			
+			LOG.info("Header comment : %s", header_comment)
+		
 			new_file_data = file_data.replace(header_comment,"")
 
 			fd.seek(0,0)
@@ -162,33 +168,44 @@ if __name__ == '__main__':
 		LOG.error("file_name and dir_name cannot be specified together -- exiting")
 		sys.exit("file_name and dir_name cannot be specified together")
 
-	if args.file_name:
-		LOG.info("Scanning file: " + ''.join(args.file_name))
-		format_file(args.file_name, args.add_header, args.strip_header, args.clang_format_code)
-	elif args.dir_name:
-		LOG.info("Scanning directory " + ''.join(args.dir_name))
-		format_dir(args.dir_name, args.add_header, args.strip_header, args.clang_format_code)
-	# BY DEFAULT, WE SCAN THE DEFAULT DIRS AND FIX THEM
-	else:
+	if args.clang_format_code:
+		
+		if args.file_name:
+			LOG.info("Scanning file: " + ''.join(args.file_name))
+			format_file(args.file_name, args.add_header, args.strip_header, args.clang_format_code)
+		elif args.dir_name:
+			LOG.info("Scanning directory " + ''.join(args.dir_name))
+			format_dir(args.dir_name, args.add_header, args.strip_header, args.clang_format_code)
+		# BY DEFAULT, WE SCAN THE DEFAULT DIRS AND FIX THEM
+		else:
+			LOG.info("Default scan")		
+			for dir in DEFAULT_DIRS:
+				LOG.info("Scanning : " + dir + "\n\n")
+	
+				LOG.info("Formatting code : " + dir)			
+				args.add_header = False
+				args.strip_header = False
+				args.clang_format_code = True
+				format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
+
+
+	if args.strip_header:
 		LOG.info("Default scan")		
 		for dir in DEFAULT_DIRS:
-			LOG.info("Scanning : " + dir + "\n\n")
 
 			LOG.info("Stripping headers : " + dir)			
 			args.add_header = False
 			args.strip_header = True
 			args.clang_format_code = False
 			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
+
+	if args.add_header:
+		LOG.info("Default scan")		
+		for dir in DEFAULT_DIRS:
 			
 			LOG.info("Adding headers : " + dir)			
 			args.add_header = True
 			args.strip_header = False
 			args.clang_format_code = False
 			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
-
-			LOG.info("Formatting code : " + dir)			
-			args.add_header = False
-			args.strip_header = False
-			args.clang_format_code = True
-			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)
-
+		

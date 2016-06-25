@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/memo.h"
 
 #include "optimizer/operators.h"

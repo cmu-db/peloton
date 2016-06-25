@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 /* The following entry types are distinguished:
  *
  * Possible Log Entries:

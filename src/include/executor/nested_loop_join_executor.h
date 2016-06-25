@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include "executor/abstract_join_executor.h"

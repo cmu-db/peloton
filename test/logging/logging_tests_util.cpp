@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "logging/logging_tests_util.h"
 
 #define DEFAULT_RECOVERY_CID 15

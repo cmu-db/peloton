@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// regex.h
+//
+// Identification: src/include/parser/regex/regex.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #ifndef _REGEX_H_
 #define _REGEX_H_				/* never again */
 /*

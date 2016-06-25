@@ -4,11 +4,12 @@
 //
 // cuckoo_map_test.cpp
 //
-// Identification: test/common/cuckoo_map_test.cpp
+// Identification: test/container/cuckoo_map_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "container/cuckoo_map.h"
 

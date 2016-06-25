@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/rule_impls.h"
 #include "optimizer/operators.h"
 

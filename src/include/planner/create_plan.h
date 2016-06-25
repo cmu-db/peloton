@@ -1,14 +1,15 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // create_plan.h
 //
-// Identification: /peloton/src/include/planner/create_plan.h
+// Identification: src/include/planner/create_plan.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

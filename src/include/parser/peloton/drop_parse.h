@@ -4,11 +4,12 @@
 //
 // drop_parse.h
 //
-// Identification: src/include/parser/drop_parse.h
+// Identification: src/include/parser/peloton/drop_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

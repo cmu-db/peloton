@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include <iostream>
 
 #include "logging/records/tuple_record.h"

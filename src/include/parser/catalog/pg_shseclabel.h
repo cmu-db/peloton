@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_shseclabel.h
+//
+// Identification: src/include/parser/catalog/pg_shseclabel.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /* -------------------------------------------------------------------------
  *
  * pg_shseclabel.h

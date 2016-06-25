@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/optimizer.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/convert_query_to_op.h"

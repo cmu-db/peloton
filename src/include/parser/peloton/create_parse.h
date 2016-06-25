@@ -1,14 +1,15 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // create_parse.h
 //
-// Identification: /peloton/src/include/parser/peloton/create_parse.h
+// Identification: src/include/parser/peloton/create_parse.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

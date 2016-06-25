@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// dirent.h
+//
+// Identification: src/include/parser/port/win32_msvc/dirent.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * Headers for port/dirent.c, win32 native implementation of dirent functions
  *

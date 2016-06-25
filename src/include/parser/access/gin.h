@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// gin.h
+//
+// Identification: src/include/parser/access/gin.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*--------------------------------------------------------------------------
  * gin.h
  *	  Public header file for Generalized Inverted Index access method.

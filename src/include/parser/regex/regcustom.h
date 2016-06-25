@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// regcustom.h
+//
+// Identification: src/include/parser/regex/regcustom.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
  *

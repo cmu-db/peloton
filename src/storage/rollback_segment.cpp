@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "storage/rollback_segment.h"
 #include "logging/log_manager.h"
 #include "planner/project_info.h"

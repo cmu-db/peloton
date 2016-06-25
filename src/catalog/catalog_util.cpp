@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// catalog.cpp
+// catalog_util.cpp
 //
 // Identification: src/catalog/catalog_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "catalog/catalog_util.h"
 

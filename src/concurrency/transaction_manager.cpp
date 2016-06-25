@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "concurrency/transaction_manager.h"
 #include "expression/container_tuple.h"
 

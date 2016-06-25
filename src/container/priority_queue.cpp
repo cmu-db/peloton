@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// queue.cpp
+// priority_queue.cpp
 //
-// Identification: src/common/queue.cpp
+// Identification: src/container/priority_queue.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "container/priority_queue.h"
 
