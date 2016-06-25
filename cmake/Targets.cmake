@@ -86,6 +86,9 @@ function(peloton_pickup_peloton_sources root)
   file(GLOB_RECURSE libcds_srcs ${root}/third_party/libcds/src/*.cpp)  
   set(libcds_hdrs ${root}/third_party/libcds/)
   include_directories(SYSTEM "${libcds_hdrs}")
+
+  # jsoncpp
+  file(GLOB_RECURSE jsoncpp_srcs ${root}/third_party/jsoncpp/*.cpp)
     
   # adding headers to make the visible in some IDEs (Qt, VS, Xcode)
   list(APPEND srcs ${hdrs} ${PROJECT_BINARY_DIR}/peloton_config.h)
@@ -93,7 +96,7 @@ function(peloton_pickup_peloton_sources root)
 
   # add proto to make them editable in IDEs too
   file(GLOB_RECURSE proto_files ${root}/src/peloton/*.proto)
-  list(APPEND srcs ${proto_files} ${murmur_srcs} ${libcds_srcs})
+  list(APPEND srcs ${proto_files} ${murmur_srcs} ${libcds_srcs} ${jsoncpp_srcs})
 
   # propogate to parent scope
   set(srcs ${srcs} PARENT_SCOPE)
