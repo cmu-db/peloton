@@ -36,7 +36,6 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
 VALIDATOR_PATTERNS = ["std\:\:cout", " printf\(", "cout", " malloc\(", " free\(",
-                      " memset\(", " memcpy\(", " \:\:memset\(", " \:\:memcpy\(", " std\:\:memset\(", " std\:\:memcpy\(",
                       "\_\_attribute\_\_\(\(unused\)\)"]
 
 ## ==============================================
@@ -72,7 +71,7 @@ def validate_file(file_path):
     # Skip some files
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
         return True
-    
+
     file = open(abs_path, "r")
 
     for line in file:
@@ -123,5 +122,5 @@ if __name__ == '__main__':
 
     LOG.info("Validation successful")
     sys.exit(EXIT_SUCCESS)
-            
-            
+
+
