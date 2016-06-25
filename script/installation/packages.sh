@@ -9,7 +9,5 @@ apt-get --ignore-missing -y install \
     libboost-dev \
     libboost-filesystem-dev \
     libjemalloc-dev \
-    libjsoncpp-dev \
     valgrind \
-    libgflags-dev \
     lcov
