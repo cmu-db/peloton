@@ -343,7 +343,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
                  tuple_location_ptrs);
   }
 
-  LOG_TRACE("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
+  LOG_TRACE("Result tuple count: %lu", tuple_location_ptrs.size());
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();

@@ -62,12 +62,12 @@ static size_t tile_group_count = 100;
 static size_t tuple_count = tile_group_count * tuples_per_tile_group;
 
 static double selectivity = 0.0001;
-static double predicate_offset = 0.1;
+static double predicate_offset = 0.9;
 
 static double tuple_start_offset = predicate_offset * tuple_count;
 static double tuple_end_offset = (selectivity + predicate_offset) * tuple_count;
 
-static size_t query_count = 10;
+static size_t query_count = 100;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
                  bool build_indexes) {
@@ -221,8 +221,7 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t
   }
 }
 
-void ExecuteTest(executor::AbstractExecutor *executor,
-                 bool print_time) {
+void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
   bool status = false;
@@ -241,12 +240,11 @@ void ExecuteTest(executor::AbstractExecutor *executor,
   }
 
   timer.Stop();
+  double time_per_transaction = timer.GetDuration();
+  LOG_INFO("%f", time_per_transaction);
 
-  if (print_time) {
-    double time_per_transaction = timer.GetDuration();
-    LOG_INFO("%f", time_per_transaction);
-  }
-
+  LOG_TRACE("Lower bound        : %.0lf", tuple_start_offset);
+  LOG_TRACE("Upper bound        : %.0lf", tuple_end_offset);
   LOG_TRACE("Result tuple count : %lu", result_tuple_count);
   EXPECT_EQ(result_tuple_count, selectivity * tuple_count);
 }
@@ -279,7 +277,7 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
 
-  ExecuteTest(&hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -324,7 +322,7 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -372,7 +370,7 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
