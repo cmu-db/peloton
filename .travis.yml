@@ -11,25 +11,34 @@ matrix:
                     - boost-latest
                 packages:
                     - g++-4.9
-          env: COMPILER=g++-4.9
+          env: CXX=g++-4.9
+        - compiler: gcc
+          addons:
+              apt:
+                sources:
+                    - ubuntu-toolchain-r-test
+                    - boost-latest
+                packages:
+                    - g++-5
+          env: CXX=g++-5
 
 before_script:
     # setup environment
     - sudo -H sh ./script/installation/packages.sh
-    - wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
-    - sudo dpkg -i libgflags0_2.0-1_amd64.deb
-    - wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
-    - sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
     - pip install --user cpp-coveralls
 
 script:
     # first, run validator
     - python ./script/validators/validator.py
-      # build
+    # create build directory
     - mkdir build
     - cd build
+    # run cmake
     - cmake -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
+    # build
     - make
+    # run tests
     - make check
+    # upload coverage info
     - make coveralls
 
