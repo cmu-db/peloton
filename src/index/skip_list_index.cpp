@@ -288,14 +288,18 @@ ConstructIntervals(oid_t leading_column_id,
   // < <= ----> < num
   std::vector<std::pair<peloton::Value, int>> nums;
   for (size_t i = 0; i < key_column_ids.size(); i++) {
+    LOG_TRACE("Column id : %u", key_column_ids[i]);
+
     if (key_column_ids[i] != leading_column_id) {
       continue;
     }
 
     // If leading column
     if (IfForwardExpression(expr_types[i])) {
+      LOG_TRACE("Forward expression");
       nums.push_back(std::pair<Value, int>(values[i], -1));
     } else if (IfBackwardExpression(expr_types[i])) {
+      LOG_TRACE("Backward expression");
       nums.push_back(std::pair<Value, int>(values[i], 1));
     } else {
       assert(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
@@ -354,8 +358,11 @@ FindMaxMinInColumns(
   for (size_t i = 0; i < key_column_ids.size(); i++) {
     oid_t column_id = key_column_ids[i];
     if (column_id == leading_column_id) {
+      LOG_TRACE("Leading column : %u", column_id);
       continue;
     }
+
+    LOG_TRACE("Non leading column : %u", column_id);
 
     if (non_leading_columns.find(column_id) == non_leading_columns.end()) {
       auto type = values[i].GetValueType();
@@ -459,6 +466,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     // Assumption: must have leading column, assume it's first one in
     // key_column_ids.
     assert(key_column_ids.size() > 0);
+    LOG_TRACE("key_column_ids size : %lu ", key_column_ids.size());
+
     oid_t leading_column_id = key_column_ids[0];
     std::vector<std::pair<Value, Value>> intervals;
 

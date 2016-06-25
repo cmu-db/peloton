@@ -42,8 +42,8 @@ namespace executor {
 
 HybridScanExecutor::HybridScanExecutor(const planner::AbstractPlan *node,
                                        ExecutorContext *executor_context)
-    : AbstractScanExecutor(node, executor_context),
-      indexed_tile_offset_(START_OID) {}
+: AbstractScanExecutor(node, executor_context),
+  indexed_tile_offset_(START_OID) {}
 
 bool HybridScanExecutor::DInit() {
   auto status = AbstractScanExecutor::DInit();
@@ -55,18 +55,22 @@ bool HybridScanExecutor::DInit() {
   table_ = node.GetTable();
   index_ = node.GetDataIndex();
   type_ = node.GetHybridType();
+  PL_ASSERT(table_ != nullptr);
 
-  if (type_ == planner::SEQ) {
+  // SEQUENTIAL SCAN
+  if (type_ == planner::HYBRID_SCAN_TYPE_SEQUENTIAL) {
+    LOG_TRACE("Sequential Scan");
     current_tile_group_offset_ = START_OID;
-    if (table_ != nullptr) {
-      table_tile_group_count_ = table_->GetTileGroupCount();
-      if (column_ids_.empty()) {
-        column_ids_.resize(table_->GetSchema()->GetColumnCount());
-        std::iota(column_ids_.begin(), column_ids_.end(), 0);
-      }
-    }
 
-  } else if (type_ == planner::INDEX) {
+    table_tile_group_count_ = table_->GetTileGroupCount();
+    if (column_ids_.empty()) {
+      column_ids_.resize(table_->GetSchema()->GetColumnCount());
+      std::iota(column_ids_.begin(), column_ids_.end(), 0);
+    }
+  }
+  // INDEX SCAN
+  else if (type_ == planner::HYBRID_SCAN_TYPE_INDEX) {
+    LOG_TRACE("Index Scan");
     result_itr_ = START_OID;
     index_done_ = false;
 
@@ -97,7 +101,11 @@ bool HybridScanExecutor::DInit() {
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
-  } else {  // Hybrid type.
+  }
+  // HYBRID SCAN
+  else if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID) {
+    LOG_TRACE("Hybrid Scan");
+
     table_tile_group_count_ = table_->GetTileGroupCount();
     int offset = index_->GetIndexedTileGroupOff();
     indexed_tile_offset_ = (offset == -1) ? INVALID_OID : (oid_t)offset;
@@ -149,6 +157,10 @@ bool HybridScanExecutor::DInit() {
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
   }
+  // FALLBACK
+  else {
+    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+  }
 
   return true;
 }
@@ -165,6 +177,7 @@ bool HybridScanExecutor::SeqScanUtil() {
 
   // Retrieve next tile group.
   while (current_tile_group_offset_ < table_tile_group_count_) {
+    LOG_TRACE("Current tile group offset : %u", current_tile_group_offset_);
     auto tile_group = table_->GetTileGroup(current_tile_group_offset_++);
     auto tile_group_header = tile_group->GetHeader();
 
@@ -181,28 +194,29 @@ bool HybridScanExecutor::SeqScanUtil() {
     std::vector<oid_t> position_list;
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      if (type_ == planner::HYBRID && item_pointers_.size() > 0 &&
+      if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID && item_pointers_.size() > 0 &&
           location.block <= upper_bound_block) {
         if (item_pointers_.find(location) != item_pointers_.end()) {
           continue;
         }
       }
 
-      // check transaction visibility
+      // Check transaction visibility
       if (transaction_manager.IsVisible(tile_group_header, tuple_id)) {
-        // if the tuple is visible, then perform predicate evaluation.
+        // If the tuple is visible, then perform predicate evaluation.
         if (predicate_ == nullptr) {
           position_list.push_back(tuple_id);
-        } else {
+        }
+        else {
           expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                                tuple_id);
-          auto eval =
-              predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
+          auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
             position_list.push_back(tuple_id);
           }
         }
-      } else {
+      }
+      else {
         expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
                                                              tuple_id);
         auto eval =
@@ -217,6 +231,7 @@ bool HybridScanExecutor::SeqScanUtil() {
         }
       }
     }
+
     // Don't return empty tiles
     if (position_list.size() == 0) {
       continue;
@@ -226,8 +241,10 @@ bool HybridScanExecutor::SeqScanUtil() {
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     logical_tile->AddColumns(tile_group, column_ids_);
     logical_tile->AddPositionList(std::move(position_list));
+
     LOG_TRACE("Hybrid executor, Seq Scan :: Got a logical tile");
     SetOutput(logical_tile.release());
+
     return true;
   }
 
@@ -252,22 +269,31 @@ bool HybridScanExecutor::IndexScanUtil() {
 }
 
 bool HybridScanExecutor::DExecute() {
-  if (type_ == planner::SEQ) {
+
+  // SEQUENTIAL SCAN
+  if (type_ == planner::HYBRID_SCAN_TYPE_SEQUENTIAL) {
     return SeqScanUtil();
-  } else if (type_ == planner::INDEX) {
-    //  LOG_TRACE("Hybrrd Scan executor, Index Scan :: 0 child");
-    assert(children_.size() == 0);
-    if (!index_done_) {
+  }
+  // INDEX SCAN
+  else if (type_ == planner::HYBRID_SCAN_TYPE_INDEX) {
+    PL_ASSERT(children_.size() == 0);
+
+    if (index_done_ == false) {
       if (index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
         auto status = ExecPrimaryIndexLookup();
-        if (status == false) return false;
-      } else {
+        if (status == false) {
+          return false;
+        }
+      }
+      else {
         return false;
       }
     }
 
     return IndexScanUtil();
-  } else {
+  }
+  // HYBRID SCAN
+  else if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID) {
     // do two part search
     if (index_done_ == false) {
       // Timer<> timer;
@@ -286,10 +312,15 @@ bool HybridScanExecutor::DExecute() {
     // Scan seq
     return SeqScanUtil();
   }
+  // FALLBACK
+  else {
+    throw Exception("Invalid hybrid scan type : " + std::to_string(type_));
+  }
+
 }
 
 bool HybridScanExecutor::ExecPrimaryIndexLookup() {
-  assert(!index_done_);
+  PL_ASSERT(index_done_ == false);
 
   const planner::HybridScanPlan &node = GetPlanNode<planner::HybridScanPlan>();
 
@@ -298,13 +329,18 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
-  assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
+  PL_ASSERT(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
+    LOG_TRACE("Scan all keys");
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, key_column_ids_, expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
+    LOG_TRACE("Scan");
+    index_->Scan(values_,
+                 key_column_ids_,
+                 expr_type_,
+                 SCAN_DIRECTION_TYPE_FORWARD,
+                 tuple_location_ptrs);
   }
 
   LOG_TRACE("Tuple_locations.size(): %lu", tuple_location_ptrs.size());
@@ -317,16 +353,15 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     return false;
   }
 
-  // std::set<oid_t> oid_ts;
-
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
+
   // for every tuple that is found in the index.
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
 
-    if (type_ == planner::HYBRID && tuple_location.block >= (block_threshold)) {
+    if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID &&
+        tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
-      //  oid_ts.insert(tuple_location.block);
     }
 
     auto &manager = catalog::Manager::GetInstance();
@@ -360,19 +395,14 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
         // check whether older version is garbage.
         if (old_end_cid < max_committed_cid) {
           assert(tile_group_header->GetTransactionId(old_item.offset) ==
-                     INITIAL_TXN_ID ||
-                 tile_group_header->GetTransactionId(old_item.offset) ==
-                     INVALID_TXN_ID);
+              INITIAL_TXN_ID ||
+              tile_group_header->GetTransactionId(old_item.offset) ==
+                  INVALID_TXN_ID);
 
           if (tile_group_header->SetAtomicTransactionId(
-                  old_item.offset, INVALID_TXN_ID) == true) {
+              old_item.offset, INVALID_TXN_ID) == true) {
             // atomically swap item pointer held in the index bucket.
             AtomicUpdateItemPointer(tuple_location_ptr, tuple_location);
-
-            // currently, let's assume only primary index exists.
-            // gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-            //  table_->GetOid(), old_item.block, old_item.offset,
-            //  max_committed_cid);
           }
         }
 
@@ -388,9 +418,11 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
     auto tile_group = manager.GetTileGroup(tuples.first);
 
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
     logical_tile->AddPositionList(std::move(tuples.second));
+
     if (column_ids_.size() != 0) {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
