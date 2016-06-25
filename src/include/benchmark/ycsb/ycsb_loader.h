@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #pragma once
 
 #include "benchmark/ycsb/ycsb_configuration.h"

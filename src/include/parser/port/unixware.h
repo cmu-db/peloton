@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// unixware.h
+//
+// Identification: src/include/parser/port/unixware.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * src/include/port/unixware.h
  *

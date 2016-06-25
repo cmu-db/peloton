@@ -4,11 +4,12 @@
 //
 // rule_test.cpp
 //
-// Identification: tests/optimizer/rule_test.cpp
+// Identification: test/optimizer/rule_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "common/harness.h"
 

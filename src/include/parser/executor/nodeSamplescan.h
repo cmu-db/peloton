@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// nodeSamplescan.h
+//
+// Identification: src/include/parser/executor/nodeSamplescan.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * nodeSamplescan.h

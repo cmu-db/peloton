@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// thread_manager.cpp
+// tcop.cpp
 //
-// Identification: src/common/tcop.cpp
+// Identification: src/tcop/tcop.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "tcop/tcop.h"
 

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_policy.h
+//
+// Identification: src/include/parser/catalog/pg_policy.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * pg_policy.h
  *   definition of the system "policy" relation (pg_policy)

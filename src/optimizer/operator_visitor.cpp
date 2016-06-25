@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/operator_visitor.h"
 
 namespace peloton {

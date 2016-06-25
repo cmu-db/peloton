@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// xloginsert.h
+//
+// Identification: src/include/parser/access/xloginsert.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * xloginsert.h
  *

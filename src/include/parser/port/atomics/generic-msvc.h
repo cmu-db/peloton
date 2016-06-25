@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// generic-msvc.h
+//
+// Identification: src/include/parser/port/atomics/generic-msvc.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * generic-msvc.h

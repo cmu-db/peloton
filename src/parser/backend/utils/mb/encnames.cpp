@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// encnames.cpp
+//
+// Identification: src/parser/backend/utils/mb/encnames.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * Encoding names and routines for work with it. All
  * in this file is shared between FE and BE.

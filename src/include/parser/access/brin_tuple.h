@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// brin_tuple.h
+//
+// Identification: src/include/parser/access/brin_tuple.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * brin_tuple.h
  *		Declarations for dealing with BRIN-specific tuples.

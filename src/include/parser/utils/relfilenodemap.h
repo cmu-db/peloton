@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// relfilenodemap.h
+//
+// Identification: src/include/parser/utils/relfilenodemap.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * relfilenodemap.h

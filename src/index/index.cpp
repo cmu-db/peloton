@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "index/index.h"
 #include "common/exception.h"
 #include "common/logger.h"

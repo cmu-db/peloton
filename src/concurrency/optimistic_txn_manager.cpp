@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "concurrency/optimistic_txn_manager.h"
 
 #include "common/platform.h"

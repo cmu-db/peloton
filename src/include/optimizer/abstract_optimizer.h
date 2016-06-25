@@ -4,11 +4,12 @@
 //
 // abstract_optimizer.h
 //
-// Identification: src/include/optimizer/abstract_optmizer.h
+// Identification: src/include/optimizer/abstract_optimizer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

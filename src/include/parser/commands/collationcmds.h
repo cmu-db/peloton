@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// collationcmds.h
+//
+// Identification: src/include/parser/commands/collationcmds.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * collationcmds.h

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_polyfills.cpp
+//
+// Identification: src/parser/parser/pg_polyfills.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /* Polyfills to avoid building unnecessary objects from the PostgreSQL source */
 
 #include "parser/postgres.h"

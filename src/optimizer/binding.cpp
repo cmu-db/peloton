@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "optimizer/binding.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"

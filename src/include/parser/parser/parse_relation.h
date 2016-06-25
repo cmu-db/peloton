@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// parse_relation.h
+//
+// Identification: src/include/parser/parser/parse_relation.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * parse_relation.h

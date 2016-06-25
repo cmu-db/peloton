@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_locale.h
+//
+// Identification: src/include/parser/utils/pg_locale.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-----------------------------------------------------------------------
  *
  * PostgreSQL locale utilities

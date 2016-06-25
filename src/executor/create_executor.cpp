@@ -4,11 +4,12 @@
 //
 // create_executor.cpp
 //
-// Identification: src/executor/create_executer.cpp
+// Identification: src/executor/create_executor.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "../include/executor/create_executor.h"
 

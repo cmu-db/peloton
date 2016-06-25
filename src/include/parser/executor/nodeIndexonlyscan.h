@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// nodeIndexonlyscan.h
+//
+// Identification: src/include/parser/executor/nodeIndexonlyscan.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*-------------------------------------------------------------------------
  *
  * nodeIndexonlyscan.h

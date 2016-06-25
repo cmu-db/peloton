@@ -1,14 +1,15 @@
 //===----------------------------------------------------------------------===//
 //
-//       Peloton
+//                         Peloton
 //
 // cuckoo_map.h
 //
-// Identification: src/include/common/cuckoo_map.h
+// Identification: src/include/container/cuckoo_map.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

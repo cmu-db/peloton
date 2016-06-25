@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// cuckoo_map_test.cpp
+// skip_list_map_test.cpp
 //
-// Identification: test/common/cuckoo_map_test.cpp
+// Identification: test/container/skip_list_map_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "container/skip_list_map.h"
 

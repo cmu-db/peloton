@@ -10,34 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// hybrid_scan_plan.h
-//
-// Identification: src/include/planner/hybrid_scan_plan.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// hybrid_scan_plan.h
-//
-// Identification: src/include/planner/hybrid_scan_plan.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//
-// Created by Rui Wang on 16-4-29.
-//
-
 #pragma once
 
 #include "planner/abstract_scan_plan.h"

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_lzcompress.h
+//
+// Identification: src/include/parser/common/pg_lzcompress.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /* ----------
  * pg_lzcompress.h -
  *

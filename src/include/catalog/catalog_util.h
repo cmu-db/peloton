@@ -2,6 +2,19 @@
 //
 //                         Peloton
 //
+// catalog_util.h
+//
+// Identification: src/include/catalog/catalog_util.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
 // catalog.h
 //
 // Identification: src/include/catalog/catalog_util.h

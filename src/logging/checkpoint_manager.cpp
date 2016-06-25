@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/macros.h"
 #include "logging/checkpoint/simple_checkpoint.h"
 #include "logging/checkpoint_manager.h"

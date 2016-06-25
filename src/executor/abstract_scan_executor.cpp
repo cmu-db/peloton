@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "executor/abstract_scan_executor.h"
 
 #include <memory>

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "storage/abstract_table.h"
 
 #include "common/exception.h"

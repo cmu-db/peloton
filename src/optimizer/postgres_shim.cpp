@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "common/logger.h"
 #include "optimizer/postgres_shim.h"
 #include "optimizer/query_operators.h"

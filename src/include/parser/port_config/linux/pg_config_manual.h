@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_config_manual.h
+//
+// Identification: src/include/parser/port_config/linux/pg_config_manual.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*------------------------------------------------------------------------
  * PostgreSQL manual configuration settings
  *

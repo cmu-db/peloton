@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// gin_private.h
+//
+// Identification: src/include/parser/access/gin_private.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*--------------------------------------------------------------------------
  * gin_private.h
  *	  header file for postgres inverted index access method implementation.

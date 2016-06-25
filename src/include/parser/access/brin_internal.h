@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// brin_internal.h
+//
+// Identification: src/include/parser/access/brin_internal.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * brin_internal.h
  *		internal declarations for BRIN indexes

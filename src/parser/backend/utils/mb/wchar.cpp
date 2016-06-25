@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// wchar.cpp
+//
+// Identification: src/parser/backend/utils/mb/wchar.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// brin_pageops.h
+//
+// Identification: src/include/parser/access/brin_pageops.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * brin_pageops.h
  *		Prototypes for operating on BRIN pages.

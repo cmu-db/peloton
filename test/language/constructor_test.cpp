@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// rule_test.cpp
+// constructor_test.cpp
 //
-// Identification: test/language/rule_test.cpp
+// Identification: test/language/constructor_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include <iostream>
 #include <cstring>

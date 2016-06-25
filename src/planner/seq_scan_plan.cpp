@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 #include "catalog/manager.h"

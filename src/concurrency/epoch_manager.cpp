@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "concurrency/epoch_manager.h"
 
 namespace peloton {

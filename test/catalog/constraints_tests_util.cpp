@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "catalog/constraints_tests_util.h"
 
 #include <cstdlib>

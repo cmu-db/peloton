@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "executor/join_tests_util.h"
 
 #include "common/types.h"

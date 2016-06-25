@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// pg_query_json.cpp
+//
+// Identification: src/parser/parser/pg_query_json.cpp
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "parser/pg_query_json.h"
 
 #include "parser/postgres.h"

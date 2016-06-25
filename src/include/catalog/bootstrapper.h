@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// bootstrap.h
+// bootstrapper.h
 //
-// Identification: src/include/catalog/bootstrap.h
+// Identification: src/include/catalog/bootstrapper.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

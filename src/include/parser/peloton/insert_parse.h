@@ -4,11 +4,12 @@
 //
 // insert_parse.h
 //
-// Identification: src/include/parser/insert_parse.h
+// Identification: src/include/parser/peloton/insert_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// fe_memutils.h
+//
+// Identification: src/include/parser/common/fe_memutils.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  *	fe_memutils.h
  *		memory management support for frontend code

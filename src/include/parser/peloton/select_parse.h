@@ -4,11 +4,12 @@
 //
 // select_parse.h
 //
-// Identification: src/include/parser/select_parse.h
+// Identification: src/include/parser/peloton/select_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 

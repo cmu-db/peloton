@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {

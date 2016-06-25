@@ -10,41 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// transaction_tests_util.h
-//
-// Identification: test/include/concurrency/transaction_tests_util.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// transaction_tests_util.h
-//
-// Identification: test/include/concurrency/transaction_tests_util.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// transaction_tests_util.h
-//
-// Identification: tests/concurrency/transaction_tests_util.h
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 
 /**
  * How to use the transaction test utilities

@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// brin_revmap.h
+//
+// Identification: src/include/parser/access/brin_revmap.h
+//
+// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 /*
  * brin_revmap.h
  *		Prototypes for BRIN reverse range maps
