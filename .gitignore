@@ -306,3 +306,6 @@ docs/dev
 # Protobuf files
 *.pb.cc
 *.pb.h
+
+# Third party
+third_party/gflags/

@@ -16,10 +16,6 @@ matrix:
 before_script:
     # setup environment
     - sudo -H sh ./script/installation/packages.sh
-    - wget https://gflags.googlecode.com/files/libgflags0_2.0-1_amd64.deb
-    - sudo dpkg -i libgflags0_2.0-1_amd64.deb
-    - wget https://gflags.googlecode.com/files/libgflags-dev_2.0-1_amd64.deb
-    - sudo dpkg -i libgflags-dev_2.0-1_amd64.deb
     - pip install --user cpp-coveralls
 
 script:
