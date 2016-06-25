@@ -11,6 +11,5 @@ apt-get --ignore-missing -y install \
     libjemalloc-dev \
     libjsoncpp-dev \
     valgrind \
-    libunwind8-dev \
     libgflags-dev \
     lcov
