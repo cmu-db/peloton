@@ -14,7 +14,8 @@ namespace peloton {
 
 void RegisterSignalHandlers();
 
-void PrintStackTrace();
+void PrintStackTrace(FILE *out = ::stderr,
+                     unsigned int max_frames = 63);
 
 void SignalHandler(int signum);
 
