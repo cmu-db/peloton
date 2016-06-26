@@ -286,10 +286,7 @@ void RunDirectTest() {
   std::unique_ptr<planner::ProjectInfo> project_info(new planner::ProjectInfo(
       std::move(target_list), std::move(direct_map_list)));
 
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info),
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -448,10 +445,7 @@ void RunAggregateTest() {
   std::unique_ptr<planner::ProjectInfo> project_info(new planner::ProjectInfo(
       std::move(target_list), std::move(direct_map_list)));
 
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info),
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -594,10 +588,7 @@ void RunArithmeticTest() {
   project_info.reset(new planner::ProjectInfo(std::move(target_list),
                                               std::move(direct_map_list)));
 
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info),
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////
@@ -754,10 +745,7 @@ void RunInsertTest() {
       new planner::ProjectInfo(std::move(target_list),
                                std::move(direct_map_list)));
 
-  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info),
-                                  bulk_insert_count);
+  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info));
   executor::InsertExecutor insert_executor(&insert_node, context.get());
 
   /////////////////////////////////////////////////////////

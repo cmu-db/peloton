@@ -133,18 +133,24 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // we just wait until a new tuple slot in the newly allocated tile group is
 // available.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         bool check_constraint) {
+                                         UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
+
+  /* Check constraints
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
   }
+  */
+
   //=============== garbage collection==================
   // check if there are recycled tuple slots
-/*  auto &gc_manager = gc::GCManagerFactory::GetInstance();
+  /*
+  auto &gc_manager = gc::GCManagerFactory::GetInstance();
   auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
   if (free_item_pointer.IsNull() == false) {
     return free_item_pointer;
-  }*/
+  }
+  */
   //====================================================
 
   std::shared_ptr<storage::TileGroup> tile_group;
@@ -164,6 +170,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
       break;
     }
   }
+
   // if this is the last tuple slot we can get
   // then create a new tile group
   if (tuple_slot == tile_group->GetAllocatedTupleCount() - 1) {
@@ -197,12 +204,6 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_TRACE("ForeignKey constraint violated");
-    return INVALID_ITEMPOINTER;
-  }
-
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
@@ -220,12 +221,6 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, location) == false) {
     LOG_TRACE("Index constraint violated");
-    return INVALID_ITEMPOINTER;
-  }
-
-  // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -248,12 +243,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   // Index checks and updates
   if (InsertInIndexes(tuple, location) == false) {
     LOG_TRACE("Index constraint violated");
-    return INVALID_ITEMPOINTER;
-  }
-
-  // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
-    LOG_TRACE("ForeignKey constraint violated");
     return INVALID_ITEMPOINTER;
   }
 
@@ -345,11 +334,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * FIXME: this still does not guarantee correctness under concurrent transaction
  *   because it only check if the key exists the referred table's index
  *   -- however this key might be a uncommitted key that is not visible to
-<<<<<<< HEAD
- *others
-=======
- * others
->>>>>>> yingjun/mvcc-old-to-new
  *   and it might be deleted if that txn abort.
  *   We should modify this function and add logic to check
  *   if the result of the ScanKey is visible.

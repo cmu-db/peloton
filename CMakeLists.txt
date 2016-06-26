@@ -117,7 +117,7 @@ doxygen_configure(src/ test/)
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-									
+
 # ---[ Configuration summary
 peloton_print_configuration_summary()
 
