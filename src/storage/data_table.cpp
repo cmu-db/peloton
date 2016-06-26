@@ -66,6 +66,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
 }
 
 DataTable::~DataTable() {
+
   // clean up tile groups by dropping the references in the catalog
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
@@ -73,6 +74,8 @@ DataTable::~DataTable() {
     tile_group_lock_.ReadLock();
     auto tile_group_id = tile_groups_.at(tile_group_itr);
     tile_group_lock_.Unlock();
+
+    LOG_INFO("Dropping tile group : %u", tile_group_id);
 
     catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }

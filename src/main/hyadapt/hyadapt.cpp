@@ -17,6 +17,7 @@
 #include "benchmark/hyadapt/hyadapt_configuration.h"
 #include "common/logger.h"
 #include "benchmark/hyadapt/hyadapt_workload.h"
+#include "benchmark/hyadapt/hyadapt_loader.h"
 
 namespace peloton {
 namespace benchmark {
@@ -135,6 +136,8 @@ int main(int argc, char **argv) {
       argc, argv, peloton::benchmark::hyadapt::state);
 
   peloton::benchmark::hyadapt::RunBenchmark();
+
+  peloton::benchmark::hyadapt::hyadapt_table.release();
 
   return 0;
 }
