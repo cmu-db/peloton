@@ -59,25 +59,6 @@ std::atomic<int> loader_tuple_id;
 // Utility
 //===------------------------------===//
 
-/**
- * Cook a ProjectInfo object from a tuple.
- * Simply use a ConstantValueExpression for each attribute.
- */
-static std::unique_ptr<const planner::ProjectInfo> MakeProjectInfoFromTuple(
-    const storage::Tuple *tuple) {
-  TargetList target_list;
-  DirectMapList direct_map_list;
-
-  for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
-    auto value = tuple->GetValue(col_id);
-    auto expression = expression::ExpressionUtil::ConstantValueFactory(value);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
-      std::move(target_list), std::move(direct_map_list)));
-}
-
 void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  oid_t tilegroup_count_per_loader,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
@@ -93,9 +74,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  auto project_info = MakeProjectInfoFromTuple(tuple.get());
-
-  planner::InsertPlan node(table, std::move(project_info));
+  planner::InsertPlan node(table, std::move(tuple));
 
   // Insert the desired # of tuples
   for (oid_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
