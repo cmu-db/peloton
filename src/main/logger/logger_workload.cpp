@@ -26,7 +26,6 @@
 #include "logging/log_manager.h"
 
 #include "benchmark/logger/logger_workload.h"
-#include "benchmark/logger/logger_loader.h"
 
 #include "benchmark/ycsb/ycsb_workload.h"
 #include "benchmark/ycsb/ycsb_configuration.h"

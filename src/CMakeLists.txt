@@ -39,11 +39,6 @@ set_target_properties(peloton-bin PROPERTIES OUTPUT_NAME peloton)
 
 # --[ Benchmarks
 
-# --[ hyadapt
-file(GLOB_RECURSE hyadapt_srcs ${PROJECT_SOURCE_DIR}/src/main/hyadapt/*.cpp)
-add_executable(hyadapt EXCLUDE_FROM_ALL ${hyadapt_srcs})
-target_link_libraries(hyadapt peloton)
-
 # --[ ycsb
 file(GLOB_RECURSE ycsb_srcs ${PROJECT_SOURCE_DIR}/src/main/ycsb/*.cpp)
 add_executable(ycsb EXCLUDE_FROM_ALL ${ycsb_srcs})
