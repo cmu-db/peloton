@@ -138,9 +138,14 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
                         non_leading_columns);
 
-    for (auto key_column_id : metadata->GetKeySchema()->GetIndexedColumns()) {
-      if (non_leading_columns.find(key_column_id) ==
-          non_leading_columns.end()) {
+    auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
+    for (auto key_column_id : indexed_columns) {
+      if (key_column_id == leading_column_id) {
+        LOG_TRACE("Leading column : %u", key_column_id);
+        continue;
+      }
+
+      if (non_leading_columns.find(key_column_id) ==  non_leading_columns.end()) {
         auto type =
             metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
         std::pair<Value, Value> range(Value::GetMinValue(type),
@@ -163,8 +168,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       LOG_TRACE("%s", "Constructing start/end keys");
 
       LOG_TRACE("left bound %s\t\t right bound %s",
-               interval.first.GetInfo().c_str(),
-               interval.second.GetInfo().c_str());
+                interval.first.GetInfo().c_str(),
+                interval.second.GetInfo().c_str());
 
       start_key->SetValue(leading_column_id, interval.first, GetPool());
       end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -173,8 +178,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
         end_key->SetValue(k_v.first, k_v.second.second, GetPool());
         LOG_TRACE("left bound %s\t\t right bound %s",
-                 k_v.second.first.GetInfo().c_str(),
-                 k_v.second.second.GetInfo().c_str());
+                  k_v.second.first.GetInfo().c_str(),
+                  k_v.second.second.GetInfo().c_str());
       }
 
       KeyType start_index_key;
@@ -379,15 +384,15 @@ FindMaxMinInColumns(
       //  non_leading_columns[column_id] = *range;
       // delete range;
       LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s",
-               non_leading_columns[column_id].first.GetInfo().size(),
-               non_leading_columns[column_id].second.GetInfo().c_str());
+                non_leading_columns[column_id].first.GetInfo().size(),
+                non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
     if (IfForwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s",
-               non_leading_columns[column_id].first.GetInfo().size(),
-               values[i].GetInfo().c_str());
+                non_leading_columns[column_id].first.GetInfo().size(),
+                values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].first.Compare(values[i]) ==
               VALUE_COMPARE_GREATERTHAN) {
@@ -400,8 +405,8 @@ FindMaxMinInColumns(
     if (IfBackwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s",
-               non_leading_columns[column_id].second.GetInfo().c_str(),
-               values[i].GetInfo().c_str());
+                non_leading_columns[column_id].second.GetInfo().c_str(),
+                values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.Compare(values[i]) ==
               VALUE_COMPARE_LESSTHAN) {
@@ -516,9 +521,9 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       LOG_TRACE("%s", "Constructing start/end keys");
 
       LOG_TRACE("Leading Column: column id : %u left bound %s\t\t right bound %s",
-               leading_column_id,
-               interval.first.GetInfo().c_str(),
-               interval.second.GetInfo().c_str());
+                leading_column_id,
+                interval.first.GetInfo().c_str(),
+                interval.second.GetInfo().c_str());
 
       start_key->SetValue(leading_column_id, interval.first, GetPool());
       end_key->SetValue(leading_column_id, interval.second, GetPool());
@@ -527,9 +532,9 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
         end_key->SetValue(k_v.first, k_v.second.second, GetPool());
         LOG_TRACE("Non Leading Column: column id : %u left bound %s\t\t right bound %s",
-                 k_v.first,
-                 k_v.second.first.GetInfo().c_str(),
-                 k_v.second.second.GetInfo().c_str());
+                  k_v.first,
+                  k_v.second.first.GetInfo().c_str(),
+                  k_v.second.second.GetInfo().c_str());
       }
 
       KeyType start_index_key;
