@@ -17,6 +17,7 @@
 #include "benchmark/sdbench/sdbench_configuration.h"
 #include "common/logger.h"
 #include "benchmark/sdbench/sdbench_workload.h"
+#include "benchmark/sdbench/sdbench_loader.h"
 
 namespace peloton {
 namespace benchmark {
@@ -95,6 +96,8 @@ int main(int argc, char **argv) {
       argc, argv, peloton::benchmark::sdbench::state);
 
   peloton::benchmark::sdbench::RunBenchmark();
+
+  peloton::benchmark::sdbench::sdbench_table.release();
 
   return 0;
 }
