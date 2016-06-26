@@ -319,21 +319,13 @@ static bool EndTransaction(concurrency::Transaction *txn) {
   }
 }
 
-/////////////////////////////////////////////////////////
-// TRANSACTIONS
-/////////////////////////////////////////////////////////
+planner::AbstractPlan *read_plan = nullptr;
 
-bool RunRead(ZipfDistribution &zipf) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+const planner::AbstractPlan *GetReadPlanNode(ZipfDistribution &zipf){
 
-  auto txn = txn_manager.BeginTransaction();
-
-  /////////////////////////////////////////////////////////
-  // INDEX SCAN + PREDICATE
-  /////////////////////////////////////////////////////////
-
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
+  if(read_plan != nullptr) {
+    return read_plan;
+  }
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids;
@@ -364,11 +356,32 @@ bool RunRead(ZipfDistribution &zipf) {
   // Create plan node.
   auto predicate = nullptr;
 
-  planner::IndexScanPlan index_scan_node(user_table, predicate, column_ids,
+  read_plan = new planner::IndexScanPlan(user_table, predicate, column_ids,
                                          index_scan_desc);
 
+  return read_plan;
+}
+
+/////////////////////////////////////////////////////////
+// TRANSACTIONS
+/////////////////////////////////////////////////////////
+
+bool RunRead(ZipfDistribution &zipf) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // INDEX SCAN + PREDICATE
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  auto index_scan_node = GetReadPlanNode(zipf);
+
   // Run the executor
-  executor::IndexScanExecutor index_scan_executor(&index_scan_node,
+  executor::IndexScanExecutor index_scan_executor(index_scan_node,
                                                   context.get());
 
   /////////////////////////////////////////////////////////
