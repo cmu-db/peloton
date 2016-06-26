@@ -75,7 +75,7 @@ DataTable::~DataTable() {
     auto tile_group_id = tile_groups_.at(tile_group_itr);
     tile_group_lock_.Unlock();
 
-    LOG_INFO("Dropping tile group : %u", tile_group_id);
+    LOG_TRACE("Dropping tile group : %u", tile_group_id);
 
     catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }
