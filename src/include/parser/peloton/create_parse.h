@@ -14,9 +14,6 @@
 
 #include "parser/peloton/abstract_parse.h"
 
-#include "catalog/column.h"
-#include "catalog/schema.h"
-
 namespace peloton {
 namespace catalog{
 	class Schema;
