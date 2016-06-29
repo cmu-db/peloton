@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "planner/abstract_plan.h"
+#include "planner/project_info.h"
 
 namespace peloton {
 

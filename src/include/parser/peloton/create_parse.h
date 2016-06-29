@@ -13,11 +13,10 @@
 #pragma once
 
 #include "parser/peloton/abstract_parse.h"
+#include "catalog/column.h"
+#include "catalog/schema.h"
 
 namespace peloton {
-namespace catalog{
-	class Schema;
-}
 namespace parser {
 
 class CreateParse : public AbstractParse {
