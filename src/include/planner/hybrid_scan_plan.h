@@ -13,13 +13,16 @@
 #pragma once
 
 #include "planner/abstract_scan_plan.h"
+#include "planner/index_scan_plan.h"
 
 namespace peloton {
 
 class Value;
 
+namespace index{
+  class Index;
+}
 namespace planner {
-
 
 enum HybridType { UNKNOWN, SEQ, INDEX, HYBRID };
 

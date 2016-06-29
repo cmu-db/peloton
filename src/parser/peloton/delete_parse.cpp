@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
  
-#include "parser/peloton/update_parse.h"
+#include "parser/peloton/delete_parse.h"
 
 #include "common/types.h"
 #include "common/logger.h"
