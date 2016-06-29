@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "abstract_plan.h"
-#include "planner/project_info.h"
+#include "planner/abstract_plan.h"
+
 
 namespace peloton {
 
@@ -34,25 +34,18 @@ class InsertPlan : public AbstractPlan {
 
   // This constructor takes in neither a project info nor a tuple
   // It must be used when the input is a logical tile
-  explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
-      : target_table_(table), bulk_insert_count(bulk_insert_count) {}
+  explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count);
 
   // This constructor takes in a project info
   explicit InsertPlan(
       storage::DataTable *table,
       std::unique_ptr<const planner::ProjectInfo> &&project_info,
-      oid_t bulk_insert_count = 1)
-      : target_table_(table),
-        project_info_(std::move(project_info)),
-        bulk_insert_count(bulk_insert_count) {}
+      oid_t bulk_insert_count);
 
   // This constructor takes in a tuple
   explicit InsertPlan(storage::DataTable *table,
                       std::unique_ptr<storage::Tuple> &&tuple,
-                      oid_t bulk_insert_count = 1)
-      : target_table_(table),
-        tuple_(std::move(tuple)),
-        bulk_insert_count(bulk_insert_count) {}
+                      oid_t bulk_insert_count);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
