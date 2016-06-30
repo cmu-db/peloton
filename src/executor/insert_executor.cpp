@@ -33,7 +33,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -98,6 +98,7 @@ bool InsertExecutor::DExecute() {
             peloton::Result::RESULT_FAILURE);
         return false;
       }
+
       auto res = transaction_manager.PerformInsert(location);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
@@ -141,6 +142,7 @@ bool InsertExecutor::DExecute() {
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
+
       // Carry out insertion
       ItemPointer location = target_table->InsertTuple(tuple);
       LOG_TRACE("Inserted into location: %u, %u", location.block,

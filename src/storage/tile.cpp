@@ -64,7 +64,9 @@ Tile::Tile(BackendType backend_type, TileGroupHeader *tile_header,
   PL_MEMSET(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false) pool = new VarlenPool(backend_type);
+  if (schema.IsInlined() == false) {
+    pool = new VarlenPool(backend_type);
+  }
 }
 
 Tile::~Tile() {
@@ -74,7 +76,9 @@ Tile::~Tile() {
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
-  if (schema.IsInlined() == false) delete pool;
+  if (schema.IsInlined() == false) {
+    delete pool;
+  }
   pool = NULL;
 
   // clear any cached column headers

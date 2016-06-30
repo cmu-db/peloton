@@ -34,8 +34,10 @@ class InsertPlan : public AbstractPlan {
 
   // This constructor takes in neither a project info nor a tuple
   // It must be used when the input is a logical tile
-  explicit InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
-      : target_table_(table), bulk_insert_count(bulk_insert_count) {}
+  explicit InsertPlan(storage::DataTable *table,
+                      oid_t bulk_insert_count = 1)
+      : target_table_(table),
+        bulk_insert_count(bulk_insert_count) {}
 
   // This constructor takes in a project info
   explicit InsertPlan(
@@ -44,7 +46,7 @@ class InsertPlan : public AbstractPlan {
       oid_t bulk_insert_count = 1)
       : target_table_(table),
         project_info_(std::move(project_info)),
-        bulk_insert_count(bulk_insert_count) {}
+        bulk_insert_count(bulk_insert_count){}
 
   // This constructor takes in a tuple
   explicit InsertPlan(storage::DataTable *table,
@@ -69,9 +71,9 @@ class InsertPlan : public AbstractPlan {
   const std::string GetInfo() const { return "InsertPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    // TODO: Fix tuple copy
-    return std::unique_ptr<AbstractPlan>(
-        new InsertPlan(target_table_, std::move(project_info_->Copy())));
+    // TODO: Add copying mechanism
+    std::unique_ptr<AbstractPlan> dummy;
+    return dummy;
   }
 
  private:

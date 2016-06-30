@@ -50,15 +50,24 @@
 
 namespace peloton {
 namespace test {
+namespace hybrid_index_test{
 
 class HybridIndexTests : public PelotonTest {};
 
 static double projectivity = 1.0;
 static size_t column_count = 4;
-static size_t tuples_per_tile_group = 1000;
-static size_t tile_group = 10;
-static float scalar = 0.4;
-static size_t query_count = 100;
+
+static size_t tuples_per_tile_group = DEFAULT_TUPLES_PER_TILEGROUP;
+static size_t tile_group_count = 5;
+static size_t tuple_count = tile_group_count * tuples_per_tile_group;
+
+static double selectivity = 0.001;
+static double predicate_offset = 0.9;
+
+static double tuple_start_offset = predicate_offset * tuple_count;
+static double tuple_end_offset = (selectivity + predicate_offset) * tuple_count;
+
+static size_t query_count = 10;
 
 void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
                  bool build_indexes) {
@@ -119,7 +128,6 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
 void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   auto table_schema = hyadapt_table->GetSchema();
-  const int tuple_count = tile_group * tuples_per_tile_group;
 
   /////////////////////////////////////////////////////////
   // Load in the data
@@ -130,14 +138,11 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
 
-  int rowid;
-  for (rowid = 0; rowid < tuple_count; rowid++) {
-    int populate_value = rowid;
+  for (size_t tuple_itr = 0; tuple_itr < tuple_count; tuple_itr++) {
 
     storage::Tuple tuple(table_schema, allocate);
-
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-      auto value = ValueFactory::GetIntegerValue(populate_value);
+      auto value = ValueFactory::GetIntegerValue(tuple_itr);
       tuple.SetValue(col_itr, value, nullptr);
     }
 
@@ -151,39 +156,15 @@ void LoadTable(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   txn_manager.CommitTransaction();
 }
 
-expression::AbstractExpression *CreatePredicate(const int lower_bound) {
-  // ATTR0 >= LOWER_BOUND
-
-  // First, create tuple value expression.
-  expression::AbstractExpression *tuple_value_expr =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
-
-  // Second, create constant value expression.
-  Value constant_value = ValueFactory::GetIntegerValue(lower_bound);
-
-  expression::AbstractExpression *constant_value_expr =
-      expression::ExpressionUtil::ConstantValueFactory(constant_value);
-
-  // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-          tuple_value_expr,
-          constant_value_expr);
-
-  return predicate;
-}
-
-expression::AbstractExpression *CreateTwoPredicate(const int lower_bound,
-                                                   const int higher_bound) {
-  // ATTR0 >= LOWER_BOUND && <= UPPER_BOUND
+expression::AbstractExpression *GetPredicate() {
+  // ATTR0 >= LOWER_BOUND && < UPPER_BOUND
 
   // First, create tuple value expression.
   expression::AbstractExpression *tuple_value_expr_left =
       expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
 
   // Second, create constant value expression.
-  Value constant_value_left = ValueFactory::GetIntegerValue(lower_bound);
+  Value constant_value_left = ValueFactory::GetIntegerValue(tuple_start_offset);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
@@ -198,14 +179,14 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound,
   expression::AbstractExpression *tuple_value_expr_right =
       expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
 
-  Value constant_value_right = ValueFactory::GetIntegerValue(higher_bound);
+  Value constant_value_right = ValueFactory::GetIntegerValue(tuple_end_offset);
 
   expression::AbstractExpression *constant_value_expr_right =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_right);
 
   expression::AbstractExpression *predicate_right =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+          EXPRESSION_TYPE_COMPARE_LESSTHAN,
           tuple_value_expr_right,
           constant_value_expr_right);
 
@@ -217,21 +198,16 @@ expression::AbstractExpression *CreateTwoPredicate(const int lower_bound,
   return predicate;
 }
 
-void CreateIndexScanPredicate(const int lower,
+void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
                               std::vector<ExpressionType>& expr_types,
                               std::vector<Value>& values) {
+  key_column_ids.push_back(0);
   expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(lower));
-}
+  values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
 
-void CreateIndexScanTwoPredicates(const int lower, const int higher,
-                                  std::vector<ExpressionType>& expr_types,
-                                  std::vector<Value>& values) {
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(lower));
-
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(higher));
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+  values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
 }
 
 void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t
@@ -245,11 +221,9 @@ void GenerateSequence(std::vector<oid_t>& hyadapt_column_ids, oid_t
   }
 }
 
-void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
+void ExecuteTest(executor::AbstractExecutor *executor) {
   Timer<> timer;
 
-  size_t tuple_counts = 0;
-  timer.Start();
   bool status = false;
 
   status = executor->Init();
@@ -257,112 +231,27 @@ void ExecuteTest(executor::AbstractExecutor *executor, bool print_time) {
     throw Exception("Init failed");
   }
 
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  Value lower_bound = ValueFactory::GetIntegerValue(tile_group *
-                                                    tuples_per_tile_group * scalar);
-
-  Value higher_bound = ValueFactory::GetIntegerValue(tile_group *
-                                                     tuples_per_tile_group * scalar +
-                                                     tile_group *
-                                                     tuples_per_tile_group * (1.0 - scalar));
-
-  LOG_TRACE("Lower bound : %s Upper bound : %s",
-            lower_bound.GetInfo().c_str(),
-            higher_bound.GetInfo().c_str());
-
-  while (executor->Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(
-        executor->GetOutput());
-    tuple_counts += result_tile->GetTupleCount();
-
-    for (auto query_count = result_tile->begin(); query_count != result_tile->end(); query_count++)
-    {
-      oid_t tuple_id = *query_count;
-      // Get key value of tuple
-      Value key_value= result_tile->GetValue(tuple_id, 0);
-      auto lower_result = key_value.Compare(lower_bound);
-      auto higher_result = key_value.Compare(higher_bound);
-      EXPECT_TRUE(lower_result == VALUE_COMPARE_EQUAL ||
-                  lower_result == VALUE_COMPARE_GREATERTHAN);
-      EXPECT_TRUE(higher_result == VALUE_COMPARE_EQUAL ||
-                  higher_result == VALUE_COMPARE_LESSTHAN);
-    }
-
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  // Execute stuff
-  executor->Execute();
-
-  timer.Stop();
-  if (print_time) {
-    double time_per_transaction = timer.GetDuration();
-    LOG_INFO("%f", time_per_transaction);
-  }
-
-  LOG_TRACE("Tuple counts : %lu", tuple_counts);
-  EXPECT_EQ(tuple_counts,
-            tile_group * tuples_per_tile_group -
-            (tile_group * tuples_per_tile_group * scalar));
-}
-
-void ExecuteTestTwoPredicates(executor::AbstractExecutor *executor,
-                              bool print_time) {
-  Timer<> timer;
-
-  size_t tuple_counts = 0;
   timer.Start();
-  bool status = false;
 
-  status = executor->Init();
-  if (status == false) throw Exception("Init failed");
-
-  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
-
-  Value lower_bound = ValueFactory::GetIntegerValue(tile_group *
-                                                    tuples_per_tile_group * scalar);
-  Value higher_bound = ValueFactory::GetIntegerValue(tile_group *
-                                                     tuples_per_tile_group * scalar +
-                                                     tile_group *
-                                                     tuples_per_tile_group * 0.3);
-
+  size_t result_tuple_count = 0;
   while (executor->Execute() == true) {
-    std::unique_ptr<executor::LogicalTile> result_tile(
-        executor->GetOutput());
-    tuple_counts += result_tile->GetTupleCount();
-
-    for (auto query_count = result_tile->begin(); query_count != result_tile->end(); query_count++) {
-      oid_t tuple_id = *query_count;
-      // Get key value of tuple
-      Value key_value= result_tile->GetValue(tuple_id, 0);
-      auto lower_result = key_value.Compare(lower_bound);
-      auto higher_result = key_value.Compare(higher_bound);
-      EXPECT_TRUE(lower_result == VALUE_COMPARE_EQUAL ||
-                  lower_result == VALUE_COMPARE_GREATERTHAN);
-      EXPECT_TRUE(higher_result == VALUE_COMPARE_EQUAL ||
-                  higher_result == VALUE_COMPARE_LESSTHAN);
-    }
-
-    result_tiles.emplace_back(result_tile.release());
+    std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
+    result_tuple_count += result_tile->GetTupleCount();
   }
-
-  // Execute stuff
-  executor->Execute();
 
   timer.Stop();
-  if (print_time) {
-    double time_per_transaction = timer.GetDuration();
-    LOG_INFO("%f", time_per_transaction);
-  }
+  double time_per_transaction = timer.GetDuration();
+  LOG_INFO("%f", time_per_transaction);
 
-  EXPECT_EQ(tuple_counts,
-            tile_group * tuples_per_tile_group * 0.3 + 1);
+  LOG_TRACE("Lower bound        : %.0lf", tuple_start_offset);
+  LOG_TRACE("Upper bound        : %.0lf", tuple_end_offset);
+  LOG_TRACE("Result tuple count : %lu", result_tuple_count);
+  EXPECT_EQ(result_tuple_count, selectivity * tuple_count);
 }
 
 void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -374,21 +263,25 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
 
   oid_t query_column_count = projectivity * column_count;
   GenerateSequence(hyadapt_column_ids, query_column_count);
-
   for (oid_t col_itr = 0; col_itr < query_column_count; col_itr++) {
     column_ids.push_back(hyadapt_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(tile_group * tuples_per_tile_group * scalar);
+  auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(), predicate,
-                                           column_ids);
+  planner::IndexScanPlan::IndexScanDesc dummy_index_scan_desc;
 
-  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_node,
+  planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(),
+                                           predicate,
+                                           column_ids,
+                                           dummy_index_scan_desc,
+                                           HYBRID_SCAN_TYPE_SEQUENTIAL);
+
+  executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -411,18 +304,18 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  key_column_ids.push_back(0);
-  CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar,
-                           expr_types, values);
+  CreateIndexScanPredicate(key_column_ids, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
 
-  expression::AbstractExpression *predicate = nullptr;
+  auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
+                                           predicate,
                                            column_ids,
-                                           index_scan_desc);
+                                           index_scan_desc,
+                                           HYBRID_SCAN_TYPE_INDEX);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -432,21 +325,21 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
       new executor::ExecutorContext(txn));
 
 
-  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
+  executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
 
-
-void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
+void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
+                      hyadapt_table) {
   std::vector<oid_t> column_ids;
   std::vector<oid_t> column_ids_second;
+  oid_t query_column_count = projectivity * column_count;
   std::vector<oid_t> hyadapt_column_ids;
 
-  oid_t query_column_count = projectivity * column_count;
   GenerateSequence(hyadapt_column_ids, query_column_count);
 
   for (oid_t col_itr = 0; col_itr < query_column_count; col_itr++) {
@@ -461,19 +354,18 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  key_column_ids.push_back(0);
-  CreateIndexScanPredicate(tile_group * tuples_per_tile_group * scalar,
-                           expr_types, values);
+  CreateIndexScanPredicate(key_column_ids, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      nullptr, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 
-  expression::AbstractExpression *predicate = CreatePredicate(tile_group *
-                                                              tuples_per_tile_group * scalar);
+  auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(),
-                                           predicate, column_ids_second,
-                                           index_scan_desc);
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
+                                           predicate,
+                                           column_ids_second,
+                                           index_scan_desc,
+                                           HYBRID_SCAN_TYPE_HYBRID);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -483,10 +375,10 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
       new executor::ExecutorContext(txn));
 
 
-  executor::HybridScanExecutor Hybrid_scan_executor(&hybrid_scan_plan,
+  executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_plan,
                                                     context.get());
 
-  ExecuteTest(&Hybrid_scan_executor, true);
+  ExecuteTest(&hybrid_scan_executor);
 
   txn_manager.CommitTransaction();
 }
@@ -561,6 +453,8 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   std::thread index_builder = std::thread(BuildIndex, pkey_index,
                                           hyadapt_table.get());
 
+  query_count *= 10;
+
   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
     LaunchHybridScan(hyadapt_table);
   }
@@ -568,5 +462,6 @@ TEST_F(HybridIndexTests, HybridScanTest) {
   index_builder.join();
 }
 
-}  // namespace tet
+}  // namespace hybrid_index_test
+}  // namespace test
 }  // namespace peloton

@@ -22,19 +22,22 @@ namespace benchmark {
 namespace sdbench {
 
 void Usage() {
-  LOG_INFO(
-      "Command line options : sdbench <options>"
-      "   -h --help              :  Print help message"
-      "   -o --operator-type     :  Operator type"
-      "   -k --scale-factor      :  # of tuples"
-      "   -s --selectivity       :  Selectivity"
-      "   -p --projectivity      :  Projectivity"
-      "   -l --layout            :  Layout"
-      "   -t --transactions      :  # of transactions"
-      "   -e --experiment_type   :  Experiment Type"
-      "   -c --column_count      :  # of columns"
-      "   -w --write_ratio       :  Fraction of writes"
-      "   -g --tuples_per_tg     :  # of tuples per tilegroup");
+  LOG_INFO("\n"
+      "Command line options : sdbench <options>\n"
+      "   -h --help              :  Print help message\n"
+      "   -o --operator-type     :  Operator type\n"
+      "   -k --scale-factor      :  # of tuples\n"
+      "   -s --selectivity       :  Selectivity\n"
+      "   -p --projectivity      :  Projectivity\n"
+      "   -l --layout            :  Layout\n"
+      "   -t --transactions      :  # of transactions\n"
+      "   -e --experiment_type   :  Experiment Type\n"
+      "   -c --column_count      :  # of columns\n"
+      "   -w --write_ratio       :  Fraction of writes\n"
+      "   -g --tuples_per_tg     :  # of tuples per tilegroup\n"
+      "   -y --hybrid_scan_type  :  hybrid scan type\n"
+      "   -i --index_count       :  # of indexes\n"
+  );
   exit(EXIT_FAILURE);
 }
 
@@ -49,7 +52,10 @@ static struct option opts[] = {
     {"column_count", optional_argument, NULL, 'c'},
     {"write_ratio", optional_argument, NULL, 'w'},
     {"tuples_per_tg", optional_argument, NULL, 'g'},
-    {NULL, 0, NULL, 0}};
+    {"hybrid_scan_type", optional_argument, NULL, 'y'},
+    {"index_count", optional_argument, NULL, 'i'},
+    {NULL, 0, NULL, 0}
+};
 
 void GenerateSequence(oid_t column_count) {
   // Reset sequence
@@ -71,14 +77,29 @@ static void ValidateOperator(const configuration &state) {
       case OPERATOR_TYPE_DIRECT:
         LOG_INFO("%s : DIRECT", "operator_type ");
         break;
-      case OPERATOR_TYPE_AGGREGATE:
-        LOG_INFO("%s : AGGREGATE", "operator_type ");
+      case OPERATOR_TYPE_INSERT:
+        LOG_INFO("%s : INSERT", "operator_type ");
         break;
-      case OPERATOR_TYPE_ARITHMETIC:
-        LOG_INFO("%s : ARITHMETIC", "operator_type ");
+      default:
         break;
-      case OPERATOR_TYPE_JOIN:
-        LOG_INFO("%s : JOIN", "operator_type ");
+    }
+  }
+}
+
+static void ValidateHybridScanType(const configuration &state) {
+  if (state.hybrid_scan_type < 1 || state.hybrid_scan_type > 3) {
+    LOG_ERROR("Invalid hybrid_scan_type :: %d", state.hybrid_scan_type);
+    exit(EXIT_FAILURE);
+  } else {
+    switch (state.hybrid_scan_type) {
+      case HYBRID_SCAN_TYPE_SEQUENTIAL:
+        LOG_INFO("%s : SEQUENTIAL", "hybrid_scan_type ");
+        break;
+      case HYBRID_SCAN_TYPE_INDEX:
+        LOG_INFO("%s : INDEX", "hybrid_scan_type ");
+        break;
+      case HYBRID_SCAN_TYPE_HYBRID:
+        LOG_INFO("%s : HYBRID", "hybrid_scan_type ");
         break;
       default:
         break;
@@ -135,7 +156,7 @@ static void ValidateSelectivity(const configuration &state) {
 }
 
 static void ValidateExperiment(const configuration &state) {
-  if (state.experiment_type <= 0 || state.experiment_type > 14) {
+  if (state.experiment_type <= 0 || state.experiment_type > 1) {
     LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
@@ -150,6 +171,15 @@ static void ValidateColumnCount(const configuration &state) {
   }
 
   LOG_INFO("%s : %d", "column_count", state.column_count);
+}
+
+static void ValidateIndexCount(const configuration &state) {
+  if (state.index_count <= 0) {
+    LOG_ERROR("Invalid index_count :: %d", state.index_count);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "index_count", state.index_count);
 }
 
 static void ValidateWriteRatio(const configuration &state) {
@@ -174,28 +204,30 @@ int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
+  state.hybrid_scan_type = HYBRID_SCAN_TYPE_INDEX;
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   state.transactions = 1;
-  state.selectivity = 1.0;
+  state.selectivity = 0.1;
   state.projectivity = 1.0;
 
   state.layout_mode = LAYOUT_ROW;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
-  state.column_count = 100;
+  state.column_count = 10;
   state.write_ratio = 0.0;
+  state.index_count = 1;
 
   state.adapt = false;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "aho:k:s:p:l:t:e:c:w:g:", opts, &idx);
+    int c = getopt_long(argc, argv, "aho:k:s:p:l:t:e:c:w:g:y:i:", opts, &idx);
 
     if (c == -1) break;
 
@@ -230,6 +262,13 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'g':
         state.tuples_per_tilegroup = atoi(optarg);
         break;
+      case 'y':
+        state.hybrid_scan_type = (HybridScanType)atoi(optarg);
+        break;
+      case 'i':
+        state.index_count = atoi(optarg);
+        break;
+
       case 'h':
         Usage();
         break;
@@ -242,12 +281,14 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID) {
     // Print configuration
+    ValidateHybridScanType(state);
     ValidateOperator(state);
     ValidateLayout(state);
     ValidateSelectivity(state);
     ValidateProjectivity(state);
     ValidateScaleFactor(state);
     ValidateColumnCount(state);
+    ValidateIndexCount(state);
     ValidateWriteRatio(state);
     ValidateTuplesPerTileGroup(state);
 

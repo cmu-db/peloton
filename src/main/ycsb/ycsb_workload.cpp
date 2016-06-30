@@ -376,17 +376,8 @@ bool RunRead(ZipfDistribution &zipf) {
   /////////////////////////////////////////////////////////
 
   // Create and set up materialization executor
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    old_to_new_cols[col_itr] = col_itr;
-  }
-
-  std::shared_ptr<const catalog::Schema> output_schema{
-      catalog::Schema::CopySchema(user_table->GetSchema())};
-
   bool physify_flag = true;  // is going to create a physical tile
-  planner::MaterializationPlan mat_node(old_to_new_cols, output_schema,
-                                        physify_flag);
+  planner::MaterializationPlan mat_node(physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
   mat_executor.AddChild(&index_scan_executor);
