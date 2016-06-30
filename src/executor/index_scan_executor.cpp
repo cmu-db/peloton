@@ -362,6 +362,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       }
     }
   }
+
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
     auto &manager = catalog::Manager::GetInstance();

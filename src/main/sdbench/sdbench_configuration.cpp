@@ -153,7 +153,7 @@ static void ValidateSelectivity(const configuration &state) {
 }
 
 static void ValidateExperiment(const configuration &state) {
-  if (state.experiment_type <= 0 || state.experiment_type > 14) {
+  if (state.experiment_type <= 0 || state.experiment_type > 1) {
     LOG_ERROR("Invalid experiment_type :: %d", state.experiment_type);
     exit(EXIT_FAILURE);
   }
@@ -205,7 +205,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
-  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+  state.tuples_per_tilegroup = 10;
 
   state.transactions = 1;
   state.selectivity = 0.01;

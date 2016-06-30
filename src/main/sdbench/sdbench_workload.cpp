@@ -81,6 +81,8 @@ namespace sdbench {
 // Tuple id counter
 oid_t sdbench_tuple_counter = -1000000;
 
+std::vector<oid_t> column_counts = {50, 500};
+
 expression::AbstractExpression *CreatePredicate(const int tuple_start_offset,
                                                 const int tuple_end_offset) {
   // ATTR0 >= LOWER_BOUND && < UPPER_BOUND
@@ -347,6 +349,208 @@ void RunDirectTest() {
   ExecuteTest(executors);
 
   txn_manager.CommitTransaction();
+}
+
+void RunInsertTest() {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  auto txn = txn_manager.BeginTransaction();
+
+  /////////////////////////////////////////////////////////
+  // INSERT
+  /////////////////////////////////////////////////////////
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  std::vector<Value> values;
+  Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
+  TargetList target_list;
+  DirectMapList direct_map_list;
+  std::vector<oid_t> column_ids;
+
+  target_list.clear();
+  direct_map_list.clear();
+
+  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
+    auto expression =
+        expression::ExpressionUtil::ConstantValueFactory(insert_val);
+    target_list.emplace_back(col_id, expression);
+    column_ids.push_back(col_id);
+  }
+
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(std::move(target_list),
+                               std::move(direct_map_list)));
+
+  auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  auto bulk_insert_count = state.write_ratio * orig_tuple_count;
+  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info), bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  /////////////////////////////////////////////////////////
+  // EXECUTE
+  /////////////////////////////////////////////////////////
+
+  std::vector<executor::AbstractExecutor *> executors;
+  executors.push_back(&insert_executor);
+
+  /////////////////////////////////////////////////////////
+  // COLLECT STATS
+  /////////////////////////////////////////////////////////
+
+  ExecuteTest(executors);
+
+  txn_manager.CommitTransaction();
+}
+
+static void Transform(double theta) {
+  // Get column map
+  auto table_name = sdbench_table->GetName();
+
+  peloton_projectivity = state.projectivity;
+
+  // TODO: Update period ?
+  oid_t update_period = 10;
+  oid_t update_itr = 0;
+
+  // Transform
+  while (state.fsm == true) {
+    auto tile_group_count = sdbench_table->GetTileGroupCount();
+    auto tile_group_offset = rand() % tile_group_count;
+
+    sdbench_table->TransformTileGroup(tile_group_offset, theta);
+
+    // Update partitioning periodically
+    update_itr++;
+    if (update_itr == update_period) {
+      sdbench_table->UpdateDefaultPartition();
+      update_itr = 0;
+    }
+  }
+}
+
+static void RunAdaptTest() {
+  double direct_low_proj = 0.06;
+  double insert_write_ratio = 0.05;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = 0.05;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+}
+
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
+                                         LAYOUT_HYBRID};
+
+std::vector<oid_t> adapt_column_counts = {column_counts[1]};
+
+void RunAdaptExperiment() {
+  auto orig_transactions = state.transactions;
+  std::thread transformer;
+
+  state.transactions = 25;
+
+  state.write_ratio = 0.0;
+  state.selectivity = 1.0;
+  state.adapt = true;
+  double theta = 0.0;
+
+  // Go over all column counts
+  for (auto column_count : adapt_column_counts) {
+    state.column_count = column_count;
+
+    // Generate sequence
+    GenerateSequence(state.column_count);
+
+    // Go over all layouts
+    for (auto layout : adapt_layouts) {
+      // Set layout
+      state.layout_mode = layout;
+      peloton_layout_mode = state.layout_mode;
+
+      LOG_TRACE("----------------------------------------- \n");
+
+      state.projectivity = 1.0;
+      peloton_projectivity = 1.0;
+      CreateAndLoadTable((LayoutType)peloton_layout_mode);
+
+      // Reset query counter
+      query_itr = 0;
+
+      // Launch transformer
+      if (state.layout_mode == LAYOUT_HYBRID) {
+        state.fsm = true;
+        peloton_fsm = true;
+        transformer = std::thread(Transform, theta);
+      }
+
+      RunAdaptTest();
+
+      // Stop transformer
+      if (state.layout_mode == LAYOUT_HYBRID) {
+        state.fsm = false;
+        peloton_fsm = false;
+        transformer.join();
+      }
+    }
+  }
+
+  // Reset
+  state.transactions = orig_transactions;
+  state.adapt = false;
+  query_itr = 0;
+
+  out.close();
 }
 
 

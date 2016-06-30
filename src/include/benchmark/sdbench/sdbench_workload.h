@@ -25,6 +25,8 @@ void CreateAndLoadTable(LayoutType layout_type);
 
 void RunDirectTest();
 
+void RunAdaptExperiment();
+
 }  // namespace sdbench
 }  // namespace benchmark
 }  // namespace peloton

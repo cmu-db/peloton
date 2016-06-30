@@ -59,6 +59,7 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
+  oid_t bulk_insert_count = node.GetBulkInsertCount();
   PL_ASSERT(target_table);
 
   auto &transaction_manager =
@@ -139,24 +140,28 @@ bool InsertExecutor::DExecute() {
       tuple = project_tuple.get();
     }
 
-    // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(tuple);
-    LOG_TRACE("Inserted into location: %u, %u", location.block,
-              location.offset);
+    // Bulk Insert Mode
+    for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
 
-    if (location.block == INVALID_OID) {
-      LOG_TRACE("Failed to Insert. Set txn failure.");
-      transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
-      return false;
+      // Carry out insertion
+      ItemPointer location = target_table->InsertTuple(tuple);
+      LOG_TRACE("Inserted into location: %u, %u", location.block,
+                location.offset);
+
+      if (location.block == INVALID_OID) {
+        LOG_TRACE("Failed to Insert. Set txn failure.");
+        transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
+        return false;
+      }
+
+      auto res = transaction_manager.PerformInsert(location);
+      if (!res) {
+        transaction_manager.SetTransactionResult(RESULT_FAILURE);
+        return res;
+      }
+
+      executor_context_->num_processed += 1;  // insert one
     }
-
-    auto res = transaction_manager.PerformInsert(location);
-    if (!res) {
-      transaction_manager.SetTransactionResult(RESULT_FAILURE);
-      return res;
-    }
-
-    executor_context_->num_processed += 1;  // insert one
 
     done_ = true;
     return true;
