@@ -70,5 +70,23 @@ TEST_F(DataTableTests, TransformTileGroupTest) {
   data_table->TransformTileGroup(0, theta);
 }
 
+std::unique_ptr<storage::DataTable> data_table_test_table;
+
+TEST_F(DataTableTests, GlobalTableTest) {
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  txn_manager.BeginTransaction();
+
+  data_table_test_table.reset(
+      ExecutorTestsUtil::CreateTable(tuple_count, false));
+  ExecutorTestsUtil::PopulateTable(data_table_test_table.get(), tuple_count, false, false,
+                                   true);
+
+  txn_manager.CommitTransaction();
+
+  data_table_test_table.release();
+}
+
 }  // End test namespace
 }  // End peloton namespace

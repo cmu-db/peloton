@@ -43,7 +43,7 @@ class MaterializationPlan : public AbstractPlan {
   MaterializationPlan(bool physify_flag)
       : schema_(nullptr), physify_flag_(physify_flag) {}
 
-  inline const std::unordered_map<oid_t, oid_t> &old_to_new_cols() const {
+  inline const std::unordered_map<oid_t, oid_t> &GetOldToNewCols() const {
     return old_to_new_cols_;
   }
 

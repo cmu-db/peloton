@@ -47,7 +47,6 @@ storage::DataTable *user_table;
 
 void CreateYCSBDatabase() {
   const oid_t col_count = state.column_count + 1;
-  const bool is_inlined = true;
 
   /////////////////////////////////////////////////////////
   // Create tables
@@ -64,6 +63,7 @@ void CreateYCSBDatabase() {
 
   bool own_schema = true;
   bool adapt_table = false;
+  const bool is_inlined = false;
 
   // Create schema first
   std::vector<catalog::Column> columns;
