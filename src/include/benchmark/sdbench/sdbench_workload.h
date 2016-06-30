@@ -25,17 +25,7 @@ void CreateAndLoadTable(LayoutType layout_type);
 
 void RunDirectTest();
 
-void RunAggregateTest();
-
-void RunArithmeticTest();
-
-void RunJoinTest();
-
-void RunProjectivityExperiment();
-
-void RunSelectivityExperiment();
-
-void RunOperatorExperiment();
+void RunInsertTest();
 
 void RunAdaptExperiment();
 

@@ -134,7 +134,7 @@ storage::DataTable *order_line_table;
 
 const bool own_schema = true;
 const bool adapt_table = false;
-const bool is_inlined = true;
+const bool is_inlined = false;
 const bool unique_index = false;
 const bool allocate = true;
 
