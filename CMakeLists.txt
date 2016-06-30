@@ -111,13 +111,15 @@ if (COVERALLS)
 endif()
 
 # -- [ Doxygen
-include(doxygen)
 
-doxygen_configure(src/ test/)
+if (DOXYGEN)
+	include(doxygen)
+	doxygen_configure(src/ test/)
+endif()
 
 # ---[ Linter target
 add_custom_target(lint COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/lint.cmake)
-									
+
 # ---[ Configuration summary
 peloton_print_configuration_summary()
 

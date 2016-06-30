@@ -28,14 +28,14 @@ namespace peloton {
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 SKIP_LIST_MAP_TYPE::SkipListMap(){
 
-  LOG_INFO("Creating Skip List Map");
+  LOG_TRACE("Creating Skip List Map");
 
 }
 
 SKIP_LIST_MAP_TEMPLATE_ARGUMENTS
 SKIP_LIST_MAP_TYPE::~SkipListMap(){
 
-  LOG_INFO("Destroying Skip List Map");
+  LOG_TRACE("Destroying Skip List Map");
 
 }
 
