@@ -17,6 +17,9 @@
 #include "benchmark/sdbench/sdbench_configuration.h"
 #include "common/logger.h"
 #include "benchmark/sdbench/sdbench_workload.h"
+#include "benchmark/sdbench/sdbench_loader.h"
+
+#include <google/protobuf/stubs/common.h>
 
 namespace peloton {
 namespace benchmark {
@@ -42,16 +45,8 @@ void RunBenchmark() {
         RunDirectTest();
         break;
 
-      case OPERATOR_TYPE_AGGREGATE:
-        RunAggregateTest();
-        break;
-
-      case OPERATOR_TYPE_ARITHMETIC:
-        RunArithmeticTest();
-        break;
-
-      case OPERATOR_TYPE_JOIN:
-        RunJoinTest();
+      case OPERATOR_TYPE_INSERT:
+        RunInsertTest();
         break;
 
       default:
@@ -63,17 +58,6 @@ void RunBenchmark() {
   // Experiment
   else {
     switch (state.experiment_type) {
-      case EXPERIMENT_TYPE_PROJECTIVITY:
-        RunProjectivityExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_SELECTIVITY:
-        RunSelectivityExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_OPERATOR:
-        RunOperatorExperiment();
-        break;
 
       case EXPERIMENT_TYPE_ADAPT:
         RunAdaptExperiment();
@@ -95,6 +79,11 @@ int main(int argc, char **argv) {
       argc, argv, peloton::benchmark::sdbench::state);
 
   peloton::benchmark::sdbench::RunBenchmark();
+
+  peloton::benchmark::sdbench::sdbench_table.release();
+
+  // shutdown protocol buf library
+  google::protobuf::ShutdownProtobufLibrary();
 
   return 0;
 }

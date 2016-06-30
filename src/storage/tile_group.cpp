@@ -71,7 +71,9 @@ oid_t TileGroup::GetTileId(const oid_t tile_id) const {
 peloton::VarlenPool *TileGroup::GetTilePool(const oid_t tile_id) const {
   Tile *tile = GetTile(tile_id);
 
-  if (tile != nullptr) return tile->GetPool();
+  if (tile != nullptr) {
+    return tile->GetPool();
+  }
 
   return nullptr;
 }

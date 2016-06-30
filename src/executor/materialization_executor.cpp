@@ -331,7 +331,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
         GetPlanNode<planner::MaterializationPlan>();
     if (node.GetSchema()) {
       output_schema = node.GetSchema();
-      old_to_new_cols = node.old_to_new_cols();
+      old_to_new_cols = node.GetOldToNewCols();
     } else {
       output_schema = source_tile_schema.get();
       old_to_new_cols = BuildIdentityMapping(output_schema);

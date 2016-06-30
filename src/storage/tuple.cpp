@@ -436,8 +436,6 @@ const std::string Tuple::GetInfo() const {
     os << ")";
   }
 
-  os << "\n";
-
   return os.str();
 }
 

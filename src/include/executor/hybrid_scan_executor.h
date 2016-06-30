@@ -43,7 +43,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
 
   oid_t indexed_tile_offset_ = INVALID_OID;
 
-  planner::HybridType type_ = planner::HybridType::UNKNOWN;
+  HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
 
   //  bool build_index_ = true;
 
@@ -56,6 +56,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
 
   inline bool SeqScanUtil();
   inline bool IndexScanUtil();
+
   //===--------------------------------------------------------------------===//
   // Index Scan
   //===--------------------------------------------------------------------===//
