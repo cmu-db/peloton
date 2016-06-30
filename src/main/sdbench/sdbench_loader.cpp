@@ -12,6 +12,7 @@
 
 
 #include "benchmark/sdbench/sdbench_loader.h"
+#include "benchmark/sdbench/sdbench_configuration.h"
 
 #include <memory>
 #include <string>
@@ -45,7 +46,6 @@ std::unique_ptr<storage::DataTable> sdbench_table;
 void CreateTable() {
   const oid_t col_count = state.column_count + 1;
   const bool is_inlined = true;
-  const bool indexes = false;
 
   // Create schema first
   std::vector<catalog::Column> columns;
@@ -71,8 +71,9 @@ void CreateTable() {
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup, own_schema, adapt_table));
 
-  // PRIMARY INDEX
-  if (indexes == true) {
+  // PRIMARY INDEXES
+  for(int index_itr = 0; index_itr < state.index_count; index_itr++) {
+
     std::vector<oid_t> key_attrs;
 
     auto tuple_schema = sdbench_table->GetSchema();
@@ -87,12 +88,19 @@ void CreateTable() {
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_index", 123, INDEX_TYPE_BTREE,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+        "primary_index",
+        index_itr,
+        INDEX_TYPE_SKIPLIST,
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+        tuple_schema,
+        key_schema,
+        unique);
 
     index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
     sdbench_table->AddIndex(pkey_index);
+
   }
+
 }
 
 void LoadTable() {

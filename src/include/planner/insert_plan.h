@@ -41,7 +41,6 @@ class InsertPlan : public AbstractPlan {
       storage::DataTable *table,
       std::unique_ptr<const planner::ProjectInfo> &&project_info,
       oid_t bulk_insert_count = 1);
-
   // This constructor takes in a tuple
   explicit InsertPlan(storage::DataTable *table,
                       std::unique_ptr<storage::Tuple> &&tuple,
@@ -62,9 +61,9 @@ class InsertPlan : public AbstractPlan {
   const std::string GetInfo() const { return "InsertPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    // TODO: Fix tuple copy
-    return std::unique_ptr<AbstractPlan>(
-        new InsertPlan(target_table_, std::move(project_info_->Copy())));
+    // TODO: Add copying mechanism
+    std::unique_ptr<AbstractPlan> dummy;
+    return dummy;
   }
 
  private:

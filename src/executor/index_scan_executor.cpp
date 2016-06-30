@@ -65,7 +65,9 @@ bool IndexScanExecutor::DInit() {
   PL_ASSERT(index_ != nullptr);
 
   result_itr_ = START_OID;
+  result_.clear();
   done_ = false;
+  key_ready_ = false;
 
   auto column_ids_ = node.GetColumnIds();
   auto key_column_ids_ = node.GetKeyColumnIds();
@@ -362,6 +364,7 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
       }
     }
   }
+
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
     auto &manager = catalog::Manager::GetInstance();
