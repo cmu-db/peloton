@@ -270,9 +270,13 @@ void LaunchSeqScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   // Create and set up seq scan executor
   auto predicate = GetPredicate();
 
+  planner::IndexScanPlan::IndexScanDesc dummy_index_scan_desc;
+
   planner::HybridScanPlan hybrid_scan_node(hyadapt_table.get(),
                                            predicate,
-                                           column_ids);
+                                           column_ids,
+                                           dummy_index_scan_desc,
+                                           HYBRID_SCAN_TYPE_SEQUENTIAL);
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
@@ -305,11 +309,13 @@ void LaunchIndexScan(std::unique_ptr<storage::DataTable>& hyadapt_table) {
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
 
-  expression::AbstractExpression *predicate = nullptr;
+  auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(), predicate,
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
+                                           predicate,
                                            column_ids,
-                                           index_scan_desc);
+                                           index_scan_desc,
+                                           HYBRID_SCAN_TYPE_INDEX);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -351,13 +357,15 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
   CreateIndexScanPredicate(key_column_ids, expr_types, values);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      nullptr, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 
   auto predicate = GetPredicate();
 
-  planner::HybridScanPlan hybrid_scan_plan(index, hyadapt_table.get(),
-                                           predicate, column_ids_second,
-                                           index_scan_desc);
+  planner::HybridScanPlan hybrid_scan_plan(hyadapt_table.get(),
+                                           predicate,
+                                           column_ids_second,
+                                           index_scan_desc,
+                                           HYBRID_SCAN_TYPE_HYBRID);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 

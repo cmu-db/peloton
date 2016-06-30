@@ -28,22 +28,13 @@ namespace sdbench {
 enum OperatorType {
   OPERATOR_TYPE_INVALID = 0, /* invalid */
 
-  OPERATOR_TYPE_DIRECT = 1,
-  OPERATOR_TYPE_AGGREGATE = 2,
-  OPERATOR_TYPE_ARITHMETIC = 3,
-  OPERATOR_TYPE_JOIN = 4,
-  OPERATOR_TYPE_INSERT = 5,
-  OPERATOR_TYPE_UPDATE = 6
-
+  OPERATOR_TYPE_DIRECT = 1
 };
 
 enum ExperimentType {
   EXPERIMENT_TYPE_INVALID = 0,
 
-  EXPERIMENT_TYPE_PROJECTIVITY = 1,
-  EXPERIMENT_TYPE_SELECTIVITY = 2,
-  EXPERIMENT_TYPE_OPERATOR = 3,
-  EXPERIMENT_TYPE_ADAPT = 6,
+  EXPERIMENT_TYPE_SELECTIVITY = 1
 
 };
 
@@ -51,6 +42,9 @@ extern int orig_scale_factor;
 
 class configuration {
  public:
+  // scan type
+  HybridScanType hybrid_scan_type;
+
   OperatorType operator_type;
 
   // experiment
@@ -70,6 +64,9 @@ class configuration {
 
   // column count
   int column_count;
+
+  // index count
+  int index_count;
 
   // update ratio
   double write_ratio;

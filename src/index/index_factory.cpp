@@ -28,7 +28,7 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 
   LOG_TRACE("Creating index %s", metadata->GetName().c_str());
   const auto key_size = metadata->key_schema->GetLength();
-  LOG_INFO("key_size : %d", key_size);
+  LOG_TRACE("key_size : %d", key_size);
 
   auto index_type = metadata->GetIndexMethodType();
   LOG_TRACE("Index type : %d", index_type);
