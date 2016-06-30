@@ -57,8 +57,8 @@ class HybridIndexTests : public PelotonTest {};
 static double projectivity = 1.0;
 static size_t column_count = 4;
 
-static size_t tuples_per_tile_group = 2;
-static size_t tile_group_count = 2;
+static size_t tuples_per_tile_group = DEFAULT_TUPLES_PER_TILEGROUP;
+static size_t tile_group_count = 5;
 static size_t tuple_count = tile_group_count * tuples_per_tile_group;
 
 static double selectivity = 0.001;

@@ -68,6 +68,6 @@ target_link_libraries(logger peloton)
 
 add_custom_target(benchmark)
 
-add_dependencies(benchmark hyadapt ycsb tpcc sdbench logger)
+add_dependencies(benchmark ycsb tpcc sdbench logger)
 
 
