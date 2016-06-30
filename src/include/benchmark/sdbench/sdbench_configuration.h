@@ -28,13 +28,15 @@ namespace sdbench {
 enum OperatorType {
   OPERATOR_TYPE_INVALID = 0, /* invalid */
 
-  OPERATOR_TYPE_DIRECT = 1
+  OPERATOR_TYPE_DIRECT = 1,
+  OPERATOR_TYPE_INSERT = 2
+
 };
 
 enum ExperimentType {
   EXPERIMENT_TYPE_INVALID = 0,
 
-  EXPERIMENT_TYPE_SELECTIVITY = 1
+  EXPERIMENT_TYPE_ADAPT = 1
 
 };
 

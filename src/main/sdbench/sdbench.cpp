@@ -19,6 +19,8 @@
 #include "benchmark/sdbench/sdbench_workload.h"
 #include "benchmark/sdbench/sdbench_loader.h"
 
+#include <google/protobuf/stubs/common.h>
+
 namespace peloton {
 namespace benchmark {
 namespace sdbench {
@@ -53,6 +55,10 @@ void RunBenchmark() {
   else {
     switch (state.experiment_type) {
 
+      case EXPERIMENT_TYPE_ADAPT:
+        RunAdaptExperiment();
+        break;
+
       default:
         LOG_ERROR("Unsupported experiment_type : %d", state.experiment_type);
         break;
@@ -71,6 +77,9 @@ int main(int argc, char **argv) {
   peloton::benchmark::sdbench::RunBenchmark();
 
   peloton::benchmark::sdbench::sdbench_table.release();
+
+  // shutdown protocol buf library
+  google::protobuf::ShutdownProtobufLibrary();
 
   return 0;
 }
