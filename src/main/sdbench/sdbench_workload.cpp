@@ -149,10 +149,16 @@ static void WriteOutput(double duration) {
   duration *= 1000;
 
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %.1lf %.1lf %.1lf %d %d %d :: %.1lf ms", state.layout_mode,
-           state.operator_type, state.projectivity, state.selectivity,
-           state.write_ratio, state.scale_factor, state.column_count,
-           state.tuples_per_tilegroup, duration);
+  LOG_INFO("%d %d %.1lf %.2lf %.1lf %d %d %d :: %.1lf ms",
+           state.layout_mode,
+           state.operator_type,
+           state.projectivity,
+           state.selectivity,
+           state.write_ratio,
+           state.scale_factor,
+           state.column_count,
+           state.tuples_per_tilegroup,
+           duration);
 
   out << state.layout_mode << " ";
   out << state.operator_type << " ";
@@ -171,7 +177,7 @@ static int GetLowerBound() {
   int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   int predicate_offset = 0.1 * tuple_count;
 
-  LOG_INFO("Tuple count : %d", tuple_count);
+  LOG_TRACE("Tuple count : %d", tuple_count);
 
   int lower_bound = predicate_offset;
   return lower_bound;
@@ -234,8 +240,8 @@ void RunDirectTest() {
   const int lower_bound = GetLowerBound();
   const int upper_bound = GetUpperBound();
 
-  LOG_INFO("Lower bound : %d", lower_bound);
-  LOG_INFO("Upper bound : %d", upper_bound);
+  LOG_TRACE("Lower bound : %d", lower_bound);
+  LOG_TRACE("Upper bound : %d", upper_bound);
 
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -385,8 +391,13 @@ void RunInsertTest() {
 
   auto orig_tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   auto bulk_insert_count = state.write_ratio * orig_tuple_count;
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info), bulk_insert_count);
-  executor::InsertExecutor insert_executor(&insert_node, context.get());
+
+  LOG_TRACE("Bulk insert count : %lf", bulk_insert_count);
+  planner::InsertPlan insert_node(sdbench_table.get(),
+                                  std::move(project_info),
+                                  bulk_insert_count);
+  executor::InsertExecutor insert_executor(&insert_node,
+                                           context.get());
 
   /////////////////////////////////////////////////////////
   // EXECUTE
@@ -498,10 +509,10 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 25;
+  state.transactions = 10;
 
   state.write_ratio = 0.0;
-  state.selectivity = 1.0;
+  state.selectivity = 0.3;
   state.adapt = true;
   double theta = 0.0;
 
@@ -518,7 +529,8 @@ void RunAdaptExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_TRACE("----------------------------------------- \n");
+      LOG_INFO("*********************************************************");
+      LOG_INFO("*********************************************************");
 
       state.projectivity = 1.0;
       peloton_projectivity = 1.0;

@@ -75,6 +75,7 @@ bool HybridScanExecutor::DInit() {
 
     result_itr_ = START_OID;
     index_done_ = false;
+    result_.clear();
 
     PL_ASSERT(index_ != nullptr);
     column_ids_ = node.GetColumnIds();
@@ -83,6 +84,7 @@ bool HybridScanExecutor::DInit() {
     values_ = node.GetValues();
     auto runtime_keys_ = node.GetRunTimeKeys();
     predicate_ = node.GetPredicate();
+    key_ready_ = false;
 
     if (runtime_keys_.size() != 0) {
       assert(runtime_keys_.size() == values_.size());
@@ -101,7 +103,7 @@ bool HybridScanExecutor::DInit() {
     }
 
     if (table_ != nullptr) {
-      LOG_INFO("Column count : %u", table_->GetSchema()->GetColumnCount());
+      LOG_TRACE("Column count : %u", table_->GetSchema()->GetColumnCount());
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
@@ -113,6 +115,7 @@ bool HybridScanExecutor::DInit() {
     table_tile_group_count_ = table_->GetTileGroupCount();
     int offset = index_->GetIndexedTileGroupOff();
     indexed_tile_offset_ = (offset == -1) ? INVALID_OID : (oid_t)offset;
+    block_threshold = 0;
 
     if (indexed_tile_offset_ == INVALID_OID) {
       current_tile_group_offset_ = START_OID;

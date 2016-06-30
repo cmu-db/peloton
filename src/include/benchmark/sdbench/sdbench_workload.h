@@ -25,6 +25,8 @@ void CreateAndLoadTable(LayoutType layout_type);
 
 void RunDirectTest();
 
+void RunInsertTest();
+
 void RunAdaptExperiment();
 
 }  // namespace sdbench

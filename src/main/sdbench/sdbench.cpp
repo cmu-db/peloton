@@ -45,6 +45,10 @@ void RunBenchmark() {
         RunDirectTest();
         break;
 
+      case OPERATOR_TYPE_INSERT:
+        RunInsertTest();
+        break;
+
       default:
         LOG_ERROR("Unsupported test type : %d", state.operator_type);
         break;
