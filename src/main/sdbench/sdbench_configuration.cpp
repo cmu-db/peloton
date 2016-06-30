@@ -77,6 +77,9 @@ static void ValidateOperator(const configuration &state) {
       case OPERATOR_TYPE_DIRECT:
         LOG_INFO("%s : DIRECT", "operator_type ");
         break;
+      case OPERATOR_TYPE_INSERT:
+        LOG_INFO("%s : INSERT", "operator_type ");
+        break;
       default:
         break;
     }
@@ -205,10 +208,10 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
-  state.tuples_per_tilegroup = 10;
+  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   state.transactions = 1;
-  state.selectivity = 0.01;
+  state.selectivity = 0.1;
   state.projectivity = 1.0;
 
   state.layout_mode = LAYOUT_ROW;

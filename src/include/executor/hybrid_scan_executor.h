@@ -56,6 +56,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
 
   inline bool SeqScanUtil();
   inline bool IndexScanUtil();
+
   //===--------------------------------------------------------------------===//
   // Index Scan
   //===--------------------------------------------------------------------===//
