@@ -22,15 +22,6 @@
 namespace peloton {
 namespace planner {
 
-enum HybridScanType {
-  HYBRID_SCAN_TYPE_INVALID = 0,
-
-  HYBRID_SCAN_TYPE_SEQUENTIAL = 1,
-  HYBRID_SCAN_TYPE_INDEX = 2,
-  HYBRID_SCAN_TYPE_HYBRID = 3
-};
-
-
 class HybridScanPlan : public AbstractScan {
  public:
   HybridScanPlan(const HybridScanPlan &) = delete;
@@ -38,38 +29,19 @@ class HybridScanPlan : public AbstractScan {
   HybridScanPlan(HybridScanPlan &&) = delete;
   HybridScanPlan &operator=(HybridScanPlan &&) = delete;
 
-  HybridScanPlan(index::Index *index, storage::DataTable *table,
+  HybridScanPlan(storage::DataTable *table,
                  expression::AbstractExpression *predicate,
                  const std::vector<oid_t> &column_ids,
-                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
+                 const IndexScanPlan::IndexScanDesc &index_scan_desc,
+                 HybridScanType hybrid_scan_type)
       : AbstractScan(table, predicate, column_ids),
-        index_(index),
+        type_(hybrid_scan_type),
         column_ids_(column_ids),
         key_column_ids_(std::move(index_scan_desc.key_column_ids)),
         expr_types_(std::move(index_scan_desc.expr_types)),
         values_(std::move(index_scan_desc.values)),
         runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-        type_(HYBRID_SCAN_TYPE_HYBRID) {}
-
-  HybridScanPlan(storage::DataTable *table,
-                 expression::AbstractExpression *predicate,
-                 const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids),
-        column_ids_(column_ids),
-        type_(HYBRID_SCAN_TYPE_SEQUENTIAL) {}
-
-  HybridScanPlan(storage::DataTable *table,
-                 expression::AbstractExpression *predicate,
-                 const std::vector<oid_t> &column_ids,
-                 const IndexScanPlan::IndexScanDesc &index_scan_desc)
-      : AbstractScan(table, predicate, column_ids),
-        index_(index_scan_desc.index),
-        column_ids_(column_ids),
-        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-        expr_types_(std::move(index_scan_desc.expr_types)),
-        values_(std::move(index_scan_desc.values)),
-        runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-        type_(HYBRID_SCAN_TYPE_INDEX) {}
+        index_(index_scan_desc.index){}
 
   index::Index *GetDataIndex() const { return this->index_; }
 
@@ -98,7 +70,8 @@ class HybridScanPlan : public AbstractScan {
   HybridScanType GetHybridType() const { return type_; }
 
  private:
-  index::Index *index_ = nullptr;
+
+  HybridScanType type_ = HYBRID_SCAN_TYPE_INVALID;
 
   const std::vector<oid_t> column_ids_;
 
@@ -110,7 +83,8 @@ class HybridScanPlan : public AbstractScan {
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 
-  HybridScanType type_;
+  index::Index *index_ = nullptr;
+
 };
 
 }  // namespace planner

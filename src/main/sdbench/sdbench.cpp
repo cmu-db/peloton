@@ -43,18 +43,6 @@ void RunBenchmark() {
         RunDirectTest();
         break;
 
-      case OPERATOR_TYPE_AGGREGATE:
-        RunAggregateTest();
-        break;
-
-      case OPERATOR_TYPE_ARITHMETIC:
-        RunArithmeticTest();
-        break;
-
-      case OPERATOR_TYPE_JOIN:
-        RunJoinTest();
-        break;
-
       default:
         LOG_ERROR("Unsupported test type : %d", state.operator_type);
         break;
@@ -64,21 +52,6 @@ void RunBenchmark() {
   // Experiment
   else {
     switch (state.experiment_type) {
-      case EXPERIMENT_TYPE_PROJECTIVITY:
-        RunProjectivityExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_SELECTIVITY:
-        RunSelectivityExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_OPERATOR:
-        RunOperatorExperiment();
-        break;
-
-      case EXPERIMENT_TYPE_ADAPT:
-        RunAdaptExperiment();
-        break;
 
       default:
         LOG_ERROR("Unsupported experiment_type : %d", state.experiment_type);

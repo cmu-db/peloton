@@ -58,7 +58,7 @@ bool HybridScanExecutor::DInit() {
   PL_ASSERT(table_ != nullptr);
 
   // SEQUENTIAL SCAN
-  if (type_ == planner::HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
     LOG_TRACE("Sequential Scan");
     current_tile_group_offset_ = START_OID;
 
@@ -69,11 +69,14 @@ bool HybridScanExecutor::DInit() {
     }
   }
   // INDEX SCAN
-  else if (type_ == planner::HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
     LOG_TRACE("Index Scan");
+    index_ = node.GetIndex();
+
     result_itr_ = START_OID;
     index_done_ = false;
 
+    PL_ASSERT(index_ != nullptr);
     column_ids_ = node.GetColumnIds();
     auto key_column_ids_ = node.GetKeyColumnIds();
     auto expr_types_ = node.GetExprTypes();
@@ -98,12 +101,13 @@ bool HybridScanExecutor::DInit() {
     }
 
     if (table_ != nullptr) {
+      LOG_INFO("Column count : %u", table_->GetSchema()->GetColumnCount());
       full_column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(full_column_ids_.begin(), full_column_ids_.end(), 0);
     }
   }
   // HYBRID SCAN
-  else if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
     LOG_TRACE("Hybrid Scan");
 
     table_tile_group_count_ = table_->GetTileGroupCount();
@@ -194,7 +198,7 @@ bool HybridScanExecutor::SeqScanUtil() {
     std::vector<oid_t> position_list;
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-      if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID && item_pointers_.size() > 0 &&
+      if (type_ == HYBRID_SCAN_TYPE_HYBRID && item_pointers_.size() > 0 &&
           location.block <= upper_bound_block) {
         if (item_pointers_.find(location) != item_pointers_.end()) {
           continue;
@@ -271,11 +275,13 @@ bool HybridScanExecutor::IndexScanUtil() {
 bool HybridScanExecutor::DExecute() {
 
   // SEQUENTIAL SCAN
-  if (type_ == planner::HYBRID_SCAN_TYPE_SEQUENTIAL) {
+  if (type_ == HYBRID_SCAN_TYPE_SEQUENTIAL) {
+    LOG_TRACE("Sequential Scan");
     return SeqScanUtil();
   }
   // INDEX SCAN
-  else if (type_ == planner::HYBRID_SCAN_TYPE_INDEX) {
+  else if (type_ == HYBRID_SCAN_TYPE_INDEX) {
+    LOG_TRACE("Index Scan");
     PL_ASSERT(children_.size() == 0);
 
     if (index_done_ == false) {
@@ -293,7 +299,9 @@ bool HybridScanExecutor::DExecute() {
     return IndexScanUtil();
   }
   // HYBRID SCAN
-  else if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID) {
+  else if (type_ == HYBRID_SCAN_TYPE_HYBRID) {
+    LOG_TRACE("Hybrid Scan");
+
     // do two part search
     if (index_done_ == false) {
       // Timer<> timer;
@@ -359,7 +367,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
   for (auto tuple_location_ptr : tuple_location_ptrs) {
     ItemPointer tuple_location = *tuple_location_ptr;
 
-    if (type_ == planner::HYBRID_SCAN_TYPE_HYBRID &&
+    if (type_ == HYBRID_SCAN_TYPE_HYBRID &&
         tuple_location.block >= (block_threshold)) {
       item_pointers_.insert(tuple_location);
     }
