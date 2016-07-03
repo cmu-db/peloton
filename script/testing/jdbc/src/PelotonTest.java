@@ -66,7 +66,7 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DDL);
-    stmt.execute(DROP);
+//    stmt.execute(DROP);
     System.out.println("Test db created.");
   }
 
