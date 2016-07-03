@@ -33,11 +33,11 @@ void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
   auto database_catalog = CreateDatabaseCatalog(START_OID, DATABASE_CATALOG_NAME);
-  storage::DataTable *table = database_catalog.release();
-  database->AddTable(table);
+  storage::DataTable *databases_table = database_catalog.release();
+  database->AddTable(databases_table);
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
-  table = table_catalog.release();
-  database->AddTable(table);
+  storage::DataTable *tables_table = table_catalog.release();
+  database->AddTable(tables_table);
   databases.push_back(database);
 }
 
@@ -246,7 +246,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(
       new catalog::Schema({id_column, name_column}));
-
   return database_schema;
 }
 

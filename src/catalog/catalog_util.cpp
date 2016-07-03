@@ -24,6 +24,8 @@ void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tupl
   auto txn = peloton::concurrency::current_txn;
   std::unique_ptr<executor::ExecutorContext> context(
         new executor::ExecutorContext(txn));
+  LOG_INFO("Tuple Info: %s", tuple->GetInfo().c_str());
+  LOG_INFO("Tuple Length: %d", (int)tuple->GetLength());
   planner::InsertPlan node(table, std::move(tuple));
   executor::InsertExecutor executor(&node, context.get());
   executor.Init();
