@@ -31,8 +31,7 @@ CreatePlan::CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema
 
 CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
   table_name = parse_tree->GetTableName();
-  std::unique_ptr<catalog::Schema> table_schemas(new catalog::Schema(parse_tree->GetColumns()));
-  table_schema = table_schemas.release();
+  table_schema = parse_tree->GetSchema();
 }
 
 }  // namespace planner
