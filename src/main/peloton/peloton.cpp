@@ -14,23 +14,16 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "wire/socket_base.h"
-#include "wire/wire.h"
 #include "common/stack_trace.h"
 #include "common/init.h"
+#include "common/config.h"
+#include "common/macros.h"
 
-DECLARE_bool(help);
-DECLARE_bool(h);
+#include "wire/socket_base.h"
+#include "wire/wire.h"
 
 // Peloton process begins execution here.
-int main(int argc, char *argv[]) {
-  ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
-
-  if (FLAGS_help || FLAGS_h) {
-    FLAGS_help = true;
-    ::google::SetUsageMessage("Usage Info: \n");
-    ::google::HandleCommandLineHelpFlags();
-  }
+int main(UNUSED_ATTRIBUTE int argc, UNUSED_ATTRIBUTE char *argv[]) {
 
   // Setup
   peloton::PelotonInit::Initialize();
@@ -39,8 +32,10 @@ int main(int argc, char *argv[]) {
   //peloton::RegisterSignalHandlers();
 
   // Launch server
-  peloton::wire::Server server;
-  peloton::wire::StartServer(&server);
+  peloton::PelotonConfiguration configuration;
+  peloton::wire::Server server(configuration);
+
+  peloton::wire::StartServer(configuration, &server);
   peloton::wire::HandleConnections<peloton::wire::PacketManager,
                                    peloton::wire::PktBuf>(&server);
 

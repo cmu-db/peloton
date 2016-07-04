@@ -17,22 +17,21 @@
 #include <sys/un.h>
 #include <string>
 
-DECLARE_string(socket_family);
-
 namespace peloton {
 namespace wire {
 
-void StartServer(Server *server) {
+void StartServer(const PelotonConfiguration& configuration,
+                 Server *server) {
   int yes = 1;
   int ret;
 
   // UNIX SOCKET FAMILY
-  if (FLAGS_socket_family == "AF_UNIX") {
+  if (configuration.GetSocketFamily() == "AF_UNIX") {
     struct sockaddr_un serv_addr;
     int len;
 
     std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
-    LOG_INFO("Family : %s", FLAGS_socket_family.c_str());
+    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
     LOG_INFO("Socket path : %s", SOCKET_PATH.c_str());
 
     server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -70,10 +69,10 @@ void StartServer(Server *server) {
     }
   }
   // INET SOCKET FAMILY
-  else if (FLAGS_socket_family == "AF_INET") {
+  else if (configuration.GetSocketFamily() == "AF_INET") {
     struct sockaddr_in serv_addr;
 
-    LOG_INFO("Family : %s", FLAGS_socket_family.c_str());
+    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
 
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd < 0) {
@@ -112,7 +111,7 @@ void StartServer(Server *server) {
   }
   // UNKNOWN SOCKET FAMILY
   else {
-    throw Exception("Unknown socket family: " + FLAGS_socket_family);
+    throw Exception("Unknown socket family: " + configuration.GetSocketFamily());
   }
 }
 
