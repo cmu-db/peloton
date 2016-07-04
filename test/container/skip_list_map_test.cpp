@@ -133,7 +133,7 @@ TEST_F(SkipListMapTest, MultithreadedTest) {
 
   // Parallel Test
   size_t num_threads = 4;
-  size_t scale_factor = 100;
+  size_t scale_factor = 3;
 
   std::vector<std::thread> thread_group;
 

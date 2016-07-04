@@ -64,7 +64,7 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
                  UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  oid_t tuple_count = tilegroup_count_per_loader * DEFAULT_TUPLES_PER_TILEGROUP;
+  oid_t tuple_count = tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
 
   // Start a txn for each insert
   auto txn = txn_manager.BeginTransaction();
@@ -88,14 +88,14 @@ void InsertTuple(storage::DataTable *table, VarlenPool *pool,
 TEST_F(InsertTests, LoadingTest) {
   // We are going to simply load tile groups concurrently in this test
   // WARNING: This test may potentially run for a long time if
-  // DEFAULT_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard
+  // TEST_TUPLES_PER_TILEGROUP is large, consider rewrite the test or hard
   // code the number of tuples per tile group in this test
-  oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+  oid_t tuples_per_tilegroup = TEST_TUPLES_PER_TILEGROUP;
   bool build_indexes = false;
 
   // Control the scale
   oid_t loader_threads_count = 1;
-  oid_t tilegroup_count_per_loader = 100;
+  oid_t tilegroup_count_per_loader = 1;
 
   // Each tuple size ~40 B.
   oid_t tuple_size = 41;
