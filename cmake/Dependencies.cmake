@@ -38,3 +38,8 @@ endif()
 find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
+
+# --[ Valgrind
+find_program(MEMORYCHECK_COMMAND valgrind)
+set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
+set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/valgrind_suppress.txt")

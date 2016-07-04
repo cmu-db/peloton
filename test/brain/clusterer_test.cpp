@@ -80,6 +80,7 @@ TEST_F(ClustererTests, BasicTest) {
     LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
              entry.second.second);
   }
+
 }
 
 }  // End test namespace

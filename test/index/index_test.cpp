@@ -680,7 +680,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
 
   // Parallel Test
   size_t num_threads = 4;
-  size_t scale_factor = 100;
+  size_t scale_factor = 3;
   LaunchParallelTest(num_threads, InsertTest, index.get(), pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
@@ -725,7 +725,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
 
   // Parallel Test
   size_t num_threads = 15;
-  size_t scale_factor = 30;
+  size_t scale_factor = 3;
   LaunchParallelTest(num_threads, InsertTest, index.get(), pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 

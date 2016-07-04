@@ -126,6 +126,7 @@ class Value;
 #define DEFAULT_DB_NAME "default"
 
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
+extern int TEST_TUPLES_PER_TILEGROUP;
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
