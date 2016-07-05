@@ -443,6 +443,7 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
+  double direct_high_proj = 0.5;
   double insert_write_ratio = 0.05;
 
   state.projectivity = direct_low_proj;
@@ -454,7 +455,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_low_proj;
+  state.projectivity = direct_high_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -463,41 +464,6 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = 0.05;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
 }
 
 std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
@@ -509,7 +475,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 10;
+  state.transactions = 2;
 
   state.write_ratio = 0.0;
   state.selectivity = 0.3;
