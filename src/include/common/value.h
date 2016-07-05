@@ -1713,7 +1713,7 @@ class Value {
     if (IsNull()) {
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      PL_MEMSET(storage, 0, maxLength + 1);
+      PL_MEMSET(storage, 0, maxLength);
 
       /*
        * The 7th bit of the length preceding value
@@ -1729,7 +1729,7 @@ class Value {
 
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      PL_MEMSET(storage, 0, maxLength + 1);
+      PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {
         PL_MEMCPY(storage, *reinterpret_cast<char *const *>(m_data),

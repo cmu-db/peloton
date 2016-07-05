@@ -28,12 +28,12 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
 }
 
 // Initialize executer
+// Nothing to initialize now
 bool CreateExecutor::DInit() {
   LOG_INFO("Initializing Create Executer...");
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
   LOG_INFO("Create Executer initialized!");
   return true;
+
 }
 
 bool CreateExecutor::DExecute() {

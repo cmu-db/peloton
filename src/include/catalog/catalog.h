@@ -78,6 +78,9 @@ public:
  // Initialize the schema of the table catalog
  std::unique_ptr<Schema> InitializeTablesSchema();
 
+ // Get table from a database
+ storage::DataTable* GetTableFromDatabase(std::string database_name, std::string table_name);
+
  // Get the number of databases currently in the catalog
  int GetDatabaseCount();
 

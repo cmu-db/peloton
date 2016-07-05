@@ -6,12 +6,14 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:12345/";
+  private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";
   private final String pass = "postgres";
 
-  private final String DROP = "DROP TABLE IF EXISTS A;" +
+  private final String DROP_IF_EXISTS = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
+  private final String DROP = "DROP TABLE A;" +
+          "DROP TABLE B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
@@ -66,7 +68,10 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DDL);
-//    stmt.execute(DROP);
+    stmt.execute(DDL);
+    stmt.execute(DROP_IF_EXISTS);
+    stmt.execute(DROP_IF_EXISTS);
+    stmt.execute(DROP);
     System.out.println("Test db created.");
   }
 
