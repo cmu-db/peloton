@@ -167,6 +167,24 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
   return nullptr;
 }
 
+// Get table from a database
+storage::DataTable* Catalog::GetTableFromDatabase(std::string database_name, std::string table_name) {
+	storage::Database* database = GetDatabaseWithName(database_name);
+	if(database) {
+		storage::DataTable *table = database->GetTableWithName(table_name);
+		if(table) {
+			return table;
+		}
+		else {
+			return nullptr;
+		}
+	}
+	else {
+		return nullptr;
+	}
+}
+
+
 // Create Table for pg_class
 std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(oid_t database_id, std::string table_name) {
   bool own_schema = true;

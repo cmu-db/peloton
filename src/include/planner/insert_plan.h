@@ -45,6 +45,10 @@ class InsertPlan : public AbstractPlan {
   explicit InsertPlan(storage::DataTable *table,
                       std::unique_ptr<storage::Tuple> &&tuple,
                       oid_t bulk_insert_count = 1);
+  // This constructor takes in a table name and a tuple
+  explicit InsertPlan(std::string table_name,
+                        std::unique_ptr<storage::Tuple> &&tuple,
+                        oid_t bulk_insert_count = 1);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 

@@ -27,12 +27,11 @@ DropExecutor::DropExecutor(const planner::AbstractPlan *node,
 }
 
 // Initialize executer
+// Nothing to initialize for now
 bool DropExecutor::DInit() {
   LOG_INFO("Initializing Drop Executer...");
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
 
-  LOG_INFO("Drop Executer initialized!");
+  LOG_INFO("Create Executer initialized!");
   return true;
 }
 

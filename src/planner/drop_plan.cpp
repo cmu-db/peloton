@@ -15,22 +15,31 @@
 
 #include "storage/data_table.h"
 #include "parser/peloton/drop_parse.h"
+#include "catalog/bootstrapper.h"
 
 namespace peloton {
 namespace planner {
 
-DropPlan::DropPlan(storage::DataTable *table) :
-        target_table_(table) {
+DropPlan::DropPlan(storage::DataTable *table) {
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  target_table_ = table;
   missing = false;
 }
 
-DropPlan::DropPlan(std::string name) :
-        table_name(name) {
+DropPlan::DropPlan(std::string name) {
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  table_name = name;
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase("default_database", table_name);
   missing = false;
 }
 
-DropPlan::DropPlan(parser::DropParse *parse_tree) :
-        table_name(parse_tree->GetEntityName()) {
+DropPlan::DropPlan(parser::DropParse *parse_tree) {
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  table_name = parse_tree->GetEntityName();
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase("default_database", table_name);
   missing = parse_tree->IsMissing();
 }
 

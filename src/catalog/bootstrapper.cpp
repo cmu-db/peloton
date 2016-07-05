@@ -27,8 +27,9 @@ Catalog* Bootstrapper::bootstrap() {
 	  return global_catalog;
   }
   else{
+    Catalog* catalog = InitializeGlobalCatalog();
     bootstrapped = true;
-    return InitializeGlobalCatalog();
+    return catalog;
   }
   LOG_INFO("Catalog bootstrapped!");
 }
