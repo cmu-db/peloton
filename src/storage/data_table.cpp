@@ -37,7 +37,7 @@
 // Configuration Variables
 //===--------------------------------------------------------------------===//
 
-std::vector<peloton::oid_t> hyadapt_column_ids;
+std::vector<peloton::oid_t> sdbench_column_ids;
 
 double peloton_projectivity;
 
@@ -922,7 +922,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
   column_map_type column_map;
 
   // HYADAPT
-  if (table_name == "HYADAPTTABLE") {
+  if (table_name == "SDBENCHTABLE") {
     // FSM MODE
     if (peloton_fsm == true) {
       for (oid_t column_id = 0; column_id < column_count; column_id++) {
@@ -941,13 +941,13 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
 
       column_map[0] = std::make_pair(0, 0);
       for (oid_t column_id = 0; column_id < split_point; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[column_id];
-        column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
+        auto sdbench_column_id = sdbench_column_ids[column_id];
+        column_map[sdbench_column_id] = std::make_pair(0, column_id + 1);
       }
 
       for (oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
-        column_map[hyadapt_column_id] = std::make_pair(1, column_id);
+        auto sdbench_column_id = sdbench_column_ids[split_point + column_id];
+        column_map[sdbench_column_id] = std::make_pair(1, column_id);
       }
     }
     // MULTIPLE GROUPS
@@ -956,7 +956,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
       oid_t tile_column_count = column_count / peloton_num_groups;
 
       for (oid_t column_id = 1; column_id < column_count; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[column_id - 1];
+        auto sdbench_column_id = sdbench_column_ids[column_id - 1];
         int tile_id = (column_id - 1) / tile_column_count;
         oid_t tile_column_id;
         if (tile_id == 0)
@@ -966,7 +966,7 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
 
         if (tile_id >= peloton_num_groups) tile_id = peloton_num_groups - 1;
 
-        column_map[hyadapt_column_id] = std::make_pair(tile_id, tile_column_id);
+        column_map[sdbench_column_id] = std::make_pair(tile_id, tile_column_id);
       }
     }
 

@@ -59,7 +59,7 @@ void CreateTable() {
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
-  std::string table_name("HYADAPTTABLE");
+  std::string table_name("SDBENCHTABLE");
 
   /////////////////////////////////////////////////////////
   // Create table.
