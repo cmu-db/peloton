@@ -229,7 +229,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 
     // Emit time
     timer.Stop();
-    double time_per_transaction = timer.GetDuration() / txn_count;
+    auto time_per_transaction = timer.GetDuration();
 
     WriteOutput(time_per_transaction);
   }
@@ -260,7 +260,7 @@ void RunDirectTest() {
   oid_t column_count = state.projectivity * state.column_count;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr]);
+    column_ids.push_back(sdbench_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
@@ -443,8 +443,7 @@ static void Transform(double theta) {
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double direct_high_proj = 0.5;
-  double insert_write_ratio = 0.05;
+  double insert_write_ratio = 0.005;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -455,7 +454,7 @@ static void RunAdaptTest() {
   RunInsertTest();
   state.write_ratio = 0.0;
 
-  state.projectivity = direct_high_proj;
+  state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
   RunDirectTest();
 
@@ -475,10 +474,10 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 2;
+  state.transactions = 5;   // 25
 
   state.write_ratio = 0.0;
-  state.selectivity = 0.3;
+  state.selectivity = 1.0;
   state.adapt = true;
   double theta = 0.0;
 

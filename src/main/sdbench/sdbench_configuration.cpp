@@ -59,13 +59,13 @@ static struct option opts[] = {
 
 void GenerateSequence(oid_t column_count) {
   // Reset sequence
-  hyadapt_column_ids.clear();
+  sdbench_column_ids.clear();
 
   // Generate sequence
   for (oid_t column_id = 1; column_id <= column_count; column_id++)
-    hyadapt_column_ids.push_back(column_id);
+    sdbench_column_ids.push_back(column_id);
 
-  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
+  std::random_shuffle(sdbench_column_ids.begin(), sdbench_column_ids.end());
 }
 
 static void ValidateOperator(const configuration &state) {
@@ -207,7 +207,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.hybrid_scan_type = HYBRID_SCAN_TYPE_INDEX;
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
-  state.scale_factor = 10.0;
+  state.scale_factor = 100.0;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   state.transactions = 1;
@@ -218,8 +218,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
-  state.column_count = 10;
+  state.column_count = 100;
   state.write_ratio = 0.0;
+
   state.index_count = 1;
 
   state.adapt = false;

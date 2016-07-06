@@ -46,7 +46,7 @@ extern int peloton_num_groups;
 // FSM or not ?
 extern bool peloton_fsm;
 
-extern std::vector<peloton::oid_t> hyadapt_column_ids;
+extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
 
