@@ -2,39 +2,44 @@
 //
 //                         Peloton
 //
-// abstract_parser.h
+// parser.h
 //
-// Identification: src/include/parser/abstract_parser.h
+// Identification: src/include/parser/parser.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+/*-------------------------------------------------------------------------
+ *
+ * parser.h
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ *
+ *
+ *-------------------------------------------------------------------------
+ */
 
-#include <memory>
+#pragma once
 
-#include "parser/abstract_parse.h"
+#include "parser/statements.h"
 
 namespace peloton {
 namespace parser {
 
 //===--------------------------------------------------------------------===//
-// Abstract Parser
+// Parser
 //===--------------------------------------------------------------------===//
 
-class AbstractParser {
+class Parser {
+  Parser() = delete;
 
  public:
-  AbstractParser(const AbstractParser &) = delete;
-  AbstractParser &operator=(const AbstractParser &) = delete;
-  AbstractParser(AbstractParser &&) = delete;
-  AbstractParser &operator=(AbstractParser &&) = delete;
-
-  AbstractParser();
-  virtual ~AbstractParser();
-
-  virtual std::unique_ptr<parser::AbstractParse> BuildParseTree(
-      const std::string &query_string) = 0;
+  // Parse a given query
+  static SQLStatementList* ParseSQLString(const char* sql);
+  static SQLStatementList* ParseSQLString(const std::string& sql);
 };
 
 }  // End parser namespace

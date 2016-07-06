@@ -97,12 +97,9 @@ if (COVERALLS)
 
 	# Create the coveralls target.
 	file(GLOB_RECURSE srcs ${PROJECT_SOURCE_DIR}/src/*/*.cpp)
-	file(GLOB_RECURSE parser_srcs ${PROJECT_SOURCE_DIR}/src/parser/backend/*/*.cpp)
 
 	peloton_convert_absolute_paths(srcs)
 	peloton_convert_absolute_paths(parser_srcs)
-
-	list(REMOVE_ITEM  srcs ${parser_srcs})
 
     #message(STATUS "Coverage srcs : ${srcs}" )
 	set(COVERAGE_SRCS ${srcs})
