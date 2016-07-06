@@ -83,8 +83,7 @@ std::unique_ptr<parser::AbstractParse> TransformParseTree(
       break;
 
     case T_CreateStmt:
-	LOG_INFO("Move on Up");
-    	child_parse_tree.reset(new parser::CreateParse((CreateStmt *) postgres_parse_tree));
+	  	child_parse_tree.reset(new parser::CreateParse((CreateStmt *) postgres_parse_tree));
       break;
 
     case T_DropStmt:
@@ -104,6 +103,8 @@ std::unique_ptr<parser::AbstractParse> TransformParseTree(
       break;
 
     case T_InsertStmt:
+      child_parse_tree.reset(
+          new parser::InsertParse((InsertStmt *)postgres_parse_tree));
       break;
 
     case T_UpdateStmt:
