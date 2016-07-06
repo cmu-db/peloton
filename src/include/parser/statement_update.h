@@ -27,7 +27,7 @@ class UpdateClause {
   expression::AbstractExpression* value;
 
   ~UpdateClause() {
-    free(column);
+    delete (column);
     delete value;
   }
 };

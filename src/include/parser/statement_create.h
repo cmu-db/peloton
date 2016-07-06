@@ -53,21 +53,21 @@ struct ColumnDefinition {
 
   virtual ~ColumnDefinition() {
     if (primary_key) {
-      for (auto key : *primary_key) free(key);
+      for (auto key : *primary_key) delete (key);
       delete primary_key;
     }
 
     if (foreign_key_source) {
-      for (auto key : *foreign_key_source) free(key);
+      for (auto key : *foreign_key_source) delete (key);
       delete foreign_key_source;
     }
 
     if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) free(key);
+      for (auto key : *foreign_key_sink) delete (key);
       delete foreign_key_sink;
     }
 
-    free(name);
+    delete (name);
   }
 
   static ValueType GetValueType(DataType type) {
@@ -161,12 +161,12 @@ struct CreateStatement : SQLStatement {
     }
 
     if (index_attrs) {
-      for (auto attr : *index_attrs) free(attr);
+      for (auto attr : *index_attrs) delete (attr);
       delete index_attrs;
     }
 
-    free(name);
-    free(table_name);
+    delete (name);
+    delete (table_name);
   }
 
   CreateType type;

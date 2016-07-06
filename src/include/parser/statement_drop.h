@@ -38,8 +38,8 @@ struct DropStatement : SQLStatement {
         table_name(NULL) {}
 
   virtual ~DropStatement() {
-    free(name);
-    free(table_name);
+    delete (name);
+    delete (table_name);
   }
 
   EntityType type;
