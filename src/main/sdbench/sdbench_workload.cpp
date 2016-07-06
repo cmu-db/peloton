@@ -322,7 +322,6 @@ void RunDirectTest() {
   // INSERT
   /////////////////////////////////////////////////////////
 
-  values.clear();
   Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
 
   TargetList target_list;
@@ -466,7 +465,7 @@ static void RunAdaptTest() {
 }
 
 std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
-                                         LAYOUT_HYBRID};
+    LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
@@ -474,7 +473,7 @@ void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
 
-  state.transactions = 5;   // 25
+  state.transactions = 25;   // 25
 
   state.write_ratio = 0.0;
   state.selectivity = 1.0;
