@@ -15,6 +15,7 @@
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
+#include "parser/peloton/insert_parse.h"
 
 namespace peloton{
 namespace planner{
@@ -37,6 +38,14 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     : target_table_(table),
       tuple_(std::move(tuple)),
       bulk_insert_count(bulk_insert_count) {}
+
+InsertPlan::InsertPlan(parser::InsertParse *parse_tree){
+  // Here try to get the columns vector (if size if over zero)
+  // and the values vector and genertate a tuple. Table name can also
+  // be taken from this parse_tree , HAPPY EID!!
+  LOG_INFO("Table Name is %s" , parse_tree->GetTableName().c_str());
+  
+}
 
 }
 }

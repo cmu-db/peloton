@@ -23,6 +23,10 @@ class DataTable;
 class Tuple;
 }
 
+namespace parser{
+  class InsertParse;
+}
+
 namespace planner {
 class InsertPlan : public AbstractPlan {
  public:
@@ -49,6 +53,8 @@ class InsertPlan : public AbstractPlan {
   explicit InsertPlan(std::string table_name,
                         std::unique_ptr<storage::Tuple> &&tuple,
                         oid_t bulk_insert_count = 1);
+
+  explicit InsertPlan(parser::InsertParse *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 

@@ -26,7 +26,7 @@ class InsertParse : public AbstractParse {
   InsertParse(InsertParse &&) = delete;
   InsertParse &operator=(InsertParse &&) = delete;
 
-  explicit InsertParse(InsertStmt *insert_node) {}
+  explicit InsertParse(InsertStmt *insert_node);
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_INSERT; }
 
@@ -38,6 +38,11 @@ class InsertParse : public AbstractParse {
 
  // Table Name
  std::string entity_name;
+
+ // if columns are specified in insert
+ std::vector<std::string> columns;
+
+ std::vector<Value> values;
 
 };
 

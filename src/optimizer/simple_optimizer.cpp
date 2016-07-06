@@ -16,8 +16,11 @@
 #include "parser/peloton/abstract_parse.h"
 #include "parser/peloton/drop_parse.h"
 #include "parser/peloton/create_parse.h"
+#include "parser/peloton/insert_parse.h"
+
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
+#include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
 
@@ -74,6 +77,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPlanTree(
       std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan(
           new planner::SeqScanPlan());
       child_plan = std::move(child_SeqScanPlan);
+    }
+
+    case PARSE_NODE_TYPE_INSERT: {
+      std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+          new planner::InsertPlan((parser::InsertParse*) parse_tree.get()));
+      child_plan = std::move(child_InsertPlan);
     }
       break;
 

@@ -6,7 +6,7 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:5432/";
+  private final String url = "jdbc:postgresql://localhost:12345/";
   private final String username = "postgres";
   private final String pass = "postgres";
 
@@ -17,7 +17,7 @@ public class PelotonTest {
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A = "INSERT INTO A VALUES (?,?)";
+  private final String INSERT_A = "INSERT INTO Customers(num,name) VALUES (1,'hello');";
   private final String INSERT_B = "INSERT INTO B VALUES (?,?)";
 
   private final String INSERT = "BEGIN;" +
@@ -67,11 +67,11 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
-    stmt.execute(DDL);
-    stmt.execute(DDL);
-    stmt.execute(DROP_IF_EXISTS);
-    stmt.execute(DROP_IF_EXISTS);
-    stmt.execute(DROP);
+    stmt.execute(INSERT_A);
+    //stmt.execute(DDL);
+    //stmt.execute(DROP_IF_EXISTS);
+    //stmt.execute(DROP_IF_EXISTS);
+    //stmt.execute(DROP);
     System.out.println("Test db created.");
   }
 
