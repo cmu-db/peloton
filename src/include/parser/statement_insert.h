@@ -32,10 +32,10 @@ struct InsertStatement : SQLStatement {
         select(NULL) {}
 
   virtual ~InsertStatement() {
-    free(table_name);
+    delete(table_name);
 
     if (columns) {
-      for (auto col : *columns) free(col);
+      for (auto col : *columns) delete(col);
       delete columns;
     }
 

@@ -34,8 +34,8 @@ struct ImportStatement : SQLStatement {
         table_name(NULL){};  // For bulk import support
 
   virtual ~ImportStatement() {
-    free(file_path);
-    free(table_name);
+    delete (file_path);
+    delete (table_name);
   }
 
   ImportType type;

@@ -32,7 +32,7 @@ struct PrepareStatement : SQLStatement {
 
   virtual ~PrepareStatement() {
     delete query;
-    free(name);
+    delete (name);
 
     for (void* e : placeholders) {
       delete (peloton::expression::AbstractExpression*)e;

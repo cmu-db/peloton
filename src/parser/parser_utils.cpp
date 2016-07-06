@@ -12,6 +12,7 @@
 
 #include "parser/parser_utils.h"
 #include "common/types.h"
+#include "common/logger.h"
 
 #include <stdio.h>
 #include <string>
@@ -23,27 +24,28 @@ namespace parser {
 std::string indent(uint num_indent) { return std::string(num_indent, '\t'); }
 
 void inprint(int64_t val, uint num_indent) {
-  std::cout << indent(num_indent) << val << "\n";
+  // indent(num_indent)
+  LOG_INFO("%d", val);
 }
 
 void inprint(float val, uint num_indent) {
-  std::cout << indent(num_indent) << val << "\n";
+  LOG_INFO("%f", val);
 }
 
 void inprint(const char* val, uint num_indent) {
-  std::cout << indent(num_indent) << val << "\n";
+  LOG_INFO("%s", val);
 }
 
 void inprint(const char* val, const char* val2, uint num_indent) {
-  std::cout << indent(num_indent) << val << "->" << val2 << "\n";
+  LOG_INFO("%s -> %s", val, val2);
 }
 
 void inprintC(char val, uint num_indent) {
-  std::cout << indent(num_indent) << val << "\n";
+  LOG_INFO("%c", val);
 }
 
 void inprintU(uint64_t val, uint num_indent) {
-  std::cout << indent(num_indent) << val << "\n";
+  LOG_INFO("%u", val);
 }
 
 void PrintTableRefInfo(TableRef* table, uint num_indent) {
@@ -72,7 +74,7 @@ void PrintTableRefInfo(TableRef* table, uint num_indent) {
 
     case TABLE_REFERENCE_TYPE_INVALID:
     default:
-      printf("invalid table ref type \n");
+      LOG_ERROR("invalid table ref type");
       break;
   }
 
@@ -101,9 +103,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
     return;
   }
 
-  std::cout << indent(num_indent);
-  std::cout << "-> Expr Type :: "
-            << ExpressionTypeToString(expr->GetExpressionType()) << "\n";
+  LOG_INFO("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:
@@ -115,8 +115,6 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
       // TODO: Fix this
-      // std::cout << indent(num_indent);
-      // std::cout <<
       // ((expression::ConstantValueExpression*)expr)->Evaluate(nullptr,
       // nullptr, nullptr);
       printf("\n");
