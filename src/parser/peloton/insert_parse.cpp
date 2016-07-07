@@ -69,7 +69,7 @@ InsertParse::InsertParse(InsertStmt* insert_node) {
 				tuple_value = ValueFactory::GetDoubleValue(atof(ac->val.val.str));
 			} else if(IsA(&ac->val, String)){
 				//::Value* val = (::Value*) lfirst(sub_value_item);
-				LOG_INFO("Value of Integer -------> %s", ac->val.val);
+				LOG_INFO("Value of String -------> %s", ac->val.val);
 				tuple_value = ValueFactory::GetStringValue(std::string(ac->val.val.str));
 			}
 

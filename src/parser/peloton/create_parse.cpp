@@ -145,7 +145,7 @@ CreateParse::CreateParse(CreateStmt *create_node) {
 
             }
           }
-        auto col = catalog::Column(vType,GetTypeSize(vType), column_name,false);
+        auto col = catalog::Column(vType, GetTypeSize(vType), column_name, false);
 
         for(auto constraint : column_contraints)
           col.AddConstraint(constraint);

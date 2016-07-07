@@ -54,7 +54,10 @@ class InsertPlan : public AbstractPlan {
                         std::unique_ptr<storage::Tuple> &&tuple,
                         oid_t bulk_insert_count = 1);
 
-  explicit InsertPlan(parser::InsertParse *parse_tree);
+  explicit InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count = 1);
+
+  // Get a varlen pool (will construct the pool only if needed)
+  VarlenPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
 
@@ -88,6 +91,9 @@ class InsertPlan : public AbstractPlan {
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;
+
+  // pool for variable length types
+  std::unique_ptr<VarlenPool> pool_;
 };
 
 }  // namespace planner

@@ -123,7 +123,7 @@ class Value;
   -3  // assigned when comparing array list and no element matching.
 
 #define DEFAULT_DB_ID 12345
-#define DEFAULT_DB_NAME "default"
+#define DEFAULT_DB_NAME "default_database"
 
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
 

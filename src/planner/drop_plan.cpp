@@ -22,24 +22,24 @@ namespace planner {
 
 DropPlan::DropPlan(storage::DataTable *table) {
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   target_table_ = table;
   missing = false;
 }
 
 DropPlan::DropPlan(std::string name) {
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = name;
-  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase("default_database", table_name);
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, table_name);
   missing = false;
 }
 
 DropPlan::DropPlan(parser::DropParse *parse_tree) {
   catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = parse_tree->GetEntityName();
-  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase("default_database", table_name);
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, table_name);
   missing = parse_tree->IsMissing();
 }
 

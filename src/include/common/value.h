@@ -2865,10 +2865,10 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
           *reinterpret_cast<void **>(storage) = NULL;
         } else {
           int32_t objLength = GetObjectLengthWithoutNull();
-          const char *ptr =
-              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
-                                            maxLength, isInBytes);
+//          const char *ptr =
+//              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+//          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
+//                                            maxLength, isInBytes);
 
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;
