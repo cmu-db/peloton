@@ -34,6 +34,14 @@ class InsertParse : public AbstractParse {
 
   std::string GetTableName() { return entity_name; }
 
+  const std::vector<std::string>& getColumns() const {
+	return columns;
+  }
+
+  const std::vector<Value>& getValues() const {
+	return values;
+  }
+
  private:
 
  // Table Name

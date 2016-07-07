@@ -15,6 +15,7 @@
 
 #include "catalog/catalog.h"
 
+
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
 #define TABLE_CATALOG_NAME    "table_catalog"
@@ -169,6 +170,7 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
 
 // Get table from a database
 storage::DataTable* Catalog::GetTableFromDatabase(std::string database_name, std::string table_name) {
+	LOG_INFO("Looking for table %s in database %s", table_name.c_str(), database_name.c_str());
 	storage::Database* database = GetDatabaseWithName(database_name);
 	if(database) {
 		storage::DataTable *table = database->GetTableWithName(table_name);

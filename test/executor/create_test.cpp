@@ -55,7 +55,7 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Execute();
 
   txn_manager.CommitTransaction();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
 }
 

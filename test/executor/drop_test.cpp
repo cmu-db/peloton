@@ -48,24 +48,24 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema2(new catalog::Schema({id_column, name_column}));
 
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   txn_manager.CommitTransaction();
 
   txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->CreateTable("default_database", "department_table", std::move(table_schema));
+  catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, "department_table", std::move(table_schema));
   txn_manager.CommitTransaction();
 
   txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->CreateTable("default_database", "department_table_2", std::move(table_schema2));
+  catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, "department_table_2", std::move(table_schema2));
   txn_manager.CommitTransaction();
 
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 2);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 2);
 
   // Now dropping the table using the executer
   txn_manager.BeginTransaction();
-  catalog::Bootstrapper::global_catalog->DropTable("default_database", "department_table");
+  catalog::Bootstrapper::global_catalog->DropTable(DEFAULT_DB_NAME, "department_table");
   txn_manager.CommitTransaction();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("default_database")->GetTableCount(), 1);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
 
 }
 
