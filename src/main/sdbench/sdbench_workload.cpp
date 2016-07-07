@@ -293,9 +293,32 @@ void RunDirectTest() {
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound, upper_bound);
-  planner::SeqScanPlan seq_scan_node(sdbench_table.get(), predicate, column_ids);
 
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
+
+  auto index = sdbench_table->GetIndex(0);
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  CreateIndexScanPredicate(key_column_ids, expr_types, values,
+                           lower_bound, upper_bound);
+
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_ids, expr_types, values, runtime_keys);
+
+  planner::HybridScanPlan hybrid_scan_node(sdbench_table.get(),
+                                           predicate,
+                                           column_ids,
+                                           index_scan_desc,
+                                           state.hybrid_scan_type);
+
+  executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
+                                                    context.get());
+
+  //planner::SeqScanPlan seq_scan_node(sdbench_table.get(), predicate, column_ids);
+  //executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
@@ -325,7 +348,7 @@ void RunDirectTest() {
                                         physify_flag);
 
   executor::MaterializationExecutor mat_executor(&mat_node, nullptr);
-  mat_executor.AddChild(&seq_scan_executor);
+  mat_executor.AddChild(&hybrid_scan_executor);
 
   /////////////////////////////////////////////////////////
   // EXECUTE
@@ -434,7 +457,7 @@ static void Transform(double theta) {
 }
 
 static void RunAdaptTest() {
-  double direct_low_proj = 0.6;
+  double direct_low_proj = 0.06;
   double insert_write_ratio = 0.02;
 
   state.projectivity = direct_low_proj;
