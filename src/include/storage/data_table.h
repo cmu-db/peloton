@@ -24,15 +24,6 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-/* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_INVALID = 0,
-
-  LAYOUT_ROW = 1,    /* Pure row layout */
-  LAYOUT_COLUMN = 2, /* Pure column layout */
-  LAYOUT_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
-
 extern LayoutType peloton_layout_mode;
 
 //===--------------------------------------------------------------------===//

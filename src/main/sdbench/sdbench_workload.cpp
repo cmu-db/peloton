@@ -433,8 +433,8 @@ static void Transform(double theta) {
 }
 
 static void RunAdaptTest() {
-  double direct_low_proj = 0.06;
-  double insert_write_ratio = 0.005;
+  double direct_low_proj = 0.6;
+  double insert_write_ratio = 0.02;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -455,7 +455,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
