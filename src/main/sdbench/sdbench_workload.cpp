@@ -152,8 +152,8 @@ static void WriteOutput(double duration) {
   LOG_INFO("%d %d %.3lf %.3lf %.1lf %d %d %d :: %.1lf ms",
            state.layout_mode,
            state.operator_type,
-           state.projectivity,
            state.selectivity,
+           state.projectivity,
            state.write_ratio,
            state.scale_factor,
            state.column_count,
@@ -164,12 +164,13 @@ static void WriteOutput(double duration) {
   out << state.operator_type << " ";
   out << state.selectivity << " ";
   out << state.projectivity << " ";
-  out << state.column_count << " ";
-  out << state.write_ratio << " ";
-  out << state.tuples_per_tilegroup << " ";
   out << query_itr << " ";
+  out << state.write_ratio << " ";
   out << state.scale_factor << " ";
+  out << state.column_count << " ";
+  out << state.tuples_per_tilegroup << " ";
   out << duration << "\n";
+
   out.flush();
 }
 
@@ -482,9 +483,6 @@ void RunAdaptExperiment() {
       // Set layout
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
-
-      LOG_INFO("*********************************************************");
-      LOG_INFO("*********************************************************");
 
       state.projectivity = 1.0;
       peloton_projectivity = state.projectivity;
