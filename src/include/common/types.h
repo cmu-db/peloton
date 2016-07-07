@@ -45,6 +45,15 @@ enum LoggingType {
   LOGGING_TYPE_HDD_WBL = 6
 };
 
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType {
+  LAYOUT_INVALID = 0,
+
+  LAYOUT_ROW = 1,    /* Pure row layout */
+  LAYOUT_COLUMN = 2, /* Pure column layout */
+  LAYOUT_HYBRID = 3  /* Hybrid layout */
+} LayoutType;
+
 enum LoggerMappingStrategyType {
   LOGGER_MAPPING_INVALID,
   LOGGER_MAPPING_ROUND_ROBIN,
