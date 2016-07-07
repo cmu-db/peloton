@@ -117,7 +117,7 @@ static void ValidateScaleFactor(const configuration &state) {
 }
 
 static void ValidateLayout(const configuration &state) {
-  if (state.layout_mode < 0 || state.layout_mode > 2) {
+  if (state.layout_mode < 1 || state.layout_mode > 3) {
     LOG_ERROR("Invalid layout :: %d", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
@@ -143,7 +143,7 @@ static void ValidateProjectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %.1lf", "projectivity", state.projectivity);
+  LOG_INFO("%s : %.3lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
@@ -152,7 +152,7 @@ static void ValidateSelectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %.1lf", "selectivity", state.selectivity);
+  LOG_INFO("%s : %.3lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
@@ -211,14 +211,14 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   state.transactions = 1;
-  state.selectivity = 0.1;
+  state.selectivity = 1.0;
   state.projectivity = 1.0;
 
   state.layout_mode = LAYOUT_ROW;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
-  state.column_count = 100;
+  state.column_count = 500;
   state.write_ratio = 0.0;
 
   state.index_count = 1;
@@ -282,9 +282,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID) {
     // Print configuration
+    ValidateLayout(state);
     ValidateHybridScanType(state);
     ValidateOperator(state);
-    ValidateLayout(state);
     ValidateSelectivity(state);
     ValidateProjectivity(state);
     ValidateScaleFactor(state);
