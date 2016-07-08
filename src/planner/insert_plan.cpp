@@ -17,6 +17,7 @@
 #include "storage/tuple.h"
 #include "parser/peloton/insert_parse.h"
 #include "catalog/bootstrapper.h"
+#include "catalog/column.h"
 
 namespace peloton{
 namespace planner{
@@ -62,8 +63,7 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
 	    PL_ASSERT(values.size() == table_schema->GetColumnCount());
 	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
 	    int col_cntr = 0;
-	    std::for_each(values.begin(), values.end(), [&](Value const& elem){
-	    	LOG_INFO("Inside Planner. Value %d: %s", col_cntr, elem.GetInfo().c_str());
+	    for(Value const& elem : values) {
 	    	switch (elem.GetValueType()) {
 	    	  case VALUE_TYPE_VARCHAR:
 	    	  case VALUE_TYPE_VARBINARY:
@@ -74,12 +74,42 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
 	    	    	tuple->SetValue(col_cntr++, elem, nullptr);
 	    	    }
 	    	  }
-	    });
+	    }
 	    tuple_ = std::move(tuple);
   }
   else{
+	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
+	    int col_cntr = 0;
+	    auto table_columns = table_schema->GetColumns();
+	    auto query_columns = parse_tree->getColumns();
+	    for(catalog::Column const& elem : table_columns){
+	    	std::size_t pos = std::find(query_columns.begin(), query_columns.end(), elem.GetName()) - query_columns.begin();
+			switch (elem.GetType()) {
+			case VALUE_TYPE_VARCHAR:
+			case VALUE_TYPE_VARBINARY: {
+				if(pos >= query_columns.size()) {
+					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+				}
+				else {
+					tuple->SetValue(col_cntr, values[pos], GetPlanPool());
+				}
+				break;
+			}
 
+			default: {
+				if(pos >= query_columns.size()) {
+					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+				}
+				else {
+					tuple->SetValue(col_cntr, values[pos], nullptr);
+				}
+			}
+			}
+			++col_cntr;
+	    }
+	    tuple_ = std::move(tuple);
   }
+  LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
 }
 
 VarlenPool *InsertPlan::GetPlanPool() {

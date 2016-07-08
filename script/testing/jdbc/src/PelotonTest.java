@@ -17,8 +17,11 @@ public class PelotonTest {
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A = "INSERT INTO a(id,data) VALUES (1,'hello');";
-  private final String INSERT_B = "INSERT INTO B VALUES (?,?)";
+  private final String INSERT_A_1 = "INSERT INTO a(id,data) VALUES (1,'hello');";
+  private final String INSERT_A_2 = "INSERT INTO a(id) VALUES (1)";
+  private final String INSERT_A_3 = "INSERT INTO a VALUES (3, 'hello')";
+
+  private final String INSERT_B_1 = "INSERT INTO b VALUES (1, 'hello')";
 
   private final String INSERT = "BEGIN;" +
           "INSERT INTO A VALUES (?,?);" +
@@ -68,7 +71,9 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DDL);
-    stmt.execute(INSERT_A);
+    stmt.execute(INSERT_A_1);
+    stmt.execute(INSERT_A_2);
+    stmt.execute(INSERT_A_3);
     //stmt.execute(DROP_IF_EXISTS);
     //stmt.execute(DROP_IF_EXISTS);
     //stmt.execute(DROP);
@@ -85,10 +90,10 @@ public class PelotonTest {
     PreparedStatement stmt = null;
     switch (table) {
       case A:
-        stmt = conn.prepareStatement(INSERT_A);
+        stmt = conn.prepareStatement(INSERT_A_1);
         break;
       case B:
-        stmt = conn.prepareStatement(INSERT_B);
+        stmt = conn.prepareStatement(INSERT_B_1);
         break;
     }
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
@@ -114,8 +119,8 @@ public class PelotonTest {
   public void Insert(int n) throws SQLException {
     conn.setAutoCommit(false);
     PreparedStatement stmt = conn.prepareStatement(INSERT);
-    PreparedStatement stmtA = conn.prepareStatement(INSERT_A);
-    PreparedStatement stmtB = conn.prepareStatement(INSERT_B);
+    PreparedStatement stmtA = conn.prepareStatement(INSERT_A_1);
+    PreparedStatement stmtB = conn.prepareStatement(INSERT_B_1);
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
     pgstmt.setPrepareThreshold(1);
     for (int i = 0; i < n; i++) {
