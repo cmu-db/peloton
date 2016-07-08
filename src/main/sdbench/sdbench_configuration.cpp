@@ -207,8 +207,8 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
-  state.scale_factor = 100.0;
-  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
+  state.scale_factor = 1000.0;
+  state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP/10;
 
   state.transactions = 1;
   state.selectivity = 1.0;
