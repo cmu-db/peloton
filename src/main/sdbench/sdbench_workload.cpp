@@ -294,24 +294,40 @@ void RunDirectTest() {
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound, upper_bound);
 
-  auto index = sdbench_table->GetIndex(0);
+  auto index_count = sdbench_table->GetIndexCount();
+  index::Index *index = nullptr;
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
+  // Check if ad-hoc index exists
+  if(index_count != 0) {
 
-  CreateIndexScanPredicate(key_column_ids, expr_types, values,
-                           lower_bound, upper_bound);
+    index = sdbench_table->GetIndex(0);
 
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+    std::vector<oid_t> key_column_ids;
+    std::vector<ExpressionType> expr_types;
+    std::vector<Value> values;
+    std::vector<expression::AbstractExpression *> runtime_keys;
+
+    CreateIndexScanPredicate(key_column_ids, expr_types, values,
+                             lower_bound, upper_bound);
+
+    index_scan_desc = planner::IndexScanPlan::IndexScanDesc(index,
+                                                            key_column_ids,
+                                                            expr_types,
+                                                            values,
+                                                            runtime_keys);
+  }
 
   // Determine hybrid scan type
   auto hybrid_scan_type = state.hybrid_scan_type;
   if(state.layout_mode == LAYOUT_ROW ||
       state.layout_mode == LAYOUT_COLUMN) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
+  }
+
+  if(state.layout_mode == LAYOUT_HYBRID &&
+      index_count != 0) {
+    hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
 
   planner::HybridScanPlan hybrid_scan_node(sdbench_table.get(),
@@ -462,8 +478,8 @@ static void Transform(double theta) {
   }
 }
 
-UNUSED_ATTRIBUTE static void BuildIndex(index::Index *index,
-                                        storage::DataTable *table) {
+static void BuildIndex(index::Index *index,
+                       storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
@@ -537,7 +553,7 @@ void RunAdaptExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("------------------------------------------------------------");
+      LOG_INFO("*****************************************************");
 
       state.projectivity = 1.0;
       peloton_projectivity = state.projectivity;
@@ -546,11 +562,20 @@ void RunAdaptExperiment() {
       // Reset query counter
       query_itr = 0;
 
-      // Launch transformer
       if (state.layout_mode == LAYOUT_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
+
+        // Launch transformer
         transformer = std::thread(Transform, theta);
+
+        // Create an ad-hoc index
+        CreateIndex();
+
+        // Launch index build
+        index_builder = std::thread(BuildIndex,
+                                    sdbench_table->GetIndex(0),
+                                    sdbench_table.get());
       }
 
       // Run adapt test
@@ -562,6 +587,8 @@ void RunAdaptExperiment() {
         peloton_fsm = false;
 
         transformer.join();
+
+        index_builder.join();
       }
     }
   }

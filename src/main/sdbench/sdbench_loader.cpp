@@ -150,8 +150,6 @@ void CreateAndLoadTable(LayoutType layout_type) {
 
   CreateTable();
 
-  CreateIndex();
-
   LoadTable();
 }
 
