@@ -47,18 +47,19 @@ enum LoggingType {
 
 /* Possible values for peloton_tilegroup_layout GUC */
 typedef enum LayoutType {
-  LAYOUT_INVALID = 0,
+  LAYOUT_TYPE_INVALID = 0,
 
-  LAYOUT_ROW = 1,    /* Pure row layout */
-  LAYOUT_COLUMN = 2, /* Pure column layout */
-  LAYOUT_HYBRID = 3  /* Hybrid layout */
+  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
+  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
+  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
 } LayoutType;
 
 enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_INVALID,
-  LOGGER_MAPPING_ROUND_ROBIN,
-  LOGGER_MAPPING_AFFINITY,
-  LOGGER_MAPPING_MANUAL,
+  LOGGER_MAPPING_TYPE_INVALID = 0,
+
+  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
+  LOGGER_MAPPING_TYPE_AFFINITY = 2,
+  LOGGER_MAPPING_TYPE_MANUAL = 3
 };
 
 enum CheckpointType {
