@@ -321,12 +321,12 @@ void RunDirectTest() {
 
   // Determine hybrid scan type
   auto hybrid_scan_type = state.hybrid_scan_type;
-  if(state.layout_mode == LAYOUT_ROW ||
-      state.layout_mode == LAYOUT_COLUMN) {
+  if(state.layout_mode == LAYOUT_TYPE_ROW ||
+      state.layout_mode == LAYOUT_TYPE_COLUMN) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
   }
 
-  if(state.layout_mode == LAYOUT_HYBRID &&
+  if(state.layout_mode == LAYOUT_TYPE_HYBRID &&
       index_count != 0) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
@@ -559,7 +559,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_TYPE_ROW, LAYOUT_TYPE_COLUMN, LAYOUT_TYPE_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
@@ -596,7 +596,7 @@ void RunAdaptExperiment() {
       // Reset query counter
       query_itr = 0;
 
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
 
@@ -616,7 +616,7 @@ void RunAdaptExperiment() {
       RunAdaptTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
 

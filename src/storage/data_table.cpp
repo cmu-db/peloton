@@ -472,19 +472,19 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   auto col_count = schema->GetColumnCount();
 
   // pure row layout map
-  if (layout_type == LAYOUT_ROW) {
+  if (layout_type == LAYOUT_TYPE_ROW) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
   // pure column layout map
-  else if (layout_type == LAYOUT_COLUMN) {
+  else if (layout_type == LAYOUT_TYPE_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
   // hybrid layout map
-  else if (layout_type == LAYOUT_HYBRID) {
+  else if (layout_type == LAYOUT_TYPE_HYBRID) {
     // TODO: Fallback option for regular tables
     if (col_count < 10) {
       for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
