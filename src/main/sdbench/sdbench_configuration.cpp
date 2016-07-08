@@ -204,7 +204,7 @@ int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
-  state.hybrid_scan_type = HYBRID_SCAN_TYPE_INDEX;
+  state.hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
