@@ -105,7 +105,7 @@ void InsertTest(index::Index *index, size_t scale_factor, uint64_t thread_itr) {
 }
 
 static void TestIndexPerformance(const IndexType& index_type) {
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false, index_type));
@@ -121,9 +121,9 @@ static void TestIndexPerformance(const IndexType& index_type) {
 
   LaunchParallelTest(num_threads, InsertTest, index.get(), scale_factor);
 
-  index->ScanAllKeys(locations);
-  EXPECT_EQ(locations.size(), num_threads * scale_factor * base_scale);
-  locations.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), num_threads * scale_factor * base_scale);
+  location_ptrs.clear();
 
   timer.Stop();
   LOG_INFO("Duration : %.2lf", timer.GetDuration());

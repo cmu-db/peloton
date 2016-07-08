@@ -53,16 +53,6 @@ class SkipListIndex : public Index {
 
   void Scan(const std::vector<Value> &values,
             const std::vector<oid_t> &key_column_ids,
-            const std::vector<ExpressionType> &expr_types,
-            const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer> &);
-
-  void ScanAllKeys(std::vector<ItemPointer> &);
-
-  void ScanKey(const storage::Tuple *key, std::vector<ItemPointer> &);
-
-  void Scan(const std::vector<Value> &values,
-            const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &exprs,
             const ScanDirectionType &scan_direction,
             std::vector<ItemPointer *> &result);

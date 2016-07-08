@@ -368,11 +368,11 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
-        std::vector<ItemPointer> locations;
-        index->ScanKey(key.get(), locations);
+        std::vector<ItemPointer*> location_ptrs;
+        index->ScanKey(key.get(), location_ptrs);
 
         // if this key doesn't exist in the refered column
-        if (locations.size() == 0) {
+        if (location_ptrs.size() == 0) {
           return false;
         }
 
