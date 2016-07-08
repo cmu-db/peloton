@@ -520,7 +520,25 @@ static void BuildIndex(index::Index *index,
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double insert_write_ratio = 0.005;
+  double insert_write_ratio = 0.01;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
+
+  state.projectivity = direct_low_proj;
+  state.operator_type = OPERATOR_TYPE_DIRECT;
+  RunDirectTest();
+
+  state.write_ratio = insert_write_ratio;
+  state.operator_type = OPERATOR_TYPE_INSERT;
+  RunInsertTest();
+  state.write_ratio = 0.0;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
