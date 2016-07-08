@@ -537,6 +537,7 @@ void RunAdaptExperiment() {
 
   state.transactions = 100;   // 25
 
+  state.selectivity = 0.06;
   state.adapt = true;
   double theta = 0.0;
 
