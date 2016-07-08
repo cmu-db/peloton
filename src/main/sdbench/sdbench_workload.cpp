@@ -19,6 +19,7 @@
 #include <ctime>
 #include <thread>
 #include <algorithm>
+#include <chrono>
 
 #include "expression/expression_util.h"
 #include "brain/clusterer.h"
@@ -475,6 +476,9 @@ static void Transform(double theta) {
       sdbench_table->UpdateDefaultPartition();
       update_itr = 0;
     }
+
+    // TODO: Sleep a bit
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
@@ -507,6 +511,9 @@ static void BuildIndex(index::Index *index,
 
     // Update indexed tile group offset (set of tgs indexed)
     index->IncrementIndexedTileGroupOffset();
+
+    // TODO: Sleep a bit
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 
 }
