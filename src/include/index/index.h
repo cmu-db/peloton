@@ -51,13 +51,13 @@ class IndexMetadata {
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema, bool unique_keys)
-      : index_name(index_name),
-        index_oid(index_oid),
-        method_type(method_type),
-        index_type(index_type),
-        tuple_schema(tuple_schema),
-        key_schema(key_schema),
-        unique_keys(unique_keys) {}
+ : index_name(index_name),
+   index_oid(index_oid),
+   method_type(method_type),
+   index_type(index_type),
+   tuple_schema(tuple_schema),
+   key_schema(key_schema),
+   unique_keys(unique_keys) {}
 
   ~IndexMetadata();
 
@@ -210,9 +210,14 @@ class Index : public Printable {
                                   const std::pair<peloton::Value, int> &j);
 
   // Get the indexed tile group offset
-  virtual int GetIndexedTileGroupOff() { return -1; }
+  virtual int GetIndexedTileGroupOff() {
+    return indexed_tile_group_offset_.load();
+  }
 
-  virtual void IncrementIndexedTileGroupOffset() { return; }
+  virtual void IncrementIndexedTileGroupOffset() {
+    indexed_tile_group_offset_++;
+    return;
+  }
 
  protected:
   Index(IndexMetadata *schema);
@@ -248,6 +253,8 @@ class Index : public Printable {
 
   // pool
   VarlenPool *pool = nullptr;
+
+  std::atomic<int> indexed_tile_group_offset_;
 };
 
 }  // End index namespace
