@@ -71,6 +71,10 @@ void CreateTable() {
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup, own_schema, adapt_table));
 
+}
+
+void CreateIndex() {
+
   // PRIMARY INDEXES
   for(int index_itr = 0; index_itr < state.index_count; index_itr++) {
 
@@ -100,6 +104,7 @@ void CreateTable() {
     sdbench_table->AddIndex(pkey_index);
 
   }
+
 
 }
 
@@ -144,6 +149,8 @@ void CreateAndLoadTable(LayoutType layout_type) {
   peloton_layout_mode = layout_type;
 
   CreateTable();
+
+  CreateIndex();
 
   LoadTable();
 }
