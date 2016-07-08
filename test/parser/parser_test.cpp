@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "common/harness.h"
-#include "parser/parser/pg_query.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace test {
@@ -26,8 +26,9 @@ namespace test {
 
 class ParserTest : public PelotonTest {};
 
-void ParseSQLStrings(const std::vector<std::string>& sql_strings,
-                     const bool expect_failure) {
+void ParseSQLStrings(UNUSED_ATTRIBUTE const std::vector<std::string>& sql_strings,
+                     UNUSED_ATTRIBUTE const bool expect_failure) {
+  /*
   // Initialize the postgres memory context
   pg_query_init();
 
@@ -49,7 +50,7 @@ void ParseSQLStrings(const std::vector<std::string>& sql_strings,
 
   // Destroy the postgres memory context
   //pg_query_destroy();
-
+  */
 }
 
 TEST_F(ParserTest, SQL92Test) {

@@ -24,34 +24,37 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs}
 # --[ Add "make check" target
 
 set(CTEST_FLAGS "")
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS})
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
+
+# Set memcheck parameters
+find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
+set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes --soname-synonyms='somalloc=*jemalloc*')
+set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp" )
 
 foreach(test_src ${test_srcs} )
     # get test file name
 	get_filename_component(test_bare_name ${test_src} NAME)	
-	string(REPLACE ".cpp" "" test_name ${test_bare_name} )
-    
+	string(REPLACE ".cpp" "" test_bare_name_without_extension ${test_bare_name})
+    string(REPLACE "\"" "" test_name ${test_bare_name_without_extension})
+     
     # create executable
     add_executable(${test_name} EXCLUDE_FROM_ALL ${test_src})
     add_dependencies(check ${test_name})
     
     # link libraries
     target_link_libraries(${test_name} peloton peloton-test-common)    
-    
+
+	# set target properties    
 	set_target_properties(${test_name}
 	    PROPERTIES
 	    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
-	)    
+	    COMMAND ${test_name}
+	)   
 	
 	# add test
-	add_test(${test_name} ${test_name})
+	add_test(${test_name} ${MEMORYCHECK_COMMAND} ${MEMORYCHECK_COMMAND_OPTIONS} ${CMAKE_BINARY_DIR}/test/${test_name})
+	
 endforeach(test_src ${test_srcs})
-
-# ---[ Valgrind	
-if (("${CMAKE_BUILD_TYPE}" STREQUAL "Valgrind") AND (NOT WIN32))
-    include(MemoryCheck)
-    SETUP_TARGET_FOR_MEMCHECK(valgrind ${CMAKE_BINARY_DIR}/test/peloton-testsuite)
-endif()
 
 # ---[ Coverage
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Coverage")

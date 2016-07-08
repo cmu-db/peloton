@@ -15,16 +15,13 @@
 #include <memory>
 
 #include "common/logger.h"
-#include "parser/postgres.h"
 #include "parser/parse_tree_transformer.h"
-#include "parser/nodes/nodes.h"
-#include "parser/nodes/parsenodes.h"
 
-#include "parser/peloton/abstract_parse.h"
-#include "parser/peloton/insert_parse.h"
-#include "parser/peloton/drop_parse.h"
-#include "parser/peloton/create_parse.h"
-#include "parser/peloton/select_parse.h"
+#include "parser/abstract_parse.h"
+#include "parser/insert_parse.h"
+#include "parser/drop_parse.h"
+#include "parser/create_parse.h"
+#include "parser/select_parse.h"
 
 namespace peloton {
 namespace parser {
@@ -73,6 +70,7 @@ std::unique_ptr<parser::AbstractParse> TransformParseTree(
 
   std::unique_ptr<parser::AbstractParse> child_parse_tree;
 
+  /*
   auto parse_node_type = postgres_parse_tree->type;
   LOG_INFO("Parse node type : %d", parse_node_type);
 
@@ -123,6 +121,7 @@ std::unique_ptr<parser::AbstractParse> TransformParseTree(
       LOG_ERROR("Unsupported parse node type : %d ", parse_node_type);
       break;
   }
+  */
 
   // Base case
   if (child_parse_tree.get() != nullptr) {

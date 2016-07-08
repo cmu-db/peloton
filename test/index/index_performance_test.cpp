@@ -111,8 +111,8 @@ static void TestIndexPerformance(const IndexType& index_type) {
   std::unique_ptr<index::Index> index(BuildIndex(false, index_type));
 
   // Parallel Test
-  size_t num_threads = 4;
-  size_t scale_factor = 10;
+  size_t num_threads = 2;
+  size_t scale_factor = 1;
   Timer<> timer;
 
   std::vector<std::thread> thread_group;

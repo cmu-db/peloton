@@ -57,11 +57,11 @@ class HybridIndexTests : public PelotonTest {};
 static double projectivity = 1.0;
 static size_t column_count = 4;
 
-static size_t tuples_per_tile_group = DEFAULT_TUPLES_PER_TILEGROUP;
+static size_t tuples_per_tile_group = TEST_TUPLES_PER_TILEGROUP * 100;
 static size_t tile_group_count = 5;
 static size_t tuple_count = tile_group_count * tuples_per_tile_group;
 
-static double selectivity = 0.001;
+static double selectivity = 0.01;
 static double predicate_offset = 0.9;
 
 static double tuple_start_offset = predicate_offset * tuple_count;
@@ -400,7 +400,7 @@ void BuildIndex(index::Index *index, storage::DataTable *table) {
 
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
-    index->IncreamentIndexedTileGroupOff();
+    index->IncrementIndexedTileGroupOffset();
   }
 }
 
@@ -452,8 +452,6 @@ TEST_F(HybridIndexTests, HybridScanTest) {
 
   std::thread index_builder = std::thread(BuildIndex, pkey_index,
                                           hyadapt_table.get());
-
-  query_count *= 10;
 
   for (size_t query_itr = 0; query_itr < query_count; query_itr++) {
     LaunchHybridScan(hyadapt_table);

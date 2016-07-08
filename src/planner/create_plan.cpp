@@ -14,8 +14,8 @@
 #include "planner/create_plan.h"
 
 #include "storage/data_table.h"
-#include "parser/peloton/create_parse.h"
 #include "catalog/bootstrapper.h"
+#include "parser/create_parse.h"
 
 namespace peloton {
 namespace planner {

@@ -19,6 +19,7 @@
 #include <ctime>
 #include <thread>
 #include <algorithm>
+#include <chrono>
 
 #include "expression/expression_util.h"
 #include "brain/clusterer.h"
@@ -149,11 +150,11 @@ static void WriteOutput(double duration) {
   duration *= 1000;
 
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %.1lf %.2lf %.1lf %d %d %d :: %.1lf ms",
+  LOG_INFO("%d %d %.3lf %.3lf %.1lf %d %d %d :: %.1lf ms",
            state.layout_mode,
            state.operator_type,
-           state.projectivity,
            state.selectivity,
+           state.projectivity,
            state.write_ratio,
            state.scale_factor,
            state.column_count,
@@ -164,12 +165,13 @@ static void WriteOutput(double duration) {
   out << state.operator_type << " ";
   out << state.selectivity << " ";
   out << state.projectivity << " ";
-  out << state.column_count << " ";
-  out << state.write_ratio << " ";
-  out << state.tuples_per_tilegroup << " ";
   out << query_itr << " ";
+  out << state.write_ratio << " ";
   out << state.scale_factor << " ";
+  out << state.column_count << " ";
+  out << state.tuples_per_tilegroup << " ";
   out << duration << "\n";
+
   out.flush();
 }
 
@@ -192,12 +194,15 @@ static int GetUpperBound() {
   return upper_bound;
 }
 
-static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
+static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
+                        std::vector<double> columns_accessed, double cost) {
   Timer<> timer;
 
   auto txn_count = state.transactions;
   bool status = false;
 
+  // Construct sample
+  brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
@@ -229,11 +234,35 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors) {
 
     // Emit time
     timer.Stop();
-    double time_per_transaction = timer.GetDuration() / txn_count;
+    auto time_per_transaction = timer.GetDuration();
+
+    // Record sample
+    if (state.fsm == true && cost != 0) {
+      sdbench_table->RecordSample(sample);
+    }
 
     WriteOutput(time_per_transaction);
   }
 
+}
+
+std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
+  std::vector<double> columns_accessed;
+  std::map<oid_t, oid_t> columns_accessed_map;
+
+  // Init map
+  for (auto col : column_ids) columns_accessed_map[col] = 1;
+
+  for (int column_itr = 0; column_itr < state.column_count; column_itr++) {
+    auto location = columns_accessed_map.find(column_itr);
+    auto end = columns_accessed_map.end();
+    if (location != end)
+      columns_accessed.push_back(1);
+    else
+      columns_accessed.push_back(0);
+  }
+
+  return columns_accessed;
 }
 
 void RunDirectTest() {
@@ -260,33 +289,59 @@ void RunDirectTest() {
   oid_t column_count = state.projectivity * state.column_count;
 
   for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
-    column_ids.push_back(hyadapt_column_ids[col_itr]);
+    column_ids.push_back(sdbench_column_ids[col_itr]);
   }
 
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound, upper_bound);
 
-  auto index = sdbench_table->GetIndex(0);
+  auto index_count = sdbench_table->GetIndexCount();
+  index::Index *index = nullptr;
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
-  std::vector<oid_t> key_column_ids;
-  std::vector<ExpressionType> expr_types;
-  std::vector<Value> values;
-  std::vector<expression::AbstractExpression *> runtime_keys;
+  // Check if ad-hoc index exists
+  if(index_count != 0) {
 
-  CreateIndexScanPredicate(key_column_ids, expr_types, values,
-                           lower_bound, upper_bound);
+    index = sdbench_table->GetIndex(0);
 
-  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, key_column_ids, expr_types, values, runtime_keys);
+    std::vector<oid_t> key_column_ids;
+    std::vector<ExpressionType> expr_types;
+    std::vector<Value> values;
+    std::vector<expression::AbstractExpression *> runtime_keys;
+
+    CreateIndexScanPredicate(key_column_ids, expr_types, values,
+                             lower_bound, upper_bound);
+
+    index_scan_desc = planner::IndexScanPlan::IndexScanDesc(index,
+                                                            key_column_ids,
+                                                            expr_types,
+                                                            values,
+                                                            runtime_keys);
+  }
+
+  // Determine hybrid scan type
+  auto hybrid_scan_type = state.hybrid_scan_type;
+  if(state.layout_mode == LAYOUT_TYPE_ROW ||
+      state.layout_mode == LAYOUT_TYPE_COLUMN) {
+    hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
+  }
+
+  if(state.layout_mode == LAYOUT_TYPE_HYBRID &&
+      index_count != 0) {
+    hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
+  }
 
   planner::HybridScanPlan hybrid_scan_node(sdbench_table.get(),
                                            predicate,
                                            column_ids,
                                            index_scan_desc,
-                                           state.hybrid_scan_type);
+                                           hybrid_scan_type);
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
+
+  //planner::SeqScanPlan seq_scan_node(sdbench_table.get(), predicate, column_ids);
+  //executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
@@ -319,40 +374,21 @@ void RunDirectTest() {
   mat_executor.AddChild(&hybrid_scan_executor);
 
   /////////////////////////////////////////////////////////
-  // INSERT
-  /////////////////////////////////////////////////////////
-
-  values.clear();
-  Value insert_val = ValueFactory::GetIntegerValue(++sdbench_tuple_counter);
-
-  TargetList target_list;
-  DirectMapList direct_map_list;
-
-  for (auto col_id = 0; col_id <= state.column_count; col_id++) {
-    auto expression =
-        expression::ExpressionUtil::ConstantValueFactory(insert_val);
-    target_list.emplace_back(col_id, expression);
-  }
-
-  std::unique_ptr<planner::ProjectInfo> project_info(new planner::ProjectInfo(
-      std::move(target_list), std::move(direct_map_list)));
-
-  planner::InsertPlan insert_node(sdbench_table.get(), std::move(project_info));
-  executor::InsertExecutor insert_executor(&insert_node, context.get());
-
-  /////////////////////////////////////////////////////////
   // EXECUTE
   /////////////////////////////////////////////////////////
 
   std::vector<executor::AbstractExecutor *> executors;
   executors.push_back(&mat_executor);
-  executors.push_back(&insert_executor);
 
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
+  double cost = 10;
+  column_ids.push_back(0);
 
-  ExecuteTest(executors);
+  auto columns_accessed = GetColumnsAccessed(column_ids);
+
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction();
 }
@@ -409,8 +445,10 @@ void RunInsertTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
+  double cost = 0;
+  std::vector<double> columns_accessed;
 
-  ExecuteTest(executors);
+  ExecuteTest(executors, columns_accessed, cost);
 
   txn_manager.CommitTransaction();
 }
@@ -438,12 +476,51 @@ static void Transform(double theta) {
       sdbench_table->UpdateDefaultPartition();
       update_itr = 0;
     }
+
+    // TODO: Sleep a bit
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+}
+
+static void BuildIndex(index::Index *index,
+                       storage::DataTable *table) {
+  oid_t start_tile_group_count = START_OID;
+  oid_t table_tile_group_count = table->GetTileGroupCount();
+  auto table_schema = table->GetSchema();
+  std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
+
+  while (start_tile_group_count < table_tile_group_count &&
+      state.fsm == true) {
+    table_tile_group_count = table->GetTileGroupCount();
+    auto tile_group = table->GetTileGroup(start_tile_group_count++);
+    auto tile_group_id = tile_group->GetTileGroupId();
+
+    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
+
+    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
+      // Copy over the tuple
+      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
+
+      // Set the location
+      ItemPointer location(tile_group_id, tuple_id);
+
+      // TODO: Adds an entry in ALL the indexes
+      // (should only insert in specific index)
+      table->InsertInIndexes(tuple_ptr.get(), location);
+    }
+
+    // Update indexed tile group offset (set of tgs indexed)
+    index->IncrementIndexedTileGroupOffset();
+
+    // TODO: Sleep a bit
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+
 }
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double insert_write_ratio = 0.05;
+  double insert_write_ratio = 0.01;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -477,42 +554,23 @@ static void RunAdaptTest() {
   RunDirectTest();
 
   state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = 0.05;
   state.operator_type = OPERATOR_TYPE_INSERT;
   RunInsertTest();
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN,
-                                         LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_TYPE_ROW, LAYOUT_TYPE_COLUMN, LAYOUT_TYPE_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread transformer;
+  std::thread index_builder;
 
-  state.transactions = 10;
+  state.transactions = 100;   // 25
 
-  state.write_ratio = 0.0;
-  state.selectivity = 0.3;
+  state.selectivity = 0.06;
   state.adapt = true;
   double theta = 0.0;
 
@@ -529,30 +587,42 @@ void RunAdaptExperiment() {
       state.layout_mode = layout;
       peloton_layout_mode = state.layout_mode;
 
-      LOG_INFO("*********************************************************");
-      LOG_INFO("*********************************************************");
+      LOG_INFO("*****************************************************");
 
       state.projectivity = 1.0;
-      peloton_projectivity = 1.0;
+      peloton_projectivity = state.projectivity;
       CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
       // Reset query counter
       query_itr = 0;
 
-      // Launch transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
         state.fsm = true;
         peloton_fsm = true;
+
+        // Launch transformer
         transformer = std::thread(Transform, theta);
+
+        // Create an ad-hoc index
+        CreateIndex();
+
+        // Launch index build
+        index_builder = std::thread(BuildIndex,
+                                    sdbench_table->GetIndex(0),
+                                    sdbench_table.get());
       }
 
+      // Run adapt test
       RunAdaptTest();
 
       // Stop transformer
-      if (state.layout_mode == LAYOUT_HYBRID) {
+      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
         state.fsm = false;
         peloton_fsm = false;
+
         transformer.join();
+
+        index_builder.join();
       }
     }
   }

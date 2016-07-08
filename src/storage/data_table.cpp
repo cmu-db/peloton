@@ -37,7 +37,7 @@
 // Configuration Variables
 //===--------------------------------------------------------------------===//
 
-std::vector<peloton::oid_t> hyadapt_column_ids;
+std::vector<peloton::oid_t> sdbench_column_ids;
 
 double peloton_projectivity;
 
@@ -52,9 +52,9 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
                      const bool adapt_table)
-    : AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
-      tuples_per_tilegroup_(tuples_per_tilegroup),
-      adapt_table_(adapt_table) {
+: AbstractTable(database_oid, table_oid, table_name, schema, own_schema),
+  tuples_per_tilegroup_(tuples_per_tilegroup),
+  adapt_table_(adapt_table) {
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -70,7 +70,7 @@ DataTable::~DataTable() {
   // clean up tile groups by dropping the references in the catalog
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     tile_group_lock_.ReadLock();
     auto tile_group_id = tile_groups_.at(tile_group_itr);
     tile_group_lock_.Unlock();
@@ -116,7 +116,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
-	  LOG_INFO("Not NULL constraint violated");
+    LOG_INFO("Not NULL constraint violated");
     throw ConstraintException("Not NULL constraint violated : " +
                               std::string(tuple->GetInfo()));
     return false;
@@ -140,7 +140,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   if (check_constraint == true && CheckConstraints(tuple) == false) {
     return INVALID_ITEMPOINTER;
   }
-  */
+   */
 
   //=============== garbage collection==================
   // check if there are recycled tuple slots
@@ -150,7 +150,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
   if (free_item_pointer.IsNull() == false) {
     return free_item_pointer;
   }
-  */
+   */
   //====================================================
 
   std::shared_ptr<storage::TileGroup> tile_group;
@@ -341,7 +341,7 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
-                                               UNUSED_ATTRIBUTE) {
+                                           UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table =
@@ -351,7 +351,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
     int ref_table_index_count = ref_table->GetIndexCount();
 
     for (int index_itr = ref_table_index_count - 1; index_itr >= 0;
-         --index_itr) {
+        --index_itr) {
       auto index = ref_table->GetIndex(index_itr);
 
       // The foreign key constraints only refer to the primary key
@@ -470,22 +470,21 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   column_map_type column_map;
 
   auto col_count = schema->GetColumnCount();
-  if (adapt_table_ == false) layout_type = LAYOUT_ROW;
 
   // pure row layout map
-  if (layout_type == LAYOUT_ROW) {
+  if (layout_type == LAYOUT_TYPE_ROW) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(0, col_itr);
     }
   }
   // pure column layout map
-  else if (layout_type == LAYOUT_COLUMN) {
+  else if (layout_type == LAYOUT_TYPE_COLUMN) {
     for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
       column_map[col_itr] = std::make_pair(col_itr, 0);
     }
   }
   // hybrid layout map
-  else if (layout_type == LAYOUT_HYBRID) {
+  else if (layout_type == LAYOUT_TYPE_HYBRID) {
     // TODO: Fallback option for regular tables
     if (col_count < 10) {
       for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -507,7 +506,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
+  column_map = GetTileGroupLayout((LayoutType) peloton_layout_mode);
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
@@ -636,7 +635,7 @@ const std::string DataTable::GetInfo() const {
   oid_t tuple_count = 0;
   oid_t table_id = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
     table_id = tile_group->GetTableId();
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
@@ -836,6 +835,8 @@ storage::TileGroup *DataTable::TransformTileGroup(
     return nullptr;
   }
 
+  LOG_TRACE("Transforming tile group : %u", tile_group_offset);
+
   // Get the schema for the new transformed tile group
   auto new_schema =
       TransformTileGroupSchema(tile_group.get(), default_partition_);
@@ -922,52 +923,23 @@ column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
   column_map_type column_map;
 
   // HYADAPT
-  if (table_name == "HYADAPTTABLE") {
-    // FSM MODE
-    if (peloton_fsm == true) {
-      for (oid_t column_id = 0; column_id < column_count; column_id++) {
-        column_map[column_id] = std::make_pair(0, column_id);
-      }
-      return std::move(column_map);
+  if (table_name == "SDBENCHTABLE") {
 
-      // TODO: ADD A FSM
-      // return default_partition;
+    oid_t split_point = peloton_projectivity * (column_count - 1);
+    oid_t rest_column_count = (column_count - 1) - split_point;
+
+    LOG_TRACE("peloton_projectivity: %f column_count: %u split_point : %u",
+              peloton_projectivity, column_count, split_point);
+
+    column_map[0] = std::make_pair(0, 0);
+    for (oid_t column_id = 0; column_id < split_point; column_id++) {
+      auto sdbench_column_id = sdbench_column_ids[column_id];
+      column_map[sdbench_column_id] = std::make_pair(0, column_id + 1);
     }
 
-    // DEFAULT
-    if (peloton_num_groups == 0) {
-      oid_t split_point = peloton_projectivity * (column_count - 1);
-      oid_t rest_column_count = (column_count - 1) - split_point;
-
-      column_map[0] = std::make_pair(0, 0);
-      for (oid_t column_id = 0; column_id < split_point; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[column_id];
-        column_map[hyadapt_column_id] = std::make_pair(0, column_id + 1);
-      }
-
-      for (oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[split_point + column_id];
-        column_map[hyadapt_column_id] = std::make_pair(1, column_id);
-      }
-    }
-    // MULTIPLE GROUPS
-    else {
-      column_map[0] = std::make_pair(0, 0);
-      oid_t tile_column_count = column_count / peloton_num_groups;
-
-      for (oid_t column_id = 1; column_id < column_count; column_id++) {
-        auto hyadapt_column_id = hyadapt_column_ids[column_id - 1];
-        int tile_id = (column_id - 1) / tile_column_count;
-        oid_t tile_column_id;
-        if (tile_id == 0)
-          tile_column_id = (column_id) % tile_column_count;
-        else
-          tile_column_id = (column_id - 1) % tile_column_count;
-
-        if (tile_id >= peloton_num_groups) tile_id = peloton_num_groups - 1;
-
-        column_map[hyadapt_column_id] = std::make_pair(tile_id, tile_column_id);
-      }
+    for (oid_t column_id = 0; column_id < rest_column_count; column_id++) {
+      auto sdbench_column_id = sdbench_column_ids[split_point + column_id];
+      column_map[sdbench_column_id] = std::make_pair(1, column_id);
     }
 
   }

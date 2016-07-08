@@ -59,7 +59,7 @@ void CreateTable() {
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
-  std::string table_name("HYADAPTTABLE");
+  std::string table_name("SDBENCHTABLE");
 
   /////////////////////////////////////////////////////////
   // Create table.
@@ -70,6 +70,10 @@ void CreateTable() {
   sdbench_table.reset(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
       state.tuples_per_tilegroup, own_schema, adapt_table));
+
+}
+
+void CreateIndex() {
 
   // PRIMARY INDEXES
   for(int index_itr = 0; index_itr < state.index_count; index_itr++) {
@@ -100,6 +104,7 @@ void CreateTable() {
     sdbench_table->AddIndex(pkey_index);
 
   }
+
 
 }
 

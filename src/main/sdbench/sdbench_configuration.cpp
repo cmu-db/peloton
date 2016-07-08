@@ -59,13 +59,13 @@ static struct option opts[] = {
 
 void GenerateSequence(oid_t column_count) {
   // Reset sequence
-  hyadapt_column_ids.clear();
+  sdbench_column_ids.clear();
 
   // Generate sequence
   for (oid_t column_id = 1; column_id <= column_count; column_id++)
-    hyadapt_column_ids.push_back(column_id);
+    sdbench_column_ids.push_back(column_id);
 
-  std::random_shuffle(hyadapt_column_ids.begin(), hyadapt_column_ids.end());
+  std::random_shuffle(sdbench_column_ids.begin(), sdbench_column_ids.end());
 }
 
 static void ValidateOperator(const configuration &state) {
@@ -117,18 +117,18 @@ static void ValidateScaleFactor(const configuration &state) {
 }
 
 static void ValidateLayout(const configuration &state) {
-  if (state.layout_mode < 0 || state.layout_mode > 2) {
+  if (state.layout_mode < 1 || state.layout_mode > 3) {
     LOG_ERROR("Invalid layout :: %d", state.layout_mode);
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
-      case LAYOUT_ROW:
+      case LAYOUT_TYPE_ROW:
         LOG_INFO("%s : ROW", "layout ");
         break;
-      case LAYOUT_COLUMN:
+      case LAYOUT_TYPE_COLUMN:
         LOG_INFO("%s : COLUMN", "layout ");
         break;
-      case LAYOUT_HYBRID:
+      case LAYOUT_TYPE_HYBRID:
         LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
@@ -143,7 +143,7 @@ static void ValidateProjectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %.1lf", "projectivity", state.projectivity);
+  LOG_INFO("%s : %.3lf", "projectivity", state.projectivity);
 }
 
 static void ValidateSelectivity(const configuration &state) {
@@ -152,7 +152,7 @@ static void ValidateSelectivity(const configuration &state) {
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %.1lf", "selectivity", state.selectivity);
+  LOG_INFO("%s : %.3lf", "selectivity", state.selectivity);
 }
 
 static void ValidateExperiment(const configuration &state) {
@@ -204,22 +204,23 @@ int orig_scale_factor;
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
   // Default Values
-  state.hybrid_scan_type = HYBRID_SCAN_TYPE_INDEX;
+  state.hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   state.operator_type = OPERATOR_TYPE_DIRECT;
 
   state.scale_factor = 100.0;
   state.tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP;
 
   state.transactions = 1;
-  state.selectivity = 0.1;
+  state.selectivity = 1.0;
   state.projectivity = 1.0;
 
-  state.layout_mode = LAYOUT_ROW;
+  state.layout_mode = LAYOUT_TYPE_ROW;
 
   state.experiment_type = EXPERIMENT_TYPE_INVALID;
 
-  state.column_count = 10;
+  state.column_count = 500;
   state.write_ratio = 0.0;
+
   state.index_count = 1;
 
   state.adapt = false;
@@ -281,9 +282,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
 
   if (state.experiment_type == EXPERIMENT_TYPE_INVALID) {
     // Print configuration
+    ValidateLayout(state);
     ValidateHybridScanType(state);
     ValidateOperator(state);
-    ValidateLayout(state);
     ValidateSelectivity(state);
     ValidateProjectivity(state);
     ValidateScaleFactor(state);

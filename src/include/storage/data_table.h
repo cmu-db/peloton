@@ -24,13 +24,6 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-/* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_ROW,    /* Pure row layout */
-  LAYOUT_COLUMN, /* Pure column layout */
-  LAYOUT_HYBRID  /* Hybrid layout */
-} LayoutType;
-
 extern LayoutType peloton_layout_mode;
 
 //===--------------------------------------------------------------------===//
@@ -46,7 +39,7 @@ extern int peloton_num_groups;
 // FSM or not ?
 extern bool peloton_fsm;
 
-extern std::vector<peloton::oid_t> hyadapt_column_ids;
+extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
 
