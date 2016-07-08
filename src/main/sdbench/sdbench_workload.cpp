@@ -526,7 +526,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
