@@ -137,20 +137,6 @@ class Index : public Printable {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // scan all keys in the index matching an arbitrary key
-  // used by index scan executor
-  virtual void Scan(const std::vector<Value> &values,
-                    const std::vector<oid_t> &key_column_ids,
-                    const std::vector<ExpressionType> &exprs,
-                    const ScanDirectionType &scan_direction,
-                    std::vector<ItemPointer> &) = 0;
-
-  // scan the entire index, working like a sort
-  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
-
-  virtual void ScanKey(const storage::Tuple *key,
-                       std::vector<ItemPointer> &) = 0;
-
   virtual void Scan(const std::vector<Value> &values,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &exprs,
