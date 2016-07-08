@@ -11,10 +11,36 @@
 //===----------------------------------------------------------------------===//
 
 
-#include <gflags/gflags.h>
+#include "common/config.h"
 
-DEFINE_uint64(port, 5432, "Peloton port (default: 5432)");
-DEFINE_uint64(max_connections, 64,
-              "Maximum number of connections (default: 64)");
-DEFINE_string(socket_family, "AF_INET", "Socket family (AF_UNIX, AF_INET)");
-DEFINE_bool(h, false, "Show help");
+namespace peloton {
+
+
+void PelotonConfiguration::PrintHelp() {
+}
+
+int PelotonConfiguration::GetPort() const{
+  return port;
+}
+
+void PelotonConfiguration::SetPort(const int port_){
+  port = port_;
+}
+
+int PelotonConfiguration::GetMaxConnections() const{
+ return max_connections;
+}
+
+void PelotonConfiguration::SetMaxConnections(const int max_connections_){
+  max_connections = max_connections_;
+}
+
+std::string PelotonConfiguration::GetSocketFamily() const{
+  return socket_family;
+}
+
+void PelotonConfiguration::SetSocketFamily(const std::string& socket_family_){
+  socket_family = socket_family_;
+}
+
+}  // End peloton namespace

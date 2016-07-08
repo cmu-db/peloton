@@ -13,16 +13,17 @@
 
 #include "optimizer/simple_optimizer.h"
 
-#include "parser/peloton/abstract_parse.h"
-#include "parser/peloton/drop_parse.h"
-#include "parser/peloton/create_parse.h"
-#include "parser/peloton/insert_parse.h"
+#include "parser/abstract_parse.h"
+#include "parser/insert_parse.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
+#include "parser/abstract_parse.h"
+#include "parser/drop_parse.h"
+#include "parser/create_parse.h"
 
 #include "common/logger.h"
 

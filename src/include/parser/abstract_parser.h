@@ -13,7 +13,7 @@
 
 #include <memory>
 
-#include "parser/peloton/abstract_parse.h"
+#include "parser/abstract_parse.h"
 
 namespace peloton {
 namespace parser {

@@ -14,10 +14,10 @@
 #include "common/types.h"
 
 // Layout mode
-int peloton_layout_mode;
+int peloton_layout_mode = LAYOUT_TYPE_ROW;
 
 // Logging mode
-LoggingType peloton_logging_mode;
+LoggingType peloton_logging_mode = LOGGING_TYPE_INVALID;
 
 // GC mode
 GCType peloton_gc_mode;

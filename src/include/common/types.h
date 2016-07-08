@@ -45,11 +45,21 @@ enum LoggingType {
   LOGGING_TYPE_HDD_WBL = 6
 };
 
+/* Possible values for peloton_tilegroup_layout GUC */
+typedef enum LayoutType {
+  LAYOUT_TYPE_INVALID = 0,
+
+  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
+  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
+  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
+} LayoutType;
+
 enum LoggerMappingStrategyType {
-  LOGGER_MAPPING_INVALID,
-  LOGGER_MAPPING_ROUND_ROBIN,
-  LOGGER_MAPPING_AFFINITY,
-  LOGGER_MAPPING_MANUAL,
+  LOGGER_MAPPING_TYPE_INVALID = 0,
+
+  LOGGER_MAPPING_TYPE_ROUND_ROBIN = 1,
+  LOGGER_MAPPING_TYPE_AFFINITY = 2,
+  LOGGER_MAPPING_TYPE_MANUAL = 3
 };
 
 enum CheckpointType {
@@ -126,6 +136,7 @@ class Value;
 #define DEFAULT_DB_NAME "default_database"
 
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
+extern int TEST_TUPLES_PER_TILEGROUP;
 
 // TODO: Use ThreadLocalPool ?
 // This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently

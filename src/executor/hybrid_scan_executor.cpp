@@ -135,6 +135,7 @@ bool HybridScanExecutor::DInit() {
 
     result_itr_ = START_OID;
     index_done_ = false;
+    result_.clear();
 
     column_ids_ = node.GetColumnIds();
     auto key_column_ids_ = node.GetKeyColumnIds();
@@ -266,12 +267,14 @@ bool HybridScanExecutor::IndexScanUtil() {
     if (result_[result_itr_]->GetTupleCount() == 0) {
       result_itr_++;
       continue;
-    } else {
+    }
+    else {
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
     }
   }  // end while
+
   return false;
 }
 
@@ -307,13 +310,11 @@ bool HybridScanExecutor::DExecute() {
 
     // do two part search
     if (index_done_ == false) {
-      // Timer<> timer;
-      // timer.Start();
-
       if (indexed_tile_offset_ == INVALID_OID) {
         index_done_ = true;
       } else {
         ExecPrimaryIndexLookup();
+        LOG_TRACE("Using index -- tile count : %lu", result_.size());
       }
     }
 

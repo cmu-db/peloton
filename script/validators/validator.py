@@ -59,24 +59,8 @@ SKIP_FILES_LIST = [
     "src/wire/protocol.cpp",
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
-    "src/include/parser/port.h",
-    "src/include/parser/c.h",
-    "src/include/parser/catalog/pg_type.h",
-    "src/include/parser/catalog/pg_proc.h",
-    "src/include/parser/executor/execdebug.h",
-    "src/include/parser/utils/builtins.h",
-    "src/include/parser/utils/palloc.h",
-    "src/include/parser/utils/hsearch.h",
-    "src/include/parser/nodes/memnodes.h",
-    "src/parser/backend/utils/mmgr/mcxt.cpp",
-    "src/include/parser/port_config/linux/pg_config.h",
-    "src/include/parser/lib/ilist.h",
-    "src/include/parser/storage/sinval.h",
-    "src/parser/backend/utils/mmgr/aset.cpp",
-    "src/parser/backend/nodes/nodeFuncs.cpp",
-    "src/parser/backend/parser/gram.cpp",
-    "src/parser/parser/pg_query_parse.cpp",
-    "src/parser/port/chklocale.cpp"
+    "src/include/parser/sql_scanner.h",
+    "src/parser/parser_utils.cpp"
 ];
 
 ## ==============================================

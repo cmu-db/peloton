@@ -204,12 +204,12 @@ void ExecuteTileGroupTest() {
 }
 
 TEST_F(TileGroupLayoutTest, RowLayout) {
-  peloton_layout_mode = LAYOUT_ROW;
+  peloton_layout_mode = LAYOUT_TYPE_ROW;
   ExecuteTileGroupTest();
 }
 
 TEST_F(TileGroupLayoutTest, ColumnLayout) {
-  peloton_layout_mode = LAYOUT_COLUMN;
+  peloton_layout_mode = LAYOUT_TYPE_COLUMN;
   ExecuteTileGroupTest();
 }
 

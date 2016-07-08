@@ -10,11 +10,6 @@ list(APPEND Peloton_LINKER_LIBS ${Boost_LIBRARIES})
 find_package(Threads REQUIRED)
 list(APPEND Peloton_LINKER_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
-# ---[ Google-gflags
-include("cmake/External/gflags.cmake")
-include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
-list(APPEND Peloton_LINKER_LIBS ${GFLAGS_LIBRARIES})
-
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
@@ -38,3 +33,22 @@ endif()
 find_package(JeMalloc)
 include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${JEMALLOC_LIBRARIES})
+
+# --[ Valgrind
+find_program(MEMORYCHECK_COMMAND valgrind)
+set(MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=full")
+set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp")
+
+# --[ IWYU
+
+# Generate clang compilation database
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_package(PythonInterp REQUIRED)
+find_program(iwyu_tool_path NAMES "${PROJECT_SOURCE_DIR}/third_party/iwyu/iwyu_tool.py")
+
+add_custom_target(iwyu
+    COMMAND "${PYTHON_EXECUTABLE}" "${iwyu_tool_path}" -p "${CMAKE_BINARY_DIR}"
+    COMMENT "Running include-what-you-use tool"
+    VERBATIM
+)

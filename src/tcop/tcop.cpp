@@ -18,7 +18,6 @@
 #include "common/logger.h"
 #include "common/types.h"
 
-#include "parser/postgres_parser.h"
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
 
@@ -94,10 +93,11 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   statement.reset(new Statement(statement_name, query_string));
 
-  auto& postgres_parser = parser::PostgresParser::GetInstance();
-  auto parse_tree = postgres_parser.BuildParseTree(query_string);
+  // TODO: Use parser
+  //auto& postgres_parser = parser::PostgresParser::GetInstance();
+  //auto parse_tree = postgres_parser.BuildParseTree(query_string);
 
-  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
+  //statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
 
   return statement;
 }

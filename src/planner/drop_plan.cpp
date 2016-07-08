@@ -14,8 +14,8 @@
 #include "planner/drop_plan.h"
 
 #include "storage/data_table.h"
-#include "parser/peloton/drop_parse.h"
 #include "catalog/bootstrapper.h"
+#include "parser/drop_parse.h"
 
 namespace peloton {
 namespace planner {
