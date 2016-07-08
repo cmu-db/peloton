@@ -487,9 +487,10 @@ static void BuildIndex(index::Index *index,
 
   while (start_tile_group_count < table_tile_group_count &&
       state.fsm == true) {
-
+    table_tile_group_count = table->GetTileGroupCount();
     auto tile_group = table->GetTileGroup(start_tile_group_count++);
     auto tile_group_id = tile_group->GetTileGroupId();
+
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
@@ -512,7 +513,7 @@ static void BuildIndex(index::Index *index,
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
-  double insert_write_ratio = 0.02;
+  double insert_write_ratio = 0.005;
 
   state.projectivity = direct_low_proj;
   state.operator_type = OPERATOR_TYPE_DIRECT;
@@ -533,7 +534,7 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_HYBRID};
+std::vector<LayoutType> adapt_layouts = {LAYOUT_ROW, LAYOUT_COLUMN, LAYOUT_HYBRID};
 
 std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
@@ -542,8 +543,9 @@ void RunAdaptExperiment() {
   std::thread transformer;
   std::thread index_builder;
 
-  state.transactions = 25;   // 25
+  state.transactions = 100;   // 25
 
+  state.selectivity = 0.06;
   state.adapt = true;
   double theta = 0.0;
 
