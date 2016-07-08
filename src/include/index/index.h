@@ -226,7 +226,7 @@ class Index : public Printable {
   // Get the indexed tile group offset
   virtual int GetIndexedTileGroupOff() { return -1; }
 
-  virtual void IncreamentIndexedTileGroupOff() { return; }
+  virtual void IncrementIndexedTileGroupOffset() { return; }
 
  protected:
   Index(IndexMetadata *schema);

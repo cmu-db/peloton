@@ -482,23 +482,32 @@ static void BuildIndex(index::Index *index,
                        storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
+  auto table_schema = table->GetSchema();
+  std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
 
   while (start_tile_group_count < table_tile_group_count &&
       state.fsm == true) {
-    auto tile_group =
-        table->GetTileGroup(start_tile_group_count++);
+
+    auto tile_group = table->GetTileGroup(start_tile_group_count++);
+    auto tile_group_id = tile_group->GetTileGroupId();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      std::unique_ptr<storage::Tuple> tuple_ptr(new
-                                                storage::Tuple(table->GetSchema(), true));
+      // Copy over the tuple
       tile_group->CopyTuple(tuple_id, tuple_ptr.get());
-      ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
+      // Set the location
+      ItemPointer location(tile_group_id, tuple_id);
+
+      // TODO: Adds an entry in ALL the indexes
+      // (should only insert in specific index)
       table->InsertInIndexes(tuple_ptr.get(), location);
     }
-    index->IncreamentIndexedTileGroupOff();
+
+    // Update indexed tile group offset (set of tgs indexed)
+    index->IncrementIndexedTileGroupOffset();
   }
+
 }
 
 static void RunAdaptTest() {
