@@ -314,7 +314,7 @@ bool HybridScanExecutor::DExecute() {
         index_done_ = true;
       } else {
         ExecPrimaryIndexLookup();
-        LOG_INFO("Using index -- tile count : %lu", result_.size());
+        LOG_TRACE("Using index -- tile count : %lu", result_.size());
       }
     }
 
