@@ -95,7 +95,7 @@ class BTreeIndex : public Index {
     return indexed_tile_group_offset_.load();
   }
 
-  virtual void IncreamentIndexedTileGroupOff() {
+  virtual void IncrementIndexedTileGroupOffset() {
     indexed_tile_group_offset_++;
     return;
   }
