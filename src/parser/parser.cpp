@@ -80,7 +80,15 @@ std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& 
   std::unique_ptr<parser::SQLStatement> res;
   auto stmt  = Parser::ParseSQLString(query_string);
 
-  auto first_stmt = stmt->GetStatement(0);
+  LOG_INFO("Statements Size -------------> %d" ,stmt->GetStatements().size());
+  SQLStatement* first_stmt = nullptr;
+
+  for(auto s : stmt->GetStatements()){
+    first_stmt = s;
+    break;
+  }
+
+  //auto first_stmt = stmt->GetStatement(0);
 
   std::unique_ptr<parser::SQLStatement> res1(std::move(first_stmt));
   res = std::move(res1);

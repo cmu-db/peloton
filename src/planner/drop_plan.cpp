@@ -50,7 +50,7 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
   table_name = parse_tree->name;
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, table_name);
   // Set it up for the moment , cannot seem to find it in DropStatement
-  missing = false;
+  missing = true;
 }
 
 }  // namespace planner

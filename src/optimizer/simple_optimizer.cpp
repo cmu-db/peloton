@@ -21,6 +21,8 @@
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/create_plan.h"
+#include "planner/delete_plan.h"
+#include "planner/update_plan.h"
 #include "parser/abstract_parse.h"
 #include "parser/drop_parse.h"
 #include "parser/create_parse.h"
@@ -129,6 +131,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
   switch (parse_item_node_type) {
     case STATEMENT_TYPE_DROP: {
+      LOG_INFO("------------------------------------------------I got the power -----------------------------------------------------");
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
           new planner::DropPlan((parser::DropStatement*) parse_tree.get()));
       child_plan = std::move(child_DropPlan);
@@ -155,19 +158,19 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     }
       break;
 
-    // case STATEMENT_TYPE_DELETE: {
-    //       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-    //           new planner::DeletePlan((parser::DeleteStatement*) parse_tree.get()));
-    //       child_plan = std::move(child_InsertPlan);
-    //     }
-    //  break;
+    case STATEMENT_TYPE_DELETE: {
+          std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+              new planner::DeletePlan((parser::DeleteStatement*) parse_tree.get()));
+          child_plan = std::move(child_InsertPlan);
+        }
+     break;
 
-    // case STATEMENT_TYPE_UPDATE: {
-    //       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
-    //           new planner::UpdatePlan((parser::UpdateStatement*) parse_tree.get()));
-    //       child_plan = std::move(child_InsertPlan);
-    //     }
-    //       break;
+    case STATEMENT_TYPE_UPDATE: {
+          std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+              new planner::UpdatePlan((parser::UpdateStatement*) parse_tree.get()));
+          child_plan = std::move(child_InsertPlan);
+        }
+          break;
 
     default:
       LOG_INFO("Unsupported Parse Node Type");
