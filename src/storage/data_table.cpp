@@ -485,13 +485,8 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   }
   // hybrid layout map
   else if (layout_type == LAYOUT_TYPE_HYBRID) {
-    // TODO: Fallback option for regular tables
-    if (col_count < 10) {
-      for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-        column_map[col_itr] = std::make_pair(0, col_itr);
-      }
-    } else {
-      column_map = GetStaticColumnMap(table_name, col_count);
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      column_map[col_itr] = std::make_pair(0, col_itr);
     }
   } else {
     throw Exception("Unknown tilegroup layout option : " +
@@ -912,53 +907,6 @@ void DataTable::UpdateDefaultPartition() {
 
   // TODO: Max number of tiles
   default_partition_ = clusterer.GetPartitioning(2);
-}
-
-//===--------------------------------------------------------------------===//
-// UTILS
-//===--------------------------------------------------------------------===//
-
-column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
-                                              const oid_t &column_count) {
-  column_map_type column_map;
-
-  // HYADAPT
-  if (table_name == "SDBENCHTABLE") {
-
-    oid_t split_point = peloton_projectivity * (column_count - 1);
-    oid_t rest_column_count = (column_count - 1) - split_point;
-
-    LOG_TRACE("peloton_projectivity: %f column_count: %u split_point : %u",
-              peloton_projectivity, column_count, split_point);
-
-    column_map[0] = std::make_pair(0, 0);
-    for (oid_t column_id = 0; column_id < split_point; column_id++) {
-      auto sdbench_column_id = sdbench_column_ids[column_id];
-      column_map[sdbench_column_id] = std::make_pair(0, column_id + 1);
-    }
-
-    for (oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-      auto sdbench_column_id = sdbench_column_ids[split_point + column_id];
-      column_map[sdbench_column_id] = std::make_pair(1, column_id);
-    }
-
-  }
-  // YCSB
-  else if (table_name == "USERTABLE") {
-    column_map[0] = std::make_pair(0, 0);
-
-    for (oid_t column_id = 1; column_id < column_count; column_id++) {
-      column_map[column_id] = std::make_pair(1, column_id - 1);
-    }
-  }
-  // FALLBACK
-  else {
-    for (oid_t column_id = 0; column_id < column_count; column_id++) {
-      column_map[column_id] = std::make_pair(0, column_id);
-    }
-  }
-
-  return std::move(column_map);
 }
 
 }  // End storage namespace

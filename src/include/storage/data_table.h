@@ -202,9 +202,6 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  column_map_type GetStaticColumnMap(const std::string &table_name,
-                                     const oid_t &column_count);
-
   std::map<oid_t, oid_t> GetColumnMapStats();
 
   // Get a string representation for debugging
