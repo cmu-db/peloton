@@ -17,6 +17,7 @@
 
 namespace peloton {
 namespace parser {
+class InsertStatement;
 
 class InsertParse : public AbstractParse {
  public:
@@ -26,7 +27,7 @@ class InsertParse : public AbstractParse {
   InsertParse(InsertParse &&) = delete;
   InsertParse &operator=(InsertParse &&) = delete;
 
-  explicit InsertParse(InsertStmt *insert_node);
+  explicit InsertParse(InsertStatement *insert_node);
   
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_INSERT; }
 

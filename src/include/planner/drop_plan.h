@@ -21,6 +21,7 @@ class DataTable;
 }
 namespace parser {
 class DropParse;
+class DropStatement;
 }
 namespace catalog {
 class Schema;
@@ -42,13 +43,15 @@ class DropPlan : public AbstractPlan {
 
   explicit DropPlan(parser::DropParse *parse_tree);
 
+  explicit DropPlan(parser::DropStatement *parse_tree);
+
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_DROP;
   }
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
-	returned_string += "\tTable name: " + table_name + "\n";
+  returned_string += "\tTable name: " + table_name + "\n";
     return returned_string;
   }
 

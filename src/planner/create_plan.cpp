@@ -16,6 +16,7 @@
 #include "storage/data_table.h"
 #include "catalog/bootstrapper.h"
 #include "parser/create_parse.h"
+#include "parser/statement_create.h"
 
 namespace peloton {
 namespace planner {
@@ -39,6 +40,20 @@ CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = parse_tree->GetTableName();
   table_schema = parse_tree->GetSchema();
+}
+
+CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  table_name = std::string(parse_tree->name);
+  std::vector<catalog::Column> columns;
+  for(auto col : *parse_tree->columns){
+    ValueType val = col->GetValueType(col->type);
+    auto column = catalog::Column(val,GetTypeSize(val),std::string(col->name),false);
+    columns.push_back(column);
+  }
+  catalog::Schema* schema = new catalog::Schema(columns);
+  table_schema = schema;
 }
 
 }  // namespace planner

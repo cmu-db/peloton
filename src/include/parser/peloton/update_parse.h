@@ -13,10 +13,11 @@
 
 #pragma once
 
-#include "parser/peloton/abstract_parse.h"
+#include "parser/abstract_parse.h"
 
 namespace peloton {
 namespace parser {
+  class UpdateStatement;
 
 class UpdateParse : public AbstractParse {
  public:
@@ -26,7 +27,7 @@ class UpdateParse : public AbstractParse {
 	UpdateParse(UpdateParse &&) = delete;
 	UpdateParse &operator=(UpdateParse &&) = delete;
 
-  explicit UpdateParse(UpdateStmt *update_node);
+  explicit UpdateParse(UpdateStatement *update_node);
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_UPDATE; }
 
