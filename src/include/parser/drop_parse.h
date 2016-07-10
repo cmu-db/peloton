@@ -20,6 +20,7 @@
 
 namespace peloton {
 namespace parser {
+  class DropStatement;
 
 class DropParse : public AbstractParse {
  public:
@@ -29,7 +30,7 @@ class DropParse : public AbstractParse {
   DropParse(DropParse &&) = delete;
   DropParse &operator=(DropParse &&) = delete;
 
-  explicit DropParse(DropStmt *drop_node);
+  explicit DropParse(DropStatement *drop_node);
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
 
