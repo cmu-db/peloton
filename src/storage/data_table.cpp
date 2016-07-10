@@ -857,13 +857,21 @@ storage::TileGroup *DataTable::TransformTileGroup(
 void DataTable::RecordSample(const brain::Sample &sample) {
   // Add sample
   {
-    std::lock_guard<std::mutex> lock(clustering_mutex_);
+    std::lock_guard<std::mutex> lock(samples_mutex_);
     samples_.push_back(sample);
   }
 }
 
-const column_map_type &DataTable::GetDefaultPartition() {
-  return default_partition_;
+const std::vector<brain::Sample>& DataTable::GetSamples() const {
+  return samples_;
+}
+
+void DataTable::ClearSamples() {
+  // Clear sample list
+  {
+    std::lock_guard<std::mutex> lock(samples_mutex_);
+    samples_.clear();
+  }
 }
 
 std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
@@ -882,31 +890,8 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
   return std::move(column_map_stats);
 }
 
-void DataTable::UpdateDefaultPartition() {
-  oid_t column_count = GetSchema()->GetColumnCount();
-
-  // TODO: Number of clusters and new sample weight
-  oid_t cluster_count = 4;
-  double new_sample_weight = 0.01;
-
-  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
-
-  // Process all samples
-  {
-    std::lock_guard<std::mutex> lock(clustering_mutex_);
-
-    // Check if we have any samples
-    if (samples_.empty()) return;
-
-    for (auto sample : samples_) {
-      clusterer.ProcessSample(sample);
-    }
-
-    samples_.clear();
-  }
-
-  // TODO: Max number of tiles
-  default_partition_ = clusterer.GetPartitioning(2);
+void DataTable::SetDefaultLayout(const column_map_type& layout) {
+  default_partition_ = layout;
 }
 
 }  // End storage namespace
