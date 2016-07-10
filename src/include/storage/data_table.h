@@ -182,15 +182,17 @@ class DataTable : public AbstractTable {
 
   void ResetDirty();
 
-  const column_map_type &GetDefaultPartition();
-
   //===--------------------------------------------------------------------===//
-  // Clustering
+  // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
   void RecordSample(const brain::Sample &sample);
 
-  void UpdateDefaultPartition();
+  const std::vector<brain::Sample>& GetSamples() const;
+
+  void ClearSamples();
+
+  void SetDefaultLayout(const column_map_type& layout);
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
@@ -283,9 +285,6 @@ class DataTable : public AbstractTable {
   // dirty flag
   bool dirty_ = false;
 
-  // clustering mutex
-  std::mutex clustering_mutex_;
-
   // adapt table
   bool adapt_table_ = true;
 
@@ -294,6 +293,10 @@ class DataTable : public AbstractTable {
 
   // samples for clustering
   std::vector<brain::Sample> samples_;
+
+  // samples mutex
+  std::mutex samples_mutex_;
+
 };
 
 }  // End storage namespace

@@ -22,7 +22,8 @@
 #include <chrono>
 
 #include "expression/expression_util.h"
-#include "brain/clusterer.h"
+#include "brain/layout_tuner.h"
+#include "brain/sample.h"
 
 #include "benchmark/sdbench/sdbench_workload.h"
 #include "benchmark/sdbench/sdbench_loader.h"
@@ -453,35 +454,6 @@ void RunInsertTest() {
   txn_manager.CommitTransaction();
 }
 
-static void Transform(double theta) {
-  // Get column map
-  auto table_name = sdbench_table->GetName();
-
-  peloton_projectivity = state.projectivity;
-
-  // TODO: Update period ?
-  oid_t update_period = 10;
-  oid_t update_itr = 0;
-
-  // Transform
-  while (state.fsm == true) {
-    auto tile_group_count = sdbench_table->GetTileGroupCount();
-    auto tile_group_offset = rand() % tile_group_count;
-
-    sdbench_table->TransformTileGroup(tile_group_offset, theta);
-
-    // Update partitioning periodically
-    update_itr++;
-    if (update_itr == update_period) {
-      sdbench_table->UpdateDefaultPartition();
-      update_itr = 0;
-    }
-
-    // TODO: Sleep a bit
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-}
-
 static void BuildIndex(index::Index *index,
                        storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
@@ -565,14 +537,15 @@ std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
-  std::thread transformer;
   std::thread index_builder;
+
+  // Setup layout tuner
+  auto& layout_tuner = brain::LayoutTuner::GetInstance();
 
   state.transactions = 100;   // 25
 
   state.selectivity = 0.06;
   state.adapt = true;
-  double theta = 0.0;
 
   // Go over all column counts
   for (auto column_count : adapt_column_counts) {
@@ -600,8 +573,9 @@ void RunAdaptExperiment() {
         state.fsm = true;
         peloton_fsm = true;
 
-        // Launch transformer
-        transformer = std::thread(Transform, theta);
+        // Start layout tuner
+        layout_tuner.AddTable(sdbench_table.get());
+        layout_tuner.Start();
 
         // Create an ad-hoc index
         CreateIndex();
@@ -620,7 +594,10 @@ void RunAdaptExperiment() {
         state.fsm = false;
         peloton_fsm = false;
 
-        transformer.join();
+        // Stop layout tuner
+        layout_tuner.Stop();
+        layout_tuner.ClearTables();
+
 
         index_builder.join();
       }
