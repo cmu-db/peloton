@@ -323,13 +323,14 @@ void RunDirectTest() {
   // Determine hybrid scan type
   auto hybrid_scan_type = state.hybrid_scan_type;
   if(state.layout_mode == LAYOUT_TYPE_ROW ||
-      state.layout_mode == LAYOUT_TYPE_COLUMN) {
+      state.layout_mode == LAYOUT_TYPE_COLUMN ||
+      state.layout_mode == LAYOUT_TYPE_HYBRID) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
   }
 
   if(state.layout_mode == LAYOUT_TYPE_HYBRID &&
       index_count != 0) {
-    hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
+    //hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
 
   planner::HybridScanPlan hybrid_scan_node(sdbench_table.get(),
@@ -454,7 +455,7 @@ void RunInsertTest() {
   txn_manager.CommitTransaction();
 }
 
-static void BuildIndex(index::Index *index,
+UNUSED_ATTRIBUTE static void BuildIndex(index::Index *index,
                        storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
@@ -537,7 +538,7 @@ std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
-  std::thread index_builder;
+  //std::thread index_builder;
 
   // Setup layout tuner
   auto& layout_tuner = brain::LayoutTuner::GetInstance();
@@ -577,6 +578,7 @@ void RunAdaptExperiment() {
         layout_tuner.AddTable(sdbench_table.get());
         layout_tuner.Start();
 
+        /*
         // Create an ad-hoc index
         CreateIndex();
 
@@ -584,6 +586,7 @@ void RunAdaptExperiment() {
         index_builder = std::thread(BuildIndex,
                                     sdbench_table->GetIndex(0),
                                     sdbench_table.get());
+         */
       }
 
       // Run adapt test
@@ -598,8 +601,7 @@ void RunAdaptExperiment() {
         layout_tuner.Stop();
         layout_tuner.ClearTables();
 
-
-        index_builder.join();
+        //index_builder.join();
       }
     }
   }
