@@ -53,9 +53,6 @@ void LayoutTuner::Tune(){
     // Go over all tables
     for(auto table : tables) {
 
-      // TODO: Update period ?
-      oid_t update_period = 10;
-      oid_t update_itr = 0;
       double theta = 0;
 
       // Transform
@@ -65,11 +62,7 @@ void LayoutTuner::Tune(){
       table->TransformTileGroup(tile_group_offset, theta);
 
       // Update partitioning periodically
-      update_itr++;
-      if (update_itr == update_period) {
-        UpdateDefaultPartition(table);
-        update_itr = 0;
-      }
+      UpdateDefaultPartition(table);
 
       // TODO: Sleep a bit
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
