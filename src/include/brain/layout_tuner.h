@@ -17,6 +17,8 @@
 #include <atomic>
 #include <thread>
 
+#include "common/types.h"
+
 namespace peloton {
 
 namespace storage{
@@ -76,6 +78,24 @@ class LayoutTuner {
   // Tuner thread
   std::thread layout_tuner_thread;
 
+  //===--------------------------------------------------------------------===//
+  // Tuner Parameters
+  //===--------------------------------------------------------------------===//
+
+  // Layout similarity threshold
+  double theta = 0.0;
+
+  // Sleeping period (in us)
+  oid_t sleep_duration = 100;
+
+  // Cluster count
+  oid_t cluster_count = 4;
+
+  // New sample weight
+  double new_sample_weight = 0.01;
+
+  // Desired layout tile count
+  oid_t tile_count = 2;
 
 };
 
