@@ -14,7 +14,6 @@
 #include "brain/clusterer.h"
 
 #include "catalog/schema.h"
-#include "common/types.h"
 #include "common/logger.h"
 #include "storage/data_table.h"
 
@@ -53,8 +52,6 @@ void LayoutTuner::Tune(){
     // Go over all tables
     for(auto table : tables) {
 
-      double theta = 0;
-
       // Transform
       auto tile_group_count = table->GetTileGroupCount();
       auto tile_group_offset = rand() % tile_group_count;
@@ -64,8 +61,8 @@ void LayoutTuner::Tune(){
       // Update partitioning periodically
       UpdateDefaultPartition(table);
 
-      // TODO: Sleep a bit
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      // Sleep a bit
+      std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
     }
 
   }
@@ -75,13 +72,12 @@ void LayoutTuner::Tune(){
 void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   oid_t column_count = table->GetSchema()->GetColumnCount();
 
-  // TODO: Number of clusters and new sample weight
-  oid_t cluster_count = 4;
-  double new_sample_weight = 0.01;
+  // Set up clusterer
+  brain::Clusterer clusterer(cluster_count,
+                             column_count,
+                             new_sample_weight);
 
-  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
-
-  // Process all samples
+  // Process all samples in table
   auto& samples = table->GetSamples();
 
   // Check if we have any samples
@@ -93,11 +89,11 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
     clusterer.ProcessSample(sample);
   }
 
-  // Clear samples
+  // Clear all samples in table
   table->ClearSamples();
 
-  // TODO: Max number of tiles
-  auto layout = clusterer.GetPartitioning(2);
+  // Desired number of tiles
+  auto layout = clusterer.GetPartitioning(tile_count);
 
   // Update table layout
   table->SetDefaultLayout(layout);
