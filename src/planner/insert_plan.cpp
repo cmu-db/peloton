@@ -52,14 +52,17 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 
 // This constructor takes a parse tree
 InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
-  std::vector<std::string> columns = parse_tree->getColumns();
-  std::vector<Value> values = parse_tree->getValues();
   catalog::Bootstrapper::bootstrap();
   catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+
+  std::vector<std::string> columns = parse_tree->getColumns();
+  std::vector<Value> values = parse_tree->getValues();
+
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, parse_tree->GetTableName());
   PL_ASSERT(target_table_);
   catalog::Schema* table_schema = target_table_->GetSchema();
-  if(columns.size() == 0){
+
+  if(columns.size() == 0){ // INSERT INTO table_name VALUES (val1, val2, ...);
 	    PL_ASSERT(values.size() == table_schema->GetColumnCount());
 	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
 	    int col_cntr = 0;
@@ -77,17 +80,17 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
 	    }
 	    tuple_ = std::move(tuple);
   }
-  else{
+  else{  // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+	    PL_ASSERT(columns.size() <= table_schema->GetColumnCount());  // columns has to be less than or equal that of schema
 	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
 	    int col_cntr = 0;
 	    auto table_columns = table_schema->GetColumns();
-	    auto query_columns = parse_tree->getColumns();
 	    for(catalog::Column const& elem : table_columns){
-	    	std::size_t pos = std::find(query_columns.begin(), query_columns.end(), elem.GetName()) - query_columns.begin();
+	    	std::size_t pos = std::find(columns.begin(), columns.end(), elem.GetName()) - columns.begin();
 			switch (elem.GetType()) {
 			case VALUE_TYPE_VARCHAR:
 			case VALUE_TYPE_VARBINARY: {
-				if(pos >= query_columns.size()) {
+				if(pos >= columns.size()) {
 					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
 				}
 				else {
@@ -97,7 +100,7 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
 			}
 
 			default: {
-				if(pos >= query_columns.size()) {
+				if(pos >= columns.size()) {
 					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
 				}
 				else {
