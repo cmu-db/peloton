@@ -213,7 +213,7 @@ struct PARSER_CUST_LTYPE {
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias
-%type <bval> 		opt_not_exists opt_distinct opt_notnull opt_primary opt_unique
+%type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique
 %type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
@@ -424,16 +424,17 @@ column_type:
 
 /******************************
  * Drop Statement
- * DROP TABLE student_table;
+ * DROP TABLE IF EXISTS student_table;
  * DROP DATABASE student_db;
  * DROP INDEX student_index ON student_table;
  * DEALLOCATE PREPARE stmt;
  ******************************/
 
 drop_statement:
-		DROP TABLE table_name {
+		DROP TABLE opt_exists table_name {
 			$$ = new DropStatement(DropStatement::kTable);
-			$$->name = $3;
+			$$->missing = $3;
+			$$->name = $4;
 		}
 		|
 		DROP DATABASE IDENTIFIER {
@@ -451,6 +452,11 @@ drop_statement:
 			$$ = new DropStatement(DropStatement::kPreparedStatement);
 			$$->name = $3;
 		}
+	;
+
+opt_exists:
+	IF EXISTS { $$ = true; }
+	|	/* empty */ { $$ = false; }
 	;
 
 /******************************
