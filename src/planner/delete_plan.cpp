@@ -26,9 +26,17 @@ DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
 DeletePlan::DeletePlan(parser::DeleteStatement *parse_tree) {
   // Add your stuff here
   table_name = std::string(parse_tree->table_name);
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, table_name);
   // if expr is null , delete all tuples from table
-  if(parse_tree->expr == NULL) truncate = true;
-  else expr = parse_tree->expr;
+  if(parse_tree->expr == NULL) {
+	  truncate = true;
+  }
+  else {
+	  expr = parse_tree->expr;
+	  LOG_INFO("Expression in delete: %s", expr->GetInfo().c_str());
+  }
+
+
 }
 
 }  // namespace planner

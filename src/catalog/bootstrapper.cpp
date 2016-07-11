@@ -24,9 +24,11 @@ Catalog* Bootstrapper::global_catalog = nullptr;
 // Bootstrap Catalog
 Catalog* Bootstrapper::bootstrap() {
   if(bootstrapped) {
+	  LOG_INFO("Bootstrapped already!");
 	  return global_catalog;
   }
   else{
+	  LOG_INFO("Bootstrapping Catalog...");
     Catalog* catalog = InitializeGlobalCatalog();
     bootstrapped = true;
     return catalog;

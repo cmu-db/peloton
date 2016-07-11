@@ -158,7 +158,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 				}
 
 				default: {
-					if(pos >= query_columns->size()) {
+					if(pos >= query_columns->size()) {  // If the column does not exist, insert a null value as string
 						tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
 					}
 					else {
