@@ -213,7 +213,7 @@ struct PARSER_CUST_LTYPE {
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias
-%type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique
+%type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique opt_update
 %type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
@@ -594,13 +594,14 @@ set_operator:
 	;
 
 select_clause:
-		SELECT opt_distinct select_list from_clause opt_where opt_group {
+		SELECT opt_distinct select_list from_clause opt_where opt_group opt_update{
 			$$ = new SelectStatement();
 			$$->select_distinct = $2;
 			$$->select_list = $3;
 			$$->from_table = $4;
 			$$->where_clause = $5;
 			$$->group_by = $6;
+			$$->is_for_update = $7;
 		}
 	;
 
@@ -631,6 +632,11 @@ opt_group:
 			$$->having = $4;
 		}
 	|	/* empty */ { $$ = NULL; }
+	;
+
+opt_update:
+		FOR UPDATE { $$ = true; }
+	|	/* empty */ { $$ = false; }
 	;
 
 opt_having:
