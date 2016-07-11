@@ -25,6 +25,7 @@ class Tuple;
 
 namespace parser{
   class InsertParse;
+  class InsertStatement;
 }
 
 namespace planner {
@@ -55,6 +56,9 @@ class InsertPlan : public AbstractPlan {
                         oid_t bulk_insert_count = 1);
 
   explicit InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count = 1);
+
+  explicit InsertPlan(parser::InsertStatement* parse_tree, oid_t bulk_insert_count = 1);
+
 
   // Get a varlen pool (will construct the pool only if needed)
   VarlenPool *GetPlanPool();

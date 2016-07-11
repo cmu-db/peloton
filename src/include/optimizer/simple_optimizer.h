@@ -18,6 +18,9 @@
 #include <memory>
 
 namespace peloton {
+namespace parser{
+  class SQLStatement;
+}
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -36,6 +39,9 @@ class SimpleOptimizer : public AbstractOptimizer {
 
   static std::shared_ptr<planner::AbstractPlan> BuildPlanTree(
       const std::unique_ptr<parser::AbstractParse>& parse_tree);
+
+  static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      const std::unique_ptr<parser::SQLStatement>& parse_tree);
 
 };
 

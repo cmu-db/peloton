@@ -19,16 +19,8 @@
 namespace peloton {
 namespace parser {
 
-DeleteParse::DeleteParse(DeleteStmt* delete_node) {
+DeleteParse::DeleteParse(UNUSED_ATTRIBUTE DeleteStatement* delete_node) {
 
-	//Get Table name
-	entity_name = delete_node->relation->relname;
-
-	// if query has a With Clause then it will be processed seperatly
-
-	if(delete_node->withClause){
-		// process with clause
-	}
 }
 
 }  // namespace parser

@@ -15,7 +15,9 @@
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
-#include "parser/peloton/insert_parse.h"
+#include "parser/insert_parse.h"
+#include "parser/statement_select.h"
+#include "parser/statement_insert.h"
 #include "catalog/bootstrapper.h"
 #include "catalog/column.h"
 
@@ -115,6 +117,72 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
   LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
 }
 
+InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
+  auto cols = parse_tree->columns;
+  std::vector<std::string> columns;
+  for(auto c : *cols) columns.push_back(std::string(c));
+  std::vector<Value> val;
+	auto tuple_value = ValueFactory::GetStringValue("WorkAround");
+	val.push_back(tuple_value);
+  std::vector<Value> values = val;
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, parse_tree->table_name);
+  PL_ASSERT(target_table_);
+  catalog::Schema* table_schema = target_table_->GetSchema();
+  if(columns.size() == 0){
+	    PL_ASSERT(values.size() == table_schema->GetColumnCount());
+	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
+	    int col_cntr = 0;
+	    for(Value const& elem : values) {
+	    	switch (elem.GetValueType()) {
+	    	  case VALUE_TYPE_VARCHAR:
+	    	  case VALUE_TYPE_VARBINARY:
+	    		  tuple->SetValue(col_cntr++, elem, GetPlanPool());
+	    		  break;
+
+	    	    default: {
+	    	    	tuple->SetValue(col_cntr++, elem, nullptr);
+	    	    }
+	    	  }
+	    }
+	    tuple_ = std::move(tuple);
+  }
+  else{
+	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
+	    int col_cntr = 0;
+	    auto table_columns = table_schema->GetColumns();
+	    auto query_columns = parse_tree->columns;
+	    for(catalog::Column const& elem : table_columns){
+	    	std::size_t pos = std::find(query_columns->begin(), query_columns->end(), elem.GetName()) - query_columns->begin();
+			switch (elem.GetType()) {
+			case VALUE_TYPE_VARCHAR:
+			case VALUE_TYPE_VARBINARY: {
+				if(pos >= query_columns->size()) {
+					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+				}
+				else {
+					tuple->SetValue(col_cntr, values[pos], GetPlanPool());
+				}
+				break;
+			}
+
+			default: {
+				if(pos >= query_columns->size()) {
+					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+				}
+				else {
+					tuple->SetValue(col_cntr, values[pos], nullptr);
+				}
+			}
+			}
+			++col_cntr;
+	    }
+	    tuple_ = std::move(tuple);
+  }
+  LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
+}
+
 VarlenPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
   if (pool_.get() == nullptr) pool_.reset(new VarlenPool(BACKEND_TYPE_MM));
@@ -124,5 +192,3 @@ VarlenPool *InsertPlan::GetPlanPool() {
 
 }
 }
-
-

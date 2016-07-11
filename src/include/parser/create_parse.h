@@ -24,6 +24,7 @@
 
 namespace peloton {
 namespace parser {
+  class CreateStatement;
 
 class CreateParse : public AbstractParse {
  public:
@@ -33,7 +34,7 @@ class CreateParse : public AbstractParse {
   CreateParse(CreateParse &&) = delete;
   CreateParse &operator=(CreateParse &&) = delete;
 
-  explicit CreateParse(CreateStmt *create_node);
+  explicit CreateParse(CreateStatement *create_node);
       inline ParseNodeType GetParseNodeType() const {
         return PARSE_NODE_TYPE_CREATE;
       }

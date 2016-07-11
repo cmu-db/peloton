@@ -17,6 +17,9 @@
 #include "common/types.h"
 
 namespace peloton {
+namespace parser{
+  class DeleteStatement;
+}
 namespace storage {
 class DataTable;
 }
@@ -31,8 +34,9 @@ class DeletePlan : public AbstractPlan {
   DeletePlan(DeletePlan &&) = delete;
   DeletePlan &operator=(DeletePlan &&) = delete;
 
-  explicit DeletePlan(storage::DataTable *table, bool truncate)
-      : target_table_(table), truncate(truncate) {}
+  explicit DeletePlan(storage::DataTable *table, bool truncate);
+
+  explicit DeletePlan(parser::DeleteStatement *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_DELETE; }
 
@@ -50,6 +54,10 @@ class DeletePlan : public AbstractPlan {
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
+
+  std::string table_name;
+
+  expression::AbstractExpression* expr;
 
   /** @brief Truncate table. */
   bool truncate = false;
