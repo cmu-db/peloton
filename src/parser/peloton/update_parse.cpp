@@ -20,10 +20,7 @@
 namespace peloton {
 namespace parser {
 
-UpdateParse::UpdateParse(UpdateStmt* update_node) {
-	if(update_node->withClause){
-		// process with clause
-	}
+UpdateParse::UpdateParse(UNUSED_ATTRIBUTE UpdateStatement* update_node) {
 }
 
 }  // namespace parser

@@ -18,8 +18,11 @@
 #include "common/logger.h"
 #include "common/types.h"
 
+#include "parser/parser.h"
+
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
+
 
 namespace peloton {
 namespace tcop {
@@ -59,11 +62,11 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
                                  result, rows_changed, error_message);
 
   if(status == Result::RESULT_SUCCESS) {
-	  LOG_INFO("Execution succeeded!");
+    LOG_INFO("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
   }
   else{
-	  LOG_INFO("Execution failed!");
+    LOG_INFO("Execution failed!");
   }
 
   return status;
@@ -94,10 +97,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
   statement.reset(new Statement(statement_name, query_string));
 
   // TODO: Use parser
-  //auto& postgres_parser = parser::PostgresParser::GetInstance();
-  //auto parse_tree = postgres_parser.BuildParseTree(query_string);
+  auto& peloton_parser = parser::Parser::GetInstance();
+  auto parse_tree = peloton_parser.BuildParseTree(query_string);
 
-  //statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(parse_tree));
 
   return statement;
 }
