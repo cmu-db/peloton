@@ -61,6 +61,7 @@ bool InsertExecutor::DExecute() {
   storage::DataTable *target_table = node.GetTable();
   oid_t bulk_insert_count = node.GetBulkInsertCount();
   PL_ASSERT(target_table);
+  LOG_INFO("Number of tuples in table before insert: %d", (int)target_table->GetNumberOfTuples());
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -104,7 +105,7 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-
+      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
       executor_context_->num_processed += 1;  // insert one
     }
 
@@ -159,7 +160,7 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-
+      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
       executor_context_->num_processed += 1;  // insert one
     }
 
