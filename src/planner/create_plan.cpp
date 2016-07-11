@@ -22,29 +22,21 @@ namespace peloton {
 namespace planner {
 
 CreatePlan::CreatePlan(storage::DataTable *table) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   target_table_ = table;
   table_schema = nullptr;
 }
 
 CreatePlan::CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = name;
   table_schema = schema.release();
 }
 
 CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = parse_tree->GetTableName();
   table_schema = parse_tree->GetSchema();
 }
 
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   table_name = std::string(parse_tree->name);
   std::vector<catalog::Column> columns;
   for(auto col : *parse_tree->columns){

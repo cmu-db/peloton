@@ -18,15 +18,13 @@
 #include "parser/insert_parse.h"
 #include "parser/statement_select.h"
 #include "parser/statement_insert.h"
-#include "catalog/bootstrapper.h"
 #include "catalog/column.h"
+#include "catalog/bootstrapper.h"
 
 namespace peloton{
 namespace planner{
 InsertPlan::InsertPlan(storage::DataTable *table, oid_t bulk_insert_count)
     : target_table_(table), bulk_insert_count(bulk_insert_count) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 }
 
 // This constructor takes in a project info
@@ -37,8 +35,6 @@ InsertPlan::InsertPlan(
     : target_table_(table),
       project_info_(std::move(project_info)),
       bulk_insert_count(bulk_insert_count) {
-	  catalog::Bootstrapper::bootstrap();
-	  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 }
 
 // This constructor takes in a tuple
@@ -48,14 +44,10 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     : target_table_(table),
       tuple_(std::move(tuple)),
       bulk_insert_count(bulk_insert_count) {
-	  catalog::Bootstrapper::bootstrap();
-	  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 }
 
 // This constructor takes a parse tree
 InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
   std::vector<std::string> columns = parse_tree->getColumns();
   std::vector<Value> values = parse_tree->getValues();
@@ -119,70 +111,71 @@ InsertPlan::InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count)
 
 InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
 
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
-
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
 
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, parse_tree->table_name);
-  PL_ASSERT(target_table_);
-  catalog::Schema* table_schema = target_table_->GetSchema();
-  if(cols == NULL){
-	    PL_ASSERT(values->size() == table_schema->GetColumnCount());
-	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
-	    int col_cntr = 0;
-	    for(expression::AbstractExpression* elem : *values) {
-	    	expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(elem);
-	    	switch (const_expr_elem->GetValueType()) {
-	    	  case VALUE_TYPE_VARCHAR:
-	    	  case VALUE_TYPE_VARBINARY:
-	    		  tuple->SetValue(col_cntr++, const_expr_elem->getValue(), GetPlanPool());
-	    		  break;
+  if(target_table_){
+	  catalog::Schema* table_schema = target_table_->GetSchema();
+	  if(cols == NULL){
+			PL_ASSERT(values->size() == table_schema->GetColumnCount());
+			std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
+			int col_cntr = 0;
+			for(expression::AbstractExpression* elem : *values) {
+				expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(elem);
+				switch (const_expr_elem->GetValueType()) {
+				  case VALUE_TYPE_VARCHAR:
+				  case VALUE_TYPE_VARBINARY:
+					  tuple->SetValue(col_cntr++, const_expr_elem->getValue(), GetPlanPool());
+					  break;
 
-	    	    default: {
-	    	    	tuple->SetValue(col_cntr++, const_expr_elem->getValue(), nullptr);
-	    	    }
-	    	  }
-	    }
-	    tuple_ = std::move(tuple);
-  }
-  else{ // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
-	    PL_ASSERT(cols->size() <= table_schema->GetColumnCount());  // columns has to be less than or equal that of schema
-	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
-	    int col_cntr = 0;
-	    auto table_columns = table_schema->GetColumns();
-	    auto query_columns = parse_tree->columns;
-	    for(catalog::Column const& elem : table_columns){
-	    	std::size_t pos = std::find(query_columns->begin(), query_columns->end(), elem.GetName()) - query_columns->begin();
-			switch (elem.GetType()) {
-			case VALUE_TYPE_VARCHAR:
-			case VALUE_TYPE_VARBINARY: {
-				if(pos >= query_columns->size()) {
-					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
-				}
-				else {
-					expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(values->at(pos));
-					tuple->SetValue(col_cntr, const_expr_elem->getValue(), GetPlanPool());
-				}
-				break;
+					default: {
+						tuple->SetValue(col_cntr++, const_expr_elem->getValue(), nullptr);
+					}
+				  }
 			}
+			tuple_ = std::move(tuple);
+	  }
+	  else{ // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+			PL_ASSERT(cols->size() <= table_schema->GetColumnCount());  // columns has to be less than or equal that of schema
+			std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
+			int col_cntr = 0;
+			auto table_columns = table_schema->GetColumns();
+			auto query_columns = parse_tree->columns;
+			for(catalog::Column const& elem : table_columns){
+				std::size_t pos = std::find(query_columns->begin(), query_columns->end(), elem.GetName()) - query_columns->begin();
+				switch (elem.GetType()) {
+				case VALUE_TYPE_VARCHAR:
+				case VALUE_TYPE_VARBINARY: {
+					if(pos >= query_columns->size()) {
+						tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+					}
+					else {
+						expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(values->at(pos));
+						tuple->SetValue(col_cntr, const_expr_elem->getValue(), GetPlanPool());
+					}
+					break;
+				}
 
-			default: {
-				if(pos >= query_columns->size()) {
-					tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+				default: {
+					if(pos >= query_columns->size()) {
+						tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
+					}
+					else {
+						expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(values->at(pos));
+						tuple->SetValue(col_cntr, const_expr_elem->getValue(), nullptr);
+					}
 				}
-				else {
-					expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(values->at(pos));
-					tuple->SetValue(col_cntr, const_expr_elem->getValue(), nullptr);
 				}
+				++col_cntr;
 			}
-			}
-			++col_cntr;
-	    }
-	    tuple_ = std::move(tuple);
+			tuple_ = std::move(tuple);
+	  }
+	  LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
   }
-  LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
+  else {
+	  LOG_INFO("Table does not exist!");
+  }
 }
 
 VarlenPool *InsertPlan::GetPlanPool() {
