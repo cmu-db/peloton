@@ -72,8 +72,8 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
     stmt.execute(DDL);
     stmt.execute(INSERT_A_1);
-//    stmt.execute(INSERT_A_2);
-//    stmt.execute(INSERT_A_3);
+    stmt.execute(INSERT_A_2);
+    stmt.execute(INSERT_A_3);
     //stmt.execute(DROP_IF_EXISTS);
     //stmt.execute(DROP_IF_EXISTS);
     //stmt.execute(DROP);
