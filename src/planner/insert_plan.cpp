@@ -124,13 +124,11 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
-  std::vector<std::string> columns;
-  for(auto c : *cols) columns.push_back(std::string(c));
 
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, parse_tree->table_name);
   PL_ASSERT(target_table_);
   catalog::Schema* table_schema = target_table_->GetSchema();
-  if(columns.size() == 0){
+  if(cols == NULL){
 	    PL_ASSERT(values->size() == table_schema->GetColumnCount());
 	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
 	    int col_cntr = 0;
@@ -150,7 +148,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 	    tuple_ = std::move(tuple);
   }
   else{ // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
-	    PL_ASSERT(columns.size() <= table_schema->GetColumnCount());  // columns has to be less than or equal that of schema
+	    PL_ASSERT(cols->size() <= table_schema->GetColumnCount());  // columns has to be less than or equal that of schema
 	    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table_schema, true));
 	    int col_cntr = 0;
 	    auto table_columns = table_schema->GetColumns();
