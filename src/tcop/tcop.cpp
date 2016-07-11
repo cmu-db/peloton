@@ -22,6 +22,7 @@
 
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
+#include "catalog/bootstrapper.h"
 
 
 namespace peloton {
@@ -30,6 +31,8 @@ namespace tcop {
 // global singleton
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   return traffic_cop;
 }
 

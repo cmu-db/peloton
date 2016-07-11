@@ -17,7 +17,7 @@ public class PelotonTest {
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A_1 = "INSERT INTO a(id,data) VALUES (1,'hello');";
+  private final String INSERT_A_1 = "INSERT INTO c(id,data) VALUES (1,'hello');";
   private final String INSERT_A_2 = "INSERT INTO a(id) VALUES (1)";
   private final String INSERT_A_3 = "INSERT INTO a VALUES (3, 'hello')";
 
@@ -70,13 +70,11 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
+    stmt.execute(DROP_IF_EXISTS);
     stmt.execute(DDL);
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
-    //stmt.execute(DROP_IF_EXISTS);
-    //stmt.execute(DROP_IF_EXISTS);
-    //stmt.execute(DROP);
     System.out.println("Test db created.");
   }
 
