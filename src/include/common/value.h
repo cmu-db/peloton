@@ -1713,6 +1713,7 @@ class Value {
     if (IsNull()) {
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
+      // @author: aelroby removed tihs extra byte write because it is corrupted
       PL_MEMSET(storage, 0, maxLength);
 
       /*
@@ -1729,6 +1730,7 @@ class Value {
 
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
+      // @author: aelroby removed tihs extra byte write because it is corrupted
       PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {
@@ -2865,6 +2867,9 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
           *reinterpret_cast<void **>(storage) = NULL;
         } else {
           int32_t objLength = GetObjectLengthWithoutNull();
+
+          // author: aelroby commented this routine temporarily because no maxLength
+          // value is defined for variable length values in Peloton
 //          const char *ptr =
 //              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
 //          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
