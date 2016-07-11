@@ -34,6 +34,7 @@ class CreateTests : public PelotonTest {};
 TEST_F(CreateTests, CreatingTable) {
 
   catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
 
   // Insert a table first
   auto id_column =

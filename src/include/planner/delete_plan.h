@@ -57,7 +57,7 @@ class DeletePlan : public AbstractPlan {
 
   std::string table_name;
 
-  expression::AbstractExpression* expr;
+  expression::AbstractExpression* expr = nullptr;
 
   /** @brief Truncate table. */
   bool truncate = false;

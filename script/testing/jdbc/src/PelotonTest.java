@@ -17,11 +17,11 @@ public class PelotonTest {
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A_1 = "INSERT INTO c(id,data) VALUES (1,'hello');";
-  private final String INSERT_A_2 = "INSERT INTO a(id) VALUES (1)";
-  private final String INSERT_A_3 = "INSERT INTO a VALUES (3, 'hello')";
+  private final String INSERT_A_1 = "INSERT INTO a(id,data) VALUES (1,'hello_1');";
+  private final String INSERT_A_2 = "INSERT INTO a(id) VALUES (2)";
+  private final String INSERT_A_3 = "INSERT INTO a VALUES (3, 'hello_3')";
 
-  private final String INSERT_B_1 = "INSERT INTO b VALUES (1, 'hello')";
+  private final String INSERT_B_1 = "INSERT INTO b VALUES (1, 'hello_1')";
 
   private final String INSERT = "BEGIN;" +
           "INSERT INTO A VALUES (?,?);" +
@@ -33,7 +33,7 @@ public class PelotonTest {
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id < 3 AND data = 'hello_1'";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
 
@@ -75,6 +75,7 @@ public class PelotonTest {
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
+    stmt.execute(DELETE_BY_INDEXSCAN);
     System.out.println("Test db created.");
   }
 
