@@ -655,7 +655,7 @@ const std::string DataTable::GetInfo() const {
 
 void DataTable::AddIndex(index::Index *index) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
     indexes_.push_back(index);
   }
 
@@ -677,7 +677,7 @@ index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
 
 void DataTable::DropIndexWithOid(const oid_t &index_id) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
 
     oid_t index_offset = 0;
     for (auto index : indexes_) {
@@ -705,7 +705,7 @@ oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
     catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(CONSTRAINT_TYPE_FOREIGN,
                                    key->GetConstraintName());
@@ -727,7 +727,7 @@ catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
 
 void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
     PL_ASSERT(key_offset < foreign_keys_.size());
     foreign_keys_.erase(foreign_keys_.begin() + key_offset);
   }
@@ -854,23 +854,43 @@ storage::TileGroup *DataTable::TransformTileGroup(
   return new_tile_group.get();
 }
 
-void DataTable::RecordSample(const brain::Sample &sample) {
-  // Add sample
+void DataTable::RecordLayoutSample(const brain::Sample &sample) {
+  // Add layout sample
   {
-    std::lock_guard<std::mutex> lock(samples_mutex_);
-    samples_.push_back(sample);
+    std::lock_guard<std::mutex> lock(layout_samples_mutex_);
+    layout_samples_.push_back(sample);
   }
 }
 
-const std::vector<brain::Sample>& DataTable::GetSamples() const {
-  return samples_;
+const std::vector<brain::Sample>& DataTable::GetLayoutSamples() const {
+  return layout_samples_;
 }
 
-void DataTable::ClearSamples() {
-  // Clear sample list
+void DataTable::ClearLayoutSamples() {
+  // Clear layout samples list
   {
-    std::lock_guard<std::mutex> lock(samples_mutex_);
-    samples_.clear();
+    std::lock_guard<std::mutex> lock(layout_samples_mutex_);
+    layout_samples_.clear();
+  }
+}
+
+void DataTable::RecordIndexSample(const brain::Sample &sample) {
+  // Add index sample
+  {
+    std::lock_guard<std::mutex> lock(index_samples_mutex_);
+    index_samples_.push_back(sample);
+  }
+}
+
+const std::vector<brain::Sample>& DataTable::GetIndexSamples() const {
+  return index_samples_;
+}
+
+void DataTable::ClearIndexSamples() {
+  // Clear index samples list
+  {
+    std::lock_guard<std::mutex> lock(index_samples_mutex_);
+    index_samples_.clear();
   }
 }
 

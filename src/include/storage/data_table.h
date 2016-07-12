@@ -186,13 +186,23 @@ class DataTable : public AbstractTable {
   // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordSample(const brain::Sample &sample);
+  void RecordLayoutSample(const brain::Sample &sample);
 
-  const std::vector<brain::Sample>& GetSamples() const;
+  const std::vector<brain::Sample>& GetLayoutSamples() const;
 
-  void ClearSamples();
+  void ClearLayoutSamples();
 
   void SetDefaultLayout(const column_map_type& layout);
+
+  //===--------------------------------------------------------------------===//
+  // INDEX TUNER
+  //===--------------------------------------------------------------------===//
+
+  void RecordIndexSample(const brain::Sample &sample);
+
+  const std::vector<brain::Sample>& GetIndexSamples() const;
+
+  void ClearIndexSamples();
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
@@ -265,7 +275,7 @@ class DataTable : public AbstractTable {
 
   // tile group mutex
   // TODO: don't know why need this mutex --Yingjun
-  std::mutex tile_group_mutex_;
+  std::mutex data_table_mutex_;
 
   // INDEXES
   std::vector<index::Index *> indexes_;
@@ -285,17 +295,27 @@ class DataTable : public AbstractTable {
   // dirty flag
   bool dirty_ = false;
 
+  //===--------------------------------------------------------------------===//
+  // TUNING MEMBERS
+  //===--------------------------------------------------------------------===//
+
   // adapt table
   bool adapt_table_ = true;
 
   // default partition map for table
   column_map_type default_partition_;
 
-  // samples for clustering
-  std::vector<brain::Sample> samples_;
+  // samples for layout tuning
+  std::vector<brain::Sample> layout_samples_;
 
-  // samples mutex
-  std::mutex samples_mutex_;
+  // layout samples mutex
+  std::mutex layout_samples_mutex_;
+
+  // samples for layout tuning
+  std::vector<brain::Sample> index_samples_;
+
+  // index samples mutex
+  std::mutex index_samples_mutex_;
 
 };
 

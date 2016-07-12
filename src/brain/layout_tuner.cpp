@@ -43,6 +43,37 @@ void LayoutTuner::Start(){
 
 }
 
+void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
+  oid_t column_count = table->GetSchema()->GetColumnCount();
+
+  // Set up clusterer
+  brain::Clusterer clusterer(cluster_count,
+                             column_count,
+                             new_sample_weight);
+
+  // Process all samples in table
+  auto& samples = table->GetLayoutSamples();
+
+  // Check if we have any samples
+  if (samples.empty()) {
+    return;
+  }
+
+  for (auto sample : samples) {
+    clusterer.ProcessSample(sample);
+  }
+
+  // Clear all samples in table
+  table->ClearLayoutSamples();
+
+  // Desired number of tiles
+  auto layout = clusterer.GetPartitioning(tile_count);
+
+  // Update table layout
+  table->SetDefaultLayout(layout);
+
+}
+
 void LayoutTuner::Tune(){
 
 
@@ -66,37 +97,6 @@ void LayoutTuner::Tune(){
     }
 
   }
-
-}
-
-void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
-  oid_t column_count = table->GetSchema()->GetColumnCount();
-
-  // Set up clusterer
-  brain::Clusterer clusterer(cluster_count,
-                             column_count,
-                             new_sample_weight);
-
-  // Process all samples in table
-  auto& samples = table->GetSamples();
-
-  // Check if we have any samples
-  if (samples.empty()) {
-    return;
-  }
-
-  for (auto sample : samples) {
-    clusterer.ProcessSample(sample);
-  }
-
-  // Clear all samples in table
-  table->ClearSamples();
-
-  // Desired number of tiles
-  auto layout = clusterer.GetPartitioning(tile_count);
-
-  // Update table layout
-  table->SetDefaultLayout(layout);
 
 }
 
