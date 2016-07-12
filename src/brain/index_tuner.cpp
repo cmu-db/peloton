@@ -114,7 +114,7 @@ void IndexTuner::BuildIndex(index::Index *index,
     index->IncrementIndexedTileGroupOffset();
 
     // Sleep a bit
-    std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+    //std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
   }
 
 }
@@ -123,22 +123,24 @@ void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
   // Process all samples in table
   auto& samples = table->GetIndexSamples();
+  auto sample_count = samples.size();
 
-  // TODO: Check if we have any samples
-  if (samples.empty()) {
-    //return;
+  // Check if we have any samples
+  if (sample_count < sample_count_threshold) {
+    return;
   }
 
+  LOG_INFO("Found %lu samples", samples.size());
   auto index_count = table->GetIndexCount();
 
   // Create ad-hoc index if needed
   if(index_count == 0) {
-    LOG_TRACE("Create index");
+    LOG_INFO("Create index");
     CreateIndex(table);
   }
 
   // Build index
-  BuildIndex(table->GetIndex(0), table);
+  //BuildIndex(table->GetIndex(0), table);
 
   // Clear all samples in table
   table->ClearIndexSamples();

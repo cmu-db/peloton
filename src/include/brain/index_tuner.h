@@ -92,7 +92,10 @@ class IndexTuner {
   //===--------------------------------------------------------------------===//
 
   // Sleeping period (in us)
-  oid_t sleep_duration = 100;
+  oid_t sleep_duration = 10;
+
+  // Threshold sample count
+  oid_t sample_count_threshold = 100;
 
 };
 
