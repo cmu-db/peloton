@@ -242,7 +242,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Record sample
     if (state.fsm == true && cost != 0) {
-      sdbench_table->RecordSample(sample);
+      sdbench_table->RecordLayoutSample(sample);
     }
 
     WriteOutput(time_per_transaction);

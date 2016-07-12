@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// layout_tuner.h
+// index_tuner.h
 //
-// Identification: src/include/brain/layout_tuner.h
+// Identification: src/include/brain/index_tuner.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -28,24 +28,24 @@ class DataTable;
 namespace brain {
 
 //===--------------------------------------------------------------------===//
-// Layout Tuner
+// Index Tuner
 //===--------------------------------------------------------------------===//
 
-class LayoutTuner {
+class IndexTuner {
 
  public:
 
-  LayoutTuner(const LayoutTuner &) = delete;
-  LayoutTuner &operator=(const LayoutTuner &) = delete;
-  LayoutTuner(LayoutTuner &&) = delete;
-  LayoutTuner &operator=(LayoutTuner &&) = delete;
+  IndexTuner(const IndexTuner &) = delete;
+  IndexTuner &operator=(const IndexTuner &) = delete;
+  IndexTuner(IndexTuner &&) = delete;
+  IndexTuner &operator=(IndexTuner &&) = delete;
 
-  LayoutTuner();
+  IndexTuner();
 
-  ~LayoutTuner();
+  ~IndexTuner();
 
   // Singleton
-  static LayoutTuner &GetInstance();
+  static IndexTuner &GetInstance();
 
   // Start tuning
   void Start();
@@ -62,42 +62,25 @@ class LayoutTuner {
   // Clear list
   void ClearTables();
 
- protected:
-
-  // Update layout of table
-  void UpdateDefaultPartition(storage::DataTable* table);
-
  private:
 
-  // Tables whose layout must be tuned
+  // Tables whose indices must be tuned
   std::vector<storage::DataTable*> tables;
 
-  std::mutex layout_tuner_mutex;
+  std::mutex index_tuner_mutex;
 
   // Stop signal
-  std::atomic<bool> layout_tuning_stop;
+  std::atomic<bool> index_tuning_stop;
 
   // Tuner thread
-  std::thread layout_tuner_thread;
+  std::thread index_tuner_thread;
 
   //===--------------------------------------------------------------------===//
   // Tuner Parameters
   //===--------------------------------------------------------------------===//
 
-  // Layout similarity threshold
-  double theta = 0.0;
-
   // Sleeping period (in us)
   oid_t sleep_duration = 100;
-
-  // Cluster count
-  oid_t cluster_count = 4;
-
-  // New sample weight
-  double new_sample_weight = 0.01;
-
-  // Desired layout tile count
-  oid_t tile_count = 2;
 
 };
 
