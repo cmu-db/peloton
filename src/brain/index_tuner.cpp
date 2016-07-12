@@ -47,7 +47,7 @@ void IndexTuner::Start(){
 }
 
 // Create an ad-hoc index
-UNUSED_ATTRIBUTE static void CreateIndex(storage::DataTable* table) {
+static void CreateIndex(storage::DataTable* table) {
 
   // PRIMARY INDEXES
   std::vector<oid_t> key_attrs;
@@ -90,6 +90,8 @@ void IndexTuner::BuildIndex(index::Index *index,
   std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
 
   while (start_tile_group_count < table_tile_group_count) {
+    LOG_TRACE("Build index");
+
     table_tile_group_count = table->GetTileGroupCount();
     auto tile_group = table->GetTileGroup(start_tile_group_count++);
     auto tile_group_id = tile_group->GetTileGroupId();
@@ -122,7 +124,7 @@ void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
   // Process all samples in table
   auto& samples = table->GetIndexSamples();
 
-  // Check if we have any samples
+  // TODO: Check if we have any samples
   if (samples.empty()) {
     //return;
   }
@@ -131,6 +133,7 @@ void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
   // Create ad-hoc index if needed
   if(index_count == 0) {
+    LOG_TRACE("Create index");
     CreateIndex(table);
   }
 

@@ -507,12 +507,14 @@ void RunAdaptExperiment() {
 
   // Start index tuner
   index_tuner.Start();
+  index_tuner.AddTable(sdbench_table.get());
 
   // Run adapt test
   RunAdaptTest();
 
   // Stop index tuner
   index_tuner.Stop();
+  index_tuner.ClearTables();
 
   // Reset
   state.transactions = orig_transactions;
