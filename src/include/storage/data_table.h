@@ -30,15 +30,6 @@ extern LayoutType peloton_layout_mode;
 // Configuration Variables
 //===--------------------------------------------------------------------===//
 
-// Projectivity for determining FSM layout
-extern double peloton_projectivity;
-
-// # of groups
-extern int peloton_num_groups;
-
-// FSM or not ?
-extern bool peloton_fsm;
-
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
@@ -273,8 +264,7 @@ class DataTable : public AbstractTable {
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  // tile group mutex
-  // TODO: don't know why need this mutex --Yingjun
+  // data table mutex
   std::mutex data_table_mutex_;
 
   // INDEXES
