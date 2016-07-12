@@ -165,7 +165,7 @@ void DeleteTuple(storage::DataTable *table,
       EXPRESSION_TYPE_COMPARE_GREATERTHAN, tup_val_exp, const_val_exp);
 
   // Seq scan
-  std::vector<oid_t> column_ids = {0};
+  std::vector<oid_t> column_ids = {};
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
       new planner::SeqScanPlan(table, predicate, column_ids));
 
@@ -180,6 +180,7 @@ void DeleteTuple(storage::DataTable *table,
   EXPECT_TRUE(delete_executor.Execute());
 
   txn_manager.CommitTransaction();
+
 }
 
 TEST_F(MutateTests, StressTests) {
