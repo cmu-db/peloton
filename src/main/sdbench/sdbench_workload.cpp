@@ -162,6 +162,9 @@ static void WriteOutput(double duration) {
            state.tuples_per_tilegroup,
            duration);
 
+  auto timestamp = std::time(nullptr);
+
+  out << timestamp << " ";
   out << state.layout_mode << " ";
   out << state.operator_type << " ";
   out << state.selectivity << " ";
@@ -597,7 +600,6 @@ void RunAdaptExperiment() {
         // Stop layout tuner
         layout_tuner.Stop();
         layout_tuner.ClearTables();
-
 
         index_builder.join();
       }
