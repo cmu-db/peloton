@@ -21,6 +21,10 @@
 
 namespace peloton {
 
+namespace index{
+class Index;
+}
+
 namespace storage{
 class DataTable;
 }
@@ -61,6 +65,14 @@ class IndexTuner {
 
   // Clear list
   void ClearTables();
+
+ protected:
+
+  // Index building helper
+  void BuildIndex(index::Index *index, storage::DataTable *table);
+
+  // Index tuning helper
+  void IndexTuneHelper(storage::DataTable* table);
 
  private:
 

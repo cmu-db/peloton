@@ -21,9 +21,9 @@
 #include <algorithm>
 #include <chrono>
 
-#include "expression/expression_util.h"
-#include "brain/layout_tuner.h"
 #include "brain/sample.h"
+#include "brain/layout_tuner.h"
+#include "brain/index_tuner.h"
 
 #include "benchmark/sdbench/sdbench_workload.h"
 #include "benchmark/sdbench/sdbench_loader.h"
@@ -57,8 +57,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-
-#include "index/index_factory.h"
+#include "expression/expression_util.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/aggregate_plan.h"
@@ -240,11 +239,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
     timer.Stop();
     auto time_per_transaction = timer.GetDuration();
 
-    // Record sample
-    if (state.fsm == true && cost != 0) {
-      sdbench_table->RecordLayoutSample(sample);
-    }
-
     WriteOutput(time_per_transaction);
   }
 
@@ -324,14 +318,9 @@ void RunDirectTest() {
   }
 
   // Determine hybrid scan type
-  auto hybrid_scan_type = state.hybrid_scan_type;
-  if(state.layout_mode == LAYOUT_TYPE_ROW ||
-      state.layout_mode == LAYOUT_TYPE_COLUMN) {
-    hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
-  }
+  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
 
-  if(state.layout_mode == LAYOUT_TYPE_HYBRID &&
-      index_count != 0) {
+  if(index_count != 0) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
 
@@ -343,9 +332,6 @@ void RunDirectTest() {
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
-
-  //planner::SeqScanPlan seq_scan_node(sdbench_table.get(), predicate, column_ids);
-  //executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
@@ -457,42 +443,6 @@ void RunInsertTest() {
   txn_manager.CommitTransaction();
 }
 
-static void BuildIndex(index::Index *index,
-                       storage::DataTable *table) {
-  oid_t start_tile_group_count = START_OID;
-  oid_t table_tile_group_count = table->GetTileGroupCount();
-  auto table_schema = table->GetSchema();
-  std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
-
-  while (start_tile_group_count < table_tile_group_count &&
-      state.fsm == true) {
-    table_tile_group_count = table->GetTileGroupCount();
-    auto tile_group = table->GetTileGroup(start_tile_group_count++);
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
-
-    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      // Copy over the tuple
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
-
-      // Set the location
-      ItemPointer location(tile_group_id, tuple_id);
-
-      // TODO: Adds an entry in ALL the indexes
-      // (should only insert in specific index)
-      table->InsertInIndexes(tuple_ptr.get(), location);
-    }
-
-    // Update indexed tile group offset (set of tgs indexed)
-    index->IncrementIndexedTileGroupOffset();
-
-    // TODO: Sleep a bit
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-
-}
-
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
@@ -534,77 +484,38 @@ static void RunAdaptTest() {
   state.write_ratio = 0.0;
 }
 
-std::vector<LayoutType> adapt_layouts = {LAYOUT_TYPE_ROW, LAYOUT_TYPE_HYBRID};
-
-std::vector<oid_t> adapt_column_counts = {column_counts[1]};
-
 void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
   std::thread index_builder;
 
   // Setup layout tuner
-  auto& layout_tuner = brain::LayoutTuner::GetInstance();
+  auto& index_tuner = brain::IndexTuner::GetInstance();
 
   state.transactions = 100;   // 25
 
+  state.projectivity = 1.0;
   state.selectivity = 0.06;
   state.adapt = true;
+  state.column_count = 50;
+  state.layout_mode = LAYOUT_TYPE_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
-  // Go over all column counts
-  for (auto column_count : adapt_column_counts) {
-    state.column_count = column_count;
+  // Generate sequence
+  GenerateSequence(state.column_count);
 
-    // Generate sequence
-    GenerateSequence(state.column_count);
+  CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
-    // Go over all layouts
-    for (auto layout : adapt_layouts) {
-      // Set layout
-      state.layout_mode = layout;
-      peloton_layout_mode = state.layout_mode;
+  // Reset query counter
+  query_itr = 0;
 
-      LOG_INFO("*****************************************************");
+  // Start index tuner
+  index_tuner.Start();
 
-      state.projectivity = 1.0;
-      peloton_projectivity = state.projectivity;
-      CreateAndLoadTable((LayoutType)peloton_layout_mode);
+  // Run adapt test
+  RunAdaptTest();
 
-      // Reset query counter
-      query_itr = 0;
-
-      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
-        state.fsm = true;
-        peloton_fsm = true;
-
-        // Start layout tuner
-        layout_tuner.AddTable(sdbench_table.get());
-        layout_tuner.Start();
-
-        // Create an ad-hoc index
-        CreateIndex();
-
-        // Launch index build
-        index_builder = std::thread(BuildIndex,
-                                    sdbench_table->GetIndex(0),
-                                    sdbench_table.get());
-      }
-
-      // Run adapt test
-      RunAdaptTest();
-
-      // Stop transformer
-      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
-        state.fsm = false;
-        peloton_fsm = false;
-
-        // Stop layout tuner
-        layout_tuner.Stop();
-        layout_tuner.ClearTables();
-
-        index_builder.join();
-      }
-    }
-  }
+  // Stop index tuner
+  index_tuner.Stop();
 
   // Reset
   state.transactions = orig_transactions;

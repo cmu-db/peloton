@@ -73,41 +73,6 @@ void CreateTable() {
 
 }
 
-void CreateIndex() {
-
-  // PRIMARY INDEXES
-  for(int index_itr = 0; index_itr < state.index_count; index_itr++) {
-
-    std::vector<oid_t> key_attrs;
-
-    auto tuple_schema = sdbench_table->GetSchema();
-    catalog::Schema *key_schema;
-    index::IndexMetadata *index_metadata;
-    bool unique;
-
-    key_attrs = {0};
-    key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-    key_schema->SetIndexedColumns(key_attrs);
-
-    unique = true;
-
-    index_metadata = new index::IndexMetadata(
-        "primary_index",
-        index_itr,
-        INDEX_TYPE_SKIPLIST,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-        tuple_schema,
-        key_schema,
-        unique);
-
-    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
-    sdbench_table->AddIndex(pkey_index);
-
-  }
-
-
-}
-
 void LoadTable() {
   const oid_t col_count = state.column_count + 1;
   const int tuple_count = state.scale_factor * state.tuples_per_tilegroup;

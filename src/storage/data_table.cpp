@@ -43,8 +43,6 @@ double peloton_projectivity;
 
 int peloton_num_groups;
 
-bool peloton_fsm;
-
 namespace peloton {
 namespace storage {
 
