@@ -25,6 +25,13 @@ namespace brain {
 #define DEFAULT_SAMPLE_WEIGHT 1.0
 #define DEFAULT_COLUMN_VALUE 0.5
 
+enum SampleType {
+  SAMPLE_TYPE_INVALID = 0,
+
+  SAMPLE_TYPE_ACCESS = 1,       // accessed attributes
+  SAMPLE_TYPE_UPDATE = 2        // updated attributes
+};
+
 //===--------------------------------------------------------------------===//
 // Sample
 //===--------------------------------------------------------------------===//
@@ -34,11 +41,13 @@ class Sample : public Printable {
   Sample(const size_t column_count)
       : columns_accessed_(
             std::vector<double>(column_count, DEFAULT_COLUMN_VALUE)),
-        weight_(DEFAULT_SAMPLE_WEIGHT) {}
+        weight_(DEFAULT_SAMPLE_WEIGHT),
+        sample_type_(SAMPLE_TYPE_ACCESS) {}
 
   Sample(const std::vector<double> &columns_accessed,
-         double weight = DEFAULT_SAMPLE_WEIGHT)
-      : columns_accessed_(columns_accessed), weight_(weight) {}
+         double weight = DEFAULT_SAMPLE_WEIGHT,
+         SampleType sample_type = SAMPLE_TYPE_ACCESS)
+      : columns_accessed_(columns_accessed), weight_(weight), sample_type_(sample_type) {}
 
   // get the distance from other sample
   double GetDistance(const Sample &other) const;
@@ -67,6 +76,9 @@ class Sample : public Printable {
 
   // weight of the sample
   double weight_;
+
+  // type of sample
+  SampleType sample_type_;
 };
 
 }  // End brain namespace
