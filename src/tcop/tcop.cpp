@@ -99,7 +99,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   statement.reset(new Statement(statement_name, query_string));
 
-  // TODO: Use parser
   auto& peloton_parser = parser::Parser::GetInstance();
   auto parse_tree = peloton_parser.BuildParseTree(query_string);
 
