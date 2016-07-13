@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include<unordered_map>
+
 #include "brain/index_tuner.h"
 #include "brain/clusterer.h"
 
@@ -119,16 +121,102 @@ void IndexTuner::BuildIndex(index::Index *index,
 
 }
 
+typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
+
+bool sample_frequency_entry_comparator(sample_frequency_map_entry a,
+                                       sample_frequency_map_entry b){
+    return a.second > b.second;
+}
+
+void IndexTuner::Analyze(UNUSED_ATTRIBUTE storage::DataTable* table,
+                         const std::vector<brain::Sample>& samples) {
+
+  double rd_wr_ratio = 0;
+
+  double total_rd_duration = 0;
+  double total_wr_duration = 0;
+  double max_rd_wr_ratio = 10000;
+
+  std::unordered_map<brain::Sample, oid_t> sample_frequency_map;
+
+  // Go over all samples
+  for(auto sample : samples){
+
+    if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
+      total_rd_duration += sample.weight_;
+
+      // Update sample count
+      sample_frequency_map[sample]++;
+    }
+    else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
+      total_wr_duration += sample.weight_;
+
+      // Ignore update samples
+    }
+    else {
+      throw Exception("Unknown sample type : " + std::to_string(sample.sample_type_));
+    }
+
+  }
+
+  // Find frequent samples
+  size_t frequency_rank_threshold = 3;
+
+  std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
+
+  for(auto sample_frequency_map_entry : sample_frequency_map){
+    auto entry = std::make_pair(sample_frequency_map_entry.first,
+                                sample_frequency_map_entry.second);
+
+    sample_frequency_entry_list.push_back(entry);
+  }
+
+  std::sort(sample_frequency_entry_list.begin(), sample_frequency_entry_list.end(),
+            sample_frequency_entry_comparator);
+
+  // Print top-k frequent samples for table
+  std::vector<std::vector<double>> suggested_indices;
+
+  for(size_t entry_itr = 0;
+      entry_itr < frequency_rank_threshold && entry_itr < sample_frequency_entry_list.size();
+      entry_itr++){
+    auto& entry = sample_frequency_entry_list[entry_itr];
+    auto& sample = entry.first;
+    LOG_INFO("%s Frequency : %u", sample.GetInfo().c_str(), entry.second);
+
+    // Add to suggested index list
+    suggested_indices.push_back(sample.columns_accessed_);
+  }
+
+  // Compute read write ratio
+  if(total_wr_duration == 0) {
+    rd_wr_ratio = max_rd_wr_ratio;
+  }
+  else{
+    rd_wr_ratio = total_rd_duration / total_wr_duration;
+  }
+
+  LOG_INFO("Read Write Ratio : %.2lf", rd_wr_ratio);
+
+
+  // TODO: Use read write ratio to throttle index creation
+
+  // Construct indices in suggested index list
+
+}
+
 void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
   // Process all samples in table
   auto& samples = table->GetIndexSamples();
   auto sample_count = samples.size();
 
-  // Check if we have any samples
+  // Check if we have sufficient number of samples
   if (sample_count < sample_count_threshold) {
     return;
   }
+
+  Analyze(table, samples);
 
   LOG_INFO("Found %lu samples", samples.size());
   auto index_count = table->GetIndexCount();

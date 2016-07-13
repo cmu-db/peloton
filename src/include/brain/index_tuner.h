@@ -31,6 +31,8 @@ class DataTable;
 
 namespace brain {
 
+class Sample;
+
 //===--------------------------------------------------------------------===//
 // Index Tuner
 //===--------------------------------------------------------------------===//
@@ -74,6 +76,10 @@ class IndexTuner {
   // Index tuning helper
   void IndexTuneHelper(storage::DataTable* table);
 
+  // Analyze
+  void Analyze(storage::DataTable* table,
+               const std::vector<brain::Sample>& samples);
+
  private:
 
   // Tables whose indices must be tuned
@@ -95,7 +101,7 @@ class IndexTuner {
   oid_t sleep_duration = 10;
 
   // Threshold sample count
-  oid_t sample_count_threshold = 100;
+  oid_t sample_count_threshold = 300;
 
 };
 
