@@ -15,8 +15,7 @@
 
 #include <memory>
 
-#include "abstract_plan.h"
-#include "common/types.h"
+#include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 
 namespace peloton {
@@ -35,8 +34,7 @@ class ProjectionPlan : public AbstractPlan {
   ProjectionPlan &operator=(ProjectionPlan &&) = delete;
 
   ProjectionPlan(std::unique_ptr<const planner::ProjectInfo> &&project_info,
-                 std::shared_ptr<const catalog::Schema> &schema)
-      : project_info_(std::move(project_info)), schema_(schema) {}
+                 std::shared_ptr<const catalog::Schema> &schema);
 
   inline const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();

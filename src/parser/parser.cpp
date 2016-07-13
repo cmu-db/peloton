@@ -34,6 +34,14 @@
 namespace peloton {
 namespace parser {
 
+Parser::Parser(){
+
+}
+
+Parser::~Parser(){
+
+}
+
 SQLStatementList* Parser::ParseSQLString(const char* text) {
   SQLStatementList* result;
   yyscan_t scanner;
@@ -62,6 +70,27 @@ SQLStatementList* Parser::ParseSQLString(const char* text) {
 SQLStatementList* Parser::ParseSQLString(const std::string& text) {
   return ParseSQLString(text.c_str());
 }
+
+static Parser &Parser::GetInstance(){
+  static Parser parser;
+  return parser;
+}
+
+parser::SQLStatement* Parser::BuildParseTree(const std::string& query_string){
+  auto stmt  = Parser::ParseSQLString(query_string);
+
+  LOG_INFO("Statements Size -------------> %d" ,stmt->GetStatements().size());
+  SQLStatement* first_stmt = nullptr;
+
+  for(auto s : stmt->GetStatements()){
+    first_stmt = s;
+    break;
+  }
+
+  return first_stmt;
+}
+
+
 
 }  // End parser namespace
 }  // End peloton namespace

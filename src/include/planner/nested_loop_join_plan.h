@@ -13,17 +13,15 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "abstract_join_plan.h"
-#include "common/types.h"
-#include "expression/abstract_expression.h"
-#include "planner/project_info.h"
+#include "planner/abstract_join_plan.h"
 
 namespace peloton {
+namespace expression{
+class AbstractExpression;
+}
 namespace planner {
+
+class ProjectInfo;
 
 class NestedLoopJoinPlan : public AbstractJoinPlan {
  public:
@@ -36,9 +34,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       PelotonJoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema)
-      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
-                         proj_schema) {}
+      std::shared_ptr<const catalog::Schema> &proj_schema);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_NESTLOOP;

@@ -16,6 +16,7 @@
 
 #include "common/harness.h"
 #include "common/macros.h"
+#include "parser/parser.h"
 
 namespace peloton {
 namespace test {
@@ -28,52 +29,55 @@ class ParserTest : public PelotonTest {};
 
 void ParseSQLStrings(UNUSED_ATTRIBUTE const std::vector<std::string>& sql_strings,
                      UNUSED_ATTRIBUTE const bool expect_failure) {
-  /*
-  // Initialize the postgres memory context
-  pg_query_init();
 
-  for (auto sql_string : sql_strings) {
-    PgQueryParseResult result = pg_query_parse(sql_string.c_str());
+  LOG_INFO("Query String: %s", query_string.c_str());
+  std::string query_string = sql_strings[0];
 
-    if (expect_failure == true) {
-      EXPECT_NE(result.error, nullptr);
-      LOG_INFO("input: %s", sql_string.c_str());
-      LOG_ERROR("error: %s at %d", result.error->message,
-                result.error->cursorpos);
-    } else {
-      EXPECT_EQ(result.error, nullptr);
-      LOG_INFO("parse tree: %s", result.parse_tree);
-    }
+  // This test case works without the last delete statement.
+  // When the delete statement is added, it crashes
+  /*auto stmt  = parser::Parser::ParseSQLString(query_string);
 
-    pg_query_free_parse_result(result);
+  parser::SQLStatement* first_stmt = nullptr;
+
+  for(auto s : stmt->GetStatements()){
+    first_stmt = s;
+    break;
   }
 
-  // Destroy the postgres memory context
-  //pg_query_destroy();
+  EXPECT_EQ(first_stmt->GetType(), STATEMENT_TYPE_DELETE);
+
+  delete first_stmt; // When this line is added, it crashes at AbstractExpression destructor
   */
+
+  // This test case crashes on the return from the BuildParseTree function
+  auto& peloton_parser = parser::Parser::GetInstance();
+  auto parse_tree = peloton_parser.BuildParseTree(query_string);
+
+  EXPECT_EQ(parse_tree->GetType(), STATEMENT_TYPE_DELETE);
+
 }
 
 TEST_F(ParserTest, SQL92Test) {
   std::vector<std::string> sqlStrings;
 
-  sqlStrings.push_back("SELECT * FROM SAMPLE1");
-  sqlStrings.push_back("SELECT * FROM SAMPLE2 WHERE A = B");
-  sqlStrings.push_back("SELECT * FROM SAMPLE3 LIMIT 10");
+//  sqlStrings.push_back("SELECT * FROM SAMPLE1");
+//  sqlStrings.push_back("SELECT * FROM SAMPLE2 WHERE A = B");
+//  sqlStrings.push_back("SELECT * FROM SAMPLE3 LIMIT 10");
+//
+//  sqlStrings.push_back("INSERT INTO abc VALUES (1234)");
+//  sqlStrings.push_back("INSERT INTO abc (age) VALUES (34)");
+//  sqlStrings.push_back("INSERT INTO abc (name,age) VALUES (skonno,34)");
+//
+//  sqlStrings.push_back("DELETE FROM abc");
+  sqlStrings.push_back("DELETE FROM abc WHERE id < 2");
 
-  sqlStrings.push_back("INSERT INTO abc VALUES (1234)");
-  sqlStrings.push_back("INSERT INTO abc (age) VALUES (34)");
-  sqlStrings.push_back("INSERT INTO abc (name,age) VALUES (skonno,34)");
-
-  sqlStrings.push_back("DELETE FROM abc");
-  sqlStrings.push_back("DELETE FROM abc WHERE A = B");
-
-  sqlStrings.push_back("UPDATE abc SET age = 34");
-  sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
+//  sqlStrings.push_back("UPDATE abc SET age = 34");
+//  sqlStrings.push_back("UPDATE abc SET age = 34 WHERE name = skonno");
 
   bool expect_failure = false;
   ParseSQLStrings(sqlStrings, expect_failure);
 }
-
+/*
 TEST_F(ParserTest, ExpressionTest) {
   std::vector<std::string> sqlStrings;
 
@@ -167,6 +171,6 @@ TEST_F(ParserTest, DDLTest2) {
   bool expect_failure = false;
   ParseSQLStrings(sqlStrings, expect_failure);
 }
-
+*/
 }  // End test namespace
 }  // End peloton namespace

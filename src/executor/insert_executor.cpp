@@ -60,10 +60,18 @@ bool InsertExecutor::DExecute() {
   const planner::InsertPlan &node = GetPlanNode<planner::InsertPlan>();
   storage::DataTable *target_table = node.GetTable();
   oid_t bulk_insert_count = node.GetBulkInsertCount();
-  PL_ASSERT(target_table);
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
+
+  if(!target_table) {
+	  transaction_manager.SetTransactionResult(
+	             peloton::Result::RESULT_FAILURE);
+	         return false;
+  }
+
+  LOG_INFO("Number of tuples in table before insert: %d", (int)target_table->GetNumberOfTuples());
+
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
@@ -104,7 +112,7 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-
+      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
       executor_context_->num_processed += 1;  // insert one
     }
 
@@ -159,7 +167,7 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-
+      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
       executor_context_->num_processed += 1;  // insert one
     }
 

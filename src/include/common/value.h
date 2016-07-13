@@ -1713,7 +1713,8 @@ class Value {
     if (IsNull()) {
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      PL_MEMSET(storage, 0, maxLength + 1);
+      // @author: aelroby removed this extra byte write because it is corrupted
+      PL_MEMSET(storage, 0, maxLength);
 
       /*
        * The 7th bit of the length preceding value
@@ -1729,7 +1730,8 @@ class Value {
 
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      PL_MEMSET(storage, 0, maxLength + 1);
+      // @author: aelroby removed this extra byte write because it is corrupted
+      PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {
         PL_MEMCPY(storage, *reinterpret_cast<char *const *>(m_data),
@@ -2865,10 +2867,13 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
           *reinterpret_cast<void **>(storage) = NULL;
         } else {
           int32_t objLength = GetObjectLengthWithoutNull();
-          const char *ptr =
-              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
-                                            maxLength, isInBytes);
+
+          // author: aelroby commented this routine temporarily because no maxLength
+          // value is defined for variable length values in Peloton
+//          const char *ptr =
+//              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+//          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
+//                                            maxLength, isInBytes);
 
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;

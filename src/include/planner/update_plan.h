@@ -13,11 +13,18 @@
 
 #pragma once
 
-#include "abstract_plan.h"
+#include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 #include "common/types.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
+
+namespace parser{
+  class UpdateStatement;
+  class UpdateClause;
+  class TableRef;
+}
 
 namespace expression {
 class Expression;
@@ -38,8 +45,9 @@ class UpdatePlan : public AbstractPlan {
   UpdatePlan &operator=(UpdatePlan &&) = delete;
 
   explicit UpdatePlan(storage::DataTable *table,
-                      std::unique_ptr<const planner::ProjectInfo> project_info)
-      : target_table_(table), project_info_(std::move(project_info)) {}
+                      std::unique_ptr<const planner::ProjectInfo> project_info);
+
+  explicit UpdatePlan(parser::UpdateStatement* parse_tree);
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -59,6 +67,12 @@ class UpdatePlan : public AbstractPlan {
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_;
+
+  std::string table_name;
+
+  std::vector<parser::UpdateClause*>* updates;
+
+  expression::AbstractExpression* where;
 
   /** @brief Projection info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;

@@ -24,6 +24,7 @@ class DataTable;
 }
 namespace parser{
 class CreateParse;
+class CreateStatement;
 }
 
 namespace planner {
@@ -41,6 +42,8 @@ class CreatePlan : public AbstractPlan {
   explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema);
 
   explicit CreatePlan(parser::CreateParse *parse_tree);
+
+  explicit CreatePlan(parser::CreateStatement *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_CREATE;
