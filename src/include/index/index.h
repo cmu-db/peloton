@@ -221,7 +221,7 @@ class Index : public Printable {
                                   const std::pair<peloton::Value, int> &j);
 
   // Get the indexed tile group offset
-  virtual int GetIndexedTileGroupOff() {
+  virtual size_t GetIndexedTileGroupOff() {
     return indexed_tile_group_offset_.load();
   }
 
@@ -265,7 +265,7 @@ class Index : public Printable {
   // pool
   VarlenPool *pool = nullptr;
 
-  std::atomic<int> indexed_tile_group_offset_;
+  std::atomic<size_t> indexed_tile_group_offset_;
 };
 
 }  // End index namespace

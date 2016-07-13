@@ -48,11 +48,16 @@ void IndexTuner::Start(){
 
 }
 
-// Create an ad-hoc index
-static void CreateIndex(storage::DataTable* table) {
+// Add an ad-hoc index
+static void AddIndex(storage::DataTable* table,
+                     std::set<oid_t> suggested_index_attrs) {
 
-  // PRIMARY INDEXES
-  std::vector<oid_t> key_attrs;
+  // Construct index metadata
+  std::vector<oid_t> key_attrs(suggested_index_attrs.size());
+  std::copy(suggested_index_attrs.begin(),
+            suggested_index_attrs.end(),
+            key_attrs.begin());
+
   auto index_count = table->GetIndexCount();
   auto index_oid = index_count + 1;
 
@@ -61,14 +66,13 @@ static void CreateIndex(storage::DataTable* table) {
   index::IndexMetadata *index_metadata;
   bool unique;
 
-  key_attrs = {0};
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
 
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index",
+      "adhoc_index_" + std::to_string(index_oid),
       index_oid,
       INDEX_TYPE_SKIPLIST,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
@@ -77,28 +81,29 @@ static void CreateIndex(storage::DataTable* table) {
       key_attrs,
       unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  index::Index *adhoc_index = index::IndexFactory::GetInstance(index_metadata);
 
   // Add index
-  table->AddIndex(pkey_index);
+  table->AddIndex(adhoc_index);
 
+  LOG_INFO("Added suggested index");
 }
 
-void IndexTuner::BuildIndex(index::Index *index,
-                            storage::DataTable *table) {
+void IndexTuner::BuildIndex(storage::DataTable *table,
+                            index::Index *index) {
 
-  oid_t start_tile_group_count = START_OID;
-  oid_t table_tile_group_count = table->GetTileGroupCount();
   auto table_schema = table->GetSchema();
-  std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
+  auto index_tile_group_offset = index->GetIndexedTileGroupOff();
+  auto table_tile_group_count = table->GetTileGroupCount();
+  oid_t tile_groups_indexed = 0;
 
-  while (start_tile_group_count < table_tile_group_count) {
-    LOG_TRACE("Build index");
+  while (index_tile_group_offset < table_tile_group_count &&
+      (tile_groups_indexed < max_tile_groups_indexed)) {
 
-    table_tile_group_count = table->GetTileGroupCount();
-    auto tile_group = table->GetTileGroup(start_tile_group_count++);
+    std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
+
+    auto tile_group = table->GetTileGroup(index_tile_group_offset);
     auto tile_group_id = tile_group->GetTileGroupId();
-
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
@@ -118,6 +123,24 @@ void IndexTuner::BuildIndex(index::Index *index,
 
     // Sleep a bit
     //std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+
+    index_tile_group_offset++;
+    tile_groups_indexed++;
+  }
+
+}
+
+void IndexTuner::BuildIndices(storage::DataTable *table) {
+
+  oid_t index_count = table->GetIndexCount();
+
+  for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
+
+    // Get index
+    auto index = table->GetIndex(index_itr);
+
+    // Build index
+    BuildIndex(table, index);
   }
 
 }
@@ -126,11 +149,19 @@ typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
 
 bool sample_frequency_entry_comparator(sample_frequency_map_entry a,
                                        sample_frequency_map_entry b){
-    return a.second > b.second;
+  return a.second > b.second;
 }
 
-void IndexTuner::Analyze(UNUSED_ATTRIBUTE storage::DataTable* table,
-                         const std::vector<brain::Sample>& samples) {
+void IndexTuner::Analyze(storage::DataTable* table) {
+
+  // Process all samples in table
+  auto& samples = table->GetIndexSamples();
+  auto sample_count = samples.size();
+
+  // Check if we have sufficient number of samples
+  if (sample_count < sample_count_threshold) {
+    return;
+  }
 
   double rd_wr_ratio = 0;
 
@@ -230,9 +261,8 @@ void IndexTuner::Analyze(UNUSED_ATTRIBUTE storage::DataTable* table,
     if(suggested_index_found == false) {
       LOG_INFO("Did not find suggested index. Going to create it.");
 
-      for(auto column : suggested_index_set){
-        LOG_INFO("%u", column);
-      }
+      // Add adhoc index
+      AddIndex(table, suggested_index_set);
 
       LOG_INFO("-------------------");
     }
@@ -242,36 +272,18 @@ void IndexTuner::Analyze(UNUSED_ATTRIBUTE storage::DataTable* table,
 
   }
 
+  // Clear all current samples in table
+  table->ClearIndexSamples();
 
 }
 
 void IndexTuner::IndexTuneHelper(storage::DataTable* table) {
 
-  // Process all samples in table
-  auto& samples = table->GetIndexSamples();
-  auto sample_count = samples.size();
+  // Add required indices
+  Analyze(table);
 
-  // Check if we have sufficient number of samples
-  if (sample_count < sample_count_threshold) {
-    return;
-  }
-
-  Analyze(table, samples);
-
-  LOG_INFO("Found %lu samples", samples.size());
-  auto index_count = table->GetIndexCount();
-
-  // Create ad-hoc index if needed
-  if(index_count == 0) {
-    LOG_INFO("Create index");
-    CreateIndex(table);
-  }
-
-  // Build index
-  //BuildIndex(table->GetIndex(0), table);
-
-  // Clear all samples in table
-  table->ClearIndexSamples();
+  // Build desired indices
+  BuildIndices(table);
 
 }
 

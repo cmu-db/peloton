@@ -267,6 +267,41 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
+index::Index *PickIndex(storage::DataTable* table,
+                        std::vector<oid_t> query_attrs){
+
+  // Construct set
+  std::set<oid_t> query_attrs_set(query_attrs.begin(), query_attrs.end());
+
+  oid_t index_count = table->GetIndexCount();
+
+  // Go over all indices
+  bool query_index_found = false;
+  oid_t index_itr = 0;
+  for(index_itr = 0; index_itr < index_count; index_itr++){
+
+    auto index_attrs = table->GetIndexAttrs(index_itr);
+
+    // Some attribute did not match
+    if(index_attrs != query_attrs_set) {
+      continue;
+    }
+
+    // Exact match
+    query_index_found = true;
+    break;
+  }
+
+  index::Index* index = nullptr;
+
+  // Found index
+  if(query_index_found == true) {
+    index = table->GetIndex(index_itr);
+  }
+
+  return index;
+}
+
 void RunDirectTest() {
   const int lower_bound = GetLowerBound();
   const int upper_bound = GetUpperBound();
@@ -297,34 +332,29 @@ void RunDirectTest() {
   // Create and set up seq scan executor
   auto predicate = CreatePredicate(lower_bound, upper_bound);
 
-  auto index_count = sdbench_table->GetIndexCount();
-  index::Index *index = nullptr;
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
-  // Check if ad-hoc index exists
-  if(index_count != 0) {
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-    index = sdbench_table->GetIndex(0);
+  CreateIndexScanPredicate(key_column_ids, expr_types, values,
+                           lower_bound, upper_bound);
 
-    std::vector<oid_t> key_column_ids;
-    std::vector<ExpressionType> expr_types;
-    std::vector<Value> values;
-    std::vector<expression::AbstractExpression *> runtime_keys;
+  // Determine hybrid scan type
+  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
 
-    CreateIndexScanPredicate(key_column_ids, expr_types, values,
-                             lower_bound, upper_bound);
+  // Pick index
+  auto index = PickIndex(sdbench_table.get(), key_column_ids);
 
+  if(index != nullptr) {
     index_scan_desc = planner::IndexScanPlan::IndexScanDesc(index,
                                                             key_column_ids,
                                                             expr_types,
                                                             values,
                                                             runtime_keys);
-  }
 
-  // Determine hybrid scan type
-  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
-
-  if(index_count != 0) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
 
@@ -500,7 +530,7 @@ void RunAdaptExperiment() {
   // Setup layout tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
-  state.transactions = 100;   // 25
+  state.transactions = 200;   // 25
 
   state.projectivity = 1.0;
   state.selectivity = 0.06;

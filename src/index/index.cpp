@@ -225,7 +225,7 @@ bool Index::ConstructLowerBoundTuple(
 
 Index::Index(IndexMetadata *metadata) :
     metadata(metadata),
-    indexed_tile_group_offset_(-1) {
+    indexed_tile_group_offset_(0) {
   index_oid = metadata->GetOid();
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
