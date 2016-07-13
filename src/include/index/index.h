@@ -17,6 +17,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <set>
 
 #include "common/printable.h"
 #include "common/types.h"
@@ -47,16 +48,21 @@ class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
-  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
+  IndexMetadata(std::string index_name,
+                oid_t index_oid,
+                IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
-                const catalog::Schema *key_schema, bool unique_keys)
+                const catalog::Schema *key_schema,
+                const std::vector<oid_t>& key_attrs,
+                bool unique_keys)
  : index_name(index_name),
    index_oid(index_oid),
    method_type(method_type),
    index_type(index_type),
    tuple_schema(tuple_schema),
    key_schema(key_schema),
+   key_attrs(key_attrs),
    unique_keys(unique_keys) {}
 
   ~IndexMetadata();
@@ -75,6 +81,8 @@ class IndexMetadata {
 
   bool HasUniqueKeys() const { return unique_keys; }
 
+  std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
+
   std::string index_name;
 
   oid_t index_oid;
@@ -88,6 +96,9 @@ class IndexMetadata {
 
   // schema of keys
   const catalog::Schema *key_schema;
+
+  // key attributes
+  std::vector<oid_t> key_attrs;
 
   // unique keys ?
   bool unique_keys;

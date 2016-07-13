@@ -654,7 +654,15 @@ const std::string DataTable::GetInfo() const {
 void DataTable::AddIndex(index::Index *index) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
+
+    // Add index
     indexes_.push_back(index);
+
+    // Add index column info
+    auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
+    std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
+
+    indexes_columns_.push_back(index_columns_set);
   }
 
   // Update index stats
@@ -686,6 +694,9 @@ void DataTable::DropIndexWithOid(const oid_t &index_id) {
 
     // Drop the index
     indexes_.erase(indexes_.begin() + index_offset);
+
+    // Drop index column info
+    indexes_columns_.erase(indexes_columns_.begin() + index_offset);
   }
 }
 
@@ -693,6 +704,12 @@ index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
   PL_ASSERT(index_offset < indexes_.size());
   auto index = indexes_.at(index_offset);
   return index;
+}
+
+std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
+  PL_ASSERT(index_offset < indexes_columns_.size());
+  auto index_attrs = indexes_columns_.at(index_offset);
+  return index_attrs;
 }
 
 oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
