@@ -24,6 +24,7 @@ namespace brain {
 
 #define DEFAULT_SAMPLE_WEIGHT 1.0
 #define DEFAULT_COLUMN_VALUE 0.5
+#define DEFAULT_METRIC_VALUE 0
 
 enum SampleType {
   SAMPLE_TYPE_INVALID = 0,
@@ -46,8 +47,12 @@ class Sample : public Printable {
 
   Sample(const std::vector<double> &columns_accessed,
          double weight = DEFAULT_SAMPLE_WEIGHT,
-         SampleType sample_type = SAMPLE_TYPE_ACCESS)
-      : columns_accessed_(columns_accessed), weight_(weight), sample_type_(sample_type) {}
+         SampleType sample_type = SAMPLE_TYPE_ACCESS,
+         double metric = DEFAULT_METRIC_VALUE)
+      : columns_accessed_(columns_accessed),
+        weight_(weight),
+        sample_type_(sample_type),
+        metric_(metric){}
 
   // get the distance from other sample
   double GetDistance(const Sample &other) const;
@@ -67,6 +72,8 @@ class Sample : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  bool operator==(const Sample &other) const;
+
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -79,7 +86,32 @@ class Sample : public Printable {
 
   // type of sample
   SampleType sample_type_;
+
+  // more info about the sample
+  double metric_ = 0;
 };
 
 }  // End brain namespace
 }  // End peloton namespace
+
+namespace std {
+
+template <>
+struct hash<peloton::brain::Sample>
+{
+  size_t operator()(const peloton::brain::Sample& sample) const
+  {
+    // Compute individual hash values using XOR and bit shifting:
+    long hash = 31;
+    auto sample_size = sample.columns_accessed_.size();
+    for(size_t sample_itr = 0; sample_itr < sample_size; sample_itr++){
+      hash *= ( sample.columns_accessed_[sample_itr] + 31);
+    }
+
+    return hash;
+  }
+};
+
+}
+
+

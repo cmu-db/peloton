@@ -195,8 +195,6 @@ static int GetUpperBound() {
 }
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
-                        std::vector<double> columns_accessed,
-                        double io_cost,
                         brain::SampleType sample_type,
                         std::vector<double> index_columns_accessed,
                         double selectivity) {
@@ -204,10 +202,6 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
   auto txn_count = state.transactions;
   bool status = false;
-
-  // Construct sample
-  brain::Sample layout_sample(columns_accessed, io_cost, brain::SAMPLE_TYPE_ACCESS);
-  brain::Sample index_sample(index_columns_accessed, selectivity, sample_type);
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
@@ -237,17 +231,19 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
       executor->Execute();
     }
 
-    // Record samples
-    sdbench_table->RecordLayoutSample(layout_sample);
-    sdbench_table->RecordIndexSample(index_sample);
-
     // Emit time
     timer.Stop();
-    auto time_per_transaction = timer.GetDuration();
+    auto duration = timer.GetDuration();
 
     if(txn_itr % 20 == 0) {
-      WriteOutput(time_per_transaction);
+      WriteOutput(duration);
     }
+
+    // Construct sample
+    brain::Sample index_sample(index_columns_accessed, duration, sample_type, selectivity);
+
+    // Record sample
+    sdbench_table->RecordIndexSample(index_sample);
   }
 
 }
@@ -381,18 +377,11 @@ void RunDirectTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double io_cost = 10;
-  column_ids.push_back(0);
-
-  auto columns_accessed = GetColumnsAccessed(column_ids);
-
   std::vector<double> index_columns_accessed;
   index_columns_accessed.push_back(0);
   auto selectivity = state.selectivity;
 
   ExecuteTest(executors,
-              columns_accessed,
-              io_cost,
               brain::SAMPLE_TYPE_ACCESS,
               index_columns_accessed,
               selectivity);
@@ -452,14 +441,10 @@ void RunInsertTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  std::vector<double> columns_accessed;
-  double io_cost = 0;
   std::vector<double> index_columns_accessed;
   double selectivity = 0;
 
   ExecuteTest(executors,
-              columns_accessed,
-              io_cost,
               brain::SAMPLE_TYPE_UPDATE,
               index_columns_accessed,
               selectivity);

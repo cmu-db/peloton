@@ -88,9 +88,23 @@ const std::string Sample::GetInfo() const {
   os << "Sample :: ";
 
   for (auto column : columns_accessed_) os << std::round(column) << " ";
-  os << "  ::  " << std::round(weight_);
+
+  os << "  ::  " << std::round(metric_);
 
   return os.str();
+}
+
+bool Sample::operator==(const Sample &other) const{
+
+  auto sample_size = columns_accessed_.size();
+
+  for(oid_t sample_itr = 0; sample_itr < sample_size; sample_itr++){
+    if(columns_accessed_[sample_itr] != other.columns_accessed_[sample_itr]){
+      return false;
+    }
+  }
+
+  return true;
 }
 
 }  // End brain namespace
