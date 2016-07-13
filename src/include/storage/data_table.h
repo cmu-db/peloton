@@ -17,6 +17,7 @@
 #include <queue>
 #include <map>
 #include <mutex>
+#include <set>
 
 #include "storage/abstract_table.h"
 
@@ -135,6 +136,8 @@ class DataTable : public AbstractTable {
   void DropIndexWithOid(const oid_t &index_oid);
 
   index::Index *GetIndex(const oid_t &index_offset) const;
+
+  std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
 
   oid_t GetIndexCount() const;
 
@@ -269,6 +272,9 @@ class DataTable : public AbstractTable {
 
   // INDEXES
   std::vector<index::Index *> indexes_;
+
+  // columns present in the indexes
+  std::vector<std::set<oid_t>> indexes_columns_;
 
   // CONSTRAINTS
   std::vector<catalog::ForeignKey *> foreign_keys_;

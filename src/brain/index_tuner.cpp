@@ -74,6 +74,7 @@ static void CreateIndex(storage::DataTable* table) {
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema,
       key_schema,
+      key_attrs,
       unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
@@ -202,6 +203,45 @@ void IndexTuner::Analyze(UNUSED_ATTRIBUTE storage::DataTable* table,
   // TODO: Use read write ratio to throttle index creation
 
   // Construct indices in suggested index list
+  oid_t index_count = table->GetIndexCount();
+
+  for(auto suggested_index : suggested_indices) {
+
+    std::set<oid_t> suggested_index_set(suggested_index.begin(),
+                                        suggested_index.end());
+
+    // Go over all indices
+    bool suggested_index_found = false;
+    for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
+
+      auto index_attrs = table->GetIndexAttrs(index_itr);
+
+      // Some attribute did not match
+      if(index_attrs != suggested_index_set) {
+        continue;
+      }
+
+      // Exact match
+      suggested_index_found = true;
+      break;
+    }
+
+    // Did we find suggested index ?
+    if(suggested_index_found == false) {
+      LOG_INFO("Did not find suggested index. Going to create it.");
+
+      for(auto column : suggested_index_set){
+        LOG_INFO("%u", column);
+      }
+
+      LOG_INFO("-------------------");
+    }
+    else {
+      LOG_INFO("Found suggested index.");
+    }
+
+  }
+
 
 }
 

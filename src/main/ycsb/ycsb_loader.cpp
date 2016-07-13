@@ -110,6 +110,7 @@ void CreateYCSBDatabase() {
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
       tuple_schema,
       key_schema,
+      key_attrs,
       unique);
 
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
