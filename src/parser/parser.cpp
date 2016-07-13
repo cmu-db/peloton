@@ -76,7 +76,7 @@ static Parser &Parser::GetInstance(){
   return parser;
 }
 
-parser::SQLStatement* Parser::BuildParseTree(const std::string& query_string){
+std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& query_string){
   auto stmt  = Parser::ParseSQLString(query_string);
 
   LOG_INFO("Statements Size -------------> %d" ,stmt->GetStatements().size());
@@ -86,8 +86,8 @@ parser::SQLStatement* Parser::BuildParseTree(const std::string& query_string){
     first_stmt = s;
     break;
   }
-
-  return first_stmt;
+  std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
+  return sql_stmt;
 }
 
 
