@@ -70,15 +70,15 @@ class IndexTuner {
 
  protected:
 
-  // Index building helper
-  void BuildIndex(index::Index *index, storage::DataTable *table);
-
   // Index tuning helper
   void IndexTuneHelper(storage::DataTable* table);
 
-  // Analyze
-  void Analyze(storage::DataTable* table,
-               const std::vector<brain::Sample>& samples);
+  void BuildIndex(storage::DataTable *table,
+                  index::Index *index);
+
+  void BuildIndices(storage::DataTable *table);
+
+  void Analyze(storage::DataTable* table);
 
  private:
 
@@ -102,6 +102,9 @@ class IndexTuner {
 
   // Threshold sample count
   oid_t sample_count_threshold = 300;
+
+  // # of tile groups to be indexed per iteration
+  oid_t max_tile_groups_indexed = 50;
 
 };
 
