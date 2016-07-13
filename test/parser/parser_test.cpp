@@ -16,6 +16,7 @@
 
 #include "common/harness.h"
 #include "common/macros.h"
+#include "common/logger.h"
 #include "parser/parser.h"
 
 namespace peloton {
@@ -30,8 +31,8 @@ class ParserTest : public PelotonTest {};
 void ParseSQLStrings(UNUSED_ATTRIBUTE const std::vector<std::string>& sql_strings,
                      UNUSED_ATTRIBUTE const bool expect_failure) {
 
-  LOG_INFO("Query String: %s", query_string.c_str());
   std::string query_string = sql_strings[0];
+  LOG_INFO("Query String: %s", query_string.c_str());
 
   // This test case works without the last delete statement.
   // When the delete statement is added, it crashes
