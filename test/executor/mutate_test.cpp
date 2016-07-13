@@ -138,6 +138,7 @@ void UpdateTuple(storage::DataTable *table,
     ;
 
   txn_manager.CommitTransaction();
+
 }
 
 void DeleteTuple(storage::DataTable *table,

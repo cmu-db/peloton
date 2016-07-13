@@ -100,11 +100,15 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
   statement.reset(new Statement(statement_name, query_string));
 
   auto& peloton_parser = parser::Parser::GetInstance();
-  auto parse_tree = peloton_parser.BuildParseTree(query_string);
+  auto sql_stmt = peloton_parser.BuildParseTree(query_string);
+
+  std::unique_ptr<parser::SQLStatement> parse_tree (sql_stmt);
 
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(parse_tree));
 
+  LOG_INFO("Statement Prepared!");
   return statement;
+
 }
 
 

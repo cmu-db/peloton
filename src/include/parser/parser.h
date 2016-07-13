@@ -45,7 +45,7 @@ class Parser {
 
   static Parser &GetInstance();
 
-  std::unique_ptr<parser::SQLStatement> BuildParseTree(const std::string& query_string);
+  parser::SQLStatement* BuildParseTree(const std::string& query_string);
 };
 
 }  // End parser namespace

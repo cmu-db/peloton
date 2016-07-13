@@ -28,7 +28,7 @@ struct DeleteStatement : SQLStatement {
       : SQLStatement(STATEMENT_TYPE_DELETE), table_name(NULL), expr(NULL){};
 
   virtual ~DeleteStatement() {
-    delete table_name;
+    free(table_name);
     delete expr;
   }
 

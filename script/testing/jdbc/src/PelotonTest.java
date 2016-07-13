@@ -33,7 +33,7 @@ public class PelotonTest {
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = 1";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id < 2";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
 

@@ -60,7 +60,17 @@ SKIP_FILES_LIST = [
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
     "src/include/parser/sql_scanner.h",
-    "src/parser/parser_utils.cpp"
+    "src/parser/parser_utils.cpp",
+    "src/include/parser/sql_statement.h",
+    "src/include/parser/statement_create.h",
+    "src/include/parser/statement_delete.h",
+    "src/include/parser/statement_drop.h",
+    "src/include/parser/statement_execute.h",
+    "src/include/parser/statement_import.h",
+    "src/include/parser/statement_insert.h",
+    "src/include/parser/statement_prepare.h",
+    "src/include/parser/statement_update.h",
+    "src/parser/table_ref.cpp"
 ];
 
 ## ==============================================

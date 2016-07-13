@@ -1713,7 +1713,7 @@ class Value {
     if (IsNull()) {
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      // @author: aelroby removed tihs extra byte write because it is corrupted
+      // @author: aelroby removed this extra byte write because it is corrupted
       PL_MEMSET(storage, 0, maxLength);
 
       /*
@@ -1730,7 +1730,7 @@ class Value {
 
       // Always reSet all the bits regardless of the actual length of the value
       // 1 additional byte for the length prefix
-      // @author: aelroby removed tihs extra byte write because it is corrupted
+      // @author: aelroby removed this extra byte write because it is corrupted
       PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {

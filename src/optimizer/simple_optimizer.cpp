@@ -131,7 +131,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
   switch (parse_item_node_type) {
     case STATEMENT_TYPE_DROP: {
-      LOG_INFO("------------------------------------------------I got the power -----------------------------------------------------");
+    	LOG_INFO("Adding Drop plan...");
       std::unique_ptr<planner::AbstractPlan> child_DropPlan(
           new planner::DropPlan((parser::DropStatement*) parse_tree.get()));
       child_plan = std::move(child_DropPlan);
@@ -139,6 +139,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       break;
 
     case STATEMENT_TYPE_CREATE: {
+    	LOG_INFO("Adding Create plan...");
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(
           new planner::CreatePlan((parser::CreateStatement*) parse_tree.get()));
       child_plan = std::move(child_CreatePlan);
@@ -146,12 +147,14 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       break;
 
     case STATEMENT_TYPE_SELECT: {
+    	LOG_INFO("Adding Select plan...");
       std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan(
           new planner::SeqScanPlan());
       child_plan = std::move(child_SeqScanPlan);
     }
 
     case STATEMENT_TYPE_INSERT: {
+    	LOG_INFO("Adding Insert plan...");
       std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
           new planner::InsertPlan((parser::InsertStatement*) parse_tree.get()));
       child_plan = std::move(child_InsertPlan);
@@ -159,6 +162,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       break;
 
     case STATEMENT_TYPE_DELETE: {
+    	LOG_INFO("Adding Delete plan...");
           std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
               new planner::DeletePlan((parser::DeleteStatement*) parse_tree.get()));
           child_plan = std::move(child_InsertPlan);
@@ -166,6 +170,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
      break;
 
     case STATEMENT_TYPE_UPDATE: {
+    	LOG_INFO("Adding Update plan...");
           std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
               new planner::UpdatePlan((parser::UpdateStatement*) parse_tree.get()));
           child_plan = std::move(child_InsertPlan);
