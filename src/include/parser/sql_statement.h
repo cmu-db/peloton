@@ -56,7 +56,8 @@ class SQLStatementList {
     // clean up statements
     for (auto stmt : statements) delete stmt;
 
-    delete((char*)parser_msg);
+    free((char*)parser_msg);
+
   }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }

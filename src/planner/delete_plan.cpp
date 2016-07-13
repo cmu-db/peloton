@@ -33,6 +33,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *parse_tree) {
   }
   else {
 	  expr = parse_tree->expr;
+	  LOG_INFO("Expression Info: %s", expr->GetInfo().c_str());
 	  std::vector<oid_t> column_ids = {};
 	  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
 	      new planner::SeqScanPlan(target_table_, expr, column_ids));

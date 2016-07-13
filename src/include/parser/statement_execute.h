@@ -26,7 +26,7 @@ struct ExecuteStatement : SQLStatement {
       : SQLStatement(STATEMENT_TYPE_EXECUTE), name(NULL), parameters(NULL) {}
 
   virtual ~ExecuteStatement() {
-    delete (name);
+    free (name);
 
     if (parameters) {
       for (auto expr : *parameters) delete expr;
