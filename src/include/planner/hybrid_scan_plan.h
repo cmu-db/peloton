@@ -33,15 +33,7 @@ class HybridScanPlan : public AbstractScan {
                  expression::AbstractExpression *predicate,
                  const std::vector<oid_t> &column_ids,
                  const IndexScanPlan::IndexScanDesc &index_scan_desc,
-                 HybridScanType hybrid_scan_type)
-      : AbstractScan(table, predicate, column_ids),
-        type_(hybrid_scan_type),
-        column_ids_(column_ids),
-        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-        expr_types_(std::move(index_scan_desc.expr_types)),
-        values_(std::move(index_scan_desc.values)),
-        runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-        index_(index_scan_desc.index){}
+                 HybridScanType hybrid_scan_type);
 
   index::Index *GetDataIndex() const { return this->index_; }
 

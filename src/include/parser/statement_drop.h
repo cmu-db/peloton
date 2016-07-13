@@ -35,16 +35,18 @@ struct DropStatement : SQLStatement {
       : SQLStatement(STATEMENT_TYPE_DROP),
         type(type),
         name(NULL),
-        table_name(NULL) {}
+        table_name(NULL),
+        missing(false) {}
 
   virtual ~DropStatement() {
-    delete (name);
-    delete (table_name);
+    free (name);
+    free (table_name);
   }
 
   EntityType type;
   char* name;
   char* table_name;
+  bool missing;
 };
 
 }  // End parser namespace

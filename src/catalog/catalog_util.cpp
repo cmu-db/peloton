@@ -21,13 +21,22 @@ namespace catalog {
  * Inserts a tuple in a table
  */
 void InsertTuple(storage::DataTable *table, std::unique_ptr<storage::Tuple> tuple) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = peloton::concurrency::current_txn;
+  bool single_statement_txn = false;
+  if (txn == nullptr) {
+	single_statement_txn = true;
+    txn = txn_manager.BeginTransaction();
+  }
   std::unique_ptr<executor::ExecutorContext> context(
         new executor::ExecutorContext(txn));
   planner::InsertPlan node(table, std::move(tuple));
   executor::InsertExecutor executor(&node, context.get());
   executor.Init();
   executor.Execute();
+  if(single_statement_txn){
+    txn_manager.CommitTransaction();
+  }
 }
 
 void DeleteTuple(storage::DataTable *table, oid_t id){

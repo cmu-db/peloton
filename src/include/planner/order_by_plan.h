@@ -13,13 +13,7 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "abstract_plan.h"
-#include "common/types.h"
-#include "expression/abstract_expression.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace planner {
@@ -37,10 +31,7 @@ class OrderByPlan : public AbstractPlan {
 
   OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
-              const std::vector<oid_t> &output_column_ids)
-      : sort_keys_(sort_keys),
-        descend_flags_(descend_flags),
-        output_column_ids_(output_column_ids) {}
+              const std::vector<oid_t> &output_column_ids);
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
