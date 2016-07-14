@@ -14,6 +14,8 @@
 
 #include "parser/sql_statement.h"
 
+#include "common/logger.h"
+
 namespace peloton {
 namespace parser {
 
@@ -25,15 +27,16 @@ namespace parser {
  */
 struct DeleteStatement : SQLStatement {
   DeleteStatement()
-      : SQLStatement(STATEMENT_TYPE_DELETE), table_name(NULL), expr(NULL){};
+      : SQLStatement(STATEMENT_TYPE_DELETE), table_name(NULL), expr(NULL){
+  };
 
   virtual ~DeleteStatement() {
-    free(table_name);
+    delete table_name;
     delete expr;
   }
 
-  char* table_name;
-  expression::AbstractExpression* expr;
+  char* table_name = nullptr;
+  expression::AbstractExpression* expr = nullptr;
 };
 
 }  // End parser namespace
