@@ -17,6 +17,7 @@
 #include <queue>
 #include <map>
 #include <mutex>
+#include <set>
 
 #include "storage/abstract_table.h"
 
@@ -29,15 +30,6 @@ extern LayoutType peloton_layout_mode;
 //===--------------------------------------------------------------------===//
 // Configuration Variables
 //===--------------------------------------------------------------------===//
-
-// Projectivity for determining FSM layout
-extern double peloton_projectivity;
-
-// # of groups
-extern int peloton_num_groups;
-
-// FSM or not ?
-extern bool peloton_fsm;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
@@ -145,6 +137,8 @@ class DataTable : public AbstractTable {
 
   index::Index *GetIndex(const oid_t &index_offset) const;
 
+  std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
+
   oid_t GetIndexCount() const;
 
   //===--------------------------------------------------------------------===//
@@ -182,15 +176,27 @@ class DataTable : public AbstractTable {
 
   void ResetDirty();
 
-  const column_map_type &GetDefaultPartition();
-
   //===--------------------------------------------------------------------===//
-  // Clustering
+  // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordSample(const brain::Sample &sample);
+  void RecordLayoutSample(const brain::Sample &sample);
 
-  void UpdateDefaultPartition();
+  const std::vector<brain::Sample>& GetLayoutSamples() const;
+
+  void ClearLayoutSamples();
+
+  void SetDefaultLayout(const column_map_type& layout);
+
+  //===--------------------------------------------------------------------===//
+  // INDEX TUNER
+  //===--------------------------------------------------------------------===//
+
+  void RecordIndexSample(const brain::Sample &sample);
+
+  const std::vector<brain::Sample>& GetIndexSamples() const;
+
+  void ClearIndexSamples();
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
@@ -201,9 +207,6 @@ class DataTable : public AbstractTable {
   bool HasUniqueConstraints() { return (unique_constraint_count_ > 0); }
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
-
-  column_map_type GetStaticColumnMap(const std::string &table_name,
-                                     const oid_t &column_count);
 
   std::map<oid_t, oid_t> GetColumnMapStats();
 
@@ -264,12 +267,14 @@ class DataTable : public AbstractTable {
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  // tile group mutex
-  // TODO: don't know why need this mutex --Yingjun
-  std::mutex tile_group_mutex_;
+  // data table mutex
+  std::mutex data_table_mutex_;
 
   // INDEXES
   std::vector<index::Index *> indexes_;
+
+  // columns present in the indexes
+  std::vector<std::set<oid_t>> indexes_columns_;
 
   // CONSTRAINTS
   std::vector<catalog::ForeignKey *> foreign_keys_;
@@ -286,8 +291,9 @@ class DataTable : public AbstractTable {
   // dirty flag
   bool dirty_ = false;
 
-  // clustering mutex
-  std::mutex clustering_mutex_;
+  //===--------------------------------------------------------------------===//
+  // TUNING MEMBERS
+  //===--------------------------------------------------------------------===//
 
   // adapt table
   bool adapt_table_ = true;
@@ -295,8 +301,18 @@ class DataTable : public AbstractTable {
   // default partition map for table
   column_map_type default_partition_;
 
-  // samples for clustering
-  std::vector<brain::Sample> samples_;
+  // samples for layout tuning
+  std::vector<brain::Sample> layout_samples_;
+
+  // layout samples mutex
+  std::mutex layout_samples_mutex_;
+
+  // samples for layout tuning
+  std::vector<brain::Sample> index_samples_;
+
+  // index samples mutex
+  std::mutex index_samples_mutex_;
+
 };
 
 }  // End storage namespace

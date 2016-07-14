@@ -304,7 +304,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   PL_ASSERT(!done_);
 
-  std::vector<ItemPointer> tuple_locations;
+  std::vector<ItemPointer *> tuple_location_ptrs;
 
   // Grab info from plan node and check it
   const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
@@ -316,22 +316,25 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   PL_ASSERT(index_->GetIndexType() != INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
-    index_->ScanAllKeys(tuple_locations);
+    index_->ScanAllKeys(tuple_location_ptrs);
   } else {
     index_->Scan(values_, key_column_ids_, expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_locations);
+                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
   LOG_TRACE("Tuple_locations.size(): %lu", tuple_locations.size());
 
-  if (tuple_locations.size() == 0) return false;
+  if (tuple_location_ptrs.size() == 0) {
+    return false;
+  }
 
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
   std::map<oid_t, std::vector<oid_t>> visible_tuples;
   // for every tuple that is found in the index.
-  for (auto tuple_location : tuple_locations) {
+  for (auto tuple_location_ptr : tuple_location_ptrs) {
+    auto tuple_location = *tuple_location_ptr;
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(tuple_location.block);
     auto tile_group_header = tile_group.get()->GetHeader();

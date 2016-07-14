@@ -43,8 +43,6 @@ double peloton_projectivity;
 
 int peloton_num_groups;
 
-bool peloton_fsm;
-
 namespace peloton {
 namespace storage {
 
@@ -368,11 +366,11 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
-        std::vector<ItemPointer> locations;
-        index->ScanKey(key.get(), locations);
+        std::vector<ItemPointer*> location_ptrs;
+        index->ScanKey(key.get(), location_ptrs);
 
         // if this key doesn't exist in the refered column
-        if (locations.size() == 0) {
+        if (location_ptrs.size() == 0) {
           return false;
         }
 
@@ -485,13 +483,8 @@ column_map_type DataTable::GetTileGroupLayout(LayoutType layout_type) {
   }
   // hybrid layout map
   else if (layout_type == LAYOUT_TYPE_HYBRID) {
-    // TODO: Fallback option for regular tables
-    if (col_count < 10) {
-      for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
-        column_map[col_itr] = std::make_pair(0, col_itr);
-      }
-    } else {
-      column_map = GetStaticColumnMap(table_name, col_count);
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+      column_map[col_itr] = std::make_pair(0, col_itr);
     }
   } else {
     throw Exception("Unknown tilegroup layout option : " +
@@ -660,8 +653,16 @@ const std::string DataTable::GetInfo() const {
 
 void DataTable::AddIndex(index::Index *index) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
+
+    // Add index
     indexes_.push_back(index);
+
+    // Add index column info
+    auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
+    std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
+
+    indexes_columns_.push_back(index_columns_set);
   }
 
   // Update index stats
@@ -682,7 +683,7 @@ index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
 
 void DataTable::DropIndexWithOid(const oid_t &index_id) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
 
     oid_t index_offset = 0;
     for (auto index : indexes_) {
@@ -693,6 +694,9 @@ void DataTable::DropIndexWithOid(const oid_t &index_id) {
 
     // Drop the index
     indexes_.erase(indexes_.begin() + index_offset);
+
+    // Drop index column info
+    indexes_columns_.erase(indexes_columns_.begin() + index_offset);
   }
 }
 
@@ -700,6 +704,12 @@ index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
   PL_ASSERT(index_offset < indexes_.size());
   auto index = indexes_.at(index_offset);
   return index;
+}
+
+std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
+  PL_ASSERT(index_offset < indexes_columns_.size());
+  auto index_attrs = indexes_columns_.at(index_offset);
+  return index_attrs;
 }
 
 oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
@@ -710,7 +720,7 @@ oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
 
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
     catalog::Schema *schema = this->GetSchema();
     catalog::Constraint constraint(CONSTRAINT_TYPE_FOREIGN,
                                    key->GetConstraintName());
@@ -732,7 +742,7 @@ catalog::ForeignKey *DataTable::GetForeignKey(const oid_t &key_offset) const {
 
 void DataTable::DropForeignKey(const oid_t &key_offset) {
   {
-    std::lock_guard<std::mutex> lock(tile_group_mutex_);
+    std::lock_guard<std::mutex> lock(data_table_mutex_);
     PL_ASSERT(key_offset < foreign_keys_.size());
     foreign_keys_.erase(foreign_keys_.begin() + key_offset);
   }
@@ -859,16 +869,44 @@ storage::TileGroup *DataTable::TransformTileGroup(
   return new_tile_group.get();
 }
 
-void DataTable::RecordSample(const brain::Sample &sample) {
-  // Add sample
+void DataTable::RecordLayoutSample(const brain::Sample &sample) {
+  // Add layout sample
   {
-    std::lock_guard<std::mutex> lock(clustering_mutex_);
-    samples_.push_back(sample);
+    std::lock_guard<std::mutex> lock(layout_samples_mutex_);
+    layout_samples_.push_back(sample);
   }
 }
 
-const column_map_type &DataTable::GetDefaultPartition() {
-  return default_partition_;
+const std::vector<brain::Sample>& DataTable::GetLayoutSamples() const {
+  return layout_samples_;
+}
+
+void DataTable::ClearLayoutSamples() {
+  // Clear layout samples list
+  {
+    std::lock_guard<std::mutex> lock(layout_samples_mutex_);
+    layout_samples_.clear();
+  }
+}
+
+void DataTable::RecordIndexSample(const brain::Sample &sample) {
+  // Add index sample
+  {
+    std::lock_guard<std::mutex> lock(index_samples_mutex_);
+    index_samples_.push_back(sample);
+  }
+}
+
+const std::vector<brain::Sample>& DataTable::GetIndexSamples() const {
+  return index_samples_;
+}
+
+void DataTable::ClearIndexSamples() {
+  // Clear index samples list
+  {
+    std::lock_guard<std::mutex> lock(index_samples_mutex_);
+    index_samples_.clear();
+  }
 }
 
 std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
@@ -887,78 +925,8 @@ std::map<oid_t, oid_t> DataTable::GetColumnMapStats() {
   return std::move(column_map_stats);
 }
 
-void DataTable::UpdateDefaultPartition() {
-  oid_t column_count = GetSchema()->GetColumnCount();
-
-  // TODO: Number of clusters and new sample weight
-  oid_t cluster_count = 4;
-  double new_sample_weight = 0.01;
-
-  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
-
-  // Process all samples
-  {
-    std::lock_guard<std::mutex> lock(clustering_mutex_);
-
-    // Check if we have any samples
-    if (samples_.empty()) return;
-
-    for (auto sample : samples_) {
-      clusterer.ProcessSample(sample);
-    }
-
-    samples_.clear();
-  }
-
-  // TODO: Max number of tiles
-  default_partition_ = clusterer.GetPartitioning(2);
-}
-
-//===--------------------------------------------------------------------===//
-// UTILS
-//===--------------------------------------------------------------------===//
-
-column_map_type DataTable::GetStaticColumnMap(const std::string &table_name,
-                                              const oid_t &column_count) {
-  column_map_type column_map;
-
-  // HYADAPT
-  if (table_name == "SDBENCHTABLE") {
-
-    oid_t split_point = peloton_projectivity * (column_count - 1);
-    oid_t rest_column_count = (column_count - 1) - split_point;
-
-    LOG_TRACE("peloton_projectivity: %f column_count: %u split_point : %u",
-              peloton_projectivity, column_count, split_point);
-
-    column_map[0] = std::make_pair(0, 0);
-    for (oid_t column_id = 0; column_id < split_point; column_id++) {
-      auto sdbench_column_id = sdbench_column_ids[column_id];
-      column_map[sdbench_column_id] = std::make_pair(0, column_id + 1);
-    }
-
-    for (oid_t column_id = 0; column_id < rest_column_count; column_id++) {
-      auto sdbench_column_id = sdbench_column_ids[split_point + column_id];
-      column_map[sdbench_column_id] = std::make_pair(1, column_id);
-    }
-
-  }
-  // YCSB
-  else if (table_name == "USERTABLE") {
-    column_map[0] = std::make_pair(0, 0);
-
-    for (oid_t column_id = 1; column_id < column_count; column_id++) {
-      column_map[column_id] = std::make_pair(1, column_id - 1);
-    }
-  }
-  // FALLBACK
-  else {
-    for (oid_t column_id = 0; column_id < column_count; column_id++) {
-      column_map[column_id] = std::make_pair(0, column_id);
-    }
-  }
-
-  return std::move(column_map);
+void DataTable::SetDefaultLayout(const column_map_type& layout) {
+  default_partition_ = layout;
 }
 
 }  // End storage namespace
