@@ -106,6 +106,9 @@ class IndexTuner {
   // # of tile groups to be indexed per iteration
   oid_t max_tile_groups_indexed = 50;
 
+  // storage footprint (MB)
+  size_t max_storage_footprint = 2 * 1024;
+
 };
 
 
