@@ -178,12 +178,15 @@ class ComparisonExpression : public AbstractExpression {
  public:
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
-      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {}
+      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {
+    LOG_INFO("Left  : %s", left->GetInfo().c_str());
+    LOG_INFO("Right : %s", right->GetInfo().c_str());
+  }
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         const AbstractTuple *tuple2,
                         executor::ExecutorContext *context) const override {
-    LOG_TRACE("Evaluate %s. left %s, right %s. ret=%s", OP::op_name(),
+    LOG_INFO("Evaluate %s. left %s, right %s. ret=%s", OP::op_name(),
               typeid(*(m_left)).name(), typeid(*(m_right)).name(),
               traceEval(tuple1, tuple2, context));
 

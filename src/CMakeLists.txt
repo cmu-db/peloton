@@ -25,14 +25,11 @@ add_library(peloton-parser STATIC ${SQLParser_LOCATION} ${SQLScanner_LOCATION})
 set(Peloton_LINKER_LIBS peloton-parser ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-parser)
 
-# --[ Postgres files
+# --[ Parser Flags
 
-file(GLOB_RECURSE postgres_srcs ${PROJECT_SOURCE_DIR}/src/parser/*.cpp)
-set(POSTGRES_FLAGS "-w -Wno-error -fpermissive")
-
-foreach(postgres_src ${postgres_srcs} )
-	set_source_files_properties(${postgres_src} PROPERTIES COMPILE_FLAGS ${POSTGRES_FLAGS})
-endforeach(postgres_src ${postgres_srcs})    
+set(PARSER_FLAGS "-w -Wno-error -fpermissive")
+set_source_files_properties(${SQLParser_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
+set_source_files_properties(${SQLScanner_LOCATION} PROPERTIES COMPILE_FLAGS ${PARSER_FLAGS})
 
 # --[ Peloton library
 

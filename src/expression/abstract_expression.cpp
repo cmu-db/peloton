@@ -27,6 +27,12 @@
 namespace peloton {
 namespace expression {
 
+AbstractExpression::AbstractExpression(ExpressionType expr_type)
+: m_type(expr_type),
+  m_valueType(VALUE_TYPE_INVALID),
+  m_hasParameter(true)
+{}
+
 AbstractExpression::AbstractExpression(ExpressionType expr_type, ValueType type,
                                        AbstractExpression *left,
                                        AbstractExpression *right)

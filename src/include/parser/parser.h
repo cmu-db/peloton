@@ -10,18 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*-------------------------------------------------------------------------
- *
- * parser.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *
- *
- *-------------------------------------------------------------------------
- */
-
 #pragma once
 
 #include "parser/statements.h"
@@ -45,7 +33,7 @@ class Parser {
 
   static Parser &GetInstance();
 
-  parser::SQLStatement* BuildParseTree(const std::string& query_string);
+  std::unique_ptr<parser::SQLStatement> BuildParseTree(const std::string& query_string);
 };
 
 }  // End parser namespace

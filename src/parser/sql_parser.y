@@ -19,6 +19,7 @@
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
+#include "expression/parser_expression.h"
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
@@ -723,12 +724,12 @@ comp_expr:
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); */ }
+		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
 	;
 
 column_name:
-		IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); */ }
-	|	IDENTIFIER '.' IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); */ }
+		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
 	;
 
 literal:
@@ -752,13 +753,13 @@ int_literal:
 	;
 
 star_expr:
-		'*' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_STAR); */ } 
+		'*' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR); }
 	;
 
 
 placeholder_expr:
 		'?' {
-			/* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column) */ ;
+			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
 			yyloc.placeholder_list.push_back($$);
 		}
 	;

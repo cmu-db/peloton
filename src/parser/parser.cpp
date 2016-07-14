@@ -10,18 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*-------------------------------------------------------------------------
- *
- * parser.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *
- *
- *-------------------------------------------------------------------------
- */
-
 #include <iostream>
 #include <string>
 
@@ -71,15 +59,15 @@ SQLStatementList* Parser::ParseSQLString(const std::string& text) {
   return ParseSQLString(text.c_str());
 }
 
-static Parser &Parser::GetInstance(){
+Parser &Parser::GetInstance(){
   static Parser parser;
   return parser;
 }
 
-parser::SQLStatement* Parser::BuildParseTree(const std::string& query_string){
+std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& query_string){
   auto stmt  = Parser::ParseSQLString(query_string);
 
-  LOG_INFO("Statements Size -------------> %d" ,stmt->GetStatements().size());
+  LOG_INFO("Statements Size -------------> %lu" ,stmt->GetStatements().size());
   SQLStatement* first_stmt = nullptr;
 
   for(auto s : stmt->GetStatements()){
@@ -87,7 +75,8 @@ parser::SQLStatement* Parser::BuildParseTree(const std::string& query_string){
     break;
   }
 
-  return first_stmt;
+  std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
+  return sql_stmt;
 }
 
 
