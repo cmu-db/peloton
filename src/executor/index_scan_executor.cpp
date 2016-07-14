@@ -322,12 +322,13 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-  LOG_TRACE("Tuple_locations.size(): %lu", tuple_locations.size());
 
   if (tuple_location_ptrs.size() == 0) {
     return false;
   }
 
+  LOG_TRACE("Tuple locations: %lu", tuple_location_ptrs.size());
+  
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
