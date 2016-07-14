@@ -84,61 +84,116 @@ oid_t sdbench_tuple_counter = -1000000;
 
 std::vector<oid_t> column_counts = {50, 500};
 
-expression::AbstractExpression *CreatePredicate(const int tuple_start_offset,
-                                                const int tuple_end_offset) {
-  // ATTR0 >= LOWER_BOUND && < UPPER_BOUND
+static int GetLowerBound() {
+  int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  int predicate_offset = 0.1 * tuple_count;
+
+  LOG_TRACE("Tuple count : %d", tuple_count);
+
+  int lower_bound = predicate_offset;
+  return lower_bound;
+}
+
+static int GetUpperBound() {
+  int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
+  int selected_tuple_count = state.selectivity * tuple_count;
+  int predicate_offset = 0.1 * tuple_count;
+
+  int upper_bound = predicate_offset + selected_tuple_count;
+  return upper_bound;
+}
+
+expression::AbstractExpression *CreateSimpleScanPredicate(oid_t key_attr,
+                                                          ExpressionType expression_type,
+                                                          oid_t constant){
 
   // First, create tuple value expression.
+  oid_t left_tuple_idx = 0;
   expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER,
+                                                    left_tuple_idx,
+                                                    key_attr);
 
   // Second, create constant value expression.
-  Value constant_value_left = ValueFactory::GetIntegerValue(tuple_start_offset);
+  Value constant_value_left = ValueFactory::GetIntegerValue(constant);
 
   expression::AbstractExpression *constant_value_expr_left =
       expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
 
   // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate_left =
+  expression::AbstractExpression *predicate =
       expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+          expression_type,
           tuple_value_expr_left,
           constant_value_expr_left);
-
-  expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
-
-  Value constant_value_right = ValueFactory::GetIntegerValue(tuple_end_offset);
-
-  expression::AbstractExpression *constant_value_expr_right =
-      expression::ExpressionUtil::ConstantValueFactory(constant_value_right);
-
-  expression::AbstractExpression *predicate_right =
-      expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN,
-          tuple_value_expr_right,
-          constant_value_expr_right);
-
-  expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                                     predicate_left,
-                                                     predicate_right);
 
   return predicate;
 }
 
-void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
-                              std::vector<ExpressionType>& expr_types,
-                              std::vector<Value>& values,
-                              const int tuple_start_offset,
-                              const int tuple_end_offset) {
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
+expression::AbstractExpression *CreateScanPredicate(std::vector<oid_t> key_attrs) {
 
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
+  const int tuple_start_offset = GetLowerBound();
+  const int tuple_end_offset = GetUpperBound();
+
+  LOG_TRACE("Lower bound : %d", tuple_start_offset);
+  LOG_TRACE("Upper bound : %d", tuple_end_offset);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Go over all key_attrs
+  for(auto key_attr : key_attrs) {
+
+    // ATTR >= LOWER_BOUND && < UPPER_BOUND
+
+    auto left_predicate = CreateSimpleScanPredicate(key_attr,
+                                                    EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                                                    tuple_start_offset);
+
+    auto right_predicate = CreateSimpleScanPredicate(key_attr,
+                                                     EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                                                     tuple_end_offset);
+
+    expression::AbstractExpression *attr_predicate =
+        expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                       left_predicate,
+                                                       right_predicate);
+
+    // Build complex predicate
+    if(predicate == nullptr){
+      predicate = attr_predicate;
+    }
+    else {
+      // Join predicate with given attribute predicate
+      predicate =  expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                                  predicate,
+                                                                  attr_predicate);
+    }
+
+  }
+
+  return predicate;
+}
+
+void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
+                              std::vector<oid_t>& key_column_ids,
+                              std::vector<ExpressionType>& expr_types,
+                              std::vector<Value>& values) {
+  const int tuple_start_offset = GetLowerBound();
+  const int tuple_end_offset = GetUpperBound();
+
+  // Go over all key_attrs
+  for(auto key_attr : key_attrs) {
+
+    key_column_ids.push_back(key_attr);
+    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+    values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
+
+    key_column_ids.push_back(key_attr);
+    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+    values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
+
+  }
+
 }
 
 std::ofstream out("outputfile.summary");
@@ -173,25 +228,6 @@ static void WriteOutput(double duration) {
   out << duration << "\n";
 
   out.flush();
-}
-
-static int GetLowerBound() {
-  int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  int predicate_offset = 0.1 * tuple_count;
-
-  LOG_TRACE("Tuple count : %d", tuple_count);
-
-  int lower_bound = predicate_offset;
-  return lower_bound;
-}
-
-static int GetUpperBound() {
-  int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
-  int selected_tuple_count = state.selectivity * tuple_count;
-  int predicate_offset = 0.1 * tuple_count;
-
-  int upper_bound = predicate_offset + selected_tuple_count;
-  return upper_bound;
 }
 
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
@@ -282,6 +318,11 @@ index::Index *PickIndex(storage::DataTable* table,
 
     auto index_attrs = table->GetIndexAttrs(index_itr);
 
+    LOG_INFO("Available Index :: ");
+    for(auto index_attr : index_attrs){
+      LOG_INFO("%u", index_attr);
+    }
+
     // Some attribute did not match
     if(index_attrs != query_attrs_set) {
       continue;
@@ -296,19 +337,17 @@ index::Index *PickIndex(storage::DataTable* table,
 
   // Found index
   if(query_index_found == true) {
+    LOG_INFO("Found available Index");
     index = table->GetIndex(index_itr);
+  }
+  else {
+    LOG_INFO("Did not find available index");
   }
 
   return index;
 }
 
 void RunDirectTest() {
-  const int lower_bound = GetLowerBound();
-  const int upper_bound = GetUpperBound();
-
-  LOG_TRACE("Lower bound : %d", lower_bound);
-  LOG_TRACE("Upper bound : %d", upper_bound);
-
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -329,8 +368,30 @@ void RunDirectTest() {
     column_ids.push_back(sdbench_column_ids[col_itr]);
   }
 
+  std::vector<oid_t> tuple_key_attrs;
+  std::vector<oid_t> index_key_attrs;
+
+  auto rand_sample = rand() % 3;
+  if(rand_sample == 0) {
+    tuple_key_attrs = {0, 1};
+    index_key_attrs = {0, 1};
+  }
+  else if(rand_sample == 1){
+    tuple_key_attrs = {3, 4};
+    index_key_attrs = {0, 1};
+  }
+  else {
+    tuple_key_attrs = {2};
+    index_key_attrs = {0};
+  }
+
+  LOG_INFO("Direct :: ");
+  for(auto tuple_key_attr : tuple_key_attrs){
+    LOG_INFO("%u", tuple_key_attr);
+  }
+
   // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound, upper_bound);
+  auto predicate = CreateScanPredicate(tuple_key_attrs);
 
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
@@ -339,14 +400,14 @@ void RunDirectTest() {
   std::vector<Value> values;
   std::vector<expression::AbstractExpression *> runtime_keys;
 
-  CreateIndexScanPredicate(key_column_ids, expr_types, values,
-                           lower_bound, upper_bound);
+  // Create index scan predicate
+  CreateIndexScanPredicate(index_key_attrs, key_column_ids, expr_types, values);
 
   // Determine hybrid scan type
   auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
 
   // Pick index
-  auto index = PickIndex(sdbench_table.get(), key_column_ids);
+  auto index = PickIndex(sdbench_table.get(), tuple_key_attrs);
 
   if(index != nullptr) {
     index_scan_desc = planner::IndexScanPlan::IndexScanDesc(index,
@@ -407,8 +468,8 @@ void RunDirectTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  std::vector<double> index_columns_accessed;
-  index_columns_accessed.push_back(0);
+  std::vector<double> index_columns_accessed(tuple_key_attrs.begin(),
+                                             tuple_key_attrs.end());
   auto selectivity = state.selectivity;
 
   ExecuteTest(executors,
@@ -485,42 +546,21 @@ void RunInsertTest() {
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
+  double repeat_count = 30;
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  for(oid_t repeat_itr = 0; repeat_itr < repeat_count; repeat_itr++){
 
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+    state.projectivity = direct_low_proj;
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+    state.write_ratio = insert_write_ratio;
+    state.operator_type = OPERATOR_TYPE_INSERT;
+    RunInsertTest();
+    state.write_ratio = 0.0;
 
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+  }
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
 }
 
 void RunAdaptExperiment() {

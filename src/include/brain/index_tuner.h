@@ -101,7 +101,7 @@ class IndexTuner {
   oid_t sleep_duration = 10;
 
   // Threshold sample count
-  oid_t sample_count_threshold = 300;
+  oid_t sample_count_threshold = 100;
 
   // # of tile groups to be indexed per iteration
   oid_t max_tile_groups_indexed = 50;

@@ -263,12 +263,16 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
       // Add adhoc index
       AddIndex(table, suggested_index_set);
-
-      LOG_INFO("-------------------");
     }
     else {
       LOG_INFO("Found suggested index.");
     }
+
+    for(auto attr : suggested_index_set){
+      LOG_INFO("%u", attr);
+    }
+
+    LOG_INFO("-------------------");
 
   }
 
@@ -318,8 +322,6 @@ void IndexTuner::Stop(){
 void IndexTuner::AddTable(storage::DataTable* table){
   {
     std::lock_guard<std::mutex> lock(index_tuner_mutex);
-    LOG_INFO("table : %p", table);
-
     tables.push_back(table);
   }
 }
