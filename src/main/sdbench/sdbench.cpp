@@ -31,7 +31,6 @@ configuration state;
 void RunBenchmark() {
   // Initialize settings
   peloton_layout_mode = state.layout_mode;
-  peloton_projectivity = state.projectivity;
 
   // Generate sequence
   GenerateSequence(state.column_count);

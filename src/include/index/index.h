@@ -17,6 +17,7 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <set>
 
 #include "common/printable.h"
 #include "common/types.h"
@@ -47,17 +48,22 @@ class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
-  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
+  IndexMetadata(std::string index_name,
+                oid_t index_oid,
+                IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
-                const catalog::Schema *key_schema, bool unique_keys)
-      : index_name(index_name),
-        index_oid(index_oid),
-        method_type(method_type),
-        index_type(index_type),
-        tuple_schema(tuple_schema),
-        key_schema(key_schema),
-        unique_keys(unique_keys) {}
+                const catalog::Schema *key_schema,
+                const std::vector<oid_t>& key_attrs,
+                bool unique_keys)
+ : index_name(index_name),
+   index_oid(index_oid),
+   method_type(method_type),
+   index_type(index_type),
+   tuple_schema(tuple_schema),
+   key_schema(key_schema),
+   key_attrs(key_attrs),
+   unique_keys(unique_keys) {}
 
   ~IndexMetadata();
 
@@ -75,6 +81,8 @@ class IndexMetadata {
 
   bool HasUniqueKeys() const { return unique_keys; }
 
+  std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
+
   std::string index_name;
 
   oid_t index_oid;
@@ -88,6 +96,9 @@ class IndexMetadata {
 
   // schema of keys
   const catalog::Schema *key_schema;
+
+  // key attributes
+  std::vector<oid_t> key_attrs;
 
   // unique keys ?
   bool unique_keys;
@@ -136,20 +147,6 @@ class Index : public Printable {
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
-
-  // scan all keys in the index matching an arbitrary key
-  // used by index scan executor
-  virtual void Scan(const std::vector<Value> &values,
-                    const std::vector<oid_t> &key_column_ids,
-                    const std::vector<ExpressionType> &exprs,
-                    const ScanDirectionType &scan_direction,
-                    std::vector<ItemPointer> &) = 0;
-
-  // scan the entire index, working like a sort
-  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
-
-  virtual void ScanKey(const storage::Tuple *key,
-                       std::vector<ItemPointer> &) = 0;
 
   virtual void Scan(const std::vector<Value> &values,
                     const std::vector<oid_t> &key_column_ids,
@@ -224,9 +221,14 @@ class Index : public Printable {
                                   const std::pair<peloton::Value, int> &j);
 
   // Get the indexed tile group offset
-  virtual int GetIndexedTileGroupOff() { return -1; }
+  virtual size_t GetIndexedTileGroupOff() {
+    return indexed_tile_group_offset_.load();
+  }
 
-  virtual void IncrementIndexedTileGroupOffset() { return; }
+  virtual void IncrementIndexedTileGroupOffset() {
+    indexed_tile_group_offset_++;
+    return;
+  }
 
  protected:
   Index(IndexMetadata *schema);
@@ -262,6 +264,8 @@ class Index : public Printable {
 
   // pool
   VarlenPool *pool = nullptr;
+
+  std::atomic<size_t> indexed_tile_group_offset_;
 };
 
 }  // End index namespace
