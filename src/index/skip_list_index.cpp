@@ -129,7 +129,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     assert(key_column_ids.size() > 0);
     LOG_TRACE("key_column_ids size : %lu ", key_column_ids.size());
 
-    oid_t leading_column_id = key_column_ids[0];
+    oid_t leading_column_offset = 0;
+    oid_t leading_column_id = key_column_ids[leading_column_offset];
     std::vector<std::pair<Value, Value>> intervals;
 
     ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
@@ -178,8 +179,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                 interval.first.GetInfo().c_str(),
                 interval.second.GetInfo().c_str());
 
-      start_key->SetValue(leading_column_id, interval.first, GetPool());
-      end_key->SetValue(leading_column_id, interval.second, GetPool());
+      start_key->SetValue(leading_column_offset, interval.first, GetPool());
+      end_key->SetValue(leading_column_offset, interval.second, GetPool());
 
       for (const auto &k_v : non_leading_columns) {
         start_key->SetValue(k_v.first, k_v.second.first, GetPool());
