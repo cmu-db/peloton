@@ -204,17 +204,20 @@ static void WriteOutput(double duration) {
   // Convert to ms
   duration *= 1000;
 
-  LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %.3lf %.3lf %.1lf %d %d %d :: %.1lf ms",
-           state.layout_mode,
-           state.operator_type,
-           state.selectivity,
-           state.projectivity,
-           state.write_ratio,
-           state.scale_factor,
-           state.column_count,
-           state.tuples_per_tilegroup,
-           duration);
+  if(rand() % 20 == 0) {
+    LOG_INFO("----------------------------------------------------------");
+    LOG_INFO("%d %d %.3lf %.3lf %u %.1lf %d %d %d :: %.1lf ms",
+             state.layout_mode,
+             state.operator_type,
+             state.selectivity,
+             state.projectivity,
+             query_itr,
+             state.write_ratio,
+             state.scale_factor,
+             state.column_count,
+             state.tuples_per_tilegroup,
+             duration);
+  }
 
   out << state.layout_mode << " ";
   out << state.operator_type << " ";
@@ -271,9 +274,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
     timer.Stop();
     auto duration = timer.GetDuration();
 
-    if(txn_itr % 20 == 0) {
-      WriteOutput(duration);
-    }
+    WriteOutput(duration);
 
     // Construct sample
     brain::Sample index_sample(index_columns_accessed, duration, sample_type, selectivity);
