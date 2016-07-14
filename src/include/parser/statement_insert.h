@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
+#include "parser/statement_select.h"
 
 namespace peloton {
 namespace parser {
