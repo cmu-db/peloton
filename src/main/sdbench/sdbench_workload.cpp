@@ -373,16 +373,16 @@ void RunDirectTest() {
 
   auto rand_sample = rand() % 3;
   if(rand_sample == 0) {
-    tuple_key_attrs = {0, 1};
-    index_key_attrs = {0, 1};
-  }
-  else if(rand_sample == 1){
     tuple_key_attrs = {3, 4};
     index_key_attrs = {0, 1};
   }
-  else {
+  else if(rand_sample == 1){
     tuple_key_attrs = {2};
     index_key_attrs = {0};
+  }
+  else {
+    tuple_key_attrs = {0, 1};
+    index_key_attrs = {0, 1};
   }
 
   LOG_INFO("Direct :: ");

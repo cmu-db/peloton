@@ -142,6 +142,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                         non_leading_columns);
 
     auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
+    oid_t non_leading_column_offset = 0;
     for (auto key_column_id : indexed_columns) {
       if (key_column_id == leading_column_id) {
         LOG_TRACE("Leading column : %u", key_column_id);
@@ -149,15 +150,17 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       }
 
       if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
-        auto type =
-            metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
+        auto key_schema = metadata->GetKeySchema();
+        auto type = key_schema->GetColumn(non_leading_column_offset).column_type;
         std::pair<Value, Value> range(Value::GetMinValue(type),
                                       Value::GetMaxValue(type));
-        std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id,
+        std::pair<oid_t, std::pair<Value, Value>> key_value(non_leading_column_offset,
                                                             range);
 
         non_leading_columns.insert(key_value);
       }
+
+      non_leading_column_offset++;
     }
 
     LOG_TRACE("Non leading columns size : %lu", non_leading_columns.size());
