@@ -235,8 +235,31 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
   // Construct indices in suggested index list
   oid_t index_count = table->GetIndexCount();
+  auto tuple_count = table->GetNumberOfTuples();
+
+  LOG_INFO("Tuple count : %.0lf", tuple_count);
+
+  size_t per_index_storage_footprint = (tuple_count * 80) / (1024 * 1024);
+  size_t current_storage_footprint = index_count * per_index_storage_footprint;
+
+  LOG_INFO("Per index storage footprint : %lu", per_index_storage_footprint);
+  LOG_INFO("Current storage footprint : %lu", current_storage_footprint);
+
+  size_t available_space = max_storage_footprint - current_storage_footprint;
+  size_t max_indexes_allowed = available_space / per_index_storage_footprint;
+
+  LOG_INFO("Available index space : %lu", max_indexes_allowed);
+
+  size_t constructed_index_itr = 0;
 
   for(auto suggested_index : suggested_indices) {
+
+    // Check if we have space
+    if((max_indexes_allowed <= 0) ||
+        (constructed_index_itr >= max_indexes_allowed)) {
+      LOG_INFO("No more index space");
+      break;
+    }
 
     std::set<oid_t> suggested_index_set(suggested_index.begin(),
                                         suggested_index.end());
@@ -263,6 +286,8 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
       // Add adhoc index
       AddIndex(table, suggested_index_set);
+
+      constructed_index_itr++;
     }
     else {
       LOG_INFO("Found suggested index.");
