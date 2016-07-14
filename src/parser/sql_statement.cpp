@@ -29,36 +29,47 @@
 namespace peloton {
 namespace parser {
 
-std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
-  os << "STATEMENT : Type :: " << stmt.stmt_type << "\n";
+//===--------------------------------------------------------------------===//
+// Utilities
+//===--------------------------------------------------------------------===//
+
+const std::string SQLStatement::GetInfo() const {
+  std::ostringstream os;
+
+  os << "STATEMENT : Type :: " << stmt_type << "\n";
 
   int indent = 1;
 
-  switch (stmt.stmt_type) {
+  switch (stmt_type) {
     case STATEMENT_TYPE_SELECT:
-      GetSelectStatementInfo((SelectStatement*)&stmt, indent);
+      GetSelectStatementInfo((SelectStatement*)this, indent);
       break;
     case STATEMENT_TYPE_INSERT:
-      GetInsertStatementInfo((InsertStatement*)&stmt, indent);
+      GetInsertStatementInfo((InsertStatement*)this, indent);
       break;
     case STATEMENT_TYPE_CREATE:
-      GetCreateStatementInfo((CreateStatement*)&stmt, indent);
+      GetCreateStatementInfo((CreateStatement*)this, indent);
       break;
     default:
       break;
   }
 
-  return os;
+  return os.str();
 }
 
-std::ostream& operator<<(std::ostream& os, const SQLStatementList& stmt_list) {
-  if (stmt_list.is_valid) {
-    for (auto stmt : stmt_list.statements) os << *stmt;
-  } else {
+const std::string SQLStatementList::GetInfo() const {
+  std::ostringstream os;
+
+  if (is_valid) {
+    for (auto stmt : statements) {
+      os << stmt->GetInfo();
+    }
+  }
+  else {
     os << "Invalid statement list \n";
   }
 
-  return os;
+  return os.str();
 }
 
 }  // End parser namespace

@@ -109,6 +109,7 @@ class AbstractExpression : public Printable {
   bool distinct = false;
 
  protected:
+  AbstractExpression(ExpressionType type);
   AbstractExpression(ExpressionType expr_type, ValueType type);
   AbstractExpression(ExpressionType expr_type, ValueType type,
                      AbstractExpression *left, AbstractExpression *right);
