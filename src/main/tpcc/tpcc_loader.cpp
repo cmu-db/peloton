@@ -28,6 +28,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "index/index_factory.h"
@@ -208,7 +209,8 @@ void CreateWarehouseTable() {
       "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   warehouse_table->AddIndex(pkey_index);
 }
@@ -292,7 +294,7 @@ void CreateDistrictTable() {
       "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   district_table->AddIndex(pkey_index);
 }
@@ -351,7 +353,7 @@ void CreateItemTable() {
       "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   item_table->AddIndex(pkey_index);
 }
 
@@ -486,7 +488,7 @@ void CreateCustomerTable() {
       "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   customer_table->AddIndex(pkey_index);
 
   // Secondary index on C_W_ID, C_D_ID, C_LAST
@@ -498,7 +500,7 @@ void CreateCustomerTable() {
       "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   customer_table->AddIndex(skey_index);
 }
 
@@ -671,7 +673,7 @@ void CreateStockTable() {
       "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   stock_table->AddIndex(pkey_index);
 }
 
@@ -752,7 +754,7 @@ void CreateOrdersTable() {
       "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
@@ -764,7 +766,7 @@ void CreateOrdersTable() {
       "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   orders_table->AddIndex(skey_index);
 }
 
@@ -818,7 +820,7 @@ void CreateNewOrderTable() {
       "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   new_order_table->AddIndex(pkey_index);
 }
 
@@ -911,7 +913,7 @@ void CreateOrderLineTable() {
       "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
@@ -923,7 +925,7 @@ void CreateOrderLineTable() {
       "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   order_line_table->AddIndex(skey_index);
 }
 

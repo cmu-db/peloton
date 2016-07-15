@@ -121,7 +121,8 @@ void CreateTable(std::unique_ptr<storage::DataTable>& hyadapt_table,
         key_attrs,
         unique);
 
-    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+
     hyadapt_table->AddIndex(pkey_index);
   }
 
@@ -385,7 +386,8 @@ void LaunchHybridScan(std::unique_ptr<storage::DataTable>&
   txn_manager.CommitTransaction();
 }
 
-void BuildIndex(index::Index *index, storage::DataTable *table) {
+void BuildIndex(std::shared_ptr<index::Index> index,
+                storage::DataTable *table) {
   oid_t start_tile_group_count = START_OID;
   oid_t table_tile_group_count = table->GetTileGroupCount();
 
@@ -449,7 +451,8 @@ TEST_F(HybridIndexTests, HybridScanTest) {
       "primary_index", 123, INDEX_TYPE_SKIPLIST,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
+
   hyadapt_table->AddIndex(pkey_index);
 
   std::thread index_builder = std::thread(BuildIndex, pkey_index,

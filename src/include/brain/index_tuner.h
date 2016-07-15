@@ -74,7 +74,7 @@ class IndexTuner {
   void IndexTuneHelper(storage::DataTable* table);
 
   void BuildIndex(storage::DataTable *table,
-                  index::Index *index);
+                  std::shared_ptr<index::Index> index);
 
   void BuildIndices(storage::DataTable *table);
 
@@ -107,7 +107,7 @@ class IndexTuner {
   oid_t max_tile_groups_indexed = 50;
 
   // storage footprint (MB)
-  size_t max_storage_footprint = 2 * 1024;
+  size_t max_storage_footprint = 1 * 1024;
 
 };
 

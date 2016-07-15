@@ -35,7 +35,7 @@ class HybridScanPlan : public AbstractScan {
                  const IndexScanPlan::IndexScanDesc &index_scan_desc,
                  HybridScanType hybrid_scan_type);
 
-  index::Index *GetDataIndex() const { return this->index_; }
+  std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
@@ -43,7 +43,7 @@ class HybridScanPlan : public AbstractScan {
 
   PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
-  index::Index *GetIndex() const { return index_; }
+  std::shared_ptr<index::Index> GetIndex() const { return index_; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -75,7 +75,7 @@ class HybridScanPlan : public AbstractScan {
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 
-  index::Index *index_ = nullptr;
+  std::shared_ptr<index::Index> index_;
 
 };
 

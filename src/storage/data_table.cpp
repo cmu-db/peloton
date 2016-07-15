@@ -78,10 +78,8 @@ DataTable::~DataTable() {
     catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
   }
 
-  // clean up indices
-  for (auto index : indexes_) {
-    delete index;
-  }
+  // indices will be automatically cleaned up
+
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
@@ -651,7 +649,7 @@ const std::string DataTable::GetInfo() const {
 // INDEX
 //===--------------------------------------------------------------------===//
 
-void DataTable::AddIndex(index::Index *index) {
+void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
 
@@ -674,9 +672,13 @@ void DataTable::AddIndex(index::Index *index) {
   }
 }
 
-index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
-  for (auto index : indexes_)
-    if (index->GetOid() == index_oid) return index;
+std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
+    const oid_t &index_oid) const {
+  for (auto index : indexes_) {
+    if (index->GetOid() == index_oid) {
+      return index;
+    }
+  }
 
   return nullptr;
 }
@@ -700,7 +702,8 @@ void DataTable::DropIndexWithOid(const oid_t &index_id) {
   }
 }
 
-index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
+std::shared_ptr<index::Index> DataTable::GetIndex(
+    const oid_t &index_offset) const {
   PL_ASSERT(index_offset < indexes_.size());
   auto index = indexes_.at(index_offset);
   return index;

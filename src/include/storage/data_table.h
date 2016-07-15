@@ -21,6 +21,7 @@
 
 #include "common/platform.h"
 #include "storage/abstract_table.h"
+#include "index/index.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -130,13 +131,13 @@ class DataTable : public AbstractTable {
   // INDEX
   //===--------------------------------------------------------------------===//
 
-  void AddIndex(index::Index *index);
+  void AddIndex(std::shared_ptr<index::Index> index);
 
-  index::Index *GetIndexWithOid(const oid_t &index_oid) const;
+  std::shared_ptr<index::Index> GetIndexWithOid(const oid_t &index_oid) const;
 
   void DropIndexWithOid(const oid_t &index_oid);
 
-  index::Index *GetIndex(const oid_t &index_offset) const;
+  std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset) const;
 
   std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
 
@@ -272,7 +273,7 @@ class DataTable : public AbstractTable {
   std::mutex data_table_mutex_;
 
   // INDEXES
-  std::vector<index::Index *> indexes_;
+  std::vector<std::shared_ptr<index::Index>> indexes_;
 
   // columns present in the indexes
   std::vector<std::set<oid_t>> indexes_columns_;
