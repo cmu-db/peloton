@@ -239,9 +239,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         for (const auto &k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          LOG_TRACE("left bound %s\t\t right bound %s\n",
-                    k_v.second.first.GetInfo().c_str(),
-                    k_v.second.second.GetInfo().c_str());
         }
 
         KeyType start_index_key;
