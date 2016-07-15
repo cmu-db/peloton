@@ -70,12 +70,13 @@ class UpdatePlan : public AbstractPlan {
 
   std::string table_name;
 
+  /** @brief Projection info */
+  std::unique_ptr<const planner::ProjectInfo> project_info_;
+
   std::vector<parser::UpdateClause*>* updates;
 
   expression::AbstractExpression* where;
 
-  /** @brief Projection info */
-  std::unique_ptr<const planner::ProjectInfo> project_info_;
 };
 
 }  // namespace planner
