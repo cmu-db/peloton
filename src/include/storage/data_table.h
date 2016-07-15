@@ -19,6 +19,7 @@
 #include <mutex>
 #include <set>
 
+#include "common/platform.h"
 #include "storage/abstract_table.h"
 
 //===--------------------------------------------------------------------===//

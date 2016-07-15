@@ -11,9 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "executor/abstract_executor.h"
-#include "planner/abstract_plan.h"
+#include "common/value.h"
 #include "common/logger.h"
+#include "executor/abstract_executor.h"
+#include "executor/executor_context.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -93,6 +95,15 @@ bool AbstractExecutor::Execute() {
 
   return status;
 }
+
+void AbstractExecutor::SetContext(Value value) {
+  executor_context_->SetParams(value);
+}
+
+void AbstractExecutor::ClearContext() {
+  executor_context_->ClearParams();
+}
+
 
 }  // namespace executor
 }  // namespace peloton

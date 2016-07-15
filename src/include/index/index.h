@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <atomic>
 
 #include "common/printable.h"
 #include "common/types.h"

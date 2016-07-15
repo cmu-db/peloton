@@ -13,21 +13,37 @@
 
 #include "common/value.h"
 #include "executor/executor_context.h"
+#include "concurrency/transaction.h"
 
 namespace peloton {
 namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
-    : transaction_(transaction), params_exec_flag_(INVALID_FLAG) {}
+    : transaction_(transaction) {}
 
 ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
                                  const std::vector<Value> &params)
     : transaction_(transaction),
-      params_(params),
-      params_exec_flag_(INVALID_FLAG) {}
+      params_(params) {}
 
 ExecutorContext::~ExecutorContext() {
   // params will be freed automatically
+}
+
+concurrency::Transaction *ExecutorContext::GetTransaction() const {
+  return transaction_;
+}
+
+const std::vector<Value> &ExecutorContext::GetParams() const {
+  return params_;
+}
+
+void ExecutorContext::SetParams(Value value) {
+  params_.push_back(value);
+}
+
+void ExecutorContext::ClearParams() {
+  params_.clear();
 }
 
 VarlenPool *ExecutorContext::GetExecutorContextPool() {
