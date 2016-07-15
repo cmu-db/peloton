@@ -257,7 +257,6 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
 
   prefix += "  ";
 
-  LOG_INFO("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
   LOG_INFO("%s->Plan Info :: %s ", prefix.c_str(), plan->GetInfo().c_str());
 
   auto &children = plan->GetChildren();
@@ -299,68 +298,84 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
+    	LOG_INFO("Adding Sequential Scan Executer");
       child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INDEXSCAN:
+    	LOG_INFO("Adding Index Scan Executer");
       child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INSERT:
+    	LOG_INFO("Adding Insert Executer");
       child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DELETE:
+    	LOG_INFO("Adding Delete Executer");
       child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_UPDATE:
+    	LOG_INFO("Adding Update Executer");
       child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
+    	LOG_INFO("Adding Limit Executer");
       child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
+    	LOG_INFO("Adding Nested Loop Joing Executer");
       child_executor =
           new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_MERGEJOIN:
+    	LOG_INFO("Adding Merge Join Executer");
       child_executor = new executor::MergeJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_HASH:
+    	LOG_INFO("Adding Hash Executer");
       child_executor = new executor::HashExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_HASHJOIN:
+    	LOG_INFO("Adding Hash Join Executer");
       child_executor = new executor::HashJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
+    	LOG_INFO("Adding Projection Executer");
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_MATERIALIZE:
+    	LOG_INFO("Adding Materialization Executer");
       child_executor =
           new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_AGGREGATE_V2:
+    	LOG_INFO("Adding Aggregate Executer");
       child_executor = new executor::AggregateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_ORDERBY:
+    	LOG_INFO("Adding Order By Executer");
       child_executor = new executor::OrderByExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DROP:
+    	LOG_INFO("Adding Drop Executer");
       child_executor = new executor::DropExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_CREATE:
+    	LOG_INFO("Adding Create Executer");
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
 

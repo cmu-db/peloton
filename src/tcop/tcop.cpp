@@ -104,6 +104,13 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
+  // This if is used for debugging
+  if(statement->GetPlanTree().get()->GetPlanNodeType() == PLAN_NODE_TYPE_DELETE){
+	  auto del_plan = (planner::DeletePlan*) statement->GetPlanTree().get();  // Delete plan
+	  auto seq_scan_plan = (planner::SeqScanPlan*)del_plan->GetChildren()[0].get();  // SeqScanPlan
+	  LOG_INFO("Predicate Expression Type: %s", seq_scan_plan->GetPredicate()->GetInfo().c_str());
+  }
+
   LOG_INFO("Statement Prepared!");
   return statement;
 

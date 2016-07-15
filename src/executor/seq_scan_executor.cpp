@@ -157,6 +157,9 @@ bool SeqScanExecutor::DExecute() {
                 transaction_manager.SetTransactionResult(RESULT_FAILURE);
                 return res;
               }
+              else {
+            	  LOG_INFO("Sequential Scan Predicate Satisfied");
+              }
             }
           }
         }

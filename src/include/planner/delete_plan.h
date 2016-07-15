@@ -44,6 +44,10 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
+  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
+
+  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
+
   bool GetTruncate() const { return truncate; }
 
   std::unique_ptr<AbstractPlan> Copy() const {

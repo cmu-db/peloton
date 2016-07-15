@@ -70,7 +70,7 @@ bool InsertExecutor::DExecute() {
 	         return false;
   }
 
-  LOG_INFO("Number of tuples in table before insert: %d", (int)target_table->GetNumberOfTuples());
+  LOG_INFO("Number of tuples in table %s before insert: %d", target_table->GetName().c_str(), (int)target_table->GetNumberOfTuples());
 
   auto executor_pool = executor_context_->GetExecutorContextPool();
 

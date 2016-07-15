@@ -76,7 +76,7 @@ std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& 
   }
 
   std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
-  return sql_stmt;
+  return std::move(sql_stmt);
 }
 
 
