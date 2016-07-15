@@ -33,6 +33,7 @@
 #include "common/timer.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
 #include "index/index_factory.h"
 #include "planner/insert_plan.h"
 #include "storage/tile.h"
