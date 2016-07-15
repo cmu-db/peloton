@@ -163,9 +163,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     case STATEMENT_TYPE_DELETE: {
     	LOG_INFO("Adding Delete plan...");
-          std::unique_ptr<planner::AbstractPlan> child_InsertPlan(
+          std::unique_ptr<planner::AbstractPlan> child_DeletePlan(
               new planner::DeletePlan((parser::DeleteStatement*) parse_tree.get()));
-          child_plan = std::move(child_InsertPlan);
+          child_plan = std::move(child_DeletePlan);
         }
      break;
 
@@ -182,10 +182,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
   }
 
   if (child_plan != nullptr) {
-    if (plan_tree != nullptr)
+    if (plan_tree != nullptr) {
       plan_tree->AddChild(std::move(child_plan));
-    else
+    }
+    else {
       plan_tree = std::move(child_plan);
+    }
   }
 
   // Recurse

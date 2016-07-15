@@ -17,11 +17,11 @@ public class PelotonTest {
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A_1 = "INSERT INTO a(id,data) VALUES (1,'hello_1');";
-  private final String INSERT_A_2 = "INSERT INTO a(id) VALUES (2)";
-  private final String INSERT_A_3 = "INSERT INTO a VALUES (3, 'hello_3')";
+  private final String INSERT_A_1 = "INSERT INTO A(id,data) VALUES (1,'hello_1');";
+  private final String INSERT_A_2 = "INSERT INTO A(id) VALUES (2)";
+  private final String INSERT_A_3 = "INSERT INTO A VALUES (3, 'hello_3')";
 
-  private final String INSERT_B_1 = "INSERT INTO b VALUES (1, 'hello_1')";
+  private final String INSERT_B_1 = "INSERT INTO B VALUES (1, 'hello_1')";
 
   private final String INSERT = "BEGIN;" +
           "INSERT INTO A VALUES (?,?);" +

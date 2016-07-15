@@ -17,6 +17,8 @@
 #include "common/cache.h"
 #include "common/types.h"
 #include "common/macros.h"
+#include "planner/delete_plan.h"
+#include "planner/seq_scan_plan.h"
 
 #include "wire/marshal.h"
 #include "common/portal.h"
@@ -314,6 +316,13 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   auto &tcop = tcop::TrafficCop::GetInstance();
   statement = std::move(
       tcop.PrepareStatement(statement_name, query_string, error_message));
+  // This if condition is for debugging. When done, remove with the two includes for
+  // delete_plan and seq_scan_plan
+  if(statement->GetPlanTree().get()->GetPlanNodeType() == PLAN_NODE_TYPE_DELETE){
+	  auto del_plan = (planner::DeletePlan*) statement->GetPlanTree().get();  // Delete plan
+	  auto seq_scan_plan = (planner::SeqScanPlan*)del_plan->GetChildren()[0].get();  // SeqScanPlan
+	  LOG_INFO("Predicate Expression Type: %s", seq_scan_plan->GetPredicate()->GetInfo().c_str());
+  }
   if (statement.get() == nullptr) {
     SendErrorResponse({{'M', error_message}}, responses);
     SendReadyForQuery(txn_state, responses);
@@ -322,7 +331,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read number of params
   int num_params = PacketGetInt(pkt, 2);
-  LOG_INFO("NumParams: %d", num_params);
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
@@ -338,7 +346,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Unnamed statement
   if (unnamed_query) {
-    LOG_INFO("Setting unnamed statement");
     unnamed_statement = statement;
   } else {
     LOG_INFO("Setting named statement with name : %s", statement_name.c_str());
@@ -355,11 +362,8 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
-  LOG_INFO("BIND message");
   GetStringToken(pkt, portal_name);
-  LOG_INFO("Portal name: %s", portal_name.c_str());
   GetStringToken(pkt, statement_name);
-  LOG_INFO("Prep stmt name: %s", statement_name.c_str());
 
   if (skipped_stmt_) {
     // send bind complete
@@ -391,7 +395,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::shared_ptr<Statement> statement;
 
   if (statement_name.empty()) {
-    LOG_INFO("Getting Unnamed statement");
     statement = unnamed_statement;
 
     // Check unnamed statement
