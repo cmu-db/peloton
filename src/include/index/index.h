@@ -164,13 +164,13 @@ class Index : public Printable {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void IncreaseNumberOfTuplesBy(const float amount);
+  void IncreaseNumberOfTuplesBy(const size_t amount);
 
-  void DecreaseNumberOfTuplesBy(const float amount);
+  void DecreaseNumberOfTuplesBy(const size_t amount);
 
-  void SetNumberOfTuples(const float num_tuples);
+  void SetNumberOfTuples(const size_t num_tuples);
 
-  float GetNumberOfTuples() const;
+  size_t GetNumberOfTuples() const;
 
   bool IsDirty() const;
 
@@ -258,7 +258,7 @@ class Index : public Printable {
   int update_counter;
 
   // number of tuples
-  float number_of_tuples = 0.0;
+  size_t number_of_tuples;
 
   // dirty flag
   bool dirty = false;

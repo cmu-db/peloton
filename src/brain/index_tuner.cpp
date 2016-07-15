@@ -81,7 +81,8 @@ static void AddIndex(storage::DataTable* table,
       key_attrs,
       unique);
 
-  index::Index *adhoc_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> adhoc_index(
+      index::IndexFactory::GetInstance(index_metadata));
 
   // Add index
   table->AddIndex(adhoc_index);
@@ -90,7 +91,7 @@ static void AddIndex(storage::DataTable* table,
 }
 
 void IndexTuner::BuildIndex(storage::DataTable *table,
-                            index::Index *index) {
+                            std::shared_ptr<index::Index> index) {
 
   auto table_schema = table->GetSchema();
   auto index_tile_group_offset = index->GetIndexedTileGroupOff();
@@ -230,7 +231,6 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
   LOG_INFO("Read Write Ratio : %.2lf", rd_wr_ratio);
 
-
   // TODO: Use read write ratio to throttle index creation
 
   // Construct indices in suggested index list
@@ -246,7 +246,10 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   LOG_INFO("Current storage footprint : %lu", current_storage_footprint);
 
   size_t available_space = max_storage_footprint - current_storage_footprint;
-  size_t max_indexes_allowed = available_space / per_index_storage_footprint;
+  size_t max_indexes_allowed = 0;
+  if(per_index_storage_footprint != 0) {
+    max_indexes_allowed = available_space / per_index_storage_footprint;
+  }
 
   LOG_INFO("Available index space : %lu", max_indexes_allowed);
 
@@ -258,6 +261,15 @@ void IndexTuner::Analyze(storage::DataTable* table) {
     if((max_indexes_allowed <= 0) ||
         (constructed_index_itr >= max_indexes_allowed)) {
       LOG_INFO("No more index space");
+
+      auto index = table->GetIndex(0);
+
+      if(index != nullptr){
+        auto index_oid = index->GetOid();
+        LOG_INFO("Dropping index with oid : %u", index_oid);
+        table->DropIndexWithOid(index_oid);
+      }
+
       break;
     }
 

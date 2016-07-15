@@ -304,8 +304,8 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
-index::Index *PickIndex(storage::DataTable* table,
-                        std::vector<oid_t> query_attrs){
+std::shared_ptr<index::Index> PickIndex(storage::DataTable* table,
+                                        std::vector<oid_t> query_attrs){
 
   // Construct set
   std::set<oid_t> query_attrs_set(query_attrs.begin(), query_attrs.end());
@@ -334,7 +334,7 @@ index::Index *PickIndex(storage::DataTable* table,
     break;
   }
 
-  index::Index* index = nullptr;
+  std::shared_ptr<index::Index> index;
 
   // Found index
   if(query_index_found == true) {

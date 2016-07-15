@@ -27,6 +27,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "index/index_factory.h"
@@ -113,7 +114,7 @@ void CreateYCSBDatabase() {
       key_attrs,
       unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   user_table->AddIndex(pkey_index);
 }
 

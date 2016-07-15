@@ -160,20 +160,5 @@ storage::DataTable *Manager::GetTableWithName(
   return nullptr;
 }
 
-index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
-                                       const oid_t table_oid,
-                                       const oid_t index_oid) const {
-  // Lookup table
-  auto table = GetTableWithOid(database_oid, table_oid);
-
-  // Lookup index
-  if (table != nullptr) {
-    auto index = table->GetIndexWithOid(index_oid);
-    return index;
-  }
-
-  return nullptr;
-}
-
 }  // End catalog namespace
 }  // End peloton namespace
