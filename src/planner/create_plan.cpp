@@ -39,9 +39,27 @@ CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
 CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   table_name = std::string(parse_tree->name);
   std::vector<catalog::Column> columns;
+  std::vector<catalog::Constraint> column_contraints;
   for(auto col : *parse_tree->columns){
     ValueType val = col->GetValueType(col->type);
+    
+    //Check main constraints
+    if(col->primary_key){
+      catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+      column_contraints.push_back(constraint);
+    }
+
+    if(col->not_null){
+      catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL, "con_not_null");
+      column_contraints.push_back(constraint);
+    }
+
     auto column = catalog::Column(val,GetTypeSize(val),std::string(col->name),false);
+    for(auto con : column_contraints){
+      column.AddConstraint(con);
+    }
+    
+    column_contraints.clear();
     columns.push_back(column);
   }
   catalog::Schema* schema = new catalog::Schema(columns);
