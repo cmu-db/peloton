@@ -202,8 +202,6 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  LOG_TRACE("Location: %u, %u", location.block, location.offset);
-
   IncreaseNumberOfTuplesBy(1);
   return location;
 }
@@ -221,8 +219,6 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
-
-  LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseNumberOfTuplesBy(1);
   return location;
@@ -287,7 +283,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
         index->InsertEntry(key.get(), location);
         break;
     }
-    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   return true;
@@ -320,7 +315,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
         index->InsertEntry(key.get(), location);
         break;
     }
-    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
   return true;
 }
