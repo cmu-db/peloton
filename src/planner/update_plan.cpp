@@ -63,7 +63,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 			new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
 	project_info_ = std::move(project_info);
 	
-	where = parse_tree->where->Copy();
+	where = parse_tree->where;
 	auto expr = where->Copy();
 
 	ReplaceColumnExpressions(expr);
