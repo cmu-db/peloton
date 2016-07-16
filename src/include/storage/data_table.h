@@ -215,6 +215,11 @@ class DataTable : public AbstractTable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // insert into specific index
+  bool InsertInIndex(oid_t index_offset,
+                     const storage::Tuple *tuple,
+                     ItemPointer location);
+
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 

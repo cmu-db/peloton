@@ -250,6 +250,44 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
 }
 
 /**
+ * @brief Insert a tuple into a specific index.
+ * If index is primary/unique, check visibility of existing index entries.
+ *
+ * @returns True on success, false if a visible entry exists (in case of
+ *primary/unique).
+ */
+bool DataTable::InsertInIndex(oid_t index_offset,
+                              const storage::Tuple *tuple,
+                              ItemPointer location){
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
+  auto index = GetIndex(index_offset);
+  auto index_schema = index->GetKeySchema();
+  auto indexed_columns = index_schema->GetIndexedColumns();
+  std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+  key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+
+  switch (index->GetIndexType()) {
+    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+      // TODO: get unique tuple from primary index.
+      // if in this index there has been a visible or uncommitted
+      // <key, location> pair, this constraint is violated
+      index->InsertEntry(key.get(), location);
+    } break;
+
+    case INDEX_CONSTRAINT_TYPE_DEFAULT:
+    default:
+      index->InsertEntry(key.get(), location);
+      break;
+  }
+  LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
+
+  return true;
+}
+
+/**
  * @brief Insert a tuple into all indexes. If index is primary/unique,
  * check visibility of existing
  * index entries.
@@ -262,30 +300,11 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   int index_count = GetIndexCount();
 
-  // (A) Check existence for primary/unique indexes
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-    auto index = GetIndex(index_itr);
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-    switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // TODO: get unique tuple from primary index.
-        // if in this index there has been a visible or uncommitted
-        // <key, location> pair, this constraint is violated
-        index->InsertEntry(key.get(), location);
-      } break;
-
-      case INDEX_CONSTRAINT_TYPE_DEFAULT:
-      default:
-        index->InsertEntry(key.get(), location);
-        break;
+    auto status = InsertInIndex(index_itr, tuple, location);
+    if(status == false){
+      return false;
     }
-    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
 
   return true;
