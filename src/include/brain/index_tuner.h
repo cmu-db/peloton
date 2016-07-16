@@ -82,6 +82,8 @@ class IndexTuner {
 
   size_t CheckIndexStorageFootprint(storage::DataTable *table);
 
+  double ComputeWriteRatio(const std::vector<brain::Sample>& samples);
+
  private:
 
   // Tables whose indices must be tuned
@@ -110,6 +112,14 @@ class IndexTuner {
 
   // storage footprint (MB)
   size_t max_storage_footprint = 1.5 * 1024;
+
+  // alpha (weight for old samples)
+  double alpha = 0.2;
+
+  static constexpr double invalid_ratio = -1;
+
+  // average write ratio
+  double average_write_ratio = invalid_ratio;
 
 };
 

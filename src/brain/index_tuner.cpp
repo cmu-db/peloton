@@ -98,6 +98,10 @@ void IndexTuner::BuildIndex(storage::DataTable *table,
   auto table_tile_group_count = table->GetTileGroupCount();
   oid_t tile_groups_indexed = 0;
 
+  auto index_schema = index->GetKeySchema();
+  auto indexed_columns = index_schema->GetIndexedColumns();
+  std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+
   while (index_tile_group_offset < table_tile_group_count &&
       (tile_groups_indexed < max_tile_groups_indexed)) {
 
@@ -114,9 +118,11 @@ void IndexTuner::BuildIndex(storage::DataTable *table,
       // Set the location
       ItemPointer location(tile_group_id, tuple_id);
 
-      // TODO: Adds an entry in ALL the indexes
-      // (should only insert in specific index)
-      table->InsertInIndexes(tuple_ptr.get(), location);
+      // Set the key
+      key->SetFromTuple(tuple_ptr.get(), indexed_columns, index->GetPool());
+
+      // Insert in specific index
+      index->InsertEntry(key.get(), location);
     }
 
     // Update indexed tile group offset (set of tgs indexed)
@@ -146,40 +152,45 @@ void IndexTuner::BuildIndices(storage::DataTable *table) {
 
 }
 
-double ComputeReadWriteRatio(const std::vector<brain::Sample>& samples) {
+double IndexTuner::ComputeWriteRatio(const std::vector<brain::Sample>& samples) {
 
-  double rd_wr_ratio = 0;
+  double write_ratio = 0;
 
-  double total_rd_duration = 0;
-  double total_wr_duration = 0;
-  double max_rd_wr_ratio = 10000;
+  double total_read_duration = 0;
+  double total_write_duration = 0;
 
   // Go over all samples
   for(auto sample : samples){
     if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
-      total_rd_duration += sample.weight_;
+      total_read_duration += sample.weight_;
     }
     else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
-      total_wr_duration += sample.weight_;
-      // Ignore update samples
+      total_write_duration += sample.weight_;
     }
     else {
-      throw Exception("Unknown sample type : " + std::to_string(sample.sample_type_));
+      throw Exception("Unknown sample type : " +
+                      std::to_string(sample.sample_type_));
     }
   }
 
-  // Compute read write ratio
-  if(total_wr_duration == 0) {
-    rd_wr_ratio = max_rd_wr_ratio;
+  // Compute write ratio
+  auto total_duration = total_read_duration + total_write_duration;
+  PL_ASSERT(total_duration > 0);
+  write_ratio = total_read_duration / (total_duration);
+
+  // Compute exponential moving average
+  if(average_write_ratio == invalid_ratio) {
+    average_write_ratio = write_ratio;
   }
-  else{
-    rd_wr_ratio = total_rd_duration / total_wr_duration;
+  else {
+    // S_t = alpha * Y_t + (1 - alpha) * S_t-1
+    average_write_ratio = write_ratio * alpha +  (1 - alpha) * average_write_ratio;
   }
 
-  LOG_INFO("Read Write Ratio : %.2lf", rd_wr_ratio);
+  LOG_INFO("Average write Ratio : %.2lf", average_write_ratio);
 
-  // TODO: Use read write ratio to throttle index creation
-  return rd_wr_ratio;
+  // TODO: Use average write ratio to throttle index creation
+  return average_write_ratio;
 }
 
 typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
@@ -336,8 +347,8 @@ void IndexTuner::Analyze(storage::DataTable* table) {
     return;
   }
 
-  // Check read write ratio
-  ComputeReadWriteRatio(samples);
+  // Check write ratio
+  ComputeWriteRatio(samples);
 
   // Determine frequent samples
   auto sample_frequency_entry_list = GetFrequentSamples(samples);
