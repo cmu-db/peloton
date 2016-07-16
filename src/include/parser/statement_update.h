@@ -51,13 +51,15 @@ struct UpdateStatement : SQLStatement {
     }
 
     delete updates;
+    if(where != NULL)
     delete where;
+
   }
 
   // TODO: switch to char* instead of TableRef
   TableRef* table;
   std::vector<UpdateClause*>* updates;
-  expression::AbstractExpression* where;
+  expression::AbstractExpression* where = nullptr;
 };
 
 }  // End parser namespace
