@@ -17,9 +17,6 @@
 #include "common/cache.h"
 #include "common/types.h"
 #include "common/macros.h"
-#include "planner/delete_plan.h"
-#include "planner/seq_scan_plan.h"
-
 #include "wire/marshal.h"
 #include "common/portal.h"
 #include "tcop/tcop.h"
@@ -315,13 +312,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   std::shared_ptr<Statement> statement;
   auto &tcop = tcop::TrafficCop::GetInstance();
   statement = tcop.PrepareStatement(statement_name, query_string, error_message);
-  // This if condition is for debugging. When done, remove with the two includes for
-  // delete_plan and seq_scan_plan
-  if(statement->GetPlanTree().get()->GetPlanNodeType() == PLAN_NODE_TYPE_DELETE){
-	  auto del_plan = (planner::DeletePlan*) statement->GetPlanTree().get();  // Delete plan
-	  auto seq_scan_plan = (planner::SeqScanPlan*)del_plan->GetChildren()[0].get();  // SeqScanPlan
-	  LOG_INFO("Predicate Expression Type: %s", seq_scan_plan->GetPredicate()->GetInfo().c_str());
-  }
   if (statement.get() == nullptr) {
     SendErrorResponse({{'M', error_message}}, responses);
     SendReadyForQuery(txn_state, responses);
