@@ -146,23 +146,7 @@ void IndexTuner::BuildIndices(storage::DataTable *table) {
 
 }
 
-typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
-
-bool sample_frequency_entry_comparator(sample_frequency_map_entry a,
-                                       sample_frequency_map_entry b){
-  return a.second > b.second;
-}
-
-void IndexTuner::Analyze(storage::DataTable* table) {
-
-  // Process all samples in table
-  auto& samples = table->GetIndexSamples();
-  auto sample_count = samples.size();
-
-  // Check if we have sufficient number of samples
-  if (sample_count < sample_count_threshold) {
-    return;
-  }
+double ComputeReadWriteRatio(const std::vector<brain::Sample>& samples) {
 
   double rd_wr_ratio = 0;
 
@@ -170,55 +154,18 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   double total_wr_duration = 0;
   double max_rd_wr_ratio = 10000;
 
-  std::unordered_map<brain::Sample, oid_t> sample_frequency_map;
-
   // Go over all samples
   for(auto sample : samples){
-
     if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
       total_rd_duration += sample.weight_;
-
-      // Update sample count
-      sample_frequency_map[sample]++;
     }
     else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
       total_wr_duration += sample.weight_;
-
       // Ignore update samples
     }
     else {
       throw Exception("Unknown sample type : " + std::to_string(sample.sample_type_));
     }
-
-  }
-
-  // Find frequent samples
-  size_t frequency_rank_threshold = 3;
-
-  std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
-
-  for(auto sample_frequency_map_entry : sample_frequency_map){
-    auto entry = std::make_pair(sample_frequency_map_entry.first,
-                                sample_frequency_map_entry.second);
-
-    sample_frequency_entry_list.push_back(entry);
-  }
-
-  std::sort(sample_frequency_entry_list.begin(), sample_frequency_entry_list.end(),
-            sample_frequency_entry_comparator);
-
-  // Print top-k frequent samples for table
-  std::vector<std::vector<double>> suggested_indices;
-
-  for(size_t entry_itr = 0;
-      entry_itr < frequency_rank_threshold && entry_itr < sample_frequency_entry_list.size();
-      entry_itr++){
-    auto& entry = sample_frequency_entry_list[entry_itr];
-    auto& sample = entry.first;
-    LOG_INFO("%s Frequency : %u", sample.GetInfo().c_str(), entry.second);
-
-    // Add to suggested index list
-    suggested_indices.push_back(sample.columns_accessed_);
   }
 
   // Compute read write ratio
@@ -232,6 +179,75 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   LOG_INFO("Read Write Ratio : %.2lf", rd_wr_ratio);
 
   // TODO: Use read write ratio to throttle index creation
+  return rd_wr_ratio;
+}
+
+typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
+
+bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
+                                       sample_frequency_map_entry b){
+  return a.second > b.second;
+}
+
+std::vector<sample_frequency_map_entry>
+GetFrequentSamples(const std::vector<brain::Sample>& samples){
+
+  std::unordered_map<brain::Sample, oid_t> sample_frequency_map;
+
+  // Go over all samples
+  for(auto sample : samples){
+    if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
+      // Update sample count
+      sample_frequency_map[sample]++;
+    }
+    else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
+      // Ignore update samples
+    }
+    else {
+      throw Exception("Unknown sample type : " + std::to_string(sample.sample_type_));
+    }
+  }
+
+  std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
+
+  for(auto sample_frequency_map_entry : sample_frequency_map){
+    auto entry = std::make_pair(sample_frequency_map_entry.first,
+                                sample_frequency_map_entry.second);
+    sample_frequency_entry_list.push_back(entry);
+  }
+
+  std::sort(sample_frequency_entry_list.begin(),
+            sample_frequency_entry_list.end(),
+            SampleFrequencyMapEntryComparator);
+
+  return sample_frequency_entry_list;
+}
+
+std::vector<std::vector<double>>
+GetSuggestedIndices(const std::vector<sample_frequency_map_entry>& list){
+
+  // Find frequent samples
+  size_t frequency_rank_threshold = 3;
+
+  // Print top-k frequent samples for table
+  std::vector<std::vector<double>> suggested_indices;
+  auto list_size = list.size();
+
+  for(size_t entry_itr = 0;
+      (entry_itr < frequency_rank_threshold) && (entry_itr < list_size);
+      entry_itr++){
+    auto& entry = list[entry_itr];
+    auto& sample = entry.first;
+    LOG_INFO("%s Frequency : %u", sample.GetInfo().c_str(), entry.second);
+
+    // Add to suggested index list
+    suggested_indices.push_back(sample.columns_accessed_);
+  }
+
+  return suggested_indices;
+}
+
+size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable *table){
 
   // Construct indices in suggested index list
   oid_t index_count = table->GetIndexCount();
@@ -253,23 +269,22 @@ void IndexTuner::Analyze(storage::DataTable* table) {
 
   LOG_INFO("Available index space : %lu", max_indexes_allowed);
 
+  return max_indexes_allowed;
+}
+
+void UpdateIndexes(storage::DataTable *table,
+                   const std::vector<std::vector<double>>& suggested_indices,
+                   size_t max_indexes_allowed) {
+
+  oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
 
   for(auto suggested_index : suggested_indices) {
 
-    // Check if we have space
+    // Check if we have storage space
     if((max_indexes_allowed <= 0) ||
         (constructed_index_itr >= max_indexes_allowed)) {
       LOG_INFO("No more index space");
-
-      auto index = table->GetIndex(0);
-
-      if(index != nullptr){
-        auto index_oid = index->GetOid();
-        LOG_INFO("Dropping index with oid : %u", index_oid);
-        table->DropIndexWithOid(index_oid);
-      }
-
       break;
     }
 
@@ -280,9 +295,8 @@ void IndexTuner::Analyze(storage::DataTable* table) {
     bool suggested_index_found = false;
     for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
 
+      // Check attributes
       auto index_attrs = table->GetIndexAttrs(index_itr);
-
-      // Some attribute did not match
       if(index_attrs != suggested_index_set) {
         continue;
       }
@@ -295,10 +309,8 @@ void IndexTuner::Analyze(storage::DataTable* table) {
     // Did we find suggested index ?
     if(suggested_index_found == false) {
       LOG_INFO("Did not find suggested index. Going to create it.");
-
       // Add adhoc index
       AddIndex(table, suggested_index_set);
-
       constructed_index_itr++;
     }
     else {
@@ -308,10 +320,36 @@ void IndexTuner::Analyze(storage::DataTable* table) {
     for(auto attr : suggested_index_set){
       LOG_INFO("%u", attr);
     }
-
     LOG_INFO("-------------------");
 
   }
+}
+
+void IndexTuner::Analyze(storage::DataTable* table) {
+
+  // Process all samples in table
+  auto& samples = table->GetIndexSamples();
+  auto sample_count = samples.size();
+
+  // Check if we have sufficient number of samples
+  if (sample_count < sample_count_threshold) {
+    return;
+  }
+
+  // Check read write ratio
+  ComputeReadWriteRatio(samples);
+
+  // Determine frequent samples
+  auto sample_frequency_entry_list = GetFrequentSamples(samples);
+
+  // Compute suggested indices
+  auto suggested_indices = GetSuggestedIndices(sample_frequency_entry_list);
+
+  // Check index storage footprint
+  auto max_indexes_allowed = CheckIndexStorageFootprint(table);
+
+  // Add/Drop indexes as needed
+  UpdateIndexes(table, suggested_indices, max_indexes_allowed);
 
   // Clear all current samples in table
   table->ClearIndexSamples();

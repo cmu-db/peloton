@@ -80,6 +80,8 @@ class IndexTuner {
 
   void Analyze(storage::DataTable* table);
 
+  size_t CheckIndexStorageFootprint(storage::DataTable *table);
+
  private:
 
   // Tables whose indices must be tuned
