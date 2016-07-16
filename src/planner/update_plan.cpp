@@ -38,28 +38,25 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 
 	TargetList tlist;
 	DirectMapList dmlist;
-
-	auto column_id = target_table_->GetSchema()->GetColumns();
+	oid_t col_id;
+	auto schema = target_table_->GetSchema();
 
 	std::vector<oid_t> columns;
 	for (auto update : *updates) {
 
-		auto column = std::string(update->column);
-		oid_t col_id = 0;
-
-		for (uint i = 0; i < column_id.size(); i++) {
-			if (column == column_id[i].GetName())
-				col_id = i;
-			break;
-		}
-
 		// get oid_t of the column and push it to the vector;
+		col_id = schema->GetColumnID(std::string(update->column));
+
+		LOG_INFO("This is the column ID -------------------------> %d" , col_id);
+		
+		columns.push_back(col_id);
 		tlist.emplace_back(col_id, update->value);
 	}
 
-	for (uint i = 0; i < tlist.size(); i++) {
-		dmlist.emplace_back(tlist[i].first,
-				std::pair<oid_t, oid_t>(0, tlist[i].first));
+	for (uint i = 0; i < schema->GetColumns().size(); i++) {
+		if(schema->GetColumns()[i].column_name != schema->GetColumns()[col_id].column_name)
+		dmlist.emplace_back(i,
+				std::pair<oid_t, oid_t>(0, i));
 	}
 
 	std::unique_ptr<const planner::ProjectInfo> project_info(
@@ -67,15 +64,61 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	project_info_ = std::move(project_info);
 	
 	where = parse_tree->where;
+	auto expr = where;
 
-	auto right_of = (expression::AbstractExpression*)where->GetRight();
-	auto left_of = (expression::AbstractExpression*)where->GetLeft();
+	ReplaceColumnExpressions(expr);
+	// auto right_expr = (expression::AbstractExpression*)expr->GetRight();
+	// auto left_expr = (expression::AbstractExpression*)expr->GetLeft();
 
-	auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, right_of, left_of);
+	// std::unique_ptr<expression::AbstractExpression> unique_right_expr(std::move(right_expr));
+	// std::unique_ptr<expression::AbstractExpression> unique_left_expr(std::move(left_expr));
+
+	// LOG_INFO("right_expr TYPE =========-----------------> %s" ,ExpressionTypeToString(right_expr->GetExpressionType()).c_str());
+	// LOG_INFO("left_expr TYPE =========-----------------> %s" ,ExpressionTypeToString(left_expr->GetExpressionType()).c_str());
+
+
+	// auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
+ //      expr->GetExpressionType(), unique_left_expr.release(), unique_right_expr.release());
+
 	std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-			new planner::SeqScanPlan(target_table_, predicate, columns));
-	this->AddChild(std::move(seq_scan_node));
+			new planner::SeqScanPlan(target_table_, expr, columns));
+	AddChild(std::move(seq_scan_node));
+}
+
+void UpdatePlan::ReplaceColumnExpressions(expression::AbstractExpression* expression) {
+  LOG_INFO("Expression Type --> %s", ExpressionTypeToString(expression->GetExpressionType()).c_str());
+  LOG_INFO("Left Type --> %s", ExpressionTypeToString(expression->GetLeft()->GetExpressionType()).c_str());
+  LOG_INFO("Right Type --> %s", ExpressionTypeToString(expression->GetRight()->GetExpressionType()).c_str());
+  if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
+    auto expr = expression->GetLeft();
+    std::string col_name(expr->getName());
+    LOG_INFO("Column name: %s", col_name.c_str());
+    delete expr;
+    expression->setLeft(ConvertToTupleValueExpression(col_name));
+  }
+  else if (expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
+    auto expr = expression->GetRight();
+    std::string col_name(expr->getName());
+    LOG_INFO("Column name: %s", col_name.c_str());
+    delete expr;
+    expression->setRight(ConvertToTupleValueExpression(col_name));
+  }
+  else {
+	  ReplaceColumnExpressions(expression->GetModifiableLeft());
+	  ReplaceColumnExpressions(expression->GetModifiableRight());
+
+  }
+}
+/**
+ * This function generates a TupleValue expression from the column name
+ */
+expression::AbstractExpression* UpdatePlan::ConvertToTupleValueExpression (std::string column_name) {
+	auto schema = target_table_->GetSchema();
+    auto column_id = schema->GetColumnID(column_name);
+    LOG_INFO("Column id in table: %u", column_id);
+    expression::TupleValueExpression *expr =
+        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
+	return expr;
 }
 
 }  // namespace planner
