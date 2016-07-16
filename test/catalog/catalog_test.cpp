@@ -62,7 +62,7 @@ TEST_F(CatalogTests, CreatingTable) {
 
   txn_manager.CommitTransaction();
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableWithName("department_table")->GetSchema()->GetColumn(1).GetName(), "name");
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 3);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetTupleCount(), 3);
   EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetSchema()->GetLength(), 72);
 
 }
