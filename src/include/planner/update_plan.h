@@ -57,6 +57,11 @@ class UpdatePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
+  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
+
+  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
+
+
   const std::string GetInfo() const { return "UpdatePlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
