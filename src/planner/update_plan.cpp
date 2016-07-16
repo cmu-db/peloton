@@ -50,7 +50,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 		LOG_INFO("This is the column ID -------------------------> %d" , col_id);
 		
 		columns.push_back(col_id);
-		tlist.emplace_back(col_id, update->value);
+		tlist.emplace_back(col_id, update->value->Copy());
 	}
 
 	for (uint i = 0; i < schema->GetColumns().size(); i++) {
@@ -63,8 +63,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 			new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
 	project_info_ = std::move(project_info);
 	
-	where = parse_tree->where;
-	auto expr = where;
+	where = parse_tree->where->Copy();
+	auto expr = where->Copy();
 
 	ReplaceColumnExpressions(expr);
 	// auto right_expr = (expression::AbstractExpression*)expr->GetRight();
