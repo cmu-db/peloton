@@ -314,8 +314,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   // Prepare statement
   std::shared_ptr<Statement> statement;
   auto &tcop = tcop::TrafficCop::GetInstance();
-  statement = std::move(
-      tcop.PrepareStatement(statement_name, query_string, error_message));
+  statement = tcop.PrepareStatement(statement_name, query_string, error_message);
   // This if condition is for debugging. When done, remove with the two includes for
   // delete_plan and seq_scan_plan
   if(statement->GetPlanTree().get()->GetPlanNodeType() == PLAN_NODE_TYPE_DELETE){

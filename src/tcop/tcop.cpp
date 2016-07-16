@@ -112,7 +112,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
   }
 
   LOG_INFO("Statement Prepared!");
-  return statement;
+  return std::move(statement);
 
 }
 
