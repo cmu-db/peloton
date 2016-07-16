@@ -567,7 +567,7 @@ void InsertTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
   tile_group->InsertTupleFromRecovery(commit_id, insert_loc.offset, tuple);
   if (should_increase_tuple_count) {
     table->GetTileGroupLock().WriteLock();
-    table->IncreaseNumberOfTuplesBy(1);
+    table->IncreaseTupleCount(1);
     table->GetTileGroupLock().Unlock();
   }
   delete tuple;
@@ -597,7 +597,7 @@ void DeleteTupleHelper(oid_t &max_tg, cid_t commit_id, oid_t db_id,
     }
   }
   // FIXME we always decrease the number of tuples by one
-  table->DecreaseNumberOfTuplesBy(1);
+  table->DecreaseTupleCount(1);
   // table->GetTileGroupLock().Unlock();
 
   tile_group->DeleteTupleFromRecovery(commit_id, delete_loc.offset);

@@ -1655,15 +1655,15 @@ void LoadTPCCDatabase() {
 
   LoadWarehouses();
 
-  LOG_INFO("warehouse count = %lf", warehouse_table->GetNumberOfTuples());
-  LOG_INFO("district count  = %lf", district_table->GetNumberOfTuples());
-  LOG_INFO("item count = %lf", item_table->GetNumberOfTuples());
-  LOG_INFO("customer count = %lf", customer_table->GetNumberOfTuples());
-  LOG_INFO("history count = %lf", history_table->GetNumberOfTuples());
-  LOG_INFO("stock count = %lf", stock_table->GetNumberOfTuples());
-  LOG_INFO("orders count = %lf", orders_table->GetNumberOfTuples());
-  LOG_INFO("new order count = %lf", new_order_table->GetNumberOfTuples());
-  LOG_INFO("order line count = %lf", order_line_table->GetNumberOfTuples());
+  LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
+  LOG_INFO("district count  = %lu", district_table->GetTupleCount());
+  LOG_INFO("item count = %lu", item_table->GetTupleCount());
+  LOG_INFO("customer count = %lu", customer_table->GetTupleCount());
+  LOG_INFO("history count = %lu", history_table->GetTupleCount());
+  LOG_INFO("stock count = %lu", stock_table->GetTupleCount());
+  LOG_INFO("orders count = %lu", orders_table->GetTupleCount());
+  LOG_INFO("new order count = %lu", new_order_table->GetTupleCount());
+  LOG_INFO("order line count = %lu", order_line_table->GetTupleCount());
 }
 
 }  // namespace tpcc

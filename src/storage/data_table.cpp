@@ -202,7 +202,7 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
-  IncreaseNumberOfTuplesBy(1);
+  IncreaseTupleCount(1);
   return location;
 }
 
@@ -222,7 +222,7 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
-  IncreaseNumberOfTuplesBy(1);
+  IncreaseTupleCount(1);
   return location;
 }
 
@@ -243,7 +243,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   }
 
   // Increase the table's number of tuples by 1
-  IncreaseNumberOfTuplesBy(1);
+  IncreaseTupleCount(1);
   // Increase the indexes' number of tuples by 1 as well
   for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
   return location;
@@ -407,7 +407,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
-void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
+void DataTable::IncreaseTupleCount(const size_t &amount) {
   number_of_tuples_ += amount;
   dirty_ = true;
 }
@@ -416,7 +416,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
  * @brief Decrease the number of tuples in this table
  * @param amount amount to decrease
  */
-void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
+void DataTable::DecreaseTupleCount(const size_t &amount) {
   number_of_tuples_ -= amount;
   dirty_ = true;
 }
@@ -425,7 +425,7 @@ void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
  * @brief Set the number of tuples in this table
  * @param num_tuples number of tuples
  */
-void DataTable::SetNumberOfTuples(const float &num_tuples) {
+void DataTable::SetTupleCount(const size_t &num_tuples) {
   number_of_tuples_ = num_tuples;
   dirty_ = true;
 }
@@ -434,7 +434,9 @@ void DataTable::SetNumberOfTuples(const float &num_tuples) {
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples_; }
+size_t DataTable::GetTupleCount() const {
+  return number_of_tuples_;
+}
 
 /**
  * @brief return dirty flag

@@ -10,7 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include<unordered_map>
+#include <unordered_map>
+#include <algorithm>
 
 #include "brain/index_tuner.h"
 #include "brain/clusterer.h"
@@ -262,30 +263,28 @@ size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable *table){
 
   // Construct indices in suggested index list
   oid_t index_count = table->GetIndexCount();
-  auto tuple_count = table->GetNumberOfTuples();
+  size_t min_tuple_count = 1000;
+  auto tuple_count = std::max(min_tuple_count, table->GetTupleCount());
 
-  LOG_INFO("Tuple count : %.0lf", tuple_count);
+  // Compute index storage footprint (in MB)
+  size_t per_index_storage_space = (tuple_count * 80) / (1024 * 1024);
+  size_t current_storage_space = index_count * per_index_storage_space;
 
-  size_t per_index_storage_footprint = (tuple_count * 80) / (1024 * 1024);
-  size_t current_storage_footprint = index_count * per_index_storage_footprint;
+  LOG_INFO("Per index storage space : %lu", per_index_storage_space);
+  LOG_INFO("Current storage space : %lu", current_storage_space);
 
-  LOG_INFO("Per index storage footprint : %lu", per_index_storage_footprint);
-  LOG_INFO("Current storage footprint : %lu", current_storage_footprint);
+  size_t available_storage_space = max_storage_space - current_storage_space;
+  size_t max_allowed_indexes = available_storage_space / per_index_storage_space;
 
-  size_t available_space = max_storage_footprint - current_storage_footprint;
-  size_t max_indexes_allowed = 0;
-  if(per_index_storage_footprint != 0) {
-    max_indexes_allowed = available_space / per_index_storage_footprint;
-  }
+  LOG_INFO("Available storage space : %lu", available_storage_space);
+  LOG_INFO("Available index count : %lu", max_allowed_indexes);
 
-  LOG_INFO("Available index space : %lu", max_indexes_allowed);
-
-  return max_indexes_allowed;
+  return max_allowed_indexes;
 }
 
 void UpdateIndexes(storage::DataTable *table,
                    const std::vector<std::vector<double>>& suggested_indices,
-                   size_t max_indexes_allowed) {
+                   size_t max_allowed_indexes) {
 
   oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
@@ -293,8 +292,8 @@ void UpdateIndexes(storage::DataTable *table,
   for(auto suggested_index : suggested_indices) {
 
     // Check if we have storage space
-    if((max_indexes_allowed <= 0) ||
-        (constructed_index_itr >= max_indexes_allowed)) {
+    if((max_allowed_indexes <= 0) ||
+        (constructed_index_itr >= max_allowed_indexes)) {
       LOG_INFO("No more index space");
       break;
     }

@@ -111,7 +111,7 @@ class IndexTuner {
   oid_t max_tile_groups_indexed = 50;
 
   // storage footprint (MB)
-  size_t max_storage_footprint = 1.5 * 1024;
+  size_t max_storage_space = 200;
 
   // alpha (weight for old samples)
   double alpha = 0.2;

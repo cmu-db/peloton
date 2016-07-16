@@ -132,7 +132,7 @@ void Checkpoint::RecoverTuple(storage::Tuple *tuple, storage::DataTable *table,
     // TODO: We need to abort on failure!
   } else {
     // TODO this is not thread safe
-    table->SetNumberOfTuples(table->GetNumberOfTuples() + 1);
+    table->SetTupleCount(table->GetTupleCount() + 1);
   }
 }
 
