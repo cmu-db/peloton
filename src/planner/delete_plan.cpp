@@ -36,7 +36,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 	  truncate = true;
   }
   else {
-	  expr = delete_statemenet->expr;
+	  expr = delete_statemenet->expr->Copy();
 	  LOG_INFO("Replacing COLUMN_REF with TupleValueExpressions");
 	  ReplaceColumnExpressions(expr);
 	  std::vector<oid_t> column_ids = {};

@@ -113,10 +113,10 @@ TEST_F(UpdateTests, Updating) {
 
   txn_manager.BeginTransaction();
   LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table WHERE dept_id = 1");
-  statement.reset(new Statement("DELETE", "DELETE FROM department_table WHERE dept_id = 1"));
+  LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
+  statement.reset(new Statement("DELETE", "DELETE FROM department_table WHERE dept_name = 'CS'"));
   LOG_INFO("Building parse tree...");
-  auto delete_stmt = peloton_parser.BuildParseTree("DELETE FROM department_table WHERE dept_id = 1");
+  auto delete_stmt = peloton_parser.BuildParseTree("DELETE FROM department_table WHERE dept_name = 'CS'");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
