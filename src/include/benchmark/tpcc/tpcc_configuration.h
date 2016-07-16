@@ -10,10 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
-
-#undef NDEBUG
 
 #include <string>
 #include <getopt.h>

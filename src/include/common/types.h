@@ -999,27 +999,4 @@ typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
 
-//===--------------------------------------------------------------------===//
-// Asserts
-//===--------------------------------------------------------------------===//
-
-#ifndef NDEBUG
-
-#define AssertMsg(condition, message)                                    \
-  do {                                                                   \
-    if (!(condition)) {                                                  \
-      std::cerr << "Assertion `" #condition "` failed in " << __FILE__   \
-                << " line " << __LINE__ << ": " << message << std::endl; \
-      std::exit(EXIT_FAILURE);                                           \
-    }                                                                    \
-  } while (false)
-
-#else
-
-#define AssertMsg(condition, message) \
-  do {                                \
-  } while (false)
-
-#endif
-
 }  // End peloton namespace
