@@ -45,7 +45,7 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata {
+class IndexMetadata : public Printable {
   IndexMetadata() = delete;
 
  public:
@@ -84,6 +84,15 @@ class IndexMetadata {
 
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
+  double GetUtility() const { return utility_ratio; }
+
+  void SetUtility(double utility_ratio_) {
+    utility_ratio = utility_ratio_;
+  }
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
+
   std::string index_name;
 
   oid_t index_oid;
@@ -103,6 +112,9 @@ class IndexMetadata {
 
   // unique keys ?
   bool unique_keys;
+
+  // utility of an index
+  double utility_ratio = INVALID_RATIO;
 };
 
 //===--------------------------------------------------------------------===//
