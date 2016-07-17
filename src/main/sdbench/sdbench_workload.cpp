@@ -372,12 +372,12 @@ void RunDirectTest() {
   std::vector<oid_t> tuple_key_attrs;
   std::vector<oid_t> index_key_attrs;
 
-  auto rand_sample = rand() % 3;
-  if(rand_sample == 0) {
+  auto rand_sample = rand() % 5;
+  if(rand_sample <= 2) {
     tuple_key_attrs = {3, 4};
     index_key_attrs = {0, 1};
   }
-  else if(rand_sample == 1){
+  else if(rand_sample == 3){
     tuple_key_attrs = {2};
     index_key_attrs = {0};
   }
@@ -549,7 +549,7 @@ void RunInsertTest() {
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
-  double repeat_count = 60;
+  double repeat_count = 100;
 
   for(oid_t repeat_itr = 0; repeat_itr < repeat_count; repeat_itr++){
 
@@ -573,7 +573,7 @@ void RunAdaptExperiment() {
   // Setup layout tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
-  state.transactions = 50;   // 25
+  state.transactions = 30;   // 25
 
   state.projectivity = 1.0;
   state.selectivity = 0.06;

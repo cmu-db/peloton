@@ -51,7 +51,8 @@ void IndexTuner::Start(){
 
 // Add an ad-hoc index
 static void AddIndex(storage::DataTable* table,
-                     std::set<oid_t> suggested_index_attrs) {
+                     std::set<oid_t> suggested_index_attrs,
+                     double current_index_utility) {
 
   // Construct index metadata
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
@@ -81,6 +82,9 @@ static void AddIndex(storage::DataTable* table,
       key_schema,
       key_attrs,
       unique);
+
+  // Set utility
+  index_metadata->SetUtility(current_index_utility);
 
   std::shared_ptr<index::Index> adhoc_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -223,7 +227,6 @@ GetFrequentSamples(const std::vector<brain::Sample>& samples){
     }
   }
 
-  LOG_INFO("Sample size : %lu", samples.size());
   LOG_INFO("Sample frequency map size : %lu", sample_frequency_map.size());
 
   // Normalize
@@ -234,7 +237,6 @@ GetFrequentSamples(const std::vector<brain::Sample>& samples){
       ++sample_frequency_map_itr) {
     // Normalize sample's utility
     sample_frequency_map_itr->second /= total_metric;
-    LOG_INFO("Sample utility : %.2lf", sample_frequency_map_itr->second);
   }
 
   std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
@@ -256,7 +258,7 @@ std::vector<std::vector<double>>
 GetSuggestedIndices(const std::vector<sample_frequency_map_entry>& list){
 
   // Find frequent samples
-  size_t frequency_rank_threshold = 3;
+  size_t frequency_rank_threshold = 10;
 
   // Print top-k frequent samples for table
   std::vector<std::vector<double>> suggested_indices;
@@ -298,9 +300,34 @@ size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable *table){
   return max_allowed_indexes;
 }
 
+double GetCurrentIndexUtility(std::set<oid_t> suggested_index_set,
+                              const std::vector<sample_frequency_map_entry>& list){
+
+  double current_index_utility = 0;
+  auto list_size = list.size();
+
+  for(size_t entry_itr = 0; entry_itr < list_size; entry_itr++){
+    auto& entry = list[entry_itr];
+    auto& sample = entry.first;
+    auto& columns = sample.columns_accessed_;
+
+    std::set<oid_t> columns_set(columns.begin(), columns.end());
+
+    if(columns_set == suggested_index_set){
+      LOG_INFO("Sample--Index Match : %s ", sample.GetInfo().c_str());
+      current_index_utility = entry.second;
+      break;
+    }
+
+  }
+
+  return current_index_utility;
+}
+
 void UpdateIndexes(storage::DataTable *table,
                    const std::vector<std::vector<double>>& suggested_indices,
-                   size_t max_allowed_indexes) {
+                   size_t max_allowed_indexes,
+                   const std::vector<sample_frequency_map_entry>& list) {
 
   oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
@@ -319,7 +346,8 @@ void UpdateIndexes(storage::DataTable *table,
 
     // Go over all indices
     bool suggested_index_found = false;
-    for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
+    oid_t index_itr;
+    for(index_itr = 0; index_itr < index_count; index_itr++){
 
       // Check attributes
       auto index_attrs = table->GetIndexAttrs(index_itr);
@@ -334,13 +362,41 @@ void UpdateIndexes(storage::DataTable *table,
 
     // Did we find suggested index ?
     if(suggested_index_found == false) {
-      LOG_INFO("Did not find suggested index. Going to create it.");
-      // Add adhoc index
-      AddIndex(table, suggested_index_set);
+
+      LOG_INFO("Did not find suggested index.");
+
+      // Get current index utility
+      auto current_index_utility = GetCurrentIndexUtility(suggested_index_set,
+                                                          list);
+
+      LOG_INFO("*****************************************************");
+      LOG_INFO("Going to create index with utility %.2lf", current_index_utility);
+
+      // Add adhoc index with given utility
+      AddIndex(table, suggested_index_set, current_index_utility);
       constructed_index_itr++;
     }
     else {
       LOG_INFO("Found suggested index.");
+
+      // Get current index utility
+      auto current_index_utility = GetCurrentIndexUtility(suggested_index_set,
+                                                          list);
+
+      auto index_metadata = table->GetIndex(index_itr)->GetMetadata();
+      auto average_index_utility = index_metadata->GetUtility();
+
+      // alpha (weight for old samples)
+      double alpha = 0.2;
+
+      // Update index utility
+      auto updated_average_index_utility = alpha * current_index_utility +
+          (1 - alpha) * average_index_utility;
+
+      index_metadata->SetUtility(updated_average_index_utility);
+
+      LOG_INFO("*****************************************************");
+      LOG_INFO("Updated index utility %.2lf", updated_average_index_utility);
     }
 
   }
@@ -370,7 +426,8 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   auto max_indexes_allowed = CheckIndexStorageFootprint(table);
 
   // Add/Drop indexes as needed
-  UpdateIndexes(table, suggested_indices, max_indexes_allowed);
+  UpdateIndexes(table, suggested_indices, max_indexes_allowed,
+                sample_frequency_entry_list);
 
   // Clear all current samples in table
   table->ClearIndexSamples();
