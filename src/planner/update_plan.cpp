@@ -35,11 +35,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
 			DEFAULT_DB_NAME, table_name);
 
-	updates = new std::vector<parser::UpdateClause*>();
-	for(auto update : *parse_tree->updates) {
-		updates->emplace_back(update->Copy());
-	}
-
+	updates = parse_tree->updates;
 	TargetList tlist;
 	DirectMapList dmlist;
 	oid_t col_id;
@@ -54,7 +50,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 		LOG_INFO("This is the column ID -------------------------> %d" , col_id);
 		
 		columns.push_back(col_id);
-		tlist.emplace_back(col_id, update->value);
+		tlist.emplace_back(col_id, update->value->Copy());
 	}
 
 	for (uint i = 0; i < schema->GetColumns().size(); i++) {
