@@ -332,6 +332,9 @@ std::shared_ptr<index::Index> PickIndex(storage::DataTable* table,
     // Exact match
     query_index_found = true;
     break;
+
+    // update index count
+    index_count = table->GetIndexCount();
   }
 
   std::shared_ptr<index::Index> index;
