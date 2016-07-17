@@ -549,7 +549,7 @@ void RunInsertTest() {
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
-  double repeat_count = 30;
+  double repeat_count = 60;
 
   for(oid_t repeat_itr = 0; repeat_itr < repeat_count; repeat_itr++){
 
@@ -573,7 +573,7 @@ void RunAdaptExperiment() {
   // Setup layout tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
-  state.transactions = 200;   // 25
+  state.transactions = 50;   // 25
 
   state.projectivity = 1.0;
   state.selectivity = 0.06;
