@@ -42,6 +42,22 @@ oid_t IndexMetadata::GetColumnCount() const {
   return GetKeySchema()->GetColumnCount();
 }
 
+const std::string IndexMetadata::GetInfo() const {
+  std::stringstream os;
+
+  os << "\tINDEX METADATA: [";
+
+  for(auto key_attr : key_attrs){
+    os << key_attr << " ";
+  }
+
+  os << " ] :: ";
+
+  os << utility_ratio;
+
+  return os.str();
+}
+
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &expr_types,

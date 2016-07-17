@@ -130,6 +130,8 @@ class Value;
 #define VALUE_COMPARE_NO_EQUAL \
   -3  // assigned when comparing array list and no element matching.
 
+#define INVALID_RATIO  -1
+
 #define DEFAULT_DB_ID 12345
 #define DEFAULT_DB_NAME "default_database"
 

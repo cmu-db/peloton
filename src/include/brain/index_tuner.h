@@ -110,16 +110,14 @@ class IndexTuner {
   // # of tile groups to be indexed per iteration
   oid_t max_tile_groups_indexed = 50;
 
-  // storage footprint (MB)
-  size_t max_storage_space = 200;
+  // storage footprint (KB)
+  size_t max_storage_space = 200 * 1024;
 
   // alpha (weight for old samples)
   double alpha = 0.2;
 
-  static constexpr double invalid_ratio = -1;
-
   // average write ratio
-  double average_write_ratio = invalid_ratio;
+  double average_write_ratio = INVALID_RATIO;
 
 };
 

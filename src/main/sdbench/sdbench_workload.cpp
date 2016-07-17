@@ -277,7 +277,10 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
     WriteOutput(duration);
 
     // Construct sample
-    brain::Sample index_sample(index_columns_accessed, duration, sample_type, selectivity);
+    brain::Sample index_sample(index_columns_accessed,
+                               duration,
+                               sample_type,
+                               selectivity);
 
     // Record sample
     sdbench_table->RecordIndexSample(index_sample);
@@ -316,13 +319,10 @@ std::shared_ptr<index::Index> PickIndex(storage::DataTable* table,
   bool query_index_found = false;
   oid_t index_itr = 0;
   for(index_itr = 0; index_itr < index_count; index_itr++){
-
     auto index_attrs = table->GetIndexAttrs(index_itr);
+    auto index_metadata = table->GetIndex(index_itr)->GetMetadata();
 
-    LOG_INFO("Available Index :: ");
-    for(auto index_attr : index_attrs){
-      LOG_INFO("%u", index_attr);
-    }
+    LOG_INFO("Available Index :: %s", index_metadata->GetInfo().c_str());
 
     // Some attribute did not match
     if(index_attrs != query_attrs_set) {
@@ -386,10 +386,12 @@ void RunDirectTest() {
     index_key_attrs = {0, 1};
   }
 
-  LOG_INFO("Direct :: ");
+  std::stringstream os;
+  os << "Direct :: ";
   for(auto tuple_key_attr : tuple_key_attrs){
-    LOG_INFO("%u", tuple_key_attr);
+    os << tuple_key_attr << " ";
   }
+  LOG_INFO("%s", os.str().c_str());
 
   // Create and set up seq scan executor
   auto predicate = CreateScanPredicate(tuple_key_attrs);

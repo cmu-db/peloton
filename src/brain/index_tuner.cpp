@@ -88,7 +88,8 @@ static void AddIndex(storage::DataTable* table,
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_INFO("Added suggested index");
+  LOG_INFO("Added suggested index : %s",
+           index_metadata->GetInfo().c_str());
 }
 
 void IndexTuner::BuildIndex(storage::DataTable *table,
@@ -180,7 +181,7 @@ double IndexTuner::ComputeWriteRatio(const std::vector<brain::Sample>& samples) 
   write_ratio = total_read_duration / (total_duration);
 
   // Compute exponential moving average
-  if(average_write_ratio == invalid_ratio) {
+  if(average_write_ratio == INVALID_RATIO) {
     average_write_ratio = write_ratio;
   }
   else {
@@ -210,7 +211,7 @@ GetFrequentSamples(const std::vector<brain::Sample>& samples){
   for(auto sample : samples){
     if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
       // Update sample count
-      sample_frequency_map[sample]++;
+      sample_frequency_map[sample] += sample.metric_;
     }
     else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
       // Ignore update samples
@@ -263,21 +264,21 @@ size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable *table){
 
   // Construct indices in suggested index list
   oid_t index_count = table->GetIndexCount();
-  size_t min_tuple_count = 1000;
+  size_t min_tuple_count = 1024;
   auto tuple_count = std::max(min_tuple_count, table->GetTupleCount());
 
-  // Compute index storage footprint (in MB)
-  size_t per_index_storage_space = (tuple_count * 80) / (1024 * 1024);
+  // Compute index storage footprint (in KB)
+  size_t per_index_storage_space = tuple_count * 80 / 1024;
   size_t current_storage_space = index_count * per_index_storage_space;
 
   LOG_INFO("Per index storage space : %lu", per_index_storage_space);
   LOG_INFO("Current storage space : %lu", current_storage_space);
 
-  size_t available_storage_space = max_storage_space - current_storage_space;
-  size_t max_allowed_indexes = available_storage_space / per_index_storage_space;
+  int available_storage_space = max_storage_space - current_storage_space;
+  int max_allowed_indexes = available_storage_space / per_index_storage_space;
 
-  LOG_INFO("Available storage space : %lu", available_storage_space);
-  LOG_INFO("Available index count : %lu", max_allowed_indexes);
+  LOG_INFO("Available storage space : %d", available_storage_space);
+  LOG_INFO("Available index count : %d", max_allowed_indexes);
 
   return max_allowed_indexes;
 }
@@ -326,11 +327,6 @@ void UpdateIndexes(storage::DataTable *table,
     else {
       LOG_INFO("Found suggested index.");
     }
-
-    for(auto attr : suggested_index_set){
-      LOG_INFO("%u", attr);
-    }
-    LOG_INFO("-------------------");
 
   }
 }
