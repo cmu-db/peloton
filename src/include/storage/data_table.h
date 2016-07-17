@@ -280,6 +280,9 @@ class DataTable : public AbstractTable {
   // INDEXES
   std::vector<std::shared_ptr<index::Index>> indexes_;
 
+  // To protect indexes
+  RWLock indexes_lock_;
+
   // columns present in the indexes
   std::vector<std::set<oid_t>> indexes_columns_;
 
