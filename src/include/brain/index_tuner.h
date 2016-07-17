@@ -84,6 +84,8 @@ class IndexTuner {
 
   double ComputeWriteRatio(const std::vector<brain::Sample>& samples);
 
+  void DropIndexes(storage::DataTable *table);
+
  private:
 
   // Tables whose indices must be tuned
@@ -118,6 +120,12 @@ class IndexTuner {
 
   // average write ratio
   double average_write_ratio = INVALID_RATIO;
+
+  // write ratio threshold
+  double write_ratio_threshold = 0.8;
+
+  // index utility threshold
+  double index_utility_threshold = 0.2;
 
 };
 
