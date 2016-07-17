@@ -195,7 +195,7 @@ double IndexTuner::ComputeWriteRatio(const std::vector<brain::Sample>& samples) 
   return average_write_ratio;
 }
 
-typedef std::pair<brain::Sample, oid_t> sample_frequency_map_entry;
+typedef std::pair<brain::Sample, double> sample_frequency_map_entry;
 
 bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
                                        sample_frequency_map_entry b){
@@ -205,13 +205,15 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 std::vector<sample_frequency_map_entry>
 GetFrequentSamples(const std::vector<brain::Sample>& samples){
 
-  std::unordered_map<brain::Sample, oid_t> sample_frequency_map;
+  std::unordered_map<brain::Sample, double> sample_frequency_map;
+  double total_metric = 0;
 
   // Go over all samples
   for(auto sample : samples){
     if(sample.sample_type_ == SAMPLE_TYPE_ACCESS){
       // Update sample count
       sample_frequency_map[sample] += sample.metric_;
+      total_metric += sample.metric_;
     }
     else if(sample.sample_type_ == SAMPLE_TYPE_UPDATE){
       // Ignore update samples
@@ -219,6 +221,20 @@ GetFrequentSamples(const std::vector<brain::Sample>& samples){
     else {
       throw Exception("Unknown sample type : " + std::to_string(sample.sample_type_));
     }
+  }
+
+  LOG_INFO("Sample size : %lu", samples.size());
+  LOG_INFO("Sample frequency map size : %lu", sample_frequency_map.size());
+
+  // Normalize
+  std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
+
+  for(sample_frequency_map_itr = sample_frequency_map.begin();
+      sample_frequency_map_itr != sample_frequency_map.end();
+      ++sample_frequency_map_itr) {
+    // Normalize sample's utility
+    sample_frequency_map_itr->second /= total_metric;
+    LOG_INFO("Sample utility : %.2lf", sample_frequency_map_itr->second);
   }
 
   std::vector<sample_frequency_map_entry> sample_frequency_entry_list;
@@ -251,9 +267,8 @@ GetSuggestedIndices(const std::vector<sample_frequency_map_entry>& list){
       entry_itr++){
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
-    LOG_INFO("%s Frequency : %u", sample.GetInfo().c_str(), entry.second);
+    LOG_INFO("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
 
-    // Add to suggested index list
     suggested_indices.push_back(sample.columns_accessed_);
   }
 
