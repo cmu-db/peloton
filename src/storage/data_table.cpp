@@ -244,8 +244,18 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
+
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
+  auto index_count = GetIndexCount();
+
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
+    auto index = GetIndex(index_itr);
+    index->IncreaseNumberOfTuplesBy(1);
+
+    // Update index count
+    index_count = GetIndexCount();
+  }
+
   return location;
 }
 
@@ -298,13 +308,17 @@ bool DataTable::InsertInIndex(oid_t index_offset,
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
-  int index_count = GetIndexCount();
 
-  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+  auto index_count = GetIndexCount();
+
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
     auto status = InsertInIndex(index_itr, tuple, location);
     if(status == false){
       return false;
     }
+
+    // Update index count
+    index_count = GetIndexCount();
   }
 
   return true;
