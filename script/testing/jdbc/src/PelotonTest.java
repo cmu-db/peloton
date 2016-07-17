@@ -31,9 +31,9 @@ public class PelotonTest {
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
-  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
+  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data = 'test update' WHERE id=3";
   private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id < 2";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE data = 'test update'";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
 
@@ -75,6 +75,7 @@ public class PelotonTest {
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
+    stmt.execute(UPDATE_BY_INDEXSCAN);
     stmt.execute(DELETE_BY_INDEXSCAN);
     System.out.println("Test db created.");
   }

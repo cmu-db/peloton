@@ -34,7 +34,10 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	table_name = std::string(t_ref->name);
 	target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
 			DEFAULT_DB_NAME, table_name);
-	updates = parse_tree->updates;
+	updates = new std::vector<parser::UpdateClause*>();
+	for(auto update : *parse_tree->updates) {
+		updates->emplace_back(update->Copy());
+	}
 
 	TargetList tlist;
 	DirectMapList dmlist;
@@ -63,8 +66,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 			new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
 	project_info_ = std::move(project_info);
 	
-	where = parse_tree->where;
-	auto expr = where;
+	where = parse_tree->where->Copy();
+	auto expr = where->Copy();
 
 	ReplaceColumnExpressions(expr);
 	// auto right_expr = (expression::AbstractExpression*)expr->GetRight();
