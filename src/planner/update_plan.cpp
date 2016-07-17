@@ -34,6 +34,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	table_name = std::string(t_ref->name);
 	target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
 			DEFAULT_DB_NAME, table_name);
+
 	updates = new std::vector<parser::UpdateClause*>();
 	for(auto update : *parse_tree->updates) {
 		updates->emplace_back(update->Copy());
@@ -66,22 +67,9 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 			new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
 	project_info_ = std::move(project_info);
 	
-	where = parse_tree->where->Copy();
-	auto expr = where->Copy();
-
+	auto expr = parse_tree->where->Copy();
 	ReplaceColumnExpressions(expr);
-	// auto right_expr = (expression::AbstractExpression*)expr->GetRight();
-	// auto left_expr = (expression::AbstractExpression*)expr->GetLeft();
 
-	// std::unique_ptr<expression::AbstractExpression> unique_right_expr(std::move(right_expr));
-	// std::unique_ptr<expression::AbstractExpression> unique_left_expr(std::move(left_expr));
-
-	// LOG_INFO("right_expr TYPE =========-----------------> %s" ,ExpressionTypeToString(right_expr->GetExpressionType()).c_str());
-	// LOG_INFO("left_expr TYPE =========-----------------> %s" ,ExpressionTypeToString(left_expr->GetExpressionType()).c_str());
-
-
-	// auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
- //      expr->GetExpressionType(), unique_left_expr.release(), unique_right_expr.release());
 
 	std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
 			new planner::SeqScanPlan(target_table_, expr, columns));
