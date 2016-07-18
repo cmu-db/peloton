@@ -91,10 +91,10 @@ TEST_F(DeleteTests, Deleting) {
 
   // Now deleting end-to-end
   LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table WHERE dept_id < 2 AND dept_name = 'hello_1'");
-  statement.reset(new Statement("DELETE", "DELETE FROM department_table WHERE dept_id < 2 AND dept_name = 'hello_1'"));
+  LOG_INFO("Query: DELETE FROM department_table");
+  statement.reset(new Statement("DELETE", "DELETE FROM department_table"));
   LOG_INFO("Building parse tree...");
-  auto delete_stmt = peloton_parser.BuildParseTree("DELETE FROM department_table WHERE dept_id < 2 AND dept_name = 'hello_1'");
+  auto delete_stmt = peloton_parser.BuildParseTree("DELETE FROM department_table");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));

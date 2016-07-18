@@ -32,18 +32,21 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
   table_name = std::string(delete_statemenet->table_name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, table_name);
   // if expr is null , delete all tuples from table
-  if(delete_statemenet->expr == NULL) {
+  if(delete_statemenet->expr == nullptr) {
+	  LOG_INFO("No expression, setting truncate to true");
+	  expr = nullptr;
 	  truncate = true;
+
   }
   else {
 	  expr = delete_statemenet->expr->Copy();
 	  LOG_INFO("Replacing COLUMN_REF with TupleValueExpressions");
 	  ReplaceColumnExpressions(expr);
-	  std::vector<oid_t> column_ids = {};
-	  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-	      new planner::SeqScanPlan(target_table_, expr, column_ids));
-	  AddChild(std::move(seq_scan_node));
   }
+  std::vector<oid_t> column_ids = {};
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+      new planner::SeqScanPlan(target_table_, expr, column_ids));
+  AddChild(std::move(seq_scan_node));
 }
 
 /**
