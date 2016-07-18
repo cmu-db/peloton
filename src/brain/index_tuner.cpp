@@ -51,8 +51,7 @@ void IndexTuner::Start(){
 
 // Add an ad-hoc index
 static void AddIndex(storage::DataTable* table,
-                     std::set<oid_t> suggested_index_attrs,
-                     double current_index_utility) {
+                     std::set<oid_t> suggested_index_attrs) {
 
   // Construct index metadata
   std::vector<oid_t> key_attrs(suggested_index_attrs.size());
@@ -83,8 +82,9 @@ static void AddIndex(storage::DataTable* table,
       key_attrs,
       unique);
 
-  // Set utility
-  index_metadata->SetUtility(current_index_utility);
+  // Set initial utility ratio
+  double intial_utility_ratio = 0.5;
+  index_metadata->SetUtility(intial_utility_ratio);
 
   std::shared_ptr<index::Index> adhoc_index(
       index::IndexFactory::GetInstance(index_metadata));
@@ -92,8 +92,8 @@ static void AddIndex(storage::DataTable* table,
   // Add index
   table->AddIndex(adhoc_index);
 
-  LOG_INFO("Added suggested index : %s",
-           index_metadata->GetInfo().c_str());
+  LOG_TRACE("Added suggested index : %s", index_metadata->GetInfo().c_str());
+
 }
 
 void IndexTuner::BuildIndex(storage::DataTable *table,
@@ -158,7 +158,7 @@ void IndexTuner::BuildIndices(storage::DataTable *table) {
 
 }
 
-double IndexTuner::ComputeWriteRatio(const std::vector<brain::Sample>& samples) {
+double IndexTuner::ComputeWorkloadWriteRatio(const std::vector<brain::Sample>& samples) {
 
   double write_ratio = 0;
 
@@ -227,7 +227,7 @@ GetFrequentSamples(const std::vector<brain::Sample>& samples){
     }
   }
 
-  LOG_INFO("Sample frequency map size : %lu", sample_frequency_map.size());
+  LOG_TRACE("Sample frequency map size : %lu", sample_frequency_map.size());
 
   // Normalize
   std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
@@ -269,7 +269,7 @@ GetSuggestedIndices(const std::vector<sample_frequency_map_entry>& list){
       entry_itr++){
     auto& entry = list[entry_itr];
     auto& sample = entry.first;
-    LOG_INFO("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
+    LOG_TRACE("%s Utility : %.2lf", sample.GetInfo().c_str(), entry.second);
 
     suggested_indices.push_back(sample.columns_accessed_);
   }
@@ -288,13 +288,13 @@ size_t IndexTuner::CheckIndexStorageFootprint(storage::DataTable *table){
   size_t per_index_storage_space = tuple_count * 80 / 1024;
   size_t current_storage_space = index_count * per_index_storage_space;
 
-  LOG_INFO("Per index storage space : %lu", per_index_storage_space);
-  LOG_INFO("Current storage space : %lu", current_storage_space);
+  LOG_TRACE("Per index storage space : %lu", per_index_storage_space);
+  LOG_TRACE("Current storage space : %lu", current_storage_space);
 
   int available_storage_space = max_storage_space - current_storage_space;
   int max_allowed_indexes = available_storage_space / per_index_storage_space;
 
-  LOG_INFO("Available storage space : %d", available_storage_space);
+  LOG_TRACE("Available storage space : %d", available_storage_space);
   LOG_INFO("Available index count : %d", max_allowed_indexes);
 
   return max_allowed_indexes;
@@ -314,7 +314,7 @@ double GetCurrentIndexUtility(std::set<oid_t> suggested_index_set,
     std::set<oid_t> columns_set(columns.begin(), columns.end());
 
     if(columns_set == suggested_index_set){
-      LOG_INFO("Sample--Index Match : %s ", sample.GetInfo().c_str());
+      LOG_TRACE("Sample~Index Match : %s ", sample.GetInfo().c_str());
       current_index_utility = entry.second;
       break;
     }
@@ -339,7 +339,7 @@ void IndexTuner::DropIndexes(storage::DataTable *table) {
 
     // Check if index utility below threshold and drop if needed
     if(average_index_utility < index_utility_threshold) {
-      LOG_INFO("Dropping index : %s", index_metadata->GetInfo().c_str());
+      LOG_TRACE("Dropping index : %s", index_metadata->GetInfo().c_str());
       table->DropIndexWithOid(index_oid);
 
       // Update index count
@@ -353,8 +353,7 @@ void IndexTuner::DropIndexes(storage::DataTable *table) {
 
 void AddIndexes(storage::DataTable *table,
                 const std::vector<std::vector<double>>& suggested_indices,
-                size_t max_allowed_indexes,
-                const std::vector<sample_frequency_map_entry>& list) {
+                size_t max_allowed_indexes) {
 
   oid_t index_count = table->GetIndexCount();
   size_t constructed_index_itr = 0;
@@ -390,41 +389,83 @@ void AddIndexes(storage::DataTable *table,
     // Did we find suggested index ?
     if(suggested_index_found == false) {
 
-      LOG_INFO("Did not find suggested index.");
-
-      // Get current index utility
-      auto current_index_utility = GetCurrentIndexUtility(suggested_index_set,
-                                                          list);
-
-      LOG_INFO("Going to create index");
+      LOG_TRACE("Did not find suggested index.");
 
       // Add adhoc index with given utility
-      AddIndex(table, suggested_index_set, current_index_utility);
+      AddIndex(table, suggested_index_set);
       constructed_index_itr++;
     }
     else {
-      LOG_INFO("Found suggested index.");
-
-      // Get current index utility
-      auto current_index_utility = GetCurrentIndexUtility(suggested_index_set,
-                                                          list);
-
-      auto index_metadata = table->GetIndex(index_itr)->GetMetadata();
-      auto average_index_utility = index_metadata->GetUtility();
-
-      // alpha (weight for old samples)
-      double alpha = 0.2;
-
-      // Update index utility
-      auto updated_average_index_utility = alpha * current_index_utility +
-          (1 - alpha) * average_index_utility;
-
-      index_metadata->SetUtility(updated_average_index_utility);
-
-      LOG_INFO("Updated index utility %.2lf", updated_average_index_utility);
+      LOG_TRACE("Found suggested index.");
     }
 
   }
+}
+
+void UpdateIndexUtility(storage::DataTable* table,
+                        const std::vector<sample_frequency_map_entry>& list) {
+
+  oid_t index_count = table->GetIndexCount();
+
+  for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
+
+    // Get index
+    auto index = table->GetIndex(index_itr);
+    auto index_metadata = index->GetMetadata();
+    auto index_key_attrs = index_metadata->GetKeyAttrs();
+
+    std::set<oid_t> index_set(index_key_attrs.begin(),
+                              index_key_attrs.end());
+
+    // Get current index utility
+    auto current_index_utility = GetCurrentIndexUtility(index_set,
+                                                        list);
+
+    auto average_index_utility = index_metadata->GetUtility();
+
+    LOG_TRACE("Average index utility %5.2lf", average_index_utility);
+    LOG_TRACE("Current index utility %5.2lf", current_index_utility);
+
+    // alpha (weight for old samples)
+    double alpha = 0.2;
+
+    // Update index utility
+    auto updated_average_index_utility = alpha * current_index_utility +
+        (1 - alpha) * average_index_utility;
+
+    index_metadata->SetUtility(updated_average_index_utility);
+
+    LOG_TRACE("Updated index utility %5.2lf :: %s",
+             updated_average_index_utility,
+             index_metadata->GetInfo().c_str());
+  }
+
+}
+
+
+void PrintIndexInformation(storage::DataTable* table) {
+
+  oid_t index_count = table->GetIndexCount();
+  auto table_tilegroup_count = table->GetTileGroupCount();
+
+  for(oid_t index_itr = 0; index_itr < index_count; index_itr++){
+
+    // Get index
+    auto index = table->GetIndex(index_itr);
+    auto index_metadata = index->GetMetadata();
+
+    auto indexed_tile_group_offset = index->GetIndexedTileGroupOff();
+
+    // Get percentage completion
+    auto fraction = 0.0;
+    if(table_tilegroup_count != 0){
+      fraction = indexed_tile_group_offset / table_tilegroup_count;
+      fraction *= 100;
+    }
+
+    LOG_INFO("%s %.1f%%", index_metadata->GetInfo().c_str(), fraction);
+  }
+
 }
 
 void IndexTuner::Analyze(storage::DataTable* table) {
@@ -439,7 +480,7 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   }
 
   // Check write ratio
-  auto average_write_ratio = ComputeWriteRatio(samples);
+  auto average_write_ratio = ComputeWorkloadWriteRatio(samples);
 
   // Determine frequent samples
   auto sample_frequency_entry_list = GetFrequentSamples(samples);
@@ -458,11 +499,16 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   }
 
   // Add indexes if needed
-  AddIndexes(table, suggested_indices, max_indexes_allowed,
-             sample_frequency_entry_list);
+  AddIndexes(table, suggested_indices, max_indexes_allowed);
 
   // Clear all current samples in table
   table->ClearIndexSamples();
+
+  // Update index utility
+  UpdateIndexUtility(table, sample_frequency_entry_list);
+
+  // Display index information
+  PrintIndexInformation(table);
 
 }
 

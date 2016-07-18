@@ -82,7 +82,7 @@ class IndexTuner {
 
   size_t CheckIndexStorageFootprint(storage::DataTable *table);
 
-  double ComputeWriteRatio(const std::vector<brain::Sample>& samples);
+  double ComputeWorkloadWriteRatio(const std::vector<brain::Sample>& samples);
 
   void DropIndexes(storage::DataTable *table);
 
