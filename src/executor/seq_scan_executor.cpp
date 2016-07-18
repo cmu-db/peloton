@@ -102,6 +102,7 @@ bool SeqScanExecutor::DExecute() {
 
       /* Hopefully we needn't do projections here */
       SetOutput(tile.release());
+
       return true;
     }
 
@@ -175,6 +176,7 @@ bool SeqScanExecutor::DExecute() {
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
 
+      LOG_INFO("Information %s" , logical_tile->GetInfo().c_str());
       SetOutput(logical_tile.release());
       return true;
     }
