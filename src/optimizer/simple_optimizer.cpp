@@ -147,11 +147,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       break;
 
     case STATEMENT_TYPE_SELECT: {
-    	LOG_INFO("Adding Select plan...");
-      std::unique_ptr<planner::AbstractPlan> child_SeqScanPlan(
-          new planner::SeqScanPlan());
-      child_plan = std::move(child_SeqScanPlan);
+    	std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
+          new planner::SeqScanPlan((parser::SelectStatement*) parse_tree.get()));
+      child_plan = std::move(child_SelectPlan);
     }
+    break;
 
     case STATEMENT_TYPE_INSERT: {
     	LOG_INFO("Adding Insert plan...");
