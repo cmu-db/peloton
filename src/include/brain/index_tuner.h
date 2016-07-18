@@ -107,13 +107,13 @@ class IndexTuner {
   oid_t sleep_duration = 10;
 
   // Threshold sample count
-  oid_t sample_count_threshold = 500;
+  oid_t sample_count_threshold = 50;
 
   // # of tile groups to be indexed per iteration
   oid_t max_tile_groups_indexed = 50;
 
   // storage footprint (KB)
-  size_t max_storage_space = 200 * 1024;
+  size_t max_storage_space = 2 * 1024 * 1024;
 
   // alpha (weight for old samples)
   double alpha = 0.2;
