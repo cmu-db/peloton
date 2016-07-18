@@ -172,8 +172,8 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
 storage::DataTable* Catalog::GetTableFromDatabase(std::string database_name, std::string table_name) {
 	LOG_INFO("Looking for table %s in database %s", table_name.c_str(), database_name.c_str());
 	storage::Database* database = GetDatabaseWithName(database_name);
-	if(database) {
-		storage::DataTable *table = database->GetTableWithName(table_name);
+  if(database) {
+  	storage::DataTable *table = database->GetTableWithName(table_name);
 		if(table) {
 			return table;
 		}

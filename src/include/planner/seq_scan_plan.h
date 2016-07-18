@@ -24,6 +24,9 @@
 
 namespace peloton {
 
+namespace parser{
+struct SelectStatement;
+}
 namespace storage {
 class DataTable;
 }
@@ -42,11 +45,18 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {}
 
+  SeqScanPlan(parser::SelectStatement* select_node);
+
   SeqScanPlan() : AbstractScan() {}
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   const std::string GetInfo() const { return "SeqScan"; }
+
+  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
+
+  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
+
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
@@ -56,6 +66,8 @@ class SeqScanPlan : public AbstractScan {
 
   /* For init SerializeOutput */
   int SerializeSize();
+
+  oid_t GetColumnID(std::string col_name);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     AbstractPlan *new_plan = new SeqScanPlan(
