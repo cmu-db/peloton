@@ -451,9 +451,9 @@ void IndexTuner::Analyze(storage::DataTable* table) {
   auto max_indexes_allowed = CheckIndexStorageFootprint(table);
 
   // Drop indexes if needed
-  UNUSED_ATTRIBUTE auto index_creation_constraint = (max_indexes_allowed <= 0);
-  UNUSED_ATTRIBUTE auto write_intensive_workload = (average_write_ratio > write_ratio_threshold);
-  if(true) {
+  auto index_creation_constraint = (max_indexes_allowed <= 0);
+  auto write_intensive_workload = (average_write_ratio > write_ratio_threshold);
+  if(index_creation_constraint == true || write_intensive_workload == true) {
     DropIndexes(table);
   }
 
