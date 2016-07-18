@@ -52,21 +52,17 @@ namespace planner {
  */
 
 
-SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node){
+SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node) {
 
   auto target_table = static_cast<storage::DataTable *>(catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();
   
   if(select_node->select_list->at(0)->GetExpressionType() != EXPRESSION_TYPE_STAR){
-    LOG_INFO("Under your fate ------> %lu" , select_node->select_list->size());
     for(auto col : *select_node->select_list){
       LOG_INFO("ExpressionType -------------> %d" ,col->GetExpressionType());
-      LOG_INFO("the night of");
       auto col_name = col->getName();
-      LOG_INFO("Into dust ---------------> %s" , col_name);
       oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
-      LOG_INFO("Thanking the lord for my fingers");
       SetColumnId(col_id);
     }
   }
