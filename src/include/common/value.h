@@ -1711,9 +1711,7 @@ class Value {
   void InlineCopyyObject(void *storage, int32_t maxLength,
                          bool isInBytes) const {
     if (IsNull()) {
-      // Always reSet all the bits regardless of the actual length of the value
-      // 1 additional byte for the length prefix
-      // @author: aelroby removed this extra byte write because it is corrupted
+      // Always reset all the bits regardless of the actual length of the value
       PL_MEMSET(storage, 0, maxLength);
 
       /*
@@ -1728,9 +1726,7 @@ class Value {
       checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength, maxLength,
                                         isInBytes);
 
-      // Always reSet all the bits regardless of the actual length of the value
-      // 1 additional byte for the length prefix
-      // @author: aelroby removed this extra byte write because it is corrupted
+      // Always reset all the bits regardless of the actual length of the value
       PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {
@@ -2617,14 +2613,16 @@ inline Value::Value(const ValueType type) {
 /* Objects may have storage allocated for them.
  * Release memory associated to object type Values */
 inline Value::~Value() {
-  if (m_sourceInlined == true || m_cleanUp == false) {
-    return;
-  }
 
   switch (GetValueType()) {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     case VALUE_TYPE_ARRAY: {
+  
+      if (m_sourceInlined == true || m_cleanUp == false) {
+        return;
+      }
+
       Varlen *sref = *reinterpret_cast<Varlen *const *>(m_data);
       if (sref != NULL) {
         delete sref;
@@ -3129,7 +3127,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
       const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
       // the NULL SQL string is a NULL C pointer
       if (isInlined) {
-        // Always reSet the bits regardless of how long the actual value is.
+        // Always reset the bits regardless of how long the actual value is.
         PL_MEMSET(storage, 0, lengthLength + maxLength);
 
         SetObjectLengthToLocation(length, storage);
