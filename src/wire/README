@@ -1,0 +1,58 @@
+#####################################################
+#													#
+#	PELOTON WIRE									#
+#													#
+#####################################################
+
+Description
+This is a prototype implementation of the Postgres wire protocol in C++ in order to support communication with Postgres shell and JDBC clients with Peloton. To test the correctness of the implementation, this protocol is backed against Sqlite. This helps us provide the required database support for fully executing the YCSB and TPCC benchmarks and inspecting whether this protocol design can potentially support these benchmarks.
+
+The Sqlite sources have been included in the source folder for the wire protocol, to avoid introducing Sqlite linking dependencies in the Peloton Makefiles.
+
+The protocol abstracts the server-client interaction for every query through packet formats. The full details about the protocol can be found in the Postgres Documentation.
+
+Preliminary results
+The underlying socket layer has been evaluated to support (over a single connection)
+
+    ~70,000 NOPs (empty queries) per second
+    ~12,000 exact-match queries per second
+
+Deployment and Testing
+
+    Build by using the standard peloton make and install
+
+    The wire_server using wire_server binary (ex: > wire_server 57721). The wire_server behaves similarly to the Postgres Server.
+
+    build/tests/wire_test can be used for elementary testing
+
+    using psql shell pointed to wire_server's port can be used to run simple queries. Any of the SQL tests in scripts/testing could be used to test the Simple Query Protocol
+
+    Use scripts/testing/jdbc/test-jdbc.sh to test the Extended Query Protocol
+
+    Run oltpbench/ycsb for more comprehensive tests
+
+
+Basic implementation of the Postgres wire protocol for Peloton.
+
+This currently exists as a standalone server devoid of query parser, planner or any other DB internals. 
+Only server side of the protocol is covered.
+
+Packets supported
+-----------------
+-> From PSQL to Server
+	* StartupMessage (F)
+	* Query (Q) 
+	* Sync (S)
+	* Bind (P)
+	* Execute (E)
+	* Describe (D)
+
+-> At Server, send to Client
+	* AuthenticationOk (R)
+	* ErrorResponse (E)
+	* ReadyForQuery (Z)
+	* EmptyQueryResponse (I)
+ 	* RowDescription (T)
+	* DataRow (D)
+	* CommandComplete (C)
+

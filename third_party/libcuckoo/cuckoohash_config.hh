@@ -11,6 +11,12 @@ const size_t DEFAULT_SLOT_PER_BUCKET = 4;
 //! The default number of elements in an empty hash table
 const size_t DEFAULT_SIZE = (1U << 16) * DEFAULT_SLOT_PER_BUCKET;
 
+//! On a scale of 0 to 16, the memory granularity of the locks array. 0 is the
+//! least granular, meaning the array is a contiguous array and thus offers the
+//! best performance but the greatest memory overhead. 16 is the most granular,
+//! offering the least memory overhead but worse performance.
+const size_t LOCK_ARRAY_GRANULARITY = 0;
+
 //! The default minimum load factor that the table allows for automatic
 //! expansion. It must be a number between 0.0 and 1.0. The table will throw
 //! libcuckoo_load_factor_too_low if the load factor falls below this value
