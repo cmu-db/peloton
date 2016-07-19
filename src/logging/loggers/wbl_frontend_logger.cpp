@@ -119,6 +119,8 @@ void WriteBehindFrontendLogger::DoRecovery() {
   // read file, truncate any trailing log data
   // get file size
 
+  LOG_INFO("DoRecovery");
+
   struct stat stat_buf;
   fstat(log_file_fd, &stat_buf);
 
@@ -129,6 +131,8 @@ void WriteBehindFrontendLogger::DoRecovery() {
       LOG_ERROR("ftruncate failed on recovery");
     }
   }
+
+  LOG_INFO("Record count : %lu", record_num);
 
   // if no records, return
   if (record_num == 0) {

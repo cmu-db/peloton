@@ -66,8 +66,6 @@ namespace logger {
 
 std::ofstream out("outputfile.summary");
 
-size_t GetLogFileSize();
-
 static void WriteOutput(double value) {
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%d %d %lf %d %d %d %d %d %d %d :: %lf", state.benchmark_type,
@@ -139,6 +137,7 @@ void StartLogging(std::thread& log_thread, std::thread& checkpoint_thread) {
       }
     }
   }
+
   if (peloton_logging_mode != LOGGING_TYPE_INVALID) {
     // Launching a thread for logging
     if (!log_manager.IsInLoggingMode()) {

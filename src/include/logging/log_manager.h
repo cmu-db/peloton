@@ -88,9 +88,6 @@ class LogManager {
 
   // Check whether the frontend logger is in logging mode
   inline bool IsInLoggingMode() {
-    // TODO: Temporarily Disable logging
-    return false;
-
     // Check the logging status
     return (logging_status == LOGGING_STATUS_TYPE_LOGGING);
   }
