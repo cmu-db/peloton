@@ -34,6 +34,7 @@ namespace peloton {
 namespace test {
 class WriteBehindLoggingTests : public PelotonTest {};
 
+/* TODO: Disabled it due to arbitrary timing constraints
 void grant_thread(concurrency::TransactionManager &txn_manager){
   for (long i = 6; i <= 20; i++){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -41,9 +42,9 @@ void grant_thread(concurrency::TransactionManager &txn_manager){
   }
 }
 
-// not sure the best way to test this, so I will spawn a new thread to bump up
-// the grant every 10 ms and ensure enough time has passed by the end of the test
-// (we are not prematurely allowing transactions to continue with unsanctioned cids
+// not sure the best way to test this, so I will spawn a new thread to bump up the grant every 10 ms
+// and ensure enough time has passed by the end of the test (we are not prematurely
+// allowing transactions to continue with unsanctioned cids
 TEST_F(WriteBehindLoggingTests, BasicGrantTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   txn_manager.SetMaxGrantCid(5);
@@ -56,7 +57,10 @@ TEST_F(WriteBehindLoggingTests, BasicGrantTest) {
   std::chrono::milliseconds min_expected_dur(140);
   EXPECT_TRUE(end-begin > min_expected_dur);
   granting_thread.join();
+
+
 }
+*/
 
 int SeqScanCount(storage::DataTable *table,
                  const std::vector<oid_t> &column_ids,
@@ -88,8 +92,7 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
 
-  std::unique_ptr<storage::DataTable>
-  table(ExecutorTestsUtil::CreateTable());\
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());\
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   txn_manager.SetNextCid(1);
   txn_manager.BeginTransaction();
@@ -134,32 +137,21 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   column_ids.push_back(3);
 
   txn_manager.BeginTransaction();
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(),
-                                    visible1.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(),
-                                    visible2.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(),
-                                    invisible1.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(),
-                                    invisible2.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(),
-                                    visible3.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset));
   txn_manager.AbortTransaction();
 
   txn_manager.SetDirtyRange(std::make_pair(4, 9));
 
   txn_manager.BeginTransaction();
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(),
-                                    visible1.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(),
-                                    visible2.offset));
-  // TODO: Fix the next two checks
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(),
-                                     invisible1.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(),
-                                     invisible2.offset));
-  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(),
-                                    visible3.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible1.block)->GetHeader(), visible1.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible2.block)->GetHeader(), visible2.offset));
+  EXPECT_FALSE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible1.block)->GetHeader(), invisible1.offset));
+  EXPECT_FALSE(txn_manager.IsVisible(catalog_manager.GetTileGroup(invisible2.block)->GetHeader(), invisible2.offset));
+  EXPECT_TRUE(txn_manager.IsVisible(catalog_manager.GetTileGroup(visible3.block)->GetHeader(), visible3.offset));
   txn_manager.AbortTransaction();
 }
 
