@@ -45,9 +45,6 @@
 #include <cstddef>
 #include <assert.h>
 
-#include "backend/storage/storage_manager.h"
-#include "backend/common/types.h"
-
 // *** Debugging Macros
 
 #ifdef BTREE_DEBUG
@@ -1486,13 +1483,7 @@ private:
     /// Allocate and initialize a leaf node
     inline leaf_node* allocate_leaf()
     {
-        auto &storage_manager = peloton::storage::StorageManager::GetInstance();
-        leaf_node *n = (leaf_node *)storage_manager.Allocate(backend_type, sizeof(leaf_node));
-
-        if(is_durable){
-          storage_manager.Sync(backend_type, n, sizeof(leaf_node));
-        }
-
+        leaf_node *n = new (leaf_node_allocator().allocate(1)) leaf_node();
         n->initialize();
         m_stats.leaves++;
         return n;
@@ -1501,13 +1492,7 @@ private:
     /// Allocate and initialize an inner node
     inline inner_node* allocate_inner(unsigned short level)
     {
-        auto &storage_manager = peloton::storage::StorageManager::GetInstance();
-        inner_node *n = (inner_node *)storage_manager.Allocate(backend_type, sizeof(inner_node));
-
-        if(is_durable){
-          storage_manager.Sync(backend_type, n, sizeof(inner_node));
-        }
-
+        inner_node *n = new (inner_node_allocator().allocate(1)) inner_node();
         n->initialize(level);
         m_stats.innernodes++;
         return n;

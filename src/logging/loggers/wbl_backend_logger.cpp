@@ -33,7 +33,6 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
     }
   }
   log_buffer_lock.Lock();
-  cid_t cur_log_id = record->GetTransactionId();
   switch (record->GetType()) {
     case LOGRECORD_TYPE_TRANSACTION_COMMIT:
       highest_logged_commit_message = record->GetTransactionId();

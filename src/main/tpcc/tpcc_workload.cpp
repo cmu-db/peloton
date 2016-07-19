@@ -65,6 +65,10 @@
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include "planner/index_scan_plan.h"
+#include "planner/nested_loop_join_plan.h"
+#include "planner/aggregate_plan.h"
+#include "planner/order_by_plan.h"
+#include "planner/limit_plan.h"
 
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
@@ -170,7 +174,6 @@ void RunWorkload() {
   oid_t num_threads = state.backend_count;
   transaction_counts.resize(num_threads);
   durations.resize(num_threads);
-  bool check_transaction_count = (state.transaction_count != 0);
 
   // Launch a group of threads
   for (oid_t thread_itr = 0; thread_itr < num_threads; ++thread_itr) {
@@ -192,14 +195,6 @@ void RunWorkload() {
   for (auto transaction_count : transaction_counts) {
     sum_transaction_count += transaction_count;
   }
-
-  // Compute average duration
-  double sum_duration = 0;
-  double avg_duration = 0;
-  for (auto duration : durations) {
-    sum_duration += duration;
-  }
-  avg_duration = sum_duration / num_threads;
 
   // Compute average throughput and latency
   state.throughput = (sum_transaction_count * 1000) / state.duration;

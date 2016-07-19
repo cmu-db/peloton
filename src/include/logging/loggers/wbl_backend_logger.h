@@ -13,13 +13,11 @@
 
 #pragma once
 
+#include <unordered_set>
+
 #include "common/types.h"
 #include "logging/backend_logger.h"
 #include "concurrency/transaction_manager_factory.h"
-
-#include "unordered_set"
-
-extern char *peloton_endpoint_address;
 
 namespace peloton {
 namespace logging {

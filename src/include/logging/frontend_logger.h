@@ -28,8 +28,6 @@
 #include "logging/backend_logger.h"
 #include "logging/checkpoint.h"
 
-extern char *peloton_endpoint_address;
-
 namespace peloton {
 namespace logging {
 //===--------------------------------------------------------------------===//
@@ -111,13 +109,6 @@ class FrontendLogger : public Logger {
     backend_loggers_lock.Unlock();
   }
 
-  void RemoteDone(long sequence_number) {
-    while (sequence_number > remote_done_.load()) {
-      long old = remote_done_.load();
-      remote_done_.compare_exchange_weak(old, sequence_number);
-    }
-  }
-
   void SetNoWrite(bool no_write) { no_write_ = no_write; }
 
  protected:
@@ -144,22 +135,9 @@ class FrontendLogger : public Logger {
 
   cid_t max_seen_commit_id = 0;
 
-  // variables for replication
-  std::unique_ptr<networking::PelotonLoggingService_Stub> replication_stub_;
-  std::unique_ptr<networking::RpcChannel> channel_;
-  std::unique_ptr<networking::RpcController> controller_;
-
-  bool replicating_ = false;
-
-  networking::ResponseType replication_mode_;
-
   bool no_write_ = false;
 
   bool test_mode_ = false;
-
-  std::atomic<long> remote_done_;
-
-  long replication_seq_ = 1;
 
   bool is_distinguished_logger = false;
 };

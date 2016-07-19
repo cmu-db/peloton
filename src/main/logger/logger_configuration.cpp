@@ -21,10 +21,6 @@
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 
-extern char* peloton_endpoint_address;
-
-extern ReplicationType peloton_replication_mode;
-
 extern CheckpointType peloton_checkpoint_mode;
 
 namespace peloton {
@@ -269,9 +265,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
-  state.replication_port = 0;
-  state.remote_endpoint = nullptr;
-  state.replication_mode = SYNC_REPLICATION;
   state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
 
   // Default YCSB Values
@@ -294,7 +287,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     // logger - a:e:f:g:hl:n:p:v:w:y:
     // ycsb   - b:c:d:k:t:u:
     // tpcc   - b:d:k:t:
-    int c = getopt_long(argc, argv, "a:e:f:g:hil:n:p:v:w:y:b:c:d:k:u:t:x:z:",
+    int c = getopt_long(argc, argv, "a:e:f:hil:n:p:v:w:y:b:c:d:k:u:t:",
                         opts, &idx);
 
     if (c == -1) break;
@@ -309,22 +302,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
       case 'f':
         state.data_file_size = atoi(optarg);
         break;
-      case 'g': {
-        int mode = atoi(optarg);
-        switch (mode) {
-          case 1:
-            state.replication_mode = ASYNC_REPLICATION;
-            break;
-          case 2:
-            state.replication_mode = SEMISYNC_REPLICATION;
-            break;
-          case 3:
-          default:
-            state.replication_mode = SYNC_REPLICATION;
-            break;
-        }
-        break;
-      }
       case 'i':
         state.checkpoint_type = CHECKPOINT_TYPE_NORMAL;
         break;
@@ -342,14 +319,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 'w':
         state.wait_timeout = atoi(optarg);
-        break;
-      case 'x':
-        state.replication_port = atoi(optarg);
-        break;
-      case 'z':
-        state.remote_endpoint = new char[strlen(optarg)];
-        memcpy(state.remote_endpoint, optarg, strlen(optarg));
-        peloton_endpoint_address = state.remote_endpoint;
         break;
       case 'y':
         state.benchmark_type = (BenchmarkType)atoi(optarg);
@@ -399,7 +368,6 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
        state.logging_type == LOGGING_TYPE_HDD_WAL)) {
     peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
   }
-  peloton_replication_mode = state.replication_mode;
 
   // Print Logger configuration
   ValidateLoggingType(state);
