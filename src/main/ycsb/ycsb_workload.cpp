@@ -291,14 +291,6 @@ void RunWorkload() {
     sum_transaction_count += transaction_count;
   }
 
-  // Compute average duration
-  double sum_duration = 0;
-  double avg_duration = 0;
-  for (auto duration : durations) {
-    sum_duration += duration;
-  }
-  avg_duration = sum_duration / num_threads;
-
   // Compute average throughput and latency
   state.throughput = (sum_transaction_count * 1000) / state.duration;
   state.latency = state.backend_count / state.throughput;

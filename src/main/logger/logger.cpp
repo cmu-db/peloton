@@ -65,62 +65,24 @@ void RunBenchmark() {
   // WAL
   //===--------------------------------------------------------------------===//
   if (IsBasedOnWriteAheadLogging(peloton_logging_mode)) {
-    if (state.replication_port > 0) {
-      networking::RpcServer *rpc_server =
-          new networking::RpcServer(state.replication_port);
-      rpc_server->RegisterService(new logging::LoggingService());
-      std::thread rpc_thread(&peloton::networking::RpcServer::Start,
-                             rpc_server);
-      rpc_thread.detach();
-      if (state.remote_endpoint == nullptr) {
-        std::thread logging_thread;
-        SetupLoggingOnFollower();
-        ycsb::CreateYCSBDatabase();
-        while (true)
-          ;
-      } else {
-        // Prepare a simple log file
-        PrepareLogFile();
-      }
-    } else {
-      // Prepare a simple log file
-      PrepareLogFile();
+    // Prepare a simple log file
+    PrepareLogFile();
 
-      // Reset data
-      ResetSystem();
+    // Reset data
+    ResetSystem();
 
-      // Do recovery
-      DoRecovery();
-    }
+    // Do recovery
+    DoRecovery();
   }
   //===--------------------------------------------------------------------===//
   // WBL
   //===--------------------------------------------------------------------===//
   else if (IsBasedOnWriteBehindLogging(peloton_logging_mode)) {
-    if (state.replication_port > 0) {
-      std::thread logging_thread;
-      ycsb::CreateYCSBDatabase();
+    // Test a simple log process
+    PrepareLogFile();
 
-      networking::RpcServer rpc_server(state.replication_port);
-      rpc_server.RegisterService(new logging::LoggingService());
-      std::thread rpc_thread(&peloton::networking::RpcServer::Start,
-                             &rpc_server);
-      rpc_thread.detach();
-      if (state.remote_endpoint == nullptr) {
-        SetupLoggingOnFollower();
-        ycsb::CreateYCSBDatabase();
-        while (true)
-          ;
-      } else {
-        // Prepare a simple log file
-        PrepareLogFile();
-      }
-    } else {
-      // Test a simple log process
-      PrepareLogFile();
-      // Do recovery
-      DoRecovery();
-    }
+    // Do recovery
+    DoRecovery();
   }
 }
 

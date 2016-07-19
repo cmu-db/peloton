@@ -74,12 +74,6 @@ class configuration {
   // Benchmark type
   BenchmarkType benchmark_type;
 
-  int replication_port;
-
-  char *remote_endpoint;
-
-  ReplicationType replication_mode;
-
   // clflush or clwb
   int flush_mode;
 

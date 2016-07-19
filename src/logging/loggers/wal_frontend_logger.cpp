@@ -132,23 +132,9 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
     }
   }
 
-  size_t write_size = 0;
-  size_t rep_array_offset = 0;
-  std::unique_ptr<char> replication_array = nullptr;
   TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
                                   this->max_collected_commit_id);
   delimiter_rec.Serialize(output_buffer);
-  if (replicating_) {
-    // find the size we need to write out
-    for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
-         global_queue_itr++) {
-      write_size += global_queue[global_queue_itr]->GetSize();
-    }
-    if (max_collected_commit_id != max_flushed_commit_id) {
-      write_size += delimiter_rec.GetMessageLength();
-    }
-    replication_array.reset(new char[write_size]);
-  }
 
   // First, write all the record in the queue
   for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
@@ -160,11 +146,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
              cur_file_handle.file);
     }
 
-    if (replicating_) {
-      memcpy(replication_array.get() + rep_array_offset, log_buffer->GetData(),
-             log_buffer->GetSize());
-      rep_array_offset += log_buffer->GetSize();
-    }
     LOG_TRACE("Log buffer get max log id returned %d",
               (int)log_buffer->GetMaxLogId());
 
@@ -180,26 +161,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
   }
 
   bool flushed = false;
-  long rep_seq_number = 0;
-  // send to remote before fsyncing, then wait for the response after fsy
-  if (replicating_ && write_size > 0) {
-    if (max_collected_commit_id != max_flushed_commit_id) {
-      memcpy(replication_array.get() + rep_array_offset,
-             delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
-      // send the request
-      rep_array_offset += delimiter_rec.GetMessageLength();
-    }
-    networking::LogRecordReplayRequest request;
-    request.set_log(replication_array.get(), write_size);
-    request.set_sync_type(replication_mode_);
-    rep_seq_number = replication_seq_++;
-    request.set_sequence_number(rep_seq_number);
-    assert(request.sequence_number() != 0);
-    networking::LogRecordReplayResponse response;
-    remote_done_ = false;
-    replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
-                                       nullptr);
-  }
 
   if (max_collected_commit_id != max_flushed_commit_id) {
     if (!test_mode_) {
@@ -244,13 +205,6 @@ void WriteAheadFrontendLogger::FlushLogRecords(void) {
         flushed = true;
       }
     }
-  }
-  // if replicating and doing sync or semisync wait here
-  if (rep_seq_number > 0 && (replication_mode_ == networking::SYNC ||
-                             replication_mode_ == networking::SEMISYNC)) {
-    // wait for the response with the proper sequence number
-    while (remote_done_.load() < rep_seq_number)
-      ;
   }
 
   /* For now, fflush after every iteration of collecting buffers */

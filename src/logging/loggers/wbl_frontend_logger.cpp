@@ -93,74 +93,10 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       LOG_ERROR("Unable to write log record");
     }
   }
-  long curr_seq_num = 0;
-  size_t global_queue_size = global_queue.size();
-  if (replicating_ && global_queue_size > 0) {
-    size_t global_queue_size = global_queue.size();
-
-    size_t write_size = 0;
-    size_t rep_array_offset = 0;
-    std::unique_ptr<char> replication_array = nullptr;
-    TransactionRecord delimiter_rec(LOGRECORD_TYPE_ITERATION_DELIMITER,
-                                    this->max_collected_commit_id);
-    delimiter_rec.Serialize(output_buffer);
-
-    // find the size we need to write out
-    for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
-         global_queue_itr++) {
-      write_size += global_queue[global_queue_itr]->GetSize();
-    }
-    if (max_collected_commit_id != max_flushed_commit_id) {
-      write_size += delimiter_rec.GetMessageLength();
-    }
-    replication_array.reset(new char[write_size]);
-
-    for (oid_t global_queue_itr = 0; global_queue_itr < global_queue_size;
-         global_queue_itr++) {
-      auto &log_buffer = global_queue[global_queue_itr];
-
-      memcpy(replication_array.get() + rep_array_offset, log_buffer->GetData(),
-             log_buffer->GetSize());
-      rep_array_offset += log_buffer->GetSize();
-
-      // return empty buffer
-      auto backend_logger = log_buffer->GetBackendLogger();
-      log_buffer->ResetData();
-      backend_logger->GrantEmptyBuffer(std::move(log_buffer));
-    }
-
-    if (max_collected_commit_id != max_flushed_commit_id) {
-      PL_ASSERT(rep_array_offset + delimiter_rec.GetMessageLength() ==
-                write_size);
-      memcpy(replication_array.get() + rep_array_offset,
-             delimiter_rec.GetMessage(), delimiter_rec.GetMessageLength());
-      // send the request
-      rep_array_offset += delimiter_rec.GetMessageLength();
-    }
-
-    networking::LogRecordReplayRequest request;
-    request.set_log(replication_array.get(), write_size);
-    curr_seq_num = replication_seq_++;
-    request.set_sync_type(replication_mode_);
-    request.set_sequence_number(curr_seq_num);
-    networking::LogRecordReplayResponse response;
-    replication_stub_->LogRecordReplay(controller_.get(), &request, &response,
-                                       nullptr);
-
-    global_queue.clear();
-  }
 
   // for now fsync every time because the cost is relatively low
   if (fsync(log_file_fd)) {
     LOG_ERROR("Unable to fsync log");
-  }
-
-  // if replicating in the proper mode, wait here
-  if (curr_seq_num > 0 && (replication_mode_ == networking::SYNC ||
-                           replication_mode_ == networking::SEMISYNC)) {
-    // wait for the response with the proper sequence number
-    while (remote_done_.load() < curr_seq_num)
-      ;
   }
 
   // inform backend loggers they can proceed if waiting for sync

@@ -30,8 +30,6 @@
 //===--------------------------------------------------------------------===//
 extern LoggingType peloton_logging_mode;
 
-extern char *peloton_endpoint_address;
-
 namespace peloton {
 namespace logging {
 

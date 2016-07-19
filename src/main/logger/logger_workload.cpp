@@ -16,6 +16,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <fts.h>
+#include <unistd.h>
 
 #include "concurrency/transaction_manager_factory.h"
 #include "common/value_factory.h"
@@ -36,8 +37,7 @@
 #include "benchmark/tpcc/tpcc_loader.h"
 
 #include "logging/loggers/wbl_frontend_logger.h"
-
-#include <unistd.h>
+#include "logging/checkpoint_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
