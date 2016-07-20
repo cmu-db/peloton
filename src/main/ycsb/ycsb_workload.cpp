@@ -448,7 +448,12 @@ bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf, oid_t next_insert_key) {
 
   tuple->SetValue(0, key_value, nullptr);
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    tuple->SetValue(col_itr, field_value, pool.get());
+    if(state.ints_mode == false) {
+      tuple->SetValue(col_itr, field_value, pool.get());
+    }
+    else {
+      tuple->SetValue(col_itr, key_value, nullptr);
+    }
   }
 
   planner::InsertPlan insert_node(user_table, std::move(tuple));

@@ -58,6 +58,9 @@ class configuration {
 
   // # of transaction
   int transaction_count;
+
+  // store ints
+  bool ints_mode;
 };
 
 extern configuration state;

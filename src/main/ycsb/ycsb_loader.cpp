@@ -78,10 +78,18 @@ void CreateYCSBDatabase() {
   columns.push_back(column);
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    auto column =
-        catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
-                        "FIELD" + std::to_string(col_itr), is_inlined);
-    columns.push_back(column);
+    if(state.ints_mode == false) {
+      auto column =
+          catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
+                          "FIELD" + std::to_string(col_itr), is_inlined);
+      columns.push_back(column);
+    }
+    else {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "FIELD" + std::to_string(col_itr), is_inlined);
+      columns.push_back(column);
+    }
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -150,7 +158,12 @@ void LoadYCSBDatabase() {
 
     tuple->SetValue(0, key_value, nullptr);
     for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple->SetValue(col_itr, field_value, pool.get());
+      if(state.ints_mode == false) {
+        tuple->SetValue(col_itr, field_value, pool.get());
+      }
+      else {
+        tuple->SetValue(col_itr, key_value, nullptr);
+      }
     }
 
     planner::InsertPlan node(user_table, std::move(tuple));
