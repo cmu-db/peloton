@@ -99,50 +99,103 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   //                                      key_column_ids.end(),
   //                                      leading_column_id);
 
-  // SPECIAL CASE : leading column id is one of the key column ids
+  // PARTIAL SCAN CASE : leading column id is one of the key column ids
   // and is involved in a equality constraint
   // Currently special case only includes EXPRESSION_TYPE_COMPARE_EQUAL
   // There are two more types, one is aligned, another is not aligned.
   // Aligned example: A > 0, B >= 15, c > 4
   // Not Aligned example: A >= 15, B < 30
 
-  bool special_case = true;
+  // Check if suitable for point query
+  bool point_query = true;
   for (auto key_column_ids_itr = key_column_ids.begin();
       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
     auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
 
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
-      special_case = false;
-      break;
+    if (expr_types[offset] != EXPRESSION_TYPE_COMPARE_EQUAL){
+      point_query = false;
     }
   }
 
-  LOG_TRACE("Special case : %d ", special_case);
+  // Check if suitable for partial scan
+  bool partial_scan_candidate = true;
+  if(point_query == false) {
 
-  // If it is a special case, we can figure out the range to scan in the index
-  if (special_case == true) {
-    // Assumption: must have leading column, assume it's first one in
-    // key_column_ids.
-    assert(key_column_ids.size() > 0);
+    for (auto key_column_ids_itr = key_column_ids.begin();
+        key_column_ids_itr != key_column_ids.end();
+        key_column_ids_itr++) {
+      auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+
+      if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
+          expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
+          expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
+          expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+        partial_scan_candidate = false;
+      }
+    }
+
+  }
+
+  LOG_TRACE("Point query : %d ", point_query);
+  LOG_TRACE("Partial scan : %d ", partial_scan_candidate);
+
+  // POINT QUERY
+  if (point_query == true) {
+
+    std::unique_ptr<storage::Tuple> find_key;
+
+    find_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
+
+    LOG_TRACE("%s", "Constructing key");
+
+    for (auto key_column_ids_itr = key_column_ids.begin();
+        key_column_ids_itr != key_column_ids.end();
+        key_column_ids_itr++) {
+      auto column_offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+      find_key->SetValue(column_offset, values[column_offset], GetPool());
+    }
+
+    LOG_TRACE("Find key : %s", find_key->GetInfo().c_str());
+
+    KeyType find_index_key;
+    find_index_key.SetFromKey(find_key.get());
+
+    // Check if key exists in index
+    auto find_itr = container.Contains(find_index_key);
+
+    if(find_itr != container.end()){
+      ItemPointer *location_header = find_itr->second;
+      result.push_back(location_header);
+    }
+
+  }
+  // PARTIAL SCAN
+  else if (partial_scan_candidate == true) {
+    PL_ASSERT(key_column_ids.size() > 0);
     LOG_TRACE("key_column_ids size : %lu ", key_column_ids.size());
 
     oid_t leading_column_offset = 0;
     oid_t leading_column_id = key_column_ids[leading_column_offset];
     std::vector<std::pair<Value, Value>> intervals;
 
-    ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
+    ConstructIntervals(leading_column_id,
+                       values,
+                       key_column_ids,
+                       expr_types,
                        intervals);
 
     // For non-leading columns, find the max and min
     std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
-    FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
+
+    FindMaxMinInColumns(leading_column_id,
+                        values,
+                        key_column_ids,
+                        expr_types,
                         non_leading_columns);
 
     auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
     oid_t non_leading_column_offset = 0;
+
     for (auto key_column_id : indexed_columns) {
       if (key_column_id == leading_column_id) {
         LOG_TRACE("Leading column : %u", key_column_id);
@@ -164,14 +217,16 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     }
 
     LOG_TRACE("Non leading columns size : %lu", non_leading_columns.size());
+    PL_ASSERT(intervals.empty() != true);
 
-    assert(intervals.size() != 0);
     // Search each interval of leading_column.
     for (const auto &interval : intervals) {
       auto scan_begin_itr = container.begin();
       auto scan_end_itr = container.end();
+
       std::unique_ptr<storage::Tuple> start_key;
       std::unique_ptr<storage::Tuple> end_key;
+
       start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
       end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
@@ -250,14 +305,18 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       }
     }
 
-  } else {
+  }
+  // FULL SCAN
+  else {
     auto scan_begin_itr = container.begin();
+    auto scan_end_itr = container.end();
 
     switch (scan_direction) {
       case SCAN_DIRECTION_TYPE_FORWARD:
       case SCAN_DIRECTION_TYPE_BACKWARD: {
         // Scan the index entries in forward direction
-        for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
+        for (auto scan_itr = scan_begin_itr;
+            scan_itr != scan_end_itr;
             ++scan_itr) {
           auto scan_current_key = scan_itr->first;
           auto tuple = scan_current_key.GetTupleForComparison(
