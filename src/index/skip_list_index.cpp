@@ -279,7 +279,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         case SCAN_DIRECTION_TYPE_BACKWARD: {
 
           // Scan the index entries in forward direction
-          for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
+          for (auto scan_itr = scan_begin_itr;
+              true;
               ++scan_itr) {
             auto scan_current_key = scan_itr->first;
             auto tuple = scan_current_key.GetTupleForComparison(
@@ -292,6 +293,12 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               ItemPointer *location_header = scan_itr->second;
               result.push_back(location_header);
             }
+
+            // Check end of iteration
+            if(scan_itr == scan_end_itr){
+              break;
+            }
+
           }
 
         }
