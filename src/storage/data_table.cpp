@@ -132,22 +132,10 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-  /* Check constraints
-  if (check_constraint == true && CheckConstraints(tuple) == false) {
-    return INVALID_ITEMPOINTER;
-  }
-   */
-
-  //=============== garbage collection==================
-  // check if there are recycled tuple slots
-  /*
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
-  if (free_item_pointer.IsNull() == false) {
-    return free_item_pointer;
-  }
-   */
-  //====================================================
+  // Check constraints
+  //if (check_constraint == true && CheckConstraints(tuple) == false) {
+  //  return INVALID_ITEMPOINTER;
+  //}
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
