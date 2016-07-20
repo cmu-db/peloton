@@ -207,7 +207,7 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
-                          nullptr);
+                          tile->GetPool());
       column_itr++;
     }
   }
