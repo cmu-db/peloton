@@ -674,7 +674,7 @@ const std::string DataTable::GetInfo() const {
 
 void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
   // Add index
-  indexes_.push_back(index);
+  indexes_.Append(index);
 
   // Add index column info
   auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
@@ -692,13 +692,14 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
 }
 
 std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
-    const oid_t &index_oid) const {
+    const oid_t &index_oid) {
 
   std::shared_ptr<index::Index> ret_index;
+  auto index_count = indexes_.GetSize();
 
-  for (auto index : indexes_) {
-    if (index->GetOid() == index_oid) {
-      ret_index = index;
+  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+    indexes_.Find(index_itr, ret_index);
+    if (ret_index->GetOid() == index_oid) {
       break;
     }
   }
@@ -706,29 +707,34 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
   return ret_index;
 }
 
-void DataTable::DropIndexWithOid(const oid_t &index_id) {
+void DataTable::DropIndexWithOid(const oid_t &index_oid) {
   oid_t index_offset = 0;
-  for (auto index : indexes_) {
-    if (index->GetOid() == index_id) break;
-    index_offset++;
+  std::shared_ptr<index::Index> index;
+  auto index_count = indexes_.GetSize();
+
+  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+    indexes_.Find(index_itr, index);
+    if (index->GetOid() == index_oid) {
+      break;
+    }
   }
 
-  PL_ASSERT(index_offset < indexes_.size());
+  PL_ASSERT(index_offset < indexes_.GetSize());
 
   // Drop the index
-  indexes_.erase(indexes_.begin() + index_offset);
+  indexes_.Update(index_offset, nullptr);
 
   // Drop index column info
   indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
 std::shared_ptr<index::Index> DataTable::GetIndex(
-    const oid_t &index_offset) const {
+    const oid_t &index_offset) {
 
   std::shared_ptr<index::Index> ret_index;
 
-  PL_ASSERT(index_offset < indexes_.size());
-  ret_index = indexes_.at(index_offset);
+  PL_ASSERT(index_offset < indexes_.GetSize());
+  indexes_.Find(index_offset, ret_index);
 
   return ret_index;
 }
@@ -742,7 +748,7 @@ std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
 oid_t DataTable::GetIndexCount() const {
   size_t index_count;
 
-  index_count = indexes_.size();
+  index_count = indexes_.GetSize();
 
   return index_count;
 }

@@ -19,6 +19,10 @@
 
 namespace peloton {
 
+namespace index{
+class Index;
+}
+
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::LockFreeArray(){
   lock_free_array.reset(new lock_free_array_t());
@@ -31,19 +35,22 @@ LOCK_FREE_ARRAY_TYPE::~LockFreeArray(){
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value){
   PL_ASSERT(offset <= lock_free_array_offset);
+  LOG_TRACE("Update at %lu", lock_free_array_offset.load());
   lock_free_array->at(offset) =  value;
   return true;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value){
-  lock_free_array->at(++lock_free_array_offset) = value;
+  LOG_TRACE("Appended at %lu", lock_free_array_offset.load());
+  lock_free_array->at(lock_free_array_offset++) = value;
   return true;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, ValueType& value){
   PL_ASSERT(offset <= lock_free_array_offset);
+  LOG_TRACE("Erase at %lu", offset);
   lock_free_array->at(offset) =  value;
   return true;
 }
@@ -51,8 +58,8 @@ bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, ValueType& value){
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset, ValueType& value){
   PL_ASSERT(offset <= lock_free_array_offset);
+  LOG_TRACE("Find at %lu", offset);
   value = lock_free_array->at(offset);
-  LOG_TRACE("find status : %d", status);
   return true;
 }
 
@@ -70,5 +77,7 @@ bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const{
 template class LockFreeArray<uint32_t>;
 
 template class LockFreeArray<std::shared_ptr<oid_t>>;
+
+template class LockFreeArray<std::shared_ptr<index::Index>>;
 
 }  // End peloton namespace

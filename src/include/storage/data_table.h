@@ -21,6 +21,7 @@
 
 #include "common/platform.h"
 #include "storage/abstract_table.h"
+#include "container/lock_free_array.h"
 #include "index/index.h"
 
 //===--------------------------------------------------------------------===//
@@ -133,11 +134,11 @@ class DataTable : public AbstractTable {
 
   void AddIndex(std::shared_ptr<index::Index> index);
 
-  std::shared_ptr<index::Index> GetIndexWithOid(const oid_t &index_oid) const;
+  std::shared_ptr<index::Index> GetIndexWithOid(const oid_t &index_oid);
 
   void DropIndexWithOid(const oid_t &index_oid);
 
-  std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset) const;
+  std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset);
 
   std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
 
@@ -278,7 +279,7 @@ class DataTable : public AbstractTable {
   std::mutex data_table_mutex_;
 
   // INDEXES
-  std::vector<std::shared_ptr<index::Index>> indexes_;
+  LockFreeArray<std::shared_ptr<index::Index>> indexes_;
 
   // columns present in the indexes
   std::vector<std::set<oid_t>> indexes_columns_;
