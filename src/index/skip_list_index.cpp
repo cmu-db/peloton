@@ -267,6 +267,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       else {
         LOG_TRACE("Found start key");
       }
+
       if(scan_end_itr == container.end()){
         LOG_TRACE("Did not find end key");
       }
@@ -280,7 +281,7 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
           // Scan the index entries in forward direction
           for (auto scan_itr = scan_begin_itr;
-              true;
+              scan_itr != scan_end_itr;
               ++scan_itr) {
             auto scan_current_key = scan_itr->first;
             auto tuple = scan_current_key.GetTupleForComparison(
@@ -292,11 +293,6 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
             if (Compare(tuple, key_column_ids, expr_types, values) == true) {
               ItemPointer *location_header = scan_itr->second;
               result.push_back(location_header);
-            }
-
-            // Check end of iteration
-            if(scan_itr == scan_end_itr){
-              break;
             }
 
           }
