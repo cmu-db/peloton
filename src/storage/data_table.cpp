@@ -673,16 +673,14 @@ const std::string DataTable::GetInfo() const {
 //===--------------------------------------------------------------------===//
 
 void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
-  {
-    // Add index
-    indexes_.push_back(index);
+  // Add index
+  indexes_.push_back(index);
 
-    // Add index column info
-    auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
-    std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
+  // Add index column info
+  auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
+  std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
 
-    indexes_columns_.push_back(index_columns_set);
-  }
+  indexes_columns_.push_back(index_columns_set);
 
   // Update index stats
   auto index_type = index->GetIndexType();
@@ -698,8 +696,6 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
 
   std::shared_ptr<index::Index> ret_index;
 
-  indexes_lock_.ReadLock();
-
   for (auto index : indexes_) {
     if (index->GetOid() == index_oid) {
       ret_index = index;
@@ -707,31 +703,23 @@ std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
     }
   }
 
-  indexes_lock_.Unlock();
-
   return ret_index;
 }
 
 void DataTable::DropIndexWithOid(const oid_t &index_id) {
-  {
-    indexes_lock_.WriteLock();
-
-    oid_t index_offset = 0;
-    for (auto index : indexes_) {
-      if (index->GetOid() == index_id) break;
-      index_offset++;
-    }
-
-    PL_ASSERT(index_offset < indexes_.size());
-
-    // Drop the index
-    indexes_.erase(indexes_.begin() + index_offset);
-
-    // Drop index column info
-    indexes_columns_.erase(indexes_columns_.begin() + index_offset);
-
-    indexes_lock_.Unlock();
+  oid_t index_offset = 0;
+  for (auto index : indexes_) {
+    if (index->GetOid() == index_id) break;
+    index_offset++;
   }
+
+  PL_ASSERT(index_offset < indexes_.size());
+
+  // Drop the index
+  indexes_.erase(indexes_.begin() + index_offset);
+
+  // Drop index column info
+  indexes_columns_.erase(indexes_columns_.begin() + index_offset);
 }
 
 std::shared_ptr<index::Index> DataTable::GetIndex(
@@ -739,14 +727,8 @@ std::shared_ptr<index::Index> DataTable::GetIndex(
 
   std::shared_ptr<index::Index> ret_index;
 
-  {
-    indexes_lock_.ReadLock();
-
-    PL_ASSERT(index_offset < indexes_.size());
-    ret_index = indexes_.at(index_offset);
-
-    indexes_lock_.Unlock();
-  }
+  PL_ASSERT(index_offset < indexes_.size());
+  ret_index = indexes_.at(index_offset);
 
   return ret_index;
 }
@@ -760,13 +742,7 @@ std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
 oid_t DataTable::GetIndexCount() const {
   size_t index_count;
 
-  {
-    indexes_lock_.ReadLock();
-
-    index_count = indexes_.size();
-
-    indexes_lock_.Unlock();
-  }
+  index_count = indexes_.size();
 
   return index_count;
 }
