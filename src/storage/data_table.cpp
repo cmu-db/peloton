@@ -674,8 +674,6 @@ const std::string DataTable::GetInfo() const {
 
 void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
   {
-    indexes_lock_.WriteLock();
-
     // Add index
     indexes_.push_back(index);
 
@@ -684,8 +682,6 @@ void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
     std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
 
     indexes_columns_.push_back(index_columns_set);
-
-    indexes_lock_.Unlock();
   }
 
   // Update index stats

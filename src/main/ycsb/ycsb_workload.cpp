@@ -431,8 +431,6 @@ bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf, oid_t next_insert_key) {
   const bool allocate = true;
   std::string field_raw_value(ycsb_field_length - 1, 'o');
 
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
-
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -444,16 +442,9 @@ bool RunInsert(UNUSED_ATTRIBUTE ZipfDistribution &zipf, oid_t next_insert_key) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(table_schema, allocate));
   auto key_value = ValueFactory::GetIntegerValue(next_insert_key);
-  auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
-  tuple->SetValue(0, key_value, nullptr);
-  for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    if(state.ints_mode == false) {
-      tuple->SetValue(col_itr, field_value, pool.get());
-    }
-    else {
-      tuple->SetValue(col_itr, key_value, nullptr);
-    }
+  for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+    tuple->SetValue(col_itr, key_value, nullptr);
   }
 
   planner::InsertPlan insert_node(user_table, std::move(tuple));
