@@ -23,6 +23,7 @@
 #include "common/macros.h"
 #include "common/types.h"
 #include "container/cuckoo_map.h"
+#include "container/lock_free_array.h"
 
 namespace peloton {
 
@@ -40,8 +41,6 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 // Manager
 //===--------------------------------------------------------------------===//
-
-typedef std::unordered_map<oid_t, std::shared_ptr<storage::TileGroup>> lookup_dir;
 
 class Manager {
  public:
@@ -103,15 +102,16 @@ class Manager {
 
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
-  lookup_dir locator;
-
-  std::mutex locator_mutex;
+  LockFreeArray<std::shared_ptr<storage::TileGroup>> locator;
 
   // DATABASES
 
   std::vector<storage::Database *> databases;
 
   std::mutex catalog_mutex;
+
+  static std::shared_ptr<storage::TileGroup> empty_location;
+
 };
 
 }  // End catalog namespace
