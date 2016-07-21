@@ -44,16 +44,25 @@ class LockFreeArray {
   bool Append(ValueType value);
 
   // Get a item
-  bool Find(const std::size_t &offset, ValueType& value);
+  ValueType Find(const std::size_t &offset) const;
+
+  // Get a valid item
+  ValueType FindValid(const std::size_t &offset, const ValueType& invalid_value) const;
 
   // Delete key from the lock_free_array
-  bool Erase(const std::size_t &offset, ValueType& value);
+  bool Erase(const std::size_t &offset, const ValueType& invalid_value);
 
   // Returns item count in the lock_free_array
   size_t GetSize() const;
 
   // Checks if the lock_free_array is empty
   bool IsEmpty() const;
+
+  // Clear all elements and reset them to default value
+  void Clear(const ValueType& invalid_value);
+
+  // Exists ?
+  bool Contains(const ValueType& value);
 
  private:
 

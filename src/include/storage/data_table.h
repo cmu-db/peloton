@@ -117,7 +117,7 @@ class DataTable : public AbstractTable {
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
-      const oid_t &tile_group_offset) const;
+      const std::size_t &tile_group_offset) const;
 
   // ID is the global identifier in the entire DBMS
   std::shared_ptr<storage::TileGroup> GetTileGroupById(
@@ -224,8 +224,6 @@ class DataTable : public AbstractTable {
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  RWLock &GetTileGroupLock() { return tile_group_lock_; }
-
  protected:
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
@@ -268,10 +266,7 @@ class DataTable : public AbstractTable {
   size_t tuples_per_tilegroup_;
 
   // TILE GROUPS
-  // set of tile groups
-  RWLock tile_group_lock_;
-
-  std::vector<oid_t> tile_groups_;
+  LockFreeArray<oid_t> tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
@@ -321,6 +316,7 @@ class DataTable : public AbstractTable {
   // index samples mutex
   std::mutex index_samples_mutex_;
 
+  static oid_t invalid_tile_group_id;
 };
 
 }  // End storage namespace
