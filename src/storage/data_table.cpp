@@ -72,16 +72,13 @@ DataTable::~DataTable() {
   auto tile_groups_size = tile_groups_.GetSize();
   std::size_t tile_groups_itr;
 
-  LOG_INFO("~DataTable");
-
   for (tile_groups_itr = 0;
       tile_groups_itr < tile_groups_size;
       tile_groups_itr++) {
     auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
     if(tile_group_id != invalid_tile_group_id) {
-      LOG_INFO("Dropping tile group : %u ", tile_group_id);
-
+      LOG_TRACE("Dropping tile group : %u ", tile_group_id);
       // drop tile group in catalog
       catalog_manager.DropTileGroup(tile_group_id);
     }
@@ -643,8 +640,6 @@ void DataTable::DropTileGroups() {
     auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
     if(tile_group_id != invalid_tile_group_id) {
-      LOG_INFO("Dropping tile group : %u ", tile_group_id);
-
       // drop tile group in catalog
       catalog_manager.DropTileGroup(tile_group_id);
     }
