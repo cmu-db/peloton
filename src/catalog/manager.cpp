@@ -45,7 +45,6 @@ void Manager::AddTileGroup(const oid_t oid,
 
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
-  LOG_INFO("Dropping tile group %u", oid);
 
   {
     // drop the catalog reference to the tile group
