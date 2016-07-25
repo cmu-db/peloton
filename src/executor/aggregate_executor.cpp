@@ -47,7 +47,7 @@ AggregateExecutor::~AggregateExecutor() {
 bool AggregateExecutor::DInit() {
   PL_ASSERT(children_.size() == 1);
 
-  LOG_TRACE("Aggregate executor :: 1 child ");
+  LOG_INFO("Aggregate executor :: 1 child ");
 
   // Grab info from plan node and check it
   const planner::AggregatePlan &node = GetPlanNode<planner::AggregatePlan>();
@@ -108,17 +108,17 @@ bool AggregateExecutor::DExecute() {
       // Initialize the aggregator
       switch (node.GetAggregateStrategy()) {
         case AGGREGATE_TYPE_HASH:
-          LOG_TRACE("Use HashAggregator");
+          LOG_INFO("Use HashAggregator");
           aggregator.reset(new HashAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_SORTED:
-          LOG_TRACE("Use SortedAggregator");
+          LOG_INFO("Use SortedAggregator");
           aggregator.reset(new SortedAggregator(
               &node, output_table, executor_context_, tile->GetColumnCount()));
           break;
         case AGGREGATE_TYPE_PLAIN:
-          LOG_TRACE("Use PlainAggregator");
+          LOG_INFO("Use PlainAggregator");
           aggregator.reset(
               new PlainAggregator(&node, output_table, executor_context_));
           break;
@@ -128,7 +128,7 @@ bool AggregateExecutor::DExecute() {
       }
     }
 
-    LOG_TRACE("Looping over tile..");
+    LOG_INFO("Looping over tile..");
 
     for (oid_t tuple_id : *tile) {
       std::unique_ptr<expression::ContainerTuple<LogicalTile>> cur_tuple(
@@ -138,16 +138,16 @@ bool AggregateExecutor::DExecute() {
         return false;
       }
     }
-    LOG_TRACE("Finished processing logical tile");
+    LOG_INFO("Finished processing logical tile");
   }
 
-  LOG_TRACE("Finalizing..");
+  LOG_INFO("Finalizing..");
   if (!aggregator.get() || !aggregator->Finalize()) {
     // If there's no tuples in the table and only if no group-by in the query,
     // we should return a NULL tuple
     // this is required by SQL
     if (!aggregator.get() && node.GetGroupbyColIds().empty()) {
-      LOG_TRACE(
+      LOG_INFO(
           "No tuples received and no group-by. Should insert a NULL tuple "
           "here.");
       std::unique_ptr<storage::Tuple> tuple(
@@ -183,7 +183,11 @@ bool AggregateExecutor::DExecute() {
   }
 
   done = true;
-  LOG_TRACE("Result tiles : %lu ", result.size());
+  LOG_INFO("Result tiles : %lu ", result.size());
+  for(auto tile : result) {
+	  LOG_INFO("Information %s" , tile->GetInfo().c_str());
+  }
+
 
   SetOutput(result[result_itr]);
   result_itr++;

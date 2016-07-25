@@ -15,6 +15,7 @@
 
 #include "planner/abstract_plan.h"
 #include "common/types.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace parser{
@@ -44,9 +45,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
-
-  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
+  void ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression);
 
   bool GetTruncate() const { return truncate; }
 

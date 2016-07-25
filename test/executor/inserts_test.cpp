@@ -69,10 +69,6 @@ TEST_F(InsertTests, InsertRecord) {
   std::string col_1 = "dept_id";
   std::string col_2 = "dept_name";
 
-  //std::vector<char*>* col = new std::vector<char*>; 
-  // col->push_back(const_cast<char*>(col_1.c_str()));
-  // col->push_back(const_cast<char*>(col_2.c_str()));
-  
   insert_node->table_name = const_cast<char*>(name.c_str());
 
   insert_node->columns = new std::vector<char*>;

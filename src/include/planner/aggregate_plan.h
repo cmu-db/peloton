@@ -97,6 +97,8 @@ class AggregatePlan : public AbstractPlan {
     column_ids_ = column_ids;
   }
 
+  const std::string GetInfo() const { return "AggregatePlan"; }
+
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {

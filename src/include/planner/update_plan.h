@@ -17,6 +17,7 @@
 #include "planner/project_info.h"
 #include "common/types.h"
 #include "parser/table_ref.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 
@@ -57,10 +58,7 @@ class UpdatePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
-
-  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
-
+  void ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression);
 
   const std::string GetInfo() const { return "UpdatePlan"; }
 

@@ -119,9 +119,6 @@ bool SeqScanExecutor::DExecute() {
     concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
 
-    // LOG_TRACE("Number of tuples: %f",
-    // target_table_->GetIndex(0)->GetNumberOfTuples());
-
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
       auto tile_group =
