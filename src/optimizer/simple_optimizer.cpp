@@ -151,7 +151,22 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     	auto select_stmt = (parser::SelectStatement*) parse_tree.get();
     	int index = 0;
     	auto agg_type = AGGREGATE_TYPE_PLAIN; // default aggregator
+    	std::vector<oid_t> group_by_columns;
     	auto group_by = select_stmt->group_by;
+    	expression::AbstractExpression* having = nullptr;
+    	auto target_table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME,
+    	    				select_stmt->from_table->name);
+
+
+    	// Preparing the group by columns
+    	if(group_by != NULL){
+			for(auto elem : *group_by->columns) {
+				std::string col_name(elem->getName());
+				auto column_id = target_table->GetSchema()->GetColumnID(col_name);
+				group_by_columns.push_back(column_id);
+			}
+			having = group_by->having;
+    	}
 
     	// Check if there are any aggregate functions
     	bool func_flag = false;
@@ -164,7 +179,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     	}
 
     	// If there is no aggregate functions, just do a sequential scan
-    	if(!func_flag && !group_by->columns) {
+    	if(!func_flag && group_by_columns.size() == 0) {
     		std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
     		          new planner::SeqScanPlan((parser::SelectStatement*) parse_tree.get()));
     		child_plan = std::move(child_SelectPlan);
@@ -173,7 +188,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     	else {
     		// Create sequential scan plan
     		LOG_INFO("Creating a sequential scan plan");
-    		auto target_table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME,
+    		target_table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME,
     				select_stmt->from_table->name);
 			std::vector<oid_t> column_ids = {};
 			std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
@@ -183,7 +198,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 			// Prepare aggregate plan
 			std::vector<catalog::Column> output_schema_columns;
     		std::vector<planner::AggregatePlan::AggTerm> agg_terms;
-    		std::vector<oid_t> group_by_columns;
 			DirectMapList direct_map_list = {};
 			oid_t new_col_id = 0;
 			oid_t agg_id = 0;
@@ -287,7 +301,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 		  std::unique_ptr<const planner::ProjectInfo> proj_info(
 				  new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
 
-		  std::unique_ptr<const expression::AbstractExpression> predicate(nullptr);
+		  std::unique_ptr<const expression::AbstractExpression> predicate(having);
 		  std::shared_ptr<const catalog::Schema> output_table_schema(
 		        new catalog::Schema(output_schema_columns));
 		  LOG_INFO("Output Schema Info: %s", output_table_schema.get()->GetInfo().c_str());

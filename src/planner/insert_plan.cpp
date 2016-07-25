@@ -147,7 +147,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 				switch (elem.GetType()) {
 				case VALUE_TYPE_VARCHAR:
 				case VALUE_TYPE_VARBINARY: {
-					if(pos >= query_columns->size()) {
+					if(pos >= query_columns->size()) { // Not found. Set value to null
 						tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(), GetPlanPool());
 					}
 					else {
