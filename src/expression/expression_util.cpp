@@ -477,6 +477,11 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
  */
 expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (catalog::Schema* schema, std::string column_name) {
     auto column_id = schema->GetColumnID(column_name);
+    // If there is no column with this name
+    if(column_id > schema->GetColumnCount()) {
+    	LOG_INFO("Could not find column name %s in schema: %s", column_name.c_str(), schema->GetInfo().c_str());
+    	return nullptr;
+    }
     LOG_INFO("Column id in table: %u", column_id);
     expression::TupleValueExpression *expr =
         new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
