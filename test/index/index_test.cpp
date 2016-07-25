@@ -37,14 +37,18 @@ ItemPointer item0(120, 5);
 ItemPointer item1(120, 7);
 ItemPointer item2(123, 19);
 
+// Since we need index type to determine the result
+// of the test, this needs to be made as a global static
+static IndexType index_type = INDEX_TYPE_BTREE;
+
+// Uncomment this to enable BwTree as index being tested
+//static IndexType index_type = INDEX_TYPE_BWTREE;
+
 index::Index *BuildIndex(const bool unique_keys) {
   // Build tuple and key schema
   std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
-  IndexType index_type = INDEX_TYPE_BTREE;
-  // FIXME: Try to use BWTREE
-  //index_type = INDEX_TYPE_BWTREE;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "A", true);
