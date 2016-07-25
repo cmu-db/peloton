@@ -210,7 +210,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 					LOG_INFO("Expression type in Function Expression: %s",
 							ExpressionTypeToString(func_expr->expr->GetExpressionType()).c_str());
 					LOG_INFO("Distinct flag: %d", func_expr->distinct);
+					// Count a column expression
 					if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
+
+						  LOG_INFO("Function name: %s", func_expr->getName());
+						  LOG_INFO("Aggregate type: %s",
+								  ExpressionTypeToString(ParserExpressionNameToExpressionType(func_expr->getName())).c_str());
 						  planner::AggregatePlan::AggTerm agg_term(
 							  ParserExpressionNameToExpressionType(func_expr->getName()),
 							  expression::ExpressionUtil::ConvertToTupleValueExpression(target_table->GetSchema(),
@@ -247,6 +252,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
 
 					}
+					// Count star
 					else if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
 						LOG_INFO("Creating an aggregate plan");
 						planner::AggregatePlan::AggTerm agg_term(

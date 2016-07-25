@@ -237,7 +237,6 @@ bool HashAggregator::Finalize() {
       return false;
     }
   }
-
   return true;
 }
 
@@ -360,6 +359,7 @@ PlainAggregator::PlainAggregator(const planner::AggregatePlan *node,
 
   // initialize aggregators
   for (oid_t aggno = 0; aggno < node->GetUniqueAggTerms().size(); aggno++) {
+	  LOG_INFO("Aggregate term type: %s", ExpressionTypeToString(node->GetUniqueAggTerms()[aggno].aggtype).c_str());
     aggregates[aggno] =
         GetAggInstance(node->GetUniqueAggTerms()[aggno].aggtype);
 
