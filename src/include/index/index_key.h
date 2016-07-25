@@ -91,10 +91,17 @@ inline uint64_t ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
 }
 
 /**
- *  Integer key that will pack all key data into KeySize number of uint64_t.
- *  The minimum number of uint64_ts necessary to pack all the integers is used.
+ *  class IntsKey - Integer key
+ *
+ * Integer key that will pack all key data into KeySize number of uint64_t.
+ * The minimum number of uint64_ts necessary to pack all the integers is used.
+ *
+ * This will be hopefully optimized into direct integer manipulation whenever
+ * possible by the compiler since the operations are just on an array of
+ * integers
  */
-template <std::size_t KeySize> class IntsKey {
+template <std::size_t KeySize>
+class IntsKey {
  public:
   /*
    * Take a value that is part of the key (already converted to a uint64_t) and
@@ -321,8 +328,10 @@ template <std::size_t KeySize> class IntsKey {
  private:
 };
 
+
 /** comparator for Int specialized indexes. */
-template <std::size_t KeySize> class IntsComparator {
+template <std::size_t KeySize>
+class IntsComparator {
  public:
 
   inline bool operator()(const IntsKey<KeySize> &lhs,
@@ -343,10 +352,13 @@ template <std::size_t KeySize> class IntsComparator {
     return false;
   }
 
+  IntsComparator(const IntsComparator &) {}
+  IntsComparator() {}
 };
 
 /** comparator for Int specialized indexes. */
-template <std::size_t KeySize> class IntsComparatorRaw {
+template <std::size_t KeySize>
+class IntsComparatorRaw {
  public:
 
   inline int operator()(const IntsKey<KeySize> &lhs,
@@ -369,6 +381,8 @@ template <std::size_t KeySize> class IntsComparatorRaw {
     return VALUE_COMPARE_EQUAL;
   }
 
+  IntsComparatorRaw(const IntsComparatorRaw &) {}
+  IntsComparatorRaw() {}
 };
 
 /**
@@ -390,6 +404,8 @@ template <std::size_t KeySize> class IntsEqualityChecker {
     return true;
   }
 
+  IntsEqualityChecker(const IntsEqualityChecker &) {};
+  IntsEqualityChecker() {};
 };
 
 /**
@@ -409,13 +425,20 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
   }
 
   const catalog::Schema *schema;
+  
+  IntsHasher(const IntsHasher &) {}
+  IntsHasher() {};
 };
 
 /**
- * Key object for indexes of mixed types.
- * Using storage::Tuple to store columns.
+ * class GenericKey - Key used for indexing with opaque data
+ *
+ * This key type uses an fixed length array to hold data for indexing
+ * purposes, the actual size of which is specified and instanciated
+ * with a template argument.
  */
-template <std::size_t KeySize> class GenericKey {
+template <std::size_t KeySize>
+class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_ASSERT(tuple);
@@ -441,14 +464,13 @@ template <std::size_t KeySize> class GenericKey {
   char data[KeySize];
 
   const catalog::Schema *schema;
-
- private:
 };
 
 /**
  * Function object returns true if lhs < rhs, used for trees
  */
-template <std::size_t KeySize> class GenericComparator {
+template <std::size_t KeySize>
+class GenericComparator {
  public:
 
   inline bool operator()(const GenericKey<KeySize> &lhs,
@@ -471,12 +493,15 @@ template <std::size_t KeySize> class GenericComparator {
     return false;
   }
 
+  GenericComparator(const GenericComparator &) {}
+  GenericComparator() {}
 };
 
 /**
  * Function object returns true if lhs < rhs, used for trees
  */
-template <std::size_t KeySize> class GenericComparatorRaw {
+template <std::size_t KeySize>
+class GenericComparatorRaw {
  public:
 
   inline int operator()(const GenericKey<KeySize> &lhs,
@@ -499,6 +524,8 @@ template <std::size_t KeySize> class GenericComparatorRaw {
     return VALUE_COMPARE_EQUAL;
   }
 
+  GenericComparatorRaw(const GenericComparatorRaw &) {}
+  GenericComparatorRaw() {}
 };
 
 /**
@@ -518,6 +545,8 @@ template <std::size_t KeySize> class GenericEqualityChecker {
     return lhTuple.EqualsNoSchemaCheck(rhTuple);
   }
 
+  GenericEqualityChecker(const GenericEqualityChecker &) {}
+  GenericEqualityChecker() {}
 };
 
 /**
@@ -534,6 +563,9 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
     pTuple.MoveToTuple(reinterpret_cast<const void *>(&p));
     return pTuple.HashCode();
   }
+  
+  GenericHasher(const GenericHasher &) {}
+  GenericHasher() {};
 
 };
 
@@ -611,6 +643,9 @@ class TupleKey {
   const catalog::Schema *key_tuple_schema;
 };
 
+/*
+ * class TupleKeyHasher - Hash function for tuple keys
+ */
 struct TupleKeyHasher {
 
   /** Generate a 64-bit number for the key value */
@@ -618,7 +653,12 @@ struct TupleKeyHasher {
     storage::Tuple pTuple = p.GetTupleForComparison(p.key_tuple_schema);
     return pTuple.HashCode();
   }
-
+  
+  /*
+   * Copy Constructor - To make compiler happy
+   */
+  TupleKeyHasher(const TupleKeyHasher &) {}
+  TupleKeyHasher() {};
 };
 
 class TupleKeyComparator {
@@ -646,6 +686,11 @@ class TupleKeyComparator {
     return false;
   }
 
+  /*
+   * Copy constructor
+   */
+  TupleKeyComparator(const TupleKeyComparator &) {}
+  TupleKeyComparator() {};
 };
 
 class TupleKeyComparatorRaw {
@@ -673,6 +718,11 @@ class TupleKeyComparatorRaw {
     return VALUE_COMPARE_EQUAL;
   }
 
+  /*
+   * Copy constructor
+   */
+  TupleKeyComparatorRaw(const TupleKeyComparatorRaw &) {}
+  TupleKeyComparatorRaw() {};
 };
 
 class TupleKeyEqualityChecker {
@@ -697,6 +747,8 @@ class TupleKeyEqualityChecker {
     return true;
   }
 
+  TupleKeyEqualityChecker(const TupleKeyEqualityChecker &) {}
+  TupleKeyEqualityChecker() {}
 };
 
 }  // End index namespace
