@@ -39,10 +39,10 @@ ItemPointer item2(123, 19);
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
-static IndexType index_type = INDEX_TYPE_BTREE;
+//static IndexType index_type = INDEX_TYPE_BTREE;
 
 // Uncomment this to enable BwTree as index being tested
-//static IndexType index_type = INDEX_TYPE_BWTREE;
+static IndexType index_type = INDEX_TYPE_BWTREE;
 
 index::Index *BuildIndex(const bool unique_keys) {
   // Build tuple and key schema
@@ -269,7 +269,14 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 
   // Checks
   index->ScanAllKeys(locations);
-  EXPECT_EQ(locations.size(), 9);
+  
+  if(index_type == INDEX_TYPE_BWTREE) {
+    EXPECT_EQ(locations.size(), 7);
+  } else {
+    EXPECT_EQ(locations.size(), 9);
+  }
+
+
   locations.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
