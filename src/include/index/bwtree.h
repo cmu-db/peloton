@@ -101,18 +101,6 @@ class PointerComparator {
                                             typename ValueEqualityChecker, \
                                             typename ValueHashFunc>
 
-// These two are used to verify whether to use certain flags
-#ifdef BWTREE_PELOTON
-  #pragma message("BWTREE_PELOTON = On")
-#else
-  #pragma message("BWTREE_PELOTON = Off")
-#endif
-
-#ifdef BWTREE_DEBUG
-  #pragma message("BWTREE_DEBUG = On")
-#else
-  #pragma message("BWTREE_DEBUG = Off")
-#endif
 
 #ifdef BWTREE_PELOTON
 namespace peloton {
