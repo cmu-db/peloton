@@ -14,10 +14,10 @@
 #include <string>
 
 #include "parser/parser.h"
-
 #include "parser/sql_parser.h"
 #include "parser/sql_scanner.h"
 #include "common/exception.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace parser {
@@ -67,7 +67,7 @@ Parser &Parser::GetInstance(){
 std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& query_string){
   auto stmt  = Parser::ParseSQLString(query_string);
 
-  LOG_INFO("Statements Size -------------> %lu" ,stmt->GetStatements().size());
+  LOG_INFO("Number of statements: %lu" ,stmt->GetStatements().size());
   SQLStatement* first_stmt = nullptr;
 
   for(auto s : stmt->GetStatements()){
@@ -75,6 +75,7 @@ std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& 
     break;
   }
 
+  LOG_INFO("Statement type: %s", StatementTypeToString(first_stmt->GetType()).c_str());
   std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
   return std::move(sql_stmt);
 }

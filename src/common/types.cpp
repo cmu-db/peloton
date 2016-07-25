@@ -388,6 +388,31 @@ void AtomicUpdateItemPointer(ItemPointer* src_ptr, const ItemPointer& value) {
 }
 
 //===--------------------------------------------------------------------===//
+// Statement - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string StatementTypeToString(StatementType type) {
+	switch(type){
+	case STATEMENT_TYPE_SELECT: { return "SELECT"; }
+	case STATEMENT_TYPE_ALTER: { return "ALTER"; }
+	case STATEMENT_TYPE_CREATE: { return "CREATE"; }
+	case STATEMENT_TYPE_DELETE: { return "DELETE"; }
+	case STATEMENT_TYPE_DROP: { return "DROP"; }
+	case STATEMENT_TYPE_EXECUTE: { return "EXECUTE"; }
+	case STATEMENT_TYPE_EXPORT: { return "EXPORT"; }
+	case STATEMENT_TYPE_IMPORT: { return "IMPORT"; }
+	case STATEMENT_TYPE_INSERT: { return "INSERT"; }
+	case STATEMENT_TYPE_INVALID: { return "INVALID"; }
+	case STATEMENT_TYPE_PREPARE: { return "PREPARE"; }
+	case STATEMENT_TYPE_RENAME: { return "RENAME"; }
+	case STATEMENT_TYPE_TRANSACTION: { return "TRANSACTION"; }
+	case STATEMENT_TYPE_UPDATE: { return "UPDATE"; }
+	}
+	return "NOT A KNOWN TYPE - INVALID";
+}
+
+
+//===--------------------------------------------------------------------===//
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
@@ -481,6 +506,34 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_DATE_TO_TIMESTAMP: { return "DATE_TO_TIMESTAMP"; }
   }
   return "INVALID";
+}
+
+ExpressionType ParserExpressionNameToExpressionType (const std::string& str) {
+	if(str == "COUNT") {
+		return EXPRESSION_TYPE_AGGREGATE_COUNT;
+	}
+	else if(str == "SUM") {
+		return EXPRESSION_TYPE_AGGREGATE_SUM;
+	}
+	else if(str == "AVG") {
+		return EXPRESSION_TYPE_AGGREGATE_AVG;
+	}
+	else if(str == "MAX") {
+		return EXPRESSION_TYPE_AGGREGATE_MAX;
+	}
+	else if(str == "MIN") {
+		return EXPRESSION_TYPE_AGGREGATE_MIN;
+	}
+	else if(str == "APPROX_COUNT_DISTINCT") {
+		return EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT;
+	}
+	else if(str == "AGGREGATE_HYPERLOGLOGS_TO_CARD") {
+		return EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD;
+	}
+	else if(str == "VALS_TO_HYPERLOGLOG") {
+		return EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG;
+	}
+	return EXPRESSION_TYPE_INVALID;
 }
 
 ExpressionType StringToExpressionType(const std::string& str) {

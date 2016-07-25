@@ -104,6 +104,7 @@ struct SelectStatement : SQLStatement {
     delete limit;
   }
 
+
   TableRef* from_table;
   bool select_distinct;
   std::vector<expression::AbstractExpression*>* select_list;
@@ -114,6 +115,11 @@ struct SelectStatement : SQLStatement {
   OrderDescription* order;
   LimitDescription* limit;
   bool is_for_update;
+
+public:
+	const std::vector<expression::AbstractExpression*>* getSelectList() const {
+		return select_list;
+	}
 };
 
 }  // End parser namespace

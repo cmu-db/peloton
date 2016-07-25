@@ -28,6 +28,8 @@ public class PelotonTest {
           "INSERT INTO B VALUES (?,?);" +
           "COMMIT;";
 
+  private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
+
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
@@ -75,8 +77,9 @@ public class PelotonTest {
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
-    stmt.execute(UPDATE_BY_INDEXSCAN);
-    stmt.execute(DELETE_BY_INDEXSCAN);
+    stmt.execute(AGG_COUNT);
+    //stmt.execute(UPDATE_BY_INDEXSCAN);
+    //stmt.execute(DELETE_BY_INDEXSCAN);
     System.out.println("Test db created.");
   }
 

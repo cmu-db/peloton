@@ -19,6 +19,7 @@
 #include "catalog/bootstrapper.h"
 #include "parser/statement_update.h"
 #include "parser/table_ref.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace planner {
@@ -64,7 +65,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	project_info_ = std::move(project_info);
 	
 	auto expr = parse_tree->where->Copy();
-	ReplaceColumnExpressions(expr);
+	ReplaceColumnExpressions(target_table_->GetSchema(), expr);
 
 
 	std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
@@ -72,7 +73,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 	AddChild(std::move(seq_scan_node));
 }
 
-void UpdatePlan::ReplaceColumnExpressions(expression::AbstractExpression* expression) {
+void UpdatePlan::ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression) {
   LOG_INFO("Expression Type --> %s", ExpressionTypeToString(expression->GetExpressionType()).c_str());
   LOG_INFO("Left Type --> %s", ExpressionTypeToString(expression->GetLeft()->GetExpressionType()).c_str());
   LOG_INFO("Right Type --> %s", ExpressionTypeToString(expression->GetRight()->GetExpressionType()).c_str());
@@ -81,32 +82,22 @@ void UpdatePlan::ReplaceColumnExpressions(expression::AbstractExpression* expres
     std::string col_name(expr->getName());
     LOG_INFO("Column name: %s", col_name.c_str());
     delete expr;
-    expression->setLeft(ConvertToTupleValueExpression(col_name));
+    expression->setLeft(expression::ExpressionUtil::ConvertToTupleValueExpression(schema, col_name));
   }
   else if (expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
     auto expr = expression->GetRight();
     std::string col_name(expr->getName());
     LOG_INFO("Column name: %s", col_name.c_str());
     delete expr;
-    expression->setRight(ConvertToTupleValueExpression(col_name));
+    expression->setRight(expression::ExpressionUtil::ConvertToTupleValueExpression(schema, col_name));
   }
   else {
-	  ReplaceColumnExpressions(expression->GetModifiableLeft());
-	  ReplaceColumnExpressions(expression->GetModifiableRight());
+	  ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+	  ReplaceColumnExpressions(schema, expression->GetModifiableRight());
 
   }
 }
-/**
- * This function generates a TupleValue expression from the column name
- */
-expression::AbstractExpression* UpdatePlan::ConvertToTupleValueExpression (std::string column_name) {
-	auto schema = target_table_->GetSchema();
-    auto column_id = schema->GetColumnID(column_name);
-    LOG_INFO("Column id in table: %u", column_id);
-    expression::TupleValueExpression *expr =
-        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
-	return expr;
-}
+
 
 }  // namespace planner
 }  // namespace peloton

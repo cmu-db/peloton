@@ -256,7 +256,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlan *plan,
   }
 
   prefix += "  ";
-
+  LOG_INFO("Plan Type: %s", PlanNodeTypeToString(plan->GetPlanNodeType()).c_str());
   LOG_INFO("%s->Plan Info :: %s ", prefix.c_str(), plan->GetInfo().c_str());
 
   auto &children = plan->GetChildren();

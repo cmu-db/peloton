@@ -58,9 +58,9 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node) {
   SetTargetTable(target_table);
   ColumnIds().clear();
   
-  if(select_node->select_list->at(0)->GetExpressionType() != EXPRESSION_TYPE_STAR){
+  if(select_node->select_list->at(0)->GetExpressionType() != EXPRESSION_TYPE_STAR) {
     for(auto col : *select_node->select_list){
-      LOG_INFO("ExpressionType -------------> %d" ,col->GetExpressionType());
+      LOG_INFO("ExpressionType: %s", ExpressionTypeToString(col->GetExpressionType()).c_str());
       auto col_name = col->getName();
       oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
       SetColumnId(col_id);
@@ -79,13 +79,6 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node) {
     SetPredicate(pred);
   
   }
-  
-  // if(select_node->limit != NULL){
-  //   std::unique_ptr<planner::AbstractPlan> limit_plan(new planner::LimitPlan(select_node->limit->limit, select_node->limit->offset));
-  //   this->AddChild(std::move(limit_plan));
-  // }
-
-
 }
 
 

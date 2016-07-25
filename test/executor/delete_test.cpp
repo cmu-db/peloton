@@ -89,6 +89,52 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
 
+  LOG_INFO("Inserting a tuple...");
+  LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
+  statement.reset(new Statement("INSERT", "INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');"));
+  LOG_INFO("Building parse tree...");
+  insert_stmt = peloton_parser.BuildParseTree("INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple inserted!");
+
+  LOG_INFO("Inserting a tuple...");
+  LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_3');");
+  statement.reset(new Statement("INSERT", "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_3');"));
+  LOG_INFO("Building parse tree...");
+  insert_stmt = peloton_parser.BuildParseTree("INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_3');");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple inserted!");
+
+  // Just Counting number of tuples in table
+  LOG_INFO("Selecting COUNT(*)");
+  LOG_INFO("Query: SELECT COUNT(*) FROM department_table;");
+  statement.reset(new Statement("COUNT", "SELECT COUNT(*) FROM department_table;"));
+  LOG_INFO("Building parse tree...");
+  auto select_stmt = peloton_parser.BuildParseTree("SELECT COUNT(*) FROM department_table;");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Counted Tuples!");
+
   // Now deleting end-to-end
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table");

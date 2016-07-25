@@ -82,6 +82,8 @@ class ExpressionUtil {
                                                int value_idx);
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
+
+  static expression::AbstractExpression* ConvertToTupleValueExpression (catalog::Schema *schema, std::string column_name);
 };
 
 }  // End expression namespace

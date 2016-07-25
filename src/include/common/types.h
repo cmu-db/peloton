@@ -956,8 +956,12 @@ std::string ValueTypeToString(ValueType type);
 ValueType StringToValueType(const std::string &str);
 ValueType PostgresStringToValueType(std::string str);
 
+std::string StatementTypeToString(StatementType type);
+
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(const std::string &str);
+
+ExpressionType ParserExpressionNameToExpressionType (const std::string& str);
 
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);

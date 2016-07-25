@@ -472,5 +472,16 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
   ExpressionUtil::ExtractTupleValuesColumnIdx(expr->GetRight(), columnIds);
 }
 
+/**
+ * This function generates a TupleValue expression from the column name
+ */
+expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (catalog::Schema* schema, std::string column_name) {
+    auto column_id = schema->GetColumnID(column_name);
+    LOG_INFO("Column id in table: %u", column_id);
+    expression::TupleValueExpression *expr =
+        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
+	return expr;
+}
+
 }  // End expression namespace
 }  // End peloton namespace
