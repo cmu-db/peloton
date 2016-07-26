@@ -148,6 +148,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       break;
 
     case STATEMENT_TYPE_SELECT: {
+    	LOG_INFO("Processing SELECT...");
     	auto select_stmt = (parser::SelectStatement*) parse_tree.get();
     	int index = 0;
     	auto agg_type = AGGREGATE_TYPE_PLAIN; // default aggregator
@@ -160,11 +161,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     	// Preparing the group by columns
     	if(group_by != NULL){
+    		LOG_INFO("Found GROUP BY");
 			for(auto elem : *group_by->columns) {
 				std::string col_name(elem->getName());
 				auto column_id = target_table->GetSchema()->GetColumnID(col_name);
 				group_by_columns.push_back(column_id);
 			}
+			// Having Expression needs to be prepared
+			// Currently it's mostly ParserExpression
+			// Needs to be prepared
 			having = group_by->having;
     	}
 
@@ -180,6 +185,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
     	// If there is no aggregate functions, just do a sequential scan
     	if(!func_flag && group_by_columns.size() == 0) {
+    		LOG_INFO("No aggregate functions found.");
     		std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
     		          new planner::SeqScanPlan((parser::SelectStatement*) parse_tree.get()));
     		child_plan = std::move(child_SelectPlan);
@@ -247,7 +253,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 										"COL_" + std::to_string(col_cntr_id++), // COL_A should be used only when there is no AS
 										true);
 
-								output_schema_columns.push_back(target_table->GetSchema()->GetColumn(old_col_id));
+								output_schema_columns.push_back(column);
 						  }
 
 
