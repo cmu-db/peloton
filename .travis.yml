@@ -40,5 +40,5 @@ script:
     # run tests
     - make check
     # upload coverage info
-    - make coveralls
+    #- make coveralls
 

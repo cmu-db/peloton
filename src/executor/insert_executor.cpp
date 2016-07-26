@@ -71,7 +71,6 @@ bool InsertExecutor::DExecute() {
   }
 
   LOG_INFO("Number of tuples in table %s before insert: %d", target_table->GetName().c_str(), (int)target_table->GetNumberOfTuples());
-
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
@@ -112,7 +111,7 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
+      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetTupleCount());
       executor_context_->num_processed += 1;  // insert one
     }
 
@@ -167,7 +166,9 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetNumberOfTuples());
+      LOG_TRACE("Number of tuples in table after insert: %lu",
+                target_table->GetTupleCount());
+
       executor_context_->num_processed += 1;  // insert one
     }
 

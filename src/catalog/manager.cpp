@@ -22,6 +22,8 @@
 namespace peloton {
 namespace catalog {
 
+std::shared_ptr<storage::TileGroup> Manager::empty_location;
+
 Manager &Manager::GetInstance() {
   static Manager manager;
   return manager;
@@ -35,23 +37,18 @@ void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
 
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-
     // add/update the catalog reference to the tile group
-    locator[oid] = location;
+    locator.Update(oid, location);
   }
 
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   concurrency::TransactionManagerFactory::GetInstance().DroppingTileGroup(oid);
-  LOG_TRACE("Dropping tile group %u", oid);
 
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-
     // drop the catalog reference to the tile group
-    locator.erase(oid);
+    locator.Erase(oid, empty_location);
   }
 
 }
@@ -60,12 +57,7 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
 
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-
-    if(locator.count(oid) != 0) {
-      location = locator.at(oid);
-    }
-
+    location = locator.Find(oid);
   }
 
   return location;
@@ -75,9 +67,7 @@ std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
 void Manager::ClearTileGroup() {
 
   {
-    std::lock_guard<std::mutex> lock(locator_mutex);
-
-    locator.clear();
+    locator.Clear(empty_location);
   }
 
 }
@@ -155,21 +145,6 @@ storage::DataTable *Manager::GetTableWithName(
   if (database != nullptr) {
     auto table = database->GetTableWithName(table_name);
     return table;
-  }
-
-  return nullptr;
-}
-
-index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
-                                       const oid_t table_oid,
-                                       const oid_t index_oid) const {
-  // Lookup table
-  auto table = GetTableWithOid(database_oid, table_oid);
-
-  // Lookup index
-  if (table != nullptr) {
-    auto index = table->GetIndexWithOid(index_oid);
-    return index;
   }
 
   return nullptr;

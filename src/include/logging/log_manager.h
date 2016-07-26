@@ -88,9 +88,6 @@ class LogManager {
 
   // Check whether the frontend logger is in logging mode
   inline bool IsInLoggingMode() {
-    // TODO: Temporarily Disable logging
-    return false;
-
     // Check the logging status
     return (logging_status == LOGGING_STATUS_TYPE_LOGGING);
   }
@@ -239,6 +236,10 @@ class LogManager {
     log_buffer_capacity_ = log_buffer_capacity;
   }
 
+  inline void SetNoWrite(bool no_write) { no_write_ = no_write; }
+
+  inline bool GetNoWrite() const { return no_write_; }
+
  private:
   LogManager();
   ~LogManager();
@@ -308,6 +309,10 @@ class LogManager {
   // number the fronted loggers who have updated the manager of their max oid
   // and cid
   int update_managers_count = 0;
+
+  bool replicating_ = false;
+
+  bool no_write_ = false;
 
   // max oid after recovery
   oid_t max_oid = 0;

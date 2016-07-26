@@ -42,6 +42,22 @@ oid_t IndexMetadata::GetColumnCount() const {
   return GetKeySchema()->GetColumnCount();
 }
 
+const std::string IndexMetadata::GetInfo() const {
+  std::stringstream os;
+
+  os << "\tINDEX METADATA: [";
+
+  for(auto key_attr : key_attrs){
+    os << key_attr << " ";
+  }
+
+  os << " ] :: ";
+
+  os << utility_ratio;
+
+  return os.str();
+}
+
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &expr_types,
@@ -255,7 +271,7 @@ const std::string Index::GetInfo() const {
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
-void Index::IncreaseNumberOfTuplesBy(const float amount) {
+void Index::IncreaseNumberOfTuplesBy(const size_t amount) {
   number_of_tuples += amount;
   dirty = true;
 }
@@ -264,7 +280,7 @@ void Index::IncreaseNumberOfTuplesBy(const float amount) {
  * @brief Decrease the number of tuples in this table
  * @param amount amount to decrease
  */
-void Index::DecreaseNumberOfTuplesBy(const float amount) {
+void Index::DecreaseNumberOfTuplesBy(const size_t amount) {
   number_of_tuples -= amount;
   dirty = true;
 }
@@ -273,7 +289,7 @@ void Index::DecreaseNumberOfTuplesBy(const float amount) {
  * @brief Set the number of tuples in this table
  * @param num_tuples number of tuples
  */
-void Index::SetNumberOfTuples(const float num_tuples) {
+void Index::SetNumberOfTuples(const size_t num_tuples) {
   number_of_tuples = num_tuples;
   dirty = true;
 }
@@ -282,7 +298,7 @@ void Index::SetNumberOfTuples(const float num_tuples) {
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float Index::GetNumberOfTuples() const { return number_of_tuples; }
+size_t Index::GetNumberOfTuples() const { return number_of_tuples; }
 
 /**
  * @brief return dirty flag

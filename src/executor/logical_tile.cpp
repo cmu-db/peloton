@@ -25,6 +25,14 @@
 namespace peloton {
 namespace executor {
 
+#define SCHEMA_PREALLOCATION_SIZE 20
+
+LogicalTile::LogicalTile(){
+  // Preallocate schema
+  schema_.reserve(SCHEMA_PREALLOCATION_SIZE);
+}
+
+
 /**
  * @brief Get the schema of the tile.
  * @return ColumnInfo-based schema of the tile.

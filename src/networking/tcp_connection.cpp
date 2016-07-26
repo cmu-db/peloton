@@ -220,7 +220,7 @@ void *Connection::ProcessMessage(void *connection) {
         google::protobuf::Message *message = rpc_method->response_->New();
 
         // Deserialize the receiving message
-        message->ParseFromString(buf + HEADERLEN + TYPELEN + OPCODELEN);
+        message->ParseFromArray(buf + HEADERLEN + TYPELEN + OPCODELEN, msg_len);
 
         // Invoke rpc call. request is null
         rpc_method->service_->CallMethod(method, &controller, NULL, message,
@@ -381,8 +381,14 @@ int Connection::GetReadData(char *buffer, int len) {
    *       bufferevent_lock(bev_);
    *       bufferevent_unlock(bev_);
    */
+
+  int remaining_len = len;
+  do{
   struct evbuffer *input = bufferevent_get_input(bev_);
-  return evbuffer_remove(input, buffer, len);
+  remaining_len -= evbuffer_remove(input, buffer, len);
+
+  }while(remaining_len > 0);
+  return len;
 }
 
 /*
