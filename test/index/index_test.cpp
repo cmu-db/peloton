@@ -39,10 +39,10 @@ ItemPointer item2(123, 19);
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
-//static IndexType index_type = INDEX_TYPE_BTREE;
+static IndexType index_type = INDEX_TYPE_BTREE;
 
 // Uncomment this to enable BwTree as index being tested
-static IndexType index_type = INDEX_TYPE_BWTREE;
+//static IndexType index_type = INDEX_TYPE_BWTREE;
 
 index::Index *BuildIndex(const bool unique_keys) {
   // Build tuple and key schema
