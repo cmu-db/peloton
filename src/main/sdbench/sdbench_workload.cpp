@@ -277,7 +277,10 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
     WriteOutput(duration);
 
     // Construct sample
-    brain::Sample index_sample(index_columns_accessed, duration, sample_type, selectivity);
+    brain::Sample index_sample(index_columns_accessed,
+                               duration,
+                               sample_type,
+                               selectivity);
 
     // Record sample
     sdbench_table->RecordIndexSample(index_sample);
@@ -304,8 +307,8 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
-index::Index *PickIndex(storage::DataTable* table,
-                        std::vector<oid_t> query_attrs){
+std::shared_ptr<index::Index> PickIndex(storage::DataTable* table,
+                                        std::vector<oid_t> query_attrs){
 
   // Construct set
   std::set<oid_t> query_attrs_set(query_attrs.begin(), query_attrs.end());
@@ -316,13 +319,10 @@ index::Index *PickIndex(storage::DataTable* table,
   bool query_index_found = false;
   oid_t index_itr = 0;
   for(index_itr = 0; index_itr < index_count; index_itr++){
-
     auto index_attrs = table->GetIndexAttrs(index_itr);
 
-    LOG_INFO("Available Index :: ");
-    for(auto index_attr : index_attrs){
-      LOG_INFO("%u", index_attr);
-    }
+    UNUSED_ATTRIBUTE auto index_metadata = table->GetIndex(index_itr)->GetMetadata();
+    LOG_TRACE("Available Index :: %s", index_metadata->GetInfo().c_str());
 
     // Some attribute did not match
     if(index_attrs != query_attrs_set) {
@@ -332,17 +332,20 @@ index::Index *PickIndex(storage::DataTable* table,
     // Exact match
     query_index_found = true;
     break;
+
+    // update index count
+    index_count = table->GetIndexCount();
   }
 
-  index::Index* index = nullptr;
+  std::shared_ptr<index::Index> index;
 
   // Found index
   if(query_index_found == true) {
-    LOG_INFO("Found available Index");
+    LOG_TRACE("Found available Index");
     index = table->GetIndex(index_itr);
   }
   else {
-    LOG_INFO("Did not find available index");
+    LOG_TRACE("Did not find available index");
   }
 
   return index;
@@ -372,24 +375,30 @@ void RunDirectTest() {
   std::vector<oid_t> tuple_key_attrs;
   std::vector<oid_t> index_key_attrs;
 
-  auto rand_sample = rand() % 3;
-  if(rand_sample == 0) {
+  auto rand_sample = rand() % 10;
+  if(rand_sample <= 3) {
     tuple_key_attrs = {3, 4};
     index_key_attrs = {0, 1};
   }
-  else if(rand_sample == 1){
-    tuple_key_attrs = {2};
-    index_key_attrs = {0};
+  else if(rand_sample <= 6){
+    tuple_key_attrs = {3, 6};
+    index_key_attrs = {0, 1};
   }
-  else {
+  else if(rand_sample <= 8){
     tuple_key_attrs = {0, 1};
     index_key_attrs = {0, 1};
   }
-
-  LOG_INFO("Direct :: ");
-  for(auto tuple_key_attr : tuple_key_attrs){
-    LOG_INFO("%u", tuple_key_attr);
+  else {
+    tuple_key_attrs = {2};
+    index_key_attrs = {0};
   }
+
+  UNUSED_ATTRIBUTE std::stringstream os;
+  os << "Direct :: ";
+  for(auto tuple_key_attr : tuple_key_attrs){
+    os << tuple_key_attr << " ";
+  }
+  LOG_INFO("%s", os.str().c_str());
 
   // Create and set up seq scan executor
   auto predicate = CreateScanPredicate(tuple_key_attrs);
@@ -547,7 +556,7 @@ void RunInsertTest() {
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
-  double repeat_count = 30;
+  double repeat_count = 300;
 
   for(oid_t repeat_itr = 0; repeat_itr < repeat_count; repeat_itr++){
 
@@ -571,7 +580,7 @@ void RunAdaptExperiment() {
   // Setup layout tuner
   auto& index_tuner = brain::IndexTuner::GetInstance();
 
-  state.transactions = 200;   // 25
+  state.transactions = 20;   // 25
 
   state.projectivity = 1.0;
   state.selectivity = 0.06;

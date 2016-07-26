@@ -74,11 +74,17 @@ class IndexTuner {
   void IndexTuneHelper(storage::DataTable* table);
 
   void BuildIndex(storage::DataTable *table,
-                  index::Index *index);
+                  std::shared_ptr<index::Index> index);
 
   void BuildIndices(storage::DataTable *table);
 
   void Analyze(storage::DataTable* table);
+
+  size_t CheckIndexStorageFootprint(storage::DataTable *table);
+
+  double ComputeWorkloadWriteRatio(const std::vector<brain::Sample>& samples);
+
+  void DropIndexes(storage::DataTable *table);
 
  private:
 
@@ -101,13 +107,25 @@ class IndexTuner {
   oid_t sleep_duration = 10;
 
   // Threshold sample count
-  oid_t sample_count_threshold = 100;
+  oid_t sample_count_threshold = 50;
 
   // # of tile groups to be indexed per iteration
   oid_t max_tile_groups_indexed = 50;
 
-  // storage footprint (MB)
-  size_t max_storage_footprint = 2 * 1024;
+  // storage footprint (KB)
+  size_t max_storage_space = 2 * 1024 * 1024;
+
+  // alpha (weight for old samples)
+  double alpha = 0.2;
+
+  // average write ratio
+  double average_write_ratio = INVALID_RATIO;
+
+  // write ratio threshold
+  double write_ratio_threshold = 0.8;
+
+  // index utility threshold
+  double index_utility_threshold = 0.2;
 
 };
 

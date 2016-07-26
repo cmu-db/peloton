@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -89,8 +88,10 @@ void WriteBehindFrontendLogger::FlushLogRecords(void) {
       txn_manager.GetCurrentCommitId() + POSSIBLY_DIRTY_GRANT_SIZE;
   // get current highest dispense commit id
   record.max_possible_dirty_commit_id = new_grant;
-  if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)) {
-    LOG_ERROR("Unable to write log record");
+  if (!no_write_) {
+    if (!fwrite(&record, sizeof(WriteBehindLogRecord), 1, log_file)) {
+      LOG_ERROR("Unable to write log record");
+    }
   }
 
   // for now fsync every time because the cost is relatively low
@@ -118,6 +119,8 @@ void WriteBehindFrontendLogger::DoRecovery() {
   // read file, truncate any trailing log data
   // get file size
 
+  LOG_INFO("DoRecovery");
+
   struct stat stat_buf;
   fstat(log_file_fd, &stat_buf);
 
@@ -128,6 +131,8 @@ void WriteBehindFrontendLogger::DoRecovery() {
       LOG_ERROR("ftruncate failed on recovery");
     }
   }
+
+  LOG_INFO("Record count : %lu", record_num);
 
   // if no records, return
   if (record_num == 0) {

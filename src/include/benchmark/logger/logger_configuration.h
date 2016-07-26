@@ -45,9 +45,10 @@ enum BenchmarkType {
 enum AsynchronousType {
   ASYNCHRONOUS_TYPE_INVALID = 0,
 
-  ASYNCHRONOUS_TYPE_SYNC = 1,     // logging enabled + sync commits
-  ASYNCHRONOUS_TYPE_ASYNC = 2,    // logging enabled + async commits
-  ASYNCHRONOUS_TYPE_DISABLED = 3  // logging disabled
+  ASYNCHRONOUS_TYPE_SYNC = 1,      // logging enabled + sync commits
+  ASYNCHRONOUS_TYPE_ASYNC = 2,     // logging enabled + async commits
+  ASYNCHRONOUS_TYPE_DISABLED = 3,  // logging disabled
+  ASYNCHRONOUS_TYPE_NO_WRITE = 4
 };
 
 class configuration {
@@ -57,6 +58,9 @@ class configuration {
 
   // logging type
   LoggingType logging_type;
+
+  // checkpoint type
+  CheckpointType checkpoint_type;
 
   // log file dir
   std::string log_file_dir;

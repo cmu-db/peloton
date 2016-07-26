@@ -37,7 +37,7 @@ class HybridScanExecutor : public AbstractScanExecutor {
   bool DExecute();
 
  private:
-  index::Index *index_ = nullptr;
+  std::shared_ptr<index::Index> index_;
 
   storage::DataTable *table_ = nullptr;
 
