@@ -35,21 +35,6 @@
 #include <vector>
 
 /*
- * class PointerComparator - A template class for comparing pointer types
- *
- * If the ValueType of BwTree is pointer type, we usually do not want to
- * compare pointers directly, but instead we hope to dereference the pointer
- * and do comparison with the dereferenced type
- */
-template <typename DereferencedType,
-          typename DereferencedTypeComparator = std::equal_to<DereferencedType>>
-class PointerComparator {
-  inline bool operator()(const DereferencedType *p1, const DereferencedType *p2) {
-    return DereferencedTypeComparator(*p1, *p2);
-  }
-};
-
-/*
  * BWTREE_PELOTON - Specifies whether Peloton-specific features are
  *                  Compiled or not
  *                  We strive to make BwTree a standalone and independent
@@ -101,7 +86,6 @@ class PointerComparator {
                                             typename ValueEqualityChecker, \
                                             typename ValueHashFunc>
 
-
 #ifdef BWTREE_PELOTON
 namespace peloton {
 namespace index {
@@ -128,63 +112,36 @@ static void dummy(const char*, ...) {}
 
 #endif
 
-/*
- * class DummyOutObject - Mimics std::cout interface and avoids std::cout
- *                       appearing in the source
- *
- * It is a validation requirement that std::cout should not appear in the
- * source code, and all output should use logger function
- */
-class DummyOutObject {
- public:
-
-  /*
-   * operator<<() - accepts any type and chauin them up
-   *
-   * The template argument can be automatically deducted from the actual
-   * argument, which is done by the compiler
-   */
-  template <typename T>
-  DummyOutObject &operator<<(const T &value) {
-    (void)value;
-
-    return *this;
-  }
-
-  /*
-   * operator<<() - The following three are to support std::endl()
-   */
-  DummyOutObject &operator<<(std::ostream& (*f)(std::ostream &)) {
-    (void)f;
-
-    return *this;
-  }
-
-  DummyOutObject &operator<<(std::ostream& (*f)(std::ios &)) {
-    (void)f;
-
-    return *this;
-  }
-
-  DummyOutObject &operator<<(std::ostream& (*f)(std::ios_base &)) {
-    (void)f;
-
-    return *this;
-  }
-};
-
-/*
-static DummyOutObject dummy_out;
-*/
-
-#define dummy_out std::cout
-
 using NodeID = uint64_t;
 
+// This could not be set as a macro since we will change the flag inside
+// the testing framework
 extern bool print_flag;
 
-#define INVALID_NODE_ID (0UL)
-#define FIRST_LEAF_NODE_ID (2UL)
+// This constant represents INVALID_NODE_ID which is used as an indication
+// that the node is actually the last node on that level
+#define INVALID_NODE_ID ((NodeID)0UL)
+
+// The NodeID for the first leaf is fixed, which is 2
+#define FIRST_LEAF_NODE_ID ((NodeID)2UL)
+
+// This is the value we use in epoch manager to make sure
+// no thread sneaking in while GC decision is being made
+#define MAX_THREAD_COUNT ((int)0x7FFFFFFF)
+
+// The maximum number of nodes we could map in this index
+#define MAPPING_TABLE_SIZE ((size_t)(1 << 20))
+
+// If the length of delta chain exceeds ( >= ) this then we consolidate the node
+#define INNER_DELTA_CHAIN_LENGTH_THRESHOLD ((int)10)
+#define LEAF_DELTA_CHAIN_LENGTH_THRESHOLD ((int)8)
+
+// If node size goes above this then we split it
+#define INNER_NODE_SIZE_UPPER_THRESHOLD ((int)128)
+#define INNER_NODE_SIZE_LOWER_THRESHOLD ((int)32)
+
+#define LEAF_NODE_SIZE_UPPER_THRESHOLD ((int)64)
+#define LEAF_NODE_SIZE_LOWER_THRESHOLD ((int)16)
 
 /*
  * class BwTree - Lock-free BwTree index implementation
@@ -286,29 +243,6 @@ class BwTree {
 
 
   using EpochNode = typename EpochManager::EpochNode;
-
-  // The maximum number of nodes we could map in this index
-  constexpr static NodeID MAPPING_TABLE_SIZE = 1 << 20;
-
-  // If the length of delta chain exceeds ( >= ) this then we consolidate the node
-  constexpr static int INNER_DELTA_CHAIN_LENGTH_THRESHOLD = 10;
-  constexpr static int LEAF_DELTA_CHAIN_LENGTH_THRESHOLD = 8;
-
-  // If node size goes above this then we split it
-  constexpr static size_t INNER_NODE_SIZE_UPPER_THRESHOLD = 128;
-  constexpr static size_t INNER_NODE_SIZE_LOWER_THRESHOLD = 32;
-  
-  constexpr static size_t LEAF_NODE_SIZE_UPPER_THRESHOLD = 64;
-  constexpr static size_t LEAF_NODE_SIZE_LOWER_THRESHOLD = 16;
-
-  constexpr static int max_thread_count = 0x7FFFFFFF;
-
-  // This constant represents INVALID_NODE_ID which is used as an indication
-  // that the node is actually the last node on that level
-  //constexpr static NodeID INVALID_NODE_ID = 0;
-
-  // The NodeID for the first leaf is fixed, which is 2
-  //constexpr static NodeID FIRST_LEAF_NODE_ID = 2;
 
   /*
    * enum class NodeType - Bw-Tree node type
@@ -6448,19 +6382,19 @@ before_switch:
       // measure just force cleaning all epoches no matter whether they
       // are cleared or not
       if(head_epoch_p != nullptr) {
-        printf("ERROR: After cleanup there is still epoch left\n");
-        printf("==============================================\n");
-        printf("DUMP\n");
+        bwt_printf("ERROR: After cleanup there is still epoch left\n");
+        bwt_printf("==============================================\n");
+        bwt_printf("DUMP\n");
 
         for(EpochNode *epoch_node_p = head_epoch_p;
             epoch_node_p != nullptr;
             epoch_node_p = epoch_node_p->next_p) {
-          printf("Active thread count: %d\n",
+          bwt_printf("Active thread count: %d\n",
                  epoch_node_p->active_thread_count.load());
           epoch_node_p->active_thread_count = 0;
         }
 
-        printf("RETRY CLEANING...\n");
+        bwt_printf("RETRY CLEANING...\n");
         ClearEpoch();
       }
 
@@ -6829,13 +6763,13 @@ try_join_again:
         // number, which is the number of threads that have joined the epoch
         // since last epoch counter testing.
 
-        if(head_epoch_p->active_thread_count.fetch_sub(max_thread_count) > 0) {
+        if(head_epoch_p->active_thread_count.fetch_sub(MAX_THREAD_COUNT) > 0) {
           bwt_printf("Some thread sneaks in after we have decided"
                      " to clean. Return\n");
 
           // Must add it back to let the next round of cleaning correctly
           // identify empty epoch
-          head_epoch_p->active_thread_count.fetch_add(max_thread_count);
+          head_epoch_p->active_thread_count.fetch_add(MAX_THREAD_COUNT);
 
           break;
         }
