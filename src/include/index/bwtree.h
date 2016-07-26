@@ -3516,7 +3516,7 @@ abort_traverse:
 
     // We cannot reach here
     assert(false);
-    return false;
+    return nullptr;
   }
 
   /*
