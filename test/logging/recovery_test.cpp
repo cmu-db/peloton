@@ -222,7 +222,7 @@ TEST_F(RecoveryTests, RestartTest) {
   EXPECT_EQ(wal_fel.GetMaxDelimiterForRecovery(), num_files + 1);
   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files);
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
 
   auto &log_manager = logging::LogManager::GetInstance();
   log_manager.SetGlobalMaxFlushedIdForRecovery(num_files + 1);
@@ -231,7 +231,7 @@ TEST_F(RecoveryTests, RestartTest) {
 
   wal_fel.DoRecovery();
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(),
+  EXPECT_EQ(recovery_table->GetTupleCount(),
             tile_group_size * table_tile_group_count - 1);
   EXPECT_EQ(wal_fel.GetLogFileCursor(), num_files);
 
@@ -274,7 +274,7 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   db.AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
   EXPECT_EQ(tuples.size(), 1);
   logging::WriteAheadFrontendLogger fel(true);
@@ -305,7 +305,7 @@ TEST_F(RecoveryTests, BasicInsertTest) {
   EXPECT_TRUE(
       val3.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 3)) == 0);
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 1);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 1);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
@@ -317,7 +317,7 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   db.AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
   EXPECT_EQ(tuples.size(), 1);
   logging::WriteAheadFrontendLogger fel(true);
@@ -350,7 +350,7 @@ TEST_F(RecoveryTests, BasicUpdateTest) {
   EXPECT_TRUE(
       val3.Compare(recovery_table->GetTileGroupById(100)->GetValue(5, 3)) == 0);
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 
@@ -390,7 +390,7 @@ TEST_F(RecoveryTests, OutOfOrderCommitTest) {
   db.AddTable(recovery_table);
 
   auto tuples = BuildLoggingTuples(recovery_table, 1, false, false);
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 1);
   EXPECT_EQ(tuples.size(), 1);
   logging::WriteAheadFrontendLogger fel(true);
@@ -417,7 +417,7 @@ TEST_F(RecoveryTests, OutOfOrderCommitTest) {
   auto tg_header = recovery_table->GetTileGroupById(100)->GetHeader();
   EXPECT_EQ(tg_header->GetEndCommitId(5), test_commit_id + 1);
 
-  EXPECT_EQ(recovery_table->GetNumberOfTuples(), 0);
+  EXPECT_EQ(recovery_table->GetTupleCount(), 0);
   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
 }
 

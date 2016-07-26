@@ -14,13 +14,14 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
-#include "common/macros.h"
-#include "common/abstract_tuple.h"
+#include "common/serializer.h"
 #include "common/printable.h"
 
 namespace peloton {
+
+class Printable;
+class AbstractTuple;
 
 namespace executor {
 class ExecutorContext;
@@ -83,17 +84,11 @@ class AbstractExpression : public Printable {
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   // Each sub-class will have to implement this function
-  // After the implementation for each sub-class, we should set it to pure
-  // virtual
   //===--------------------------------------------------------------------===//
-  virtual bool SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
-    PL_ASSERT(&output != nullptr);
-    return false;
-  }
-  virtual bool DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) {
-    PL_ASSERT(&input != nullptr);
-    return false;
-  }
+
+  virtual bool SerializeTo(SerializeOutput &output) const;
+
+  virtual bool DeserializeFrom(SerializeInputBE &input) const;
 
   virtual int SerializeSize() { return 0; }
 

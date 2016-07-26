@@ -72,7 +72,7 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
   EXPECT_EQ(2, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
-  EXPECT_TRUE(source_base_tile.get() != result_base_tile);
+  EXPECT_TRUE(source_base_tile.get() == result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
   // Check that the base tile has the correct values.

@@ -25,13 +25,18 @@ namespace logging {
 void WriteBehindBackendLogger::Log(LogRecord *record) {
   // if we are committing, sync all data before taking the lock
   if (record->GetType() == LOGRECORD_TYPE_TRANSACTION_COMMIT) {
-    SyncDataForCommit();
+    auto &log_manager = LogManager::GetInstance();
+    auto no_write = log_manager.GetNoWrite();
+
+    if(no_write == false) {
+      SyncDataForCommit();
+    }
   }
   log_buffer_lock.Lock();
   switch (record->GetType()) {
     case LOGRECORD_TYPE_TRANSACTION_COMMIT:
       highest_logged_commit_message = record->GetTransactionId();
-    // fallthrough
+      // fallthrough
     case LOGRECORD_TYPE_TRANSACTION_ABORT:
     case LOGRECORD_TYPE_TRANSACTION_BEGIN:
     case LOGRECORD_TYPE_TRANSACTION_DONE:
@@ -41,17 +46,20 @@ void WriteBehindBackendLogger::Log(LogRecord *record) {
       }
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_DELETE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_DELETE:
+    case LOGRECORD_TYPE_WAL_TUPLE_DELETE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_INSERT: {
+    case LOGRECORD_TYPE_WBL_TUPLE_INSERT:
+    case LOGRECORD_TYPE_WAL_TUPLE_INSERT: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetInsertLocation().block);
       break;
     }
-    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE: {
+    case LOGRECORD_TYPE_WBL_TUPLE_UPDATE:
+    case LOGRECORD_TYPE_WAL_TUPLE_UPDATE: {
       tile_groups_to_sync_.insert(
           ((TupleRecord *)record)->GetDeleteLocation().block);
       tile_groups_to_sync_.insert(
@@ -85,6 +93,8 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
     oid_t db_oid, ItemPointer insert_location, ItemPointer delete_location,
     UNUSED_ATTRIBUTE const void *data) {
   // Figure the log record type
+  LogRecord *tuple_record;
+
   switch (log_record_type) {
     case LOGRECORD_TYPE_TUPLE_INSERT: {
       log_record_type = LOGRECORD_TYPE_WBL_TUPLE_INSERT;
@@ -106,12 +116,12 @@ LogRecord *WriteBehindBackendLogger::GetTupleRecord(
       break;
     }
   }
-
   // Don't make use of "data" in case of peloton log records
   // Build the tuple log record
-  LogRecord *tuple_record =
+  tuple_record =
       new TupleRecord(log_record_type, txn_id, table_oid, insert_location,
                       delete_location, nullptr, db_oid);
+
 
   return tuple_record;
 }

@@ -1307,6 +1307,12 @@ private:
     /// Memory allocator.
     allocator_type m_allocator;
 
+    // Backend type
+    peloton::BackendType backend_type = peloton::BACKEND_TYPE_MM;
+
+    /// Persistence mode
+    bool is_durable = false;
+
 public:
     // *** Constructors and Destructor
 
@@ -1364,6 +1370,16 @@ public:
         std::swap(m_stats, from.m_stats);
         std::swap(m_key_less, from.m_key_less);
         std::swap(m_allocator, from.m_allocator);
+    }
+
+    // Set persistence mode
+    void set_persistence_mode(const bool is_durable_) {
+      is_durable = is_durable_;
+    }
+
+    // Set backend type
+    void set_backend_type(const peloton::BackendType backend_type_) {
+      backend_type = backend_type_;
     }
 
 public:

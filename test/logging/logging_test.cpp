@@ -133,8 +133,7 @@ TEST_F(LoggingTests, LaggardTest) {
 
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
-  // TODO: Check this
-  EXPECT_EQ(4, results[1]);
+  EXPECT_EQ(3, results[1]);
   scheduler.Cleanup();
 }
 
@@ -177,9 +176,8 @@ TEST_F(LoggingTests, FastLoggerTest) {
   scheduler.Run();
 
   auto results = scheduler.frontend_threads[0].results;
-  // TODO: Check this
   EXPECT_EQ(3, results[0]);
-  EXPECT_EQ(5, results[1]);
+  EXPECT_EQ(3, results[1]);
   scheduler.Cleanup();
 }
 
@@ -231,9 +229,8 @@ TEST_F(LoggingTests, BothPreparingTest) {
 
   auto results = scheduler.frontend_threads[0].results;
   EXPECT_EQ(3, results[0]);
-  // TODO: Check this
-  EXPECT_EQ(5, results[1]);
-  EXPECT_EQ(6, results[2]);
+  EXPECT_EQ(3, results[1]);
+  EXPECT_EQ(4, results[2]);
   scheduler.Cleanup();
 }
 
@@ -368,9 +365,8 @@ TEST_F(LoggingTests, BasicLogManagerTest) {
   log_manager.LogInsert(commit_id, delete_loc);
   log_manager.LogCommitTransaction(commit_id);
 
-  // TODO: Check the flushed commit id
   // since we are doing sync commit we should have reached 5 already
-  //EXPECT_EQ(commit_id, log_manager.GetPersistentFlushedCommitId());
+  EXPECT_EQ(commit_id, log_manager.GetPersistentFlushedCommitId());
   log_manager.EndLogging();
 }
 

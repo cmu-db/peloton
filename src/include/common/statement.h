@@ -15,6 +15,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "common/types.h"
 

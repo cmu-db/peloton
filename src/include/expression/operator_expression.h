@@ -14,6 +14,7 @@
 #pragma once
 
 #include "common/serializer.h"
+#include "common/value.h"
 
 #include "expression/abstract_expression.h"
 
