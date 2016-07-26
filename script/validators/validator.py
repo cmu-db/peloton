@@ -60,7 +60,8 @@ SKIP_FILES_LIST = [
     "src/include/common/macros.h",
     "src/common/stack_trace.cpp",
     "src/include/parser/sql_scanner.h",
-    "src/parser/parser_utils.cpp"
+    "src/parser/parser_utils.cpp",
+    "src/include/index/bloom_filter.h"
 ];
 
 ## ==============================================
