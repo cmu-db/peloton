@@ -13,7 +13,6 @@
 
 #include <cstdio>
 #include <unordered_map>
-#include <mutex>
 
 #include "common/cache.h"
 #include "common/types.h"
@@ -21,9 +20,6 @@
 #include "wire/marshal.h"
 #include "common/portal.h"
 #include "tcop/tcop.h"
-
-#include "parser/parser.h"
-#include "optimizer/simple_optimizer.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -63,7 +59,7 @@ void PacketManager::MakeHardcodedParameterStatus(
 }
 /*
  * process_startup_packet - Processes the startup packet
- *  (after the size field of the header).
+ * 	(after the size field of the header).
  */
 bool PacketManager::ProcessStartupPacket(Packet *pkt,
                                          ResponseBuffer &responses) {
@@ -313,9 +309,16 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // Prepare statement
+  std::shared_ptr<Statement> statement;
+  auto &tcop = tcop::TrafficCop::GetInstance();
+  statement = tcop.PrepareStatement(statement_name, query_string, error_message);
+  if (statement.get() == nullptr) {
+    SendErrorResponse({{'M', error_message}}, responses);
+    SendReadyForQuery(txn_state, responses);
+    return;
+  }
 
-  // NEED TO CHANGE!!!
-
+  // Read number of params
   int num_params = PacketGetInt(pkt, 2);
 
   // Read param types
@@ -324,15 +327,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     int param_type = PacketGetInt(pkt, 4);
     param_types[i] = param_type;
   }
-
-  std::shared_ptr<Statement> statement;
-  auto &tcop = tcop::TrafficCop::GetInstance();
-  statement = tcop.PrepareStatement(statement_name, query_string, error_message);
-  if (statement.get() == nullptr) {
-    SendErrorResponse({{'M', error_message}}, responses);
-    SendReadyForQuery(txn_state, responses);
-    return;
-}
 
   // Cache the received query
   bool unnamed_query = statement_name.empty();
@@ -430,9 +424,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     return;
   }
 
-
-  std::string new_query_string = query_string;
-
   // Group the parameter types and thae parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters;
   auto param_types = statement->GetParamTypes();
@@ -453,7 +444,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         std::string param_str = std::string(std::begin(param), std::end(param));
         bind_parameters.push_back(
             std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
-        boost::replace_first(new_query_string , "$" + std::to_string(param_idx + 1) ,"'" + param_str + "'");
       } else {
         // BINARY mode
         switch (param_types[param_idx]) {
@@ -464,7 +454,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             }
             bind_parameters.push_back(std::make_pair(
                 ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
-            boost::replace_first(new_query_string , "$" + std::to_string(param_idx + 1) , std::to_string(int_val));
           } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
@@ -475,7 +464,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
             memcpy(&float_val, &buf, sizeof(double));
             bind_parameters.push_back(std::make_pair(
                 ValueType::VALUE_TYPE_DOUBLE, std::to_string(float_val)));
-            boost::replace_first(new_query_string , "$" + std::to_string(param_idx + 1) , std::to_string(float_val));
             // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
           } break;
           default: {
@@ -487,17 +475,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   // Construct a portal
-  // std::string err = "WE NOT GONNA USE THIS";
-  // // auto &tcop = tcop::TrafficCop::GetInstance();
-  // statement = tcop.PrepareStatement(statement_name, new_query_string,err);
-  LOG_INFO("THIS IS THE NEW QUERY STRING -----------------> %s" , new_query_string.c_str());
-  statement.reset(new Statement(statement_name, new_query_string));
-
-  auto& peloton_parser = parser::Parser::GetInstance();
-  auto sql_stmt = peloton_parser.BuildParseTree(new_query_string);
-
-  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
-
   auto portal = new Portal(portal_name, statement, bind_parameters);
   std::shared_ptr<Portal> portal_reference(portal);
 
@@ -593,7 +570,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   LOG_INFO("Executing query: %s", query_string.c_str());
 
-  
   // acquire the mutex if we are starting a txn
   if (query_string.compare("BEGIN") == 0) {
     LOG_WARN("BEGIN - acquire lock");
@@ -659,7 +635,7 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
 
 /*
  * send_error_response - Sends the passed string as an error response.
- *    For now, it only supports the human readable 'M' message body
+ * 		For now, it only supports the human readable 'M' message body
  */
 void PacketManager::SendErrorResponse(
     std::vector<std::pair<uchar, std::string>> error_status,
@@ -691,7 +667,7 @@ void PacketManager::SendReadyForQuery(uchar txn_status,
 
 /*
  * PacketManager - Main wire protocol logic.
- *    Always return with a closed socket.
+ * 		Always return with a closed socket.
  */
 void PacketManager::ManagePackets() {
   Packet pkt;

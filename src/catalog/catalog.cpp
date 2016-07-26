@@ -175,13 +175,16 @@ storage::DataTable* Catalog::GetTableFromDatabase(std::string database_name, std
   if(database) {
   	storage::DataTable *table = database->GetTableWithName(table_name);
 		if(table) {
+			LOG_INFO("Found table.");
 			return table;
 		}
 		else {
+			LOG_INFO("Couldn't find table.");
 			return nullptr;
 		}
 	}
 	else {
+		LOG_INFO("Well, database wasn't found in the first place.");
 		return nullptr;
 	}
 }
