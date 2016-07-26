@@ -107,7 +107,7 @@ TEST_F(CheckpointTests, CheckpointIntegrationTest) {
   recovery_checkpointer->DoRecovery();
 
   EXPECT_EQ(db->GetTableCount(), 1);
-  EXPECT_EQ(db->GetTable(0)->GetNumberOfTuples(),
+  EXPECT_EQ(db->GetTable(0)->GetTupleCount(),
             tile_group_size * table_tile_group_count);
   catalog_manager.DropDatabaseWithOid(db->GetOid());
   logging::LoggingUtil::RemoveDirectory("pl_checkpoint", false);

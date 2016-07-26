@@ -13,11 +13,11 @@
 
 #pragma once
 
+#include <unordered_set>
+
 #include "common/types.h"
 #include "logging/backend_logger.h"
 #include "concurrency/transaction_manager_factory.h"
-
-#include "unordered_set"
 
 namespace peloton {
 namespace logging {
@@ -34,7 +34,9 @@ class WriteBehindBackendLogger : public BackendLogger {
   WriteBehindBackendLogger(WriteBehindBackendLogger &&) = delete;
   WriteBehindBackendLogger &operator=(WriteBehindBackendLogger &&) = delete;
 
-  WriteBehindBackendLogger() { logging_type = LOGGING_TYPE_NVM_WBL; }
+  WriteBehindBackendLogger() {
+    logging_type = LOGGING_TYPE_NVM_WBL;
+  }
 
   void Log(LogRecord *record);
 

@@ -33,13 +33,6 @@ static const oid_t user_table_pkey_index_oid = 2001;
 
 static const oid_t ycsb_field_length = 100;
 
-enum SkewFactor {
-  SKEW_FACTOR_INVALID = 0,
-
-  SKEW_FACTOR_LOW = 1,
-  SKEW_FACTOR_HIGH = 2
-};
-
 class configuration {
  public:
   // size of the table
@@ -60,11 +53,14 @@ class configuration {
   // throughput
   double throughput;
 
-  // skew
-  SkewFactor skew_factor;
-
   // latency average
   double latency;
+
+  // # of transaction
+  int transaction_count;
+
+  // store ints
+  bool ints_mode;
 };
 
 extern configuration state;
@@ -83,7 +79,7 @@ void ValidateBackendCount(const configuration &state);
 
 void ValidateDuration(const configuration &state);
 
-void ValidateSkewFactor(const configuration &state);
+void ValidateTransactionCount(const configuration &state);
 
 }  // namespace ycsb
 }  // namespace benchmark

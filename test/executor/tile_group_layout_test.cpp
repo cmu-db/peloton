@@ -111,7 +111,7 @@ void ExecuteTileGroupTest() {
         "primary_index", 123, INDEX_TYPE_BTREE,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+    std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
     table->AddIndex(pkey_index);
   }
 

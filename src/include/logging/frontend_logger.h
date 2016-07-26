@@ -109,6 +109,8 @@ class FrontendLogger : public Logger {
     backend_loggers_lock.Unlock();
   }
 
+  void SetNoWrite(bool no_write) { no_write_ = no_write; }
+
  protected:
   // Associated backend loggers
   std::vector<BackendLogger *> backend_loggers;
@@ -120,8 +122,7 @@ class FrontendLogger : public Logger {
   Spinlock backend_loggers_lock;
 
   // period with which it collects log records from backend loggers
-  // (in milliseconds)
-  int64_t wait_timeout;
+  int wait_timeout;
 
   // stats
   size_t fsync_count = 0;
@@ -133,6 +134,8 @@ class FrontendLogger : public Logger {
   cid_t max_delimiter_for_recovery = 0;
 
   cid_t max_seen_commit_id = 0;
+
+  bool no_write_ = false;
 
   bool test_mode_ = false;
 

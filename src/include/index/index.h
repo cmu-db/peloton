@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <atomic>
 
 #include "common/printable.h"
 #include "common/types.h"
@@ -44,7 +45,7 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata {
+class IndexMetadata : public Printable {
   IndexMetadata() = delete;
 
  public:
@@ -83,6 +84,15 @@ class IndexMetadata {
 
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
+  double GetUtility() const { return utility_ratio; }
+
+  void SetUtility(double utility_ratio_) {
+    utility_ratio = utility_ratio_;
+  }
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
+
   std::string index_name;
 
   oid_t index_oid;
@@ -102,6 +112,9 @@ class IndexMetadata {
 
   // unique keys ?
   bool unique_keys;
+
+  // utility of an index
+  double utility_ratio = INVALID_RATIO;
 };
 
 //===--------------------------------------------------------------------===//
@@ -163,13 +176,13 @@ class Index : public Printable {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void IncreaseNumberOfTuplesBy(const float amount);
+  void IncreaseNumberOfTuplesBy(const size_t amount);
 
-  void DecreaseNumberOfTuplesBy(const float amount);
+  void DecreaseNumberOfTuplesBy(const size_t amount);
 
-  void SetNumberOfTuples(const float num_tuples);
+  void SetNumberOfTuples(const size_t num_tuples);
 
-  float GetNumberOfTuples() const;
+  size_t GetNumberOfTuples() const;
 
   bool IsDirty() const;
 
@@ -243,6 +256,7 @@ class Index : public Printable {
 
   bool IfBackwardExpression(ExpressionType e);
 
+  //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
@@ -257,7 +271,7 @@ class Index : public Printable {
   int update_counter;
 
   // number of tuples
-  float number_of_tuples = 0.0;
+  size_t number_of_tuples;
 
   // dirty flag
   bool dirty = false;

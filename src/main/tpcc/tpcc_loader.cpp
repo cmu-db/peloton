@@ -28,6 +28,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "index/index_factory.h"
@@ -37,6 +38,9 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
+
+// Logging mode
+extern LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace benchmark {
@@ -208,7 +212,8 @@ void CreateWarehouseTable() {
       "warehouse_pkey", warehouse_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   warehouse_table->AddIndex(pkey_index);
 }
@@ -292,7 +297,7 @@ void CreateDistrictTable() {
       "district_pkey", district_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   district_table->AddIndex(pkey_index);
 }
@@ -351,7 +356,7 @@ void CreateItemTable() {
       "item_pkey", item_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   item_table->AddIndex(pkey_index);
 }
 
@@ -486,7 +491,7 @@ void CreateCustomerTable() {
       "customer_pkey", customer_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   customer_table->AddIndex(pkey_index);
 
   // Secondary index on C_W_ID, C_D_ID, C_LAST
@@ -498,7 +503,7 @@ void CreateCustomerTable() {
       "customer_skey", customer_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   customer_table->AddIndex(skey_index);
 }
 
@@ -671,7 +676,7 @@ void CreateStockTable() {
       "stock_pkey", stock_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   stock_table->AddIndex(pkey_index);
 }
 
@@ -752,7 +757,7 @@ void CreateOrdersTable() {
       "orders_pkey", orders_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   orders_table->AddIndex(pkey_index);
 
   // Secondary index on O_C_ID, O_D_ID, O_W_ID
@@ -764,7 +769,7 @@ void CreateOrdersTable() {
       "orders_skey", orders_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   orders_table->AddIndex(skey_index);
 }
 
@@ -818,7 +823,7 @@ void CreateNewOrderTable() {
       "new_order_pkey", new_order_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   new_order_table->AddIndex(pkey_index);
 }
 
@@ -911,7 +916,7 @@ void CreateOrderLineTable() {
       "order_line_pkey", order_line_table_pkey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, true);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   order_line_table->AddIndex(pkey_index);
 
   // Secondary index on OL_O_ID, OL_D_ID, OL_W_ID
@@ -923,7 +928,7 @@ void CreateOrderLineTable() {
       "order_line_skey", order_line_table_skey_index_oid, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_INVALID, tuple_schema, key_schema, key_attrs, false);
 
-  index::Index *skey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> skey_index(index::IndexFactory::GetInstance(index_metadata));
   order_line_table->AddIndex(skey_index);
 }
 
@@ -1059,6 +1064,21 @@ double GetRandomDouble(const double lower_bound, const double upper_bound) {
 
   double sample = dist(rng);
   return sample;
+}
+
+double GetRandomFixedPoint(int decimal_places, double minimum, double maximum) {
+  assert(decimal_places > 0);
+  assert(minimum < maximum);
+
+  int multiplier = 1;
+  for ( int i = 0; i < decimal_places; ++i ) {
+    multiplier *= 10;
+  }
+
+  int int_min = (int)(minimum * multiplier + 0.5);
+  int int_max = (int)(maximum * multiplier + 0.5);
+
+  return GetRandomDouble(int_min, int_max) / (double)(multiplier);
 }
 
 std::string GetStreetName() {
@@ -1467,7 +1487,7 @@ std::unique_ptr<storage::Tuple> BuildStockTuple(
   // S_I_ID
   stock_tuple->SetValue(0, ValueFactory::GetIntegerValue(stock_id), nullptr);
   // S_W_ID
-  stock_tuple->SetValue(1, ValueFactory::GetSmallIntValue(s_w_id), nullptr);
+  stock_tuple->SetValue(1, ValueFactory::GetIntegerValue(s_w_id), nullptr);
   // S_QUANTITY
   auto s_quantity = GetRandomInteger(stock_min_quantity, stock_max_quantity);
   stock_tuple->SetValue(2, ValueFactory::GetIntegerValue(s_quantity), nullptr);
@@ -1653,15 +1673,15 @@ void LoadTPCCDatabase() {
 
   LoadWarehouses();
 
-  LOG_INFO("warehouse count = %lf", warehouse_table->GetNumberOfTuples());
-  LOG_INFO("district count  = %lf", district_table->GetNumberOfTuples());
-  LOG_INFO("item count = %lf", item_table->GetNumberOfTuples());
-  LOG_INFO("customer count = %lf", customer_table->GetNumberOfTuples());
-  LOG_INFO("history count = %lf", history_table->GetNumberOfTuples());
-  LOG_INFO("stock count = %lf", stock_table->GetNumberOfTuples());
-  LOG_INFO("orders count = %lf", orders_table->GetNumberOfTuples());
-  LOG_INFO("new order count = %lf", new_order_table->GetNumberOfTuples());
-  LOG_INFO("order line count = %lf", order_line_table->GetNumberOfTuples());
+  LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
+  LOG_INFO("district count  = %lu", district_table->GetTupleCount());
+  LOG_INFO("item count = %lu", item_table->GetTupleCount());
+  LOG_INFO("customer count = %lu", customer_table->GetTupleCount());
+  LOG_INFO("history count = %lu", history_table->GetTupleCount());
+  LOG_INFO("stock count = %lu", stock_table->GetTupleCount());
+  LOG_INFO("orders count = %lu", orders_table->GetTupleCount());
+  LOG_INFO("new order count = %lu", new_order_table->GetTupleCount());
+  LOG_INFO("order line count = %lu", order_line_table->GetTupleCount());
 }
 
 }  // namespace tpcc

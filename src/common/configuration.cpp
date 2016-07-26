@@ -32,3 +32,8 @@ char *peloton_log_directory;
 int64_t peloton_wait_timeout;
 
 int peloton_flush_frequency_micros;
+
+int peloton_flush_mode;
+
+// pcommit latency (for NVM WBL)
+int peloton_pcommit_latency;
