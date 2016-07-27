@@ -62,6 +62,8 @@ class UpdatePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "UpdatePlan"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new UpdatePlan(target_table_, std::move(project_info_->Copy())));

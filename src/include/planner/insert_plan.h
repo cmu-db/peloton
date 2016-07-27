@@ -55,8 +55,6 @@ class InsertPlan : public AbstractPlan {
                         std::unique_ptr<storage::Tuple> &&tuple,
                         oid_t bulk_insert_count = 1);
 
-  explicit InsertPlan(parser::InsertParse *parse_tree, oid_t bulk_insert_count = 1);
-
   explicit InsertPlan(parser::InsertStatement* parse_tree, oid_t bulk_insert_count = 1);
 
 
@@ -64,6 +62,8 @@ class InsertPlan : public AbstractPlan {
   VarlenPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_INSERT; }
+
+  void SetParameterValues(std::vector<Value>* values);
 
   storage::DataTable *GetTable() const { return target_table_; }
 
@@ -83,6 +83,7 @@ class InsertPlan : public AbstractPlan {
     return dummy;
   }
 
+
  private:
   /** @brief Target table. */
   storage::DataTable *target_table_ = nullptr;
@@ -92,6 +93,9 @@ class InsertPlan : public AbstractPlan {
 
   /** @brief Tuple */
   std::unique_ptr<storage::Tuple> tuple_;
+
+  // <tuple_column_index, parameter_index>
+  std::unique_ptr<std::vector<std::pair<oid_t, oid_t>>> parameter_vector_;
 
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;

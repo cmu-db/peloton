@@ -424,7 +424,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
     return;
   }
 
-  // Group the parameter types and thae parameters in this vector
+  // Group the parameter types and the parameters in this vector
   std::vector<std::pair<int, std::string>> bind_parameters;
   auto param_types = statement->GetParamTypes();
 

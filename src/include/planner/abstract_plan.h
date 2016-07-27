@@ -66,6 +66,9 @@ class AbstractPlan : public Printable {
   // This is better than having to store redundant types in all the objects
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
+  // Setting values of the parameters in the prepare statement
+  virtual void SetParameterValues(std::vector<Value>* values) = 0;
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//

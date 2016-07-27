@@ -53,6 +53,8 @@ class SeqScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "SeqScan"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   void ReplaceColumnExpressions(expression::AbstractExpression* expression);
 
   expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
