@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -21,10 +20,10 @@
 
 namespace peloton {
 
-namespace parser{
-  class UpdateStatement;
-  class UpdateClause;
-  class TableRef;
+namespace parser {
+class UpdateStatement;
+class UpdateClause;
+class TableRef;
 }
 
 namespace expression {
@@ -48,7 +47,7 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(storage::DataTable *table,
                       std::unique_ptr<const planner::ProjectInfo> project_info);
 
-  explicit UpdatePlan(parser::UpdateStatement* parse_tree);
+  explicit UpdatePlan(parser::UpdateStatement *parse_tree);
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -58,11 +57,9 @@ class UpdatePlan : public AbstractPlan {
 
   storage::DataTable *GetTable() const { return target_table_; }
 
-  void ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression);
-
   const std::string GetInfo() const { return "UpdatePlan"; }
 
-  void SetParameterValues(std::vector<Value>* values);
+  void SetParameterValues(std::vector<Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -78,10 +75,9 @@ class UpdatePlan : public AbstractPlan {
   /** @brief Projection info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-  std::vector<parser::UpdateClause*>* updates;
+  std::vector<parser::UpdateClause *> *updates;
 
-  expression::AbstractExpression* where;
-
+  expression::AbstractExpression *where;
 };
 
 }  // namespace planner
