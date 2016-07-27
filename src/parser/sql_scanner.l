@@ -222,6 +222,12 @@ TO			TOKEN(TO)
 	return SQL_IDENTIFIER;
 }
 
+$[0-9]* {
+	// Crop the leading and trailing quote char
+	yylval->sval = substr(yytext, 1, strlen(yytext));
+	return SQL_PREPAREPARAMETERS;
+}
+
 
 '[^'\n]*' {
 	// Crop the leading and trailing quote char
