@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -24,7 +23,7 @@
 
 namespace peloton {
 
-namespace parser{
+namespace parser {
 struct SelectStatement;
 }
 namespace storage {
@@ -45,7 +44,7 @@ class SeqScanPlan : public AbstractScan {
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) { where_ = nullptr; }
 
-  SeqScanPlan(parser::SelectStatement* select_node);
+  SeqScanPlan(parser::SelectStatement *select_node);
 
   SeqScanPlan() : AbstractScan() { where_ = nullptr; }
 
@@ -54,11 +53,6 @@ class SeqScanPlan : public AbstractScan {
   const std::string GetInfo() const { return "SeqScan"; }
 
   void SetParameterValues(std::vector<Value>* values);
-
-  void ReplaceColumnExpressions(expression::AbstractExpression* expression);
-
-  expression::AbstractExpression* ConvertToTupleValueExpression (std::string column_name);
-
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization

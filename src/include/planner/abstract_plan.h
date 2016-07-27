@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iostream>
@@ -29,6 +28,14 @@ namespace peloton {
 namespace executor {
 class AbstractExecutor;
 class LogicalTile;
+}
+
+namespace catalog {
+class Schema;
+}
+
+namespace expression {
+class AbstractExpression;
 }
 
 namespace planner {
@@ -67,7 +74,7 @@ class AbstractPlan : public Printable {
   virtual PlanNodeType GetPlanNodeType() const = 0;
 
   // Setting values of the parameters in the prepare statement
-  virtual void SetParameterValues(std::vector<Value>* values) = 0;
+  virtual void SetParameterValues(std::vector<Value> *values) = 0;
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -100,6 +107,10 @@ class AbstractPlan : public Printable {
  protected:
   // only used by its derived classes (when deserialization)
   AbstractPlan *Parent() { return parent_; }
+
+  // Convert COLUMN_REF in AbstractExpression to TupleValueExpression
+  void ReplaceColumnExpressions(catalog::Schema *schema,
+                                expression::AbstractExpression *expression);
 
  private:
   // A plan node can have multiple children
