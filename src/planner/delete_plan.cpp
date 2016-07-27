@@ -55,7 +55,11 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
  */
 void DeletePlan::ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression) {
   LOG_INFO("Expression Type --> %s", ExpressionTypeToString(expression->GetExpressionType()).c_str());
+  if(expression->GetLeft() == nullptr)
+	  return;
   LOG_INFO("Left Type --> %s", ExpressionTypeToString(expression->GetLeft()->GetExpressionType()).c_str());
+  if(expression->GetRight() == nullptr)
+  	  return;
   LOG_INFO("Right Type --> %s", ExpressionTypeToString(expression->GetRight()->GetExpressionType()).c_str());
   if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
     auto expr = expression->GetLeft();
