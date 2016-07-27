@@ -91,9 +91,6 @@ TEST_F(InsertTests, InsertRecord) {
   EXPECT_TRUE(executor.Execute());
 
   txn_manager.CommitTransaction();
-  auto tbl = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, insert_node->table_name);
-  EXPECT_EQ((int)tbl->GetNumberOfTuples(), 1);
-  EXPECT_NE((int)tbl->GetNumberOfTuples(), 2);
 
 }
 
