@@ -42,20 +42,21 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan &operator=(IndexScanPlan &&) = delete;
 
   struct IndexScanDesc {
-    IndexScanDesc() : index(nullptr) {}
+    IndexScanDesc() {}
 
     IndexScanDesc(
-        index::Index *index, const std::vector<oid_t> &column_ids,
+        std::shared_ptr<index::Index> index_,
+        const std::vector<oid_t> &column_ids,
         const std::vector<ExpressionType> &expr_types,
         const std::vector<Value> &values,
         const std::vector<expression::AbstractExpression *> &runtime_keys)
-        : index(index),
+        : index(index_),
           key_column_ids(column_ids),
           expr_types(expr_types),
           values(values),
           runtime_keys(runtime_keys) {}
 
-    index::Index *index = nullptr;
+    std::shared_ptr<index::Index> index;
 
     std::vector<oid_t> key_column_ids;
 
@@ -84,7 +85,7 @@ class IndexScanPlan : public AbstractScan {
     }
   }
 
-  index::Index *GetIndex() const { return index_; }
+  std::shared_ptr<index::Index> GetIndex() const { return index_; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -123,7 +124,7 @@ class IndexScanPlan : public AbstractScan {
 
  private:
   /** @brief index associated with index scan. */
-  index::Index *index_;
+  std::shared_ptr<index::Index> index_;
 
   const std::vector<oid_t> column_ids_;
 

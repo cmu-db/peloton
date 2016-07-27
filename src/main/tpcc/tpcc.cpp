@@ -33,7 +33,6 @@ static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
   LOG_INFO("%d %d :: %lf", state.scale_factor, state.backend_count, stat);
 
-  out << state.scale_factor << " ";
   out << state.backend_count << " ";
   out << stat << "\n";
   out.flush();

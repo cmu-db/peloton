@@ -17,13 +17,13 @@
 #include "common/portal.h"
 #include "common/logger.h"
 #include "common/types.h"
+#include "common/abstract_tuple.h"
 
 #include "parser/parser.h"
 
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
 #include "catalog/bootstrapper.h"
-
 
 namespace peloton {
 namespace tcop {
