@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 #include "catalog/manager.h"
@@ -22,7 +21,6 @@
 #include "catalog/schema.h"
 
 #include "parser/statement_select.h"
-
 
 namespace peloton {
 namespace planner {
@@ -51,36 +49,34 @@ namespace planner {
  * TODO: parent_ seems never be set or used
  */
 
+SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
 
-SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node) {
-
-  auto target_table = static_cast<storage::DataTable *>(catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, select_node->from_table->name));
+  auto target_table = static_cast<storage::DataTable *>(
+      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+          DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();
-  
-  if(select_node->select_list->at(0)->GetExpressionType() != EXPRESSION_TYPE_STAR) {
-    for(auto col : *select_node->select_list){
-      LOG_INFO("ExpressionType: %s", ExpressionTypeToString(col->GetExpressionType()).c_str());
+
+  if (select_node->select_list->at(0)->GetExpressionType() !=
+      EXPRESSION_TYPE_STAR) {
+    for (auto col : *select_node->select_list) {
+      LOG_INFO("ExpressionType: %s",
+               ExpressionTypeToString(col->GetExpressionType()).c_str());
       auto col_name = col->getName();
       oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
       SetColumnId(col_id);
     }
-  }
-
-  else{
+  } else {
     auto allColumns = GetTable()->GetSchema()->GetColumns();
-    for(uint i = 0; i < allColumns.size() ; i++)
-      SetColumnId(i);
+    for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
   }
 
-  if(select_node->where_clause != NULL){
+  if (select_node->where_clause != NULL) {
     auto pred = select_node->where_clause->Copy();
-    ReplaceColumnExpressions(pred);
+    ReplaceColumnExpressions(GetTable()->GetSchema(), pred);
     SetPredicate(pred);
-  
   }
 }
-
 
 bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
   // A placeholder for the total size written at the end
@@ -274,54 +270,17 @@ int SeqScanPlan::SerializeSize() {
   return size;
 }
 
-oid_t SeqScanPlan::GetColumnID(std::string col_name){
+oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   auto columns = GetTable()->GetSchema()->GetColumns();
   oid_t index = -1;
-      for(oid_t i = 0; i < columns.size(); ++i) {
-        if(columns[i].column_name == col_name){
-          index = i;
-          break;
-        }
-      }
-      return index;
-}
-
-void SeqScanPlan::ReplaceColumnExpressions(expression::AbstractExpression* expression) {
-  LOG_INFO("Expression Type --> %s", ExpressionTypeToString(expression->GetExpressionType()).c_str());
-  LOG_INFO("Left Type --> %s", ExpressionTypeToString(expression->GetLeft()->GetExpressionType()).c_str());
-  LOG_INFO("Right Type --> %s", ExpressionTypeToString(expression->GetRight()->GetExpressionType()).c_str());
-  if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-    auto expr = expression->GetLeft();
-    std::string col_name(expr->getName());
-    LOG_INFO("Column name: %s", col_name.c_str());
-    delete expr;
-    expression->setLeft(ConvertToTupleValueExpression(col_name));
+  for (oid_t i = 0; i < columns.size(); ++i) {
+    if (columns[i].column_name == col_name) {
+      index = i;
+      break;
+    }
   }
-  else if (expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
-    auto expr = expression->GetRight();
-    std::string col_name(expr->getName());
-    LOG_INFO("Column name: %s", col_name.c_str());
-    delete expr;
-    expression->setRight(ConvertToTupleValueExpression(col_name));
-  }
-  else {
-    ReplaceColumnExpressions(expression->GetModifiableLeft());
-    ReplaceColumnExpressions(expression->GetModifiableRight());
-
-  }
+  return index;
 }
-/**
- * This function generates a TupleValue expression from the column name
- */
-expression::AbstractExpression* SeqScanPlan::ConvertToTupleValueExpression (std::string column_name) {
-  auto schema = GetTable()->GetSchema();
-    auto column_id = schema->GetColumnID(column_name);
-    LOG_INFO("Column id in table: %u", column_id);
-    expression::TupleValueExpression *expr =
-        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
-  return expr;
-}
-
 
 }  // namespace planner
 }  // namespace peloton
