@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -18,8 +17,8 @@
 #include "catalog/schema.h"
 
 namespace peloton {
-namespace parser{
-  class DeleteStatement;
+namespace parser {
+class DeleteStatement;
 }
 namespace storage {
 class DataTable;
@@ -45,9 +44,7 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
-  void SetParameterValues(std::vector<Value>* values);
-
-  void ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression);
+  void SetParameterValues(std::vector<Value> *values);
 
   bool GetTruncate() const { return truncate; }
 
@@ -62,7 +59,7 @@ class DeletePlan : public AbstractPlan {
 
   std::string table_name;
 
-  expression::AbstractExpression* expr = nullptr;
+  expression::AbstractExpression *expr = nullptr;
 
   /** @brief Truncate table. */
   bool truncate = false;
