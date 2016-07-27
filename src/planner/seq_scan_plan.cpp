@@ -281,25 +281,10 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
   }
   return index;
 }
-<<<<<<< HEAD
-=======
-/**
- * This function generates a TupleValue expression from the column name
- */
-expression::AbstractExpression* SeqScanPlan::ConvertToTupleValueExpression (std::string column_name) {
-  auto schema = GetTable()->GetSchema();
-    auto column_id = schema->GetColumnID(column_name);
-    LOG_INFO("Column id in table: %u", column_id);
-    expression::TupleValueExpression *expr =
-        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
-  return expr;
-}
 
 void SeqScanPlan::SetParameterValues(std::vector<Value>* values) {
   expression::ExpressionUtil::ConvertParameterExpressions(where_, values);
 }
-
->>>>>>> saif/frontend
 
 }  // namespace planner
 }  // namespace peloton
