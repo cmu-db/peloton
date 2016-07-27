@@ -21,6 +21,8 @@
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "benchmark/tpcc/tpcc_configuration.h"
 
+extern CheckpointType peloton_checkpoint_mode;
+
 namespace peloton {
 namespace benchmark {
 namespace logger {
@@ -44,13 +46,16 @@ static struct option opts[] = {
     {"asynchronous_mode", optional_argument, NULL, 'a'},
     {"experiment-type", optional_argument, NULL, 'e'},
     {"data-file-size", optional_argument, NULL, 'f'},
+    {"replication-type", optional_argument, NULL, 'g'},
     {"logging-type", optional_argument, NULL, 'l'},
     {"nvm-latency", optional_argument, NULL, 'n'},
     {"pcommit-latency", optional_argument, NULL, 'p'},
     {"skew", optional_argument, NULL, 's'},
     {"flush-mode", optional_argument, NULL, 'v'},
     {"commit-interval", optional_argument, NULL, 'w'},
+    {"replication-port", optional_argument, NULL, 'x'},
     {"benchmark-type", optional_argument, NULL, 'y'},
+    {"remote-endpoint", optional_argument, NULL, 'z'},
     {NULL, 0, NULL, 0}};
 
 static void ValidateLoggingType(const configuration& state) {
@@ -113,6 +118,8 @@ std::string AsynchronousTypeToString(AsynchronousType type) {
       return "ASYNC";
     case ASYNCHRONOUS_TYPE_DISABLED:
       return "DISABLED";
+    case ASYNCHRONOUS_TYPE_NO_WRITE:
+      return "NO_WRITE";
 
     default:
       LOG_ERROR("Invalid asynchronous_mode :: %d", type);
@@ -171,7 +178,7 @@ static void ValidateFlushMode(const configuration& state) {
 
 static void ValidateAsynchronousMode(const configuration& state) {
   if (state.asynchronous_mode <= ASYNCHRONOUS_TYPE_INVALID ||
-      state.asynchronous_mode > ASYNCHRONOUS_TYPE_DISABLED) {
+      state.asynchronous_mode > ASYNCHRONOUS_TYPE_NO_WRITE) {
     LOG_ERROR("Invalid asynchronous_mode :: %d", state.asynchronous_mode);
     exit(EXIT_FAILURE);
   }
@@ -258,6 +265,7 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   state.nvm_latency = 0;
   state.pcommit_latency = 0;
   state.asynchronous_mode = ASYNCHRONOUS_TYPE_SYNC;
+  state.checkpoint_type = CHECKPOINT_TYPE_INVALID;
 
   // Default YCSB Values
   ycsb::state.scale_factor = 1;
@@ -265,21 +273,22 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
   ycsb::state.column_count = 10;
   ycsb::state.update_ratio = 0.5;
   ycsb::state.backend_count = 2;
-  ycsb::state.skew_factor = ycsb::SKEW_FACTOR_LOW;
+  ycsb::state.transaction_count = 0;
 
   // Default Values
-  tpcc::state.scale_factor = 1;
+  tpcc::state.warehouse_count = 2;  // 10
   tpcc::state.duration = 1000;
   tpcc::state.backend_count = 2;
+  tpcc::state.transaction_count = 0;
 
   // Parse args
   while (1) {
     int idx = 0;
-    // logger - a:e:f:hl:n:p:v:w:y:
-    // ycsb   - b:c:d:k:s:u:
-    // tpcc   - b:d:k:
-    int c =
-        getopt_long(argc, argv, "a:e:f:hl:n:p:v:w:y:b:c:d:k:s:u:", opts, &idx);
+    // logger - a:e:f:g:hl:n:p:v:w:y:
+    // ycsb   - b:c:d:k:t:u:
+    // tpcc   - b:d:k:t:
+    int c = getopt_long(argc, argv, "a:e:f:hil:n:p:v:w:y:b:c:d:k:u:t:",
+                        opts, &idx);
 
     if (c == -1) break;
 
@@ -292,6 +301,9 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 'f':
         state.data_file_size = atoi(optarg);
+        break;
+      case 'i':
+        state.checkpoint_type = CHECKPOINT_TYPE_NORMAL;
         break;
       case 'l':
         state.logging_type = (LoggingType)atoi(optarg);
@@ -326,10 +338,11 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         break;
       case 'k':
         ycsb::state.scale_factor = atoi(optarg);
-        tpcc::state.scale_factor = atoi(optarg);
+        tpcc::state.warehouse_count = atoi(optarg);
         break;
-      case 's':
-        ycsb::state.skew_factor = (ycsb::SkewFactor)atoi(optarg);
+      case 't':
+        ycsb::state.transaction_count = atoi(optarg);
+        tpcc::state.transaction_count = atoi(optarg);
         break;
       case 'u':
         ycsb::state.update_ratio = atof(optarg);
@@ -347,6 +360,13 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
         exit(EXIT_FAILURE);
         break;
     }
+  }
+
+  if (state.checkpoint_type == CHECKPOINT_TYPE_NORMAL &&
+      (state.logging_type == LOGGING_TYPE_NVM_WAL ||
+       state.logging_type == LOGGING_TYPE_SSD_WAL ||
+       state.logging_type == LOGGING_TYPE_HDD_WAL)) {
+    peloton_checkpoint_mode = CHECKPOINT_TYPE_NORMAL;
   }
 
   // Print Logger configuration
@@ -368,20 +388,21 @@ void ParseArguments(int argc, char* argv[], configuration& state) {
     ycsb::ValidateUpdateRatio(ycsb::state);
     ycsb::ValidateBackendCount(ycsb::state);
     ycsb::ValidateDuration(ycsb::state);
-    ycsb::ValidateSkewFactor(ycsb::state);
+    ycsb::ValidateTransactionCount(ycsb::state);
+
   }
   // Print TPCC configuration
   else if (state.benchmark_type == BENCHMARK_TYPE_TPCC) {
     tpcc::ValidateBackendCount(tpcc::state);
     tpcc::ValidateDuration(tpcc::state);
-    tpcc::ValidateScaleFactor(tpcc::state);
+    tpcc::ValidateWarehouseCount(tpcc::state);
+    tpcc::ValidateTransactionCount(tpcc::state);
 
     // Static TPCC parameters
-    tpcc::state.warehouse_count = tpcc::state.scale_factor;
-    tpcc::state.item_count = 10 * tpcc::state.warehouse_count;
-    tpcc::state.districts_per_warehouse = 2;
-    tpcc::state.customers_per_district = 30;
-    tpcc::state.new_orders_per_district = 9;
+    tpcc::state.item_count = 1000;            // 100000
+    tpcc::state.districts_per_warehouse = 2;  // 10
+    tpcc::state.customers_per_district = 30;  // 3000
+    tpcc::state.new_orders_per_district = 9;  // 900
   }
 }
 

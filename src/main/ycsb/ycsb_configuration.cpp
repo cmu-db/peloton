@@ -29,17 +29,21 @@ void Usage(FILE *out) {
           "   -c --column-count      :  # of columns \n"
           "   -d --duration          :  execution duration \n"
           "   -k --scale-factor      :  # of tuples \n"
-          "   -s --skew              :  Skew factor \n"
-          "   -u --update-ratio      :  Fraction of updates \n");
+          "   -u --update-ratio      :  Fraction of updates \n"
+          "   -t --transaction-count :  # of transactions \n"
+          "   -i --ints-mode         :  Store ints \n"
+          );
 }
 
-static struct option opts[] = {{"backend-count", optional_argument, NULL, 'b'},
-                               {"column-count", optional_argument, NULL, 'c'},
-                               {"duration", optional_argument, NULL, 'd'},
-                               {"scale-factor", optional_argument, NULL, 'k'},
-                               {"skew", optional_argument, NULL, 's'},
-                               {"update-ratio", optional_argument, NULL, 'u'},
-                               {NULL, 0, NULL, 0}};
+static struct option opts[] = {
+    { "backend-count", optional_argument, NULL, 'b'},
+    { "column-count", optional_argument, NULL, 'c'},
+    { "duration", optional_argument, NULL, 'd'},
+    { "scale-factor", optional_argument, NULL, 'k'},
+    { "update-ratio", optional_argument, NULL, 'u'},
+    { "transaction-count", optional_argument, NULL, 't'},
+    { "ints-mode", optional_argument, NULL, 'i'},
+    { NULL, 0, NULL, 0}};
 
 void ValidateScaleFactor(const configuration &state) {
   if (state.scale_factor <= 0) {
@@ -78,7 +82,7 @@ void ValidateBackendCount(const configuration &state) {
 }
 
 void ValidateDuration(const configuration &state) {
-  if (state.duration <= 0) {
+  if (state.duration < 0) {
     LOG_ERROR("Invalid duration :: %d", state.duration);
     exit(EXIT_FAILURE);
   }
@@ -86,13 +90,22 @@ void ValidateDuration(const configuration &state) {
   LOG_INFO("%s : %d", "duration", state.duration);
 }
 
-void ValidateSkewFactor(const configuration &state) {
-  if (state.skew_factor <= 0 || state.skew_factor >= 3) {
-    LOG_ERROR("Invalid skew_factor :: %d", state.skew_factor);
+void ValidateTransactionCount(const configuration &state) {
+  if (state.transaction_count < 0) {
+    LOG_ERROR("Invalid transaction_count :: %d", state.transaction_count);
     exit(EXIT_FAILURE);
   }
 
-  LOG_INFO("%s : %d", "skew_factor", state.skew_factor);
+  LOG_INFO("%s : %d", "transaction_count", state.transaction_count);
+}
+
+void ValidateIntsMode(const configuration &state) {
+  if (state.ints_mode < 0) {
+    LOG_ERROR("Invalid ints_mode :: %d", state.ints_mode);
+    exit(EXIT_FAILURE);
+  }
+
+  LOG_INFO("%s : %d", "ints_mode", state.ints_mode);
 }
 
 void ParseArguments(int argc, char *argv[], configuration &state) {
@@ -100,14 +113,15 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.scale_factor = 1;
   state.duration = 1000;
   state.column_count = 10;
-  state.update_ratio = 1;
+  state.update_ratio = 0.5;
   state.backend_count = 2;
-  state.skew_factor = SKEW_FACTOR_LOW;
+  state.transaction_count = 0;
+  state.ints_mode = true;
 
   // Parse args
   while (1) {
     int idx = 0;
-    int c = getopt_long(argc, argv, "hb:c:d:k:s:u:", opts, &idx);
+    int c = getopt_long(argc, argv, "hb:c:d:k:t:u:i:", opts, &idx);
 
     if (c == -1) break;
 
@@ -124,11 +138,14 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
       case 'k':
         state.scale_factor = atoi(optarg);
         break;
-      case 's':
-        state.skew_factor = (SkewFactor)atoi(optarg);
+      case 't':
+        state.transaction_count = atoi(optarg);
         break;
       case 'u':
         state.update_ratio = atof(optarg);
+        break;
+      case 'i':
+        state.ints_mode = atoi(optarg);
         break;
 
       case 'h':
@@ -150,7 +167,9 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   ValidateColumnCount(state);
   ValidateUpdateRatio(state);
   ValidateDuration(state);
-  ValidateSkewFactor(state);
+  ValidateTransactionCount(state);
+  ValidateIntsMode(state);
+
 }
 
 }  // namespace ycsb

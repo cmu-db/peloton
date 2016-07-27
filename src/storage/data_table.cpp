@@ -46,6 +46,8 @@ int peloton_num_groups;
 namespace peloton {
 namespace storage {
 
+oid_t DataTable::invalid_tile_group_id = -1;
+
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
@@ -66,22 +68,24 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
 DataTable::~DataTable() {
 
   // clean up tile groups by dropping the references in the catalog
-  oid_t tile_group_count = GetTileGroupCount();
-  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-      tile_group_itr++) {
-    tile_group_lock_.ReadLock();
-    auto tile_group_id = tile_groups_.at(tile_group_itr);
-    tile_group_lock_.Unlock();
+  auto &catalog_manager = catalog::Manager::GetInstance();
+  auto tile_groups_size = tile_groups_.GetSize();
+  std::size_t tile_groups_itr;
 
-    LOG_TRACE("Dropping tile group : %u", tile_group_id);
+  for (tile_groups_itr = 0;
+      tile_groups_itr < tile_groups_size;
+      tile_groups_itr++) {
+    auto tile_group_id = tile_groups_.Find(tile_groups_itr);
 
-    catalog::Manager::GetInstance().DropTileGroup(tile_group_id);
+    if(tile_group_id != invalid_tile_group_id) {
+      LOG_TRACE("Dropping tile group : %u ", tile_group_id);
+      // drop tile group in catalog
+      catalog_manager.DropTileGroup(tile_group_id);
+    }
   }
 
-  // clean up indices
-  for (auto index : indexes_) {
-    delete index;
-  }
+  // indices will be automatically cleaned up
+
   // clean up foreign keys
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
@@ -134,22 +138,10 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-  /* Check constraints
-  if (check_constraint == true && CheckConstraints(tuple) == false) {
-    return INVALID_ITEMPOINTER;
-  }
-   */
-
-  //=============== garbage collection==================
-  // check if there are recycled tuple slots
-  /*
-  auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
-  if (free_item_pointer.IsNull() == false) {
-    return free_item_pointer;
-  }
-   */
-  //====================================================
+  // Check constraints
+  //if (check_constraint == true && CheckConstraints(tuple) == false) {
+  //  return INVALID_ITEMPOINTER;
+  //}
 
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
@@ -202,7 +194,9 @@ ItemPointer DataTable::InsertEmptyVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  IncreaseNumberOfTuplesBy(1);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
+
+  IncreaseTupleCount(1);
   return location;
 }
 
@@ -220,7 +214,9 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
     return INVALID_ITEMPOINTER;
   }
 
-  IncreaseNumberOfTuplesBy(1);
+  LOG_TRACE("Location: %u, %u", location.block, location.offset);
+
+  IncreaseTupleCount(1);
   return location;
 }
 
@@ -241,10 +237,58 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
   }
 
   // Increase the table's number of tuples by 1
-  IncreaseNumberOfTuplesBy(1);
+  IncreaseTupleCount(1);
+
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes_) index->IncreaseNumberOfTuplesBy(1);
+  auto index_count = GetIndexCount();
+
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
+    auto index = GetIndex(index_itr);
+    index->IncreaseNumberOfTuplesBy(1);
+
+    // Update index count
+    index_count = GetIndexCount();
+  }
+
   return location;
+}
+
+/**
+ * @brief Insert a tuple into a specific index.
+ * If index is primary/unique, check visibility of existing index entries.
+ *
+ * @returns True on success, false if a visible entry exists (in case of
+ *primary/unique).
+ */
+bool DataTable::InsertInIndex(oid_t index_offset,
+                              const storage::Tuple *tuple,
+                              ItemPointer location){
+
+  // (A) Check existence for primary/unique indexes
+  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
+  auto index = GetIndex(index_offset);
+  auto index_schema = index->GetKeySchema();
+  auto indexed_columns = index_schema->GetIndexedColumns();
+  std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
+  key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+
+  switch (index->GetIndexType()) {
+    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+      // TODO: get unique tuple from primary index.
+      // if in this index there has been a visible or uncommitted
+      // <key, location> pair, this constraint is violated
+      index->InsertEntry(key.get(), location);
+    } break;
+
+    case INDEX_CONSTRAINT_TYPE_DEFAULT:
+    default:
+      index->InsertEntry(key.get(), location);
+      break;
+  }
+  LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
+
+  return true;
 }
 
 /**
@@ -258,31 +302,15 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  */
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
-  int index_count = GetIndexCount();
 
-  // (A) Check existence for primary/unique indexes
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
-  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-    auto index = GetIndex(index_itr);
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-    key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+  auto index_count = GetIndexCount();
 
-    switch (index->GetIndexType()) {
-      case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-      case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-        // TODO: get unique tuple from primary index.
-        // if in this index there has been a visible or uncommitted
-        // <key, location> pair, this constraint is violated
-        index->InsertEntry(key.get(), location);
-      } break;
-
-      case INDEX_CONSTRAINT_TYPE_DEFAULT:
-      default:
-        index->InsertEntry(key.get(), location);
-        break;
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
+    auto status = InsertInIndex(index_itr, tuple, location);
+    if(status == false){
+      return false;
     }
+
   }
 
   return true;
@@ -384,7 +412,7 @@ bool DataTable::CheckForeignKeyConstraints(const storage::Tuple *tuple
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
-void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
+void DataTable::IncreaseTupleCount(const size_t &amount) {
   number_of_tuples_ += amount;
   dirty_ = true;
 }
@@ -393,7 +421,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float &amount) {
  * @brief Decrease the number of tuples in this table
  * @param amount amount to decrease
  */
-void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
+void DataTable::DecreaseTupleCount(const size_t &amount) {
   number_of_tuples_ -= amount;
   dirty_ = true;
 }
@@ -402,7 +430,7 @@ void DataTable::DecreaseNumberOfTuplesBy(const float &amount) {
  * @brief Set the number of tuples in this table
  * @param num_tuples number of tuples
  */
-void DataTable::SetNumberOfTuples(const float &num_tuples) {
+void DataTable::SetTupleCount(const size_t &num_tuples) {
   number_of_tuples_ = num_tuples;
   dirty_ = true;
 }
@@ -411,7 +439,9 @@ void DataTable::SetNumberOfTuples(const float &num_tuples) {
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples_; }
+size_t DataTable::GetTupleCount() const {
+  return number_of_tuples_;
+}
 
 /**
  * @brief return dirty flag
@@ -504,9 +534,7 @@ oid_t DataTable::AddDefaultTileGroup() {
   {
     LOG_TRACE("Added a tile group ");
 
-    tile_group_lock_.WriteLock();
-    tile_groups_.push_back(tile_group_id);
-    tile_group_lock_.Unlock();
+    tile_groups_.Append(tile_group_id);
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -540,10 +568,11 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
       database_oid, table_oid, tile_group_id, this, schemas, column_map,
       tuples_per_tilegroup_));
 
-  tile_group_lock_.WriteLock();
-  if (std::find(tile_groups_.begin(), tile_groups_.end(),
-                tile_group->GetTileGroupId()) == tile_groups_.end()) {
-    tile_groups_.push_back(tile_group->GetTileGroupId());
+  auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
+
+  if (tile_groups_exists == false) {
+
+    tile_groups_.Append(tile_group_id);
 
     LOG_TRACE("Added a tile group ");
 
@@ -558,15 +587,13 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
     LOG_TRACE("Recording tile group : %u ", tile_group_id);
   }
-  tile_group_lock_.Unlock();
+
 }
 
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   oid_t tile_group_id = tile_group->GetTileGroupId();
 
-  tile_group_lock_.WriteLock();
-  tile_groups_.push_back(tile_group_id);
-  tile_group_lock_.Unlock();
+  tile_groups_.Append(tile_group_id);
 
   // add tile group in catalog
   catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
@@ -583,12 +610,11 @@ void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
 size_t DataTable::GetTileGroupCount() const { return tile_group_count_; }
 
 std::shared_ptr<storage::TileGroup> DataTable::GetTileGroup(
-    const oid_t &tile_group_offset) const {
+    const std::size_t &tile_group_offset) const {
   PL_ASSERT(tile_group_offset < GetTileGroupCount());
 
-  tile_group_lock_.ReadLock();
-  auto tile_group_id = tile_groups_.at(tile_group_offset);
-  tile_group_lock_.Unlock();
+  auto tile_group_id = tile_groups_.FindValid(tile_group_offset,
+                                              invalid_tile_group_id);
 
   return GetTileGroupById(tile_group_id);
 }
@@ -600,14 +626,27 @@ std::shared_ptr<storage::TileGroup> DataTable::GetTileGroupById(
 }
 
 void DataTable::DropTileGroups() {
-  tile_group_count_ = 0;
+
   auto &catalog_manager = catalog::Manager::GetInstance();
-  for (auto tile_group_id : tile_groups_) {
-    // add tile group in catalog
-    catalog_manager.DropTileGroup(tile_group_id);
-    LOG_TRACE("Dropping tile group : %u ", tile_group_id);
+  auto tile_groups_size = tile_groups_.GetSize();
+  std::size_t tile_groups_itr;
+
+  for (tile_groups_itr = 0;
+      tile_groups_itr < tile_groups_size;
+      tile_groups_itr++) {
+    auto tile_group_id = tile_groups_.Find(tile_groups_itr);
+
+    if(tile_group_id != invalid_tile_group_id) {
+      // drop tile group in catalog
+      catalog_manager.DropTileGroup(tile_group_id);
+    }
   }
-  tile_groups_.clear();
+
+  // Clear array
+  tile_groups_.Clear(invalid_tile_group_id);
+
+  tile_group_count_ = 0;
+
 }
 
 const std::string DataTable::GetInfo() const {
@@ -645,19 +684,15 @@ const std::string DataTable::GetInfo() const {
 // INDEX
 //===--------------------------------------------------------------------===//
 
-void DataTable::AddIndex(index::Index *index) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
+void DataTable::AddIndex(std::shared_ptr<index::Index> index) {
+  // Add index
+  indexes_.Append(index);
 
-    // Add index
-    indexes_.push_back(index);
+  // Add index column info
+  auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
+  std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
 
-    // Add index column info
-    auto index_columns_ = index->GetMetadata()->GetKeyAttrs();
-    std::set<oid_t> index_columns_set(index_columns_.begin(), index_columns_.end());
-
-    indexes_columns_.push_back(index_columns_set);
-  }
+  indexes_columns_.push_back(index_columns_set);
 
   // Update index stats
   auto index_type = index->GetIndexType();
@@ -668,36 +703,50 @@ void DataTable::AddIndex(index::Index *index) {
   }
 }
 
-index::Index *DataTable::GetIndexWithOid(const oid_t &index_oid) const {
-  for (auto index : indexes_)
-    if (index->GetOid() == index_oid) return index;
+std::shared_ptr<index::Index> DataTable::GetIndexWithOid(
+    const oid_t &index_oid) {
 
-  return nullptr;
-}
+  std::shared_ptr<index::Index> ret_index;
+  auto index_count = indexes_.GetSize();
 
-void DataTable::DropIndexWithOid(const oid_t &index_id) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-
-    oid_t index_offset = 0;
-    for (auto index : indexes_) {
-      if (index->GetOid() == index_id) break;
-      index_offset++;
+  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+    ret_index = indexes_.Find(index_itr);
+    if (ret_index->GetOid() == index_oid) {
+      break;
     }
-    PL_ASSERT(index_offset < indexes_.size());
-
-    // Drop the index
-    indexes_.erase(indexes_.begin() + index_offset);
-
-    // Drop index column info
-    indexes_columns_.erase(indexes_columns_.begin() + index_offset);
   }
+
+  return ret_index;
 }
 
-index::Index *DataTable::GetIndex(const oid_t &index_offset) const {
-  PL_ASSERT(index_offset < indexes_.size());
-  auto index = indexes_.at(index_offset);
-  return index;
+void DataTable::DropIndexWithOid(const oid_t &index_oid) {
+  oid_t index_offset = 0;
+  std::shared_ptr<index::Index> index;
+  auto index_count = indexes_.GetSize();
+
+  for(std::size_t index_itr = 0; index_itr < index_count; index_itr++){
+    index = indexes_.Find(index_itr);
+    if (index->GetOid() == index_oid) {
+      break;
+    }
+  }
+
+  PL_ASSERT(index_offset < indexes_.GetSize());
+
+  // Drop the index
+  indexes_.Update(index_offset, nullptr);
+
+  // Drop index column info
+  indexes_columns_.erase(indexes_columns_.begin() + index_offset);
+}
+
+std::shared_ptr<index::Index> DataTable::GetIndex(
+    const oid_t &index_offset) {
+
+  PL_ASSERT(index_offset < indexes_.GetSize());
+  auto ret_index = indexes_.Find(index_offset);
+
+  return ret_index;
 }
 
 std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
@@ -706,7 +755,13 @@ std::set<oid_t> DataTable::GetIndexAttrs(const oid_t &index_offset) const {
   return index_attrs;
 }
 
-oid_t DataTable::GetIndexCount() const { return indexes_.size(); }
+oid_t DataTable::GetIndexCount() const {
+  size_t index_count;
+
+  index_count = indexes_.GetSize();
+
+  return index_count;
+}
 
 //===--------------------------------------------------------------------===//
 // FOREIGN KEYS
@@ -822,12 +877,13 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
 storage::TileGroup *DataTable::TransformTileGroup(
     const oid_t &tile_group_offset, const double &theta) {
   // First, check if the tile group is in this table
-  if (tile_group_offset >= tile_groups_.size()) {
+  if (tile_group_offset >= tile_groups_.GetSize()) {
     LOG_ERROR("Tile group offset not found in table : %u ", tile_group_offset);
     return nullptr;
   }
 
-  auto tile_group_id = tile_groups_[tile_group_offset];
+  auto tile_group_id = tile_groups_.FindValid(tile_group_offset,
+                                              invalid_tile_group_id);
 
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();

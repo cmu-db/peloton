@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "expression/abstract_expression.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 namespace expression {
@@ -83,7 +84,7 @@ class ExpressionUtil {
 
   static AbstractExpression *ConstantValueFactory(const Value &newvalue);
 
-  static expression::AbstractExpression* ConvertToTupleValueExpression (catalog::Schema *schema, std::string column_name);
+  static expression::AbstractExpression* ConvertToTupleValueExpression(catalog::Schema *schema, std::string column_name);
 };
 
 }  // End expression namespace

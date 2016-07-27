@@ -794,14 +794,14 @@ class Value {
    * value
    * that will be stored in this instance
    */
-  Value(const ValueType type);
+  inline Value(const ValueType type);
 
   /**
    * Set the type of the value that will be stored in this instance.
    * The last of the 16 bytes of storage allocated in an Value
    * is used to store the type
    */
-  void SetValueType(ValueType type) { m_valueType = type; }
+  inline void SetValueType(ValueType type) { m_valueType = type; }
 
  public:
   /**
@@ -809,9 +809,9 @@ class Value {
    * to prevent code outside of Value from branching based on the type of a
    * value.
    */
-  ValueType GetValueType() const { return m_valueType; }
+  inline ValueType GetValueType() const { return m_valueType; }
 
-  void SetCleanUp(bool cleanup) { m_cleanUp = cleanup; }
+  inline void SetCleanUp(bool cleanup) { m_cleanUp = cleanup; }
 
  private:
   /**
@@ -823,9 +823,9 @@ class Value {
     return ValueTypeToString(m_valueType);
   }
 
-  void SetSourceInlined(bool sourceInlined) { m_sourceInlined = sourceInlined; }
+  inline void SetSourceInlined(bool sourceInlined) { m_sourceInlined = sourceInlined; }
 
-  void tagAsNull() { m_data[13] = OBJECT_NULL_BIT; }
+  inline void tagAsNull() { m_data[13] = OBJECT_NULL_BIT; }
 
   /**
    * An Object is something Like a String that has a variable length
@@ -1711,9 +1711,7 @@ class Value {
   void InlineCopyyObject(void *storage, int32_t maxLength,
                          bool isInBytes) const {
     if (IsNull()) {
-      // Always reSet all the bits regardless of the actual length of the value
-      // 1 additional byte for the length prefix
-      // @author: aelroby removed this extra byte write because it is corrupted
+      // Always reset all the bits regardless of the actual length of the value
       PL_MEMSET(storage, 0, maxLength);
 
       /*
@@ -1728,9 +1726,7 @@ class Value {
       checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength, maxLength,
                                         isInBytes);
 
-      // Always reSet all the bits regardless of the actual length of the value
-      // 1 additional byte for the length prefix
-      // @author: aelroby removed this extra byte write because it is corrupted
+      // Always reset all the bits regardless of the actual length of the value
       PL_MEMSET(storage, 0, maxLength);
 
       if (m_sourceInlined) {
@@ -2590,6 +2586,119 @@ class Value {
                                bool leading, bool trailing);
 };
 
+
+/**
+ * Public constructor that initializes to an Value that is unusable
+ * with other Values.  Useful for declaring storage for an Value.
+ */
+inline Value::Value() {
+  PL_MEMSET(m_data, 0, 16);
+  SetValueType(VALUE_TYPE_INVALID);
+  m_sourceInlined = true;
+  m_cleanUp = true;
+}
+
+/**
+ * Private constructor that initializes storage and the specifies the type of
+ * value
+ * that will be stored in this instance
+ */
+inline Value::Value(const ValueType type) {
+  PL_MEMSET(m_data, 0, 16);
+  SetValueType(type);
+  m_sourceInlined = true;
+  m_cleanUp = true;
+}
+
+/* Objects may have storage allocated for them.
+ * Release memory associated to object type Values */
+inline Value::~Value() {
+
+  switch (GetValueType()) {
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+    case VALUE_TYPE_ARRAY: {
+  
+      if (m_sourceInlined == true || m_cleanUp == false) {
+        return;
+      }
+
+      Varlen *sref = *reinterpret_cast<Varlen *const *>(m_data);
+      if (sref != NULL) {
+        delete sref;
+      }
+    } break;
+
+    default:
+      return;
+  }
+}
+
+inline Value &Value::operator=(const Value &other) {
+  // protect against invalid self-assignment
+  if (this != &other) {
+    m_sourceInlined = other.m_sourceInlined;
+    m_valueType = other.m_valueType;
+    m_cleanUp = true;
+    std::copy(other.m_data, other.m_data + 16, m_data);
+
+    // Deep copy if needed
+    if (m_sourceInlined == false && other.IsNull() == false) {
+      switch (m_valueType) {
+        case VALUE_TYPE_VARBINARY:
+        case VALUE_TYPE_VARCHAR:
+        case VALUE_TYPE_ARRAY: {
+          Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+          Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+          // TODO: Fix memory leak problem.
+          // If a varchar value having been assigned chars.
+          // = will replace old value without release,
+          // which is memory leak.
+          SetObjectValue(new_sref);
+        } break;
+
+        default:
+          break;
+      }
+    }
+  }
+
+  // by convention, always return *this
+  return *this;
+}
+
+inline Value::Value(const Value &other) {
+  m_sourceInlined = other.m_sourceInlined;
+  m_valueType = other.m_valueType;
+  m_cleanUp = true;
+  std::copy(other.m_data, other.m_data + 16, m_data);
+
+  // Deep copy if needed
+  if (m_sourceInlined == false && other.IsNull() == false) {
+    switch (m_valueType) {
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+      case VALUE_TYPE_ARRAY: {
+        Varlen *src_sref = *reinterpret_cast<Varlen *const *>(other.m_data);
+        Varlen *new_sref = Varlen::Clone(*src_sref, nullptr);
+
+        SetObjectValue(new_sref);
+      } break;
+
+      default:
+        break;
+    }
+  }
+}
+
+inline Value Value::Clone(const Value &src,
+                          UNUSED_ATTRIBUTE VarlenPool *varlen_pool) {
+  Value rv = src;
+  return rv;
+}
+
+
 /**
  * Retrieve a boolean Value that is true
  */
@@ -3018,7 +3127,7 @@ inline void Value::DeserializeFrom(SerializeInput<E> &input,
       const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
       // the NULL SQL string is a NULL C pointer
       if (isInlined) {
-        // Always reSet the bits regardless of how long the actual value is.
+        // Always reset the bits regardless of how long the actual value is.
         PL_MEMSET(storage, 0, lengthLength + maxLength);
 
         SetObjectLengthToLocation(length, storage);

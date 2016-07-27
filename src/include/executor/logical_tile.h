@@ -280,8 +280,9 @@ class LogicalTile : public Printable {
   };
 
  private:
-  // Dummy default constructor
-  LogicalTile(){};
+
+  // Default constructor
+  LogicalTile();
 
   //===--------------------------------------------------------------------===//
   // Materialize utilities. We can make these public if it is necessary.
