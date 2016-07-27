@@ -37,6 +37,8 @@ class HybridScanPlan : public AbstractScan {
 
   std::shared_ptr<index::Index> GetDataIndex() const { return index_; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
