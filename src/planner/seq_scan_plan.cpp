@@ -17,7 +17,7 @@
 #include "common/types.h"
 #include "common/macros.h"
 #include "common/logger.h"
-
+#include "expression/expression_util.h"
 #include "catalog/bootstrapper.h"
 #include "catalog/schema.h"
 
@@ -74,9 +74,9 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement* select_node) {
   }
 
   if(select_node->where_clause != NULL){
-    auto pred = select_node->where_clause->Copy();
-    ReplaceColumnExpressions(pred);
-    SetPredicate(pred);
+    where_ = select_node->where_clause->Copy();
+    ReplaceColumnExpressions(where_);
+    SetPredicate(where_->Copy());
   
   }
 }
@@ -320,6 +320,10 @@ expression::AbstractExpression* SeqScanPlan::ConvertToTupleValueExpression (std:
     expression::TupleValueExpression *expr =
         new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
   return expr;
+}
+
+void SeqScanPlan::SetParameterValues(std::vector<Value>* values) {
+  expression::ExpressionUtil::ConvertParameterExpressions(where_, values);
 }
 
 
