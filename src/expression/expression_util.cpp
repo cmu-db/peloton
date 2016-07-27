@@ -487,6 +487,27 @@ expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (c
         new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
 	return expr;
 }
+/**
+ * This function converts each ParameterValueExpression in an expression tree to a value from the value vector
+ */
+void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression, std::vector<Value>* values) {
+  if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+	  auto left = (ParameterValueExpression*)expression->GetLeft();
+	  auto value = new ConstantValueExpression(values->at(left->getValueIdx()));
+	  delete left;
+	  expression->setLeft(value);
+  }
+  else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+	  auto right = (ParameterValueExpression*)expression->GetRight();
+	  auto value = new ConstantValueExpression(values->at(right->getValueIdx()));
+	  delete right;
+	  expression->setRight(value);
+  }
+  else {
+	  ConvertParameterExpressions(expression->GetModifiableLeft(), values);
+	  ConvertParameterExpressions(expression->GetModifiableRight(), values);
+  }
+}
 
 }  // End expression namespace
 }  // End peloton namespace
