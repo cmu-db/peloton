@@ -74,6 +74,11 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 }
 
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
+  LOG_INFO("Setting values for parameters in updates");
+  for(auto update_expr : *updates) {
+	  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value, values);
+  }
+  LOG_INFO("Setting values for parameters in where");
   expression::ExpressionUtil::ConvertParameterExpressions(where, values);
 }
 
