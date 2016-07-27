@@ -42,17 +42,17 @@ class SeqScanPlan : public AbstractScan {
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids) {}
+      : AbstractScan(table, predicate, column_ids) { where_ = nullptr; }
 
   SeqScanPlan(parser::SelectStatement *select_node);
 
-  SeqScanPlan() : AbstractScan() {}
+  SeqScanPlan() : AbstractScan() { where_ = nullptr; }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
   const std::string GetInfo() const { return "SeqScan"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value> *values) {};
+  void SetParameterValues(std::vector<Value>* values);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
@@ -70,6 +70,9 @@ class SeqScanPlan : public AbstractScan {
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+ private:
+  expression::AbstractExpression *where_;
 };
 
 }  // namespace planner
