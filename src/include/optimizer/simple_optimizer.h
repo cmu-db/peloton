@@ -10,17 +10,36 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "optimizer/abstract_optimizer.h"
+#include "common/types.h"
 
 #include <memory>
+#include <vector>
 
 namespace peloton {
-namespace parser{
-  class SQLStatement;
+namespace parser {
+class SQLStatement;
+class SelectStatement;
 }
+
+namespace storage {
+class DataTable;
+}
+
+namespace catalog {
+class Schema;
+}
+
+namespace expression {
+class AbstractExpression;
+}
+
+namespace planner {
+class AbstractScan;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -38,12 +57,24 @@ class SimpleOptimizer : public AbstractOptimizer {
   virtual ~SimpleOptimizer();
 
   static std::shared_ptr<planner::AbstractPlan> BuildPlanTree(
-      const std::unique_ptr<parser::AbstractParse>& parse_tree);
+      const std::unique_ptr<parser::AbstractParse> &parse_tree);
 
   static std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatement>& parse_tree);
+      const std::unique_ptr<parser::SQLStatement> &parse_tree);
 
+ private:
+  //===--------------------------------------------------------------------===//
+  // UTILITIES
+  //===--------------------------------------------------------------------===//
+
+  // get the column IDs evaluated in a predicate
+  static void GetPredicateColumnIDs(catalog::Schema *schema,
+                                    expression::AbstractExpression *expression,
+                                    std::vector<oid_t> &column_ids);
+
+  // create a scan plan for a select statement
+  static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
+      storage::DataTable *target_table, parser::SelectStatement *select_stmt);
 };
-
 }  // namespace optimizer
 }  // namespace peloton
