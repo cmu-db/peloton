@@ -64,12 +64,12 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 			new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
 	project_info_ = std::move(project_info);
 	
-	auto expr = parse_tree->where->Copy();
-	ReplaceColumnExpressions(target_table_->GetSchema(), expr);
+	where = parse_tree->where->Copy();
+	ReplaceColumnExpressions(target_table_->GetSchema(), where);
 
 
 	std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-			new planner::SeqScanPlan(target_table_, expr, columns));
+			new planner::SeqScanPlan(target_table_, where, columns));
 	AddChild(std::move(seq_scan_node));
 }
 
@@ -98,6 +98,9 @@ void UpdatePlan::ReplaceColumnExpressions(catalog::Schema *schema, expression::A
   }
 }
 
+void UpdatePlan::SetParameterValues(std::vector<Value>* values) {
+	expression::ExpressionUtil::ConvertParameterExpressions(where, values);
+}
 
 }  // namespace planner
 }  // namespace peloton

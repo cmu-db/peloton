@@ -78,6 +78,10 @@ void DeletePlan::ReplaceColumnExpressions(catalog::Schema *schema, expression::A
   }
 }
 
+void DeletePlan::SetParameterValues(std::vector<Value>* values) {
+	expression::ExpressionUtil::ConvertParameterExpressions(expr, values);
+}
+
 
 }  // namespace planner
 }  // namespace peloton
