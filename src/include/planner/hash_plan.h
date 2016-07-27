@@ -41,6 +41,8 @@ class HashPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "Hash"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   inline const std::vector<HashKeyPtrType> &GetHashKeys() const {
     return this->hash_keys_;
   }

@@ -99,6 +99,8 @@ class AggregatePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "AggregatePlan"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   std::unique_ptr<AbstractPlan> Copy() const {

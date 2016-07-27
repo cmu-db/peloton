@@ -53,6 +53,8 @@ class CreatePlan : public AbstractPlan {
     return "Create Plan";
   }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new CreatePlan(target_table_));
   }

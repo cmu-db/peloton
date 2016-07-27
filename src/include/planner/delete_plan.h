@@ -45,6 +45,8 @@ class DeletePlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "DeletePlan"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   void ReplaceColumnExpressions(catalog::Schema *schema, expression::AbstractExpression* expression);
 
   bool GetTruncate() const { return truncate; }
