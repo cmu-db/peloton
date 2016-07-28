@@ -218,7 +218,7 @@ struct PARSER_CUST_LTYPE {
 %type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
-%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr insert_param_expr
+%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr
 %type <expr> 		column_name literal int_literal num_literal string_literal
 %type <expr> 		comp_expr opt_where join_condition opt_having
 %type <order>		opt_order
@@ -553,7 +553,10 @@ update_clause:
 		IDENTIFIER '=' literal {
 			$$ = new UpdateClause();
 			$$->column = $1;
+			printf("I am sending a value here \n");
+			printf("This is your life ----> %s \n" , $3->GetInfo().c_str());
 			$$->value = $3;
+			printf("Initialized Expression \n");
 		}
 	;
 
@@ -688,7 +691,6 @@ expr:
 	|	unary_expr
 	|	binary_expr
 	|	function_expr
-	|	parameter_expr
 	;
 
 scalar_expr:
@@ -737,7 +739,7 @@ literal:
 		string_literal
 	|	num_literal
 	|	placeholder_expr
-	|	insert_param_expr
+	|	parameter_expr
 	;
 
 string_literal:
@@ -769,18 +771,9 @@ parameter_expr:
 	PREPAREPARAMETERS {
 			printf("COOOOOOL %s COOOL \n" , $1);
 			int val = atol($1);
-			$$ = new peloton::expression::ParameterValueExpression(val , peloton::ValueFactory::GetNullStringValue());
+			$$ = new peloton::expression::ParameterValueExpression(val -1 , peloton::ValueFactory::GetNullValue());
 		}
 	;
-
-insert_param_expr:
-	PREPAREPARAMETERS {
-			printf("INSERT %s COOOL \n" , $1);
-			int val = atol($1);
-			$$ = new peloton::expression::ParameterValueExpression(val , peloton::ValueFactory::GetNullStringValue());
-		}
-	;
-
 
 /******************************
  * Table 

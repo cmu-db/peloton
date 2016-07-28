@@ -40,14 +40,21 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   auto t_ref = parse_tree->table;
+
+  LOG_INFO("THIS IS THE SIZE OF THE UPDATE -------------> %lu",parse_tree->updates->size());
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
+  
+  updates = new std::vector<parser::UpdateClause*>();
   for(auto update_clause : *parse_tree->updates) {
-	  updates->push_back(update_clause->Copy());
+    auto uc = new parser::UpdateClause();
+    uc->column = update_clause->column;
+    uc->value = update_clause->Copy()->value;
+
+    updates->push_back(uc);
   }
-  updates = parse_tree->updates;
   TargetList tlist;
   DirectMapList dmlist;
   oid_t col_id;
@@ -86,7 +93,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   LOG_INFO("Setting values for parameters in updates");
   for(auto update_expr : *updates) {
-	  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value, values);
+    LOG_INFO("*******CHECKING UP UPDATES******");
+	  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value->Copy(), values);
   }
   LOG_INFO("Setting values for parameters in where");
   expression::ExpressionUtil::ConvertParameterExpressions(where, values);
