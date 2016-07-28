@@ -29,7 +29,14 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
     : target_table_(table),
       project_info_(std::move(project_info)),
       updates(NULL),
-      where(NULL) {}
+      where(NULL) {
+	if(updates) {
+		updates->clear();
+	}
+	else {
+		updates = new std::vector<parser::UpdateClause *>();
+	}
+}
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   auto t_ref = parse_tree->table;
@@ -37,6 +44,9 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
+  for(auto update_clause : *parse_tree->updates) {
+	  updates->push_back(update_clause->Copy());
+  }
   updates = parse_tree->updates;
   TargetList tlist;
   DirectMapList dmlist;

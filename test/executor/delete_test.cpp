@@ -120,11 +120,11 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Tuple inserted!");
 
   // Just Counting number of tuples in table
-  LOG_INFO("Selecting COUNT(*)");
-  LOG_INFO("Query: SELECT SUM(dept_id), dept_name FROM department_table GROUP BY dept_name;");
-  statement.reset(new Statement("COUNT", "SELECT SUM(dept_id), dept_name FROM department_table GROUP BY dept_name;"));
+  LOG_INFO("Selecting SUM(*)");
+  LOG_INFO("Query: SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';");
+  statement.reset(new Statement("SUM", "SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';"));
   LOG_INFO("Building parse tree...");
-  auto select_stmt = peloton_parser.BuildParseTree("SELECT SUM(dept_id), dept_name FROM department_table GROUP BY dept_name;");
+  auto select_stmt = peloton_parser.BuildParseTree("SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));

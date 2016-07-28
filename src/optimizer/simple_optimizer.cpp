@@ -85,6 +85,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     case STATEMENT_TYPE_SELECT: {
     	LOG_INFO("Processing SELECT...");
     	auto select_stmt = (parser::SelectStatement*) parse_tree.get();
+    	LOG_INFO("SELECT Info: %s", select_stmt->GetInfo().c_str());
     	int index = 0;
     	auto agg_type = AGGREGATE_TYPE_PLAIN; // default aggregator
     	std::vector<oid_t> group_by_columns;
@@ -132,8 +133,19 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     		target_table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME,
     				select_stmt->from_table->name);
 			std::vector<oid_t> column_ids = {};
-			std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+			// If there is a where clause, make sure a copy is passed to the seqscan
+			std::unique_ptr<planner::SeqScanPlan> seq_scan_node;
+			if(select_stmt->where_clause) {
+				LOG_INFO("There is a where condition");
+			  seq_scan_node.reset(
+				  new planner::SeqScanPlan(target_table, select_stmt->where_clause->Copy(), std::move(column_ids)));
+			}
+			// Otherwise, send it as is (NULL)
+			else {
+				LOG_INFO("There is no where condition");
+			  seq_scan_node.reset(
 				  new planner::SeqScanPlan(target_table, select_stmt->where_clause, std::move(column_ids)));
+			}
 			LOG_INFO("Sequential scan plan created");
 
 			// Prepare aggregate plan
