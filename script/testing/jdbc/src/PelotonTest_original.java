@@ -6,34 +6,39 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:5432/?prepareThreshold=0";
+  private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";
   private final String pass = "postgres";
 
-  private final String DROP = "DROP TABLE A;" +
+  private final String DROP_IF_EXISTS = "DROP TABLE IF EXISTS A;" +
           "DROP TABLE IF EXISTS B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);";
-          //
+  private final String DROP = "DROP TABLE A;" +
+          "DROP TABLE B;";
+  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
+          "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
-  private final String INSERT_A = "INSERT INTO A VALUES (1,'1961-06-16');";
-  private final String INSERT_B = "INSERT INTO A VALUES (2,'Full Clip')";
+  private final String INSERT_A_1 = "INSERT INTO A(id,data) VALUES (1,'hello_1');";
+  private final String INSERT_A_2 = "INSERT INTO A(id,data) VALUES (2, 'hello_2')";
+  private final String INSERT_A_3 = "INSERT INTO A VALUES (3, 'hello_3')";
+
+  private final String INSERT_B_1 = "INSERT INTO B VALUES (1, 'hello_1')";
+
+  private final String INSERT = "BEGIN;" +
+          "INSERT INTO A VALUES (?,?);" +
+          "INSERT INTO B VALUES (?,?);" +
+          "COMMIT;";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
 
-  private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?);";
-
-  private final String INSERT = "BEGIN;" +
-          "INSERT INTO A VALUES (1,'Fly High');" +
-          "COMMIT;";
-
   private final String SEQSCAN = "SELECT * FROM A";
-  private final String INDEXSCAN = "SELECT id FROM A WHERE id = 1";
+  private final String SEQSCAN_2 = "SELECT * FROM A WHERE id = 1";
+  private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
-  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
-  private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data='YO'";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
-  private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = 1 FOR UPDATE";
+  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data = 'test update' WHERE id=3";
+  private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE data = 'test update'";
+  private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
 
   private final Connection conn;
@@ -69,24 +74,17 @@ public class PelotonTest {
   public void Init() throws SQLException {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
-    stmt.execute(DROP);
+    stmt.execute(DROP_IF_EXISTS);
     stmt.execute(DDL);
-
-    //stmt.execute(INSERT);
-	//stmt.execute(SEQSCAN);
-//    stmt.execute(DROP);
-    System.out.println("Test db created.");
-  }
-
-  public void ShowTable() throws SQLException {
-    conn.setAutoCommit(true);
-    Statement stmt = conn.createStatement();
-    //stmt.execute(DROP);
-    //stmt.execute(DDL);
-
-    //stmt.execute(INSERT);
-  stmt.execute(SEQSCAN);
-//    stmt.execute(DROP);
+    stmt.execute(INSERT_A_1);
+    stmt.execute(INSERT_A_2);
+    stmt.execute(INSERT_A_3);
+    stmt.execute(SEQSCAN);
+    stmt.execute(SEQSCAN_2);
+    stmt.execute(AGG_COUNT);
+    stmt.execute(AGG_COUNT_2);
+    //stmt.execute(UPDATE_BY_INDEXSCAN);
+    //stmt.execute(DELETE_BY_INDEXSCAN);
     System.out.println("Test db created.");
   }
 
@@ -100,10 +98,10 @@ public class PelotonTest {
     PreparedStatement stmt = null;
     switch (table) {
       case A:
-        stmt = conn.prepareStatement(INSERT_A);
+        stmt = conn.prepareStatement(INSERT_A_1);
         break;
       case B:
-        stmt = conn.prepareStatement(INSERT_B);
+        stmt = conn.prepareStatement(INSERT_B_1);
         break;
     }
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
@@ -129,8 +127,8 @@ public class PelotonTest {
   public void Insert(int n) throws SQLException {
     conn.setAutoCommit(false);
     PreparedStatement stmt = conn.prepareStatement(INSERT);
-    PreparedStatement stmtA = conn.prepareStatement(INSERT_A);
-    PreparedStatement stmtB = conn.prepareStatement(INSERT_B);
+    PreparedStatement stmtA = conn.prepareStatement(INSERT_A_1);
+    PreparedStatement stmtB = conn.prepareStatement(INSERT_B_1);
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
     pgstmt.setPrepareThreshold(1);
     for (int i = 0; i < n; i++) {
@@ -265,7 +263,7 @@ public class PelotonTest {
     PreparedStatement stmt = conn.prepareStatement(UNION);
 
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
-    pgstmt.setPrepareThreshold(0);
+    pgstmt.setPrepareThreshold(1);
     stmt.setInt(1, i);
     stmt.setInt(2, i);
     ResultSet r = stmt.executeQuery();
@@ -274,74 +272,9 @@ public class PelotonTest {
   }
 
 
-  public void Batch_Insert() throws SQLException{
-    PreparedStatement stmt = conn.prepareStatement(TEMPLATE_FOR_BATCH_INSERT);
-
-    conn.setAutoCommit(false);
-    
-    for(int i=1; i <= 5 ;i++){
-      stmt.setInt(1,i);
-      stmt.setString(2,"Yo");
-      stmt.addBatch();
-      }
-      System.out.println("All Good Here");
-      int[] res = stmt.executeBatch();
-      for(int i=0; i < res.length; i++)
-        System.out.println(res[i]);
-     conn.commit();
-  }
-
-  public void Batch_Update() throws SQLException{
-    PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
-
-    conn.setAutoCommit(false);
-    
-    for(int i=1; i <= 3;i++){
-      stmt.setString(1,"Cool");
-      stmt.setInt(2,i);
-      stmt.addBatch();
-      }
-      System.out.println("All Good Here");
-      int[] res = stmt.executeBatch();
-      for(int i=0; i < res.length; i++)
-        System.out.println(res[i]);
-     conn.commit();
-  }
-
-  public void Batch_Delete() throws SQLException{
-    PreparedStatement stmt = conn.prepareStatement(DELETE_BY_INDEXSCAN);
-
-    conn.setAutoCommit(false);
-    
-    for(int i=1; i <= 3;i++){
-      stmt.setInt(1,i);
-      stmt.addBatch();
-      }
-      System.out.println("All Good Here");
-      int[] res = stmt.executeBatch();
-      for(int i=0; i < res.length; i++)
-        System.out.println(res[i]);
-     conn.commit();
-  }
-
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Close();
-    PelotonTest pt2 = new PelotonTest();
-    pt2.Batch_Insert();
-    pt2.Close();
-    PelotonTest pt3 = new PelotonTest();
-    pt3.ShowTable();
-    pt2.Close();
-    PelotonTest pt4 = new PelotonTest();
-    pt4.Batch_Update();
-    pt4.Close();
-    PelotonTest pt5 = new PelotonTest();
-    pt5.ShowTable();
-    pt5.Close();
-    
-    
     //pt.Insert(3, TABLE.A);
 //    pt.Insert(20);
     //pt.ReadModifyWrite(3);
@@ -351,6 +284,7 @@ public class PelotonTest {
     //pt.SeqScan();
     //pt.UpdateBySeqScan();
     //pt.IndexScan(3);
-    //pt4.Close();
+    pt.Close();
   }
 }
+
