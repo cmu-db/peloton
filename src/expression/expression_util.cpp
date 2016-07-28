@@ -491,14 +491,20 @@ expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (c
  * This function converts each ParameterValueExpression in an expression tree to a value from the value vector
  */
 void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression, std::vector<Value>* values) {
+  PL_ASSERT(expression->GetLeft());
+  PL_ASSERT(expression->GetRight());
   if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 	  auto left = (ParameterValueExpression*)expression->GetLeft();
+	  LOG_INFO("Setting parameter %u to value %s", left->getValueIdx(),
+			  values->at(left->getValueIdx()).GetInfo().c_str());
 	  auto value = new ConstantValueExpression(values->at(left->getValueIdx()));
 	  delete left;
 	  expression->setLeft(value);
   }
   else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 	  auto right = (ParameterValueExpression*)expression->GetRight();
+	  LOG_INFO("Setting parameter %u to value %s", right->getValueIdx(),
+			  values->at(right->getValueIdx()).GetInfo().c_str());
 	  auto value = new ConstantValueExpression(values->at(right->getValueIdx()));
 	  delete right;
 	  expression->setRight(value);

@@ -35,7 +35,7 @@ struct DeleteStatement : SQLStatement {
     delete expr;
   }
 
-  char* table_name = nullptr;
+  const char* table_name = nullptr;
   expression::AbstractExpression* expr = nullptr;
 };
 

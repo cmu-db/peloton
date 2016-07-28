@@ -23,11 +23,11 @@ namespace parser {
  */
 class UpdateClause {
  public:
-  char* column;
+  const char* column;
   expression::AbstractExpression* value;
 
   ~UpdateClause() {
-    free (column);
+	delete column;
     delete value;
   }
 
