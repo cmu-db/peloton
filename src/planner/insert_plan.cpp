@@ -77,8 +77,8 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 						tuple->SetValue(col_cntr, const_expr_elem->getValue(), nullptr);
 					}
 				  }
-				++col_cntr;
 				}
+				++col_cntr;
 			}
 			tuple_ = std::move(tuple);
 	  }
@@ -146,6 +146,7 @@ void InsertPlan::SetParameterValues(std::vector<Value>* values) {
 		  case VALUE_TYPE_VARBINARY:
 		  case VALUE_TYPE_VARCHAR:
 			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i), GetPlanPool());
+			  break;
 		  default:
 			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i), nullptr);
 		  }
