@@ -398,6 +398,9 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       key_column_ids.push_back(column_id);
       expr_types.push_back(predicate_expr_types[column_idx]);
       values.push_back(predicate_values[column_idx]);
+      LOG_INFO("Adding for IndexScanDesc: id(%d), expr(%s), values(%s)",
+               column_id, ExpressionTypeToString(*expr_types.rbegin()).c_str(),
+               values.rbegin()->GetInfo().c_str());
     }
     column_idx++;
   }
@@ -409,7 +412,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
       target_table, select_stmt->where_clause, column_ids, index_scan_desc));
-  LOG_INFO("Sequential scan plan created");
+  LOG_INFO("Index scan plan created");
 
   return std::move(node);
 }
