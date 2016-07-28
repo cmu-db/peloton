@@ -331,20 +331,24 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   bool index_searchable = false;
   int index_id = 0;
 
+  // column predicates passing to the index
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
   std::vector<Value> values;
 
+  // column predicates between the tuple value and the constant in the where
+  // clause
+  std::vector<oid_t> predicate_column_ids = {};
+  std::vector<ExpressionType> predicate_expr_types;
+  std::vector<Value> predicate_values;
+
   if (select_stmt->where_clause != NULL) {
     index_searchable = true;
 
-    std::vector<oid_t> predicate_column_ids = {};
-    std::vector<ExpressionType> predicate_expr_types;
-    std::vector<Value> predicate_values;
     LOG_INFO("Getting predicate columns");
-    GetPredicateColumn(target_table->GetSchema(), select_stmt->where_clause,
-                       predicate_column_ids, predicate_expr_types,
-                       predicate_values, index_searchable);
+    GetPredicateColumns(target_table->GetSchema(), select_stmt->where_clause,
+                        predicate_column_ids, predicate_expr_types,
+                        predicate_values, index_searchable);
     LOG_INFO("Finished Getting predicate columns");
 
     if (index_searchable == true) {
@@ -383,13 +387,20 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   }
 
   // Create index scan plan
+  LOG_INFO("Creating a index scan plan");
   auto index = target_table->GetIndex(index_id);
   std::vector<expression::AbstractExpression*> runtime_keys;
 
-  key_column_ids.push_back(0);
-  expr_types.push_back(
-      ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(110));
+  auto index_columns = target_table->GetIndexColumns()[index_id];
+  int column_idx = 0;
+  for (auto column_id : predicate_column_ids) {
+    if (index_columns.find(column_id) != index_columns.end()) {
+      key_column_ids.push_back(column_id);
+      expr_types.push_back(predicate_expr_types[column_idx]);
+      values.push_back(predicate_values[column_idx]);
+    }
+    column_idx++;
+  }
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -398,6 +409,8 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
       target_table, select_stmt->where_clause, column_ids, index_scan_desc));
+  LOG_INFO("Sequential scan plan created");
+
   return std::move(node);
 }
 
@@ -405,7 +418,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
  * This function replaces all COLUMN_REF expressions with TupleValue
  * expressions
  */
-void SimpleOptimizer::GetPredicateColumn(
+void SimpleOptimizer::GetPredicateColumns(
     catalog::Schema* schema, expression::AbstractExpression* expression,
     std::vector<oid_t>& column_ids, std::vector<ExpressionType>& expr_types,
     std::vector<Value>& values, bool& index_searchable) {
@@ -449,10 +462,10 @@ void SimpleOptimizer::GetPredicateColumn(
           expression)->getValue());
     }
   } else {
-    GetPredicateColumn(schema, expression->GetModifiableLeft(), column_ids,
-                       expr_types, values, index_searchable);
-    GetPredicateColumn(schema, expression->GetModifiableRight(), column_ids,
-                       expr_types, values, index_searchable);
+    GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,
+                        expr_types, values, index_searchable);
+    GetPredicateColumns(schema, expression->GetModifiableRight(), column_ids,
+                        expr_types, values, index_searchable);
   }
 }
 

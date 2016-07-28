@@ -28,7 +28,8 @@ public class PelotonTest {
           "INSERT INTO B VALUES (?,?);" +
           "COMMIT;";
 
-  private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
+  private final String AGG_COUNT = "SELECT COUNT(*) FROM A WHERE id = 2 and id = 3";
+  //private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
 
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";

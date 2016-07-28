@@ -68,12 +68,12 @@ class SimpleOptimizer : public AbstractOptimizer {
   //===--------------------------------------------------------------------===//
 
   // get the column IDs evaluated in a predicate
-  static void GetPredicateColumn(catalog::Schema *schema,
-                                 expression::AbstractExpression *expression,
-                                 std::vector<oid_t> &column_ids,
-                                 std::vector<ExpressionType> &expr_types,
-                                 std::vector<Value> &values,
-                                 bool &index_searchable);
+  static void GetPredicateColumns(catalog::Schema *schema,
+                                  expression::AbstractExpression *expression,
+                                  std::vector<oid_t> &column_ids,
+                                  std::vector<ExpressionType> &expr_types,
+                                  std::vector<Value> &values,
+                                  bool &index_searchable);
 
   // create a scan plan for a select statement
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
