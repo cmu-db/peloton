@@ -43,8 +43,8 @@ TEST_F(CatalogTests, CreatingDatabase) {
 }
 
 TEST_F(CatalogTests, CreatingTable) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.BeginTransaction();
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
   auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
 	                      "id", true);

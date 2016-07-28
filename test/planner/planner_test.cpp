@@ -48,7 +48,8 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 	                      "name", true);
 
 	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
-	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, "department_table", std::move(table_schema));
+	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
+			"department_table", std::move(table_schema));
 
 	// DELETE FROM department_table WHERE id = $0
 	parser::DeleteStatement *delete_statement = new parser::DeleteStatement();
@@ -64,12 +65,14 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
 	delete_statement->expr = cmp_expr;
 
 	auto del_plan = new planner::DeletePlan(delete_statement);
-
+	LOG_INFO("Plan created");
 	bridge::PlanExecutor::PrintPlan(del_plan, "Delete Plan");
+
 
 	auto values = new std::vector<Value>();
 
 	// id = 15
+	LOG_INFO("Binding values");
 	values->push_back(ValueFactory::GetIntegerValue(15));
 
 	// bind values to parameters in plan
@@ -95,7 +98,8 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 	                      "name", true);
 
 	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
-	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, "department_table", std::move(table_schema));
+	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
+			"department_table", std::move(table_schema));
 
 	// UPDATE department_table SET name = $0 WHERE id = $1
 	parser::UpdateStatement *update_statement = new parser::UpdateStatement();
@@ -125,17 +129,68 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 	update_statement->where = cmp_expr;
 
 	auto update_plan = new planner::UpdatePlan(update_statement);
-
+	LOG_INFO("Plan created");
 	bridge::PlanExecutor::PrintPlan(update_plan, "Update Plan");
 
 	auto values = new std::vector<Value>();
 
 	// name = CS, id = 1
+	LOG_INFO("Binding values");
 	values->push_back(ValueFactory::GetStringValue("CS"));
 	values->push_back(ValueFactory::GetIntegerValue(1));
 
 	// bind values to parameters in plan
 	update_plan->SetParameterValues(values);
+
+}
+
+TEST_F(PlannerTests, InsertPlanTestParameter) {
+	// Bootstrapping peloton
+	catalog::Bootstrapper::bootstrap();
+	catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+
+	// Create table
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	txn_manager.BeginTransaction();
+	auto id_column =
+	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+		                      "id", true);
+	auto name_column =
+	     catalog::Column(VALUE_TYPE_VARCHAR, 32,
+	                      "name", true);
+
+	std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
+	catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME,
+			"department_table", std::move(table_schema));
+
+	// INSERT INTO department_table VALUES ($0, $1)
+	auto insert_statement = new parser::InsertStatement(peloton::INSERT_TYPE_VALUES);
+	insert_statement->table_name = "department_table";
+	std::vector<char*>* columns = NULL;  // will not be used
+	insert_statement->columns = columns;
+
+	Value val = ValueFactory::GetNullValue(); // The value is not important at this point
+	auto parameter_expr_1 = new expression::ParameterValueExpression(0, val);
+	auto parameter_expr_2 = new expression::ParameterValueExpression(1, val);
+	auto parameter_exprs = new std::vector<expression::AbstractExpression*>();
+	parameter_exprs->push_back(parameter_expr_1);
+	parameter_exprs->push_back(parameter_expr_2);
+	insert_statement->values = parameter_exprs;
+
+	auto insert_plan = new planner::InsertPlan(insert_statement);
+	LOG_INFO("Plan created");
+	bridge::PlanExecutor::PrintPlan(insert_plan, "Insert Plan");
+
+	// VALUES(1, "CS")
+	LOG_INFO("Binding values");
+	auto values = new std::vector<Value>();
+	values->push_back(ValueFactory::GetIntegerValue(1));
+	values->push_back(ValueFactory::GetStringValue("CS",
+			TestingHarness::GetInstance().GetTestingPool()));
+	LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
+	LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
+	// bind values to parameters in plan
+	insert_plan->SetParameterValues(values);
 
 }
 
