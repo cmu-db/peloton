@@ -15,6 +15,8 @@
 #include "executor/executor_context.h"
 #include "storage/rollback_segment.h"
 #include "expression/expression_util.h"
+#include "expression/parameter_value_expression.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -94,23 +96,26 @@ std::string ProjectInfo::Debug() const {
   return (buffer.str());
 }
 
-/*void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values) {
-  for(auto target : target_list_) {
+void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values) {
+  for(unsigned int i = 0; i < target_list_.size(); ++i) {
 	  // The assignment parameter is an expression with left and right
-	  if(target.second->GetLeft() && target.second->GetRight()) {
-		  expression::ExpressionUtil::ConvertParameterExpressions(target.second, values);
+	  if(target_list_[i].second->GetLeft() && target_list_[i].second->GetRight()) {
+		  auto expr = target_list_[i].second->Copy();
+		  delete target_list_[i].second;
+		  expression::ExpressionUtil::ConvertParameterExpressions(expr, values);
+		  target_list_[i].second = expr;
 	  }
 	  // The assignment parameter is a single value
 	  else {
-		  auto param_expr = (expression::ParameterValueExpression*) target.second;
+		  auto param_expr = (expression::ParameterValueExpression*) target_list_[i].second;
 		  LOG_INFO("Setting parameter %u to value %s", param_expr->getValueIdx(),
 				  values->at(param_expr->getValueIdx()).GetInfo().c_str());
 		  auto value = new expression::ConstantValueExpression(values->at(param_expr->getValueIdx()));
 		  delete param_expr;
-		  target.second = value;
+		  target_list_[i].second = value;
 	  }
   }
-}*/
+}
 
 } /* namespace planner */
 } /* namespace peloton */
