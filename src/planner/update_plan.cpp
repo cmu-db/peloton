@@ -32,12 +32,8 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       where(NULL) { }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
-  if(updates) {
-	updates->clear();
-  }
-  else {
-	updates = new std::vector<parser::UpdateClause *>();
-  }
+
+  updates = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
@@ -80,7 +76,29 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   LOG_INFO("Setting values for parameters in updates");
   // First update project_info_ target list
-//  project_info_->transformParameterToConstantValueExpression(values);
+  // Create new project_info_
+  TargetList tlist;
+  DirectMapList dmlist;
+  oid_t col_id;
+  auto schema = target_table_->GetSchema();
+
+  std::vector<oid_t> columns;
+  for (auto update : *updates) {
+    // get oid_t of the column and push it to the vector;
+    col_id = schema->GetColumnID(std::string(update->column));
+    columns.push_back(col_id);
+    tlist.emplace_back(col_id, update->value->Copy());
+  }
+
+  for (uint i = 0; i < schema->GetColumns().size(); i++) {
+    if (schema->GetColumns()[i].column_name !=
+        schema->GetColumns()[col_id].column_name)
+      dmlist.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
+  }
+
+  auto new_proj_info = new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
+  new_proj_info->transformParameterToConstantValueExpression(values);
+  project_info_.reset(new_proj_info);
 
   for(auto update_expr : *updates) {
 	  // The assignment parameter is an expression with left and right

@@ -88,6 +88,7 @@ TEST_F(DeleteTests, Deleting) {
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");
 
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (2,'hello_2');");
@@ -103,6 +104,7 @@ TEST_F(DeleteTests, Deleting) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");
 
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
@@ -118,6 +120,7 @@ TEST_F(DeleteTests, Deleting) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // Just Counting number of tuples in table
   LOG_INFO("Selecting SUM(*)");
@@ -150,6 +153,7 @@ TEST_F(DeleteTests, Deleting) {
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // Test Another delete. Should not find any tuple to be deleted
   LOG_INFO("Deleting a tuple...");
@@ -165,7 +169,21 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Executing plan...");
   status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");*/
+  LOG_INFO("Tuple deleted!");
+  ShowTable(DEFAULT_DB_NAME, "department_table");*/
+}
+
+void ShowTable(std:: string database_name, std::string table_name) {
+  auto table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(database_name, table_name);
+  std::unique_ptr<Statement> statement;
+  auto& peloton_parser = parser::Parser::GetInstance();
+  bridge::peloton_status status;
+  std::vector<Value> params;
+  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName().c_str()));
+  auto select_stmt = peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName().c_str());
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
 }
 
 }  // End test namespace
