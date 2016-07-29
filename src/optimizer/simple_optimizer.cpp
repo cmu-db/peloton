@@ -118,10 +118,28 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If there is no aggregate functions, just do a sequential scan
       if (!func_flag && group_by_columns.size() == 0) {
         LOG_INFO("No aggregate functions found.");
+
+        /*
+        // Create sequential scan plan
+        LOG_INFO("Creating a sequential scan plan");
+        std::vector<oid_t> column_ids = {};
+        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+            // new planner::SeqScanPlan(select_stmt));
+            new planner::SeqScanPlan(target_table, select_stmt->where_clause,
+                                     std::move(column_ids)));
+        LOG_INFO("Sequential scan plan created");
+        child_plan = std::move(seq_scan_node);
+        */
+
+        /*
         std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
             new planner::SeqScanPlan(
                 (parser::SelectStatement*)parse_tree.get()));
         child_plan = std::move(child_SelectPlan);
+        */
+
+        auto scan_node = CreateScanPlan(target_table, select_stmt);
+        child_plan = std::move(scan_node);
       }
       // Else, do aggregations on top of scan
       else {
@@ -357,11 +375,11 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       // Loop through the indexes to find to most proper one (if any)
       int max_columns = 0;
       int index_index = 0;
-      LOG_INFO("Do we have index?");
       for (auto& column_set : target_table->GetIndexColumns()) {
-        printf("A index:\n");
-        for (auto column_id : column_set) printf("column %d, ", column_id);
-        printf("\n");
+        LOG_INFO("Found a index in the table:");
+        for (auto column_id : column_set) {
+          LOG_INFO("column %d, ", column_id);
+        }
         int matched_columns = 0;
         for (auto column_id : predicate_column_ids)
           if (column_set.find(column_id) != column_set.end()) matched_columns++;
@@ -374,14 +392,17 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     }
   }
 
+  index_searchable = false;
   std::vector<oid_t> column_ids = {};
   if (!index_searchable) {
+    std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
+        new planner::SeqScanPlan(select_stmt));
+    return std::move(child_SelectPlan);
+
     // Create sequential scan plan
     LOG_INFO("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-        // new planner::SeqScanPlan(select_stmt));
-        new planner::SeqScanPlan(target_table, select_stmt->where_clause,
-                                 std::move(column_ids)));
+        new planner::SeqScanPlan(select_stmt));
     LOG_INFO("Sequential scan plan created");
     return std::move(seq_scan_node);
   }
@@ -449,7 +470,12 @@ void SimpleOptimizer::GetPredicateColumns(
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
       values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-          expression)->getValue());
+          expression->GetModifiableRight())->getValue());
+      LOG_INFO("Value Type: %d",
+               reinterpret_cast<expression::ConstantValueExpression*>(
+                   expression->GetModifiableRight())
+                   ->getValue()
+                   .GetValueType());
     }
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
