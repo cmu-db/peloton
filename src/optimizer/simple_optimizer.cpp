@@ -119,23 +119,16 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If there is no aggregate functions, just do a sequential scan
       if (!func_flag && group_by_columns.size() == 0) {
         LOG_INFO("No aggregate functions found.");
-        std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
-            new planner::SeqScanPlan(
-                (parser::SelectStatement*)parse_tree.get()));
+        auto child_SelectPlan = CreateScanPlan(target_table, select_stmt);
         child_plan = std::move(child_SelectPlan);
       }
       // Else, do aggregations on top of scan
       else {
         // Create sequential scan plan
-        LOG_INFO("Creating a sequential scan plan");
         target_table =
             catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
                 DEFAULT_DB_NAME, select_stmt->from_table->name);
-        std::vector<oid_t> column_ids = {};
-        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-            new planner::SeqScanPlan(
-                (parser::SelectStatement*)parse_tree.get()));
-        LOG_INFO("Sequential scan plan created");
+        auto scan_node = CreateScanPlan(target_table, select_stmt);
 
         // Prepare aggregate plan
         std::vector<catalog::Column> output_schema_columns;
@@ -281,30 +274,9 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 std::move(agg_terms), std::move(group_by_columns),
                 output_table_schema, agg_type));
 
-        child_agg_plan->AddChild(std::move(seq_scan_node));
+        child_agg_plan->AddChild(std::move(scan_node));
         child_plan = std::move(child_agg_plan);
       }
-
-      /*
-      LOG_INFO("Creating a ProjectInfo");
-      std::unique_ptr<const planner::ProjectInfo> proj_info(
-          new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
-
-      std::unique_ptr<const expression::AbstractExpression> predicate(having);
-      std::shared_ptr<const catalog::Schema> output_table_schema(
-          new catalog::Schema(output_schema_columns));
-      LOG_INFO("Output Schema Info: %s",
-               output_table_schema.get()->GetInfo().c_str());
-
-      std::unique_ptr<planner::AggregatePlan> child_agg_plan(
-          new planner::AggregatePlan(
-              std::move(proj_info), std::move(predicate),
-              std::move(agg_terms), std::move(group_by_columns),
-              output_table_schema, agg_type));
-
-      child_agg_plan->AddChild(std::move(scan_node));
-      child_plan = std::move(child_agg_plan);
-    }*/
 
     } break;
 
@@ -400,19 +372,14 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
     }
   }
 
-  index_searchable = false;
-  std::vector<oid_t> column_ids = {};
+  // index_searchable = false;
   if (!index_searchable) {
-    std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
-        new planner::SeqScanPlan(select_stmt));
-    return std::move(child_SelectPlan);
-
     // Create sequential scan plan
     LOG_INFO("Creating a sequential scan plan");
-    std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+    std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
         new planner::SeqScanPlan(select_stmt));
     LOG_INFO("Sequential scan plan created");
-    return std::move(seq_scan_node);
+    return std::move(child_SelectPlan);
   }
 
   // Create index scan plan
@@ -437,6 +404,31 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
       index, key_column_ids, expr_types, values, runtime_keys);
+
+  std::vector<oid_t> column_ids = {};
+  bool function_found = false;
+  for (auto elem : *select_stmt->select_list) {
+    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+      function_found = true;
+      break;
+    }
+  }
+  // Pass all columns
+  if (function_found || select_stmt->select_list->at(0)->GetExpressionType() ==
+                            EXPRESSION_TYPE_STAR) {
+    auto column_count = target_table->GetSchema()->GetColumnCount();
+    for (uint i = 0; i < column_count; i++) column_ids.push_back(i);
+  }
+  // Pass columns in select_list
+  else {
+    for (auto col : *select_stmt->select_list) {
+      LOG_INFO("ExpressionType: %s",
+               ExpressionTypeToString(col->GetExpressionType()).c_str());
+      column_ids.push_back(
+          target_table->GetSchema()->GetColumnID(col->getName()));
+    }
+  }
+  LOG_INFO("Index scan column size: %ld\n", column_ids.size());
 
   // Create plan node.
   std::unique_ptr<planner::IndexScanPlan> node(new planner::IndexScanPlan(
