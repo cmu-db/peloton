@@ -112,18 +112,15 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 	auto update = new parser::UpdateClause();
 	update->column = "name";
 	auto parameter_expr = new expression::ParameterValueExpression(0, val);
-	auto tuple_expr = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-	auto cmp_expr = new expression::ComparisonExpression<peloton::expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL,
-			tuple_expr, parameter_expr);
-	update->value = cmp_expr;
+	update->value = parameter_expr;
 	auto updates = new std::vector<parser::UpdateClause*>();
 	updates->push_back(update);
 	update_statement->updates = updates;
 
 	// id = $1
 	parameter_expr = new expression::ParameterValueExpression(1, val);
-	tuple_expr = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-	cmp_expr = new expression::ComparisonExpression<peloton::expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL,
+	auto tuple_expr = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+	auto cmp_expr = new expression::ComparisonExpression<peloton::expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL,
 			tuple_expr, parameter_expr);
 
 	update_statement->where = cmp_expr;
