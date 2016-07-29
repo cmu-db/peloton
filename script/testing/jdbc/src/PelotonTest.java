@@ -29,6 +29,7 @@ public class PelotonTest {
 
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT id FROM A WHERE id = 1";
+  private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data='YO'";
@@ -324,6 +325,14 @@ public class PelotonTest {
      conn.commit();
   }
 
+  public void SelectParam() throws SQLException {
+    PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
+    stmt.setInt(1, 4);
+    stmt.execute();
+    conn.commit();
+  }
+
+
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
@@ -340,8 +349,18 @@ public class PelotonTest {
     PelotonTest pt5 = new PelotonTest();
     pt5.ShowTable();
     pt5.Close();
-    
-    
+    PelotonTest pt6 = new PelotonTest();
+    pt6.Batch_Delete();
+    pt6.Close();
+    PelotonTest pt7 = new PelotonTest();
+    pt7.ShowTable();
+    pt7.Close();
+    PelotonTest pt8 = new PelotonTest();
+    pt8.SelectParam();
+    pt8.Close();
+    PelotonTest pt9 = new PelotonTest();
+    pt9.ShowTable();
+    pt9.Close();
     //pt.Insert(3, TABLE.A);
 //    pt.Insert(20);
     //pt.ReadModifyWrite(3);

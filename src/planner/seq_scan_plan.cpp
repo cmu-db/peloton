@@ -299,6 +299,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 
 void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
   expression::ExpressionUtil::ConvertParameterExpressions(where_, values);
+  SetPredicate(where_);
 }
 
 }  // namespace planner

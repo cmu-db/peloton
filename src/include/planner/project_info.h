@@ -65,7 +65,7 @@ class ProjectInfo {
 
   std::string Debug() const;
 
-//  void transformParameterToConstantValueExpression(std::vector<Value>* values);
+  void transformParameterToConstantValueExpression(std::vector<Value>* values);
 
   ~ProjectInfo();
 
