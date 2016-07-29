@@ -18,6 +18,10 @@ public class PelotonTest {
   private final String INSERT_A = "INSERT INTO A VALUES (1,'1961-06-16');";
   private final String INSERT_B = "INSERT INTO A VALUES (2,'Full Clip')";
 
+  private final String INSERT_A_1 = "INSERT INTO A VALUES (1,'1961-06-16');";
+  private final String INSERT_A_2 = "INSERT INTO A VALUES (2,'Full Clip')";
+  private final String DELETE_A = "DELETE * FROM A";
+
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
 
@@ -28,7 +32,8 @@ public class PelotonTest {
           "COMMIT;";
 
   private final String SEQSCAN = "SELECT * FROM A";
-  private final String INDEXSCAN = "SELECT id FROM A WHERE id = 1";
+  private final String INDEXSCAN = "SELECT * FROM A WHERE id = 1";
+  private final String INDEXSCAN_COLUMN = "SELECT data FROM A WHERE id = 1";
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
@@ -89,6 +94,25 @@ public class PelotonTest {
   stmt.execute(SEQSCAN);
 //    stmt.execute(DROP);
     System.out.println("Test db created.");
+  }
+
+  /**
+   * Test SeqScan and IndexScan
+   *
+   * @throws SQLException
+   */
+  public void Scan_Test() throws SQLException {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement();
+	stmt.execute(INSERT_A_1);
+	stmt.execute(INSERT_A_2);
+	stmt.execute(SEQSCAN);
+    stmt.execute(INDEXSCAN);
+    stmt.execute(INDEXSCAN_COLUMN);
+    stmt.execute(AGG_COUNT);
+    stmt.execute(AGG_COUNT_2);
+	stmt.execute(DELETE_A);
+    System.out.println("Scan test passed.");
   }
 
   /**
@@ -336,6 +360,7 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
+    pt.Scan_Test();
     pt.Close();
     PelotonTest pt2 = new PelotonTest();
     pt2.Batch_Insert();
