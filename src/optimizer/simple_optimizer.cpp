@@ -38,6 +38,7 @@
 #include "storage/data_table.h"
 
 #include "common/logger.h"
+#include "common/value_factory.h"
 
 #include <memory>
 
@@ -459,36 +460,56 @@ void SimpleOptimizer::GetPredicateColumns(
   LOG_INFO("Right Type --> %s",
            ExpressionTypeToString(expression->GetRight()->GetExpressionType())
                .c_str());
+
+  // We're only supporting comparing a column_ref to a constant/parameter for
+  // index scan right now
   if (expression->GetLeft()->GetExpressionType() ==
       EXPRESSION_TYPE_COLUMN_REF) {
-    if (expression->GetRight()->GetExpressionType() ==
-        EXPRESSION_TYPE_VALUE_CONSTANT) {
+    auto right_type = expression->GetRight()->GetExpressionType();
+    if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
+        right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = expression->GetLeft();
       std::string col_name(expr->getName());
       LOG_INFO("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
-      values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-          expression->GetModifiableRight())->getValue());
-      LOG_INFO("Value Type: %d",
-               reinterpret_cast<expression::ConstantValueExpression*>(
-                   expression->GetModifiableRight())
-                   ->getValue()
-                   .GetValueType());
+      if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
+        values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
+            expression->GetModifiableRight())->getValue());
+        LOG_INFO("Value Type: %d",
+                 reinterpret_cast<expression::ConstantValueExpression*>(
+                     expression->GetModifiableRight())
+                     ->getValue()
+                     .GetValueType());
+      } else
+        values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
+            reinterpret_cast<expression::ParameterValueExpression*>(
+                expression->GetModifiableRight())->getValueIdx())));
     }
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
-    if (expression->GetLeft()->GetExpressionType() ==
-        EXPRESSION_TYPE_VALUE_CONSTANT) {
+    auto left_type = expression->GetLeft()->GetExpressionType();
+    if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
+        left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = expression->GetRight();
       std::string col_name(expr->getName());
       LOG_INFO("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
-      values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-          expression)->getValue());
+      if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
+        values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
+            expression->GetModifiableRight())->getValue());
+        LOG_INFO("Value Type: %d",
+                 reinterpret_cast<expression::ConstantValueExpression*>(
+                     expression->GetModifiableLeft())
+                     ->getValue()
+                     .GetValueType());
+      } else
+        values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
+            reinterpret_cast<expression::ParameterValueExpression*>(
+                expression->GetModifiableLeft())->getValueIdx())));
     }
   } else {
     GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,

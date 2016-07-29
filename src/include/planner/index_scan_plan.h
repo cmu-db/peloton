@@ -99,7 +99,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value> *values) {};
+  void SetParameterValues(std::vector<Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
@@ -124,7 +124,8 @@ class IndexScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
-  const std::vector<Value> values_;
+  // LM: I removed a const keyword for binding purpose
+  std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 };
