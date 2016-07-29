@@ -56,26 +56,42 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
           DEFAULT_DB_NAME, select_node->from_table->name));
   SetTargetTable(target_table);
   ColumnIds().clear();
-
-  if (select_node->select_list->at(0)->GetExpressionType() !=
-      EXPRESSION_TYPE_STAR) {
-    for (auto col : *select_node->select_list) {
-      LOG_INFO("ExpressionType: %s",
-               ExpressionTypeToString(col->GetExpressionType()).c_str());
-      auto col_name = col->getName();
-      oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
-      SetColumnId(col_id);
-    }
-  } else {
-    auto allColumns = GetTable()->GetSchema()->GetColumns();
-    for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
+  bool function_found = false;
+  for(auto elem : *select_node->select_list) {
+	  if(elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+		  function_found = true;
+		  break;
+	  }
   }
-
+  // Pass all columns
+  if(function_found) {
+	  for(auto column : target_table->GetSchema()->GetColumns()) {
+		  oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
+		  SetColumnId(col_id);
+	  }
+  }
+  // Pass columns in select_list
+  else {
+	  if (select_node->select_list->at(0)->GetExpressionType() !=
+		  EXPRESSION_TYPE_STAR) {
+		for (auto col : *select_node->select_list) {
+		  LOG_INFO("ExpressionType: %s",
+				   ExpressionTypeToString(col->GetExpressionType()).c_str());
+		  auto col_name = col->getName();
+		  oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
+		  SetColumnId(col_id);
+		}
+	  } else {
+		auto allColumns = GetTable()->GetSchema()->GetColumns();
+		for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
+	  }
+  }
   if(select_node->where_clause != NULL){
     where_ = select_node->where_clause->Copy();
     ReplaceColumnExpressions(GetTable()->GetSchema(), where_);
     SetPredicate(where_->Copy());
   }
+
 }
 
 bool SeqScanPlan::SerializeTo(SerializeOutput &output) {

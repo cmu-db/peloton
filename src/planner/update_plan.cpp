@@ -29,15 +29,23 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
     : target_table_(table),
       project_info_(std::move(project_info)),
       updates(NULL),
-      where(NULL) {}
+      where(NULL) { }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
+  if(updates) {
+	updates->clear();
+  }
+  else {
+	updates = new std::vector<parser::UpdateClause *>();
+  }
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
-  updates = parse_tree->updates;
+  for(auto update_clause : *parse_tree->updates) {
+	  updates->push_back(update_clause->Copy());
+  }
   TargetList tlist;
   DirectMapList dmlist;
   oid_t col_id;
@@ -45,12 +53,8 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 
   std::vector<oid_t> columns;
   for (auto update : *updates) {
-
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
-
-    LOG_INFO("This is the column ID -------------------------> %d", col_id);
-
     columns.push_back(col_id);
     tlist.emplace_back(col_id, update->value->Copy());
   }
@@ -75,8 +79,23 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   LOG_INFO("Setting values for parameters in updates");
+  // First update project_info_ target list
+//  project_info_->transformParameterToConstantValueExpression(values);
+
   for(auto update_expr : *updates) {
-	  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value, values);
+	  // The assignment parameter is an expression with left and right
+	  if(update_expr->value->GetLeft() && update_expr->value->GetRight()) {
+		  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value, values);
+	  }
+	  // The assignment parameter is a single value
+	  else {
+		  auto param_expr = (expression::ParameterValueExpression*) update_expr->value;
+		  LOG_INFO("Setting parameter %u to value %s", param_expr->getValueIdx(),
+				  values->at(param_expr->getValueIdx()).GetInfo().c_str());
+		  auto value = new expression::ConstantValueExpression(values->at(param_expr->getValueIdx()));
+		  delete param_expr;
+		  update_expr->value = value;
+	  }
   }
   LOG_INFO("Setting values for parameters in where");
   expression::ExpressionUtil::ConvertParameterExpressions(where, values);

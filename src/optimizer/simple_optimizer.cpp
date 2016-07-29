@@ -82,6 +82,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     case STATEMENT_TYPE_SELECT: {
       LOG_INFO("Processing SELECT...");
       auto select_stmt = (parser::SelectStatement*)parse_tree.get();
+      LOG_INFO("SELECT Info: %s", select_stmt->GetInfo().c_str());
       int index = 0;
       auto agg_type = AGGREGATE_TYPE_PLAIN;  // default aggregator
       std::vector<oid_t> group_by_columns;
@@ -118,36 +119,23 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       // If there is no aggregate functions, just do a sequential scan
       if (!func_flag && group_by_columns.size() == 0) {
         LOG_INFO("No aggregate functions found.");
-
-        /*
-        // Create sequential scan plan
-        LOG_INFO("Creating a sequential scan plan");
-        std::vector<oid_t> column_ids = {};
-        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-            // new planner::SeqScanPlan(select_stmt));
-            new planner::SeqScanPlan(target_table, select_stmt->where_clause,
-                                     std::move(column_ids)));
-        LOG_INFO("Sequential scan plan created");
-        child_plan = std::move(seq_scan_node);
-        */
-
-        /*
         std::unique_ptr<planner::AbstractPlan> child_SelectPlan(
             new planner::SeqScanPlan(
                 (parser::SelectStatement*)parse_tree.get()));
         child_plan = std::move(child_SelectPlan);
-        */
-
-        auto scan_node = CreateScanPlan(target_table, select_stmt);
-        child_plan = std::move(scan_node);
       }
       // Else, do aggregations on top of scan
       else {
+        // Create sequential scan plan
+        LOG_INFO("Creating a sequential scan plan");
         target_table =
             catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
                 DEFAULT_DB_NAME, select_stmt->from_table->name);
-
-        auto scan_node = CreateScanPlan(target_table, select_stmt);
+        std::vector<oid_t> column_ids = {};
+        std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
+            new planner::SeqScanPlan(
+                (parser::SelectStatement*)parse_tree.get()));
+        LOG_INFO("Sequential scan plan created");
 
         // Prepare aggregate plan
         std::vector<catalog::Column> output_schema_columns;
@@ -223,8 +211,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_INFO("Creating an aggregate plan");
               planner::AggregatePlan::AggTerm agg_term(
                   EXPRESSION_TYPE_AGGREGATE_COUNT_STAR,
-                  nullptr,  // No predicate for star expression. Nothing
-                            // to
+                  nullptr,  // No predicate for star expression. Nothing to
                             // evaluate
                   func_expr->distinct);
               agg_terms.push_back(agg_term);
@@ -294,9 +281,30 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                 std::move(agg_terms), std::move(group_by_columns),
                 output_table_schema, agg_type));
 
-        child_agg_plan->AddChild(std::move(scan_node));
+        child_agg_plan->AddChild(std::move(seq_scan_node));
         child_plan = std::move(child_agg_plan);
       }
+
+      /*
+      LOG_INFO("Creating a ProjectInfo");
+      std::unique_ptr<const planner::ProjectInfo> proj_info(
+          new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
+
+      std::unique_ptr<const expression::AbstractExpression> predicate(having);
+      std::shared_ptr<const catalog::Schema> output_table_schema(
+          new catalog::Schema(output_schema_columns));
+      LOG_INFO("Output Schema Info: %s",
+               output_table_schema.get()->GetInfo().c_str());
+
+      std::unique_ptr<planner::AggregatePlan> child_agg_plan(
+          new planner::AggregatePlan(
+              std::move(proj_info), std::move(predicate),
+              std::move(agg_terms), std::move(group_by_columns),
+              output_table_schema, agg_type));
+
+      child_agg_plan->AddChild(std::move(scan_node));
+      child_plan = std::move(child_agg_plan);
+    }*/
 
     } break;
 

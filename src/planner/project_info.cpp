@@ -14,6 +14,7 @@
 #include "planner/project_info.h"
 #include "executor/executor_context.h"
 #include "storage/rollback_segment.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace planner {
@@ -92,6 +93,24 @@ std::string ProjectInfo::Debug() const {
 
   return (buffer.str());
 }
+
+/*void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values) {
+  for(auto target : target_list_) {
+	  // The assignment parameter is an expression with left and right
+	  if(target.second->GetLeft() && target.second->GetRight()) {
+		  expression::ExpressionUtil::ConvertParameterExpressions(target.second, values);
+	  }
+	  // The assignment parameter is a single value
+	  else {
+		  auto param_expr = (expression::ParameterValueExpression*) target.second;
+		  LOG_INFO("Setting parameter %u to value %s", param_expr->getValueIdx(),
+				  values->at(param_expr->getValueIdx()).GetInfo().c_str());
+		  auto value = new expression::ConstantValueExpression(values->at(param_expr->getValueIdx()));
+		  delete param_expr;
+		  target.second = value;
+	  }
+  }
+}*/
 
 } /* namespace planner */
 } /* namespace peloton */
