@@ -125,6 +125,7 @@ bool IndexScanExecutor::DExecute() {
       result_itr_++;
       continue;
     } else {
+      LOG_INFO("Information %s", result_[result_itr_]->GetInfo().c_str());
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
