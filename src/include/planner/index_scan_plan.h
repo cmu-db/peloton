@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -70,14 +69,7 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc)
-      : AbstractScan(table, predicate, column_ids),
-        index_(index_scan_desc.index),
-        column_ids_(column_ids),
-        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-        expr_types_(std::move(index_scan_desc.expr_types)),
-        values_(std::move(index_scan_desc.values)),
-        runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
+                const IndexScanDesc &index_scan_desc);
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {
@@ -107,7 +99,7 @@ class IndexScanPlan : public AbstractScan {
 
   const std::string GetInfo() const { return "IndexScan"; }
 
-  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+  void SetParameterValues(std::vector<Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
@@ -132,7 +124,8 @@ class IndexScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
-  const std::vector<Value> values_;
+  // LM: I removed a const keyword for binding purpose
+  std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 };

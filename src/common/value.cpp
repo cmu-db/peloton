@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/value.h"
 #include "common/logger.h"
 #include "common/macros.h"
@@ -311,10 +310,9 @@ ValueType Value::s_intPromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DECIMAL,  // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DECIMAL,  // 22 decimal
+    VALUE_TYPE_INVALID,                      // 23 boolean
+    VALUE_TYPE_INVALID,                      // 24 address
 };
 
 // for x<op>y where x is a double
@@ -336,10 +334,9 @@ ValueType Value::s_doublePromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DOUBLE,   // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DOUBLE,  // 22 decimal
+    VALUE_TYPE_INVALID,                     // 23 boolean
+    VALUE_TYPE_INVALID,                     // 24 address
 };
 
 // for x<op>y where x is a decimal
@@ -361,10 +358,9 @@ ValueType Value::s_decimalPromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DECIMAL,  // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DECIMAL,  // 22 decimal
+    VALUE_TYPE_INVALID,                      // 23 boolean
+    VALUE_TYPE_INVALID,                      // 24 address
 };
 
 TTInt Value::s_maxDecimalValue(
@@ -411,6 +407,7 @@ const std::string Value::GetInfo() const {
       break;
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
       buffer << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
@@ -615,8 +612,8 @@ struct ValueList {
 
   void DeserializeValues(SerializeInputBE &input, VarlenPool *varlen_pool) {
     for (size_t ii = 0; ii < m_length; ++ii) {
-      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input,
-                                                     varlen_pool);
+      m_values[ii]
+          .DeserializeFromAllocateForStorage(m_elementType, input, varlen_pool);
     }
   }
 
@@ -955,7 +952,8 @@ int64_t Value::parseTimestampString(const std::string &str) {
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
         (unsigned short int)day, hour, minute, second);
-  } catch (const std::out_of_range &bad) {
+  }
+  catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);
   }
   result += (micro - 1000000);
