@@ -18,6 +18,10 @@ public class PelotonTest {
   private final String INSERT_A = "INSERT INTO A VALUES (1,'1961-06-16');";
   private final String INSERT_B = "INSERT INTO A VALUES (2,'Full Clip')";
 
+  private final String INSERT_A_1 = "INSERT INTO A VALUES (1,'1961-06-16');";
+  private final String INSERT_A_2 = "INSERT INTO A VALUES (2,'Full Clip')";
+  private final String DELETE_A = "DELETE * FROM A";
+
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
 
@@ -28,7 +32,8 @@ public class PelotonTest {
           "COMMIT;";
 
   private final String SEQSCAN = "SELECT * FROM A";
-  private final String INDEXSCAN = "SELECT id FROM A WHERE id = 1";
+  private final String INDEXSCAN = "SELECT * FROM A WHERE id = 1";
+  private final String INDEXSCAN_COLUMN = "SELECT data FROM A WHERE id = 1";
   private final String INDEXSCAN_PARAM = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
@@ -89,6 +94,30 @@ public class PelotonTest {
   stmt.execute(SEQSCAN);
 //    stmt.execute(DROP);
     System.out.println("Test db created.");
+  }
+
+  /**
+   * Test SeqScan and IndexScan
+   *
+   * @throws SQLException
+   */
+  public void Scan_Test() throws SQLException {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement();
+	stmt.execute(INSERT_A_1);
+	stmt.execute(INSERT_A_2);
+	stmt.execute(SEQSCAN);
+    stmt.execute(INDEXSCAN);
+    stmt.execute(INDEXSCAN_COLUMN);
+    stmt.execute(AGG_COUNT);
+    stmt.execute(AGG_COUNT_2);
+
+    for (int i = 1; i < 3; i++)
+        IndexScanParam(i);
+
+	stmt.execute(DELETE_A);
+
+    System.out.println("Scan test passed.");
   }
 
   /**
@@ -178,16 +207,19 @@ public class PelotonTest {
    * @param i the param for the equal qualifier
    * @throws SQLException
    */
-  public void IndexScan(int i) throws SQLException {
+  public void IndexScanParam(int i) throws SQLException {
     System.out.println("\nIndexScan Test: ? = " + i);
-    System.out.println("Query: " + INDEXSCAN);
-    PreparedStatement stmt = conn.prepareStatement(INDEXSCAN);
+    System.out.println("Query: " + INDEXSCAN_PARAM);
+    PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
+    conn.setAutoCommit(false);
     stmt.setInt(1, i);
-    ResultSet r = stmt.executeQuery();
-    while (r.next()) {
-      System.out.println("IndexScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
-    }
-    r.close();
+    stmt.execute();
+    conn.commit();
+    //ResultSet r = stmt.executeQuery();
+    //while (r.next()) {
+    //  System.out.println("IndexScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
+    //}
+    //r.close();
   }
 
   /**
@@ -327,15 +359,16 @@ public class PelotonTest {
 
   public void SelectParam() throws SQLException {
     PreparedStatement stmt = conn.prepareStatement(INDEXSCAN_PARAM);
+    conn.setAutoCommit(false);
     stmt.setInt(1, 4);
     stmt.execute();
     conn.commit();
   }
 
-
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
+    pt.Scan_Test();
     pt.Close();
     PelotonTest pt2 = new PelotonTest();
     pt2.Batch_Insert();

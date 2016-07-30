@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/index_scan_executor.h"
 
 #include <memory>
@@ -126,6 +125,7 @@ bool IndexScanExecutor::DExecute() {
       result_itr_++;
       continue;
     } else {
+      LOG_INFO("Information %s", result_[result_itr_]->GetInfo().c_str());
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
@@ -153,7 +153,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   if (0 == column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, key_column_ids_ , expr_types_,
+    index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
@@ -198,8 +198,8 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
           if (eval == true) {
-            visible_tuples[tuple_location.block].push_back(
-                tuple_location.offset);
+            visible_tuples[tuple_location.block]
+                .push_back(tuple_location.offset);
 
             auto res = transaction_manager.PerformRead(tuple_location);
             if (!res) {
@@ -269,14 +269,15 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     }
   }
 
-// Add all garbage tuples to GC manager
-//  if (garbage_tuples.size() != 0) {
-//    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
-//    for (auto garbage : garbage_tuples) {
-//      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
-//          table_->GetOid(), garbage.block, garbage.offset, garbage_timestamp);
-//    }
-//  }
+  // Add all garbage tuples to GC manager
+  //  if (garbage_tuples.size() != 0) {
+  //    cid_t garbage_timestamp = transaction_manager.GetNextCommitId();
+  //    for (auto garbage : garbage_tuples) {
+  //      gc::GCManagerFactory::GetInstance().RecycleTupleSlot(
+  //          table_->GetOid(), garbage.block, garbage.offset,
+  // garbage_timestamp);
+  //    }
+  //  }
 
   // Construct a logical tile for each block
   for (auto tuples : visible_tuples) {
@@ -322,13 +323,12 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
 
-
   if (tuple_location_ptrs.size() == 0) {
     return false;
   }
 
   LOG_TRACE("Tuple locations: %lu", tuple_location_ptrs.size());
-  
+
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
