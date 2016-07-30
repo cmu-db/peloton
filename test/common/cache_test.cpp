@@ -15,6 +15,7 @@
 
 #include "common/cache.h"
 #include "common/logger.h"
+#include "common/statement.h"
 #include "planner/mock_plan.h"
 
 #include <unordered_set>
@@ -80,7 +81,16 @@ TEST_F(CacheTest, Insert) {
 
   EXPECT_EQ(CACHE_SIZE, cache.size());
   EXPECT_EQ(false, cache.empty());
+
+  // Additional insert
+  peloton::Cache<std::string, Statement> statement_cache_;
+  std::string statement_name = "S_1";
+  std::shared_ptr<Statement> statement;
+  auto entry = std::make_pair(statement_name, statement);
+  statement_cache_.insert(entry);
+  EXPECT_EQ(statement_cache_.size(), 1);
 }
+
 
 /**
  * Test insert operation with default threshold

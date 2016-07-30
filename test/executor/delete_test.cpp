@@ -40,6 +40,20 @@ namespace test {
 
 class DeleteTests : public PelotonTest {};
 
+void ShowTable(std:: string database_name, std::string table_name) {
+  auto table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(database_name, table_name);
+  std::unique_ptr<Statement> statement;
+  auto& peloton_parser = parser::Parser::GetInstance();
+  bridge::peloton_status status;
+  std::vector<Value> params;
+  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
+  auto select_stmt = peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+}
+
+
 TEST_F(DeleteTests, Deleting) {
 
   LOG_INFO("Bootstrapping...");
@@ -123,11 +137,11 @@ TEST_F(DeleteTests, Deleting) {
   ShowTable(DEFAULT_DB_NAME, "department_table");
 
   // Just Counting number of tuples in table
-  LOG_INFO("Selecting SUM(*)");
-  LOG_INFO("Query: SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';");
-  statement.reset(new Statement("SUM", "SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';"));
+  LOG_INFO("Selecting MAX(dept_id)");
+  LOG_INFO("Query: SELECT MAX(dept_id) FROM department_table;");
+  statement.reset(new Statement("MAX", "SELECT MAX(dept_id) FROM department_table;"));
   LOG_INFO("Building parse tree...");
-  auto select_stmt = peloton_parser.BuildParseTree("SELECT SUM(dept_id) FROM department_table WHERE dept_name = 'hello_2';");
+  auto select_stmt = peloton_parser.BuildParseTree("SELECT MAX(dept_id) FROM department_table;");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
@@ -173,18 +187,7 @@ TEST_F(DeleteTests, Deleting) {
   ShowTable(DEFAULT_DB_NAME, "department_table");*/
 }
 
-void ShowTable(std:: string database_name, std::string table_name) {
-  auto table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(database_name, table_name);
-  std::unique_ptr<Statement> statement;
-  auto& peloton_parser = parser::Parser::GetInstance();
-  bridge::peloton_status status;
-  std::vector<Value> params;
-  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName().c_str()));
-  auto select_stmt = peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName().c_str());
-  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
-}
+
 
 }  // End test namespace
 }  // End peloton namespace

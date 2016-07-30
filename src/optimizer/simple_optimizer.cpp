@@ -216,6 +216,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
 					    output_schema_columns.push_back(column);
 					}
+					// We should add support for expressions inside a function. e.g. SUM(col1 + col3)
 					else {
 						LOG_INFO("Unrecognized type in function expression!");
 					}
