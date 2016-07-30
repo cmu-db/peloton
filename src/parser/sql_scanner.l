@@ -218,8 +218,10 @@ TO			TOKEN(TO)
 }
 
 [A-Za-z][A-Za-z0-9_]* {
-	yylval->sval = strdup(yytext);
-	return SQL_IDENTIFIER;
+    for (int i = 0; yytext[i]; i++)
+        yytext[i] = tolower(yytext[i]);
+    yylval->sval = strdup(yytext);
+    return SQL_IDENTIFIER;
 }
 
 $[0-9]* {

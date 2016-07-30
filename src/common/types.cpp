@@ -509,28 +509,30 @@ std::string ExpressionTypeToString(ExpressionType type) {
 }
 
 ExpressionType ParserExpressionNameToExpressionType (const std::string& str) {
-	if(str == "COUNT") {
+	std::string lower_str = str;
+	std::transform(lower_str.begin(), lower_str.end(), lower_str.begin(), ::tolower);
+	if(str == "count") {
 		return EXPRESSION_TYPE_AGGREGATE_COUNT;
 	}
-	else if(str == "SUM") {
+	else if(str == "sum") {
 		return EXPRESSION_TYPE_AGGREGATE_SUM;
 	}
-	else if(str == "AVG") {
+	else if(str == "avg") {
 		return EXPRESSION_TYPE_AGGREGATE_AVG;
 	}
-	else if(str == "MAX") {
+	else if(str == "max") {
 		return EXPRESSION_TYPE_AGGREGATE_MAX;
 	}
-	else if(str == "MIN") {
+	else if(str == "min") {
 		return EXPRESSION_TYPE_AGGREGATE_MIN;
 	}
-	else if(str == "APPROX_COUNT_DISTINCT") {
+	else if(str == "approx_count_distinct") {
 		return EXPRESSION_TYPE_AGGREGATE_APPROX_COUNT_DISTINCT;
 	}
-	else if(str == "AGGREGATE_HYPERLOGLOGS_TO_CARD") {
+	else if(str == "aggregate_hyperloglogs_to_card") {
 		return EXPRESSION_TYPE_AGGREGATE_HYPERLOGLOGS_TO_CARD;
 	}
-	else if(str == "VALS_TO_HYPERLOGLOG") {
+	else if(str == "vals_to_hyperloglog") {
 		return EXPRESSION_TYPE_AGGREGATE_VALS_TO_HYPERLOGLOG;
 	}
 	return EXPRESSION_TYPE_INVALID;

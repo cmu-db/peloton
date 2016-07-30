@@ -63,33 +63,17 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::find(const Key &key) {
 template <class Key, class Value>
 typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     const Entry &entry) {
-  PL_ASSERT(list_.size() == map_.size());
-  PL_ASSERT(list_.size() <= this->capacity_);
-
+  assert(list_.size() == map_.size());
+  assert(list_.size() <= this->capacity_);
   auto map_itr = map_.find(entry.first);
   auto cache_itr = iterator(map_itr);
 
   if (map_itr == map_.end()) {
-    auto count_itr = counts_.find(entry.first);
-    if (insert_threshold_ > 1) {
-      if (count_itr == counts_.end()) {
-        counts_.emplace(entry.first, 1);
-        return map_.end();
-      } else {
-        size_t count = count_itr->second;
-        if (count + 1 >= insert_threshold_) {
-          counts_.erase(entry.first);
-        } else {
-          count_itr->second += 1;
-          return map_.end();
-        }
-      }
-    }
     /* new key */
     list_.push_front(entry.first);
     auto ret =
         map_.emplace(entry.first, std::make_pair(entry.second, list_.begin()));
-    PL_ASSERT(ret.second); /* should not fail */
+    assert(ret.second); /* should not fail */
     cache_itr = iterator(ret.first);
     while (map_.size() > this->capacity_) {
       auto deleted = list_.back();
@@ -100,8 +84,8 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     list_.splice(list_.begin(), list_, map_itr->second.second);
     map_itr->second = std::make_pair(entry.second, list_.begin());
   }
-  PL_ASSERT(list_.size() == map_.size());
-  PL_ASSERT(list_.size() <= capacity_);
+  assert(list_.size() == map_.size());
+  assert(list_.size() <= capacity_);
   return cache_itr;
 }
 

@@ -60,7 +60,6 @@ Result Catalog::CreateDatabase(std::string database_name) {
 		  database_id,
 		  database_name);
   catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
-//  databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->InsertTuple(tuple.get());
   LOG_INFO("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
 }

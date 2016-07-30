@@ -338,6 +338,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read number of params
   int num_params = PacketGetInt(pkt, 2);
+  LOG_INFO("NumParams: %d", num_params);
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
@@ -359,6 +360,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
         statement_name.c_str());
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
+    LOG_INFO("CACHE SIZE: %d", (int)statement_cache_.size());
   }
 
   // Send Parse complete response
@@ -371,7 +373,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
+  LOG_INFO("Portal name: %s", portal_name.c_str());
   GetStringToken(pkt, statement_name);
+  LOG_INFO("Prep stmt name: %s", statement_name.c_str());
 
   if (skipped_stmt_) {
     // send bind complete
@@ -508,7 +512,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
   // Construct a portal
 
-  LOG_INFO("Size of param values vecotr ----------------------> %lu" , param_values->size());
+  LOG_INFO("Size of param values vector ----------------------> %lu" , param_values->size());
 
   if(param_values->size() > 0){
     
