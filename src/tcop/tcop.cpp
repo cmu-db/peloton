@@ -24,6 +24,8 @@
 #include "executor/plan_executor.h"
 #include "catalog/bootstrapper.h"
 
+#include <boost/algorithm/string.hpp>
+
 namespace peloton {
 namespace tcop {
 
@@ -94,6 +96,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   std::shared_ptr<Statement> statement;
 
   LOG_INFO("Prepare Statement %s", query_string.c_str());
+	
+  std::vector<std::string> query_tokens;
+    boost::split(query_tokens, query_string, boost::is_any_of(" "),
+        boost::token_compress_on);
 
   statement.reset(new Statement(statement_name, query_string));
 
@@ -102,6 +108,60 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
+  
+  if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
+      LOG_INFO("******* SELECT STATEMENT DETECTED *******");
+
+      auto select_stmt = (parser::SelectStatement*)sql_stmt.get();
+
+      std::vector<FieldInfoType> t_desc;
+
+      auto target_table = static_cast<storage::DataTable *>(
+        catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+            DEFAULT_DB_NAME, select_stmt->from_table->name));
+    
+      auto columns = target_table->GetSchema()->GetColumns();
+
+      if(select_stmt->select_list->at(0)->GetExpressionType() == EXPRESSION_TYPE_STAR){
+    
+         for(oid_t i = 0; i < columns.size(); ++i){
+    
+          if(columns[i].column_type == VALUE_TYPE_INTEGER){
+            LOG_INFO("******* INTEGER *******");
+            t_desc.push_back(std::make_tuple(columns[i].column_name , 23 , 4));
+          }
+    
+          else if(columns[i].column_type == VALUE_TYPE_DOUBLE){
+            LOG_INFO("******* FLOAT *******");
+            t_desc.push_back(std::make_tuple(columns[i].column_name , 701 , 8));
+          }
+    
+          else if(columns[i].column_type == VALUE_TYPE_VARCHAR){
+            LOG_INFO("******* TEXT *******");
+            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
+          }
+    
+          else{
+            LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
+            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
+          }
+         }
+      }
+      else if(query_tokens[1].find("COUNT(") != std::string::npos){
+        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));
+        LOG_INFO("query_tokens is ----------------> %s" , query_tokens[1].c_str());  
+      }
+      else if(query_tokens[1].find("MAX(") != std::string::npos){
+        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));  
+      }
+      else if(query_tokens[1].find("MIN(") != std::string::npos){
+        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));  
+      }
+      else if(query_tokens[1].find("AVG(") != std::string::npos){
+        t_desc.push_back(make_tuple(query_tokens[1] , 701 , 8));  
+      }
+      statement->SetTupleDescriptor(t_desc);  
+    }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Statement Prepared!");
