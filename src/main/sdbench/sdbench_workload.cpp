@@ -21,8 +21,9 @@
 #include <algorithm>
 #include <chrono>
 
-#include "expression/expression_util.h"
-#include "brain/clusterer.h"
+#include "brain/sample.h"
+#include "brain/layout_tuner.h"
+#include "brain/index_tuner.h"
 
 #include "benchmark/sdbench/sdbench_workload.h"
 #include "benchmark/sdbench/sdbench_loader.h"
@@ -56,8 +57,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-
-#include "index/index_factory.h"
+#include "expression/expression_util.h"
 
 #include "planner/abstract_plan.h"
 #include "planner/aggregate_plan.h"
@@ -84,97 +84,6 @@ oid_t sdbench_tuple_counter = -1000000;
 
 std::vector<oid_t> column_counts = {50, 500};
 
-expression::AbstractExpression *CreatePredicate(const int tuple_start_offset,
-                                                const int tuple_end_offset) {
-  // ATTR0 >= LOWER_BOUND && < UPPER_BOUND
-
-  // First, create tuple value expression.
-  expression::AbstractExpression *tuple_value_expr_left =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
-
-  // Second, create constant value expression.
-  Value constant_value_left = ValueFactory::GetIntegerValue(tuple_start_offset);
-
-  expression::AbstractExpression *constant_value_expr_left =
-      expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
-
-  // Finally, link them together using an greater than expression.
-  expression::AbstractExpression *predicate_left =
-      expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
-          tuple_value_expr_left,
-          constant_value_expr_left);
-
-  expression::AbstractExpression *tuple_value_expr_right =
-      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER, 0, 0);
-
-  Value constant_value_right = ValueFactory::GetIntegerValue(tuple_end_offset);
-
-  expression::AbstractExpression *constant_value_expr_right =
-      expression::ExpressionUtil::ConstantValueFactory(constant_value_right);
-
-  expression::AbstractExpression *predicate_right =
-      expression::ExpressionUtil::ComparisonFactory(
-          EXPRESSION_TYPE_COMPARE_LESSTHAN,
-          tuple_value_expr_right,
-          constant_value_expr_right);
-
-  expression::AbstractExpression *predicate =
-      expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                                     predicate_left,
-                                                     predicate_right);
-
-  return predicate;
-}
-
-void CreateIndexScanPredicate(std::vector<oid_t>& key_column_ids,
-                              std::vector<ExpressionType>& expr_types,
-                              std::vector<Value>& values,
-                              const int tuple_start_offset,
-                              const int tuple_end_offset) {
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
-  values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
-
-  key_column_ids.push_back(0);
-  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
-  values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
-}
-
-std::ofstream out("outputfile.summary");
-
-oid_t query_itr;
-
-static void WriteOutput(double duration) {
-  // Convert to ms
-  duration *= 1000;
-
-  LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%d %d %.3lf %.3lf %.1lf %d %d %d :: %.1lf ms",
-           state.layout_mode,
-           state.operator_type,
-           state.selectivity,
-           state.projectivity,
-           state.write_ratio,
-           state.scale_factor,
-           state.column_count,
-           state.tuples_per_tilegroup,
-           duration);
-
-  out << state.layout_mode << " ";
-  out << state.operator_type << " ";
-  out << state.selectivity << " ";
-  out << state.projectivity << " ";
-  out << query_itr << " ";
-  out << state.write_ratio << " ";
-  out << state.scale_factor << " ";
-  out << state.column_count << " ";
-  out << state.tuples_per_tilegroup << " ";
-  out << duration << "\n";
-
-  out.flush();
-}
-
 static int GetLowerBound() {
   int tuple_count = state.scale_factor * state.tuples_per_tilegroup;
   int predicate_offset = 0.1 * tuple_count;
@@ -194,15 +103,144 @@ static int GetUpperBound() {
   return upper_bound;
 }
 
+expression::AbstractExpression *CreateSimpleScanPredicate(oid_t key_attr,
+                                                          ExpressionType expression_type,
+                                                          oid_t constant){
+
+  // First, create tuple value expression.
+  oid_t left_tuple_idx = 0;
+  expression::AbstractExpression *tuple_value_expr_left =
+      expression::ExpressionUtil::TupleValueFactory(VALUE_TYPE_INTEGER,
+                                                    left_tuple_idx,
+                                                    key_attr);
+
+  // Second, create constant value expression.
+  Value constant_value_left = ValueFactory::GetIntegerValue(constant);
+
+  expression::AbstractExpression *constant_value_expr_left =
+      expression::ExpressionUtil::ConstantValueFactory(constant_value_left);
+
+  // Finally, link them together using an greater than expression.
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ComparisonFactory(
+          expression_type,
+          tuple_value_expr_left,
+          constant_value_expr_left);
+
+  return predicate;
+}
+
+expression::AbstractExpression *CreateScanPredicate(std::vector<oid_t> key_attrs) {
+
+  const int tuple_start_offset = GetLowerBound();
+  const int tuple_end_offset = GetUpperBound();
+
+  LOG_TRACE("Lower bound : %d", tuple_start_offset);
+  LOG_TRACE("Upper bound : %d", tuple_end_offset);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Go over all key_attrs
+  for(auto key_attr : key_attrs) {
+
+    // ATTR >= LOWER_BOUND && < UPPER_BOUND
+
+    auto left_predicate = CreateSimpleScanPredicate(key_attr,
+                                                    EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
+                                                    tuple_start_offset);
+
+    auto right_predicate = CreateSimpleScanPredicate(key_attr,
+                                                     EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                                                     tuple_end_offset);
+
+    expression::AbstractExpression *attr_predicate =
+        expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                       left_predicate,
+                                                       right_predicate);
+
+    // Build complex predicate
+    if(predicate == nullptr){
+      predicate = attr_predicate;
+    }
+    else {
+      // Join predicate with given attribute predicate
+      predicate =  expression::ExpressionUtil::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                                  predicate,
+                                                                  attr_predicate);
+    }
+
+  }
+
+  return predicate;
+}
+
+void CreateIndexScanPredicate(std::vector<oid_t> key_attrs,
+                              std::vector<oid_t>& key_column_ids,
+                              std::vector<ExpressionType>& expr_types,
+                              std::vector<Value>& values) {
+  const int tuple_start_offset = GetLowerBound();
+  const int tuple_end_offset = GetUpperBound();
+
+  // Go over all key_attrs
+  for(auto key_attr : key_attrs) {
+
+    key_column_ids.push_back(key_attr);
+    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO);
+    values.push_back(ValueFactory::GetIntegerValue(tuple_start_offset));
+
+    key_column_ids.push_back(key_attr);
+    expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LESSTHAN);
+    values.push_back(ValueFactory::GetIntegerValue(tuple_end_offset));
+
+  }
+
+}
+
+std::ofstream out("outputfile.summary");
+
+oid_t query_itr;
+
+static void WriteOutput(double duration) {
+  // Convert to ms
+  duration *= 1000;
+
+  if(rand() % 20 == 0) {
+    LOG_INFO("----------------------------------------------------------");
+    LOG_INFO("%d %d %.3lf %.3lf %u %.1lf %d %d %d :: %.1lf ms",
+             state.layout_mode,
+             state.operator_type,
+             state.selectivity,
+             state.projectivity,
+             query_itr,
+             state.write_ratio,
+             state.scale_factor,
+             state.column_count,
+             state.tuples_per_tilegroup,
+             duration);
+  }
+
+  out << state.layout_mode << " ";
+  out << state.operator_type << " ";
+  out << state.selectivity << " ";
+  out << state.projectivity << " ";
+  out << query_itr << " ";
+  out << state.write_ratio << " ";
+  out << state.scale_factor << " ";
+  out << state.column_count << " ";
+  out << state.tuples_per_tilegroup << " ";
+  out << duration << "\n";
+
+  out.flush();
+}
+
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
-                        std::vector<double> columns_accessed, double cost) {
+                        brain::SampleType sample_type,
+                        std::vector<double> index_columns_accessed,
+                        double selectivity) {
   Timer<> timer;
 
   auto txn_count = state.transactions;
   bool status = false;
-
-  // Construct sample
-  brain::Sample sample(columns_accessed, cost);
 
   // Run these many transactions
   for (oid_t txn_itr = 0; txn_itr < txn_count; txn_itr++) {
@@ -234,14 +272,18 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
     // Emit time
     timer.Stop();
-    auto time_per_transaction = timer.GetDuration();
+    auto duration = timer.GetDuration();
+
+    WriteOutput(duration);
+
+    // Construct sample
+    brain::Sample index_sample(index_columns_accessed,
+                               duration,
+                               sample_type,
+                               selectivity);
 
     // Record sample
-    if (state.fsm == true && cost != 0) {
-      sdbench_table->RecordSample(sample);
-    }
-
-    WriteOutput(time_per_transaction);
+    sdbench_table->RecordIndexSample(index_sample);
   }
 
 }
@@ -265,13 +307,51 @@ std::vector<double> GetColumnsAccessed(const std::vector<oid_t> &column_ids) {
   return columns_accessed;
 }
 
+std::shared_ptr<index::Index> PickIndex(storage::DataTable* table,
+                                        std::vector<oid_t> query_attrs){
+
+  // Construct set
+  std::set<oid_t> query_attrs_set(query_attrs.begin(), query_attrs.end());
+
+  oid_t index_count = table->GetIndexCount();
+
+  // Go over all indices
+  bool query_index_found = false;
+  oid_t index_itr = 0;
+  for(index_itr = 0; index_itr < index_count; index_itr++){
+    auto index_attrs = table->GetIndexAttrs(index_itr);
+
+    UNUSED_ATTRIBUTE auto index_metadata = table->GetIndex(index_itr)->GetMetadata();
+    LOG_TRACE("Available Index :: %s", index_metadata->GetInfo().c_str());
+
+    // Some attribute did not match
+    if(index_attrs != query_attrs_set) {
+      continue;
+    }
+
+    // Exact match
+    query_index_found = true;
+    break;
+
+    // update index count
+    index_count = table->GetIndexCount();
+  }
+
+  std::shared_ptr<index::Index> index;
+
+  // Found index
+  if(query_index_found == true) {
+    LOG_TRACE("Found available Index");
+    index = table->GetIndex(index_itr);
+  }
+  else {
+    LOG_TRACE("Did not find available index");
+  }
+
+  return index;
+}
+
 void RunDirectTest() {
-  const int lower_bound = GetLowerBound();
-  const int upper_bound = GetUpperBound();
-
-  LOG_TRACE("Lower bound : %d", lower_bound);
-  LOG_TRACE("Upper bound : %d", upper_bound);
-
   const bool is_inlined = true;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -292,42 +372,60 @@ void RunDirectTest() {
     column_ids.push_back(sdbench_column_ids[col_itr]);
   }
 
-  // Create and set up seq scan executor
-  auto predicate = CreatePredicate(lower_bound, upper_bound);
+  std::vector<oid_t> tuple_key_attrs;
+  std::vector<oid_t> index_key_attrs;
 
-  auto index_count = sdbench_table->GetIndexCount();
-  index::Index *index = nullptr;
+  auto rand_sample = rand() % 10;
+  if(rand_sample <= 3) {
+    tuple_key_attrs = {3, 4};
+    index_key_attrs = {0, 1};
+  }
+  else if(rand_sample <= 6){
+    tuple_key_attrs = {3, 6};
+    index_key_attrs = {0, 1};
+  }
+  else if(rand_sample <= 8){
+    tuple_key_attrs = {0, 1};
+    index_key_attrs = {0, 1};
+  }
+  else {
+    tuple_key_attrs = {2};
+    index_key_attrs = {0};
+  }
+
+  UNUSED_ATTRIBUTE std::stringstream os;
+  os << "Direct :: ";
+  for(auto tuple_key_attr : tuple_key_attrs){
+    os << tuple_key_attr << " ";
+  }
+  LOG_INFO("%s", os.str().c_str());
+
+  // Create and set up seq scan executor
+  auto predicate = CreateScanPredicate(tuple_key_attrs);
+
   planner::IndexScanPlan::IndexScanDesc index_scan_desc;
 
-  // Check if ad-hoc index exists
-  if(index_count != 0) {
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
 
-    index = sdbench_table->GetIndex(0);
+  // Create index scan predicate
+  CreateIndexScanPredicate(index_key_attrs, key_column_ids, expr_types, values);
 
-    std::vector<oid_t> key_column_ids;
-    std::vector<ExpressionType> expr_types;
-    std::vector<Value> values;
-    std::vector<expression::AbstractExpression *> runtime_keys;
+  // Determine hybrid scan type
+  auto hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
 
-    CreateIndexScanPredicate(key_column_ids, expr_types, values,
-                             lower_bound, upper_bound);
+  // Pick index
+  auto index = PickIndex(sdbench_table.get(), tuple_key_attrs);
 
+  if(index != nullptr) {
     index_scan_desc = planner::IndexScanPlan::IndexScanDesc(index,
                                                             key_column_ids,
                                                             expr_types,
                                                             values,
                                                             runtime_keys);
-  }
 
-  // Determine hybrid scan type
-  auto hybrid_scan_type = state.hybrid_scan_type;
-  if(state.layout_mode == LAYOUT_TYPE_ROW ||
-      state.layout_mode == LAYOUT_TYPE_COLUMN) {
-    hybrid_scan_type = HYBRID_SCAN_TYPE_SEQUENTIAL;
-  }
-
-  if(state.layout_mode == LAYOUT_TYPE_HYBRID &&
-      index_count != 0) {
     hybrid_scan_type = HYBRID_SCAN_TYPE_HYBRID;
   }
 
@@ -339,9 +437,6 @@ void RunDirectTest() {
 
   executor::HybridScanExecutor hybrid_scan_executor(&hybrid_scan_node,
                                                     context.get());
-
-  //planner::SeqScanPlan seq_scan_node(sdbench_table.get(), predicate, column_ids);
-  //executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   /////////////////////////////////////////////////////////
   // MATERIALIZE
@@ -383,12 +478,14 @@ void RunDirectTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double cost = 10;
-  column_ids.push_back(0);
+  std::vector<double> index_columns_accessed(tuple_key_attrs.begin(),
+                                             tuple_key_attrs.end());
+  auto selectivity = state.selectivity;
 
-  auto columns_accessed = GetColumnsAccessed(column_ids);
-
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors,
+              brain::SAMPLE_TYPE_ACCESS,
+              index_columns_accessed,
+              selectivity);
 
   txn_manager.CommitTransaction();
 }
@@ -445,187 +542,71 @@ void RunInsertTest() {
   /////////////////////////////////////////////////////////
   // COLLECT STATS
   /////////////////////////////////////////////////////////
-  double cost = 0;
-  std::vector<double> columns_accessed;
+  std::vector<double> index_columns_accessed;
+  double selectivity = 0;
 
-  ExecuteTest(executors, columns_accessed, cost);
+  ExecuteTest(executors,
+              brain::SAMPLE_TYPE_UPDATE,
+              index_columns_accessed,
+              selectivity);
 
   txn_manager.CommitTransaction();
-}
-
-static void Transform(double theta) {
-  // Get column map
-  auto table_name = sdbench_table->GetName();
-
-  peloton_projectivity = state.projectivity;
-
-  // TODO: Update period ?
-  oid_t update_period = 10;
-  oid_t update_itr = 0;
-
-  // Transform
-  while (state.fsm == true) {
-    auto tile_group_count = sdbench_table->GetTileGroupCount();
-    auto tile_group_offset = rand() % tile_group_count;
-
-    sdbench_table->TransformTileGroup(tile_group_offset, theta);
-
-    // Update partitioning periodically
-    update_itr++;
-    if (update_itr == update_period) {
-      sdbench_table->UpdateDefaultPartition();
-      update_itr = 0;
-    }
-
-    // TODO: Sleep a bit
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-}
-
-static void BuildIndex(index::Index *index,
-                       storage::DataTable *table) {
-  oid_t start_tile_group_count = START_OID;
-  oid_t table_tile_group_count = table->GetTileGroupCount();
-  auto table_schema = table->GetSchema();
-  std::unique_ptr<storage::Tuple> tuple_ptr(new storage::Tuple(table_schema, true));
-
-  while (start_tile_group_count < table_tile_group_count &&
-      state.fsm == true) {
-    table_tile_group_count = table->GetTileGroupCount();
-    auto tile_group = table->GetTileGroup(start_tile_group_count++);
-    auto tile_group_id = tile_group->GetTileGroupId();
-
-    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
-
-    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
-      // Copy over the tuple
-      tile_group->CopyTuple(tuple_id, tuple_ptr.get());
-
-      // Set the location
-      ItemPointer location(tile_group_id, tuple_id);
-
-      // TODO: Adds an entry in ALL the indexes
-      // (should only insert in specific index)
-      table->InsertInIndexes(tuple_ptr.get(), location);
-    }
-
-    // Update indexed tile group offset (set of tgs indexed)
-    index->IncrementIndexedTileGroupOffset();
-
-    // TODO: Sleep a bit
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
-
 }
 
 static void RunAdaptTest() {
   double direct_low_proj = 0.06;
   double insert_write_ratio = 0.01;
+  double repeat_count = 300;
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+  for(oid_t repeat_itr = 0; repeat_itr < repeat_count; repeat_itr++){
 
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+    state.projectivity = direct_low_proj;
+    state.operator_type = OPERATOR_TYPE_DIRECT;
+    RunDirectTest();
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
+    state.write_ratio = insert_write_ratio;
+    state.operator_type = OPERATOR_TYPE_INSERT;
+    RunInsertTest();
+    state.write_ratio = 0.0;
 
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
+  }
 
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
-
-  state.projectivity = direct_low_proj;
-  state.operator_type = OPERATOR_TYPE_DIRECT;
-  RunDirectTest();
-
-  state.write_ratio = insert_write_ratio;
-  state.operator_type = OPERATOR_TYPE_INSERT;
-  RunInsertTest();
-  state.write_ratio = 0.0;
 }
-
-std::vector<LayoutType> adapt_layouts = {LAYOUT_TYPE_ROW, LAYOUT_TYPE_COLUMN, LAYOUT_TYPE_HYBRID};
-
-std::vector<oid_t> adapt_column_counts = {column_counts[1]};
 
 void RunAdaptExperiment() {
   auto orig_transactions = state.transactions;
-  std::thread transformer;
   std::thread index_builder;
 
-  state.transactions = 100;   // 25
+  // Setup layout tuner
+  auto& index_tuner = brain::IndexTuner::GetInstance();
 
+  state.transactions = 20;   // 25
+
+  state.projectivity = 1.0;
   state.selectivity = 0.06;
   state.adapt = true;
-  double theta = 0.0;
+  state.column_count = 50;
+  state.layout_mode = LAYOUT_TYPE_HYBRID;
+  peloton_layout_mode = state.layout_mode;
 
-  // Go over all column counts
-  for (auto column_count : adapt_column_counts) {
-    state.column_count = column_count;
+  // Generate sequence
+  GenerateSequence(state.column_count);
 
-    // Generate sequence
-    GenerateSequence(state.column_count);
+  CreateAndLoadTable((LayoutType)peloton_layout_mode);
 
-    // Go over all layouts
-    for (auto layout : adapt_layouts) {
-      // Set layout
-      state.layout_mode = layout;
-      peloton_layout_mode = state.layout_mode;
+  // Reset query counter
+  query_itr = 0;
 
-      LOG_INFO("*****************************************************");
+  // Start index tuner
+  index_tuner.Start();
+  index_tuner.AddTable(sdbench_table.get());
 
-      state.projectivity = 1.0;
-      peloton_projectivity = state.projectivity;
-      CreateAndLoadTable((LayoutType)peloton_layout_mode);
+  // Run adapt test
+  RunAdaptTest();
 
-      // Reset query counter
-      query_itr = 0;
-
-      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
-        state.fsm = true;
-        peloton_fsm = true;
-
-        // Launch transformer
-        transformer = std::thread(Transform, theta);
-
-        // Create an ad-hoc index
-        CreateIndex();
-
-        // Launch index build
-        index_builder = std::thread(BuildIndex,
-                                    sdbench_table->GetIndex(0),
-                                    sdbench_table.get());
-      }
-
-      // Run adapt test
-      RunAdaptTest();
-
-      // Stop transformer
-      if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
-        state.fsm = false;
-        peloton_fsm = false;
-
-        transformer.join();
-
-        index_builder.join();
-      }
-    }
-  }
+  // Stop index tuner
+  index_tuner.Stop();
+  index_tuner.ClearTables();
 
   // Reset
   state.transactions = orig_transactions;

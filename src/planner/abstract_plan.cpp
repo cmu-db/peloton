@@ -20,11 +20,14 @@
 
 #include "common/types.h"
 #include "common/logger.h"
+#include "catalog/bootstrapper.h"
 
 namespace peloton {
 namespace planner {
 
-AbstractPlan::AbstractPlan() {}
+AbstractPlan::AbstractPlan() {
+
+}
 
 AbstractPlan::~AbstractPlan() {}
 

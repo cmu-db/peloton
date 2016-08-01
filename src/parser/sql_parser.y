@@ -19,6 +19,7 @@
 #include "expression/conjunction_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
+#include "expression/parser_expression.h"
 
 #include "parser/statements.h"
 #include "parser/sql_parser.h"
@@ -213,7 +214,7 @@ struct PARSER_CUST_LTYPE {
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias
-%type <bval> 		opt_not_exists opt_distinct opt_notnull opt_primary opt_unique
+%type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique opt_update
 %type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
@@ -424,16 +425,17 @@ column_type:
 
 /******************************
  * Drop Statement
- * DROP TABLE student_table;
+ * DROP TABLE IF EXISTS student_table;
  * DROP DATABASE student_db;
  * DROP INDEX student_index ON student_table;
  * DEALLOCATE PREPARE stmt;
  ******************************/
 
 drop_statement:
-		DROP TABLE table_name {
+		DROP TABLE opt_exists table_name {
 			$$ = new DropStatement(DropStatement::kTable);
-			$$->name = $3;
+			$$->missing = $3;
+			$$->name = $4;
 		}
 		|
 		DROP DATABASE IDENTIFIER {
@@ -451,6 +453,11 @@ drop_statement:
 			$$ = new DropStatement(DropStatement::kPreparedStatement);
 			$$->name = $3;
 		}
+	;
+
+opt_exists:
+	IF EXISTS { $$ = true; }
+	|	/* empty */ { $$ = false; }
 	;
 
 /******************************
@@ -588,13 +595,14 @@ set_operator:
 	;
 
 select_clause:
-		SELECT opt_distinct select_list from_clause opt_where opt_group {
+		SELECT opt_distinct select_list from_clause opt_where opt_group opt_update{
 			$$ = new SelectStatement();
 			$$->select_distinct = $2;
 			$$->select_list = $3;
 			$$->from_table = $4;
 			$$->where_clause = $5;
 			$$->group_by = $6;
+			$$->is_for_update = $7;
 		}
 	;
 
@@ -625,6 +633,11 @@ opt_group:
 			$$->having = $4;
 		}
 	|	/* empty */ { $$ = NULL; }
+	;
+
+opt_update:
+		FOR UPDATE { $$ = true; }
+	|	/* empty */ { $$ = false; }
 	;
 
 opt_having:
@@ -711,12 +724,12 @@ comp_expr:
 	;
 
 function_expr:
-		IDENTIFIER '(' opt_distinct expr ')' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); */ }
+		IDENTIFIER '(' opt_distinct expr ')' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_FUNCTION_REF, $1, $4, $3); }
 	;
 
 column_name:
-		IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); */ }
-	|	IDENTIFIER '.' IDENTIFIER { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); */ }
+		IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1); }
+	|	IDENTIFIER '.' IDENTIFIER { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_COLUMN_REF, $1, $3); }
 	;
 
 literal:
@@ -740,13 +753,13 @@ int_literal:
 	;
 
 star_expr:
-		'*' { /* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_STAR); */ } 
+		'*' { $$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_STAR); }
 	;
 
 
 placeholder_expr:
 		'?' {
-			/* TODO: $$ = new peloton::expression::AbstractExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column) */ ;
+			$$ = new peloton::expression::ParserExpression(peloton::EXPRESSION_TYPE_PLACEHOLDER, yylloc.total_column);
 			yyloc.placeholder_list.push_back($$);
 		}
 	;

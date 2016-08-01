@@ -13,6 +13,7 @@
 #include "parser/parser_utils.h"
 #include "common/types.h"
 #include "common/logger.h"
+#include "common/macros.h"
 
 #include <stdio.h>
 #include <string>
@@ -23,32 +24,32 @@ namespace parser {
 
 std::string indent(uint num_indent) { return std::string(num_indent, '\t'); }
 
-void inprint(int64_t val, uint num_indent) {
+void inprint(int64_t val, UNUSED_ATTRIBUTE uint num_indent) {
   // indent(num_indent)
-  LOG_INFO("%d", val);
+  LOG_INFO("%lu", val);
 }
 
-void inprint(float val, uint num_indent) {
+void inprint(float val, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%f", val);
 }
 
-void inprint(const char* val, uint num_indent) {
+void inprint(const char* val, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%s", val);
 }
 
-void inprint(const char* val, const char* val2, uint num_indent) {
+void inprint(const char* val, const char* val2, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%s -> %s", val, val2);
 }
 
-void inprintC(char val, uint num_indent) {
+void inprintC(char val, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%c", val);
 }
 
-void inprintU(uint64_t val, uint num_indent) {
-  LOG_INFO("%u", val);
+void inprintU(uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_INFO("%lu", val);
 }
 
-void PrintTableRefInfo(TableRef* table, uint num_indent) {
+void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
   switch (table->type) {
     case TABLE_REFERENCE_TYPE_NAME:
       inprint(table->name, num_indent);

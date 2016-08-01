@@ -28,23 +28,21 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
 }
 
 // Initialize executer
+// Nothing to initialize now
 bool CreateExecutor::DInit() {
   LOG_INFO("Initializing Create Executer...");
-  catalog::Bootstrapper::bootstrap();
-  catalog::Bootstrapper::global_catalog->CreateDatabase("default_database");
-
   LOG_INFO("Create Executer initialized!");
   return true;
+
 }
 
 bool CreateExecutor::DExecute() {
-	LOG_INFO("Executing Create...");
-
-	const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
+  LOG_INFO("Executing Create...");
+  const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
   std::string table_name = node.GetTableName();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
-  Result result = catalog::Bootstrapper::global_catalog->CreateTable("default_database", table_name, std::move(schema));
+  Result result = catalog::Bootstrapper::global_catalog->CreateTable(DEFAULT_DB_NAME, table_name, std::move(schema));
   context->GetTransaction()->SetResult(result);
 
   if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){

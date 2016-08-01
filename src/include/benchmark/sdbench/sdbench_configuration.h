@@ -76,9 +76,9 @@ class configuration {
   // # of times to run operator
   unsigned long transactions;
 
+  // Adapt the layout ?
   bool adapt;
 
-  bool fsm;
 };
 
 void Usage(FILE *out);

@@ -13,23 +13,21 @@
 
 #pragma once
 
-#include "concurrency/transaction.h"
 #include "common/pool.h"
-#include "common/value.h"
 
 namespace peloton {
+
+class Value;
+
+namespace concurrency{
+class Transaction;
+}
+
 namespace executor {
 
 //===--------------------------------------------------------------------===//
 // Executor Context
 //===--------------------------------------------------------------------===//
-
-// TODO: We might move this flag into the types.h in the future
-enum ParamsExecFlag {
-  INVALID_FLAG,
-  IN_NESTLOOP = 1  // nestloop (in+indexscan)
-  // IN_**         // other types
-};
 
 class ExecutorContext {
  public:
@@ -45,14 +43,13 @@ class ExecutorContext {
 
   ~ExecutorContext();
 
-  concurrency::Transaction *GetTransaction() const { return transaction_; }
+  concurrency::Transaction *GetTransaction() const;
 
-  const std::vector<Value> &GetParams() const { return params_; }
-  uint32_t GetParamsExecFlag() { return params_exec_flag_; }
+  const std::vector<Value> &GetParams() const;
 
-  void SetParams(Value value) { params_.push_back(value); }
-  void SetParamsExecFlag(ParamsExecFlag flag) { params_exec_flag_ = flag; }
-  void ClearParams() { params_.clear(); }
+  void SetParams(Value value);
+
+  void ClearParams();
 
   // Get a varlen pool (will construct the pool only if needed)
   VarlenPool *GetExecutorContextPool();
@@ -74,8 +71,6 @@ class ExecutorContext {
   // pool
   std::unique_ptr<VarlenPool> pool_;
 
-  // PARAMS_EXEC_Flag
-  ParamsExecFlag params_exec_flag_;
 };
 
 }  // namespace executor

@@ -66,7 +66,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief index associated with index scan. */
-  index::Index *index_ = nullptr;
+  std::shared_ptr<index::Index> index_;
 
   const storage::AbstractTable *table_ = nullptr;
 

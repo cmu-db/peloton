@@ -21,6 +21,7 @@
 #include <iostream>
 
 #include "common/types.h"
+#include "common/printable.h"
 
 namespace peloton {
 namespace parser {
@@ -34,8 +35,8 @@ class SQLStatement {
 
   virtual StatementType GetType() { return stmt_type; }
 
-  // Get a string representation of this statement
-  friend std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
   StatementType stmt_type;
@@ -56,7 +57,8 @@ class SQLStatementList {
     // clean up statements
     for (auto stmt : statements) delete stmt;
 
-    delete((char*)parser_msg);
+    free((char*)parser_msg);
+
   }
 
   void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }
@@ -67,9 +69,8 @@ class SQLStatementList {
 
   size_t GetNumStatements() const { return statements.size(); }
 
-  // Get a string representation of this statement list
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const SQLStatementList& stmt_list);
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
   std::vector<SQLStatement*> statements;
   bool is_valid;

@@ -62,8 +62,9 @@ index::Index *BuildIndex(const bool unique_keys,
   columns.push_back(column2);
 
   // INDEX KEY SCHEMA -- {column1, column2}
+  std::vector<oid_t> key_attrs = {0, 1};
   key_schema = new catalog::Schema(columns);
-  key_schema->SetIndexedColumns({0, 1});
+  key_schema->SetIndexedColumns(key_attrs);
 
   columns.push_back(column3);
   columns.push_back(column4);
@@ -74,7 +75,7 @@ index::Index *BuildIndex(const bool unique_keys,
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, unique_keys);
+      tuple_schema, key_schema, key_attrs, unique_keys);
 
   // Build index
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
@@ -105,7 +106,7 @@ void InsertTest(index::Index *index, size_t scale_factor, uint64_t thread_itr) {
 }
 
 static void TestIndexPerformance(const IndexType& index_type) {
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false, index_type));
@@ -121,9 +122,9 @@ static void TestIndexPerformance(const IndexType& index_type) {
 
   LaunchParallelTest(num_threads, InsertTest, index.get(), scale_factor);
 
-  index->ScanAllKeys(locations);
-  EXPECT_EQ(locations.size(), num_threads * scale_factor * base_scale);
-  locations.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), num_threads * scale_factor * base_scale);
+  location_ptrs.clear();
 
   timer.Stop();
   LOG_INFO("Duration : %.2lf", timer.GetDuration());

@@ -10,9 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#undef NDEBUG
-
 #include <iostream>
 #include <fstream>
 
@@ -31,13 +28,16 @@ std::ofstream out("outputfile.summary");
 
 static void WriteOutput(double stat) {
   LOG_INFO("----------------------------------------------------------");
-  LOG_INFO("%lf %d %d %d %d :: %lf", state.update_ratio, state.scale_factor,
-           state.backend_count, state.skew_factor, state.column_count, stat);
+  LOG_INFO("%lf %d %d %d :: %lf",
+           state.update_ratio,
+           state.scale_factor,
+           state.backend_count,
+           state.column_count,
+           stat);
 
   out << state.update_ratio << " ";
   out << state.scale_factor << " ";
   out << state.backend_count << " ";
-  out << state.skew_factor << " ";
   out << state.column_count << " ";
   out << stat << "\n";
   out.flush();

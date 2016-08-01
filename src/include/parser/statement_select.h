@@ -85,7 +85,8 @@ struct SelectStatement : SQLStatement {
         group_by(NULL),
         union_select(NULL),
         order(NULL),
-        limit(NULL){};
+        limit(NULL),
+        is_for_update(false){};
 
   virtual ~SelectStatement() {
     delete from_table;
@@ -112,6 +113,7 @@ struct SelectStatement : SQLStatement {
   SelectStatement* union_select;
   OrderDescription* order;
   LimitDescription* limit;
+  bool is_for_update;
 };
 
 }  // End parser namespace

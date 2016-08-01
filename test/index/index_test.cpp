@@ -19,8 +19,6 @@
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 
-//#define ALLOW_UNIQUE_KEY
-
 namespace peloton {
 namespace test {
 
@@ -62,8 +60,9 @@ index::Index *BuildIndex(const bool unique_keys) {
   columns.push_back(column2);
 
   // INDEX KEY SCHEMA -- {column1, column2}
+  std::vector<oid_t> key_attrs = {0, 1};
   key_schema = new catalog::Schema(columns);
-  key_schema->SetIndexedColumns({0, 1});
+  key_schema->SetIndexedColumns(key_attrs);
 
   columns.push_back(column3);
   columns.push_back(column4);
@@ -74,7 +73,7 @@ index::Index *BuildIndex(const bool unique_keys) {
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "test_index", 125, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, unique_keys);
+      tuple_schema, key_schema, key_attrs, unique_keys);
 
   // Build index
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
@@ -85,7 +84,7 @@ index::Index *BuildIndex(const bool unique_keys) {
 
 TEST_F(IndexTests, BasicTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -99,17 +98,17 @@ TEST_F(IndexTests, BasicTest) {
   // INSERT
   index->InsertEntry(key0.get(), item0);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 1);
-  EXPECT_EQ(locations[0].block, item0.block);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  location_ptrs.clear();
 
   // DELETE
   index->DeleteEntry(key0.get(), item0);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
@@ -258,7 +257,7 @@ void DeleteTest(index::Index *index, VarlenPool *pool, size_t scale_factor,
 
 TEST_F(IndexTests, MultiMapInsertTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -268,16 +267,16 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   LaunchParallelTest(1, InsertTest, index.get(), pool, scale_factor);
 
   // Checks
-  index->ScanAllKeys(locations);
+  index->ScanAllKeys(location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 7);
+    EXPECT_EQ(location_ptrs.size(), 7);
   } else {
-    EXPECT_EQ(locations.size(), 9);
+    EXPECT_EQ(location_ptrs.size(), 9);
   }
 
 
-  locations.clear();
+  location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> keynonce(
@@ -287,14 +286,14 @@ TEST_F(IndexTests, MultiMapInsertTest) {
   keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000), pool);
   keynonce->SetValue(1, ValueFactory::GetStringValue("f"), pool);
 
-  index->ScanKey(keynonce.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(keynonce.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 1);
-  EXPECT_EQ(locations[0].block, item0.block);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
@@ -302,7 +301,7 @@ TEST_F(IndexTests, MultiMapInsertTest) {
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyDeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(true));
@@ -324,18 +323,18 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key1.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key1.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
-  EXPECT_EQ(locations.size(), 1);
-  EXPECT_EQ(locations[0].block, item1.block);
-  locations.clear();
+  index->ScanKey(key2.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(location_ptrs[0].block, item1.block);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
@@ -343,7 +342,7 @@ TEST_F(IndexTests, UniqueKeyDeleteTest) {
 
 TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -365,25 +364,25 @@ TEST_F(IndexTests, NonUniqueKeyDeleteTest) {
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key1.get(), locations);
-  EXPECT_EQ(locations.size(), 2);
-  locations.clear();
+  index->ScanKey(key1.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 2);
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
-  EXPECT_EQ(locations.size(), 1);
-  EXPECT_EQ(locations[0].block, item1.block);
-  locations.clear();
+  index->ScanKey(key2.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
 
 TEST_F(IndexTests, MultiThreadedInsertTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -393,15 +392,15 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
   size_t scale_factor = 1;
   LaunchParallelTest(num_threads, InsertTest, index.get(), pool, scale_factor);
 
-  index->ScanAllKeys(locations);
+  index->ScanAllKeys(location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 7);
+    EXPECT_EQ(location_ptrs.size(), 7);
   } else {
-    EXPECT_EQ(locations.size(), 9 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 9 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> keynonce(
@@ -413,20 +412,20 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
   key0->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, ValueFactory::GetStringValue("a"), pool);
 
-  index->ScanKey(keynonce.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(keynonce.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key0.get(), locations);
+  index->ScanKey(key0.get(), location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 1);
+    EXPECT_EQ(location_ptrs.size(), 1);
   } else {
-    EXPECT_EQ(locations.size(), num_threads);
+    EXPECT_EQ(location_ptrs.size(), num_threads);
   }
   
-  EXPECT_EQ(locations[0].block, item0.block);
-  locations.clear();
+  EXPECT_EQ(location_ptrs[0]->block, item0.block);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
@@ -434,7 +433,7 @@ TEST_F(IndexTests, MultiThreadedInsertTest) {
 #ifdef ALLOW_UNIQUE_KEY
 TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(true));
@@ -457,48 +456,48 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key1.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key1.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
-  EXPECT_EQ(locations.size(), 1);
-  EXPECT_EQ(locations[0].block, item1.block);
-  locations.clear();
+  index->ScanKey(key2.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(location_ptrs[0].block, item1.block);
+  location_ptrs.clear();
 
-  index->ScanAllKeys(locations);
-  EXPECT_EQ(locations.size(), 1);
-  locations.clear();
+  index->ScanAllKeys(location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 1);
+  location_ptrs.clear();
 
   // FORWARD SCAN
   index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
@@ -523,7 +522,7 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
 
 TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -570,96 +569,96 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                         "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"),
                  pool);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key1.get(), locations);
+  index->ScanKey(key1.get(), location_ptrs);
 
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
+  index->ScanKey(key2.get(), location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 1);
+    EXPECT_EQ(location_ptrs.size(), 1);
   } else {
-    EXPECT_EQ(locations.size(), 1 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
   
-  EXPECT_EQ(locations[0].block, item1.block);
-  locations.clear();
+  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  location_ptrs.clear();
 
-  index->ScanAllKeys(locations);
+  index->ScanAllKeys(location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3);
+    EXPECT_EQ(location_ptrs.size(), 3);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   // FORWARD SCAN
   index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3);
+    EXPECT_EQ(location_ptrs.size(), 3);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
       
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 1);
+    EXPECT_EQ(location_ptrs.size(), 1);
   } else {
-    EXPECT_EQ(locations.size(), 1 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
   index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
@@ -667,15 +666,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_FORWARD, locations);
+      SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
       
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
@@ -683,73 +682,73 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                              EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_LESSTHAN},
-              SCAN_DIRECTION_TYPE_FORWARD, locations);
+              SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3);
+    EXPECT_EQ(location_ptrs.size(), 3);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   // REVERSE SCAN
   index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_BACKWARD, locations);
+              SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3);
+    EXPECT_EQ(location_ptrs.size(), 3);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
-              SCAN_DIRECTION_TYPE_BACKWARD, locations);
+              SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
       
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 1);
+    EXPECT_EQ(location_ptrs.size(), 1);
   } else {
-    EXPECT_EQ(locations.size(), 1 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
       
-  EXPECT_EQ(locations.size(), 0);
+  EXPECT_EQ(location_ptrs.size(), 0);
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-              SCAN_DIRECTION_TYPE_BACKWARD, locations);
+              SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
@@ -757,15 +756,15 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
       {0, 1, 0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN,
        EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
-      SCAN_DIRECTION_TYPE_BACKWARD, locations);
+      SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
       
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
@@ -773,22 +772,22 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,
                              EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_LESSTHAN},
-              SCAN_DIRECTION_TYPE_BACKWARD, locations);
+              SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3);
+    EXPECT_EQ(location_ptrs.size(), 3);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
 
 TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -812,47 +811,47 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest) {
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
 
-  index->ScanKey(key0.get(), locations);
-  EXPECT_EQ(locations.size(), 0);
-  locations.clear();
+  index->ScanKey(key0.get(), location_ptrs);
+  EXPECT_EQ(location_ptrs.size(), 0);
+  location_ptrs.clear();
 
-  index->ScanKey(key1.get(), locations);
+  index->ScanKey(key1.get(), location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 2);
+    EXPECT_EQ(location_ptrs.size(), 2);
   } else {
-    EXPECT_EQ(locations.size(), 2 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
+  index->ScanKey(key2.get(), location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 1);
+    EXPECT_EQ(location_ptrs.size(), 1);
   } else {
-    EXPECT_EQ(locations.size(), 1 * num_threads);
+    EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
   }
   
-  EXPECT_EQ(locations[0].block, item1.block);
-  locations.clear();
+  EXPECT_EQ(location_ptrs[0]->block, item1.block);
+  location_ptrs.clear();
 
-  index->ScanAllKeys(locations);
+  index->ScanAllKeys(location_ptrs);
   
   if(index_type == INDEX_TYPE_BWTREE) {
-    EXPECT_EQ(locations.size(), 3 * scale_factor);
+    EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
   } else {
-    EXPECT_EQ(locations.size(), 3 * num_threads * scale_factor);
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads * scale_factor);
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   delete tuple_schema;
 }
 
 TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::vector<ItemPointer> locations;
+  std::vector<ItemPointer*> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false));
@@ -863,18 +862,13 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   LaunchParallelTest(num_threads, InsertTest, index.get(), pool, scale_factor);
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
-  index->ScanAllKeys(locations);
-  if (index->HasUniqueKeys()) {
-    EXPECT_EQ(locations.size(), scale_factor);
-  } else {
-    if(index_type == INDEX_TYPE_BWTREE) {
-      EXPECT_EQ(locations.size(), 3 * scale_factor);
-    } else {
-      EXPECT_EQ(locations.size(), 3 * num_threads * scale_factor);
-    }
-  }
-  
-  locations.clear();
+  index->ScanAllKeys(location_ptrs);
+  if (index->HasUniqueKeys())
+    EXPECT_EQ(location_ptrs.size(), scale_factor);
+  else
+    EXPECT_EQ(location_ptrs.size(), 3 * num_threads * scale_factor);
+  location_ptrs.clear();
+
 
   std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema, true));
   std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema, true));
@@ -884,30 +878,30 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   key2->SetValue(0, ValueFactory::GetIntegerValue(100), pool);
   key2->SetValue(1, ValueFactory::GetStringValue("c"), pool);
 
-  index->ScanKey(key1.get(), locations);
+  index->ScanKey(key1.get(), location_ptrs);
   if (index->HasUniqueKeys()) {
-    EXPECT_EQ(locations.size(), 0);
+    EXPECT_EQ(location_ptrs.size(), 0);
   } else {
     if(index_type == INDEX_TYPE_BWTREE) {
-      EXPECT_EQ(locations.size(), 2);
+      EXPECT_EQ(location_ptrs.size(), 2);
     } else {
-      EXPECT_EQ(locations.size(), 2 * num_threads);
+      EXPECT_EQ(location_ptrs.size(), 2 * num_threads);
     }
   }
-  locations.clear();
+  location_ptrs.clear();
 
-  index->ScanKey(key2.get(), locations);
+  index->ScanKey(key2.get(), location_ptrs);
   if (index->HasUniqueKeys()) {
-    EXPECT_EQ(locations.size(), num_threads);
+    EXPECT_EQ(location_ptrs.size(), num_threads);
   } else {
     if(index_type == INDEX_TYPE_BWTREE) {
-      EXPECT_EQ(locations.size(), 1);
+      EXPECT_EQ(location_ptrs.size(), 1);
     } else {
-      EXPECT_EQ(locations.size(), 1 * num_threads);
+      EXPECT_EQ(location_ptrs.size(), 1 * num_threads);
     }
   }
   
-  locations.clear();
+  location_ptrs.clear();
 
   delete tuple_schema;
 }

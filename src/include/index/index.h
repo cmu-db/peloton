@@ -17,6 +17,8 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include <set>
+#include <atomic>
 
 #include "common/printable.h"
 #include "common/types.h"
@@ -43,21 +45,26 @@ namespace index {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-class IndexMetadata {
+class IndexMetadata : public Printable {
   IndexMetadata() = delete;
 
  public:
-  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
+  IndexMetadata(std::string index_name,
+                oid_t index_oid,
+                IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
-                const catalog::Schema *key_schema, bool unique_keys)
-      : index_name(index_name),
-        index_oid(index_oid),
-        method_type(method_type),
-        index_type(index_type),
-        tuple_schema(tuple_schema),
-        key_schema(key_schema),
-        unique_keys(unique_keys) {}
+                const catalog::Schema *key_schema,
+                const std::vector<oid_t>& key_attrs,
+                bool unique_keys)
+ : index_name(index_name),
+   index_oid(index_oid),
+   method_type(method_type),
+   index_type(index_type),
+   tuple_schema(tuple_schema),
+   key_schema(key_schema),
+   key_attrs(key_attrs),
+   unique_keys(unique_keys) {}
 
   ~IndexMetadata();
 
@@ -75,6 +82,17 @@ class IndexMetadata {
 
   bool HasUniqueKeys() const { return unique_keys; }
 
+  std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
+
+  double GetUtility() const { return utility_ratio; }
+
+  void SetUtility(double utility_ratio_) {
+    utility_ratio = utility_ratio_;
+  }
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
+
   std::string index_name;
 
   oid_t index_oid;
@@ -89,8 +107,14 @@ class IndexMetadata {
   // schema of keys
   const catalog::Schema *key_schema;
 
+  // key attributes
+  std::vector<oid_t> key_attrs;
+
   // unique keys ?
   bool unique_keys;
+
+  // utility of an index
+  double utility_ratio = INVALID_RATIO;
 };
 
 //===--------------------------------------------------------------------===//
@@ -137,20 +161,6 @@ class Index : public Printable {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // scan all keys in the index matching an arbitrary key
-  // used by index scan executor
-  virtual void Scan(const std::vector<Value> &values,
-                    const std::vector<oid_t> &key_column_ids,
-                    const std::vector<ExpressionType> &exprs,
-                    const ScanDirectionType &scan_direction,
-                    std::vector<ItemPointer> &) = 0;
-
-  // scan the entire index, working like a sort
-  virtual void ScanAllKeys(std::vector<ItemPointer> &) = 0;
-
-  virtual void ScanKey(const storage::Tuple *key,
-                       std::vector<ItemPointer> &) = 0;
-
   virtual void Scan(const std::vector<Value> &values,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &exprs,
@@ -166,13 +176,13 @@ class Index : public Printable {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void IncreaseNumberOfTuplesBy(const float amount);
+  void IncreaseNumberOfTuplesBy(const size_t amount);
 
-  void DecreaseNumberOfTuplesBy(const float amount);
+  void DecreaseNumberOfTuplesBy(const size_t amount);
 
-  void SetNumberOfTuples(const float num_tuples);
+  void SetNumberOfTuples(const size_t num_tuples);
 
-  float GetNumberOfTuples() const;
+  size_t GetNumberOfTuples() const;
 
   bool IsDirty() const;
 
@@ -224,9 +234,14 @@ class Index : public Printable {
                                   const std::pair<peloton::Value, int> &j);
 
   // Get the indexed tile group offset
-  virtual int GetIndexedTileGroupOff() { return -1; }
+  virtual size_t GetIndexedTileGroupOff() {
+    return indexed_tile_group_offset_.load();
+  }
 
-  virtual void IncrementIndexedTileGroupOffset() { return; }
+  virtual void IncrementIndexedTileGroupOffset() {
+    indexed_tile_group_offset_++;
+    return;
+  }
 
  protected:
   Index(IndexMetadata *schema);
@@ -241,6 +256,7 @@ class Index : public Printable {
 
   bool IfBackwardExpression(ExpressionType e);
 
+  //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
@@ -255,13 +271,15 @@ class Index : public Printable {
   int update_counter;
 
   // number of tuples
-  float number_of_tuples = 0.0;
+  size_t number_of_tuples;
 
   // dirty flag
   bool dirty = false;
 
   // pool
   VarlenPool *pool = nullptr;
+
+  std::atomic<size_t> indexed_tile_group_offset_;
 };
 
 }  // End index namespace

@@ -27,8 +27,6 @@ void CreateTable();
 
 void LoadTable();
 
-void CreateIndex();
-
 void CreateAndLoadTable(LayoutType layout_type);
 
 }  // namespace sdbench

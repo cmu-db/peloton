@@ -16,16 +16,15 @@
 #include "parser/sql_parser.h"
 
 char* substr(const char* source, int from, int to) {
-	int len = to-from;
-	char* copy = (char *) malloc(sizeof(char)* (len+1));
-	strncpy(copy, source+from, len);
-	copy[len] = '\0';
-	return copy;
+    int len = to-from;
+    char* copy = new char[len+1];
+    strncpy(copy, source+from, len);
+    copy[len] = '\0';
+    return copy;
 }
 
 #define TOKEN(name) { return SQL_##name; }
-#define yylex           parser_lex
-#define YY_EXIT_FAILURE ( (void)yyscanner, 2 ) // unused function warning
+#define yylex         parser_lex
 
 %}
 /***************************
@@ -52,12 +51,6 @@ char* substr(const char* source, int from, int to) {
 %option case-insensitive
 %option bison-locations 
 /* %option nodefault */
-
-/* Peloton warning issue */
-%option noyyalloc
-%option noyyfree
-%option noyyrealloc
-
 
 %s COMMENT
 
@@ -225,9 +218,6 @@ TO			TOKEN(TO)
 }
 
 [A-Za-z][A-Za-z0-9_]* {
-	// To lower case
-	for (int i = 0; yytext[i]; i++)
-	    yytext[i] = tolower(yytext[i]);
 	yylval->sval = strdup(yytext);
 	return SQL_IDENTIFIER;
 }
@@ -249,20 +239,4 @@ TO			TOKEN(TO)
 
 int yyerror(const char *msg) {
     fprintf(stderr, "[SQL-Scanner-Error] %s\n",msg); return 0;
-}
-
-/* redefine these functions to get rid of unused variable warnings */
-void yyfree (void * ptr, yyscan_t yyscanner) {
-    (void)yyscanner;
-    free(ptr);
-}
-
-void *yyalloc (yy_size_t size, yyscan_t yyscanner) {
-    (void)yyscanner;
-    return malloc(size);
-}
-
-void *yyrealloc (void * ptr, yy_size_t size, yyscan_t yyscanner) {
-    (void)yyscanner;
-    return realloc(ptr, size );
 }
