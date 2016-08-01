@@ -112,7 +112,6 @@ bool InsertExecutor::DExecute() {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
       }
-      LOG_INFO("Number of tuples in table after insert: %d", (int)target_table->GetTupleCount());
       executor_context_->num_processed += 1;  // insert one
     }
 

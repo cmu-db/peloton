@@ -626,6 +626,8 @@ class Value {
     }
   };
 
+  std::string ToString();
+
   /* Return a string full of arcana and wonder. */
   const std::string GetInfo() const;
 
