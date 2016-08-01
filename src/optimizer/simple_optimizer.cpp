@@ -89,23 +89,28 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       std::vector<oid_t> group_by_columns;
       auto group_by = select_stmt->group_by;
       expression::AbstractExpression* having = nullptr;
-      LOG_INFO("reach here!");
-      if (select_stmt->from_table->list != NULL) {
-        for (auto table_ref : *select_stmt->from_table->list) {
-          LOG_INFO("table name: %s", table_ref->name);
-        }
+
+      // The HACK to make the join in tpcc work. This is written by Joy Arulraj
+      if (select_stmt->from_table->join != NULL) {
+        // for (auto table_ref : *select_stmt->from_table->list) {
+        //  LOG_INFO("table name: %s", table_ref->name);
+        //}
         LOG_INFO("have join condition? %d",
                  select_stmt->from_table->join != NULL);
         LOG_INFO("have sub select statement? %d",
                  select_stmt->from_table->select != NULL);
-        // LOG_INFO("Join Condition: %s",
-        //         select_stmt->from_table->join->condition->Debug().c_str());
-        // LOG_INFO("left table: %s", select_stmt->from_table->join);
+        LOG_INFO("Join Condition: %s",
+                 select_stmt->from_table->join->condition->Debug().c_str());
+        LOG_INFO("left table: %s",
+                 select_stmt->from_table->join->left->GetName());
+        auto child_SelectPlan = CreateHackingJoinPlan(select_stmt);
+        child_plan = std::move(child_SelectPlan);
+        break;
       }
-      auto target_table =
+
+      storage::DataTable* target_table =
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
               DEFAULT_DB_NAME, select_stmt->from_table->name);
-      LOG_INFO("FOUND TABLE!");
 
       // Preparing the group by columns
       if (group_by != NULL) {
@@ -530,6 +535,11 @@ void SimpleOptimizer::GetPredicateColumns(
     GetPredicateColumns(schema, expression->GetModifiableRight(), column_ids,
                         expr_types, values, index_searchable);
   }
+}
+
+std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateHackingJoinPlan(
+    __attribute__((unused)) parser::SelectStatement* select_stmt) {
+  return nullptr;
 }
 
 }  // namespace optimizer
