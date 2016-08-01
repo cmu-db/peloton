@@ -279,46 +279,6 @@ TEST_F(IndexScanTests, SQLTest) {
   ExecuteSQLQuery("SELECT AGGREGATE",
                   "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;");
   LOG_INFO("Aggregation selected");
-
-  // Now deleting end-to-end
-  /*LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table");
-  statement.reset(new Statement("DELETE", "DELETE FROM department_table"));
-  LOG_INFO("Building parse tree...");
-  auto delete_stmt = peloton_parser.BuildParseTree("DELETE FROM
-  department_table");
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-  params);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
-  ShowTable(DEFAULT_DB_NAME, "department_table");
-
-  // Test Another delete. Should not find any tuple to be deleted
-  LOG_INFO("Deleting a tuple...");
-  LOG_INFO("Query: DELETE FROM department_table WHERE dept_id < 2");
-  statement.reset(new Statement("DELETE", "DELETE FROM department_table
-  WHERE
-  dept_id < 2"));
-  LOG_INFO("Building parse tree...");
-  auto delete_stmt_2 = peloton_parser.BuildParseTree("DELETE FROM
-  department_table WHERE dept_id < 2");
-  LOG_INFO("Building parse tree completed!");
-  LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(delete_stmt_2));
-  LOG_INFO("Building plan tree completed!");
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
-  params);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
-  LOG_INFO("Tuple deleted!");
-  ShowTable(DEFAULT_DB_NAME, "department_table");*/
 }
 
 }  // namespace test
