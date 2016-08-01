@@ -37,7 +37,8 @@ void inprint(const char* val, UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%s", val);
 }
 
-void inprint(const char* val, const char* val2, UNUSED_ATTRIBUTE uint num_indent) {
+void inprint(const char* val, const char* val2,
+             UNUSED_ATTRIBUTE uint num_indent) {
   LOG_INFO("%s -> %s", val, val2);
 }
 
@@ -104,7 +105,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
     return;
   }
 
-  LOG_INFO("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
+  LOG_INFO("-> Expr Type :: %s",
+           ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:
@@ -112,7 +114,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
       break;
     case EXPRESSION_TYPE_COLUMN_REF:
       // TODO: Fix this
-      // inprint((expr)->GetName(), num_indent);
+      inprint((expr)->getName(), num_indent);
+      if (expr->getColumn() != NULL) inprint((expr)->getColumn(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
       // TODO: Fix this

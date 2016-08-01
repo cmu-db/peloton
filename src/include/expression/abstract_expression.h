@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -68,9 +67,9 @@ class AbstractExpression : public Printable {
 
   AbstractExpression *GetModifiableRight() { return m_right; }
 
-  void setLeft(AbstractExpression* left) { m_left = left; }
+  void setLeft(AbstractExpression *left) { m_left = left; }
 
-  void setRight(AbstractExpression* right) { m_right = right; }
+  void setRight(AbstractExpression *right) { m_right = right; }
 
   // Debugging methods - some various ways to create a string
   //     describing the expression tree
@@ -84,8 +83,8 @@ class AbstractExpression : public Printable {
 
   virtual AbstractExpression *Copy() const = 0;
 
-  inline AbstractExpression *CopyUtil(
-      const AbstractExpression *expression) const {
+  inline AbstractExpression *CopyUtil(const AbstractExpression *expression)
+      const {
     return (expression == nullptr) ? nullptr : expression->Copy();
   }
 
@@ -100,9 +99,9 @@ class AbstractExpression : public Printable {
 
   virtual int SerializeSize() { return 0; }
 
-  char* getName() const {
-	return name;
-  }
+  char *getName() const { return name; }
+
+  char *getColumn() const { return column; }
 
  public:
   // Parser stuff
