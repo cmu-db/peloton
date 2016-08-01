@@ -17,8 +17,12 @@
 #include <queue>
 #include <map>
 #include <mutex>
+#include <set>
 
+#include "common/platform.h"
 #include "storage/abstract_table.h"
+#include "container/lock_free_array.h"
+#include "index/index.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -29,15 +33,6 @@ extern LayoutType peloton_layout_mode;
 //===--------------------------------------------------------------------===//
 // Configuration Variables
 //===--------------------------------------------------------------------===//
-
-// Projectivity for determining FSM layout
-extern double peloton_projectivity;
-
-// # of groups
-extern int peloton_num_groups;
-
-// FSM or not ?
-extern bool peloton_fsm;
 
 extern std::vector<peloton::oid_t> sdbench_column_ids;
 
@@ -122,7 +117,7 @@ class DataTable : public AbstractTable {
 
   // Offset is a 0-based number local to the table
   std::shared_ptr<storage::TileGroup> GetTileGroup(
-      const oid_t &tile_group_offset) const;
+      const std::size_t &tile_group_offset) const;
 
   // ID is the global identifier in the entire DBMS
   std::shared_ptr<storage::TileGroup> GetTileGroupById(
@@ -137,13 +132,15 @@ class DataTable : public AbstractTable {
   // INDEX
   //===--------------------------------------------------------------------===//
 
-  void AddIndex(index::Index *index);
+  void AddIndex(std::shared_ptr<index::Index> index);
 
-  index::Index *GetIndexWithOid(const oid_t &index_oid) const;
+  std::shared_ptr<index::Index> GetIndexWithOid(const oid_t &index_oid);
 
   void DropIndexWithOid(const oid_t &index_oid);
 
-  index::Index *GetIndex(const oid_t &index_offset) const;
+  std::shared_ptr<index::Index> GetIndex(const oid_t &index_offset);
+
+  std::set<oid_t> GetIndexAttrs(const oid_t &index_offset) const;
 
   oid_t GetIndexCount() const;
 
@@ -170,27 +167,39 @@ class DataTable : public AbstractTable {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void IncreaseNumberOfTuplesBy(const float &amount);
+  void IncreaseTupleCount(const size_t &amount);
 
-  void DecreaseNumberOfTuplesBy(const float &amount);
+  void DecreaseTupleCount(const size_t &amount);
 
-  void SetNumberOfTuples(const float &num_tuples);
+  void SetTupleCount(const size_t &num_tuples);
 
-  float GetNumberOfTuples() const;
+  size_t GetTupleCount() const;
 
   bool IsDirty() const;
 
   void ResetDirty();
 
-  const column_map_type &GetDefaultPartition();
-
   //===--------------------------------------------------------------------===//
-  // Clustering
+  // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordSample(const brain::Sample &sample);
+  void RecordLayoutSample(const brain::Sample &sample);
 
-  void UpdateDefaultPartition();
+  const std::vector<brain::Sample>& GetLayoutSamples() const;
+
+  void ClearLayoutSamples();
+
+  void SetDefaultLayout(const column_map_type& layout);
+
+  //===--------------------------------------------------------------------===//
+  // INDEX TUNER
+  //===--------------------------------------------------------------------===//
+
+  void RecordIndexSample(const brain::Sample &sample);
+
+  const std::vector<brain::Sample>& GetIndexSamples() const;
+
+  void ClearIndexSamples();
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
@@ -202,18 +211,18 @@ class DataTable : public AbstractTable {
 
   bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  column_map_type GetStaticColumnMap(const std::string &table_name,
-                                     const oid_t &column_count);
-
   std::map<oid_t, oid_t> GetColumnMapStats();
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  // insert into specific index
+  bool InsertInIndex(oid_t index_offset,
+                     const storage::Tuple *tuple,
+                     ItemPointer location);
+
   // try to insert into the indices
   bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
-
-  RWLock &GetTileGroupLock() { return tile_group_lock_; }
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -257,19 +266,18 @@ class DataTable : public AbstractTable {
   size_t tuples_per_tilegroup_;
 
   // TILE GROUPS
-  // set of tile groups
-  RWLock tile_group_lock_;
-
-  std::vector<oid_t> tile_groups_;
+  LockFreeArray<oid_t> tile_groups_;
 
   std::atomic<size_t> tile_group_count_ = ATOMIC_VAR_INIT(0);
 
-  // tile group mutex
-  // TODO: don't know why need this mutex --Yingjun
-  std::mutex tile_group_mutex_;
+  // data table mutex
+  std::mutex data_table_mutex_;
 
   // INDEXES
-  std::vector<index::Index *> indexes_;
+  LockFreeArray<std::shared_ptr<index::Index>> indexes_;
+
+  // columns present in the indexes
+  std::vector<std::set<oid_t>> indexes_columns_;
 
   // CONSTRAINTS
   std::vector<catalog::ForeignKey *> foreign_keys_;
@@ -281,13 +289,14 @@ class DataTable : public AbstractTable {
   std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples
-  float number_of_tuples_ = 0.0;
+  size_t number_of_tuples_ = 0.0;
 
   // dirty flag
   bool dirty_ = false;
 
-  // clustering mutex
-  std::mutex clustering_mutex_;
+  //===--------------------------------------------------------------------===//
+  // TUNING MEMBERS
+  //===--------------------------------------------------------------------===//
 
   // adapt table
   bool adapt_table_ = true;
@@ -295,8 +304,19 @@ class DataTable : public AbstractTable {
   // default partition map for table
   column_map_type default_partition_;
 
-  // samples for clustering
-  std::vector<brain::Sample> samples_;
+  // samples for layout tuning
+  std::vector<brain::Sample> layout_samples_;
+
+  // layout samples mutex
+  std::mutex layout_samples_mutex_;
+
+  // samples for layout tuning
+  std::vector<brain::Sample> index_samples_;
+
+  // index samples mutex
+  std::mutex index_samples_mutex_;
+
+  static oid_t invalid_tile_group_id;
 };
 
 }  // End storage namespace

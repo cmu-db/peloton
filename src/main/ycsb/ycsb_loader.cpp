@@ -27,6 +27,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/executor_context.h"
 #include "expression/constant_value_expression.h"
 #include "expression/expression_util.h"
 #include "index/index_factory.h"
@@ -36,6 +37,9 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
+
+// Logging mode
+extern LoggingType peloton_logging_mode;
 
 namespace peloton {
 namespace benchmark {
@@ -74,10 +78,10 @@ void CreateYCSBDatabase() {
   columns.push_back(column);
 
   for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-    auto column =
-        catalog::Column(VALUE_TYPE_VARCHAR, ycsb_field_length,
-                        "FIELD" + std::to_string(col_itr), is_inlined);
-    columns.push_back(column);
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "FIELD" + std::to_string(col_itr), is_inlined);
+      columns.push_back(column);
   }
 
   catalog::Schema *table_schema = new catalog::Schema(columns);
@@ -104,10 +108,16 @@ void CreateYCSBDatabase() {
   unique = true;
 
   index_metadata = new index::IndexMetadata(
-      "primary_index", user_table_pkey_index_oid, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      "primary_index",
+      user_table_pkey_index_oid,
+      INDEX_TYPE_SKIPLIST,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+      tuple_schema,
+      key_schema,
+      key_attrs,
+      unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
   user_table->AddIndex(pkey_index);
 }
 
@@ -127,7 +137,6 @@ void LoadYCSBDatabase() {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
@@ -136,11 +145,9 @@ void LoadYCSBDatabase() {
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table_schema, allocate));
     auto key_value = ValueFactory::GetIntegerValue(rowid);
-    auto field_value = ValueFactory::GetStringValue(field_raw_value);
 
-    tuple->SetValue(0, key_value, nullptr);
-    for (oid_t col_itr = 1; col_itr < col_count; col_itr++) {
-      tuple->SetValue(col_itr, field_value, pool.get());
+    for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
+        tuple->SetValue(col_itr, key_value, nullptr);
     }
 
     planner::InsertPlan node(user_table, std::move(tuple));

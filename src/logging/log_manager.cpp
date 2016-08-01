@@ -181,21 +181,32 @@ void LogManager::LogUpdate(cid_t commit_id, const ItemPointer &old_version,
     auto new_tuple_tile_group = manager.GetTileGroup(new_version.block);
 
     auto logger = this->GetBackendLogger();
+
+    std::unique_ptr<LogRecord> record;
+    std::unique_ptr<storage::Tuple> tuple;
     auto schema = manager.GetTableWithOid(new_tuple_tile_group->GetDatabaseId(),
                                           new_tuple_tile_group->GetTableId())
                       ->GetSchema();
     // Can we avoid allocate tuple in head each time?
-    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-    for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
-      tuple->SetValue(col,
-                      new_tuple_tile_group->GetValue(new_version.offset, col),
-                      logger->GetVarlenPool());
+    if (IsBasedOnWriteAheadLogging(logging_type_) || replicating_) {
+      tuple.reset(new storage::Tuple(schema, true));
+      for (oid_t col = 0; col < schema->GetColumnCount(); col++) {
+        tuple->SetValue(col,
+                        new_tuple_tile_group->GetValue(new_version.offset, col),
+                        logger->GetVarlenPool());
+      }
+      record.reset(
+          logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+                                 new_tuple_tile_group->GetTableId(),
+                                 new_tuple_tile_group->GetDatabaseId(),
+                                 new_version, old_version, tuple.get()));
+    } else {
+      // if wbl without replication, do not include tuple data
+      record.reset(logger->GetTupleRecord(
+          LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
+          new_tuple_tile_group->GetTableId(),
+          new_tuple_tile_group->GetDatabaseId(), new_version, old_version));
     }
-    std::unique_ptr<LogRecord> record(
-        logger->GetTupleRecord(LOGRECORD_TYPE_TUPLE_UPDATE, commit_id,
-                               new_tuple_tile_group->GetTableId(),
-                               new_tuple_tile_group->GetDatabaseId(),
-                               new_version, old_version, tuple.get()));
 
     logger->Log(record.get());
   }
@@ -307,6 +318,7 @@ void LogManager::InitFrontendLoggers() {
     for (unsigned int i = 0; i < num_frontend_loggers_; i++) {
       std::unique_ptr<FrontendLogger> frontend_logger(
           FrontendLogger::GetFrontendLogger(logging_type_, test_mode_));
+      frontend_logger->SetNoWrite(no_write_);
 
       if (frontend_logger.get() != nullptr) {
         frontend_loggers.push_back(std::move(frontend_logger));
@@ -364,10 +376,7 @@ void LogManager::SetLogDirectoryName(std::string log_directory) {
 }
 
 // XXX change to read configuration file
-std::string LogManager::GetLogDirectoryName(void) {
-  PL_ASSERT(log_directory_name.empty() == false);
-  return log_directory_name;
-}
+std::string LogManager::GetLogDirectoryName(void) { return log_directory_name; }
 
 void LogManager::PrepareRecovery() {
   if (prepared_recovery_) {
@@ -384,7 +393,7 @@ void LogManager::PrepareRecovery() {
       auto table = database->GetTable(table_idx);
       // drop existing tile groups
       table->DropTileGroups();
-      table->SetNumberOfTuples(0);
+      table->SetTupleCount(0);
     }
   }
   prepared_recovery_ = true;

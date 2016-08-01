@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "expression/abstract_expression.h"
@@ -51,6 +50,14 @@ class ConstantValueExpression : public AbstractExpression {
 
   AbstractExpression *Copy() const override {
     return new ConstantValueExpression(value);
+  }
+
+  const Value& getValue() const {
+	return value;
+  }
+
+  void setValue(const Value& value) {
+	this->value = value;
   }
 
  protected:

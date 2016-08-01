@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "common/abstract_tuple.h"
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
 

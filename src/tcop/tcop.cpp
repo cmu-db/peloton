@@ -17,9 +17,13 @@
 #include "common/portal.h"
 #include "common/logger.h"
 #include "common/types.h"
+#include "common/abstract_tuple.h"
+
+#include "parser/parser.h"
 
 #include "optimizer/simple_optimizer.h"
 #include "executor/plan_executor.h"
+#include "catalog/bootstrapper.h"
 
 namespace peloton {
 namespace tcop {
@@ -27,6 +31,8 @@ namespace tcop {
 // global singleton
 TrafficCop &TrafficCop::GetInstance(void) {
   static TrafficCop traffic_cop;
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
   return traffic_cop;
 }
 
@@ -59,11 +65,11 @@ Result TrafficCop::ExecuteStatement(const std::string& query,
                                  result, rows_changed, error_message);
 
   if(status == Result::RESULT_SUCCESS) {
-	  LOG_INFO("Execution succeeded!");
+    LOG_INFO("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
   }
   else{
-	  LOG_INFO("Execution failed!");
+    LOG_INFO("Execution failed!");
   }
 
   return status;
@@ -77,7 +83,7 @@ Result TrafficCop::ExecuteStatement(UNUSED_ATTRIBUTE const std::shared_ptr<State
 
   LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<Value> params;
-  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Shit");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   return status.m_result;
@@ -93,13 +99,14 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(const std::string& state
 
   statement.reset(new Statement(statement_name, query_string));
 
-  // TODO: Use parser
-  //auto& postgres_parser = parser::PostgresParser::GetInstance();
-  //auto parse_tree = postgres_parser.BuildParseTree(query_string);
+  auto& peloton_parser = parser::Parser::GetInstance();
+  auto sql_stmt = peloton_parser.BuildParseTree(query_string);
 
-  //statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPlanTree(parse_tree));
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
+  LOG_INFO("Statement Prepared!");
   return statement;
+
 }
 
 

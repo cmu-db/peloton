@@ -48,7 +48,7 @@ void MaterializeColumnAtATime(
  */
 MaterializationExecutor::MaterializationExecutor(
     const planner::AbstractPlan *node, ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -75,7 +75,7 @@ void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<oid_t>> &
-        cols_in_physical_tile) {
+    cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -314,29 +314,15 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   std::unique_ptr<catalog::Schema> source_tile_schema(
       source_tile->GetPhysicalSchema());
   const int num_tuples = source_tile->GetTupleCount();
+
   const catalog::Schema *output_schema;
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  auto node = GetRawNode();
 
-  // Create a default identity mapping node if we did not get one
-  if (node == nullptr) {
-    PL_ASSERT(source_tile_schema.get());
-    output_schema = source_tile_schema.get();
+  const planner::MaterializationPlan &node =
+      GetPlanNode<planner::MaterializationPlan>();
 
-    old_to_new_cols = BuildIdentityMapping(output_schema);
-  }
-  // Else use the mapping in the given plan node
-  else {
-    const planner::MaterializationPlan &node =
-        GetPlanNode<planner::MaterializationPlan>();
-    if (node.GetSchema()) {
-      output_schema = node.GetSchema();
-      old_to_new_cols = node.GetOldToNewCols();
-    } else {
-      output_schema = source_tile_schema.get();
-      old_to_new_cols = BuildIdentityMapping(output_schema);
-    }
-  }
+  output_schema = node.GetSchema();
+  old_to_new_cols = node.GetOldToNewCols();
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<oid_t>> tile_to_cols;
@@ -377,20 +363,27 @@ bool MaterializationExecutor::DExecute() {
     return false;
   }
 
+  // By default, we don't create a physical tile unless
+  // output columns need to be reorganized into different tiles
+  bool physify_flag = false;
   auto node = GetRawNode();
-  bool physify_flag = true;  // by default, we create a physical tile
 
   if (node != nullptr) {
     const planner::MaterializationPlan &node =
         GetPlanNode<planner::MaterializationPlan>();
     physify_flag = node.GetPhysifyFlag();
+
+    // Can't physify tile if we don't get a schema
+    if(node.GetSchema() == nullptr){
+      physify_flag = false;
+    }
   }
 
-  if (physify_flag) {
-    /* create a physical tile and a logical tile wrapper to be the output */
+  if (physify_flag == true) {
+    // create a physical tile and a logical tile wrapper to be the output
     output_tile = Physify(source_tile.get());
   } else {
-    /* just pass thru the underlying logical tile */
+    // just pass thru the underlying logical tile
     output_tile = source_tile.release();
   }
 

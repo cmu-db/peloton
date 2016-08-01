@@ -47,10 +47,10 @@ TEST_F(CatalogTests, CreatingTable) {
 	txn_manager.BeginTransaction();
   auto id_column =
 	      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-	                      "dept_id", true);
+	                      "id", true);
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, 32,
-                      "dept_name", true);
+                      "name", true);
 
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema_2(new catalog::Schema({id_column, name_column}));
@@ -61,8 +61,9 @@ TEST_F(CatalogTests, CreatingTable) {
   catalog::Bootstrapper::global_catalog->CreateTable("EMP_DB", "salary_table", std::move(table_schema_3));
 
   txn_manager.CommitTransaction();
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableWithName("department_table")->GetSchema()->GetColumn(1).GetName(), "dept_name");
-  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetNumberOfTuples(), 3);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("EMP_DB")->GetTableWithName("department_table")->GetSchema()->GetColumn(1).GetName(), "name");
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetTupleCount(), 3);
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName("catalog_db")->GetTableWithName("table_catalog")->GetSchema()->GetLength(), 72);
 
 }
 

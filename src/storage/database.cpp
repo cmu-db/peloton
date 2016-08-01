@@ -107,7 +107,7 @@ const std::string Database::GetInfo() const {
       if (index_count > 0) {
         os << "Index Count : " << index_count << std::endl;
         for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-          index::Index *index = table->GetIndex(index_itr);
+          auto index = table->GetIndex(index_itr);
 
           switch (index->GetIndexType()) {
             case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
@@ -120,6 +120,7 @@ const std::string Database::GetInfo() const {
               os << "default index \n";
               break;
           }
+
           os << *index << std::endl;
         }
       }

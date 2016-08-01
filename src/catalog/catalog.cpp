@@ -15,6 +15,7 @@
 
 #include "catalog/catalog.h"
 
+
 #define CATALOG_DATABASE_NAME "catalog_db"
 #define DATABASE_CATALOG_NAME "database_catalog"
 #define TABLE_CATALOG_NAME    "table_catalog"
@@ -33,11 +34,11 @@ void Catalog::CreateCatalogDatabase() {
   storage::Database *database = new storage::Database(START_OID);
   database->setDBName(CATALOG_DATABASE_NAME);
   auto database_catalog = CreateDatabaseCatalog(START_OID, DATABASE_CATALOG_NAME);
-  storage::DataTable *table = database_catalog.release();
-  database->AddTable(table);
+  storage::DataTable *databases_table = database_catalog.release();
+  database->AddTable(databases_table);
   auto table_catalog = CreateTableCatalog(START_OID, TABLE_CATALOG_NAME);
-  table = table_catalog.release();
-  database->AddTable(table);
+  storage::DataTable *tables_table = table_catalog.release();
+  database->AddTable(tables_table);
   databases.push_back(database);
 }
 
@@ -167,6 +168,25 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
   return nullptr;
 }
 
+// Get table from a database
+storage::DataTable* Catalog::GetTableFromDatabase(std::string database_name, std::string table_name) {
+	LOG_INFO("Looking for table %s in database %s", table_name.c_str(), database_name.c_str());
+	storage::Database* database = GetDatabaseWithName(database_name);
+	if(database) {
+		storage::DataTable *table = database->GetTableWithName(table_name);
+		if(table) {
+			return table;
+		}
+		else {
+			return nullptr;
+		}
+	}
+	else {
+		return nullptr;
+	}
+}
+
+
 // Create Table for pg_class
 std::unique_ptr<storage::DataTable> Catalog::CreateTableCatalog(oid_t database_id, std::string table_name) {
   bool own_schema = true;
@@ -246,7 +266,6 @@ std::unique_ptr<catalog::Schema> Catalog::InitializeDatabaseSchema() {
 
   std::unique_ptr<catalog::Schema> database_schema(
       new catalog::Schema({id_column, name_column}));
-
   return database_schema;
 }
 

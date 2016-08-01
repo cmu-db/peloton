@@ -4,12 +4,11 @@
 //
 // drop_parse.h
 //
-// Identification: src/include/parser/peloton/drop_parse.h
+// Identification: src/include/parser/drop_parse.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -21,6 +20,7 @@
 
 namespace peloton {
 namespace parser {
+  class DropStatement;
 
 class DropParse : public AbstractParse {
  public:
@@ -30,28 +30,7 @@ class DropParse : public AbstractParse {
   DropParse(DropParse &&) = delete;
   DropParse &operator=(DropParse &&) = delete;
 
-/*
-  explicit DropParse(DropStmt *drop_node) {
-    entity_type = ENTITY_TYPE_TABLE;
-
-    ListCell *object_item;
-    List *object_list = drop_node->objects;
-    ListCell *subobject_item;
-    List *subobject_list;
-
-    // Value
-    foreach(object_item, object_list){
-      subobject_list = (List *)lfirst(object_item);
-
-      foreach(subobject_item, subobject_list) {
-        ::Value *value = (::Value *)lfirst(subobject_item);
-        LOG_INFO("Table : %s ", strVal(value));
-        entity_name = std::string(strVal(value));
-        missing = drop_node->missing_ok;
-      }
-    }
-  }
-*/
+  explicit DropParse(DropStatement *drop_node);
 
   inline ParseNodeType GetParseNodeType() const { return PARSE_NODE_TYPE_DROP; }
 

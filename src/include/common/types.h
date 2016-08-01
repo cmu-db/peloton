@@ -21,8 +21,6 @@
 #include <vector>
 #include <functional>
 
-#include "common/platform.h"
-
 //===--------------------------------------------------------------------===//
 // GUC Variables
 //===--------------------------------------------------------------------===//
@@ -34,15 +32,16 @@
 enum LoggingType {
   LOGGING_TYPE_INVALID = 0,
 
-  // Based on write ahead logging
-  LOGGING_TYPE_NVM_WAL = 1,
-  LOGGING_TYPE_SSD_WAL = 2,
-  LOGGING_TYPE_HDD_WAL = 3,
-
   // Based on write behind logging
-  LOGGING_TYPE_NVM_WBL = 4,
-  LOGGING_TYPE_SSD_WBL = 5,
-  LOGGING_TYPE_HDD_WBL = 6
+  LOGGING_TYPE_NVM_WBL = 1,
+  LOGGING_TYPE_SSD_WBL = 2,
+  LOGGING_TYPE_HDD_WBL = 3,
+
+  // Based on write ahead logging
+  LOGGING_TYPE_NVM_WAL = 4,
+  LOGGING_TYPE_SSD_WAL = 5,
+  LOGGING_TYPE_HDD_WAL = 6,
+
 };
 
 /* Possible values for peloton_tilegroup_layout GUC */
@@ -65,6 +64,12 @@ enum LoggerMappingStrategyType {
 enum CheckpointType {
   CHECKPOINT_TYPE_INVALID = 0,
   CHECKPOINT_TYPE_NORMAL = 1,
+};
+
+enum ReplicationType {
+  ASYNC_REPLICATION,
+  SYNC_REPLICATION,
+  SEMISYNC_REPLICATION
 };
 
 enum GCType {
@@ -132,8 +137,10 @@ class Value;
 #define VALUE_COMPARE_NO_EQUAL \
   -3  // assigned when comparing array list and no element matching.
 
+#define INVALID_RATIO  -1
+
 #define DEFAULT_DB_ID 12345
-#define DEFAULT_DB_NAME "default"
+#define DEFAULT_DB_NAME "default_database"
 
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
 extern int TEST_TUPLES_PER_TILEGROUP;
@@ -1000,28 +1007,5 @@ typedef std::vector<Target> TargetList;
 typedef std::pair<oid_t, std::pair<oid_t, oid_t>> DirectMap;
 
 typedef std::vector<DirectMap> DirectMapList;
-
-//===--------------------------------------------------------------------===//
-// Asserts
-//===--------------------------------------------------------------------===//
-
-#ifndef NDEBUG
-
-#define AssertMsg(condition, message)                                    \
-  do {                                                                   \
-    if (!(condition)) {                                                  \
-      std::cerr << "Assertion `" #condition "` failed in " << __FILE__   \
-                << " line " << __LINE__ << ": " << message << std::endl; \
-      std::exit(EXIT_FAILURE);                                           \
-    }                                                                    \
-  } while (false)
-
-#else
-
-#define AssertMsg(condition, message) \
-  do {                                \
-  } while (false)
-
-#endif
 
 }  // End peloton namespace

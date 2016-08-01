@@ -178,7 +178,8 @@ class ComparisonExpression : public AbstractExpression {
  public:
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
-      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {}
+      : AbstractExpression(type, VALUE_TYPE_BOOLEAN, left, right) {
+  }
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         const AbstractTuple *tuple2,

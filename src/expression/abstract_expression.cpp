@@ -14,18 +14,23 @@
 #include <sstream>
 
 #include "common/abstract_tuple.h"
-#include "common/printable.h"
 #include "common/types.h"
 #include "common/value.h"
 #include "common/logger.h"
 #include "common/serializer.h"
-#include "common/types.h"
+#include "common/macros.h"
 #include "expression/abstract_expression.h"
 #include "executor/executor_context.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
 namespace expression {
+
+AbstractExpression::AbstractExpression(ExpressionType expr_type)
+: m_type(expr_type),
+  m_valueType(VALUE_TYPE_INVALID),
+  m_hasParameter(true)
+{}
 
 AbstractExpression::AbstractExpression(ExpressionType expr_type, ValueType type,
                                        AbstractExpression *left,
@@ -85,6 +90,16 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
                                             : "<NULL>\n");
   }
   return buffer.str();
+}
+
+bool AbstractExpression::SerializeTo(SerializeOutput &output UNUSED_ATTRIBUTE) const {
+  PL_ASSERT(&output != nullptr);
+  return false;
+}
+
+bool AbstractExpression::DeserializeFrom(SerializeInputBE &input UNUSED_ATTRIBUTE) const {
+  PL_ASSERT(&input != nullptr);
+  return false;
 }
 
 //===--------------------------------------------------------------------===//

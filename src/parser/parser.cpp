@@ -10,18 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-/*-------------------------------------------------------------------------
- *
- * parser.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *
- *
- *-------------------------------------------------------------------------
- */
-
 #include <iostream>
 #include <string>
 
@@ -33,6 +21,14 @@
 
 namespace peloton {
 namespace parser {
+
+Parser::Parser(){
+
+}
+
+Parser::~Parser(){
+
+}
 
 SQLStatementList* Parser::ParseSQLString(const char* text) {
   SQLStatementList* result;
@@ -62,6 +58,28 @@ SQLStatementList* Parser::ParseSQLString(const char* text) {
 SQLStatementList* Parser::ParseSQLString(const std::string& text) {
   return ParseSQLString(text.c_str());
 }
+
+Parser &Parser::GetInstance(){
+  static Parser parser;
+  return parser;
+}
+
+std::unique_ptr<parser::SQLStatement> Parser::BuildParseTree(const std::string& query_string){
+  auto stmt  = Parser::ParseSQLString(query_string);
+
+  LOG_INFO("Statements Size -------------> %lu" ,stmt->GetStatements().size());
+  SQLStatement* first_stmt = nullptr;
+
+  for(auto s : stmt->GetStatements()){
+    first_stmt = s;
+    break;
+  }
+
+  std::unique_ptr<parser::SQLStatement> sql_stmt (first_stmt);
+  return sql_stmt;
+}
+
+
 
 }  // End parser namespace
 }  // End peloton namespace

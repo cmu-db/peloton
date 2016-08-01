@@ -65,9 +65,9 @@ storage::DataTable *TransactionTestsUtil::CreateCombinedPrimaryKeyTable() {
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -108,9 +108,9 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   auto index_metadata = new index::IndexMetadata(
       "primary_btree_index", 1234, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, unique);
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 
@@ -122,9 +122,9 @@ storage::DataTable *TransactionTestsUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema2->SetIndexedColumns(key_attrs2);
   auto index_metadata2 = new index::IndexMetadata(
       "unique_btree_index", 1235, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, unique2);
+      INDEX_CONSTRAINT_TYPE_UNIQUE, tuple_schema2, key_schema2, key_attrs2, unique2);
 
-  index::Index *ukey_index = index::IndexFactory::GetInstance(index_metadata2);
+  std::shared_ptr<index::Index> ukey_index(index::IndexFactory::GetInstance(index_metadata2));
 
   table->AddIndex(ukey_index);
 
@@ -167,9 +167,9 @@ storage::DataTable *TransactionTestsUtil::CreateTable(
       "primary_btree_index", index_oid, INDEX_TYPE_BTREE,
       need_primary_index ? INDEX_CONSTRAINT_TYPE_PRIMARY_KEY
                          : INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, unique);
+      tuple_schema, key_schema, key_attrs, unique);
 
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+  std::shared_ptr<index::Index> pkey_index(index::IndexFactory::GetInstance(index_metadata));
 
   table->AddIndex(pkey_index);
 

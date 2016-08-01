@@ -22,6 +22,7 @@
 #include "common/printable.h"
 #include "common/types.h"
 #include "common/macros.h"
+#include "common/platform.h"
 
 namespace peloton {
 namespace storage {

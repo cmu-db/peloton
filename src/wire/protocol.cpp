@@ -314,7 +314,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   auto &tcop = tcop::TrafficCop::GetInstance();
   statement = std::move(
       tcop.PrepareStatement(statement_name, query_string, error_message));
-
   if (statement.get() == nullptr) {
     SendErrorResponse({{'M', error_message}}, responses);
     SendReadyForQuery(txn_state, responses);
