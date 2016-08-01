@@ -50,6 +50,10 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
       value = values->at(ValuePeeker::PeekBindingOnlyInteger(value));
     }
   }
+
+  for (auto &child_plan : GetChildren()) {
+    child_plan->SetParameterValues(values);
+  }
 }
 
 }  // namespace planner

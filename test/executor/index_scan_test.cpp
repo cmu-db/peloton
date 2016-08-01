@@ -10,23 +10,33 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "common/harness.h"
-
+#include "common/value_factory.h"
+#include "common/logger.h"
+#include "common/statement.h"
 #include "planner/index_scan_plan.h"
+#include "planner/create_plan.h"
+#include "planner/insert_plan.h"
+#include "planner/delete_plan.h"
 #include "common/types.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/index_scan_executor.h"
+#include "executor/create_executor.h"
+#include "executor/insert_executor.h"
+#include "executor/delete_executor.h"
+#include "executor/plan_executor.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "common/value_factory.h"
+#include "catalog/bootstrapper.h"
+#include "catalog/catalog.h"
+#include "parser/parser.h"
+#include "optimizer/simple_optimizer.h"
 
 #include "executor/executor_tests_util.h"
-#include "common/harness.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -161,6 +171,114 @@ TEST_F(IndexScanTests, MultiColumnPredicateTest) {
   EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 2);
 
   txn_manager.CommitTransaction();
+}
+
+void ShowTable(std::string database_name, std::string table_name) {
+  auto table = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+      database_name, table_name);
+  std::unique_ptr<Statement> statement;
+  auto &peloton_parser = parser::Parser::GetInstance();
+  bridge::peloton_status status;
+  std::vector<Value> params;
+  statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
+  auto select_stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  status =
+      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+}
+
+void ExecuteSQLQuery(const std::string statement_name,
+                     const std::string query_string) {
+  LOG_INFO("Query: %s", query_string.c_str());
+  static std::unique_ptr<Statement> statement;
+  statement.reset(new Statement(statement_name, query_string));
+  auto &peloton_parser = parser::Parser::GetInstance();
+  LOG_INFO("Building parse tree...");
+  auto insert_stmt = peloton_parser.BuildParseTree(query_string);
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(
+      optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
+  LOG_INFO("Building plan tree completed!");
+  std::vector<Value> params;
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  bridge::peloton_status status =
+      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  ShowTable(DEFAULT_DB_NAME, "department_table");
+}
+
+TEST_F(IndexScanTests, SQLTest) {
+
+  LOG_INFO("Bootstrapping...");
+  catalog::Bootstrapper::bootstrap();
+  catalog::Bootstrapper::global_catalog->CreateDatabase(DEFAULT_DB_NAME);
+  LOG_INFO("Bootstrapping completed!");
+
+  // Create a table first
+  LOG_INFO("Creating a table...");
+  auto id_column = catalog::Column(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "dept_id", true);
+  // Set dept_id as the primary key (only that we can have a primary key index)
+  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+  id_column.AddConstraint(constraint);
+  auto name_column =
+      catalog::Column(VALUE_TYPE_VARCHAR, 32, "dept_name", false);
+
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  planner::CreatePlan node("department_table", std::move(table_schema));
+  executor::CreateExecutor create_executor(&node, context.get());
+  create_executor.Init();
+  create_executor.Execute();
+  txn_manager.CommitTransaction();
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(
+                                                       DEFAULT_DB_NAME)
+                ->GetTableCount(),
+            1);
+  LOG_INFO("Table created!");
+
+  // Inserting a tuple end-to-end
+  LOG_INFO("Inserting a tuple...");
+  ExecuteSQLQuery(
+      "INSERT",
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
+  LOG_INFO("Tuple inserted!");
+
+  LOG_INFO("Inserting a tuple...");
+  ExecuteSQLQuery(
+      "INSERT",
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (2, 'hello_2');");
+  LOG_INFO("Tuple inserted!");
+
+  LOG_INFO("Inserting a tuple...");
+  ExecuteSQLQuery(
+      "INSERT",
+      "INSERT INTO department_table(dept_id,dept_name) VALUES (3,'hello_2');");
+  LOG_INFO("Tuple inserted!");
+
+  LOG_INFO("Select a tuple...");
+  ExecuteSQLQuery("SELECT STAR",
+                  "SELECT * FROM department_table WHERE dept_id = 1;");
+  LOG_INFO("Tuple selected");
+
+  LOG_INFO("Select a column...");
+  ExecuteSQLQuery("SELECT COLUMN",
+                  "SELECT dept_name FROM department_table WHERE dept_id = 2;");
+  LOG_INFO("Column selected");
+
+  LOG_INFO("Select COUNT(*)...");
+  ExecuteSQLQuery("SELECT AGGREGATE",
+                  "SELECT COUNT(*) FROM department_table WHERE dept_id < 3;");
+  LOG_INFO("Aggregation selected");
 }
 
 }  // namespace test
