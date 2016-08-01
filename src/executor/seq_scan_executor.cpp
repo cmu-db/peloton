@@ -173,7 +173,6 @@ bool SeqScanExecutor::DExecute() {
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
 
-      LOG_INFO("Information %s" , logical_tile->GetInfo().c_str());
       SetOutput(logical_tile.release());
       return true;
     }

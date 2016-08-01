@@ -19,6 +19,7 @@
 #include "executor/executor_context.h"
 #include "executor/plan_executor.h"
 #include "storage/tuple_iterator.h"
+#include "optimizer/util.h"
 
 namespace peloton {
 namespace bridge {
@@ -43,7 +44,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @return status of execution.
  */
 peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                                         const std::vector<Value> &params) {
+                                         const std::vector<Value> &params,
+										 std::vector<ResultType> &result) {
   peloton_status p_status;
 
   if (plan == nullptr) return p_status;
@@ -94,16 +96,37 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
 
     // Stop
     if (status == false) {
+
+      std::unique_ptr<executor::LogicalTile> logical_tile(
+    	     executor_tree->GetOutput());
+      // Some executors don't return logical tiles (e.g., Update).
+      if (logical_tile.get() != nullptr) {
+    	  LOG_INFO("Final Answer: %s", logical_tile->GetInfo().c_str());  // Printing the answers
+    	  auto output_schema = logical_tile->GetPhysicalSchema();  // Physical schema of the tile
+    	  auto answer_tuples = logical_tile->GetTuples();
+
+    	  // Construct the returned results
+    	  result.clear();
+    	  for(auto tuple : answer_tuples) {
+    		  unsigned int col_index = 0;
+			  for(auto column : output_schema->GetColumns()) {
+				  auto column_name = column.GetName();
+				  auto res = ResultType();
+				  PlanExecutor::copyFromTo(column_name.c_str(), res.first);
+				  PlanExecutor::copyFromTo(tuple[col_index++].c_str(), res.second);
+				  result.push_back(res);
+			  }
+    	  }
+    	  /*LOG_INFO("Final Answer (returned): ");
+    	  for(auto res : result) {
+    		  LOG_INFO("First: %s, Second: %s", std::string(res.first.begin(), res.first.end()).c_str(),
+    				  std::string(res.second.begin(), res.second.end()).c_str());
+    	  }*/
+      }
       break;
     }
 
-    std::unique_ptr<executor::LogicalTile> logical_tile(
-        executor_tree->GetOutput());
 
-    // Some executors don't return logical tiles (e.g., Update).
-    if (logical_tile.get() == nullptr) {
-      continue;
-    }
 
     // Go over the logical tile
   }
