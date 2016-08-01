@@ -300,6 +300,10 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
   expression::ExpressionUtil::ConvertParameterExpressions(where_, values);
   SetPredicate(where_);
+
+  for (auto &child_plan : GetChildren()) {
+    child_plan->SetParameterValues(values);
+  }
 }
 
 }  // namespace planner
