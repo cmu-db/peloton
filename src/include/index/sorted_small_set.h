@@ -50,28 +50,30 @@ class SortedSmallSet {
     // Could not use upper bound here since if there are duplications
     // we want to catch the duplication by lower bound
     // But if we are OK with duplications then use upper bound here
-    auto it = std::lower_bound(start_p, end_p, value, value_cmp_obj);
+    //auto it = std::lower_bound(start_p, end_p, value, value_cmp_obj);
+    
+    // Since the assumption is a small array
+    // we choose to use linear search to increase performance
+    for(auto it = start_p;it < end_p;it++) {
+      // If it is the first element that is >= the search value
+      if(value_cmp_obj(*it, value) == false) {
+        // If we have seen a duplication then just return
+        // since duplications are not allowed
+        // Otherwise just break out of the loop
+        // and continue with inserting & shifting
+        if(value_eq_obj(*it, value) == false) {
+          // It is like backward shift operation
+          std::copy_backward(it, end_p, end_p + 1);
+          *it = value;
 
-    // Fast path: If the lower bound does not exist (i.e. the current element)
-    // is the largest on the array, then just append and increase end pointer
-    if(it == end_p) {
-      *it = value;
-      end_p++;
-
-      return;
-    }
-
-    if(value_eq_obj(*it, value) == true) {
-      return;
+          end_p++;
+        }
+        
+        return;
+      }
     }
     
-    // After this lower bound equals upper bound
-
-    // It is like backward shift operation
-    std::copy_backward(it, end_p, end_p + 1);
-    *it = value;
-
-    end_p++;
+    *end_p++ = value;
 
     return;
   }
@@ -143,5 +145,15 @@ class SortedSmallSet {
    */
   inline std::ptrdiff_t GetSize() const {
     return end_p - start_p;
+  }
+  
+  /*
+   * Invaidate() - Clears all contents between start_p and end_p
+   *
+   * This is called if we want to set the size to 0 to avoid
+   * fetching any element from the sss
+   */
+  inline void Invalidate() {
+    end_p = start_p;
   }
 };
