@@ -156,7 +156,7 @@ bool SeqScanExecutor::DExecute() {
                 return res;
               }
               else {
-            	  LOG_INFO("Sequential Scan Predicate Satisfied");
+            	  LOG_TRACE("Sequential Scan Predicate Satisfied");
               }
             }
           }
