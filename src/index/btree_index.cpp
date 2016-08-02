@@ -145,10 +145,12 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::
 template <typename KeyType, typename ValueType, class KeyComparator,
           class KeyEqualityChecker>
 void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
-    const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
+    const std::vector<Value> &values,
+    const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction,
     std::vector<ItemPointer *> &result) {
+      
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   //  oid_t leading_column_id = 0;
@@ -189,6 +191,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       assert(key_column_ids.size() > 0);
       oid_t leading_column_offset = 0;
       oid_t leading_column_id = key_column_ids[leading_column_offset];
+      
       std::vector<std::pair<Value, Value>> intervals;
 
       ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
