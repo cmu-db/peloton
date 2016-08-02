@@ -121,6 +121,11 @@ void InsertTest1(index::Index *index,
     EXPECT_TRUE(status);
   }
   
+  // Perform garbage collection
+  if(index->NeedGC() == true) {
+    index->PerformGC();
+  }
+  
   return;
 }
 
