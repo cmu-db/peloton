@@ -14,6 +14,7 @@
 #include "storage/data_table.h"
 #include "common/types.h"
 #include "expression/expression_util.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -29,25 +30,30 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       values_(std::move(index_scan_desc.values)),
       runtime_keys_(std::move(index_scan_desc.runtime_keys)) {
 
+  LOG_INFO("Creating an Index Scan Plan");
+
   SetTargetTable(table);
 
   if (predicate != NULL) {
     // we need to copy it here because eventually predicate will be destroyed by
     // its owner...
-    auto where = predicate->Copy();
-    ReplaceColumnExpressions(table->GetSchema(), where);
-    SetPredicate(where);
+	predicate_with_params_ = predicate->Copy();
+    ReplaceColumnExpressions(table->GetSchema(), predicate_with_params_);
+    SetPredicate(predicate_with_params_->Copy());
   }
 }
 
 void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
-  auto where = GetPredicate()->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(where, values);
+  LOG_INFO("Setting parameter values in Index Scans");
+  auto where = predicate_with_params_->Copy();
+  expression::ExpressionUtil::ConvertParameterExpressions(where, values, GetTable()->GetSchema());
   SetPredicate(where);
-
-  for (auto &value : values_) {
+  for (unsigned int i = 0; i < values_.size(); ++i) {
+  //for (auto &value : values_) {
+	auto &value = values_[i];
+	auto column_id = key_column_ids_[i];
     if (value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER) {
-      value = values->at(ValuePeeker::PeekBindingOnlyInteger(value));
+  	  value = values->at(ValuePeeker::PeekBindingOnlyInteger(value)).CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 

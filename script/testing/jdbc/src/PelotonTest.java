@@ -373,7 +373,7 @@ public class PelotonTest {
     PelotonTest pt2 = new PelotonTest();
     pt2.Batch_Insert();
     pt2.Close();
-    PelotonTest pt3 = new PelotonTest();
+    /*PelotonTest pt3 = new PelotonTest();
     pt3.ShowTable();
     pt2.Close();
     PelotonTest pt4 = new PelotonTest();
@@ -393,7 +393,7 @@ public class PelotonTest {
     pt8.Close();
     PelotonTest pt9 = new PelotonTest();
     pt9.ShowTable();
-    pt9.Close();
+    pt9.Close();*/
     //pt.Insert(3, TABLE.A);
 //    pt.Insert(20);
     //pt.ReadModifyWrite(3);
@@ -406,3 +406,4 @@ public class PelotonTest {
     //pt4.Close();
   }
 }
+

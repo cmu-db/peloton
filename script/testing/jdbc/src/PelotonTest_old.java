@@ -14,7 +14,7 @@ public class PelotonTest {
           "DROP TABLE IF EXISTS B;";
   private final String DROP = "DROP TABLE A;" +
           "DROP TABLE B;";
-  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
+  private final String CREATE = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
 
   private final String INSERT_A_1 = "INSERT INTO A(id,data) VALUES (1,'hello_1');";
@@ -33,6 +33,7 @@ public class PelotonTest {
 
   private final String SEQSCAN = "SELECT * FROM A";
   private final String SEQSCAN_2 = "SELECT * FROM A WHERE id = 1";
+
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data = 'test update' WHERE id=3";
@@ -75,16 +76,17 @@ public class PelotonTest {
     conn.setAutoCommit(true);
     Statement stmt = conn.createStatement();
     stmt.execute(DROP_IF_EXISTS);
-    stmt.execute(DDL);
+    stmt.execute(CREATE);
     stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
+    stmt.execute(INSERT_B_1);
     stmt.execute(SEQSCAN);
-    stmt.execute(SEQSCAN_2);
+/*    stmt.execute(SEQSCAN_2);
     stmt.execute(AGG_COUNT);
     stmt.execute(AGG_COUNT_2);
-    //stmt.execute(UPDATE_BY_INDEXSCAN);
-    //stmt.execute(DELETE_BY_INDEXSCAN);
+    stmt.execute(UPDATE_BY_INDEXSCAN);
+    stmt.execute(DELETE_BY_INDEXSCAN);*/
     System.out.println("Test db created.");
   }
 

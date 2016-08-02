@@ -96,13 +96,14 @@ std::string ProjectInfo::Debug() const {
   return (buffer.str());
 }
 
-void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values) {
+void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values, catalog::Schema* schema) {
+  LOG_INFO("Setting parameter values in Projection");
   for(unsigned int i = 0; i < target_list_.size(); ++i) {
 	  // The assignment parameter is an expression with left and right
 	  if(target_list_[i].second->GetLeft() && target_list_[i].second->GetRight()) {
 		  auto expr = target_list_[i].second->Copy();
 		  delete target_list_[i].second;
-		  expression::ExpressionUtil::ConvertParameterExpressions(expr, values);
+		  expression::ExpressionUtil::ConvertParameterExpressions(expr, values, schema);
 		  target_list_[i].second = expr;
 	  }
 	  // The assignment parameter is a single value

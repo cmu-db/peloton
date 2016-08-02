@@ -132,14 +132,14 @@ void PacketManager::PutTupleDescriptor(
   if (tuple_descriptor.empty())
     return;
 
-  LOG_INFO("Put TupleDescriptor");
+  //LOG_TRACE("Put TupleDescriptor");
 
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'T';
   PacketPutInt(pkt, tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
-    LOG_INFO("column name: %s", std::get<0>(col).c_str());
+    //LOG_TRACE("column name: %s", std::get<0>(col).c_str());
     PacketPutString(pkt, std::get<0>(col));
     // TODO: Table Oid (int32)
     PacketPutInt(pkt, 0, 4);
@@ -162,7 +162,7 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
   if (!results.size() || !colcount)
     return;
 
-  LOG_INFO("Flatten result size: %lu", results.size());
+  //LOG_TRACE("Flatten result size: %lu", results.size());
   size_t numrows = results.size() / colcount;
 
   // 1 packet per row
@@ -179,7 +179,7 @@ void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
     responses.push_back(std::move(pkt));
   }
   rows_affected = numrows;
-  LOG_INFO("Rows affected: %d", rows_affected);
+  //LOG_TRACE("Rows affected: %d", rows_affected);
 }
 
 /* Gets the first token of a query */
@@ -209,7 +209,7 @@ void PacketManager::CompleteCommand(const std::string &query_type, int rows,
     tag += " 0 " + std::to_string(rows);
   else
     tag += " " + std::to_string(rows);
-  LOG_INFO("complete command tag: %s", tag.c_str());
+  //LOG_TRACE("complete command tag: %s", tag.c_str());
   PacketPutString(pkt, tag);
 
   responses.push_back(std::move(pkt));
@@ -244,7 +244,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
-  LOG_INFO("Query Received: %s \n", q_str.c_str());
+  //LOG_TRACE("Query Received: %s \n", q_str.c_str());
 
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
@@ -279,7 +279,7 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     // check status
     if (status == Result::RESULT_FAILURE) {
       SendErrorResponse( { { 'M', error_message } }, responses);
-      LOG_INFO("Error Response Sent!");
+      //LOG_TRACE("Error Response Sent!");
       break;
     }
 
@@ -299,15 +299,15 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
  * exec_parse_message - handle PARSE message
  */
 void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
-  LOG_INFO("PARSE message");
+  //LOG_TRACE("PARSE message");
   std::string error_message, statement_name, query_string, query_type;
   GetStringToken(pkt, statement_name);
 
   // Read prepare statement name
-  LOG_INFO("Prep stmt: %s", statement_name.c_str());
+  //LOG_TRACE("Prep stmt: %s", statement_name.c_str());
   // Read query string
   GetStringToken(pkt, query_string);
-  LOG_INFO("Parse Query: %s", query_string.c_str());
+  //LOG_TRACE("Parse Query: %s", query_string.c_str());
 
   skipped_stmt_ = false;
   query_type = get_query_type(query_string);
@@ -316,7 +316,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     skipped_stmt_ = true;
     skipped_query_string_ = std::move(query_string);
     skipped_query_type_ = std::move(query_type);
-    LOG_INFO("Statement to be skipped");
+    //LOG_TRACE("Statement to be skipped");
 
     // Send Parse complete response
     std::unique_ptr<Packet> response(new Packet());
@@ -338,7 +338,7 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 
   // Read number of params
   int num_params = PacketGetInt(pkt, 2);
-  LOG_INFO("NumParams: %d", num_params);
+  //LOG_TRACE("NumParams: %d", num_params);
 
   // Read param types
   std::vector<int32_t> param_types(num_params);
@@ -356,11 +356,11 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
   if (unnamed_query) {
     unnamed_statement = statement;
   } else {
-    LOG_INFO("Setting named statement with name : %s",
-        statement_name.c_str());
+    //LOG_TRACE("Setting named statement with name : %s",
+    //    statement_name.c_str());
     auto entry = std::make_pair(statement_name, statement);
     statement_cache_.insert(entry);
-    LOG_INFO("CACHE SIZE: %d", (int)statement_cache_.size());
+    //LOG_TRACE("CACHE SIZE: %d", (int)statement_cache_.size());
   }
 
   // Send Parse complete response
@@ -373,9 +373,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
   GetStringToken(pkt, portal_name);
-  LOG_INFO("Portal name: %s", portal_name.c_str());
+  //LOG_TRACE("Portal name: %s", portal_name.c_str());
   GetStringToken(pkt, statement_name);
-  LOG_INFO("Prep stmt name: %s", statement_name.c_str());
+  //LOG_TRACE("Prep stmt name: %s", statement_name.c_str());
 
   if (skipped_stmt_) {
     // send bind complete
@@ -439,7 +439,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   if (!HardcodedExecuteFilter(query_type)) {
     skipped_stmt_ = true;
     skipped_query_string_ = query_string;
-    LOG_INFO("Statement skipped: %s", skipped_query_string_.c_str());
+    //LOG_TRACE("Statement skipped: %s", skipped_query_string_.c_str());
     std::unique_ptr<Packet> response(new Packet());
     // Send Parse complete response
     response->msg_type = '2';
@@ -498,7 +498,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
               std::make_pair(ValueType::VALUE_TYPE_DOUBLE,
                   std::to_string(float_val)));
           param_values->push_back(ValueFactory::GetDoubleValue(float_val));
-          // LOG_INFO("Bind param (size: %d) : %lf", param_len, float_val);
+          // //LOG_TRACE("Bind param (size: %d) : %lf", param_len, float_val);
         }
           break;
         default: {
@@ -512,12 +512,11 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   }
   // Construct a portal
 
-  LOG_INFO("Size of param values vector ----------------------> %lu" , param_values->size());
+  //LOG_TRACE("Size of param values vector ----------------------> %lu" , param_values->size());
 
   if(param_values->size() > 0){
-    
-  statement->GetPlanTree()->SetParameterValues(param_values);
-    
+    //LOG_TRACE("Setting Parameter Values...");
+    statement->GetPlanTree()->SetParameterValues(param_values);
   }
 
   auto portal = new Portal(portal_name, statement, bind_parameters);
@@ -543,11 +542,11 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
-  LOG_INFO("DESCRIBE message");
+  //LOG_TRACE("DESCRIBE message");
   PacketGetBytes(pkt, 1, mode);
-  LOG_INFO("mode %c", mode[0]);
+  //LOG_TRACE("mode %c", mode[0]);
   GetStringToken(pkt, portal_name);
-  LOG_INFO("portal name: %s", portal_name.c_str());
+  //LOG_TRACE("portal name: %s", portal_name.c_str());
 
   if (mode[0] == 'P') {
     auto portal_itr = portals_.find(portal_name);
@@ -575,7 +574,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
-  LOG_INFO("EXECUTE message");
+  //LOG_TRACE("EXECUTE message");
   std::vector<ResultType> results;
   std::string error_message, portal_name;
   int rows_affected = 0;
@@ -584,7 +583,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
   // execute them
   if (skipped_stmt_) {
-    LOG_INFO("Statement skipped: %s", skipped_query_string_.c_str());
+    //LOG_TRACE("Statement skipped: %s", skipped_query_string_.c_str());
     CompleteCommand(skipped_query_type_, rows_affected, responses);
     skipped_stmt_ = false;
     return;
@@ -592,7 +591,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   auto portal = portals_[portal_name];
   if (portal.get() == nullptr) {
-    LOG_INFO("Did not find portal : %s", portal_name.c_str());
+    //LOG_TRACE("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse( { { 'M', error_message } }, responses);
     SendReadyForQuery(txn_state, responses);
     return;
@@ -601,7 +600,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   auto statement = portal->GetStatement();
 
   if (statement.get() == nullptr) {
-    LOG_INFO("Did not find statement in portal : %s", portal_name.c_str());
+    //LOG_TRACE("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse( { { 'M', error_message } }, responses);
     SendReadyForQuery(txn_state, responses);
     return;
@@ -613,11 +612,11 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
 
-  LOG_INFO("Executing query: %s", query_string.c_str());
+  //LOG_TRACE("Executing query: %s", query_string.c_str());
 
   // acquire the mutex if we are starting a txn
   if (query_string.compare("BEGIN") == 0) {
-    LOG_WARN("BEGIN - acquire lock");
+    LOG_TRACE("BEGIN - acquire lock");
   }
 
   auto &tcop = tcop::TrafficCop::GetInstance();
@@ -625,14 +624,14 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
       rows_affected, error_message);
 
   if (status == Result::RESULT_FAILURE) {
-    LOG_INFO("Failed to execute: %s", error_message.c_str());
+    //LOG_TRACE("Failed to execute: %s", error_message.c_str());
     SendErrorResponse( { { 'M', error_message } }, responses);
     SendReadyForQuery(txn_state, responses);
   }
 
   // release the mutex after a txn commit
   if (query_string.compare("COMMIT") == 0) {
-    LOG_WARN("COMMIT - release lock");
+    LOG_TRACE("COMMIT - release lock");
   }
 
   // put_row_desc(portal->rowdesc, responses);
@@ -673,13 +672,13 @@ bool PacketManager::ProcessPacket(Packet *pkt, ResponseBuffer &responses) {
   }
     break;
   case 'X': {
-    LOG_INFO("Closing client");
+    //LOG_TRACE("Closing client");
     return false;
   }
     break;
   default: {
-    LOG_INFO("Packet type not supported yet: %d (%c)", pkt->msg_type,
-        pkt->msg_type);
+    //LOG_TRACE("Packet type not supported yet: %d (%c)", pkt->msg_type,
+    //    pkt->msg_type);
   }
   }
   return true;

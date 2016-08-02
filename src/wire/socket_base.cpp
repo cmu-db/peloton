@@ -31,8 +31,8 @@ void StartServer(const PelotonConfiguration& configuration,
     int len;
 
     std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
-    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
-    LOG_INFO("Socket path : %s", SOCKET_PATH.c_str());
+    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
+    LOG_TRACE("Socket path : %s", SOCKET_PATH.c_str());
 
     server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server->server_fd < 0) {
@@ -72,7 +72,7 @@ void StartServer(const PelotonConfiguration& configuration,
   else if (configuration.GetSocketFamily() == "AF_INET") {
     struct sockaddr_in serv_addr;
 
-    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
+    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
 
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd < 0) {
@@ -127,7 +127,7 @@ bool SocketManager<B>::RefillReadBuffer() {
     //  try to fill the available space in the buffer
     bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                       SOCKET_BUFFER_SIZE - rbuf.buf_size);
-    LOG_INFO("Bytes Read: %lu", bytes_read);
+    LOG_TRACE("Bytes Read: %lu", bytes_read);
     if (bytes_read < 0) {
       if (errno == EINTR) {
         // interrupts are OK
