@@ -30,9 +30,14 @@ BWTREE_INDEX_TYPE::BWTreeIndex(IndexMetadata *metadata) :
       hash_func{},
       // NOTE: These two arguments need to be constructed in advance
       // and do not have trivial constructor
-      container{comparator,
+      //
+      // NOTE 2: We set the first parameter to false to disable automatic GC
+      //
+      container{false,
+                comparator,
                 equals,
                 hash_func} {
+                  
   return;
 }
 
