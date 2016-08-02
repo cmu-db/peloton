@@ -48,7 +48,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
   // Check if a database with the same name exists
   for (auto database : databases) {
     if (database->GetDBName() == database_name) {
-      LOG_INFO("Database already exists. Returning RESULT_FAILURE.");
+      LOG_TRACE("Database already exists. Returning RESULT_FAILURE.");
       return Result::RESULT_FAILURE;
     }
   }
@@ -63,7 +63,7 @@ Result Catalog::CreateDatabase(std::string database_name) {
 		  database_name);
   catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
 
-  LOG_INFO("Database created. Returning RESULT_SUCCESS.");
+  LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
 }
 
@@ -76,7 +76,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
     if (database->GetTableWithName(table_name)) {
-      LOG_INFO("Found a table with the same name. Returning RESULT_FAILURE");
+      LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
       return Result::RESULT_FAILURE;
     }
     oid_t database_id = database->GetOid();
@@ -99,19 +99,19 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     //	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
     return Result::RESULT_SUCCESS;
   } else {
-    LOG_INFO("Could not find a database with name %s", database_name.c_str());
+    LOG_TRACE("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
 }
 
 Result Catalog::CreatePrimaryIndex(const std::string &database_name,
                                    const std::string &table_name) {
-  LOG_INFO("Trying to create primary index for table %s", table_name.c_str());
+  LOG_TRACE("Trying to create primary index for table %s", table_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
     auto table = database->GetTableWithName(table_name);
     if (!table) {
-      LOG_INFO(
+      LOG_TRACE(
           "Cannot find the table to create the primary key index. Return "
           "RESULT_FAILURE.");
       return Result::RESULT_FAILURE;
@@ -140,29 +140,29 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
         index::IndexFactory::GetInstance(index_metadata));
     table->AddIndex(pkey_index);
 
-    LOG_INFO("Successfully add primary key index for table %s",
+    LOG_TRACE("Successfully add primary key index for table %s",
              table->GetName().c_str());
     return Result::RESULT_SUCCESS;
   } else {
-    LOG_INFO("Could not find a database with name %s", database_name.c_str());
+    LOG_TRACE("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
 }
 
 // Drop a database
 Result Catalog::DropDatabase(std::string database_name) {
-  LOG_INFO("Dropping database %s", database_name.c_str());
+  LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
-    LOG_INFO("Found database!");
-    LOG_INFO("Deleting tuple from catalog");
+    LOG_TRACE("Found database!");
+    LOG_TRACE("Deleting tuple from catalog");
     catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
                              ->GetTableWithName(DATABASE_CATALOG_NAME),
                          database->GetOid());
     oid_t database_offset = 0;
     for (auto database : databases) {
       if (database->GetDBName() == database_name) {
-        LOG_INFO("Deleting database object in database vector");
+        LOG_TRACE("Deleting database object in database vector");
         delete database;
         break;
       }
@@ -170,10 +170,10 @@ Result Catalog::DropDatabase(std::string database_name) {
     }
     PL_ASSERT(database_offset < databases.size());
     // Drop the database
-    LOG_INFO("Deleting database from database vector");
+    LOG_TRACE("Deleting database from database vector");
     databases.erase(databases.begin() + database_offset);
   } else {
-    LOG_INFO("Database is not found!");
+    LOG_TRACE("Database is not found!");
     return Result::RESULT_FAILURE;
   }
   return Result::RESULT_SUCCESS;
@@ -182,28 +182,28 @@ Result Catalog::DropDatabase(std::string database_name) {
 // Drop a table
 Result Catalog::DropTable(std::string database_name, std::string table_name) {
 
-  LOG_INFO("Dropping table %s from database %s", table_name.c_str(),
+  LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
-    LOG_INFO("Found database!");
+    LOG_TRACE("Found database!");
     storage::DataTable *table = database->GetTableWithName(table_name);
     if (table) {
-      LOG_INFO("Found table!");
+      LOG_TRACE("Found table!");
       oid_t table_id = table->GetOid();
-      LOG_INFO("Deleting tuple from catalog!");
+      LOG_TRACE("Deleting tuple from catalog!");
       catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
                                ->GetTableWithName(TABLE_CATALOG_NAME),
                            table_id);
-      LOG_INFO("Deleting table!");
+      LOG_TRACE("Deleting table!");
       database->DropTableWithOid(table_id);
       return Result::RESULT_SUCCESS;
     } else {
-      LOG_INFO("Could not find table");
+      LOG_TRACE("Could not find table");
       return Result::RESULT_FAILURE;
     }
   } else {
-    LOG_INFO("Could not find database");
+    LOG_TRACE("Could not find database");
     return Result::RESULT_FAILURE;
   }
 }
@@ -227,20 +227,20 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
 // Get table from a database
 storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
                                                   std::string table_name) {
-  LOG_INFO("Looking for table %s in database %s", table_name.c_str(),
+  LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
     storage::DataTable *table = database->GetTableWithName(table_name);
     if (table) {
-      LOG_INFO("Found table.");
+      LOG_TRACE("Found table.");
       return table;
     } else {
-      LOG_INFO("Couldn't find table.");
+      LOG_TRACE("Couldn't find table.");
       return nullptr;
     }
   } else {
-    LOG_INFO("Well, database wasn't found in the first place.");
+    LOG_TRACE("Well, database wasn't found in the first place.");
     return nullptr;
   }
 }

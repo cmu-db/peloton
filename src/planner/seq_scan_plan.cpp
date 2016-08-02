@@ -75,7 +75,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
     if (select_node->select_list->at(0)->GetExpressionType() !=
         EXPRESSION_TYPE_STAR) {
       for (auto col : *select_node->select_list) {
-        LOG_INFO("ExpressionType: %s",
+        LOG_TRACE("ExpressionType: %s",
                  ExpressionTypeToString(col->GetExpressionType()).c_str());
         auto col_name = col->getName();
         oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
@@ -299,7 +299,7 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 }
 
 void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
-  LOG_INFO("Setting parameter values in Sequential Scan");
+  LOG_TRACE("Setting parameter values in Sequential Scan");
   delete where_;
   where_ = where_with_params_->Copy();
   expression::ExpressionUtil::ConvertParameterExpressions(where_,
