@@ -553,10 +553,7 @@ update_clause:
 		IDENTIFIER '=' literal {
 			$$ = new UpdateClause();
 			$$->column = $1;
-			printf("I am sending a value here \n");
-			printf("This is your life ----> %s \n" , $3->GetInfo().c_str());
 			$$->value = $3;
-			printf("Initialized Expression \n");
 		}
 	;
 
