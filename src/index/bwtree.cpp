@@ -18,7 +18,6 @@ namespace peloton {
 namespace index {
 #endif
 
-bool print_flag = true;
 
 #ifdef BWTREE_PELOTON
 }  // End index namespace
