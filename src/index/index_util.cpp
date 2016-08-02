@@ -24,27 +24,39 @@
 namespace peloton {
 namespace index {
 
+/*
+ * IfForwardExpression() - Returns true if the expression is > or >=
+ */
 bool IfForwardExpression(ExpressionType e) {
-  if (e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
-      e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) {
-    return true;
-  }
-  return false;
+  // To reduce branch misprediction penalty
+  return e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
+         e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
 }
 
+/*
+ * IfBackWardExpression() - Returns true if the expression is < or <=
+ */
 bool IfBackwardExpression(ExpressionType e) {
-  if (e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
-      e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) {
-    return true;
-  }
-  return false;
+  return e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
+         e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
 }
 
+/*
+ * ValuePairComparator() - Compares std::pair<Value, int>
+ *
+ * Values are compared first and if not equal return result
+ * If values are equal then compare the second element which is an int
+ * and return the result
+ */
 bool ValuePairComparator(const std::pair<peloton::Value, int> &i,
                          const std::pair<peloton::Value, int> &j) {
+
+  // If first elements are equal then compare the second element
   if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
     return i.second < j.second;
   }
+  
+  // Otherwise compare the first element for "<" or ">"
   return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
 }
 
@@ -76,7 +88,7 @@ void ConstructIntervals(oid_t leading_column_id,
   }
 
   // Have merged all constraints in a single line, sort this line.
-  std::sort(nums.begin(), nums.end(), Index::ValuePairComparator);
+  std::sort(nums.begin(), nums.end(), ValuePairComparator);
   assert(nums.size() > 0);
 
   // Build intervals.
