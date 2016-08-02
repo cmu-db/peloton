@@ -67,6 +67,14 @@ class BTreeIndex : public Index {
   bool Cleanup() { return true; }
 
   size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
+  
+  bool NeedGC() {
+    return false;
+  }
+
+  void PerformGC() {
+    return;
+  }
 
  protected:
   MapType container;
