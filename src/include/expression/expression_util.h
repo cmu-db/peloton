@@ -86,7 +86,10 @@ class ExpressionUtil {
 
   static expression::AbstractExpression* ConvertToTupleValueExpression(catalog::Schema *schema, std::string column_name);
 
-  static void ConvertParameterExpressions(expression::AbstractExpression* expression, std::vector<Value>* values);
+  static void ConvertParameterExpressions(expression::AbstractExpression* expression,
+		  std::vector<Value>* values,
+		  catalog::Schema* schema);
+
 };
 
 }  // End expression namespace

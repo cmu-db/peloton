@@ -91,10 +91,10 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       expression::AbstractExpression* having = nullptr;
 
       // The HACK to make the join in tpcc work. This is written by Joy Arulraj
-      if (select_stmt->from_table->join != NULL) {
-        // for (auto table_ref : *select_stmt->from_table->list) {
-        //  LOG_INFO("table name: %s", table_ref->name);
-        //}
+      if (select_stmt->from_table->list != NULL) {
+        for (auto table_ref : *select_stmt->from_table->list) {
+          LOG_INFO("table name: %s", table_ref->name);
+        }
         LOG_INFO("have join condition? %d",
                  select_stmt->from_table->join != NULL);
         LOG_INFO("have sub select statement? %d",
@@ -392,7 +392,14 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   }
 
   // index_searchable = false;
+  // using the index scan causes an error:
+  //Exception Type :: Mismatch Type
+  //Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be cast as BIGINT...
+  //terminate called after throwing an instance of 'peloton::TypeMismatchException'
+  //what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast as BIGINT...
+
   if (!index_searchable) {
+//  if (true) {
     // Create sequential scan plan
     LOG_INFO("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(

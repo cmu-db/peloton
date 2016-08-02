@@ -626,6 +626,8 @@ class Value {
     }
   };
 
+  std::string ToString();
+
   /* Return a string full of arcana and wonder. */
   const std::string GetInfo() const;
 
@@ -1075,7 +1077,6 @@ class Value {
    */
   int64_t CastAsBigIntAndGetValue() const {
     PL_ASSERT(IsNull() == false);
-
     const ValueType type = GetValueType();
     PL_ASSERT(type != VALUE_TYPE_NULL);
     switch (type) {

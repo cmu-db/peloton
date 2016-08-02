@@ -709,7 +709,7 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_MERGEJOIN: { return "MERGEJOIN"; }
     case PLAN_NODE_TYPE_HASHJOIN: { return "HASHJOIN"; }
     case PLAN_NODE_TYPE_UPDATE: { return "UPDATE"; }
-    case PLAN_NODE_TYPE_INSERT: { return "DELETE"; }
+    case PLAN_NODE_TYPE_INSERT: { return "INSERT"; }
     case PLAN_NODE_TYPE_DELETE: { return "DELETE"; }
     case PLAN_NODE_TYPE_SEND: { return "SEND"; }
     case PLAN_NODE_TYPE_RECEIVE: { return "RECEIVE"; }

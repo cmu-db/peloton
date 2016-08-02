@@ -20,6 +20,7 @@
 #include "common/types.h"
 #include "common/serializer.h"
 #include "expression/abstract_expression.h"
+#include "common/logger.h"
 
 namespace peloton {
 
@@ -42,11 +43,16 @@ class SeqScanPlan : public AbstractScan {
   SeqScanPlan(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : AbstractScan(table, predicate, column_ids) { where_ = nullptr; }
+      : AbstractScan(table, predicate, column_ids) {
+	  LOG_INFO("Creating a Sequential Scan Plan");
+	  target_table_ = table;
+	  where_ = predicate;
+	  where_with_params_ = predicate->Copy();
+  }
 
   SeqScanPlan(parser::SelectStatement *select_node);
 
-  SeqScanPlan() : AbstractScan() { where_ = nullptr; }
+  SeqScanPlan() : AbstractScan() { }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
@@ -72,7 +78,9 @@ class SeqScanPlan : public AbstractScan {
   }
 
  private:
-  expression::AbstractExpression *where_;
+  storage::DataTable *target_table_ = nullptr;
+  expression::AbstractExpression *where_ = nullptr;
+  expression::AbstractExpression *where_with_params_ = nullptr;
 };
 
 }  // namespace planner
