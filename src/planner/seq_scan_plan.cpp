@@ -51,10 +51,10 @@ namespace planner {
 
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
 
-  auto target_table = static_cast<storage::DataTable *>(
+  target_table_ = static_cast<storage::DataTable *>(
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, select_node->from_table->name));
-  SetTargetTable(target_table);
+  SetTargetTable(target_table_);
   ColumnIds().clear();
   bool function_found = false;
   for (auto elem : *select_node->select_list) {
@@ -65,7 +65,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   }
   // Pass all columns
   if (function_found) {
-    for (auto column : target_table->GetSchema()->GetColumns()) {
+    for (auto column : target_table_->GetSchema()->GetColumns()) {
       oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
       SetColumnId(col_id);
     }
@@ -89,6 +89,7 @@ SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
   if (select_node->where_clause != NULL) {
     where_ = select_node->where_clause->Copy();
     ReplaceColumnExpressions(GetTable()->GetSchema(), where_);
+    where_with_params_ = where_->Copy();
     SetPredicate(where_->Copy());
   }
 }
@@ -298,8 +299,13 @@ oid_t SeqScanPlan::GetColumnID(std::string col_name) {
 }
 
 void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
-  expression::ExpressionUtil::ConvertParameterExpressions(where_, values);
-  SetPredicate(where_);
+  LOG_INFO("Setting parameter values in Sequential Scan");
+  delete where_;
+  where_ = where_with_params_->Copy();
+  expression::ExpressionUtil::ConvertParameterExpressions(where_,
+		  values,
+		  target_table_->GetSchema());
+  SetPredicate(where_->Copy());
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);

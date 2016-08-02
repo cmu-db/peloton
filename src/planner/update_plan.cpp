@@ -74,7 +74,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 }
 
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
-  LOG_INFO("Setting values for parameters in updates");
+  LOG_INFO("Setting parameter values in Update");
   // First update project_info_ target list
   // Create new project_info_
   TargetList tlist;
@@ -97,26 +97,13 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   }
 
   auto new_proj_info = new planner::ProjectInfo(std::move(tlist), std::move(dmlist));
-  new_proj_info->transformParameterToConstantValueExpression(values);
+  new_proj_info->transformParameterToConstantValueExpression(values, target_table_->GetSchema());
   project_info_.reset(new_proj_info);
 
-  for(auto update_expr : *updates) {
-	  // The assignment parameter is an expression with left and right
-	  if(update_expr->value->GetLeft() && update_expr->value->GetRight()) {
-		  expression::ExpressionUtil::ConvertParameterExpressions(update_expr->value, values);
-	  }
-	  // The assignment parameter is a single value
-	  else {
-		  auto param_expr = (expression::ParameterValueExpression*) update_expr->value;
-		  LOG_INFO("Setting parameter %u to value %s", param_expr->getValueIdx(),
-				  values->at(param_expr->getValueIdx()).GetInfo().c_str());
-		  auto value = new expression::ConstantValueExpression(values->at(param_expr->getValueIdx()));
-		  delete param_expr;
-		  update_expr->value = value;
-	  }
-  }
   LOG_INFO("Setting values for parameters in where");
-  expression::ExpressionUtil::ConvertParameterExpressions(where, values);
+  auto &children = GetChildren();
+  // One sequential scan
+  children[0]->SetParameterValues(values);
 }
 
 }  // namespace planner

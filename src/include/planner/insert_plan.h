@@ -97,6 +97,9 @@ class InsertPlan : public AbstractPlan {
   // <tuple_column_index, parameter_index>
   std::unique_ptr<std::vector<std::pair<oid_t, oid_t>>> parameter_vector_;
 
+  // Parameter values
+  std::unique_ptr<std::vector<ValueType>> params_value_type_;
+
   /** @brief Number of times to insert */
   oid_t bulk_insert_count;
 

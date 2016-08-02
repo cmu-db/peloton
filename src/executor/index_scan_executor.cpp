@@ -125,7 +125,7 @@ bool IndexScanExecutor::DExecute() {
       result_itr_++;
       continue;
     } else {
-      LOG_INFO("Information %s", result_[result_itr_]->GetInfo().c_str());
+      LOG_TRACE("Information %s", result_[result_itr_]->GetInfo().c_str());
       SetOutput(result_[result_itr_]);
       result_itr_++;
       return true;
@@ -156,7 +156,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
     index_->Scan(values_, key_column_ids_, expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
   }
-
   if (tuple_location_ptrs.size() == 0) return false;
 
   auto &transaction_manager =

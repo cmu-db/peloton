@@ -86,7 +86,6 @@ bool Index::Compare(const AbstractTuple &index_key,
 
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
-
     const Value &rhs = values[key_column_itr];
     const Value &lhs = index_key.GetValue(column_itr);
     const ExpressionType expr_type = expr_types[key_column_itr];
@@ -99,6 +98,9 @@ bool Index::Compare(const AbstractTuple &index_key,
         diff = VALUE_COMPARE_NO_EQUAL;
       }
     } else {
+    	LOG_INFO("ERROR HERE");
+    	LOG_INFO("lhs: %s", lhs.GetInfo().c_str());
+    	LOG_INFO("rhs: %s", rhs.GetInfo().c_str());
       diff = lhs.Compare(rhs);
     }
 

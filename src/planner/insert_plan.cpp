@@ -51,6 +51,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
   parameter_vector_.reset(new std::vector<std::pair<oid_t, oid_t>> ());
+  params_value_type_.reset(new std::vector<ValueType>);
 
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(DEFAULT_DB_NAME, parse_tree->table_name);
   if(target_table_){
@@ -65,6 +66,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 				if(elem->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 					std::pair<oid_t, oid_t> pair = std::make_pair(col_cntr, param_index++);
 					parameter_vector_->push_back(pair);
+					params_value_type_->push_back(table_schema->GetColumn(col_cntr).GetType());
 				}
 				else {
 				expression::ConstantValueExpression *const_expr_elem = dynamic_cast<expression::ConstantValueExpression *>(elem);
@@ -102,6 +104,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 						if(values->at(pos)->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 							std::pair<oid_t, oid_t> pair = std::make_pair(pos, param_index++);
 							parameter_vector_->push_back(pair);
+							params_value_type_->push_back(table_schema->GetColumn(col_cntr).GetType());
 						}
 						expression::ConstantValueExpression *const_expr_elem =
 								dynamic_cast<expression::ConstantValueExpression *>(values->at(pos));
@@ -141,14 +144,17 @@ VarlenPool *InsertPlan::GetPlanPool() {
 
 void InsertPlan::SetParameterValues(std::vector<Value>* values) {
 	  PL_ASSERT(values->size() == parameter_vector_->size());
+	  LOG_INFO("Set Parameter Values in Insert");
 	  for(unsigned int i = 0; i < values->size(); ++i) {
-		  switch(values->at(i).GetValueType()) {
+		  auto param_type = params_value_type_->at(i);
+		  LOG_INFO("Setting value of type %s", ValueTypeToString(param_type).c_str());
+		  switch(param_type) {
 		  case VALUE_TYPE_VARBINARY:
 		  case VALUE_TYPE_VARCHAR:
-			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i), GetPlanPool());
+			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i).CastAs(param_type), GetPlanPool());
 			  break;
 		  default:
-			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i), nullptr);
+			  tuple_->SetValue(parameter_vector_->at(i).first, values->at(i).CastAs(param_type), nullptr);
 		  }
 	  }
 }

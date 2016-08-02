@@ -50,7 +50,10 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 }
 
 void DeletePlan::SetParameterValues(std::vector<Value> *values) {
-  expression::ExpressionUtil::ConvertParameterExpressions(expr, values);
+  LOG_INFO("Setting parameter values in Delete");
+  auto &children = GetChildren();
+  // One sequential scan
+  children[0]->SetParameterValues(values);
 }
 
 }  // namespace planner
