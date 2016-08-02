@@ -42,7 +42,6 @@ oid_t IndexMetadata::GetColumnCount() const {
   return GetKeySchema()->GetColumnCount();
 }
 
-
 const std::string IndexMetadata::GetInfo() const {
   std::stringstream os;
 
@@ -201,6 +200,10 @@ bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
  *                              satisfies a given tuple
  *
  * The predicate has the same specification as those in Scan()
+ * This function works even if there are multiple predicates on a single
+ * column, e.g. both "<" and ">" could be applied to the same column. Even
+ * in this case this function correctly identifies the lower bound, though not
+ * necessarily be a tight lower bound.
  */
 bool Index::ConstructLowerBoundTuple(
     storage::Tuple *index_key,
