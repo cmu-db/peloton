@@ -208,6 +208,47 @@ static void InsertTest2(index::Index *index,
 }
 
 /*
+ * DeleteTest2() - Tests DeleteEntry() performance for each index type
+ *
+ * This function tests threads deleting with an interleaved pattern
+ *
+ * The delete pattern is depicted as follows:
+ *
+ * |0 1 2 3 .. (num_thread - 1)|0 1 2 3 .. (num_thread - 1)| ... |0 1 2 3 .. (num_thread - 1)|
+ *  ^                           ^                                 ^
+ * 1st key for thread 0       second key for thread 0            last key for thread 0
+ *
+ * This test usually has higher contention and lower performance
+ */
+static void DeleteTest2(index::Index *index,
+                        size_t num_thread,
+                        size_t num_key,
+                        uint64_t thread_id) {
+  // num_thread is the step for each iteration
+  // thread_id is the offset of each iteration
+
+  std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
+
+  // Set the non-indexed column of the key to avoid undefined behaviour
+  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
+
+  size_t j = 0;
+  for (size_t i = thread_id;j < num_key;(i += num_thread), j++) {
+    auto key_value =  ValueFactory::GetIntegerValue(i);
+
+    key->SetValue(0, key_value, nullptr);
+    key->SetValue(1, key_value, nullptr);
+
+    auto status = index->DeleteEntry(key.get(), item0);
+    EXPECT_TRUE(status);
+  }
+
+  return;
+}
+
+
+/*
  * TestIndexPerformance() - Test driver for indices of a given type
  *
  * This function tests Insert and Delete performance together with
@@ -303,6 +344,34 @@ static void TestIndexPerformance(const IndexType& index_type) {
 
     timer.Stop();
     LOG_INFO("Test = InsertTest2; Type = %d; Duration = %.2lf",
+             (int)index_type,
+             timer.GetDuration());
+  } else {
+    LOG_INFO("INDEX_TYPE_SKIPLIST (type = %d) does not"
+             " support the following tests",
+             (int)index_type);
+  }
+  
+  ///////////////////////////////////////////////////////////////////
+  // Start DeleteTest2
+  ///////////////////////////////////////////////////////////////////
+
+  if(index_type != INDEX_TYPE_SKIPLIST) {
+    timer.Start();
+
+    LaunchParallelTest(num_thread, DeleteTest2, index.get(), num_thread, num_key);
+
+    // Perform garbage collection
+    if(index->NeedGC() == true) {
+      index->PerformGC();
+    }
+
+    index->ScanAllKeys(location_ptrs);
+    EXPECT_EQ(location_ptrs.size(), 0);
+    location_ptrs.clear();
+
+    timer.Stop();
+    LOG_INFO("Test = DeleteTest1; Type = %d; Duration = %.2lf",
              (int)index_type,
              timer.GetDuration());
   } else {
