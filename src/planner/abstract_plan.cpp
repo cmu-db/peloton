@@ -81,19 +81,19 @@ void AbstractPlan::ReplaceColumnExpressions(
   if (expression->GetLeft()->GetExpressionType() ==
       EXPRESSION_TYPE_COLUMN_REF) {
     auto expr = expression->GetLeft();
-    std::string col_name(expr->getName());
+    std::string col_name(expr->GetName());
     LOG_TRACE("Column name: %s", col_name.c_str());
     delete expr;
-    expression->setLeft(
+    expression->setLeftExpression(
         expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
                                                                   col_name));
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
     auto expr = expression->GetRight();
-    std::string col_name(expr->getName());
+    std::string col_name(expr->GetName());
     LOG_TRACE("Column name: %s", col_name.c_str());
     delete expr;
-    expression->setRight(
+    expression->setRightExpression(
         expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
                                                                   col_name));
   } else {

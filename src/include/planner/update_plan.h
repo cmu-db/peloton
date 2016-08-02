@@ -75,9 +75,11 @@ class UpdatePlan : public AbstractPlan {
   /** @brief Projection info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-  std::vector<parser::UpdateClause *> *updates;
+  // Vector of Update clauses
+  std::vector<parser::UpdateClause *> *updates_;
 
-  expression::AbstractExpression *where;
+  // The where condition
+  expression::AbstractExpression *where_;
 };
 
 }  // namespace planner

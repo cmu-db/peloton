@@ -177,7 +177,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     }
   }
 
-  LOG_INFO("Special case : %d ", special_case);
+  LOG_TRACE("Special case : %d ", special_case);
 
   {
     index_lock.ReadLock();
@@ -202,7 +202,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
       for (auto key_column_id : indexed_columns) {
         if (key_column_id == leading_column_id) {
-          LOG_INFO("Leading column : %u", key_column_id);
+          LOG_TRACE("Leading column : %u", key_column_id);
           continue;
         }
 
@@ -227,9 +227,9 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
         start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
         end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
 
-        LOG_INFO("%s", "Constructing start/end keys\n");
+        LOG_TRACE("%s", "Constructing start/end keys\n");
 
-        LOG_INFO("left bound %s\t\t right bound %s\n",
+        LOG_TRACE("left bound %s\t\t right bound %s\n",
                   interval.first.GetInfo().c_str(),
                   interval.second.GetInfo().c_str());
 
@@ -264,7 +264,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                 result.push_back(location_header);
               }
             }
-            LOG_INFO("DONE");
+            LOG_TRACE("DONE");
           } break;
 
           case SCAN_DIRECTION_TYPE_INVALID:
