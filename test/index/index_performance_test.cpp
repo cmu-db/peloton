@@ -121,11 +121,6 @@ void InsertTest1(index::Index *index,
     EXPECT_TRUE(status);
   }
   
-  // Perform garbage collection
-  if(index->NeedGC() == true) {
-    index->PerformGC();
-  }
-  
   return;
 }
 
@@ -152,6 +147,11 @@ static void TestIndexPerformance(const IndexType& index_type) {
   // First two arguments are used for launching tasks
   // All remaining arguments are passed to the thread body
   LaunchParallelTest(num_thread, InsertTest1, index.get(), num_thread, num_key);
+
+  // Perform garbage collection
+  if(index->NeedGC() == true) {
+    index->PerformGC();
+  }
 
   index->ScanAllKeys(location_ptrs);
   EXPECT_EQ(location_ptrs.size(), num_thread * num_key);
