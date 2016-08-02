@@ -93,7 +93,6 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   // Execute the tree until we get result tiles from root node
   for (;;) {
     status = executor_tree->Execute();
-
     // Stop
     if (status == false) {
 

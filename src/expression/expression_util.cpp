@@ -490,30 +490,39 @@ expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (c
 /**
  * This function converts each ParameterValueExpression in an expression tree to a value from the value vector
  */
-void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression, std::vector<Value>* values) {
+void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression,
+		std::vector<Value>* values,
+		catalog::Schema* schema) {
   PL_ASSERT(expression->GetLeft());
   PL_ASSERT(expression->GetRight());
+  LOG_INFO("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+  LOG_INFO("expression->right: %s", expression->GetRight()->GetInfo().c_str());
   if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
-	  auto left = (ParameterValueExpression*)expression->GetLeft();
+	  auto left = (ParameterValueExpression*) expression->GetLeft();  // left expression is parameter
+	  auto right = (TupleValueExpression*) expression->GetRight();  // right expression is column
+	  auto value = new ConstantValueExpression(
+			  values->at(left->getValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
 	  LOG_INFO("Setting parameter %u to value %s", left->getValueIdx(),
-			  values->at(left->getValueIdx()).GetInfo().c_str());
-	  auto value = new ConstantValueExpression(values->at(left->getValueIdx()));
+			  value->getValue().GetInfo().c_str());
 	  delete left;
 	  expression->setLeft(value);
   }
   else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
-	  auto right = (ParameterValueExpression*)expression->GetRight();
+	  auto right = (ParameterValueExpression*)expression->GetRight();  // right expression is parameter
+	  auto left = (TupleValueExpression*) expression->GetRight();  // left expression is column
+	  auto value = new ConstantValueExpression(
+			  values->at(right->getValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
 	  LOG_INFO("Setting parameter %u to value %s", right->getValueIdx(),
-			  values->at(right->getValueIdx()).GetInfo().c_str());
-	  auto value = new ConstantValueExpression(values->at(right->getValueIdx()));
+			  value->getValue().GetInfo().c_str());
 	  delete right;
 	  expression->setRight(value);
   }
   else {
-	  ConvertParameterExpressions(expression->GetModifiableLeft(), values);
-	  ConvertParameterExpressions(expression->GetModifiableRight(), values);
+	  ConvertParameterExpressions(expression->GetModifiableLeft(), values, schema);
+	  ConvertParameterExpressions(expression->GetModifiableRight(), values, schema);
   }
 }
+
 
 }  // End expression namespace
 }  // End peloton namespace

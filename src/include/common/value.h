@@ -1077,7 +1077,6 @@ class Value {
    */
   int64_t CastAsBigIntAndGetValue() const {
     PL_ASSERT(IsNull() == false);
-
     const ValueType type = GetValueType();
     PL_ASSERT(type != VALUE_TYPE_NULL);
     switch (type) {

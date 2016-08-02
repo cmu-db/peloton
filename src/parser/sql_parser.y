@@ -769,7 +769,6 @@ placeholder_expr:
 	;
 parameter_expr:
 	PREPAREPARAMETERS {
-			printf("COOOOOOL %s COOOL \n" , $1);
 			int val = atol($1);
 			$$ = new peloton::expression::ParameterValueExpression(val -1 , peloton::ValueFactory::GetNullValue());
 		}

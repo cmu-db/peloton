@@ -41,10 +41,10 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 }
 
 void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
+  LOG_INFO("Setting parameter values in Index Scans");
   auto where = GetPredicate()->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(where, values);
+  expression::ExpressionUtil::ConvertParameterExpressions(where, values, GetTable()->GetSchema());
   SetPredicate(where);
-
   for (auto &value : values_) {
     if (value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER) {
       value = values->at(ValuePeeker::PeekBindingOnlyInteger(value));
