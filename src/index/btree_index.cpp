@@ -95,7 +95,10 @@ bool BTreeIndex<KeyType, ValueType, KeyComparator,
           iterator->second = nullptr;
           container.erase(iterator);
           // Set try again
+          // We could not proceed here since erase() may invalidate
+          // iterators by one or more node merge
           try_again = true;
+          
           break;
         }
       }
