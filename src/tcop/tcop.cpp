@@ -49,7 +49,7 @@ Result TrafficCop::ExecuteStatement(
     const std::string &query, std::vector<ResultType> &result,
     std::vector<FieldInfoType> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
-  LOG_INFO("Received %s", query.c_str());
+  LOG_TRACE("Received %s", query.c_str());
 
   // Prepare the statement
   std::string unnamed_statement = "unnamed";
@@ -65,10 +65,10 @@ Result TrafficCop::ExecuteStatement(
       ExecuteStatement(statement, unnamed, result, rows_changed, error_message);
 
   if (status == Result::RESULT_SUCCESS) {
-    LOG_INFO("Execution succeeded!");
+    LOG_TRACE("Execution succeeded!");
     tuple_descriptor = std::move(statement->GetTupleDescriptor());
   } else {
-    LOG_INFO("Execution failed!");
+    LOG_TRACE("Execution failed!");
   }
 
   return status;
@@ -81,12 +81,12 @@ Result TrafficCop::ExecuteStatement(
     UNUSED_ATTRIBUTE int &rows_changed,
     UNUSED_ATTRIBUTE std::string &error_message) {
 
-  LOG_INFO("Execute Statement %s", statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<Value> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   bridge::peloton_status status =
       bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
-  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_TRACE("Statement executed. Result: %d", status.m_result);
   return status.m_result;
 }
 
@@ -95,7 +95,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     UNUSED_ATTRIBUTE std::string &error_message) {
   std::shared_ptr<Statement> statement;
 
-  LOG_INFO("Prepare Statement %s", query_string.c_str());
+  LOG_TRACE("Prepare Statement %s", query_string.c_str());
 	
   std::vector<std::string> query_tokens;
     boost::split(query_tokens, query_string, boost::is_any_of(" "),
@@ -110,7 +110,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
   
   if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
-      LOG_INFO("******* SELECT STATEMENT DETECTED *******");
+      LOG_TRACE("******* SELECT STATEMENT DETECTED *******");
 
       auto select_stmt = (parser::SelectStatement*)sql_stmt.get();
 
@@ -127,17 +127,17 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
          for(oid_t i = 0; i < columns.size(); ++i){
     
           if(columns[i].column_type == VALUE_TYPE_INTEGER){
-            LOG_INFO("******* INTEGER *******");
+            LOG_TRACE("******* INTEGER *******");
             t_desc.push_back(std::make_tuple(columns[i].column_name , 23 , 4));
           }
     
           else if(columns[i].column_type == VALUE_TYPE_DOUBLE){
-            LOG_INFO("******* FLOAT *******");
+            LOG_TRACE("******* FLOAT *******");
             t_desc.push_back(std::make_tuple(columns[i].column_name , 701 , 8));
           }
     
           else if(columns[i].column_type == VALUE_TYPE_VARCHAR){
-            LOG_INFO("******* TEXT *******");
+            LOG_TRACE("******* TEXT *******");
             t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
           }
     
@@ -149,7 +149,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       }
       else if(query_tokens[1].find("COUNT(") != std::string::npos){
         t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));
-        LOG_INFO("query_tokens is ----------------> %s" , query_tokens[1].c_str());  
+        LOG_TRACE("query_tokens is ----------------> %s" , query_tokens[1].c_str());  
       }
       else if(query_tokens[1].find("MAX(") != std::string::npos){
         t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));  
@@ -164,7 +164,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  LOG_INFO("Statement Prepared!");
+  LOG_TRACE("Statement Prepared!");
   return std::move(statement);
 }
 
