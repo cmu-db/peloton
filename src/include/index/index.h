@@ -180,6 +180,14 @@ class Index : public Printable {
   // For those that do not need GC this should return immediately
   virtual void PerformGC() = 0;
 
+  // The following two are used to perform GC in a 
+  // fast manner
+  // Because if we register for epoch for every operation then
+  // essentially we are synchronizing on each operation which does
+  // not scale at all
+  //virtual void *JoinEpoch() = 0;
+  //virtual void LeaveEpoch(void *) = 0;
+
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
