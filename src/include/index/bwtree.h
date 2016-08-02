@@ -6414,7 +6414,7 @@ before_switch:
   void PerformGarbageCollection() {
     // This function creates a new epoch node, and then checks
     // epoch counter for exiatsing nodes.
-    epoch_manager.ThreadFunc();
+    epoch_manager.PerformGarbageCollection();
 
     return;
   }
@@ -7109,6 +7109,18 @@ try_join_again:
     }
 
     /*
+     * PerformGarbageCollection() - Actual job of GC is done here
+     *
+     * We need to separate the GC loop and actual GC routine to enable
+     * external threads calling the function while also allows BwTree maintains
+     * its own GC thread using the loop
+     */
+    void PerformGarbageCollection() {
+      ClearEpoch();
+      CreateNewEpoch();
+    }
+
+    /*
      * ThreadFunc() - The cleaner thread executes this every GC_INTERVAL ms
      *
      * This function exits when exit flag is set to true
@@ -7120,8 +7132,7 @@ try_join_again:
       // hit the correct value on next try
       while(exited_flag.load() == false) {
         //printf("Start new epoch cycle\n");
-        ClearEpoch();
-        CreateNewEpoch();
+        PerformGarbageCollection();
 
         // Sleep for 50 ms
         std::chrono::milliseconds duration(GC_INTERVAL);
