@@ -479,10 +479,10 @@ expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (c
     auto column_id = schema->GetColumnID(column_name);
     // If there is no column with this name
     if(column_id > schema->GetColumnCount()) {
-    	LOG_INFO("Could not find column name %s in schema: %s", column_name.c_str(), schema->GetInfo().c_str());
+    	LOG_TRACE("Could not find column name %s in schema: %s", column_name.c_str(), schema->GetInfo().c_str());
     	return nullptr;
     }
-    LOG_INFO("Column id in table: %u", column_id);
+    LOG_TRACE("Column id in table: %u", column_id);
     expression::TupleValueExpression *expr =
         new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
 	return expr;
@@ -495,14 +495,14 @@ void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression*
 		catalog::Schema* schema) {
   PL_ASSERT(expression->GetLeft());
   PL_ASSERT(expression->GetRight());
-  LOG_INFO("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
-  LOG_INFO("expression->right: %s", expression->GetRight()->GetInfo().c_str());
+  LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+  LOG_TRACE("expression->right: %s", expression->GetRight()->GetInfo().c_str());
   if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 	  auto left = (ParameterValueExpression*) expression->GetLeft();  // left expression is parameter
 	  auto right = (TupleValueExpression*) expression->GetRight();  // right expression is column
 	  auto value = new ConstantValueExpression(
 			  values->at(left->getValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
-	  LOG_INFO("Setting parameter %u to value %s", left->getValueIdx(),
+	  LOG_TRACE("Setting parameter %u to value %s", left->getValueIdx(),
 			  value->getValue().GetInfo().c_str());
 	  delete left;
 	  expression->setLeft(value);
@@ -512,7 +512,7 @@ void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression*
 	  auto left = (TupleValueExpression*) expression->GetRight();  // left expression is column
 	  auto value = new ConstantValueExpression(
 			  values->at(right->getValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
-	  LOG_INFO("Setting parameter %u to value %s", right->getValueIdx(),
+	  LOG_TRACE("Setting parameter %u to value %s", right->getValueIdx(),
 			  value->getValue().GetInfo().c_str());
 	  delete right;
 	  expression->setRight(value);

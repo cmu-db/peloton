@@ -146,10 +146,10 @@ VarlenPool *InsertPlan::GetPlanPool() {
 
 void InsertPlan::SetParameterValues(std::vector<Value>* values) {
 	  PL_ASSERT(values->size() == parameter_vector_->size());
-	  LOG_INFO("Set Parameter Values in Insert");
+	  LOG_TRACE("Set Parameter Values in Insert");
 	  for(unsigned int i = 0; i < values->size(); ++i) {
 		  auto param_type = params_value_type_->at(i);
-		  LOG_INFO("Setting value of type %s", ValueTypeToString(param_type).c_str());
+		  //LOG_INFO("Setting value of type %s", ValueTypeToString(param_type).c_str());
 		  switch(param_type) {
 		  case VALUE_TYPE_VARBINARY:
 		  case VALUE_TYPE_VARCHAR:
