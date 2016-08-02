@@ -180,6 +180,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto &peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
   std::vector<Value> params;
+  std::vector<ResultType> result;
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
@@ -187,7 +188,7 @@ void ShowTable(std::string database_name, std::string table_name) {
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
 }
 
 void ExecuteSQLQuery(const std::string statement_name,
@@ -204,10 +205,11 @@ void ExecuteSQLQuery(const std::string statement_name,
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<Value> params;
+  std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
   bridge::peloton_status status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   ShowTable(DEFAULT_DB_NAME, "department_table");
 }

@@ -28,21 +28,21 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
                        std::unique_ptr<const planner::ProjectInfo> project_info)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      updates(NULL),
-      where(NULL) {
+      updates_(NULL),
+      where_(NULL) {
 	LOG_INFO("Creating an Update Plan");
 }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   LOG_INFO("Creating an Update Plan");
-  updates = new std::vector<parser::UpdateClause *>();
+  updates_ = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
 
   for(auto update_clause : *parse_tree->updates) {
-	  updates->push_back(update_clause->Copy());
+	  updates_->push_back(update_clause->Copy());
   }
   TargetList tlist;
   DirectMapList dmlist;
@@ -50,7 +50,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
   auto schema = target_table_->GetSchema();
 
   std::vector<oid_t> columns;
-  for (auto update : *updates) {
+  for (auto update : *updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);
@@ -67,11 +67,11 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
       new planner::ProjectInfo(std::move(tlist), std::move(dmlist)));
   project_info_ = std::move(project_info);
 
-  where = parse_tree->where->Copy();
-  ReplaceColumnExpressions(target_table_->GetSchema(), where);
+  where_ = parse_tree->where->Copy();
+  ReplaceColumnExpressions(target_table_->GetSchema(), where_);
 
   std::unique_ptr<planner::SeqScanPlan> seq_scan_node(
-      new planner::SeqScanPlan(target_table_, where, columns));
+      new planner::SeqScanPlan(target_table_, where_, columns));
   AddChild(std::move(seq_scan_node));
 }
 
@@ -85,7 +85,7 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   auto schema = target_table_->GetSchema();
 
   std::vector<oid_t> columns;
-  for (auto update : *updates) {
+  for (auto update : *updates_) {
     // get oid_t of the column and push it to the vector;
     col_id = schema->GetColumnID(std::string(update->column));
     columns.push_back(col_id);

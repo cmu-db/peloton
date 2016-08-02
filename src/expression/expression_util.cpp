@@ -501,21 +501,21 @@ void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression*
 	  auto left = (ParameterValueExpression*) expression->GetLeft();  // left expression is parameter
 	  auto right = (TupleValueExpression*) expression->GetRight();  // right expression is column
 	  auto value = new ConstantValueExpression(
-			  values->at(left->getValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
-	  LOG_TRACE("Setting parameter %u to value %s", left->getValueIdx(),
+			  values->at(left->GetValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
+	  LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
 			  value->getValue().GetInfo().c_str());
 	  delete left;
-	  expression->setLeft(value);
+	  expression->setLeftExpression(value);
   }
   else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
 	  auto right = (ParameterValueExpression*)expression->GetRight();  // right expression is parameter
 	  auto left = (TupleValueExpression*) expression->GetRight();  // left expression is column
 	  auto value = new ConstantValueExpression(
-			  values->at(right->getValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
-	  LOG_TRACE("Setting parameter %u to value %s", right->getValueIdx(),
+			  values->at(right->GetValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
+	  LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
 			  value->getValue().GetInfo().c_str());
 	  delete right;
-	  expression->setRight(value);
+	  expression->setRightExpression(value);
   }
   else {
 	  ConvertParameterExpressions(expression->GetModifiableLeft(), values, schema);

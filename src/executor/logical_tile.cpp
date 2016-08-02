@@ -425,7 +425,7 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
   schema_ = std::move(new_schema);
 }
 
-std::vector<std::vector<std::string>> LogicalTile::GetTuples() {
+std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
 	std::vector<std::vector<std::string>> string_tile;
 	for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
 		std::vector<std::string> row;

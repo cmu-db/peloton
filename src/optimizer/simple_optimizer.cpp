@@ -110,7 +110,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       if (group_by != NULL) {
         LOG_INFO("Found GROUP BY");
         for (auto elem : *group_by->columns) {
-          std::string col_name(elem->getName());
+          std::string col_name(elem->GetName());
           auto column_id = target_table->GetSchema()->GetColumnID(col_name);
           group_by_columns.push_back(column_id);
         }
@@ -165,15 +165,15 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             if (func_expr->expr->GetExpressionType() ==
                 EXPRESSION_TYPE_COLUMN_REF) {
 
-              LOG_INFO("Function name: %s", func_expr->getName());
+              LOG_INFO("Function name: %s", func_expr->GetName());
               LOG_INFO(
                   "Aggregate type: %s",
                   ExpressionTypeToString(ParserExpressionNameToExpressionType(
-                                             func_expr->getName())).c_str());
+                                             func_expr->GetName())).c_str());
               planner::AggregatePlan::AggTerm agg_term(
-                  ParserExpressionNameToExpressionType(func_expr->getName()),
+                  ParserExpressionNameToExpressionType(func_expr->GetName()),
                   expression::ExpressionUtil::ConvertToTupleValueExpression(
-                      target_table->GetSchema(), func_expr->expr->getName()),
+                      target_table->GetSchema(), func_expr->expr->GetName()),
                   func_expr->distinct);
               agg_terms.push_back(agg_term);
 
@@ -184,7 +184,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               LOG_INFO("Direct map list: (%d, (%d, %d))", outer_pair.first,
                        outer_pair.second.first, outer_pair.second.second);
 
-              if (ParserExpressionNameToExpressionType(func_expr->getName()) ==
+              // If aggregate type is average the value type should be double
+              if (ParserExpressionNameToExpressionType(func_expr->GetName()) ==
                   EXPRESSION_TYPE_AGGREGATE_AVG) {
 
                 auto column = catalog::Column(
@@ -195,9 +196,11 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                     true);
 
                 output_schema_columns.push_back(column);
-              } else {
+              }
+              // Else it is the same as the column type
+              else {
                 oid_t old_col_id = target_table->GetSchema()->GetColumnID(
-                    func_expr->expr->getName());
+                    func_expr->expr->GetName());
                 auto table_column =
                     target_table->GetSchema()->GetColumn(old_col_id);
 
@@ -246,7 +249,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
           // Column name
           else {
             agg_type = AGGREGATE_TYPE_HASH;  // There are columns in the query
-            std::string col_name(expr->getName());
+            std::string col_name(expr->GetName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
             std::pair<oid_t, oid_t> inner_pair = std::make_pair(0, old_col_id);
@@ -445,7 +448,7 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
       LOG_INFO("ExpressionType: %s",
                ExpressionTypeToString(col->GetExpressionType()).c_str());
       column_ids.push_back(
-          target_table->GetSchema()->GetColumnID(col->getName()));
+          target_table->GetSchema()->GetColumnID(col->GetName()));
     }
   }
   LOG_INFO("Index scan column size: %ld\n", column_ids.size());
@@ -488,7 +491,7 @@ void SimpleOptimizer::GetPredicateColumns(
     if (right_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         right_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = expression->GetLeft();
-      std::string col_name(expr->getName());
+      std::string col_name(expr->GetName());
       LOG_INFO("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
@@ -504,7 +507,7 @@ void SimpleOptimizer::GetPredicateColumns(
       } else
         values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableRight())->getValueIdx())));
+                expression->GetModifiableRight())->GetValueIdx())));
     }
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_COLUMN_REF) {
@@ -512,7 +515,7 @@ void SimpleOptimizer::GetPredicateColumns(
     if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT ||
         left_type == EXPRESSION_TYPE_VALUE_PARAMETER) {
       auto expr = expression->GetRight();
-      std::string col_name(expr->getName());
+      std::string col_name(expr->GetName());
       LOG_INFO("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
       column_ids.push_back(column_id);
@@ -528,7 +531,7 @@ void SimpleOptimizer::GetPredicateColumns(
       } else
         values.push_back(std::move(ValueFactory::GetBindingOnlyIntegerValue(
             reinterpret_cast<expression::ParameterValueExpression*>(
-                expression->GetModifiableLeft())->getValueIdx())));
+                expression->GetModifiableLeft())->GetValueIdx())));
     }
   } else {
     GetPredicateColumns(schema, expression->GetModifiableLeft(), column_ids,

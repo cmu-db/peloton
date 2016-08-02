@@ -54,19 +54,19 @@ class ParameterValueExpression : public AbstractExpression {
     return new ParameterValueExpression(value_idx_, param_value_);
   }
 
-  const Value& getParamValue() const {
+  const Value& GetParamValue() const {
 	return param_value_;
   }
 
-  void setParamValue(const Value& paramValue) {
+  void SetParamValue(const Value& paramValue) {
 	param_value_ = paramValue;
   }
 
-  oid_t getValueIdx() const {
+  oid_t GetValueIdx() const {
 	return value_idx_;
   }
 
-  void setValueIdx(oid_t valueIdx) {
+  void SetValueIdx(oid_t valueIdx) {
 	value_idx_ = valueIdx;
   }
 
