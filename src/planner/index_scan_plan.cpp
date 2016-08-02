@@ -37,7 +37,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   if (predicate != NULL) {
     // we need to copy it here because eventually predicate will be destroyed by
     // its owner...
-	predicate_with_params_ = predicate->Copy();
+    predicate_with_params_ = predicate->Copy();
     ReplaceColumnExpressions(table->GetSchema(), predicate_with_params_);
     SetPredicate(predicate_with_params_->Copy());
   }
@@ -46,14 +46,16 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
   LOG_INFO("Setting parameter values in Index Scans");
   auto where = predicate_with_params_->Copy();
-  expression::ExpressionUtil::ConvertParameterExpressions(where, values, GetTable()->GetSchema());
+  expression::ExpressionUtil::ConvertParameterExpressions(
+      where, values, GetTable()->GetSchema());
   SetPredicate(where);
   for (unsigned int i = 0; i < values_.size(); ++i) {
-  //for (auto &value : values_) {
-	auto &value = values_[i];
-	auto column_id = key_column_ids_[i];
+    // for (auto &value : values_) {
+    auto &value = values_[i];
+    auto column_id = key_column_ids_[i];
     if (value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER) {
-  	  value = values->at(ValuePeeker::PeekBindingOnlyInteger(value)).CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
+      value = values->at(ValuePeeker::PeekBindingOnlyInteger(value)).CastAs(
+          GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
 
