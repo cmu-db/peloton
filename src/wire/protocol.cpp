@@ -608,7 +608,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
-
+  
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
 
