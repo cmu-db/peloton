@@ -35,12 +35,9 @@ class IndexPerformanceTests : public PelotonTest {};
 catalog::Schema *key_schema = nullptr;
 catalog::Schema *tuple_schema = nullptr;
 
+
 ItemPointer item0(120, 5);
 ItemPointer item1(120, 7);
-ItemPointer item2(123, 19);
-
-const std::size_t base_scale = 1000;
-const std::size_t max_scale_factor = 10000;
 
 index::Index *BuildIndex(const bool unique_keys,
                          const IndexType index_type) {
@@ -84,17 +81,38 @@ index::Index *BuildIndex(const bool unique_keys,
   return index;
 }
 
-// INSERT HELPER FUNCTION
-void InsertTest(index::Index *index, size_t scale_factor, uint64_t thread_itr) {
+/*
+ * InsertTest1() - Tests InsertEntry() performance for each index type
+ *
+ * This function tests threads inserting on its own consecutive interval
+ * without any interleaving with each other.
+ *
+ * The insert pattern is depicted as follows:
+ *
+ * |<--- thread 0 --->|<--- thread 1 --->| ... |<--- thread (num_thread - 1) --->|
+ *  ^                ^
+ * start key       end key
+ */
+void InsertTest1(index::Index *index,
+                 size_t num_thread,
+                 size_t num_key,
+                 uint64_t thread_id) {
+  // To avoid compiler warning
+  (void)num_thread;
 
-  size_t base = thread_itr * base_scale * max_scale_factor;
-  size_t tuple_count = scale_factor * base_scale;
+  // Each thread is responsible for a consecutive range of keys
+  // and here is the range: [start_key, end_key)
+  size_t start_key = thread_id * num_key;
+  size_t end_key = start_key + num_key;
 
   std::unique_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
+  
+  // Set the non-indexed column of the key to avoid undefined behaviour
+  //key->SetValue(2, ValueFactory::GetDoubleValue(1.11), nullptr);
+  //key->SetValue(3, ValueFactory::GetIntegerValue(12345), nullptr);
 
-  for (size_t tuple_itr = 1; tuple_itr <= tuple_count; tuple_itr++) {
-    oid_t tuple_offset = base + tuple_itr;
-    auto key_value =  ValueFactory::GetIntegerValue(tuple_offset);
+  for (size_t i = start_key;i < end_key;i++) {
+    auto key_value =  ValueFactory::GetIntegerValue(i);
 
     key->SetValue(0, key_value, nullptr);
     key->SetValue(1, key_value, nullptr);
@@ -102,32 +120,40 @@ void InsertTest(index::Index *index, size_t scale_factor, uint64_t thread_itr) {
     auto status = index->InsertEntry(key.get(), item0);
     EXPECT_TRUE(status);
   }
-
+  
+  return;
 }
 
 static void TestIndexPerformance(const IndexType& index_type) {
-  std::vector<ItemPointer*> location_ptrs;
+  std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
   std::unique_ptr<index::Index> index(BuildIndex(false, index_type));
 
-  // Parallel Test
-  size_t num_threads = 2;
-  size_t scale_factor = 1;
+  // Parallel Test by default 4 Million key
+  
+  // Number of threads doing insert or delete
+  size_t num_thread = 4;
+  
+  // Number of keys inserted by each thread
+  size_t num_key = 1024 * 256;
+  
   Timer<> timer;
 
   std::vector<std::thread> thread_group;
 
   timer.Start();
 
-  LaunchParallelTest(num_threads, InsertTest, index.get(), scale_factor);
+  // First two arguments are used for launching tasks
+  // All remaining arguments are passed to the thread body
+  LaunchParallelTest(num_thread, InsertTest1, index.get(), num_thread, num_key);
 
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), num_threads * scale_factor * base_scale);
+  EXPECT_EQ(location_ptrs.size(), num_thread * num_key);
   location_ptrs.clear();
 
   timer.Stop();
-  LOG_INFO("Duration : %.2lf", timer.GetDuration());
+  LOG_INFO("Type = %d; Duration = %.2lf", (int)index_type, timer.GetDuration());
 
   delete tuple_schema;
 }
