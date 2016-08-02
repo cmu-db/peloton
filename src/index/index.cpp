@@ -171,31 +171,6 @@ bool Index::Compare(const AbstractTuple &index_key,
 }
 
 /*
- * IfForwardExpression() - Returns true if the expression is > or >=
- */
-bool Index::IfForwardExpression(ExpressionType e) {
-  // To reduce branch misprediction penalty
-  return e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
-         e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
-}
-
-/*
- * IfBackWardExpression() - Returns true if the expression is < or <=
- */
-bool Index::IfBackwardExpression(ExpressionType e) {
-  return e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
-         e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
-}
-
-bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                                const std::pair<peloton::Value, int> &j) {
-  if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
-    return i.second < j.second;
-  }
-  return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
-}
-
-/*
  * ConstructLowerBoundTuple() - Constructs a lower bound of index key that
  *                              satisfies a given tuple
  *
