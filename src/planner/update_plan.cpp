@@ -29,10 +29,12 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
     : target_table_(table),
       project_info_(std::move(project_info)),
       updates(NULL),
-      where(NULL) { }
+      where(NULL) {
+	LOG_INFO("Creating an Update Plan");
+}
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
-
+  LOG_INFO("Creating an Update Plan");
   updates = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);

@@ -50,7 +50,7 @@ namespace planner {
  */
 
 SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
-
+  LOG_INFO("Creating a Sequential Scan Plan");
   target_table_ = static_cast<storage::DataTable *>(
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, select_node->from_table->name));

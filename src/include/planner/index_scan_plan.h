@@ -124,6 +124,8 @@ class IndexScanPlan : public AbstractScan {
 
   const std::vector<ExpressionType> expr_types_;
 
+  expression::AbstractExpression *predicate_with_params_ = nullptr;
+
   // LM: I removed a const keyword for binding purpose
   std::vector<Value> values_;
 
