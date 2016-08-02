@@ -20,6 +20,7 @@
 #include "common/types.h"
 #include "common/serializer.h"
 #include "expression/abstract_expression.h"
+#include "common/logger.h"
 
 namespace peloton {
 
@@ -43,6 +44,7 @@ class SeqScanPlan : public AbstractScan {
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
       : AbstractScan(table, predicate, column_ids) {
+	  LOG_INFO("Creating a Sequential Scan Plan");
 	  target_table_ = table;
 	  where_ = predicate;
 	  where_with_params_ = predicate->Copy();

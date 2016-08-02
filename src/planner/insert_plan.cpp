@@ -44,10 +44,12 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     : target_table_(table),
       tuple_(std::move(tuple)),
       bulk_insert_count(bulk_insert_count) {
+	LOG_INFO("Creating an Insert Plan");
 }
 
 InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
 
+  LOG_INFO("Creating an Insert Plan");
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
   parameter_vector_.reset(new std::vector<std::pair<oid_t, oid_t>> ());

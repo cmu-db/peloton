@@ -392,8 +392,8 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
   //terminate called after throwing an instance of 'peloton::TypeMismatchException'
   //what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast as BIGINT...
 
-  //if (!index_searchable) {
-  if (true) {
+  if (!index_searchable) {
+//  if (true) {
     // Create sequential scan plan
     LOG_INFO("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(

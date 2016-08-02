@@ -25,10 +25,13 @@ class TupleValueExpression;
 namespace planner {
 
 DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
-    : target_table_(table), truncate(truncate) {}
+    : target_table_(table), truncate(truncate) {
+	LOG_INFO("Creating a Delete Plan");
+}
 
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
-  // Add your stuff here
+
+  LOG_INFO("Creating a Delete Plan");
   table_name = std::string(delete_statemenet->table_name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
