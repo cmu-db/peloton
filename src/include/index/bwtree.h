@@ -72,6 +72,11 @@ using NodeID = uint64_t;
 #define BWTREE_DEBUG
 #endif
 
+// If assert() is defined then we are also forced to turn on debug
+#ifndef NDEBUG
+#define BWTREE_DEBUG
+#endif
+
 /*
  * ALL_PUBLIC - This flag makes all private members become public
  *              to simplify debugging
@@ -99,11 +104,9 @@ static void dummy(const char*, ...) {}
 
 #ifdef BWTREE_DEBUG
 
-#define bwt_printf(fmt, ...)                              \
-  do {                                                    \
-    if(print_flag == false) break;                        \
-    fprintf(stderr, "%-24s(%8lX): " fmt, __FUNCTION__, std::hash<std::thread::id>()(std::this_thread::get_id()), ##__VA_ARGS__); \
-    fflush(stdout);                                       \
+#define bwt_printf(fmt, ...)   \
+  do {                         \
+    dummy(fmt, ##__VA_ARGS__); \
   } while (0);
 
 #else
