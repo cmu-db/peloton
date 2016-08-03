@@ -26,9 +26,10 @@ CreatePlan::CreatePlan(storage::DataTable *table) {
 }
 
 CreatePlan::CreatePlan(std::string name,
-    std::unique_ptr<catalog::Schema> schema) {
+    std::unique_ptr<catalog::Schema> schema, CreateType c_type) {
   table_name = name;
   table_schema = schema.release();
+  create_type = c_type;
 }
 
 CreatePlan::CreatePlan(parser::CreateParse *parse_tree) {
@@ -46,7 +47,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     for (auto col : *parse_tree->columns) {
       ValueType val = col->GetValueType(col->type);
 
-      LOG_INFO("Column name: %s; Is primary key: %d", col->name,
+      LOG_TRACE("Column name: %s; Is primary key: %d", col->name,
           col->primary);
 
       // Check main constraints
@@ -54,7 +55,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY,
             "con_primary");
         column_contraints.push_back(constraint);
-        LOG_INFO("Added a primary key constraint on column \"%s\"",
+        LOG_TRACE("Added a primary key constraint on column \"%s\"",
             col->name);
       }
 
@@ -80,12 +81,19 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     create_type = CreateType::CREATE_TYPE_INDEX;
     index_name = std::string(parse_tree->name);
     table_name = std::string(parse_tree->table_name);
-    LOG_INFO("This is the attributes size in plan node ============> %lu" , parse_tree->index_attrs->size());
-    std::vector<std::string> holder;
+    
+    //This holds the attribute names.
+    //This is a fix for a bug where
+    //The vector<char*>* items gets deleted when passed
+    //To the Executor.
+    
+    std::vector<std::string> index_attrs_holder;
+    
     for(auto attr : *parse_tree->index_attrs){
-      holder.push_back(attr);
+      index_attrs_holder.push_back(attr);
     }
-    index_attrs = holder;
+    
+    index_attrs = index_attrs_holder;
   }
 }
 

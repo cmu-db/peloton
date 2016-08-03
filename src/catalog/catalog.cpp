@@ -152,8 +152,6 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 Result Catalog::CreateIndex(const std::string &database_name,
                                    const std::string &table_name , std::vector<std::string> index_attr, std::string index_name) {
 
-  LOG_INFO("This is the index name ----------> %s" , index_name.c_str());
-
   auto database = GetDatabaseWithName(database_name);
   if(database != nullptr){
      auto table = database->GetTableWithName(table_name);
@@ -174,7 +172,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
         for(auto attr : index_attr){
           for(uint i = 0; i < columns.size() ; ++i){  
             if(attr == columns[i].column_name){
-              LOG_INFO("***** FOUND *****");
+
               key_attrs.push_back(columns[i].column_offset);
             }
           }
@@ -182,7 +180,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
         
         if(key_attrs.size() != index_attr.size()){
 
-          LOG_INFO("Some columns are missing");
+          LOG_TRACE("Some columns are missing");
           return Result::RESULT_FAILURE;
         }
 

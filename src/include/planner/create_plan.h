@@ -39,7 +39,7 @@ class CreatePlan : public AbstractPlan {
 
   explicit CreatePlan(storage::DataTable *table);
 
-  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema);
+  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema, CreateType c_type);
 
   explicit CreatePlan(parser::CreateParse *parse_tree);
 

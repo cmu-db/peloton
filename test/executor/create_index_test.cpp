@@ -74,6 +74,8 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Table Created");
   txn_manager.CommitTransaction();
 
+  EXPECT_EQ(catalog::Bootstrapper::global_catalog->GetDatabaseWithName(DEFAULT_DB_NAME)->GetTableCount(), 1);
+
   // Inserting a tuple end-to-end
   txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
@@ -109,6 +111,11 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("INDEX CREATED!");
   txn_manager.CommitTransaction();
+
+  auto target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+      DEFAULT_DB_NAME, "department_table"); 
+  // Expected 2 , Primary key index + created index
+  EXPECT_EQ(target_table_->GetIndexCount(), 2);
 
 }
 
