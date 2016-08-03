@@ -68,30 +68,67 @@ class IndexMetadata : public Printable {
 
   ~IndexMetadata();
 
-  const std::string &GetName() const { return index_name; }
-
-  oid_t GetOid() { return index_oid; }
-
-  IndexType GetIndexMethodType() { return method_type; }
-
-  IndexConstraintType GetIndexType() { return index_type; }
-
-  const catalog::Schema *GetKeySchema() const { return key_schema; }
-
-  oid_t GetColumnCount() const;
-
-  bool HasUniqueKeys() const { return unique_keys; }
-
-  std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
-
-  double GetUtility() const { return utility_ratio; }
-
-  void SetUtility(double utility_ratio_) {
-    utility_ratio = utility_ratio_;
+  const std::string &GetName() const {
+    return index_name;
   }
 
-  // Get a string representation for debugging
+  oid_t GetOid() {
+    return index_oid;
+  }
+
+  IndexType GetIndexMethodType() {
+    return method_type;
+  }
+
+  IndexConstraintType GetIndexType() {
+    return index_type;
+  }
+
+  /*
+   * GetKeySchama() - Returns a schema object pointer that represents
+   *                  the schema of indexed columns, from leading column
+   *                  to the least important columns
+   */
+  const catalog::Schema *GetKeySchema() const {
+    return key_schema;
+  }
+
+  // Note that this must be defined inside the cpp source file
+  // because it uses the member of catalog::Schema which is not known here
+  oid_t GetColumnCount() const;
+
+  bool HasUniqueKeys() const {
+    return unique_keys;
+  }
+
+  /*
+   * GetKeyAttrs() - Returns the mapping relation between indexed columns
+   *                 and base table columns
+   *
+   * The return value is a vector object (instead of an object reference)
+   * The entry whose value is j on index i means the i-th column in the
+   * key is mapped to the j-th column in the base table tuple
+   */
+  std::vector<oid_t> GetKeyAttrs() const {
+    return key_attrs;
+  }
+
+  double GetUtility() const {
+    return utility_ratio;
+  }
+
+  void SetUtility(double p_utility_ratio) {
+    utility_ratio = p_utility_ratio;
+  }
+
+  /*
+   * GetInfo() - Get a string representation for debugging
+   */ 
   const std::string GetInfo() const;
+
+  ///////////////////////////////////////////////////////////////////
+  // IndexMetadata Data Member Definition
+  ///////////////////////////////////////////////////////////////////
 
   std::string index_name;
 
@@ -101,16 +138,17 @@ class IndexMetadata : public Printable {
 
   IndexConstraintType index_type;
 
-  // schema of tuple values
+  // schema of the indexed base table
   const catalog::Schema *tuple_schema;
 
-  // schema of keys
+  // schema of the index key which is a reordered subset
+  // of the underlying table schema
   const catalog::Schema *key_schema;
 
-  // key attributes
+  // The mapping relation between key schema and tuple schema
   std::vector<oid_t> key_attrs;
 
-  // unique keys ?
+  // Whether keys are unique (e.g. primary key)
   bool unique_keys;
 
   // utility of an index
@@ -130,9 +168,21 @@ class Index : public Printable {
   friend class IndexFactory;
 
  public:
-  oid_t GetOid() const { return index_oid; }
+   
+  /*
+   * GetOid() - Returns the object identifier of the index
+   *
+   * Note that there is also an index oid stored inside the metadata. These
+   * two must remain the same and actually the one stored in index object
+   * is copied from the index metadata
+   */
+  oid_t GetOid() const {
+    return index_oid;
+  }
 
-  IndexMetadata *GetMetadata() const { return metadata; }
+  IndexMetadata *GetMetadata() const {
+    return metadata;
+  }
 
   virtual ~Index();
 
@@ -173,7 +223,7 @@ class Index : public Printable {
                        std::vector<ItemPointer *> &result) = 0;
 
   // This gives a hint on whether GC is needed on the index
-  // for those that do not need GC this always return false
+  // For those that do not need GC this always return false
   virtual bool NeedGC() = 0;
   
   // This function performs one round of GC
@@ -215,19 +265,29 @@ class Index : public Printable {
    * We might have to make a different class in future for maximizing
    * performance of UniqueIndex.
    */
-  bool HasUniqueKeys() const { return metadata->HasUniqueKeys(); }
+  bool HasUniqueKeys() const {
+    return metadata->HasUniqueKeys();
+  }
 
-  oid_t GetColumnCount() const { return metadata->GetColumnCount(); }
+  oid_t GetColumnCount() const {
+    return metadata->GetColumnCount();
+  }
 
-  const std::string &GetName() const { return metadata->GetName(); }
+  const std::string &GetName() const {
+    return metadata->GetName();
+  }
 
   const catalog::Schema *GetKeySchema() const {
     return metadata->GetKeySchema();
   }
 
-  IndexType GetIndexMethodType() { return metadata->GetIndexMethodType(); }
+  IndexType GetIndexMethodType() {
+    return metadata->GetIndexMethodType();
+  }
 
-  IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
+  IndexConstraintType GetIndexType() const {
+    return metadata->GetIndexType();
+  }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -238,7 +298,9 @@ class Index : public Printable {
                       const std::vector<ExpressionType> &expr_types,
                       const std::vector<Value> &values);
 
-  VarlenPool *GetPool() const { return pool; }
+  VarlenPool *GetPool() const {
+    return pool;
+  }
 
   // Garbage collect
   virtual bool Cleanup() = 0;
