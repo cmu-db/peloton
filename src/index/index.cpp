@@ -179,6 +179,10 @@ bool Index::Compare(const AbstractTuple &index_key,
  * column, e.g. both "<" and ">" could be applied to the same column. Even
  * in this case this function correctly identifies the lower bound, though not
  * necessarily be a tight lower bound.
+ *
+ * Note that this function logically is more proper to be in index_util than
+ * in here. But it must call the varlen pool which makes moving out to
+ * index_util impossible.
  */
 bool Index::ConstructLowerBoundTuple(
     storage::Tuple *index_key,

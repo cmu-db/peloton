@@ -4,7 +4,7 @@
 //
 // btree_index.cpp
 //
-// Identification: src/index/btree_index.cpp
+// Identification: src/index/index_util.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
