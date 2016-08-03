@@ -6,8 +6,15 @@
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 file(GLOB test_hdrs ${PROJECT_SOURCE_DIR}/test/include/*/*.h*)
-file(GLOB test_srcs ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
+file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
 file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.cpp)
+
+set(test_srcs "")
+
+foreach(test_src_temp ${test_srcs_temp} )
+    string(REPLACE "//" "/" test_src ${test_src_temp})
+    list(APPEND test_srcs ${test_src})
+endforeach(test_src_temp ${test_srcs_temp})
 
 set(GMOCK_DIR  "${PROJECT_SOURCE_DIR}/third_party/gmock")
 file(GLOB gmock_srcs  ${GMOCK_DIR}/*.cc)
@@ -68,6 +75,8 @@ foreach(perf_src ${perf_srcs} )
 endforeach(perf_src ${perf_srcs})
 
 foreach(test_src ${test_srcs} )
+    message("test_src = " ${test_src})
+    
     # get test file name
 	get_filename_component(test_bare_name ${test_src} NAME)	
 	string(REPLACE ".cpp" "" test_bare_name_without_extension ${test_bare_name})
