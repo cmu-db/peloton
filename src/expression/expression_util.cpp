@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
@@ -48,23 +47,23 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
   PL_ASSERT(l);
   PL_ASSERT(r);
   switch (c) {
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case(EXPRESSION_TYPE_COMPARE_EQUAL) :
       return new ComparisonExpression<CmpEq>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case(EXPRESSION_TYPE_COMPARE_NOTEQUAL) :
       return new ComparisonExpression<CmpNe>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case(EXPRESSION_TYPE_COMPARE_LESSTHAN) :
       return new ComparisonExpression<CmpLt>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case(EXPRESSION_TYPE_COMPARE_GREATERTHAN) :
       return new ComparisonExpression<CmpGt>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case(EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) :
       return new ComparisonExpression<CmpLte>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) :
       return new ComparisonExpression<CmpGte>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LIKE):
+    case(EXPRESSION_TYPE_COMPARE_LIKE) :
       return new ComparisonExpression<CmpLike>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
+    case(EXPRESSION_TYPE_COMPARE_NOTLIKE) :
       return new ComparisonExpression<CmpNotLike>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_IN):
+    case(EXPRESSION_TYPE_COMPARE_IN) :
       return new ComparisonExpression<CmpIn>(c, l, r);
     default:
       char message[256];
@@ -81,23 +80,23 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
   PL_ASSERT(l);
   PL_ASSERT(r);
   switch (c) {
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case(EXPRESSION_TYPE_COMPARE_EQUAL) :
       return new InlinedComparisonExpression<CmpEq, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case(EXPRESSION_TYPE_COMPARE_NOTEQUAL) :
       return new InlinedComparisonExpression<CmpNe, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case(EXPRESSION_TYPE_COMPARE_LESSTHAN) :
       return new InlinedComparisonExpression<CmpLt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case(EXPRESSION_TYPE_COMPARE_GREATERTHAN) :
       return new InlinedComparisonExpression<CmpGt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case(EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) :
       return new InlinedComparisonExpression<CmpLte, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case(EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) :
       return new InlinedComparisonExpression<CmpGte, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LIKE):
+    case(EXPRESSION_TYPE_COMPARE_LIKE) :
       return new InlinedComparisonExpression<CmpLike, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTLIKE):
+    case(EXPRESSION_TYPE_COMPARE_NOTLIKE) :
       return new InlinedComparisonExpression<CmpNotLike, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_IN):
+    case(EXPRESSION_TYPE_COMPARE_IN) :
       return new InlinedComparisonExpression<CmpIn, L, R>(c, l, r);
     default:
       char message[256];
@@ -202,38 +201,38 @@ AbstractExpression *ExpressionUtil::OperatorFactory(ExpressionType et,
   AbstractExpression *ret = NULL;
 
   switch (et) {
-    case (EXPRESSION_TYPE_OPERATOR_PLUS):
+    case(EXPRESSION_TYPE_OPERATOR_PLUS) :
       ret = new OperatorExpression<OpPlus>(et, vt, lc, rc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_MINUS):
+    case(EXPRESSION_TYPE_OPERATOR_MINUS) :
       ret = new OperatorExpression<OpMinus>(et, vt, lc, rc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
+    case(EXPRESSION_TYPE_OPERATOR_MULTIPLY) :
       ret = new OperatorExpression<OpMultiply>(et, vt, lc, rc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
+    case(EXPRESSION_TYPE_OPERATOR_DIVIDE) :
       ret = new OperatorExpression<OpDivide>(et, vt, lc, rc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_NOT):
+    case(EXPRESSION_TYPE_OPERATOR_NOT) :
       ret = new OperatorUnaryNotExpression(lc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_IS_NULL):
+    case(EXPRESSION_TYPE_OPERATOR_IS_NULL) :
       ret = new OperatorIsNullExpression(lc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_EXISTS):
+    case(EXPRESSION_TYPE_OPERATOR_EXISTS) :
       ret = new OperatorExistsExpression(lc);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_MOD):
+    case(EXPRESSION_TYPE_OPERATOR_MOD) :
       throw Exception("Mod operator.Is not yet supported.");
 
-    case (EXPRESSION_TYPE_OPERATOR_CONCAT):
+    case(EXPRESSION_TYPE_OPERATOR_CONCAT) :
       throw Exception("Concat operator not yet supported.");
 
     default:
@@ -251,7 +250,7 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
   AbstractExpression *ret = nullptr;
 
   switch (et) {
-    case (EXPRESSION_TYPE_OPERATOR_PLUS):
+    case(EXPRESSION_TYPE_OPERATOR_PLUS) :
       ret = new OperatorExpression<OpPlus>(et, vt, first, second);
       break;
 
@@ -259,85 +258,85 @@ AbstractExpression *ExpressionUtil::OperatorFactory(
       ret = new OperatorUnaryMinusExpression(first);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_MINUS):
+    case(EXPRESSION_TYPE_OPERATOR_MINUS) :
       ret = new OperatorExpression<OpMinus>(et, vt, first, second);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
+    case(EXPRESSION_TYPE_OPERATOR_MULTIPLY) :
       ret = new OperatorExpression<OpMultiply>(et, vt, first, second);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
+    case(EXPRESSION_TYPE_OPERATOR_DIVIDE) :
       ret = new OperatorExpression<OpDivide>(et, vt, first, second);
       break;
 
-    case (EXPRESSION_TYPE_OPERATOR_NOT):
+    case(EXPRESSION_TYPE_OPERATOR_NOT) :
       ret = new OperatorUnaryNotExpression(first);
       break;
-    case (EXPRESSION_TYPE_SUBSTR):
+    case(EXPRESSION_TYPE_SUBSTR) :
       ret = new SubstringExpression(first, second, third);
       break;
 
-    case (EXPRESSION_TYPE_CONCAT):
+    case(EXPRESSION_TYPE_CONCAT) :
       ret = new ConcatExpression(first, second);
       break;
 
-    case (EXPRESSION_TYPE_ASCII):
+    case(EXPRESSION_TYPE_ASCII) :
       ret = new AsciiExpression(first);
       break;
 
-    case (EXPRESSION_TYPE_CHAR):
+    case(EXPRESSION_TYPE_CHAR) :
       ret = new CharExpression(first);
       break;
 
-    case (EXPRESSION_TYPE_CHAR_LEN):
+    case(EXPRESSION_TYPE_CHAR_LEN) :
       ret = new CharLengthExpression(first);
       break;
 
-    case (EXPRESSION_TYPE_OCTET_LEN):
+    case(EXPRESSION_TYPE_OCTET_LEN) :
       ret = new OctetLengthExpression(first);
       break;
-    case (EXPRESSION_TYPE_POSITION):
+    case(EXPRESSION_TYPE_POSITION) :
       ret = new PositionExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_REPEAT):
+    case(EXPRESSION_TYPE_REPEAT) :
       ret = new RepeatExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_LEFT):
+    case(EXPRESSION_TYPE_LEFT) :
       ret = new LeftExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_RIGHT):
+    case(EXPRESSION_TYPE_RIGHT) :
       ret = new RightExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_REPLACE):
+    case(EXPRESSION_TYPE_REPLACE) :
       ret = new ReplaceExpression(first, second, third);
       break;
-    case (EXPRESSION_TYPE_OVERLAY):
+    case(EXPRESSION_TYPE_OVERLAY) :
       ret = new OverlayExpression(first, second, third, fourth);
       break;
 
-    case (EXPRESSION_TYPE_LTRIM):
+    case(EXPRESSION_TYPE_LTRIM) :
       ret = new LTrimExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_RTRIM):
+    case(EXPRESSION_TYPE_RTRIM) :
       ret = new RTrimExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_BTRIM):
+    case(EXPRESSION_TYPE_BTRIM) :
       ret = new BTrimExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_OPERATOR_MOD):
+    case(EXPRESSION_TYPE_OPERATOR_MOD) :
       ret = new OperatorExpression<OpMod>(et, vt, first, second);
       break;
-    case (EXPRESSION_TYPE_EXTRACT):
+    case(EXPRESSION_TYPE_EXTRACT) :
       ret = new ExtractExpression(first, second);
       break;
-    case (EXPRESSION_TYPE_DATE_TO_TIMESTAMP):
+    case(EXPRESSION_TYPE_DATE_TO_TIMESTAMP) :
       ret = new DateToTimestampExpression(first);
       break;
-    case (EXPRESSION_TYPE_OPERATOR_CONCAT):
+    case(EXPRESSION_TYPE_OPERATOR_CONCAT) :
       throw ExpressionException("Concat operator not yet supported.");
 
-    case (EXPRESSION_TYPE_OPERATOR_CAST):
+    case(EXPRESSION_TYPE_OPERATOR_CAST) :
       throw ExpressionException("Cast operator not yet supported.");
 
     default:
@@ -378,9 +377,9 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(ExpressionType et,
                                                        AbstractExpression *lc,
                                                        AbstractExpression *rc) {
   switch (et) {
-    case (EXPRESSION_TYPE_CONJUNCTION_AND):
+    case(EXPRESSION_TYPE_CONJUNCTION_AND) :
       return new ConjunctionExpression<ConjunctionAnd>(et, lc, rc);
-    case (EXPRESSION_TYPE_CONJUNCTION_OR):
+    case(EXPRESSION_TYPE_CONJUNCTION_OR) :
       return new ConjunctionExpression<ConjunctionOr>(et, lc, rc);
     default:
       return nullptr;
@@ -402,10 +401,10 @@ AbstractExpression *ExpressionUtil::ConjunctionFactory(
 
   if (exprs.empty()) return front;
   switch (et) {
-    case (EXPRESSION_TYPE_CONJUNCTION_AND):
+    case(EXPRESSION_TYPE_CONJUNCTION_AND) :
       return new expression::ConjunctionExpression<ConjunctionAnd>(
           et, front, expression::ExpressionUtil::ConjunctionFactory(et, exprs));
-    case (EXPRESSION_TYPE_CONJUNCTION_OR):
+    case(EXPRESSION_TYPE_CONJUNCTION_OR) :
       return new expression::ConjunctionExpression<ConjunctionOr>(
           et, front, expression::ExpressionUtil::ConjunctionFactory(et, exprs));
     default:
@@ -475,54 +474,75 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
 /**
  * This function generates a TupleValue expression from the column name
  */
-expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (catalog::Schema* schema, std::string column_name) {
-    auto column_id = schema->GetColumnID(column_name);
-    // If there is no column with this name
-    if(column_id > schema->GetColumnCount()) {
-    	LOG_TRACE("Could not find column name %s in schema: %s", column_name.c_str(), schema->GetInfo().c_str());
-    	return nullptr;
-    }
-    LOG_TRACE("Column id in table: %u", column_id);
-    expression::TupleValueExpression *expr =
-        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
-	return expr;
+expression::AbstractExpression *ExpressionUtil::ConvertToTupleValueExpression(
+    catalog::Schema *schema, std::string column_name) {
+  auto column_id = schema->GetColumnID(column_name);
+  // If there is no column with this name
+  if (column_id > schema->GetColumnCount()) {
+    LOG_TRACE("Could not find column name %s in schema: %s",
+              column_name.c_str(), schema->GetInfo().c_str());
+    return nullptr;
+  }
+  LOG_TRACE("Column id in table: %u", column_id);
+  expression::TupleValueExpression *expr = new expression::TupleValueExpression(
+      schema->GetType(column_id), 0, column_id);
+  return expr;
 }
 /**
- * This function converts each ParameterValueExpression in an expression tree to a value from the value vector
+ * This function converts each ParameterValueExpression in an expression tree to
+ * a value from the value vector
  */
-void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression,
-		std::vector<Value>* values,
-		catalog::Schema* schema) {
-  PL_ASSERT(expression->GetLeft());
-  PL_ASSERT(expression->GetRight());
-  LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
-  LOG_TRACE("expression->right: %s", expression->GetRight()->GetInfo().c_str());
-  if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
-	  auto left = (ParameterValueExpression*) expression->GetLeft();  // left expression is parameter
-	  auto right = (TupleValueExpression*) expression->GetRight();  // right expression is column
-	  auto value = new ConstantValueExpression(
-			  values->at(left->getValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
-	  LOG_TRACE("Setting parameter %u to value %s", left->getValueIdx(),
-			  value->getValue().GetInfo().c_str());
-	  delete left;
-	  expression->setLeft(value);
+void ExpressionUtil::ConvertParameterExpressions(
+    expression::AbstractExpression *expression, std::vector<Value> *values,
+    catalog::Schema *schema) {
+  LOG_INFO("expression: %s", expression->GetInfo().c_str());
+
+  bool has_two_children = true;
+  if (expression->GetLeft()) {
+    LOG_INFO("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+  } else {
+    has_two_children = false;
   }
-  else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
-	  auto right = (ParameterValueExpression*)expression->GetRight();  // right expression is parameter
-	  auto left = (TupleValueExpression*) expression->GetRight();  // left expression is column
-	  auto value = new ConstantValueExpression(
-			  values->at(right->getValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
-	  LOG_TRACE("Setting parameter %u to value %s", right->getValueIdx(),
-			  value->getValue().GetInfo().c_str());
-	  delete right;
-	  expression->setRight(value);
+  if (expression->GetRight()) {
+    LOG_INFO("expression->right: %s",
+             expression->GetRight()->GetInfo().c_str());
+  } else {
+    has_two_children = false;
   }
-  else {
-	  ConvertParameterExpressions(expression->GetModifiableLeft(), values, schema);
-	  ConvertParameterExpressions(expression->GetModifiableRight(), values, schema);
+  if (!has_two_children) return;
+  if (expression->GetLeft()->GetExpressionType() ==
+      EXPRESSION_TYPE_VALUE_PARAMETER) {
+    // left expression is parameter
+    auto left = (ParameterValueExpression *)expression->GetLeft();
+    // right expression is column
+    auto right = (TupleValueExpression *)expression->GetRight();
+    auto value =
+        new ConstantValueExpression(values->at(left->getValueIdx()).CastAs(
+            schema->GetColumn(right->GetColumnId()).GetType()));
+    LOG_INFO("Setting parameter %u to value %s", left->getValueIdx(),
+             value->getValue().GetInfo().c_str());
+    delete left;
+    expression->setLeft(value);
+  } else if (expression->GetRight()->GetExpressionType() ==
+             EXPRESSION_TYPE_VALUE_PARAMETER) {
+    // right expression is parameter
+    auto right = (ParameterValueExpression *)expression->GetRight();
+    // left expression is column
+    auto left = (TupleValueExpression *)expression->GetRight();
+    auto value =
+        new ConstantValueExpression(values->at(right->getValueIdx()).CastAs(
+            schema->GetColumn(left->GetColumnId()).GetType()));
+    LOG_INFO("Setting parameter %u to value %s", right->getValueIdx(),
+             value->getValue().GetInfo().c_str());
+    delete right;
+    expression->setRight(value);
+  } else {
+    ConvertParameterExpressions(expression->GetModifiableLeft(), values,
+                                schema);
+    ConvertParameterExpressions(expression->GetModifiableRight(), values,
+                                schema);
   }
 }
-
 
 }  // End expression namespace
 }  // End peloton namespace
