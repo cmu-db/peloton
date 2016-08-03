@@ -37,7 +37,7 @@ bool CreateExecutor::DInit() {
 }
 
 bool CreateExecutor::DExecute() {
-  LOG_INFO("Executing Create...");
+  LOG_TRACE("Executing Create...");
   const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
   if(node.GetCreateType() == CreateType::CREATE_TYPE_TABLE){
   std::string table_name = node.GetTableName();
@@ -47,32 +47,32 @@ bool CreateExecutor::DExecute() {
   context->GetTransaction()->SetResult(result);
 
   if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
-    LOG_INFO("Creating table succeeded!");
+    LOG_TRACE("Creating table succeeded!");
   }
   else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
-    LOG_INFO("Creating table failed!");
+    LOG_TRACE("Creating table failed!");
   }
   else {
-    LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());
+    LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
   }
  }
   if(node.GetCreateType() == CreateType::CREATE_TYPE_INDEX){
     std::string table_name = node.GetTableName();
     std::string index_name = node.GetIndexName();
-    LOG_INFO("This is the index_name ----------> %s" , index_name.c_str());
+    
     auto index_attrs = node.GetIndexAttributes();
 
     Result result = catalog::Bootstrapper::global_catalog->CreateIndex(DEFAULT_DB_NAME, table_name, index_attrs , index_name);
     context->GetTransaction()->SetResult(result);
 
     if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
-      LOG_INFO("Creating table succeeded!");
+      LOG_TRACE("Creating table succeeded!");
     }
     else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE) {
-      LOG_INFO("Creating table failed!");
+      LOG_TRACE("Creating table failed!");
     }
     else {
-      LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());
+      LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
     }
 
   }
