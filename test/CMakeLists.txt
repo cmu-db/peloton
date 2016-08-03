@@ -6,7 +6,15 @@
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 file(GLOB test_hdrs ${PROJECT_SOURCE_DIR}/test/include/*/*.h*)
-file(GLOB test_srcs ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
+file(GLOB test_srcs_temp ${PROJECT_SOURCE_DIR}/test/*/*.cpp)
+file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.cpp)
+
+set(test_srcs "")
+
+foreach(test_src_temp ${test_srcs_temp} )
+    string(REPLACE "//" "/" test_src ${test_src_temp})
+    list(APPEND test_srcs ${test_src})
+endforeach(test_src_temp ${test_srcs_temp})
 
 set(GMOCK_DIR  "${PROJECT_SOURCE_DIR}/third_party/gmock")
 file(GLOB gmock_srcs  ${GMOCK_DIR}/*.cc)
@@ -31,7 +39,44 @@ find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
 set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes --soname-synonyms='somalloc=*jemalloc*')
 set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp" )
 
+# For each performance test source file
+# First remove them from the test source list since they should not be run as
+# part of the correctness test
+# And secondly they should be compiled and run separately
+foreach(perf_src ${perf_srcs} )
+    list(REMOVE_ITEM test_srcs ${perf_src})
+    
+    #message("test_srcs = " ${test_srcs})
+    #message("perf_src = " ${perf_src})
+    
+    get_filename_component(perf_bare_name ${perf_src} NAME)	
+	string(REPLACE ".cpp" "" perf_bare_name_without_extension ${perf_bare_name})
+    string(REPLACE "\"" "" perf_name ${perf_bare_name_without_extension})
+     
+    # create executable
+    add_executable(${perf_name} EXCLUDE_FROM_ALL ${perf_src})
+    add_dependencies(check ${perf_name})
+    
+    #message("Performance test: "  ${perf_name})
+    
+    # link libraries
+    target_link_libraries(${perf_name} peloton peloton-test-common)    
+
+	# set target properties    
+	set_target_properties(${perf_name}
+	    PROPERTIES
+	    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
+	    COMMAND ${perf_name}
+	)   
+	
+	# add test
+	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name})
+	
+endforeach(perf_src ${perf_srcs})
+
 foreach(test_src ${test_srcs} )
+    #message("test_src = " ${test_src})
+    
     # get test file name
 	get_filename_component(test_bare_name ${test_src} NAME)	
 	string(REPLACE ".cpp" "" test_bare_name_without_extension ${test_bare_name})
@@ -40,6 +85,8 @@ foreach(test_src ${test_srcs} )
     # create executable
     add_executable(${test_name} EXCLUDE_FROM_ALL ${test_src})
     add_dependencies(check ${test_name})
+    
+    #message("Correctness test: "  ${test_name})
     
     # link libraries
     target_link_libraries(${test_name} peloton peloton-test-common)    

@@ -37,7 +37,7 @@ ItemPointer item2(123, 19);
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
-static IndexType index_type = INDEX_TYPE_BTREE;
+static IndexType index_type = INDEX_TYPE_BWTREE;
 
 // Uncomment this to enable BwTree as index being tested
 //static IndexType index_type = INDEX_TYPE_BWTREE;
@@ -863,10 +863,21 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedStressTest2) {
   LaunchParallelTest(num_threads, DeleteTest, index.get(), pool, scale_factor);
 
   index->ScanAllKeys(location_ptrs);
-  if (index->HasUniqueKeys())
-    EXPECT_EQ(location_ptrs.size(), scale_factor);
-  else
-    EXPECT_EQ(location_ptrs.size(), 3 * num_threads * scale_factor);
+  if (index->HasUniqueKeys()) {
+    if(index_type == INDEX_TYPE_BWTREE) {
+      EXPECT_EQ(location_ptrs.size(), scale_factor);
+    } else {
+      EXPECT_EQ(location_ptrs.size(), scale_factor);
+    }
+  }
+  else {
+    if(index_type == INDEX_TYPE_BWTREE) {
+      EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
+    } else {
+      EXPECT_EQ(location_ptrs.size(), 3 * scale_factor * num_threads);
+    }
+  }
+    
   location_ptrs.clear();
 
 
