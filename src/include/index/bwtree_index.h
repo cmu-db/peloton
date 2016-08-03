@@ -123,6 +123,16 @@ class BWTreeIndex : public Index {
 
   // TODO: Implement this
   size_t GetMemoryFootprint() { return 0; }
+  
+  bool NeedGC() {
+    return container.NeedGarbageCollection();
+  }
+
+  void PerformGC() {
+    container.PerformGarbageCollection();
+    
+    return;
+  }
 
  protected:
   // equality checker and comparator

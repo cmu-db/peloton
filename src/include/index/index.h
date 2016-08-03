@@ -172,6 +172,22 @@ class Index : public Printable {
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
 
+  // This gives a hint on whether GC is needed on the index
+  // for those that do not need GC this always return false
+  virtual bool NeedGC() = 0;
+  
+  // This function performs one round of GC
+  // For those that do not need GC this should return immediately
+  virtual void PerformGC() = 0;
+
+  // The following two are used to perform GC in a 
+  // fast manner
+  // Because if we register for epoch for every operation then
+  // essentially we are synchronizing on each operation which does
+  // not scale at all
+  //virtual void *JoinEpoch() = 0;
+  //virtual void LeaveEpoch(void *) = 0;
+
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
@@ -230,9 +246,6 @@ class Index : public Printable {
   // Get the memory footprint
   virtual size_t GetMemoryFootprint() = 0;
 
-  bool static ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                                  const std::pair<peloton::Value, int> &j);
-
   // Get the indexed tile group offset
   virtual size_t GetIndexedTileGroupOff() {
     return indexed_tile_group_offset_.load();
@@ -251,10 +264,6 @@ class Index : public Printable {
                                 const std::vector<Value> &values,
                                 const std::vector<oid_t> &key_column_ids,
                                 const std::vector<ExpressionType> &expr_types);
-
-  bool IfForwardExpression(ExpressionType e);
-
-  bool IfBackwardExpression(ExpressionType e);
 
   //===--------------------------------------------------------------------===//
   //  Data members
