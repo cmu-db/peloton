@@ -45,6 +45,16 @@ namespace peloton {
 namespace test {
 
 /** @brief Helper function for defining schema */
+/*
+ * GetColumnInfo() - Returns column object for testing
+ *
+ * Column 0: Integer column, not null
+ * Column 1: Integer column, not null
+ * Column 2: Double column, not null
+ * Column 3: VARCHAR, max len = 25, not null
+ *
+ * For other column IDs an exception will be thrown
+ */
 catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
   std::string not_null_constraint_name = "not_null";
