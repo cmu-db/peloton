@@ -168,20 +168,18 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
   // There are two more types, one is aligned, another is not aligned.
   // Aligned example: A > 0, B >= 15, c > 4
   // Not Aligned example: A >= 15, B < 30
+  
+  // First make sure all three components of the scan predicate are
+  // of the same length
+  // Since there is a 1-to-1 correspondense between these three vectors
+  PL_ASSERT(key_column_ids.size() == expr_types.size());
+  PL_ASSERT(key_column_ids.size() == values.size());
 
-  bool special_case = true;
-  for (auto key_column_ids_itr = key_column_ids.begin();
-       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
-    auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
-      special_case = false;
-      break;
-    }
-  }
+  // First check whether there is any expression that makes the predicate
+  // definitely not eligible for optimization
+  //
+  // Currently we check NOTEQUAL, IN, LIKE and NOTLIKE
+  bool special_case = HasNonOptimizablePredicate(expr_types);
 
   LOG_TRACE("Special case : %d ", special_case);
 
@@ -193,8 +191,14 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
       // Assumption: must have leading column, assume it's first one in
       // key_column_ids.
       assert(key_column_ids.size() > 0);
+
       oid_t leading_column_offset = 0;
       oid_t leading_column_id = key_column_ids[leading_column_offset];
+      
+      // Since we assume if there is a constraint on the leading
+      // column then the it must be the first one in the vector
+      // NOTE: This would fail index_Scan_test
+      //assert(leading_column_id == 0);
       
       std::vector<std::pair<Value, Value>> intervals;
 
