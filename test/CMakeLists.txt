@@ -38,7 +38,10 @@ set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/va
 # And secondly they should be compiled and run separately
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
-        
+    
+    message("test_srcs = " ${test_srcs})
+    message("perf_src = " ${perf_src})
+    
     get_filename_component(perf_bare_name ${perf_src} NAME)	
 	string(REPLACE ".cpp" "" perf_bare_name_without_extension ${perf_bare_name})
     string(REPLACE "\"" "" perf_name ${perf_bare_name_without_extension})
