@@ -139,7 +139,7 @@ void PacketManager::PutTupleDescriptor(
   PacketPutInt(pkt, tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
-    //LOG_TRACE("column name: %s", std::get<0>(col).c_str());
+	LOG_TRACE("column name: %s", std::get<0>(col).c_str());
     PacketPutString(pkt, std::get<0>(col));
     // TODO: Table Oid (int32)
     PacketPutInt(pkt, 0, 4);
@@ -608,11 +608,11 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
 
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
-
+  
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
 
-  //LOG_TRACE("Executing query: %s", query_string.c_str());
+  LOG_TRACE("Executing query: %s", query_string.c_str());
 
   // acquire the mutex if we are starting a txn
   if (query_string.compare("BEGIN") == 0) {

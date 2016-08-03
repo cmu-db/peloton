@@ -6,7 +6,7 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:5432/?prepareThreshold=0";
+  private final String url = "jdbc:postgresql://localhost:5432/";
   private final String username = "postgres";
   private final String pass = "postgres";
 
@@ -137,7 +137,7 @@ public class PelotonTest {
     stmt.execute(AGG_COUNT_2);
     
     PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
-    pstmt.setInt(1, 3);
+    pstmt.setInt(1, 1);
     pstmt.execute();
 
     for (int i = 1; i < 3; i++)
@@ -401,37 +401,6 @@ public class PelotonTest {
     PelotonTest pt2 = new PelotonTest();
     pt2.Batch_Insert();
     pt2.Close();
-    /*PelotonTest pt3 = new PelotonTest();
-    pt3.ShowTable();
-    pt2.Close();
-    PelotonTest pt4 = new PelotonTest();
-    pt4.Batch_Update();
-    pt4.Close();
-    PelotonTest pt5 = new PelotonTest();
-    pt5.ShowTable();
-    pt5.Close();
-    PelotonTest pt6 = new PelotonTest();
-    pt6.Batch_Delete();
-    pt6.Close();
-    PelotonTest pt7 = new PelotonTest();
-    pt7.ShowTable();
-    pt7.Close();
-    PelotonTest pt8 = new PelotonTest();
-    pt8.SelectParam();
-    pt8.Close();
-    PelotonTest pt9 = new PelotonTest();
-    pt9.ShowTable();
-    pt9.Close();*/
-    //pt.Insert(3, TABLE.A);
-//    pt.Insert(20);
-    //pt.ReadModifyWrite(3);
-    //pt.BitmapScan(2, 5);
-    //pt.SeqScan();
-    //pt.DeleteByIndexScan(3);
-    //pt.SeqScan();
-    //pt.UpdateBySeqScan();
-    //pt.IndexScan(3);
-    //pt4.Close();
   }
 }
 

@@ -109,9 +109,9 @@ void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value>
 	  // The assignment parameter is a single value
 	  else {
 		  auto param_expr = (expression::ParameterValueExpression*) target_list_[i].second;
-		  LOG_INFO("Setting parameter %u to value %s", param_expr->getValueIdx(),
-				  values->at(param_expr->getValueIdx()).GetInfo().c_str());
-		  auto value = new expression::ConstantValueExpression(values->at(param_expr->getValueIdx()));
+		  LOG_INFO("Setting parameter %u to value %s", param_expr->GetValueIdx(),
+				  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
+		  auto value = new expression::ConstantValueExpression(values->at(param_expr->GetValueIdx()));
 		  delete param_expr;
 		  target_list_[i].second = value;
 	  }

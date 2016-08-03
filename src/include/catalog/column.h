@@ -114,7 +114,7 @@ class Column : public Printable {
   // is the column inlined ?
   bool is_inlined = false;
 
-  // is the column containing the primary key?
+  // is the column contained the primary key?
   bool is_primary_ = false;
 
   // offset of column in tuple

@@ -98,9 +98,6 @@ bool Index::Compare(const AbstractTuple &index_key,
         diff = VALUE_COMPARE_NO_EQUAL;
       }
     } else {
-    	LOG_INFO("ERROR HERE");
-    	LOG_INFO("lhs: %s", lhs.GetInfo().c_str());
-    	LOG_INFO("rhs: %s", rhs.GetInfo().c_str());
       diff = lhs.Compare(rhs);
     }
 

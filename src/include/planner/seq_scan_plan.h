@@ -47,7 +47,8 @@ class SeqScanPlan : public AbstractScan {
 	  LOG_INFO("Creating a Sequential Scan Plan");
 	  target_table_ = table;
 	  where_ = predicate;
-	  where_with_params_ = predicate->Copy();
+	  if(predicate != nullptr)
+		  where_with_params_ = predicate->Copy();
   }
 
   SeqScanPlan(parser::SelectStatement *select_node);
@@ -78,8 +79,11 @@ class SeqScanPlan : public AbstractScan {
   }
 
  private:
+  // Target Table
   storage::DataTable *target_table_ = nullptr;
+  // The Where condition
   expression::AbstractExpression *where_ = nullptr;
+  // The Where condition with parameter value expression
   expression::AbstractExpression *where_with_params_ = nullptr;
 };
 

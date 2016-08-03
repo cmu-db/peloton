@@ -102,7 +102,7 @@ peloton_status PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
       if (logical_tile.get() != nullptr) {
     	  LOG_TRACE("Final Answer: %s", logical_tile->GetInfo().c_str());  // Printing the answers
     	  auto output_schema = logical_tile->GetPhysicalSchema();  // Physical schema of the tile
-    	  auto answer_tuples = logical_tile->GetTuples();
+    	  auto answer_tuples = logical_tile->GetAllValuesAsStrings();
 
     	  // Construct the returned results
     	  result.clear();
