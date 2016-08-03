@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
@@ -96,6 +95,15 @@ class AggregatePlan : public AbstractPlan {
   void SetColumnIds(const std::vector<oid_t> &column_ids) {
     column_ids_ = column_ids;
   }
+
+  const std::string GetInfo() const { return "AggregatePlan"; }
+
+  void SetParameterValues(std::vector<Value> *values) {
+    LOG_INFO("Setting parameter values in Aggregate Plan");
+    for (auto &child_plan : GetChildren()) {
+      child_plan->SetParameterValues(values);
+    }
+  };
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 

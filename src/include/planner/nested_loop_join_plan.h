@@ -42,6 +42,8 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
   const std::string GetInfo() const { return "NestedLoopJoin"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     std::unique_ptr<const expression::AbstractExpression> predicate_copy(
         GetPredicate()->Copy());

@@ -472,5 +472,57 @@ void ExpressionUtil::ExtractTupleValuesColumnIdx(const AbstractExpression *expr,
   ExpressionUtil::ExtractTupleValuesColumnIdx(expr->GetRight(), columnIds);
 }
 
+/**
+ * This function generates a TupleValue expression from the column name
+ */
+expression::AbstractExpression* ExpressionUtil::ConvertToTupleValueExpression (catalog::Schema* schema, std::string column_name) {
+    auto column_id = schema->GetColumnID(column_name);
+    // If there is no column with this name
+    if(column_id > schema->GetColumnCount()) {
+    	LOG_TRACE("Could not find column name %s in schema: %s", column_name.c_str(), schema->GetInfo().c_str());
+    	return nullptr;
+    }
+    LOG_TRACE("Column id in table: %u", column_id);
+    expression::TupleValueExpression *expr =
+        new expression::TupleValueExpression(schema->GetType(column_id), 0, column_id);
+	return expr;
+}
+/**
+ * This function converts each ParameterValueExpression in an expression tree to a value from the value vector
+ */
+void ExpressionUtil::ConvertParameterExpressions(expression::AbstractExpression* expression,
+		std::vector<Value>* values,
+		catalog::Schema* schema) {
+  PL_ASSERT(expression->GetLeft());
+  PL_ASSERT(expression->GetRight());
+  LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+  LOG_TRACE("expression->right: %s", expression->GetRight()->GetInfo().c_str());
+  if(expression->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+	  auto left = (ParameterValueExpression*) expression->GetLeft();  // left expression is parameter
+	  auto right = (TupleValueExpression*) expression->GetRight();  // right expression is column
+	  auto value = new ConstantValueExpression(
+			  values->at(left->GetValueIdx()).CastAs(schema->GetColumn(right->GetColumnId()).GetType()));
+	  LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
+			  value->getValue().GetInfo().c_str());
+	  delete left;
+	  expression->setLeftExpression(value);
+  }
+  else if(expression->GetRight()->GetExpressionType() == EXPRESSION_TYPE_VALUE_PARAMETER) {
+	  auto right = (ParameterValueExpression*)expression->GetRight();  // right expression is parameter
+	  auto left = (TupleValueExpression*) expression->GetRight();  // left expression is column
+	  auto value = new ConstantValueExpression(
+			  values->at(right->GetValueIdx()).CastAs(schema->GetColumn(left->GetColumnId()).GetType()));
+	  LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
+			  value->getValue().GetInfo().c_str());
+	  delete right;
+	  expression->setRightExpression(value);
+  }
+  else {
+	  ConvertParameterExpressions(expression->GetModifiableLeft(), values, schema);
+	  ConvertParameterExpressions(expression->GetModifiableRight(), values, schema);
+  }
+}
+
+
 }  // End expression namespace
 }  // End peloton namespace

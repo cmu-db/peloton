@@ -33,6 +33,8 @@ class AppendPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_APPEND; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   const std::string GetInfo() const { return "Append"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {

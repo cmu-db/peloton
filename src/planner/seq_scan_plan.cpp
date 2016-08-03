@@ -10,13 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 #include "catalog/manager.h"
 #include "common/types.h"
 #include "common/macros.h"
 #include "common/logger.h"
+#include "expression/expression_util.h"
+#include "catalog/bootstrapper.h"
+#include "catalog/schema.h"
+
+#include "parser/statement_select.h"
 
 namespace peloton {
 namespace planner {
@@ -44,6 +48,51 @@ namespace planner {
  *
  * TODO: parent_ seems never be set or used
  */
+
+SeqScanPlan::SeqScanPlan(parser::SelectStatement *select_node) {
+  LOG_INFO("Creating a Sequential Scan Plan");
+  target_table_ = static_cast<storage::DataTable *>(
+      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+          DEFAULT_DB_NAME, select_node->from_table->name));
+  SetTargetTable(target_table_);
+  ColumnIds().clear();
+  bool function_found = false;
+  for (auto elem : *select_node->select_list) {
+    if (elem->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+      function_found = true;
+      break;
+    }
+  }
+  // Pass all columns
+  if (function_found) {
+    for (auto column : target_table_->GetSchema()->GetColumns()) {
+      oid_t col_id = SeqScanPlan::GetColumnID(column.column_name);
+      SetColumnId(col_id);
+    }
+  }
+  // Pass columns in select_list
+  else {
+    if (select_node->select_list->at(0)->GetExpressionType() !=
+        EXPRESSION_TYPE_STAR) {
+      for (auto col : *select_node->select_list) {
+        LOG_TRACE("ExpressionType: %s",
+                 ExpressionTypeToString(col->GetExpressionType()).c_str());
+        auto col_name = col->GetName();
+        oid_t col_id = SeqScanPlan::GetColumnID(std::string(col_name));
+        SetColumnId(col_id);
+      }
+    } else {
+      auto allColumns = GetTable()->GetSchema()->GetColumns();
+      for (uint i = 0; i < allColumns.size(); i++) SetColumnId(i);
+    }
+  }
+  if (select_node->where_clause != NULL) {
+    where_ = select_node->where_clause->Copy();
+    ReplaceColumnExpressions(GetTable()->GetSchema(), where_);
+    where_with_params_ = where_->Copy();
+    SetPredicate(where_->Copy());
+  }
+}
 
 bool SeqScanPlan::SerializeTo(SerializeOutput &output) {
   // A placeholder for the total size written at the end
@@ -235,6 +284,32 @@ int SeqScanPlan::SerializeSize() {
   }
 
   return size;
+}
+
+oid_t SeqScanPlan::GetColumnID(std::string col_name) {
+  auto columns = GetTable()->GetSchema()->GetColumns();
+  oid_t index = -1;
+  for (oid_t i = 0; i < columns.size(); ++i) {
+    if (columns[i].column_name == col_name) {
+      index = i;
+      break;
+    }
+  }
+  return index;
+}
+
+void SeqScanPlan::SetParameterValues(std::vector<Value> *values) {
+  LOG_TRACE("Setting parameter values in Sequential Scan");
+  delete where_;
+  where_ = where_with_params_->Copy();
+  expression::ExpressionUtil::ConvertParameterExpressions(where_,
+		  values,
+		  target_table_->GetSchema());
+  SetPredicate(where_->Copy());
+
+  for (auto &child_plan : GetChildren()) {
+    child_plan->SetParameterValues(values);
+  }
 }
 
 }  // namespace planner

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "common/types.h"
+#include "common/statement.h"
 #include "executor/abstract_executor.h"
 
 namespace peloton {
@@ -56,6 +57,17 @@ class PlanExecutor {
   static void PrintPlan(const planner::AbstractPlan *plan,
                         std::string prefix = "");
 
+  // Copy From
+  static inline void copyFromTo(const char *src, std::vector<unsigned char> &dst) {
+    if (src == nullptr) {
+      return;
+    }
+    size_t len = strlen(src);
+    for(unsigned int i = 0; i < len; i++){
+      dst.push_back((unsigned char)src[i]);
+    }
+  }
+
   /* TODO: Delete this mothod
     static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
                                       ParamListInfo m_param_list,
@@ -70,7 +82,8 @@ class PlanExecutor {
    *        value list directly rather than passing Postgres's ParamListInfo
    */
   static peloton_status ExecutePlan(const planner::AbstractPlan *plan,
-                                    const std::vector<Value> &params);
+                                    const std::vector<Value> &params,
+									std::vector<ResultType> &result);
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked

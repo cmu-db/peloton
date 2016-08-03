@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cfloat>
@@ -527,11 +526,12 @@ class Value {
     UTF8Iterator(const char *start, const char *end)
         : m_cursor(start),
           m_end(end)
-    // TODO: We could validate up front that the string is well-formed UTF8,
-    // at least to the extent that multi-byte characters have a valid
-    // prefix byte and continuation bytes that will not cause a read
-    // off the end of the buffer.
-    // That done, ExtractCodePoint could be considerably simpler/faster.
+          // TODO: We could validate up front that the string is well-formed
+          // UTF8,
+          // at least to the extent that multi-byte characters have a valid
+          // prefix byte and continuation bytes that will not cause a read
+          // off the end of the buffer.
+          // That done, ExtractCodePoint could be considerably simpler/faster.
     {
       PL_ASSERT(m_cursor <= m_end);
     }
@@ -566,15 +566,14 @@ class Value {
      * That wouldn't be needed if we pre-validated the buffer.
      */
     uint32_t ExtractCodePoint() {
-      PL_ASSERT(
-          m_cursor <
-          m_end);  // Caller should have tested and handled AtEnd() condition
-                   /*
-                    * Copy the next 6 bytes to a temp buffer and retrieve.
-                    * We should only Get 4 byte code points, and the library
-                    * should only accept 4 byte code points, but once upon a time there
-                    * were 6 byte code points in UTF-8 so be careful here.
-                    */
+      PL_ASSERT(m_cursor < m_end);  // Caller should have tested and handled
+                                    // AtEnd() condition
+                                    /*
+* Copy the next 6 bytes to a temp buffer and retrieve.
+* We should only Get 4 byte code points, and the library
+* should only accept 4 byte code points, but once upon a time there
+* were 6 byte code points in UTF-8 so be careful here.
+*/
       char nextPotentialCodePoint[] = {0, 0, 0, 0, 0, 0};
       char *nextPotentialCodePointIter = nextPotentialCodePoint;
       // Copy 6 bytes or until the end
@@ -627,6 +626,8 @@ class Value {
     }
   };
 
+  std::string ToString();
+
   /* Return a string full of arcana and wonder. */
   const std::string GetInfo() const;
 
@@ -667,6 +668,7 @@ class Value {
       case VALUE_TYPE_BIGINT:
       case VALUE_TYPE_DATE:
       case VALUE_TYPE_TIMESTAMP:
+      case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
         rt = s_intPromotionTable[vtb];
         break;
 
@@ -823,7 +825,9 @@ class Value {
     return ValueTypeToString(m_valueType);
   }
 
-  inline void SetSourceInlined(bool sourceInlined) { m_sourceInlined = sourceInlined; }
+  inline void SetSourceInlined(bool sourceInlined) {
+    m_sourceInlined = sourceInlined;
+  }
 
   inline void tagAsNull() { m_data[13] = OBJECT_NULL_BIT; }
 
@@ -956,13 +960,15 @@ class Value {
 
   const int32_t &GetInteger() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
-              GetValueType() == VALUE_TYPE_DATE);
+              GetValueType() == VALUE_TYPE_DATE ||
+              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
-              GetValueType() == VALUE_TYPE_DATE);
+              GetValueType() == VALUE_TYPE_DATE ||
+              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
@@ -1071,7 +1077,6 @@ class Value {
    */
   int64_t CastAsBigIntAndGetValue() const {
     PL_ASSERT(IsNull() == false);
-
     const ValueType type = GetValueType();
     PL_ASSERT(type != VALUE_TYPE_NULL);
     switch (type) {
@@ -2204,25 +2209,25 @@ class Value {
     bool overflow = false;
     // Scary overflow check from
     // https://www.securecoding.cert.org/confluence/display/cplusplus/INT32-CPP.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
-    if (lhs > 0) {   /* lhs is positive */
-      if (rhs > 0) { /* lhs and rhs are positive */
+    if (lhs > 0) {  /* lhs is positive */
+      if (rhs > 0) {/* lhs and rhs are positive */
         if (lhs > (INT64_MAX / rhs)) {
           overflow = true;
         }
-      }      /* end if lhs and rhs are positive */
-      else { /* lhs positive, rhs non-positive */
+      }     /* end if lhs and rhs are positive */
+      else {/* lhs positive, rhs non-positive */
         if (rhs < (INT64_MIN / lhs)) {
           overflow = true;
         }
-      }              /* lhs positive, rhs non-positive */
-    }                /* end if lhs is positive */
-    else {           /* lhs is non-positive */
-      if (rhs > 0) { /* lhs is non-positive, rhs is positive */
+      }             /* lhs positive, rhs non-positive */
+    }               /* end if lhs is positive */
+    else {          /* lhs is non-positive */
+      if (rhs > 0) {/* lhs is non-positive, rhs is positive */
         if (lhs < (INT64_MIN / rhs)) {
           overflow = true;
         }
-      }      /* end if lhs is non-positive, rhs is positive */
-      else { /* lhs and rhs are non-positive */
+      }     /* end if lhs is non-positive, rhs is positive */
+      else {/* lhs and rhs are non-positive */
         if ((lhs != 0) && (rhs < (INT64_MAX / lhs))) {
           overflow = true;
         }
@@ -2429,6 +2434,15 @@ class Value {
     return retval;
   }
 
+  static Value GetBindingOnlyIntegerValue(int32_t value) {
+    Value retval(VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+    retval.GetInteger() = value;
+    if (value == INT32_NULL) {
+      retval.tagAsNull();
+    }
+    return retval;
+  }
+
   static Value GetBigIntValue(int64_t value) {
     Value retval(VALUE_TYPE_BIGINT);
     retval.GetBigInt() = value;
@@ -2586,7 +2600,6 @@ class Value {
                                bool leading, bool trailing);
 };
 
-
 /**
  * Public constructor that initializes to an Value that is unusable
  * with other Values.  Useful for declaring storage for an Value.
@@ -2618,7 +2631,7 @@ inline Value::~Value() {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
     case VALUE_TYPE_ARRAY: {
-  
+
       if (m_sourceInlined == true || m_cleanUp == false) {
         return;
       }
@@ -2697,7 +2710,6 @@ inline Value Value::Clone(const Value &src,
   Value rv = src;
   return rv;
 }
-
 
 /**
  * Retrieve a boolean Value that is true
@@ -2977,12 +2989,15 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
         } else {
           int32_t objLength = GetObjectLengthWithoutNull();
 
-          // author: aelroby commented this routine temporarily because no maxLength
+          // author: aelroby commented this routine temporarily because no
+          // maxLength
           // value is defined for variable length values in Peloton
-//          const char *ptr =
-//              reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-//          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr, objLength,
-//                                            maxLength, isInBytes);
+          //          const char *ptr =
+          //              reinterpret_cast<const char
+          // *>(GetObjectValueWithoutNull());
+          //          checkTooNarrowVarcharAndVarbinary(m_valueType, ptr,
+          // objLength,
+          //                                            maxLength, isInBytes);
 
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + objLength;
@@ -3352,8 +3367,8 @@ inline void Value::SerializeTo(SerializeOutput &output) const {
   }
 }
 
-inline void Value::SerializeToExportWithoutNull(
-    ExportSerializeOutput &io) const {
+inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io)
+    const {
   PL_ASSERT(IsNull() == false);
   const ValueType type = GetValueType();
   switch (type) {
@@ -3372,6 +3387,7 @@ inline void Value::SerializeToExportWithoutNull(
       return;
     }
     case VALUE_TYPE_DATE:
+    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
     case VALUE_TYPE_INTEGER: {
       io.WriteInt(GetInteger());
       return;
