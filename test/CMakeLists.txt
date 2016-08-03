@@ -38,7 +38,7 @@ set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/va
 # And secondly they should be compiled and run separately
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
-    
+        
     get_filename_component(perf_bare_name ${perf_src} NAME)	
 	string(REPLACE ".cpp" "" perf_bare_name_without_extension ${perf_bare_name})
     string(REPLACE "\"" "" perf_name ${perf_bare_name_without_extension})
@@ -46,6 +46,8 @@ foreach(perf_src ${perf_srcs} )
     # create executable
     add_executable(${perf_name} EXCLUDE_FROM_ALL ${perf_src})
     add_dependencies(check ${perf_name})
+    
+    message("Performance test: "  ${perf_name})
     
     # link libraries
     target_link_libraries(${perf_name} peloton peloton-test-common)    
@@ -71,6 +73,8 @@ foreach(test_src ${test_srcs} )
     # create executable
     add_executable(${test_name} EXCLUDE_FROM_ALL ${test_src})
     add_dependencies(check ${test_name})
+    
+    message("Correctness test: "  ${test_name})
     
     # link libraries
     target_link_libraries(${test_name} peloton peloton-test-common)    
