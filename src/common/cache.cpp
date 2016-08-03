@@ -65,26 +65,10 @@ typename Cache<Key, Value>::iterator Cache<Key, Value>::insert(
     const Entry &entry) {
   PL_ASSERT(list_.size() == map_.size());
   PL_ASSERT(list_.size() <= this->capacity_);
-
   auto map_itr = map_.find(entry.first);
   auto cache_itr = iterator(map_itr);
 
   if (map_itr == map_.end()) {
-    auto count_itr = counts_.find(entry.first);
-    if (insert_threshold_ > 1) {
-      if (count_itr == counts_.end()) {
-        counts_.emplace(entry.first, 1);
-        return map_.end();
-      } else {
-        size_t count = count_itr->second;
-        if (count + 1 >= insert_threshold_) {
-          counts_.erase(entry.first);
-        } else {
-          count_itr->second += 1;
-          return map_.end();
-        }
-      }
-    }
     /* new key */
     list_.push_front(entry.first);
     auto ret =

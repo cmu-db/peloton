@@ -240,7 +240,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
         }
-
         KeyType start_index_key;
         KeyType end_index_key;
         start_index_key.SetFromKey(start_key.get());
@@ -248,7 +247,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
 
         scan_begin_itr = container.equal_range(start_index_key).first;
         scan_end_itr = container.equal_range(end_index_key).second;
-
         switch (scan_direction) {
           case SCAN_DIRECTION_TYPE_FORWARD:
           case SCAN_DIRECTION_TYPE_BACKWARD: {
@@ -258,7 +256,6 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
               auto scan_current_key = scan_itr->first;
               auto tuple = scan_current_key.GetTupleForComparison(
                   metadata->GetKeySchema());
-
               // Compare the current key in the scan with "values" based on
               // "expression types"
               // For instance, "5" EXPR_GREATER_THAN "2" is true
@@ -267,6 +264,7 @@ void BTreeIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
                 result.push_back(location_header);
               }
             }
+            LOG_TRACE("DONE");
           } break;
 
           case SCAN_DIRECTION_TYPE_INVALID:

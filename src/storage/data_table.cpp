@@ -60,7 +60,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
-
   // Create a tile group.
   AddDefaultTileGroup();
 }

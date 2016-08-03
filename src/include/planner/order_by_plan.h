@@ -45,6 +45,8 @@ class OrderByPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "OrderBy"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
         new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));

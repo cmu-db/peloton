@@ -25,15 +25,12 @@ Portal::Portal(const std::string& portal_name,
   statement(statement),
   bind_parameters(bind_parameters) {
 
-  LOG_INFO("Portal created : %s", portal_name.c_str());
 
 }
 
 Portal::~Portal() {
 
   statement.reset();
-
-  LOG_INFO("Portal destroyed : %s", portal_name.c_str());
 
 }
 

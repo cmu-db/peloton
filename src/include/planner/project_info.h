@@ -51,7 +51,7 @@ class ProjectInfo {
   ProjectInfo(TargetList &tl, DirectMapList &dml) = delete;
 
   ProjectInfo(TargetList &&tl, DirectMapList &&dml)
-      : target_list_(tl), direct_map_list_(dml) {}
+      : target_list_(tl), direct_map_list_(dml) { }
 
   const TargetList &GetTargetList() const { return target_list_; }
 
@@ -64,6 +64,8 @@ class ProjectInfo {
                 executor::ExecutorContext *econtext) const;
 
   std::string Debug() const;
+
+  void transformParameterToConstantValueExpression(std::vector<Value>* values, catalog::Schema* schema);
 
   ~ProjectInfo();
 
