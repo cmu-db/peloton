@@ -46,8 +46,8 @@ set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/va
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
     
-    message("test_srcs = " ${test_srcs})
-    message("perf_src = " ${perf_src})
+    #message("test_srcs = " ${test_srcs})
+    #message("perf_src = " ${perf_src})
     
     get_filename_component(perf_bare_name ${perf_src} NAME)	
 	string(REPLACE ".cpp" "" perf_bare_name_without_extension ${perf_bare_name})
@@ -57,7 +57,7 @@ foreach(perf_src ${perf_srcs} )
     add_executable(${perf_name} EXCLUDE_FROM_ALL ${perf_src})
     add_dependencies(check ${perf_name})
     
-    message("Performance test: "  ${perf_name})
+    #message("Performance test: "  ${perf_name})
     
     # link libraries
     target_link_libraries(${perf_name} peloton peloton-test-common)    
@@ -75,7 +75,7 @@ foreach(perf_src ${perf_srcs} )
 endforeach(perf_src ${perf_srcs})
 
 foreach(test_src ${test_srcs} )
-    message("test_src = " ${test_src})
+    #message("test_src = " ${test_src})
     
     # get test file name
 	get_filename_component(test_bare_name ${test_src} NAME)	
@@ -86,7 +86,7 @@ foreach(test_src ${test_srcs} )
     add_executable(${test_name} EXCLUDE_FROM_ALL ${test_src})
     add_dependencies(check ${test_name})
     
-    message("Correctness test: "  ${test_name})
+    #message("Correctness test: "  ${test_name})
     
     # link libraries
     target_link_libraries(${test_name} peloton peloton-test-common)    
