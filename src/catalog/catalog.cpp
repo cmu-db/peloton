@@ -59,8 +59,8 @@ Result Catalog::CreateDatabase(std::string database_name) {
   // Update catalog_db with this database info
 
   auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
-		  database_id,
-		  database_name);
+      database_id,
+      database_name);
   catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
@@ -146,6 +146,64 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
     return Result::RESULT_FAILURE;
   }
+}
+
+
+Result Catalog::CreateIndex(const std::string &database_name,
+                                   const std::string &table_name , std::vector<std::string> index_attr, std::string index_name) {
+
+  LOG_INFO("This is the index name ----------> %s" , index_name.c_str());
+
+  auto database = GetDatabaseWithName(database_name);
+  if(database != nullptr){
+     auto table = database->GetTableWithName(table_name);
+        if (table == nullptr) {
+          LOG_TRACE(
+              "Cannot find the table to create the primary key index. Return "
+              "RESULT_FAILURE.");
+          return Result::RESULT_FAILURE;
+        }
+
+        std::vector<oid_t> key_attrs;
+        catalog::Schema *key_schema = nullptr;
+        index::IndexMetadata *index_metadata = nullptr;
+        auto schema = table->GetSchema();
+
+        // check if index attributes are in table
+        auto columns = schema->GetColumns();
+        for(auto attr : index_attr){
+          for(uint i = 0; i < columns.size() ; ++i){  
+            if(attr == columns[i].column_name){
+              LOG_INFO("***** FOUND *****");
+              key_attrs.push_back(columns[i].column_offset);
+            }
+          }
+        }
+        
+        if(key_attrs.size() != index_attr.size()){
+
+          LOG_INFO("Some columns are missing");
+          return Result::RESULT_FAILURE;
+        }
+
+        key_schema = catalog::Schema::CopySchema(schema, key_attrs);
+        key_schema->SetIndexedColumns(key_attrs);
+
+
+        index_metadata = new index::IndexMetadata(
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
+                INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+
+        std::shared_ptr<index::Index> key_index(
+             index::IndexFactory::GetInstance(index_metadata));
+        table->AddIndex(key_index);
+
+        LOG_TRACE("Successfully add index for table %s",
+                 table->GetName().c_str());
+       return Result::RESULT_SUCCESS;
+  }
+
+  return Result::RESULT_FAILURE;
 }
 
 // Drop a database

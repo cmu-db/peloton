@@ -59,18 +59,31 @@ class CreatePlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new CreatePlan(target_table_));
   }
 
+  std::string GetIndexName() const {return index_name;}
+
   std::string GetTableName() const { return table_name; }
 
   catalog::Schema* GetSchema() const {
     return table_schema;
   }
 
+  CreateType GetCreateType() const { return create_type; }
+
+  std::vector<std::string> GetIndexAttributes() const { return index_attrs;}
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
+
   std::string table_name;
+
   catalog::Schema* table_schema;
 
+  std::vector<std::string> index_attrs;
+  
+  CreateType create_type;
+  // IndexName
+  std::string index_name;
 };
 }
 }

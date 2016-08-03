@@ -57,6 +57,9 @@ class Catalog {
   Result CreatePrimaryIndex(const std::string &database_name,
                             const std::string &table_name);
 
+  Result CreateIndex(const std::string &database_name,
+                              const std::string &table_name,  std::vector<std::string> index_attr , std::string index_name);
+
   // Drop a database
   Result DropDatabase(std::string database_name);
 
