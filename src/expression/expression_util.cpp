@@ -517,12 +517,12 @@ void ExpressionUtil::ConvertParameterExpressions(
     // right expression is column
     auto right = (TupleValueExpression *)expression->GetRight();
     auto value =
-        new ConstantValueExpression(values->at(left->getValueIdx()).CastAs(
+        new ConstantValueExpression(values->at(left->GetValueIdx()).CastAs(
             schema->GetColumn(right->GetColumnId()).GetType()));
-    LOG_INFO("Setting parameter %u to value %s", left->getValueIdx(),
+    LOG_INFO("Setting parameter %u to value %s", left->GetValueIdx(),
              value->getValue().GetInfo().c_str());
     delete left;
-    expression->setLeft(value);
+    expression->setLeftExpression(value);
   } else if (expression->GetRight()->GetExpressionType() ==
              EXPRESSION_TYPE_VALUE_PARAMETER) {
     // right expression is parameter
@@ -530,12 +530,12 @@ void ExpressionUtil::ConvertParameterExpressions(
     // left expression is column
     auto left = (TupleValueExpression *)expression->GetRight();
     auto value =
-        new ConstantValueExpression(values->at(right->getValueIdx()).CastAs(
+        new ConstantValueExpression(values->at(right->GetValueIdx()).CastAs(
             schema->GetColumn(left->GetColumnId()).GetType()));
-    LOG_INFO("Setting parameter %u to value %s", right->getValueIdx(),
+    LOG_INFO("Setting parameter %u to value %s", right->GetValueIdx(),
              value->getValue().GetInfo().c_str());
     delete right;
-    expression->setRight(value);
+    expression->setRightExpression(value);
   } else {
     ConvertParameterExpressions(expression->GetModifiableLeft(), values,
                                 schema);

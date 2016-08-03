@@ -74,7 +74,7 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
   bool adapt_table = false;
   oid_t table_id = GetNewID();
   storage::Database *database = GetDatabaseWithName(database_name);
-  if (database) {
+  if (database != nullptr) {
     if (database->GetTableWithName(table_name)) {
       LOG_TRACE("Found a table with the same name. Returning RESULT_FAILURE");
       return Result::RESULT_FAILURE;
@@ -96,7 +96,6 @@ Result Catalog::CreateTable(std::string database_name, std::string table_name,
     catalog::InsertTuple(
         databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME),
         std::move(tuple));
-    //	  databases[START_OID]->GetTableWithName(TABLE_CATALOG_NAME)->InsertTuple(tuple.get());
     return Result::RESULT_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
@@ -110,7 +109,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database) {
     auto table = database->GetTableWithName(table_name);
-    if (!table) {
+    if (table == nullptr) {
       LOG_TRACE(
           "Cannot find the table to create the primary key index. Return "
           "RESULT_FAILURE.");
@@ -122,7 +121,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     index::IndexMetadata *index_metadata = nullptr;
     auto schema = table->GetSchema();
 
-    // Fine primary index attributes
+    // Find primary index attributes
     for (auto &column : schema->GetColumns()) {
       if (column.IsPrimary()) {
         key_attrs.push_back(column.column_offset);
@@ -133,7 +132,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_BTREE,
+        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
         INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
@@ -153,7 +152,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 Result Catalog::DropDatabase(std::string database_name) {
   LOG_TRACE("Dropping database %s", database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
-  if (database) {
+  if (database != nullptr) {
     LOG_TRACE("Found database!");
     LOG_TRACE("Deleting tuple from catalog");
     catalog::DeleteTuple(GetDatabaseWithName(CATALOG_DATABASE_NAME)
@@ -185,7 +184,7 @@ Result Catalog::DropTable(std::string database_name, std::string table_name) {
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
-  if (database) {
+  if (database != nullptr) {
     LOG_TRACE("Found database!");
     storage::DataTable *table = database->GetTableWithName(table_name);
     if (table) {
@@ -230,7 +229,7 @@ storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
-  if (database) {
+  if (database != nullptr) {
     storage::DataTable *table = database->GetTableWithName(table_name);
     if (table) {
       LOG_TRACE("Found table.");

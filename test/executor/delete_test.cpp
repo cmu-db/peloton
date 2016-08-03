@@ -46,15 +46,16 @@ void ShowTable(std:: string database_name, std::string table_name) {
   auto& peloton_parser = parser::Parser::GetInstance();
   bridge::peloton_status status;
   std::vector<Value> params;
+  std::vector<ResultType> result;
   statement.reset(new Statement("SELECT", "SELECT * FROM " + table->GetName()));
   auto select_stmt = peloton_parser.BuildParseTree("SELECT * FROM " + table->GetName());
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(select_stmt));
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
 }
 
 
-TEST_F(DeleteTests, Deleting) {
+TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Bootstrapping...");
   catalog::Bootstrapper::bootstrap();
@@ -97,9 +98,10 @@ TEST_F(DeleteTests, Deleting) {
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
   LOG_INFO("Building plan tree completed!");
   std::vector<Value> params;
+  std::vector<ResultType> result;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -115,7 +117,7 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -131,7 +133,7 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple inserted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -148,12 +150,12 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Counted Tuples!");
 
   // Now deleting end-to-end
-  /*LOG_INFO("Deleting a tuple...");
+  LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table");
   statement.reset(new Statement("DELETE", "DELETE FROM department_table"));
   LOG_INFO("Building parse tree...");
@@ -164,7 +166,7 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
   ShowTable(DEFAULT_DB_NAME, "department_table");
@@ -181,10 +183,10 @@ TEST_F(DeleteTests, Deleting) {
   LOG_INFO("Building plan tree completed!");
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_INFO("Executing plan...");
-  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params);
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
   LOG_INFO("Statement executed. Result: %d", status.m_result);
   LOG_INFO("Tuple deleted!");
-  ShowTable(DEFAULT_DB_NAME, "department_table");*/
+  ShowTable(DEFAULT_DB_NAME, "department_table");
 }
 
 

@@ -17,9 +17,13 @@
 #include <vector>
 
 #include "expression/abstract_expression.h"
-#include "catalog/schema.h"
 
 namespace peloton {
+
+namespace catalog {
+class Schema;
+}
+
 namespace expression {
 
 class ExpressionUtil {
