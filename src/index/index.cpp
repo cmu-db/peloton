@@ -23,6 +23,16 @@
 
 namespace peloton {
 namespace index {
+  
+/*
+ * GetColumnCount() - Returns the number of indexed columns
+ *
+ * Please note that this returns the column count of columns in the base
+ * table that are indexed, i.e. not the column count of the base table
+ */
+oid_t IndexMetadata::GetColumnCount() const {
+  return GetKeySchema()->GetColumnCount();
+}
 
 Index::~Index() {
   // clean up metadata
@@ -36,10 +46,6 @@ IndexMetadata::~IndexMetadata() {
   // clean up key schema
   delete key_schema;
   // no need to clean the tuple schema
-}
-
-oid_t IndexMetadata::GetColumnCount() const {
-  return GetKeySchema()->GetColumnCount();
 }
 
 const std::string IndexMetadata::GetInfo() const {
