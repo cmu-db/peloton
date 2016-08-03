@@ -139,7 +139,7 @@ void HandleConnections(Server *server) {
 
     std::unique_ptr<int> clientfd(new int(connfd));
 
-    LOG_INFO("LAUNCHING NEW THREAD");
+    LOG_TRACE("LAUNCHING NEW THREAD");
     std::thread client_thread(ClientHandler<P, B>, std::move(clientfd));
     client_thread.detach();
   }
@@ -153,7 +153,7 @@ void HandleConnections(Server *server) {
 template <typename P, typename B>
 void ClientHandler(std::unique_ptr<int> clientfd) {
   int fd = *clientfd;
-  LOG_INFO("Client fd: %d", fd);
+  LOG_TRACE("Client fd: %d", fd);
   SocketManager<B> sm(fd);
   P p(&sm);
   p.ManagePackets();
