@@ -1,8 +1,4 @@
-<div align="center">
-<a href="http://pelotondb.org/">
-<img src="http://db.cs.cmu.edu/wordpress/wp-content/uploads/2016/07/peloton.jpg" alt="Peloton Logo"><br><br>
-</a>
-</div>
+<a href="http://pelotondb.org/"><img src="http://db.cs.cmu.edu/wordpress/wp-content/uploads/2016/07/peloton.jpg" alt="Peloton Logo"></a>
 -----------------
 [![Join the chat at https://gitter.im/cmu-db/peloton](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/cmu-db/peloton?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Travis Status](https://travis-ci.org/cmu-db/peloton.svg?branch=master)](https://travis-ci.org/cmu-db/peloton)
