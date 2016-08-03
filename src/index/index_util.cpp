@@ -42,6 +42,35 @@ bool IfBackwardExpression(ExpressionType e) {
 }
 
 /*
+ * HasNonOptimizablePredicate() - Check whether there are expressions that
+ *                                cause the entire predicate non-optmizable
+ *
+ * This function simply checks whether there is any expression of the
+ * following types that renders the scan predicate non-optmizable:
+ *
+ * NOTEQUAL
+ * IN
+ * LIKE
+ * NOTLIKE
+ *
+ * If any of these appears as part of the scan predicate then we could
+ * stop optimizing the predicate at the beginning. So this check serves
+ * as a fast path
+ */
+bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
+  for(auto t : expr_types) {
+    if (t == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
+        t == EXPRESSION_TYPE_COMPARE_IN ||
+        t == EXPRESSION_TYPE_COMPARE_LIKE ||
+        t == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+/*
  * ValuePairComparator() - Compares std::pair<Value, int>
  *
  * Values are compared first and if not equal return result
