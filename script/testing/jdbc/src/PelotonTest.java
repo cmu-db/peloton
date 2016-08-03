@@ -24,6 +24,7 @@ public class PelotonTest {
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
+  private final String AGG_COUNT_3 = "SELECT AVG(id) FROM A WHERE id < ? + 1";
 
   private final String TEMPLATE_FOR_BATCH_INSERT = "INSERT INTO A VALUES (?,?);";
 
@@ -41,6 +42,26 @@ public class PelotonTest {
   private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = 1 FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
+  
+  private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
+		  	+ "S_W_ID INT PRIMARY KEY,"
+		  	+ "S_I_ID INT PRIMARY KEY);";
+		  	//+ "PRIMARY KEY (S_W_ID, S_I_ID));";
+  private final String CREATE_ORDER_LINE_TABLE = "CREATE TABLE ORDER_LINE ("
+		  	+ "OL_W_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_D_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_O_ID INT NOT NULL PRIMARY KEY);";
+		  	//+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
+  private final String STOCK_LEVEL = "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
+			+ " FROM " + "ORDER_LINE, STOCK"
+			//+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
+			+ " WHERE OL_W_ID = ?"
+			+ " AND OL_D_ID = ?"
+			+ " AND OL_O_ID < ?"
+			+ " AND OL_O_ID >= ? - 20"
+			+ " AND S_W_ID = ?"
+			+ " AND S_I_ID = OL_I_ID" 
+			+ " AND S_QUANTITY < ?";
 
   private final Connection conn;
 
@@ -78,6 +99,9 @@ public class PelotonTest {
     stmt.execute(DROP);
     stmt.execute(DDL);
 
+    stmt.execute(CREATE_STOCK_TABLE);
+    stmt.execute(CREATE_ORDER_LINE_TABLE);
+    //stmt.execute(STOCK_LEVEL);
     //stmt.execute(INSERT);
 	//stmt.execute(SEQSCAN);
 //    stmt.execute(DROP);
@@ -111,6 +135,10 @@ public class PelotonTest {
     stmt.execute(INDEXSCAN_COLUMN);
     stmt.execute(AGG_COUNT);
     stmt.execute(AGG_COUNT_2);
+    
+    PreparedStatement pstmt = conn.prepareStatement(AGG_COUNT_3);
+    pstmt.setInt(1, 3);
+    pstmt.execute();
 
     for (int i = 1; i < 3; i++)
         IndexScanParam(i);

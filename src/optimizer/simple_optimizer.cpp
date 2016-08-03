@@ -19,11 +19,13 @@
 #include "planner/drop_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/abstract_scan_plan.h"
 #include "planner/index_scan_plan.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/update_plan.h"
 #include "planner/aggregate_plan.h"
+#include "planner/hash_plan.h"
 #include "parser/abstract_parse.h"
 #include "parser/drop_parse.h"
 #include "parser/create_parse.h"
@@ -90,6 +92,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto group_by = select_stmt->group_by;
       expression::AbstractExpression* having = nullptr;
 
+      /*
       // The HACK to make the join in tpcc work. This is written by Joy Arulraj
       if (select_stmt->from_table->list != NULL) {
         for (auto table_ref : *select_stmt->from_table->list) {
@@ -106,7 +109,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         auto child_SelectPlan = CreateHackingJoinPlan(select_stmt);
         child_plan = std::move(child_SelectPlan);
         break;
-      }
+      }*/
 
       storage::DataTable* target_table =
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
@@ -148,7 +151,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         target_table =
             catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
                 DEFAULT_DB_NAME, select_stmt->from_table->name);
-        auto scan_node = CreateScanPlan(target_table, select_stmt);
+        std::unique_ptr<planner::AbstractScan> scan_node =  // nullptr;
+            CreateScanPlan(target_table, select_stmt);
 
         // Prepare aggregate plan
         std::vector<catalog::Column> output_schema_columns;
@@ -393,13 +397,16 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateScanPlan(
 
   // index_searchable = false;
   // using the index scan causes an error:
-  //Exception Type :: Mismatch Type
-  //Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be cast as BIGINT...
-  //terminate called after throwing an instance of 'peloton::TypeMismatchException'
-  //what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast as BIGINT...
+  // Exception Type :: Mismatch Type
+  // Message :: Type VARCHAR does not match with BIGINTType VARCHAR can't be
+  // cast as BIGINT...
+  // terminate called after throwing an instance of
+  // 'peloton::TypeMismatchException'
+  // what():  Type VARCHAR does not match with BIGINTType VARCHAR can't be cast
+  // as BIGINT...
 
   if (!index_searchable) {
-//  if (true) {
+    //  if (true) {
     // Create sequential scan plan
     LOG_INFO("Creating a sequential scan plan");
     std::unique_ptr<planner::SeqScanPlan> child_SelectPlan(
@@ -521,6 +528,7 @@ void SimpleOptimizer::GetPredicateColumns(
       std::string col_name(expr->getName());
       LOG_INFO("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
+      LOG_INFO("Column id: %d", column_id);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
@@ -546,6 +554,64 @@ void SimpleOptimizer::GetPredicateColumns(
 
 std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateHackingJoinPlan(
     __attribute__((unused)) parser::SelectStatement* select_stmt) {
+
+  /*
+  auto orderline_table =
+      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+          DEFAULT_DB_NAME, "order_line");
+  auto stock_table =
+      catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+          DEFAULT_DB_NAME, "stock");
+
+  auto ol_w_id = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+  auto ol_d_id = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+  auto ol_o_id_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 2);
+  auto ol_o_id_2 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 2);
+
+  expression::TupleValueExpression* right_table_attr_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+
+  std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(
+      new planner::IndexScanPlan(orderline_table, select_stmt->where_clause,
+                                 column_ids, index_scan_desc));
+  LOG_INFO("Index scan plan created");
+
+  // Create hash plan node
+  expression::AbstractExpression* right_table_attr_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  hash_keys.emplace_back(right_table_attr_1);
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      left_hash_keys;
+  left_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1)});
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>>
+      right_hash_keys;
+  right_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1)});
+
+  // Create hash plan node
+  planner::HashPlan hash_plan_node(hash_keys);
+
+  expression::AbstractExpression* predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+
+  expression::TupleValueExpression* left_table_attr_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
+  expression::TupleValueExpression* right_table_attr_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+  predicate = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+      */
+
   return nullptr;
 }
 
