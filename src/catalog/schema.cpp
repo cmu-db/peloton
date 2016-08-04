@@ -125,8 +125,44 @@ Schema *Schema::CopySchema(const Schema *schema) {
 }
 
 /*
- * CopySchema() - Returns a filtered schema using the given base schema
- *                and index array in the argument
+ * CopySchema() - Copies the schema into a new schema object with index_list
+ *                as indices to copy
+ *
+ * This function essentially does a "Gathering" operation, in a sense that it
+ * collects columns indexed by elemenys inside index_list in the given order
+ * and store them inside a newly created schema object
+ *
+ * If there are duplicates in index_list then the columns will be duplicated
+ * (i.e. no dup checking will be done)
+ *
+ * If the indices inside index_list >= the size of the column list then behavior
+ * is undefined (and is likely to crash)
+ *
+ * The returned schema is created by new operator, and the caller is responsible
+ * for destroying it.
+ */
+Schema *Schema::CopySchema(const Schema *schema,
+                           const std::vector<oid_t> &index_list) {
+  std::vector<Column> column_list{};
+  
+  // Reserve some space to avoid multiple malloc() calls
+  // But for future push_back() this is not optimized since the
+  // memory chunk may not be properly sized and aligned
+  column_list.reserve(index_list.size());
+
+  // For each column index, push the column
+  for(oid_t column_index : index_list) {
+    column_list.push_back(schema->columns[column_index]);
+  }
+
+  Schema *ret_schema = new Schema(column_list);
+
+  return ret_schema;
+}
+
+/*
+ * FilterSchema() - Returns a filtered schema using the given base schema
+ *                  and index array in the argument
  *
  * This function performs a "Filtering" operation on the schema given in the
  * argument using the index list into a newly created schema object. The
@@ -141,8 +177,8 @@ Schema *Schema::CopySchema(const Schema *schema) {
  * Please note that the new schame is created on the heap, and the caller
  * is responsible for destroying it.
  */
-Schema *Schema::CopySchema(const Schema *schema,
-                           const std::vector<oid_t> &set) {
+Schema *Schema::FilterSchema(const Schema *schema,
+                             const std::vector<oid_t> &set) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<Column> columns;
 
