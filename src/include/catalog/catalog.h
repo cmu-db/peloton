@@ -58,7 +58,7 @@ class Catalog {
                             const std::string &table_name);
 
   Result CreateIndex(const std::string &database_name,
-                              const std::string &table_name,  std::vector<std::string> index_attr , std::string index_name);
+                              const std::string &table_name,  std::vector<std::string> index_attr , std::string index_name , bool unique);
 
   // Drop a database
   Result DropDatabase(std::string database_name);
