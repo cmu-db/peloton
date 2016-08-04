@@ -69,6 +69,8 @@ class CreatePlan : public AbstractPlan {
 
   CreateType GetCreateType() const { return create_type; }
 
+  bool IsUnique() const { return unique; }
+
   std::vector<std::string> GetIndexAttributes() const { return index_attrs;}
 
  private:
@@ -84,6 +86,8 @@ class CreatePlan : public AbstractPlan {
   CreateType create_type;
   // IndexName
   std::string index_name;
+
+  bool unique;
 };
 }
 }
