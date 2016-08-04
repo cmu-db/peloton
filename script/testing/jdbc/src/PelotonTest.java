@@ -58,7 +58,7 @@ public class PelotonTest {
 
   private final String INSERT_STOCK_1 = "INSERT INTO STOCK VALUES (1, 2, 0);";
   private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
-  private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 8);";
+  private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 6);";
   private final String SELECT_STOCK = "SELECT * FROM STOCK;";
   
   private final String INSERT_ORDER_LINE = "INSERT INTO ORDER_LINE VALUES (1, 2, 3, 4, 5);";
@@ -124,13 +124,9 @@ public class PelotonTest {
     pstmt.setInt(3, 5);
     pstmt.setInt(4, 20);
     pstmt.setInt(5, 1);
-    pstmt.setInt(6, 7);
+    pstmt.setInt(6, 5);
     pstmt.execute();
-    //stmt.execute(INSERT);
-	//stmt.execute(SEQSCAN);
-//    stmt.execute(DROP);
     System.out.println("Test db created.");
-    System.exit(0);
   }
 
   public void ShowTable() throws SQLException {

@@ -206,20 +206,8 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
-      auto &manager = catalog::Manager::GetInstance();
-      auto tile_group = manager.GetTileGroup(8);
-      if (tile_group && tile_group->GetActiveTupleCount()) {
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                             0);
-        LOG_INFO("value: %s", tuple.GetValue(2).GetInfo().c_str());
-      }
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
                           tile->GetPool());
-      if (tile_group && tile_group->GetActiveTupleCount()) {
-        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
-                                                             0);
-        LOG_INFO("value: %s", tuple.GetValue(2).GetInfo().c_str());
-      }
       column_itr++;
     }
   }

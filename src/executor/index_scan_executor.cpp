@@ -196,8 +196,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
               tile_group.get(), tuple_location.offset);
           auto eval =
               predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue();
-          LOG_INFO("evaluate result: %d", eval);
-          LOG_INFO("value: %s", tuple.GetValue(2).GetInfo().c_str());
+          LOG_TRACE("predicate evaluate result: %d", eval);
           // LOG_INFO("peek: %s",
           //         ValuePeeker::PeekDecimalString(tuple.GetValue(2)).c_str());
           if (eval == true) {
