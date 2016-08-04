@@ -56,12 +56,15 @@ bool IfBackwardExpression(ExpressionType e) {
  * If any of these appears as part of the scan predicate then we could
  * stop optimizing the predicate at the beginning. So this check serves
  * as a fast path
+ *
+ * Please refer to src/include/common/types.h for a complete list of comparison
+ * operators
  */
 bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
   for(auto t : expr_types) {
     if (t == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
-        t == EXPRESSION_TYPE_COMPARE_IN ||
-        t == EXPRESSION_TYPE_COMPARE_LIKE ||
+        t == EXPRESSION_TYPE_COMPARE_IN       ||
+        t == EXPRESSION_TYPE_COMPARE_LIKE     ||
         t == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
       return false;
     }
@@ -110,7 +113,11 @@ void ConstructIntervals(oid_t leading_column_id,
     } else if (IfBackwardExpression(expr_types[i])) {
       nums.push_back(std::pair<Value, int>(values[i], 1));
     } else {
-      assert(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
+      // Currently if it is not >  < <= then it must be ==
+      // *** I could not find BETWEEN expression in types.h so did not add it
+      // into the list
+      PL_ASSERT(expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL);
+      
       nums.push_back(std::pair<Value, int>(values[i], -1));
       nums.push_back(std::pair<Value, int>(values[i], 1));
     }
@@ -118,7 +125,10 @@ void ConstructIntervals(oid_t leading_column_id,
 
   // Have merged all constraints in a single line, sort this line.
   std::sort(nums.begin(), nums.end(), ValuePairComparator);
-  assert(nums.size() > 0);
+  
+  // This enforces that there must be at least one constraint on the
+  // leading column, if the search is eligible for optimization
+  PL_ASSERT(nums.size() > 0);
 
   // Build intervals.
   Value cur;
