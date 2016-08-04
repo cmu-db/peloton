@@ -26,24 +26,24 @@ namespace planner {
 
 DeletePlan::DeletePlan(storage::DataTable *table, bool truncate)
     : target_table_(table), truncate(truncate) {
-	LOG_INFO("Creating a Delete Plan");
+	LOG_TRACE("Creating a Delete Plan");
 }
 
 DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 
-  LOG_INFO("Creating a Delete Plan");
+  LOG_TRACE("Creating a Delete Plan");
   table_name = std::string(delete_statemenet->table_name);
   target_table_ = catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
       DEFAULT_DB_NAME, table_name);
   // if expr is null , delete all tuples from table
   if (delete_statemenet->expr == nullptr) {
-    LOG_INFO("No expression, setting truncate to true");
+    LOG_TRACE("No expression, setting truncate to true");
     expr = nullptr;
     truncate = true;
 
   } else {
     expr = delete_statemenet->expr->Copy();
-    LOG_INFO("Replacing COLUMN_REF with TupleValueExpressions");
+    LOG_TRACE("Replacing COLUMN_REF with TupleValueExpressions");
     ReplaceColumnExpressions(target_table_->GetSchema(), expr);
   }
   std::vector<oid_t> column_ids = {};
@@ -53,7 +53,7 @@ DeletePlan::DeletePlan(parser::DeleteStatement *delete_statemenet) {
 }
 
 void DeletePlan::SetParameterValues(std::vector<Value> *values) {
-  LOG_INFO("Setting parameter values in Delete");
+  LOG_TRACE("Setting parameter values in Delete");
   auto &children = GetChildren();
   // One sequential scan
   children[0]->SetParameterValues(values);
