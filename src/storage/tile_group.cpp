@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "storage/tile_group.h"
 
 #include <numeric>
@@ -24,6 +23,7 @@
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
 #include "storage/rollback_segment.h"
+#include "expression/container_tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -206,8 +206,20 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group = manager.GetTileGroup(8);
+      if (tile_group && tile_group->GetActiveTupleCount()) {
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                             0);
+        LOG_INFO("value: %s", tuple.GetValue(2).GetInfo().c_str());
+      }
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr),
                           tile->GetPool());
+      if (tile_group && tile_group->GetActiveTupleCount()) {
+        expression::ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                                             0);
+        LOG_INFO("value: %s", tuple.GetValue(2).GetInfo().c_str());
+      }
       column_itr++;
     }
   }
@@ -421,8 +433,8 @@ Tile *TileGroup::GetTile(const oid_t tile_offset) const {
   return tile;
 }
 
-std::shared_ptr<Tile> TileGroup::GetTileReference(
-    const oid_t tile_offset) const {
+std::shared_ptr<Tile> TileGroup::GetTileReference(const oid_t tile_offset)
+    const {
   PL_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
 }

@@ -76,16 +76,15 @@ Result TrafficCop::ExecuteStatement(
 
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
-    UNUSED_ATTRIBUTE const bool unnamed,
-    std::vector<ResultType> &result,
+    UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
     UNUSED_ATTRIBUTE int &rows_changed,
     UNUSED_ATTRIBUTE std::string &error_message) {
 
   LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<Value> params;
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
-  bridge::peloton_status status =
-      bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
+  bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
+      statement->GetPlanTree().get(), params, result);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
   return status.m_result;
 }
@@ -96,10 +95,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   std::shared_ptr<Statement> statement;
 
   LOG_TRACE("Prepare Statement %s", query_string.c_str());
-	
+
   std::vector<std::string> query_tokens;
-    boost::split(query_tokens, query_string, boost::is_any_of(" "),
-        boost::token_compress_on);
+  boost::split(query_tokens, query_string, boost::is_any_of(" "),
+               boost::token_compress_on);
 
   statement.reset(new Statement(statement_name, query_string));
 
@@ -108,60 +107,56 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
   statement->SetPlanTree(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
-  
-  if(sql_stmt->GetType() == STATEMENT_TYPE_SELECT){
-      LOG_TRACE("******* SELECT STATEMENT DETECTED *******");
 
-      auto select_stmt = (parser::SelectStatement*)sql_stmt.get();
+  if (sql_stmt->GetType() == STATEMENT_TYPE_SELECT) {
+    LOG_TRACE("******* SELECT STATEMENT DETECTED *******");
 
-      std::vector<FieldInfoType> t_desc;
+    auto select_stmt = (parser::SelectStatement *)sql_stmt.get();
 
+    std::vector<FieldInfoType> t_desc;
+
+    if (select_stmt->from_table->list == NULL) {
       auto target_table = static_cast<storage::DataTable *>(
-        catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
-            DEFAULT_DB_NAME, select_stmt->from_table->name));
-    
+          catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
+              DEFAULT_DB_NAME, select_stmt->from_table->name));
+
       auto columns = target_table->GetSchema()->GetColumns();
 
-      if(select_stmt->select_list->at(0)->GetExpressionType() == EXPRESSION_TYPE_STAR){
-    
-         for(oid_t i = 0; i < columns.size(); ++i){
-    
-          if(columns[i].column_type == VALUE_TYPE_INTEGER){
+      if (select_stmt->select_list->at(0)->GetExpressionType() ==
+          EXPRESSION_TYPE_STAR) {
+
+        for (oid_t i = 0; i < columns.size(); ++i) {
+
+          if (columns[i].column_type == VALUE_TYPE_INTEGER) {
             LOG_TRACE("******* INTEGER *******");
-            t_desc.push_back(std::make_tuple(columns[i].column_name , 23 , 4));
-          }
-    
-          else if(columns[i].column_type == VALUE_TYPE_DOUBLE){
+            t_desc.push_back(std::make_tuple(columns[i].column_name, 23, 4));
+          } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
             LOG_TRACE("******* FLOAT *******");
-            t_desc.push_back(std::make_tuple(columns[i].column_name , 701 , 8));
-          }
-    
-          else if(columns[i].column_type == VALUE_TYPE_VARCHAR){
+            t_desc.push_back(std::make_tuple(columns[i].column_name, 701, 8));
+          } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
             LOG_TRACE("******* TEXT *******");
             t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
-          }
-    
-          else{
+          } else {
             LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
             t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
           }
-         }
+        }
+      } else if (query_tokens[1].find("COUNT(") != std::string::npos) {
+        t_desc.push_back(make_tuple(query_tokens[1], 23, 4));
+        LOG_TRACE("query_tokens is ----------------> %s",
+                  query_tokens[1].c_str());
+      } else if (query_tokens[1].find("MAX(") != std::string::npos) {
+        t_desc.push_back(make_tuple(query_tokens[1], 23, 4));
+      } else if (query_tokens[1].find("MIN(") != std::string::npos) {
+        t_desc.push_back(make_tuple(query_tokens[1], 23, 4));
+      } else if (query_tokens[1].find("AVG(") != std::string::npos) {
+        t_desc.push_back(make_tuple(query_tokens[1], 701, 8));
       }
-      else if(query_tokens[1].find("COUNT(") != std::string::npos){
-        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));
-        LOG_TRACE("query_tokens is ----------------> %s" , query_tokens[1].c_str());  
-      }
-      else if(query_tokens[1].find("MAX(") != std::string::npos){
-        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));  
-      }
-      else if(query_tokens[1].find("MIN(") != std::string::npos){
-        t_desc.push_back(make_tuple(query_tokens[1] , 23 , 4));  
-      }
-      else if(query_tokens[1].find("AVG(") != std::string::npos){
-        t_desc.push_back(make_tuple(query_tokens[1] , 701 , 8));  
-      }
-      statement->SetTupleDescriptor(t_desc);  
+    } else {
+      t_desc.push_back(std::make_tuple(query_tokens[1], 23, 4));
     }
+    statement->SetTupleDescriptor(t_desc);
+  }
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
   LOG_TRACE("Statement Prepared!");

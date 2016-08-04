@@ -528,7 +528,7 @@ void ExpressionUtil::ConvertParameterExpressions(
     // right expression is parameter
     auto right = (ParameterValueExpression *)expression->GetRight();
     // left expression is column
-    auto left = (TupleValueExpression *)expression->GetRight();
+    auto left = (TupleValueExpression *)expression->GetLeft();
     auto value =
         new ConstantValueExpression(values->at(right->GetValueIdx()).CastAs(
             schema->GetColumn(left->GetColumnId()).GetType()));

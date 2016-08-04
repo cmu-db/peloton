@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "common/harness.h"
@@ -63,10 +62,11 @@ std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
-      {ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(1),
-       ExecutorTestsUtil::GetColumnInfo(0),
-       ExecutorTestsUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(
+      new catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(1),
+                           ExecutorTestsUtil::GetColumnInfo(0),
+                           ExecutorTestsUtil::GetColumnInfo(0)}));
 }
 
 std::vector<PlanNodeType> join_algorithms = {
@@ -708,7 +708,6 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
     std::vector<std::unique_ptr<executor::LogicalTile>> &
-
         table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
@@ -750,7 +749,7 @@ void ExpectNormalTileResults(
       EXPECT_CALL(*table_scan_executor, GetOutput())
           .InSequence(get_output_sequence)
           .WillOnce(
-              Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
+               Return(table_logical_tile_ptrs[table_tile_group_itr].release()));
     }
   }
 }

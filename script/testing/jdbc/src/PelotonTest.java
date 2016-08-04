@@ -20,7 +20,7 @@ public class PelotonTest {
 
   private final String INSERT_A_1 = "INSERT INTO A VALUES (1,'1961-06-16');";
   private final String INSERT_A_2 = "INSERT INTO A VALUES (2,'Full Clip')";
-  private final String DELETE_A = "DELETE * FROM A";
+  private final String DELETE_A = "DELETE FROM A";
 
   private final String AGG_COUNT = "SELECT COUNT(*) FROM A";
   private final String AGG_COUNT_2 = "SELECT COUNT(*) FROM A WHERE id = 1";
@@ -45,13 +45,23 @@ public class PelotonTest {
   
   private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
 		  	+ "S_W_ID INT PRIMARY KEY,"
-		  	+ "S_I_ID INT PRIMARY KEY);";
+		  	+ "S_I_ID INT PRIMARY KEY,"
+  			+ "S_QUANTITY DECIMAL NOT NULL);";
 		  	//+ "PRIMARY KEY (S_W_ID, S_I_ID));";
   private final String CREATE_ORDER_LINE_TABLE = "CREATE TABLE ORDER_LINE ("
 		  	+ "OL_W_ID INT NOT NULL PRIMARY KEY,"
 		  	+ "OL_D_ID INT NOT NULL PRIMARY KEY,"
-		  	+ "OL_O_ID INT NOT NULL PRIMARY KEY);";
+		  	+ "OL_O_ID INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_NUMBER INT NOT NULL PRIMARY KEY,"
+		  	+ "OL_I_ID INT NOT NULL);";
 		  	//+ "PRIMARY KEY (OL_W_ID,OL_D_ID,OL_O_ID,OL_NUMBER));";
+
+  private final String INSERT_STOCK_1 = "INSERT INTO STOCK VALUES (1, 2, 0);";
+  private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
+  private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 8);";
+  private final String SELECT_STOCK = "SELECT * FROM STOCK;";
+  
+  private final String INSERT_ORDER_LINE = "INSERT INTO ORDER_LINE VALUES (1, 2, 3, 4, 5);";
   private final String STOCK_LEVEL = "SELECT COUNT(DISTINCT (S_I_ID)) AS STOCK_COUNT"
 			+ " FROM " + "ORDER_LINE, STOCK"
 			//+ " FROM " + "ORDER_LINE JOIN STOCK on S_I_ID = OL_I_ID"
@@ -101,11 +111,26 @@ public class PelotonTest {
 
     stmt.execute(CREATE_STOCK_TABLE);
     stmt.execute(CREATE_ORDER_LINE_TABLE);
-    //stmt.execute(STOCK_LEVEL);
+    stmt.execute(INSERT_STOCK_1);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_STOCK_2);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_STOCK_3);
+    stmt.execute(SELECT_STOCK);
+    stmt.execute(INSERT_ORDER_LINE);
+    PreparedStatement pstmt = conn.prepareStatement(STOCK_LEVEL);
+    pstmt.setInt(1, 1);
+    pstmt.setInt(2, 2);
+    pstmt.setInt(3, 5);
+    pstmt.setInt(4, 20);
+    pstmt.setInt(5, 1);
+    pstmt.setInt(6, 7);
+    pstmt.execute();
     //stmt.execute(INSERT);
 	//stmt.execute(SEQSCAN);
 //    stmt.execute(DROP);
     System.out.println("Test db created.");
+    System.exit(0);
   }
 
   public void ShowTable() throws SQLException {
