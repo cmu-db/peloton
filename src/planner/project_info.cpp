@@ -97,7 +97,7 @@ std::string ProjectInfo::Debug() const {
 }
 
 void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values, catalog::Schema* schema) {
-  LOG_INFO("Setting parameter values in Projection");
+  LOG_TRACE("Setting parameter values in Projection");
   for(unsigned int i = 0; i < target_list_.size(); ++i) {
 	  // The assignment parameter is an expression with left and right
 	  if(target_list_[i].second->GetLeft() && target_list_[i].second->GetRight()) {
@@ -109,7 +109,7 @@ void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value>
 	  // The assignment parameter is a single value
 	  else {
 		  auto param_expr = (expression::ParameterValueExpression*) target_list_[i].second;
-		  LOG_INFO("Setting parameter %u to value %s", param_expr->GetValueIdx(),
+		  LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
 				  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
 		  auto value = new expression::ConstantValueExpression(values->at(param_expr->GetValueIdx()));
 		  delete param_expr;

@@ -44,12 +44,12 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     : target_table_(table),
       tuple_(std::move(tuple)),
       bulk_insert_count(bulk_insert_count) {
-	LOG_INFO("Creating an Insert Plan");
+	LOG_TRACE("Creating an Insert Plan");
 }
 
 InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_count) : bulk_insert_count(bulk_insert_count) {
 
-  LOG_INFO("Creating an Insert Plan");
+  LOG_TRACE("Creating an Insert Plan");
   auto values = parse_tree->values;
   auto cols = parse_tree->columns;
   parameter_vector_.reset(new std::vector<std::pair<oid_t, oid_t>> ());
@@ -130,10 +130,10 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree, oid_t bulk_insert_co
 			}
 			tuple_ = std::move(tuple);
 	  }
-	  LOG_INFO("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
+	  LOG_TRACE("Tuple to be inserted: %s", tuple_->GetInfo().c_str());
   }
   else {
-	  LOG_INFO("Table does not exist!");
+	  LOG_TRACE("Table does not exist!");
   }
 }
 
@@ -149,7 +149,7 @@ void InsertPlan::SetParameterValues(std::vector<Value>* values) {
 	  LOG_TRACE("Set Parameter Values in Insert");
 	  for(unsigned int i = 0; i < values->size(); ++i) {
 		  auto param_type = params_value_type_->at(i);
-		  //LOG_INFO("Setting value of type %s", ValueTypeToString(param_type).c_str());
+		  //LOG_TRACE("Setting value of type %s", ValueTypeToString(param_type).c_str());
 		  switch(param_type) {
 		  case VALUE_TYPE_VARBINARY:
 		  case VALUE_TYPE_VARCHAR:

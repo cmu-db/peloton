@@ -16,6 +16,7 @@
 
 #include <sys/un.h>
 #include <string>
+#include <fstream>
 
 namespace peloton {
 namespace wire {
@@ -117,6 +118,9 @@ void StartServer(const PelotonConfiguration& configuration,
 
 template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
+	LOG_INFO("RefillReadBuffer");
+	std::ofstream fs;
+	fs.open ("Bytes_Log.txt", std::ios::app);
   ssize_t bytes_read;
 
   // our buffer is to be emptied
@@ -127,7 +131,9 @@ bool SocketManager<B>::RefillReadBuffer() {
     //  try to fill the available space in the buffer
     bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                       SOCKET_BUFFER_SIZE - rbuf.buf_size);
-    LOG_TRACE("Bytes Read: %lu", bytes_read);
+    LOG_INFO("Bytes Read: %lu", bytes_read);
+    fs << bytes_read << "\n";
+    fs.close();
     if (bytes_read < 0) {
       if (errno == EINTR) {
         // interrupts are OK

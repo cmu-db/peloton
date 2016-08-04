@@ -244,8 +244,7 @@ bool PacketManager::HardcodedExecuteFilter(std::string query_type) {
 void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string q_str;
   PacketGetString(pkt, pkt->len, q_str);
-  LOG_TRACE("Query Received: %s \n", q_str.c_str());
-
+  LOG_INFO("Query Received: %s \n", q_str.c_str());
   std::vector<std::string> queries;
   boost::split(queries, q_str, boost::is_any_of(";"));
 
@@ -292,7 +291,6 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
     // TODO: should change to query_type
     CompleteCommand(query, rows_affected, responses);
   }
-
   SendReadyForQuery('I', responses);
 }
 
@@ -300,16 +298,15 @@ void PacketManager::ExecQueryMessage(Packet *pkt, ResponseBuffer &responses) {
  * exec_parse_message - handle PARSE message
  */
 void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
-  LOG_TRACE("PARSE message");
+  LOG_INFO("Parse message");
   std::string error_message, statement_name, query_string, query_type;
   GetStringToken(pkt, statement_name);
 
   // Read prepare statement name
-  LOG_TRACE("Prep stmt: %s", statement_name.c_str());
+  LOG_INFO("Prep stmt: %s", statement_name.c_str());
   // Read query string
   GetStringToken(pkt, query_string);
-  LOG_TRACE("Parse Query: %s", query_string.c_str());
-
+  LOG_INFO("Parse Query: %s", query_string.c_str());
   skipped_stmt_ = false;
   query_type = get_query_type(query_string);
   if (!HardcodedExecuteFilter(query_type)) {
@@ -325,7 +322,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     responses.push_back(std::move(response));
     return;
   }
-
   // Prepare statement
   std::shared_ptr<Statement> statement;
   auto &tcop = tcop::TrafficCop::GetInstance();
@@ -362,7 +358,6 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
     statement_cache_.insert(entry);
     LOG_TRACE("CACHE SIZE: %d", (int)statement_cache_.size());
   }
-
   // Send Parse complete response
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = '1';
@@ -372,11 +367,11 @@ void PacketManager::ExecParseMessage(Packet *pkt, ResponseBuffer &responses) {
 void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   std::string portal_name, statement_name;
   // BIND message
+  LOG_INFO("Bind Message");
   GetStringToken(pkt, portal_name);
   LOG_TRACE("Portal name: %s", portal_name.c_str());
   GetStringToken(pkt, statement_name);
   LOG_TRACE("Prep stmt name: %s", statement_name.c_str());
-
   if (skipped_stmt_) {
     // send bind complete
     std::unique_ptr<Packet> response(new Packet());
@@ -531,7 +526,6 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
   else {
     portals_.insert(std::make_pair(portal_name, portal_reference));
   }
-
   // send bind complete
   std::unique_ptr<Packet> response(new Packet());
   response->msg_type = '2';
@@ -542,12 +536,11 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
     ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
-  LOG_TRACE("DESCRIBE message");
+  LOG_INFO("Describe message");
   PacketGetBytes(pkt, 1, mode);
   LOG_TRACE("mode %c", mode[0]);
   GetStringToken(pkt, portal_name);
   LOG_TRACE("portal name: %s", portal_name.c_str());
-
   if (mode[0] == 'P') {
     auto portal_itr = portals_.find(portal_name);
 
@@ -574,7 +567,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
 
 void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   // EXECUTE message
-  LOG_TRACE("EXECUTE message");
+  LOG_INFO("Execute message");
   std::vector<ResultType> results;
   std::string error_message, portal_name;
   int rows_affected = 0;
@@ -598,7 +591,7 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
   }
 
   auto statement = portal->GetStatement();
-
+  const auto &query_type = statement->GetQueryType();
   if (statement.get() == nullptr) {
     LOG_ERROR("Did not find statement in portal : %s", portal_name.c_str());
     SendErrorResponse( { { 'M', error_message } }, responses);
@@ -606,18 +599,11 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
     return;
   }
 
-  const auto &query_string = statement->GetQueryString();
-  const auto &query_type = statement->GetQueryType();
-  
   auto statement_name = statement->GetStatementName();
   bool unnamed = statement_name.empty();
 
   LOG_TRACE("Executing query: %s", query_string.c_str());
 
-  // acquire the mutex if we are starting a txn
-  if (query_string.compare("BEGIN") == 0) {
-    LOG_TRACE("BEGIN - acquire lock");
-  }
 
   auto &tcop = tcop::TrafficCop::GetInstance();
   auto status = tcop.ExecuteStatement(statement, unnamed, results,
@@ -628,12 +614,6 @@ void PacketManager::ExecExecuteMessage(Packet *pkt, ResponseBuffer &responses) {
     SendErrorResponse( { { 'M', error_message } }, responses);
     SendReadyForQuery(txn_state, responses);
   }
-
-  // release the mutex after a txn commit
-  if (query_string.compare("COMMIT") == 0) {
-    LOG_TRACE("COMMIT - release lock");
-  }
-
   // put_row_desc(portal->rowdesc, responses);
   auto tuple_descriptor = statement->GetTupleDescriptor();
   SendDataRows(results, tuple_descriptor.size(), rows_affected, responses);
@@ -707,6 +687,7 @@ void PacketManager::SendErrorResponse(
 
 void PacketManager::SendReadyForQuery(uchar txn_status,
     ResponseBuffer &responses) {
+	LOG_INFO("Send Read for Query");
   std::unique_ptr<Packet> pkt(new Packet());
   pkt->msg_type = 'Z';
 
