@@ -323,6 +323,8 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
     
     // This points to the schmea of only columns indiced by the index
     // This is basically selecting tuple_schema() with key_attrs as index
+    // but the order inside tuple schema is preserved - the order of schema
+    // inside key_schema is not the order of real key
     catalog::Schema *key_schema;
     
     // This will be created for each index on the table
@@ -340,6 +342,10 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 
     key_attrs = {0};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    
+    // This is not redundant
+    // since the key schema always follows the ordering of the base table
+    // schema, we need real ordering of the key columns
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = true;
