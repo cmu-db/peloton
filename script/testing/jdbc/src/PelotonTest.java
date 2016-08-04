@@ -124,9 +124,10 @@ public class PelotonTest {
     pstmt.setInt(3, 5);
     pstmt.setInt(4, 20);
     pstmt.setInt(5, 1);
-    pstmt.setInt(6, 5);
+    pstmt.setDouble(6, 5);
     pstmt.execute();
     System.out.println("Test db created.");
+    System.exit(0);
   }
 
   public void ShowTable() throws SQLException {
