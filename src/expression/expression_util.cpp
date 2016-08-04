@@ -495,17 +495,17 @@ expression::AbstractExpression *ExpressionUtil::ConvertToTupleValueExpression(
 void ExpressionUtil::ConvertParameterExpressions(
     expression::AbstractExpression *expression, std::vector<Value> *values,
     catalog::Schema *schema) {
-  LOG_INFO("expression: %s", expression->GetInfo().c_str());
+  LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
   bool has_two_children = true;
   if (expression->GetLeft()) {
-    LOG_INFO("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
+    LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
   } else {
     has_two_children = false;
   }
   if (expression->GetRight()) {
-    LOG_INFO("expression->right: %s",
-             expression->GetRight()->GetInfo().c_str());
+    LOG_TRACE("expression->right: %s",
+              expression->GetRight()->GetInfo().c_str());
   } else {
     has_two_children = false;
   }
@@ -519,8 +519,10 @@ void ExpressionUtil::ConvertParameterExpressions(
     auto value =
         new ConstantValueExpression(values->at(left->GetValueIdx()).CastAs(
             schema->GetColumn(right->GetColumnId()).GetType()));
-    LOG_INFO("Setting parameter %u to value %s", left->GetValueIdx(),
-             value->getValue().GetInfo().c_str());
+    LOG_TRACE("left in vector type: %s",
+              values->at(left->GetValueIdx()).GetInfo().c_str());
+    LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
+              value->getValue().GetInfo().c_str());
     delete left;
     expression->setLeftExpression(value);
   } else if (expression->GetRight()->GetExpressionType() ==
@@ -532,8 +534,10 @@ void ExpressionUtil::ConvertParameterExpressions(
     auto value =
         new ConstantValueExpression(values->at(right->GetValueIdx()).CastAs(
             schema->GetColumn(left->GetColumnId()).GetType()));
-    LOG_INFO("Setting parameter %u to value %s", right->GetValueIdx(),
-             value->getValue().GetInfo().c_str());
+    LOG_TRACE("right in vector type: %s",
+              values->at(right->GetValueIdx()).GetInfo().c_str());
+    LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
+              value->getValue().GetInfo().c_str());
     delete right;
     expression->setRightExpression(value);
   } else {
