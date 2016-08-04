@@ -42,6 +42,9 @@ TEST_F(TupleSchemaTests, ColumnInfoTest) {
   EXPECT_NE(column1, column3);
 }
 
+/*
+ * TupleSchemaFilteringTest() - Tests FilterSchema() which uses a set
+ */
 TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   std::vector<catalog::Column> columns;
 
@@ -104,6 +107,71 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   // All tests finished
   ///////////////////////////////////////////////////////////////////./t
   
+  return;
+}
+
+/*
+ * TupleSchemaCopyTest() - Tests CopySchema() which uses a list of indices
+ */
+TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
+  std::vector<catalog::Column> columns;
+
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
+  catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT),
+                          "C", true);
+  catalog::Column column4(VALUE_TYPE_VARCHAR, 24, "D", false);
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
+  columns.push_back(column4);
+
+  catalog::Schema schema1(columns);
+
+  ///////////////////////////////////////////////////////////////////
+  // Tests basic copy
+  ///////////////////////////////////////////////////////////////////
+
+  std::vector<oid_t> subset{0, 2};
+  catalog::Schema *schema3_p = catalog::Schema::CopySchema(&schema1, subset);
+  LOG_INFO("%s", schema3_p->GetInfo().c_str());
+
+  EXPECT_NE(schema1, (*schema3_p));
+
+  ///////////////////////////////////////////////////////////////////
+  // Tests out of order copy (SHOULD affected by order)
+  ///////////////////////////////////////////////////////////////////
+
+  subset = {2, 0};
+  catalog::Schema *schema4_p = catalog::Schema::CopySchema(&schema1, subset);
+  LOG_INFO("%s", schema4_p->GetInfo().c_str());
+
+  EXPECT_NE((*schema4_p), (*schema3_p));
+
+  ///////////////////////////////////////////////////////////////////
+  // Tests duplicated column copy (avoid this in practice, but it should work)
+  ///////////////////////////////////////////////////////////////////
+
+  subset = {0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 1};
+
+  catalog::Schema *schema5_p = catalog::Schema::CopySchema(&schema1, subset);
+  LOG_INFO("%s", schema5_p->GetInfo().c_str());
+
+  EXPECT_EQ(schema5_p->GetColumnCount(), subset.size());
+  EXPECT_NE((*schema5_p), (*schema4_p));
+  EXPECT_NE((*schema5_p), (*schema3_p));
+
+  delete schema3_p;
+  delete schema4_p;
+  delete schema5_p;
+
+  ///////////////////////////////////////////////////////////////////
+  // All tests finished
+  ///////////////////////////////////////////////////////////////////./t
+
   return;
 }
 
