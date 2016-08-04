@@ -59,10 +59,11 @@ bool CreateExecutor::DExecute() {
   if(node.GetCreateType() == CreateType::CREATE_TYPE_INDEX){
     std::string table_name = node.GetTableName();
     std::string index_name = node.GetIndexName();
+    bool unique_flag = node.IsUnique();
     
     auto index_attrs = node.GetIndexAttributes();
 
-    Result result = catalog::Bootstrapper::global_catalog->CreateIndex(DEFAULT_DB_NAME, table_name, index_attrs , index_name);
+    Result result = catalog::Bootstrapper::global_catalog->CreateIndex(DEFAULT_DB_NAME, table_name, index_attrs , index_name , unique_flag);
     context->GetTransaction()->SetResult(result);
 
     if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
