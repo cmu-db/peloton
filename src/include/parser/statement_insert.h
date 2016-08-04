@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parser/sql_statement.h"
+#include "parser/statement_select.h"
 
 namespace peloton {
 namespace parser {
@@ -32,7 +33,7 @@ struct InsertStatement : SQLStatement {
         select(NULL) {}
 
   virtual ~InsertStatement() {
-	  free(table_name);
+	  delete table_name;
 
     if (columns) {
       for (auto col : *columns) free(col);
@@ -51,7 +52,7 @@ struct InsertStatement : SQLStatement {
   }
 
   InsertType type;
-  char* table_name;
+  const char* table_name;
   std::vector<char*>* columns;
   std::vector<expression::AbstractExpression*>* values;
   SelectStatement* select;

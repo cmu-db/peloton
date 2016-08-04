@@ -218,8 +218,16 @@ TO			TOKEN(TO)
 }
 
 [A-Za-z][A-Za-z0-9_]* {
-	yylval->sval = strdup(yytext);
-	return SQL_IDENTIFIER;
+    for (int i = 0; yytext[i]; i++)
+        yytext[i] = tolower(yytext[i]);
+    yylval->sval = strdup(yytext);
+    return SQL_IDENTIFIER;
+}
+
+$[0-9]* {
+	// Crop the leading and trailing quote char
+	yylval->sval = substr(yytext, 1, strlen(yytext));
+	return SQL_PREPAREPARAMETERS;
 }
 
 

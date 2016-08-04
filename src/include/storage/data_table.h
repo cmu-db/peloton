@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -144,6 +143,10 @@ class DataTable : public AbstractTable {
 
   oid_t GetIndexCount() const;
 
+  const std::vector<std::set<oid_t>> &GetIndexColumns() const {
+    return indexes_columns_;
+  }
+
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
@@ -185,11 +188,11 @@ class DataTable : public AbstractTable {
 
   void RecordLayoutSample(const brain::Sample &sample);
 
-  const std::vector<brain::Sample>& GetLayoutSamples() const;
+  const std::vector<brain::Sample> &GetLayoutSamples() const;
 
   void ClearLayoutSamples();
 
-  void SetDefaultLayout(const column_map_type& layout);
+  void SetDefaultLayout(const column_map_type &layout);
 
   //===--------------------------------------------------------------------===//
   // INDEX TUNER
@@ -197,7 +200,7 @@ class DataTable : public AbstractTable {
 
   void RecordIndexSample(const brain::Sample &sample);
 
-  const std::vector<brain::Sample>& GetIndexSamples() const;
+  const std::vector<brain::Sample> &GetIndexSamples() const;
 
   void ClearIndexSamples();
 
@@ -217,8 +220,7 @@ class DataTable : public AbstractTable {
   const std::string GetInfo() const;
 
   // insert into specific index
-  bool InsertInIndex(oid_t index_offset,
-                     const storage::Tuple *tuple,
+  bool InsertInIndex(oid_t index_offset, const storage::Tuple *tuple,
                      ItemPointer location);
 
   // try to insert into the indices

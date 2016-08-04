@@ -41,7 +41,7 @@ struct TableRef {
   TableReferenceType type;
 
   char* schema;
-  char* name;
+  const char* name;
   char* alias;
 
   SelectStatement* select;
@@ -51,7 +51,7 @@ struct TableRef {
   // Convenience accessor methods
   inline bool HasSchema() { return schema != NULL; }
 
-  inline char* GetName() {
+  inline const char* GetName() {
     if (alias != NULL)
       return alias;
     else
