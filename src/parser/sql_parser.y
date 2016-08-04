@@ -176,7 +176,7 @@ struct PARSER_CUST_LTYPE {
 /*********************************
  ** Token Definition
  *********************************/
-%token <sval> IDENTIFIER STRING
+%token <sval> IDENTIFIER STRING PREPAREPARAMETERS
 %token <fval> FLOATVAL
 %token <ival> INTVAL
 %token <uval> NOTEQUALS LESSEQ GREATEREQ
@@ -186,7 +186,7 @@ struct PARSER_CUST_LTYPE {
 %token REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
 %token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS
 %token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
-%token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
+%token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL 
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
@@ -218,7 +218,7 @@ struct PARSER_CUST_LTYPE {
 %type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
-%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr
+%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr
 %type <expr> 		column_name literal int_literal num_literal string_literal
 %type <expr> 		comp_expr opt_where join_condition opt_having
 %type <order>		opt_order
@@ -736,6 +736,7 @@ literal:
 		string_literal
 	|	num_literal
 	|	placeholder_expr
+	|	parameter_expr
 	;
 
 string_literal:
@@ -763,7 +764,12 @@ placeholder_expr:
 			yyloc.placeholder_list.push_back($$);
 		}
 	;
-
+parameter_expr:
+	PREPAREPARAMETERS {
+			int val = atol($1);
+			$$ = new peloton::expression::ParameterValueExpression(val -1 , peloton::ValueFactory::GetNullValue());
+		}
+	;
 
 /******************************
  * Table 
@@ -892,4 +898,3 @@ ident_commalist:
  *********************************/
 
 /* empty */
-

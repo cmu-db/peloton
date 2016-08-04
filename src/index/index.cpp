@@ -91,7 +91,6 @@ bool Index::Compare(const AbstractTuple &index_key,
 
   for (auto column_itr : key_column_ids) {
     key_column_itr++;
-
     const Value &rhs = values[key_column_itr];
     const Value &lhs = index_key.GetValue(column_itr);
     const ExpressionType expr_type = expr_types[key_column_itr];

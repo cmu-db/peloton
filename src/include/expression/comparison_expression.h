@@ -184,10 +184,6 @@ class ComparisonExpression : public AbstractExpression {
   inline Value Evaluate(const AbstractTuple *tuple1,
                         const AbstractTuple *tuple2,
                         executor::ExecutorContext *context) const override {
-    LOG_TRACE("Evaluate %s. left %s, right %s. ret=%s", OP::op_name(),
-              typeid(*(m_left)).name(), typeid(*(m_right)).name(),
-              traceEval(tuple1, tuple2, context));
-
     PL_ASSERT(m_left != NULL);
     PL_ASSERT(m_right != NULL);
 

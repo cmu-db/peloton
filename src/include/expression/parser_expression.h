@@ -4,7 +4,7 @@
 //
 // parser_value_expression.h
 //
-// Identification: src/include/expression/parser_value_expression.h
+// Identification: src/include/expression/parser_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -62,8 +62,11 @@ class ParserExpression : public AbstractExpression {
   }
 
   AbstractExpression *Copy() const override {
-    // TODO: Fix copy
-    return nullptr;
+    // TODO: Fix copy based on other constructors
+	std::string str (name);
+    char * new_cstr = new char [str.length()+1];
+    std::strcpy (new_cstr, str.c_str());
+    return new ParserExpression(this->GetExpressionType(), new_cstr);
   }
 
   std::string DebugInfo(UNUSED_ATTRIBUTE const std::string &spacer) const {

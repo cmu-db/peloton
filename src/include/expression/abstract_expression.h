@@ -64,6 +64,14 @@ class AbstractExpression : public Printable {
 
   const AbstractExpression *GetRight() const { return m_right; }
 
+  AbstractExpression *GetModifiableLeft() { return m_left; }
+
+  AbstractExpression *GetModifiableRight() { return m_right; }
+
+  void setLeftExpression(AbstractExpression* left) { m_left = left; }
+
+  void setRightExpression(AbstractExpression* right) { m_right = right; }
+
   // Debugging methods - some various ways to create a string
   //     describing the expression tree
   std::string Debug() const;
@@ -91,6 +99,10 @@ class AbstractExpression : public Printable {
   virtual bool DeserializeFrom(SerializeInputBE &input) const;
 
   virtual int SerializeSize() { return 0; }
+
+  char* GetName() const {
+	return name;
+  }
 
  public:
   // Parser stuff

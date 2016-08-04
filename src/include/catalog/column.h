@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/printable.h"
@@ -27,7 +26,7 @@ class Column : public Printable {
   friend class Constraint;
 
  public:
-  Column(){};
+  Column() {};
 
   Column(ValueType value_type, oid_t column_length, std::string column_name,
          bool is_inlined = false, oid_t column_offset = INVALID_OID)
@@ -69,9 +68,14 @@ class Column : public Printable {
 
   bool IsInlined() const { return is_inlined; }
 
+  bool IsPrimary() const { return is_primary_; }
+
   // Add a constraint to the column
   void AddConstraint(const catalog::Constraint &constraint) {
     constraints.push_back(constraint);
+    if (constraint.GetType() == CONSTRAINT_TYPE_PRIMARY) {
+      is_primary_ = true;
+    }
   }
 
   const std::vector<Constraint> &GetConstraints() const { return constraints; }
@@ -109,6 +113,9 @@ class Column : public Printable {
 
   // is the column inlined ?
   bool is_inlined = false;
+
+  // is the column contained the primary key?
+  bool is_primary_ = false;
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;

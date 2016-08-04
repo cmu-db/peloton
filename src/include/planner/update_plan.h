@@ -10,20 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 #include "common/types.h"
 #include "parser/table_ref.h"
+#include "catalog/schema.h"
 
 namespace peloton {
 
-namespace parser{
-  class UpdateStatement;
-  class UpdateClause;
-  class TableRef;
+namespace parser {
+class UpdateStatement;
+class UpdateClause;
+class TableRef;
 }
 
 namespace expression {
@@ -47,7 +47,7 @@ class UpdatePlan : public AbstractPlan {
   explicit UpdatePlan(storage::DataTable *table,
                       std::unique_ptr<const planner::ProjectInfo> project_info);
 
-  explicit UpdatePlan(parser::UpdateStatement* parse_tree);
+  explicit UpdatePlan(parser::UpdateStatement *parse_tree);
 
   const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
@@ -58,6 +58,8 @@ class UpdatePlan : public AbstractPlan {
   storage::DataTable *GetTable() const { return target_table_; }
 
   const std::string GetInfo() const { return "UpdatePlan"; }
+
+  void SetParameterValues(std::vector<Value> *values);
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(
@@ -70,12 +72,14 @@ class UpdatePlan : public AbstractPlan {
 
   std::string table_name;
 
-  std::vector<parser::UpdateClause*>* updates;
-
-  expression::AbstractExpression* where;
-
   /** @brief Projection info */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
+
+  // Vector of Update clauses
+  std::vector<parser::UpdateClause *> *updates_;
+
+  // The where condition
+  expression::AbstractExpression *where_;
 };
 
 }  // namespace planner

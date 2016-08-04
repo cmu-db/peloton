@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/value.h"
@@ -49,6 +48,11 @@ class ValuePeeker {
 
   static inline int32_t PeekInteger(const Value &value) {
     PL_ASSERT(value.GetValueType() == VALUE_TYPE_INTEGER);
+    return value.GetInteger();
+  }
+
+  static inline int32_t PeekBindingOnlyInteger(const Value &value) {
+    PL_ASSERT(value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
     return value.GetInteger();
   }
 
