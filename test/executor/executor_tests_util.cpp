@@ -298,7 +298,9 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 }
 
 storage::DataTable *ExecutorTestsUtil::CreateTable(
-    int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
+    int tuples_per_tilegroup_count,
+    bool indexes,
+    oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
@@ -311,13 +313,30 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
       tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
-    // PRIMARY INDEX
+
+    // This holds column ID in the underlying table that are being indexed
     std::vector<oid_t> key_attrs;
 
+    // This holds schema of the underlying table, which stays all the same
+    // for all indices on the same underlying table
     auto tuple_schema = table->GetSchema();
+    
+    // This points to the schmea of only columns indiced by the index
+    // This is basically selecting tuple_schema() with key_attrs as index
     catalog::Schema *key_schema;
+    
+    // This will be created for each index on the table
+    // and the metadata is passed as part of the index construction paratemter
+    // list
     index::IndexMetadata *index_metadata;
+    
+    // Whether keys should be unique. For primary key this must be true;
+    // for secondary keys this might be true as an extra constraint
     bool unique;
+
+    /////////////////////////////////////////////////////////////////
+    // Add primary key on column 0
+    /////////////////////////////////////////////////////////////////
 
     key_attrs = {0};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
@@ -333,7 +352,10 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 
     table->AddIndex(pkey_index);
 
-    // SECONDARY INDEX
+    /////////////////////////////////////////////////////////////////
+    // Add index on table column 0 and 1
+    /////////////////////////////////////////////////////////////////
+    
     key_attrs = {0, 1};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
