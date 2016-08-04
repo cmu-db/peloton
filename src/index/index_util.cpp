@@ -25,18 +25,23 @@ namespace peloton {
 namespace index {
 
 /*
- * IfForwardExpression() - Returns true if the expression is > or >=
+ * IsForwardExpression() - Returns true if the expression is > or >= or ==
+ *
+ * Note: Since we consider equality (==) as both forward and backward
+ * expression, when dealing with expression type both could be true
  */
-bool IfForwardExpression(ExpressionType e) {
+bool IsForwardExpression(ExpressionType e) {
   // To reduce branch misprediction penalty
   return e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
          e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
 }
 
 /*
- * IfBackWardExpression() - Returns true if the expression is < or <=
+ * IsBackWardExpression() - Returns true if the expression is < or <= or ==
+ *
+ * Please refer to IsForwardExpression() for more information
  */
-bool IfBackwardExpression(ExpressionType e) {
+bool IsBackwardExpression(ExpressionType e) {
   return e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
          e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
 }
@@ -108,9 +113,9 @@ void ConstructIntervals(oid_t leading_column_id,
     }
 
     // If leading column
-    if (IfForwardExpression(expr_types[i])) {
+    if (IsForwardExpression(expr_types[i])) {
       nums.push_back(std::pair<Value, int>(values[i], -1));
-    } else if (IfBackwardExpression(expr_types[i])) {
+    } else if (IsBackwardExpression(expr_types[i])) {
       nums.push_back(std::pair<Value, int>(values[i], 1));
     } else {
       // Currently if it is not >  < <= then it must be ==
@@ -192,7 +197,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
                 non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
-    if (IfForwardExpression(expr_types[i]) ||
+    if (IsForwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s\n",
                 non_leading_columns[column_id].first.GetInfo().size(),
@@ -206,7 +211,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
       }
     }
 
-    if (IfBackwardExpression(expr_types[i]) ||
+    if (IsBackwardExpression(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s\n",
                 non_leading_columns[column_id].second.GetInfo().c_str(),
