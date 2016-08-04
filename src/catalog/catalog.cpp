@@ -150,7 +150,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 
 
 Result Catalog::CreateIndex(const std::string &database_name,
-                                   const std::string &table_name , std::vector<std::string> index_attr, std::string index_name) {
+                                   const std::string &table_name , std::vector<std::string> index_attr, std::string index_name , bool unique) {
 
   auto database = GetDatabaseWithName(database_name);
   if(database != nullptr){
@@ -187,10 +187,17 @@ Result Catalog::CreateIndex(const std::string &database_name,
         key_schema = catalog::Schema::CopySchema(schema, key_attrs);
         key_schema->SetIndexedColumns(key_attrs);
 
-
+        if(!unique){
         index_metadata = new index::IndexMetadata(
                 index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
                 INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
+        }
+
+        else {
+        index_metadata = new index::IndexMetadata(
+                index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
+                INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
+        }
 
         std::shared_ptr<index::Index> key_index(
              index::IndexFactory::GetInstance(index_metadata));
