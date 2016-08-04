@@ -38,12 +38,17 @@ class Tuple;
 
 namespace index {
 
-//===--------------------------------------------------------------------===//
-// IndexMetadata
-//===--------------------------------------------------------------------===//
+/////////////////////////////////////////////////////////////////////
+// IndexMetadata class definition
+/////////////////////////////////////////////////////////////////////
 
-/**
- * Parameter for constructing Index. catalog::Schema, then key schema
+/*
+ * class IndexMetadata - Holds metadata of an index object
+ *
+ * The metadata object maintains the tuple schema and key schema of an
+ * index, since the external callers does not know the actual structure of
+ * the index key, so it is the index's responsibility to maintain such a
+ * mapping relation and does the conversion between tuple key and index key
  */
 class IndexMetadata : public Printable {
   IndexMetadata() = delete;
@@ -93,6 +98,8 @@ class IndexMetadata : public Printable {
     return key_schema;
   }
 
+  // Return the number of columns inside index key (not in tuple key)
+  //
   // Note that this must be defined inside the cpp source file
   // because it uses the member of catalog::Schema which is not known here
   oid_t GetColumnCount() const;
@@ -155,14 +162,23 @@ class IndexMetadata : public Printable {
   double utility_ratio = INVALID_RATIO;
 };
 
-//===--------------------------------------------------------------------===//
-// Index
-//===--------------------------------------------------------------------===//
+/////////////////////////////////////////////////////////////////////
+// Index class definition
+/////////////////////////////////////////////////////////////////////
 
-/**
- * Index on a table maps from key value to tuple pointers.
+/*
+ * class Index - Base class for derived indices of different types
  *
- * @see IndexFactory
+ * The index structure majorly maintains information on the schema of the schema
+ * of the underlying table and the mapping relation between index key
+ * and tuple key, and provides an abstracted way for the external world to
+ * interact with the underlying index implementation without exposing
+ * the actual implementation's interface.
+ *
+ * Index object also handles predicate scan, in addition to simple insert,
+ * delete, predicate insert, point query, and full index scan. Predicate scan
+ * only supports conjunction, and may or may not be optimized depending on
+ * the type of expressions inside the predicate.
  */
 class Index : public Printable {
   friend class IndexFactory;
