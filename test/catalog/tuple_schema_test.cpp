@@ -42,7 +42,7 @@ TEST_F(TupleSchemaTests, ColumnInfoTest) {
   EXPECT_NE(column1, column3);
 }
 
-TEST_F(TupleSchemaTests, TupleSchemaTest) {
+TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   std::vector<catalog::Column> columns;
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
@@ -69,7 +69,7 @@ TEST_F(TupleSchemaTests, TupleSchemaTest) {
   ///////////////////////////////////////////////////////////////////
   
   std::vector<oid_t> subset{0, 2};
-  catalog::Schema *schema3_p = catalog::Schema::CopySchema(&schema2, subset);
+  catalog::Schema *schema3_p = catalog::Schema::FilterSchema(&schema2, subset);
   LOG_INFO("%s", schema3_p->GetInfo().c_str());
 
   EXPECT_NE(schema1, (*schema3_p));
@@ -79,7 +79,7 @@ TEST_F(TupleSchemaTests, TupleSchemaTest) {
   ///////////////////////////////////////////////////////////////////
   
   subset = {2, 0};
-  catalog::Schema *schema4_p = catalog::Schema::CopySchema(&schema2, subset);
+  catalog::Schema *schema4_p = catalog::Schema::FilterSchema(&schema2, subset);
   LOG_INFO("%s", schema4_p->GetInfo().c_str());
 
   EXPECT_EQ((*schema4_p), (*schema3_p));
@@ -90,7 +90,7 @@ TEST_F(TupleSchemaTests, TupleSchemaTest) {
   
   subset = {666, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 100, 101};
   
-  catalog::Schema *schema5_p = catalog::Schema::CopySchema(&schema2, subset);
+  catalog::Schema *schema5_p = catalog::Schema::FilterSchema(&schema2, subset);
   LOG_INFO("%s", schema5_p->GetInfo().c_str());
 
   EXPECT_EQ(schema5_p->GetColumnCount(), 2);
