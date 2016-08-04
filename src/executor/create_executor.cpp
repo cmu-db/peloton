@@ -39,6 +39,8 @@ bool CreateExecutor::DInit() {
 bool CreateExecutor::DExecute() {
   LOG_TRACE("Executing Create...");
   const planner::CreatePlan &node = GetPlanNode<planner::CreatePlan>();
+  
+  // Check if query was for creating table
   if(node.GetCreateType() == CreateType::CREATE_TYPE_TABLE){
   std::string table_name = node.GetTableName();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
@@ -56,6 +58,8 @@ bool CreateExecutor::DExecute() {
     LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
   }
  }
+  
+  // Check if query was for creating index
   if(node.GetCreateType() == CreateType::CREATE_TYPE_INDEX){
     std::string table_name = node.GetTableName();
     std::string index_name = node.GetIndexName();
