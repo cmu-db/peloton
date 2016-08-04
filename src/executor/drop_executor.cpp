@@ -29,14 +29,14 @@ DropExecutor::DropExecutor(const planner::AbstractPlan *node,
 // Initialize executer
 // Nothing to initialize for now
 bool DropExecutor::DInit() {
-  LOG_INFO("Initializing Drop Executer...");
+  LOG_TRACE("Initializing Drop Executer...");
 
-  LOG_INFO("Create Executer initialized!");
+  LOG_TRACE("Create Executer initialized!");
   return true;
 }
 
 bool DropExecutor::DExecute() {
-  LOG_INFO("Executing Drop...");
+  LOG_TRACE("Executing Drop...");
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   std::string table_name = node.GetTableName();
 
@@ -44,17 +44,17 @@ bool DropExecutor::DExecute() {
   context->GetTransaction()->SetResult(result);
 
   if(context->GetTransaction()->GetResult() == Result::RESULT_SUCCESS){
-	  LOG_INFO("Dropping table succeeded!");
+	  LOG_TRACE("Dropping table succeeded!");
   }
   else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && node.IsMissing()) {
 	  context->GetTransaction()->SetResult(Result::RESULT_SUCCESS);
-	  LOG_INFO("Dropping table Succeeded!");
+	  LOG_TRACE("Dropping table Succeeded!");
   }
   else if(context->GetTransaction()->GetResult() == Result::RESULT_FAILURE && !node.IsMissing()){
-	  LOG_INFO("Dropping table Failed!");
+	  LOG_TRACE("Dropping table Failed!");
   }
   else {
-	  LOG_INFO("Result is: %d", context->GetTransaction()->GetResult());
+	  LOG_TRACE("Result is: %d", context->GetTransaction()->GetResult());
   }
 
   return false;
