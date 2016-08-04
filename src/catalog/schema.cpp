@@ -124,12 +124,35 @@ Schema *Schema::CopySchema(const Schema *schema) {
   return CopySchema(schema, set);
 }
 
-// Copy subset of columns in the given schema
+/*
+ * CopySchema() - Returns a filtered schema using the given base schema
+ *                and index array in the argument
+ *
+ * This function performs a "Filtering" operation on the schema given in the
+ * argument using the index list into a newly created schema object. The
+ * returned schema remains the order inside the base schema, no matter how
+ * indices are arranged in the index list.
+ *
+ * If there are duplicated indices in the set, it is guaranteed that only
+ * one column will be copied into the returned schema. This is achieved by
+ * only traversing the underlying schema once and searches for the column
+ * index inside the index list
+ *
+ * Please note that the new schame is created on the heap, and the caller
+ * is responsible for destroying it.
+ */
 Schema *Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t> &set) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<Column> columns;
 
+  // It could only be smaller but not larger, here we use
+  // the size of the set (might have duplication) as an estimation
+  columns.reserve(set.size());
+
+  // For each column in the base schema, if the column id
+  // appears inside the set then push it into the column list
+  // for later construction of the new schema
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
@@ -138,6 +161,7 @@ Schema *Schema::CopySchema(const Schema *schema,
   }
 
   Schema *ret_schema = new Schema(columns);
+  
   return ret_schema;
 }
 
