@@ -30,11 +30,11 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       project_info_(std::move(project_info)),
       updates_(NULL),
       where_(NULL) {
-	LOG_INFO("Creating an Update Plan");
+	LOG_TRACE("Creating an Update Plan");
 }
 
 UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
-  LOG_INFO("Creating an Update Plan");
+  LOG_TRACE("Creating an Update Plan");
   updates_ = new std::vector<parser::UpdateClause *>();
   auto t_ref = parse_tree->table;
   table_name = std::string(t_ref->name);
@@ -76,7 +76,7 @@ UpdatePlan::UpdatePlan(parser::UpdateStatement *parse_tree) {
 }
 
 void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
-  LOG_INFO("Setting parameter values in Update");
+  LOG_TRACE("Setting parameter values in Update");
   // First update project_info_ target list
   // Create new project_info_
   TargetList tlist;
@@ -102,7 +102,7 @@ void UpdatePlan::SetParameterValues(std::vector<Value> *values) {
   new_proj_info->transformParameterToConstantValueExpression(values, target_table_->GetSchema());
   project_info_.reset(new_proj_info);
 
-  LOG_INFO("Setting values for parameters in where");
+  LOG_TRACE("Setting values for parameters in where");
   auto &children = GetChildren();
   // One sequential scan
   children[0]->SetParameterValues(values);

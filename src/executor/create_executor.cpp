@@ -30,8 +30,8 @@ CreateExecutor::CreateExecutor(const planner::AbstractPlan *node,
 // Initialize executer
 // Nothing to initialize now
 bool CreateExecutor::DInit() {
-  LOG_INFO("Initializing Create Executer...");
-  LOG_INFO("Create Executer initialized!");
+  LOG_TRACE("Initializing Create Executer...");
+  LOG_TRACE("Create Executer initialized!");
   return true;
 
 }
