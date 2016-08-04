@@ -149,6 +149,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 }
 
 
+// Function to add non-primary Key index
 Result Catalog::CreateIndex(const std::string &database_name,
                                    const std::string &table_name , std::vector<std::string> index_attr, std::string index_name , bool unique) {
 
@@ -172,12 +173,13 @@ Result Catalog::CreateIndex(const std::string &database_name,
         for(auto attr : index_attr){
           for(uint i = 0; i < columns.size() ; ++i){  
             if(attr == columns[i].column_name){
-
               key_attrs.push_back(columns[i].column_offset);
             }
           }
         }
         
+        //Check for mismatch between key attributes and attributes
+        //that came out of the parser
         if(key_attrs.size() != index_attr.size()){
 
           LOG_TRACE("Some columns are missing");
@@ -187,7 +189,8 @@ Result Catalog::CreateIndex(const std::string &database_name,
         key_schema = catalog::Schema::CopySchema(schema, key_attrs);
         key_schema->SetIndexedColumns(key_attrs);
 
-        if(!unique){
+        // Check if unique index or not
+        if(unique == false){
         index_metadata = new index::IndexMetadata(
                 index_name.c_str(), Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
                 INDEX_CONSTRAINT_TYPE_DEFAULT, schema, key_schema, key_attrs, true);
@@ -199,6 +202,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
                 INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema, key_attrs, true); 
         }
 
+        //Add index to table
         std::shared_ptr<index::Index> key_index(
              index::IndexFactory::GetInstance(index_metadata));
         table->AddIndex(key_index);

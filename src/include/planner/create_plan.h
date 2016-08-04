@@ -77,16 +77,22 @@ class CreatePlan : public AbstractPlan {
   // Target Table
   storage::DataTable *target_table_ = nullptr;
 
+  //Table Name
   std::string table_name;
 
+  // Table Schema
   catalog::Schema* table_schema;
 
+  // Index attributes
   std::vector<std::string> index_attrs;
   
+  // Check to either Create Table or INDEX
   CreateType create_type;
+  
   // IndexName
   std::string index_name;
 
+  //UNIQUE INDEX flag
   bool unique;
 };
 }

@@ -81,6 +81,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     } break;
 
     case STATEMENT_TYPE_SELECT: {
+      
       LOG_TRACE("Processing SELECT...");
       auto select_stmt = (parser::SelectStatement*)parse_tree.get();
       LOG_TRACE("SELECT Info: %s", select_stmt->GetInfo().c_str());
@@ -93,10 +94,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                  select_stmt->from_table->join != NULL);
         LOG_TRACE("have sub select statement? %d",
                  select_stmt->from_table->select != NULL);
-        // LOG_TRACE("Join Condition: %s",
-        //         select_stmt->from_table->join->condition->Debug().c_str());
-        // LOG_TRACE("left table: %s", select_stmt->from_table->join);
       }
+
       auto target_table =
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
               DEFAULT_DB_NAME, select_stmt->from_table->name);
@@ -150,6 +149,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
         for (auto expr : *select_stmt->getSelectList()) {
           LOG_TRACE("Expression %d type in Select: %s", index++,
                    ExpressionTypeToString(expr->GetExpressionType()).c_str());
+          
           // If an aggregate function is found
           if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
             auto func_expr = (expression::ParserExpression*)expr;
@@ -157,6 +157,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                      ExpressionTypeToString(
                          func_expr->expr->GetExpressionType()).c_str());
             LOG_TRACE("Distinct flag: %d", func_expr->distinct);
+          
             // Count a column expression
             if (func_expr->expr->GetExpressionType() ==
                 EXPRESSION_TYPE_COLUMN_REF) {
@@ -193,6 +194,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
 
                 output_schema_columns.push_back(column);
               }
+          
               // Else it is the same as the column type
               else {
                 oid_t old_col_id = target_table->GetSchema()->GetColumnID(
@@ -211,7 +213,8 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
               }
 
             }
-            // Count star
+          
+            // Check for COUNT STAR Expression
             else if (func_expr->expr->GetExpressionType() ==
                      EXPRESSION_TYPE_STAR) {
               LOG_TRACE("Creating an aggregate plan");
@@ -242,9 +245,12 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
             }
             ++agg_id;
           }
+          
           // Column name
           else {
-            agg_type = AGGREGATE_TYPE_HASH;  // There are columns in the query
+
+            // There are columns in the query
+            agg_type = AGGREGATE_TYPE_HASH;
             std::string col_name(expr->GetName());
             oid_t old_col_id = target_table->GetSchema()->GetColumnID(col_name);
 
@@ -325,7 +331,7 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
     }
   }
 
-  // Recurse
+  // Recurse will be modified later
   /*auto &children = parse_tree->GetChildren();
    for (auto &child : children) {
    std::shared_ptr<planner::AbstractPlan> child_parse =
