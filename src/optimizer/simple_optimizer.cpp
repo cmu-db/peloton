@@ -26,6 +26,7 @@
 #include "planner/update_plan.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
+#include "planner/hash_join_plan.h"
 #include "parser/abstract_parse.h"
 #include "parser/drop_parse.h"
 #include "parser/create_parse.h"
@@ -34,6 +35,8 @@
 #include "expression/parser_expression.h"
 #include "expression/expression_util.h"
 #include "expression/constant_value_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/conjunction_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "catalog/bootstrapper.h"
@@ -92,7 +95,6 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
       auto group_by = select_stmt->group_by;
       expression::AbstractExpression* having = nullptr;
 
-      /*
       // The HACK to make the join in tpcc work. This is written by Joy Arulraj
       if (select_stmt->from_table->list != NULL) {
         for (auto table_ref : *select_stmt->from_table->list) {
@@ -102,14 +104,16 @@ std::shared_ptr<planner::AbstractPlan> SimpleOptimizer::BuildPelotonPlanTree(
                  select_stmt->from_table->join != NULL);
         LOG_INFO("have sub select statement? %d",
                  select_stmt->from_table->select != NULL);
+        /*
         LOG_INFO("Join Condition: %s",
                  select_stmt->from_table->join->condition->Debug().c_str());
         LOG_INFO("left table: %s",
                  select_stmt->from_table->join->left->GetName());
-        auto child_SelectPlan = CreateHackingJoinPlan(select_stmt);
+                 */
+        auto child_SelectPlan = CreateHackingJoinPlan();
         child_plan = std::move(child_SelectPlan);
         break;
-      }*/
+      }
 
       storage::DataTable* target_table =
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
@@ -555,10 +559,12 @@ void SimpleOptimizer::GetPredicateColumns(
   }
 }
 
-std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateHackingJoinPlan(
-    __attribute__((unused)) parser::SelectStatement* select_stmt) {
+static std::unique_ptr<const planner::ProjectInfo> CreateHackProjection();
+static std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema();
 
-  /*
+std::unique_ptr<planner::AbstractPlan>
+SimpleOptimizer::CreateHackingJoinPlan() {
+
   auto orderline_table =
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, "order_line");
@@ -566,56 +572,207 @@ std::unique_ptr<planner::AbstractScan> SimpleOptimizer::CreateHackingJoinPlan(
       catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
           DEFAULT_DB_NAME, "stock");
 
-  auto ol_w_id = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
-  auto ol_d_id = new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  auto ol_o_id_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 2);
-  auto ol_o_id_2 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 2);
+  // Manually constructing the predicate....
+  expression::ParameterValueExpression* params[6];
+  for (int i = 0; i < 6; ++i)
+    params[i] = new expression::ParameterValueExpression(
+        VALUE_TYPE_FOR_BINDING_ONLY_INTEGER, i);
 
-  expression::TupleValueExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
-  auto predicate = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
+  char ol_w_id_name[] = "ol_w_id";
+  char ol_d_id_name[] = "ol_d_id";
+  char ol_o_id_1_name[] = "ol_o_id";
+  char ol_o_id_2_name[] = "ol_o_id";
+  auto ol_w_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                  ol_w_id_name);
+  auto ol_d_id = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                  ol_d_id_name);
+  auto ol_o_id_1 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                    ol_o_id_1_name);
+  auto ol_o_id_2 = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                    ol_o_id_2_name);
 
+  auto predicate1 = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, ol_w_id, params[0]);
+  auto predicate2 = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, ol_d_id, params[1]);
+  auto predicate3 = new expression::ComparisonExpression<expression::CmpLt>(
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, ol_o_id_1, params[2]);
+
+  auto predicate4 =
+      new expression::OperatorExpression<peloton::expression::OpMinus>(
+          peloton::EXPRESSION_TYPE_OPERATOR_MINUS, params[3]->GetValueType(),
+          params[3], new expression::ConstantValueExpression(
+                         ValueFactory::GetIntegerValue(20)));
+
+  auto predicate5 = new expression::ComparisonExpression<expression::CmpGte>(
+      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, ol_o_id_2, predicate4);
+
+  auto predicate6 =
+      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+          EXPRESSION_TYPE_CONJUNCTION_AND, predicate1, predicate2);
+  auto predicate7 =
+      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+          EXPRESSION_TYPE_CONJUNCTION_AND, predicate3, predicate5);
+  auto predicate8 =
+      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+          EXPRESSION_TYPE_CONJUNCTION_AND, predicate6, predicate7);
+
+  // Get the index scan descriptor
+  bool index_searchable;
+  std::vector<oid_t> predicate_column_ids = {};
+  std::vector<ExpressionType> predicate_expr_types;
+  std::vector<Value> predicate_values;
+  std::vector<oid_t> column_ids = {4};
+  std::vector<expression::AbstractExpression*> runtime_keys;
+
+  GetPredicateColumns(orderline_table->GetSchema(), predicate8,
+                      predicate_column_ids, predicate_expr_types,
+                      predicate_values, index_searchable);
+  auto index = orderline_table->GetIndex(0);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, predicate_column_ids, predicate_expr_types, predicate_values,
+      runtime_keys);
+
+  // Create the index scan plan for ORDER_LINE
   std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(
-      new planner::IndexScanPlan(orderline_table, select_stmt->where_clause,
-                                 column_ids, index_scan_desc));
-  LOG_INFO("Index scan plan created");
+      new planner::IndexScanPlan(orderline_table, predicate8, column_ids,
+                                 index_scan_desc));
+  LOG_INFO("Index scan for order_line plan created");
+
+  // predicate for scanning stock table
+  char s_w_id_name[] = "s_w_id";
+  char s_quantity_name[] = "s_quantity";
+  auto s_w_id =
+      new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF, s_w_id_name);
+  auto s_quantity = new expression::ParserExpression(EXPRESSION_TYPE_COLUMN_REF,
+                                                     s_quantity_name);
+  auto predicate9 = new expression::ComparisonExpression<expression::CmpEq>(
+      EXPRESSION_TYPE_COMPARE_EQUAL, s_w_id, params[4]);
+  auto predicate10 = new expression::ComparisonExpression<expression::CmpLt>(
+      EXPRESSION_TYPE_COMPARE_LESSTHAN, s_quantity, params[5]);
+  auto predicate11 =
+      new expression::ConjunctionExpression<expression::ConjunctionAnd>(
+          EXPRESSION_TYPE_CONJUNCTION_AND, predicate9, predicate10);
+
+  predicate_column_ids = {0};
+  predicate_expr_types = {EXPRESSION_TYPE_COMPARE_EQUAL};
+  predicate_values = {ValueFactory::GetBindingOnlyIntegerValue(4)};
+  column_ids = {1};
+
+  index = stock_table->GetIndex(0);
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc2(
+      index, predicate_column_ids, predicate_expr_types, predicate_values,
+      runtime_keys);
+
+  // Create the index scan plan for STOCK
+  std::unique_ptr<planner::IndexScanPlan> stock_scan_node(
+      new planner::IndexScanPlan(stock_table, predicate11, column_ids,
+                                 index_scan_desc2));
+  LOG_INFO("Index scan plan for STOCK created");
 
   // Create hash plan node
   expression::AbstractExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0);
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   hash_keys.emplace_back(right_table_attr_1);
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>>
-      left_hash_keys;
-  left_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1)});
-
-  std::vector<std::unique_ptr<const expression::AbstractExpression>>
-      right_hash_keys;
-  right_hash_keys.emplace_back(std::unique_ptr<expression::AbstractExpression>{
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1)});
-
   // Create hash plan node
-  planner::HashPlan hash_plan_node(hash_keys);
+  std::unique_ptr<planner::HashPlan> hash_plan_node(
+      new planner::HashPlan(hash_keys));
+  hash_plan_node->AddChild(std::move(stock_scan_node));
 
-  expression::AbstractExpression* predicate = nullptr;
+  // LEFT.4 == RIGHT.1
+  expression::TupleValueExpression* left_table_attr_4 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
+  right_table_attr_1 =
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 0);
+  std::unique_ptr<const expression::AbstractExpression> join_predicate(
+      new expression::ComparisonExpression<expression::CmpEq>(
+          EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_4,
+          right_table_attr_1));
 
-  // LEFT.1 == RIGHT.1
+  auto projection = CreateHackProjection();
+  auto schema = CreateHackJoinSchema();
+  // Create hash join plan node.
+  std::unique_ptr<planner::HashJoinPlan> hash_join_plan_node(
+      new planner::HashJoinPlan(JOIN_TYPE_INNER, std::move(join_predicate),
+                                std::move(projection), schema));
+
+  // left or right?
+  hash_join_plan_node->AddChild(std::move(orderline_scan_node));
+  hash_join_plan_node->AddChild(std::move(hash_plan_node));
 
   expression::TupleValueExpression* left_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 1);
-  expression::TupleValueExpression* right_table_attr_1 =
-      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 1, 1);
-  predicate = new expression::ComparisonExpression<expression::CmpEq>(
-      EXPRESSION_TYPE_COMPARE_EQUAL, left_table_attr_1, right_table_attr_1);
-      */
+      new expression::TupleValueExpression(VALUE_TYPE_INTEGER, 0, 0);
 
-  return nullptr;
+  planner::AggregatePlan::AggTerm agg_term(
+      ParserExpressionNameToExpressionType("count"), left_table_attr_1, 1);
+  std::vector<planner::AggregatePlan::AggTerm> agg_terms;
+  agg_terms.push_back(agg_term);
+
+  std::pair<oid_t, oid_t> inner_pair = std::make_pair(1, 0);
+  std::pair<oid_t, std::pair<oid_t, oid_t>> outer_pair =
+      std::make_pair(0, inner_pair);
+  DirectMapList direct_map_list;
+  direct_map_list.emplace_back(outer_pair);
+  LOG_INFO("Direct map list: (%d, (%d, %d))", outer_pair.first,
+           outer_pair.second.first, outer_pair.second.second);
+
+  LOG_INFO("Creating a ProjectInfo");
+  std::unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
+
+  std::vector<oid_t> group_by_columns;
+  expression::AbstractExpression* having = nullptr;
+  std::unique_ptr<const expression::AbstractExpression> predicate(having);
+
+  auto column =
+      catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+                      "COL_0",  // COL_A should be
+                                // used only when
+                                // there is no AS
+                      true);
+  std::shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema({column}));
+  LOG_INFO("Output Schema Info: %s",
+           output_table_schema.get()->GetInfo().c_str());
+  std::unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
+      std::move(proj_info), std::move(predicate), std::move(agg_terms),
+      std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN));
+  LOG_INFO("Aggregation plan constructed");
+
+  agg_plan->AddChild(std::move(hash_join_plan_node));
+
+  return std::move(agg_plan);
+}
+
+std::unique_ptr<const planner::ProjectInfo> CreateHackProjection() {
+  // Create the plan node
+  TargetList target_list;
+  DirectMapList direct_map_list;
+
+  /////////////////////////////////////////////////////////
+  // PROJECTION 0
+  /////////////////////////////////////////////////////////
+
+  // direct map
+  DirectMap direct_map1 = std::make_pair(0, std::make_pair(1, 0));
+
+  direct_map_list.push_back(direct_map1);
+
+  return std::unique_ptr<const planner::ProjectInfo>(new planner::ProjectInfo(
+      std::move(target_list), std::move(direct_map_list)));
+}
+
+std::shared_ptr<const peloton::catalog::Schema> CreateHackJoinSchema() {
+  auto column = catalog::Column(VALUE_TYPE_INTEGER,
+                                GetTypeSize(VALUE_TYPE_INTEGER), "S_I_ID", 1);
+
+  column.AddConstraint(
+      catalog::Constraint(CONSTRAINT_TYPE_NOTNULL, "not_null"));
+  return std::shared_ptr<const peloton::catalog::Schema>(
+      new catalog::Schema({column}));
 }
 
 }  // namespace optimizer

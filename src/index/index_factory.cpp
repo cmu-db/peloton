@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 
 #include "common/types.h"
@@ -29,6 +28,8 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   LOG_TRACE("Creating index %s", metadata->GetName().c_str());
   const auto key_size = metadata->key_schema->GetLength();
   LOG_TRACE("key_size : %d", key_size);
+  LOG_TRACE("Indexed column count: %ld",
+            metadata->key_schema->GetIndexedColumns().size());
 
   auto index_type = metadata->GetIndexMethodType();
   LOG_TRACE("Index type : %d", index_type);
@@ -62,29 +63,30 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   if (index_type == INDEX_TYPE_SKIPLIST) {
 
     if (key_size <= 4) {
-      return new SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparatorRaw<4>,
-                            GenericEqualityChecker<4>>(metadata);
+      return new SkipListIndex<GenericKey<4>, ItemPointer *,
+                               GenericComparatorRaw<4>,
+                               GenericEqualityChecker<4>>(metadata);
     } else if (key_size <= 8) {
-      return new SkipListIndex<GenericKey<8>, ItemPointer *, GenericComparatorRaw<8>,
-                            GenericEqualityChecker<8>>(metadata);
+      return new SkipListIndex<GenericKey<8>, ItemPointer *,
+                               GenericComparatorRaw<8>,
+                               GenericEqualityChecker<8>>(metadata);
     } else if (key_size <= 16) {
       return new SkipListIndex<GenericKey<16>, ItemPointer *,
-                            GenericComparatorRaw<16>, GenericEqualityChecker<16>>(
-          metadata);
+                               GenericComparatorRaw<16>,
+                               GenericEqualityChecker<16>>(metadata);
     } else if (key_size <= 64) {
       return new SkipListIndex<GenericKey<64>, ItemPointer *,
-                            GenericComparatorRaw<64>, GenericEqualityChecker<64>>(
-          metadata);
+                               GenericComparatorRaw<64>,
+                               GenericEqualityChecker<64>>(metadata);
     } else if (key_size <= 256) {
       return new SkipListIndex<GenericKey<256>, ItemPointer *,
-                            GenericComparatorRaw<256>,
-                            GenericEqualityChecker<256>>(metadata);
+                               GenericComparatorRaw<256>,
+                               GenericEqualityChecker<256>>(metadata);
     } else {
       return new SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
-                            TupleKeyEqualityChecker>(metadata);
+                               TupleKeyEqualityChecker>(metadata);
     }
   }
-
 
   throw IndexException("Unsupported index scheme.");
   return NULL;

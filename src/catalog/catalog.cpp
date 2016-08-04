@@ -58,10 +58,14 @@ Result Catalog::CreateDatabase(std::string database_name) {
   databases.push_back(database);
   // Update catalog_db with this database info
 
-  auto tuple = GetDatabaseCatalogTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME)->GetSchema(),
-		  database_id,
-		  database_name);
-  catalog::InsertTuple(databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME), std::move(tuple));
+  auto tuple =
+      GetDatabaseCatalogTuple(databases[START_OID]
+                                  ->GetTableWithName(DATABASE_CATALOG_NAME)
+                                  ->GetSchema(),
+                              database_id, database_name);
+  catalog::InsertTuple(
+      databases[START_OID]->GetTableWithName(DATABASE_CATALOG_NAME),
+      std::move(tuple));
 
   LOG_TRACE("Database created. Returning RESULT_SUCCESS.");
   return Result::RESULT_SUCCESS;
@@ -122,25 +126,28 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     auto schema = table->GetSchema();
 
     // Find primary index attributes
+    int column_idx = 0;
     for (auto &column : schema->GetColumns()) {
       if (column.IsPrimary()) {
-        key_attrs.push_back(column.column_offset);
+        key_attrs.push_back(column_idx);
       }
+      column_idx++;
     }
 
     key_schema = catalog::Schema::CopySchema(schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_SKIPLIST,
-        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
+        "customer_pkey", Manager::GetInstance().GetNextOid(),
+        INDEX_TYPE_SKIPLIST, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema,
+        key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetInstance(index_metadata));
     table->AddIndex(pkey_index);
 
     LOG_TRACE("Successfully add primary key index for table %s",
-             table->GetName().c_str());
+              table->GetName().c_str());
     return Result::RESULT_SUCCESS;
   } else {
     LOG_TRACE("Could not find a database with name %s", database_name.c_str());
@@ -182,7 +189,7 @@ Result Catalog::DropDatabase(std::string database_name) {
 Result Catalog::DropTable(std::string database_name, std::string table_name) {
 
   LOG_TRACE("Dropping table %s from database %s", table_name.c_str(),
-           database_name.c_str());
+            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     LOG_TRACE("Found database!");
@@ -227,7 +234,7 @@ storage::Database *Catalog::GetDatabaseWithName(const std::string database_name)
 storage::DataTable *Catalog::GetTableFromDatabase(std::string database_name,
                                                   std::string table_name) {
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
-           database_name.c_str());
+            database_name.c_str());
   storage::Database *database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
     storage::DataTable *table = database->GetTableWithName(table_name);

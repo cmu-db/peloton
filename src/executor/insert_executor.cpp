@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/insert_executor.h"
 
 #include "catalog/manager.h"
@@ -33,7 +32,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(const planner::AbstractPlan *node,
                                ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -64,14 +63,13 @@ bool InsertExecutor::DExecute() {
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
 
-  if(!target_table) {
-	  transaction_manager.SetTransactionResult(
-	             peloton::Result::RESULT_FAILURE);
-	         return false;
+  if (!target_table) {
+    transaction_manager.SetTransactionResult(peloton::Result::RESULT_FAILURE);
+    return false;
   }
 
   LOG_TRACE("Number of tuples in table before insert: %lu",
-              target_table->GetTupleCount());
+            target_table->GetTupleCount());
   auto executor_pool = executor_context_->GetExecutorContextPool();
 
   // Inserting a logical tile.
@@ -154,6 +152,9 @@ bool InsertExecutor::DExecute() {
       ItemPointer location = target_table->InsertTuple(tuple);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
+      if (tuple->GetColumnCount() > 2) {
+        LOG_INFO("value: %s", tuple->GetValue(2).GetInfo().c_str());
+      }
 
       if (location.block == INVALID_OID) {
         LOG_TRACE("Failed to Insert. Set txn failure.");

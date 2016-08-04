@@ -79,8 +79,7 @@ class SimpleOptimizer : public AbstractOptimizer {
   static std::unique_ptr<planner::AbstractScan> CreateScanPlan(
       storage::DataTable *target_table, parser::SelectStatement *select_stmt);
 
-  static std::unique_ptr<planner::AbstractScan> CreateHackingJoinPlan(
-      parser::SelectStatement *select_stmt);
+  static std::unique_ptr<planner::AbstractPlan> CreateHackingJoinPlan();
 };
 }  // namespace optimizer
 }  // namespace peloton
