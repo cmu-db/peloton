@@ -84,7 +84,6 @@ void AbstractPlan::ReplaceColumnExpressions(
           expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
                                                                     col_name));
 
-      return;
     } else {
       ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
     }
@@ -103,7 +102,6 @@ void AbstractPlan::ReplaceColumnExpressions(
       expression->setRightExpression(
           expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
                                                                     col_name));
-      return;
     } else {
       ReplaceColumnExpressions(schema, expression->GetModifiableRight());
     }
