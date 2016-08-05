@@ -175,6 +175,8 @@ struct CreateStatement : SQLStatement {
   std::vector<ColumnDefinition*>* columns;
   std::vector<char*>* index_attrs = nullptr;
 
+  IndexType index_type;
+
   char* name;
   char* table_name = nullptr;
   bool unique = false;

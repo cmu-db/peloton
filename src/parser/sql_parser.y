@@ -193,7 +193,7 @@ struct PARSER_CUST_LTYPE {
 %token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
 %token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
 %token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
-%token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE
+%token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE BTREE BWTREE SKIPLIST
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
 %token IN IS OF ON OR TO
@@ -215,7 +215,7 @@ struct PARSER_CUST_LTYPE {
 %type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias
 %type <bval> 		opt_not_exists opt_exists opt_distinct opt_notnull opt_primary opt_unique opt_update
-%type <uval>		opt_join_type column_type opt_column_width
+%type <uval>		opt_join_type column_type opt_column_width opt_index_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr
@@ -350,7 +350,17 @@ create_statement:
 			$$->unique = $2;
 			$$->name = $4;
 			$$->table_name = $6;
-			$$->index_attrs = $8;			
+			$$->index_attrs = $8;
+			$$->index_type = peloton::INDEX_TYPE_SKIPLIST;
+		}
+
+		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' USING opt_index_type {
+			$$ = new CreateStatement(CreateStatement::kIndex);
+			$$->unique = $2;
+			$$->name = $4;
+			$$->table_name = $6;
+			$$->index_attrs = $8;
+			$$->index_type = $11;
 		}
 	;
 
@@ -421,6 +431,13 @@ column_type:
 	|	TIMESTAMP { $$ = ColumnDefinition::TIMESTAMP; }
 	|	VARCHAR { $$ = ColumnDefinition::VARCHAR; }
     |   VARBINARY { $$ = ColumnDefinition::VARBINARY; }
+	;
+
+opt_index_type:
+		HASH { $$ = peloton::INDEX_TYPE_HASH; }
+	|	BWTREE { $$ = peloton::INDEX_TYPE_BWTREE; }
+	|	BTREE { $$ = peloton::INDEX_TYPE_BTREE; }
+	|	SKIPLIST { $$ = peloton::INDEX_TYPE_SKIPLIST; }
 	;
 
 /******************************
