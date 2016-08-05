@@ -95,6 +95,8 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     
     index_attrs = index_attrs_holder;
 
+    index_type = parse_tree->index_type;
+
     unique = parse_tree->unique;
   }
 }
