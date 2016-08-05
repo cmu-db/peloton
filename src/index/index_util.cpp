@@ -25,24 +25,29 @@ namespace peloton {
 namespace index {
 
 /*
- * IsForwardExpression() - Returns true if the expression is > or >= or ==
+ * DefinesLowerBound() - Returns true if the expression is > or >= or ==
  *
  * Note: Since we consider equality (==) as both forward and backward
  * expression, when dealing with expression type both could be true
+ *
+ * NOTE 2: We put equality at the first to compare since we want a fast result
+ * when it is equality (lazy evaluation)
  */
-bool IsForwardExpression(ExpressionType e) {
+inline bool DefinesLowerBound(ExpressionType e) {
   // To reduce branch misprediction penalty
-  return e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
+  return e == EXPRESSION_TYPE_COMPARE_EQUAL ||
+         e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
          e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
 }
 
 /*
- * IsBackWardExpression() - Returns true if the expression is < or <= or ==
+ * DefinesUpperBound() - Returns true if the expression is < or <= or ==
  *
- * Please refer to IsForwardExpression() for more information
+ * Please refer to DefinesLowerBound() for more information
  */
-bool IsBackwardExpression(ExpressionType e) {
-  return e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
+inline bool DefinesUpperBound(ExpressionType e) {
+  return e == EXPRESSION_TYPE_COMPARE_EQUAL ||
+         e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
          e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
 }
 
@@ -76,6 +81,94 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
   }
   
   return true;
+}
+
+/*
+ * IsPointQuery() - Check whether a predicate scan is point query
+ *
+ * Point query may be implemented by the index as a more efficient
+ * operation than scanning with a key, which is the case for BwTree.
+ * Therefore, it is desirable for the index system to be albe to
+ * identify point queries and optimize for them.
+ *
+ * NOTE: This function checks whether all expression types are equality
+ * and also it checks WHETHER THE COLUMN ID LIST COVERS ALL COLUMNS IN
+ * THE INDEX KEY. Since it is possible that some columns are left not bounded
+ * by the predicate in which case even if all predicates are equal on
+ * the remaining columns, it is not a point query
+ *
+ * The tuple column id list complies with the following protocol between
+ * the optimizer and index wrapper:
+ *   1. tuple_column_id_list contains indices into tuple key schema rather
+ *      than the key schema
+ *   2. tuple_column_id_list contains indices only for columns that are indexed
+ *      For those columns not indexed by the current metadata they shall not
+ *      appear
+ *   3. tuple_column_id_list is not sorted by any means
+ *   4. tuple_column_id_list may have duplicated entries, because
+ *     4.1 there might be more than one predicate on the same column, e.g.
+ *         a > 5 AND a < 3
+ *     4.2 there might be duplicated (malformed) input from the user, e.g.
+ *         a == 5 AND a== 3; a == 5 AND a > 10. It is assumed that such
+ *         malformed expressions are not removed by the optimizer, but they
+ *         should be filtered out by the executor (which keeps a separate
+ *         predicate)
+ */
+bool IsPointQuery(const IndexMetadata *metadata_p,
+                  const std::vector<oid_t> &tuple_column_id_list,
+                  const std::vector<ExpressionType> &expr_list) {
+
+  // Number of columns in index key
+  size_t index_column_count = metadata_p->GetColumnCount();
+
+  // This is an array of length of the key columns
+  // We use this to track whether all columns have at least
+  // an equality constraint
+  //
+  // NOTE: It could have more than one constraint in this case,
+  // e.g. a == 10 AND a > 20, which will resolve to empty set
+  // but anyway we do the scan, and let the executor to filter it out
+  bool has_equality[index_column_count];
+  
+  // Initialize all values to false
+  std::fill(has_equality, has_equality + index_column_count, false);
+  
+  // This is used to count how many index columns have an "==" predicate
+  size_t counter = 0;
+  for(oid_t i = 0;i < tuple_column_id_list.size();i++) {
+    
+    // If the constraint type is not equal then continue to the next
+    if(expr_list[i] != EXPRESSION_TYPE_COMPARE_EQUAL) {
+      continue;
+    }
+    
+    oid_t tuple_column_id = tuple_column_id_list[i];
+    
+    // Map tuple column to index column
+    oid_t index_column_id = \
+      metadata_p->GetTupleToIndexMapping()[tuple_column_id];
+      
+    PL_ASSERT(index_column_id < index_column_count);
+      
+    // If there is a column not yet seen an equality then
+    // make it true and increase counter
+    if(has_equality[index_column_id] == false) {
+      counter++;
+      
+      // If after increment the counter reaches index col count
+      // then we know all columns are "==" since we never increase
+      // counter twice for the same column
+      if(counter == index_column_count) {
+        return true;
+      }
+      
+      // We only write memory at the end of loop to save
+      // the last memory write which could be avoided
+      has_equality[index_column_id] = true;
+    }
+  }
+  
+  return false;
 }
 
 /*
@@ -113,9 +206,9 @@ void ConstructIntervals(oid_t leading_column_id,
     }
 
     // If leading column
-    if (IsForwardExpression(expr_types[i])) {
+    if (DefinesLowerBound(expr_types[i])) {
       nums.push_back(std::pair<Value, int>(values[i], -1));
-    } else if (IsBackwardExpression(expr_types[i])) {
+    } else if (DefinesUpperBound(expr_types[i])) {
       nums.push_back(std::pair<Value, int>(values[i], 1));
     } else {
       // Currently if it is not >  < <= then it must be ==
@@ -197,7 +290,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
                 non_leading_columns[column_id].second.GetInfo().c_str());
     }
 
-    if (IsForwardExpression(expr_types[i]) ||
+    if (DefinesLowerBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("min cur %lu compare with %s\n",
                 non_leading_columns[column_id].first.GetInfo().size(),
@@ -211,7 +304,7 @@ void FindMaxMinInColumns(oid_t leading_column_id,
       }
     }
 
-    if (IsBackwardExpression(expr_types[i]) ||
+    if (DefinesUpperBound(expr_types[i]) ||
         expr_types[i] == EXPRESSION_TYPE_COMPARE_EQUAL) {
       LOG_TRACE("max cur %s compare with %s\n",
                 non_leading_columns[column_id].second.GetInfo().c_str(),
