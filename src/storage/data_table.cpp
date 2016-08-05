@@ -60,7 +60,6 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
     default_partition_[col_itr] = std::make_pair(0, col_itr);
   }
-
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -311,8 +310,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       return false;
     }
 
-    // Update index count
-    index_count = GetIndexCount();
   }
 
   return true;
@@ -345,7 +342,6 @@ bool DataTable::InsertInSecondaryIndexes(const storage::Tuple *tuple,
         index->InsertEntry(key.get(), location);
         break;
     }
-    LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
   }
   return true;
 }

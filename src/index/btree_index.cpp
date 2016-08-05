@@ -251,11 +251,11 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
         for (const auto &k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
+          
           LOG_INFO("left bound %s\t\t right bound %s\n",
                     k_v.second.first.GetInfo().c_str(),
                     k_v.second.second.GetInfo().c_str());
         }
-
         KeyType start_index_key;
         KeyType end_index_key;
         start_index_key.SetFromKey(start_key.get());
@@ -263,7 +263,6 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
 
         scan_begin_itr = container.equal_range(start_index_key).first;
         scan_end_itr = container.equal_range(end_index_key).second;
-
         switch (scan_direction) {
           case SCAN_DIRECTION_TYPE_FORWARD:
           case SCAN_DIRECTION_TYPE_BACKWARD: {
@@ -273,7 +272,6 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
               auto scan_current_key = scan_itr->first;
               auto tuple = scan_current_key.GetTupleForComparison(
                   metadata->GetKeySchema());
-
               // Compare the current key in the scan with "values" based on
               // "expression types"
               // For instance, "5" EXPR_GREATER_THAN "2" is true
@@ -282,6 +280,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
                 result.push_back(location_header);
               }
             }
+            LOG_TRACE("DONE");
           } break;
 
           case SCAN_DIRECTION_TYPE_INVALID:

@@ -22,13 +22,9 @@ Statement::Statement(const std::string& statement_name,
 : statement_name(statement_name),
   query_string(query_string) {
 
-  LOG_INFO("Statement created : %s", statement_name.c_str());
-
 }
 
 Statement::~Statement() {
-
-  LOG_INFO("Statement destroyed : %s", statement_name.c_str());
 
 }
 

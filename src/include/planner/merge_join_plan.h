@@ -71,6 +71,8 @@ class MergeJoinPlan : public AbstractJoinPlan {
 
   const std::string GetInfo() const { return "MergeJoin"; }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     std::vector<JoinClause> new_join_clauses;
     for (size_t i = 0; i < join_clauses_.size(); i++) {

@@ -40,6 +40,7 @@ inline hash_t CombineHashes(hash_t l, hash_t r) {
   return HashBytes((char *)both, sizeof(hash_t) * 2);
 }
 
+
 template <typename T>
 inline hash_t Hash(const T *ptr) {
   return HashBytes((char *)ptr, sizeof(T));

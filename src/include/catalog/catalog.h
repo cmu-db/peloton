@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/types.h"
@@ -40,69 +39,77 @@ namespace catalog {
 
 class Catalog {
 
-public:
+ public:
+  // Global Singleton
+  static std::unique_ptr<Catalog> GetInstance(void);
 
- // Global Singleton
- static std::unique_ptr<Catalog> GetInstance(void);
+  // Creates the catalog database
+  void CreateCatalogDatabase(void);
 
- // Creates the catalog database
- void CreateCatalogDatabase(void);
+  // Create a database
+  Result CreateDatabase(std::string database_name);
 
- // Create a database
- Result CreateDatabase(std::string database_name);
+  // Create a table in a database
+  Result CreateTable(std::string database_name, std::string table_name,
+                     std::unique_ptr<catalog::Schema>);
 
- // Create a table in a database
- Result CreateTable(std::string database_name, std::string table_name, std::unique_ptr<catalog::Schema>);
+  // Create the primary key index for a table
+  Result CreatePrimaryIndex(const std::string &database_name,
+                            const std::string &table_name);
 
- // Drop a database
- Result DropDatabase(std::string database_name);
+  Result CreateIndex(const std::string &database_name,
+                              const std::string &table_name,  std::vector<std::string> index_attr , std::string index_name , bool unique);
 
- // Drop a table
- Result DropTable(std::string database_name, std::string table_name);
+  // Drop a database
+  Result DropDatabase(std::string database_name);
 
- // Find a database using its id
- storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
+  // Drop a table
+  Result DropTable(std::string database_name, std::string table_name);
 
- // Find a database using its name
- storage::Database *GetDatabaseWithName(const std::string db_name) const;
+  // Find a database using its id
+  storage::Database *GetDatabaseWithOid(const oid_t db_oid) const;
 
- // Create Table for pg_class
- std::unique_ptr<storage::DataTable> CreateTableCatalog(oid_t database_id, std::string table_name);
+  // Find a database using its name
+  storage::Database *GetDatabaseWithName(const std::string db_name) const;
 
- // Create Table for pg_database
- std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(oid_t database_id, std::string table_name);
+  // Create Table for pg_class
+  std::unique_ptr<storage::DataTable> CreateTableCatalog(
+      oid_t database_id, std::string table_name);
 
- // Initialize the schema of the database catalog
- std::unique_ptr<Schema> InitializeDatabaseSchema();
+  // Create Table for pg_database
+  std::unique_ptr<storage::DataTable> CreateDatabaseCatalog(
+      oid_t database_id, std::string table_name);
 
- // Initialize the schema of the table catalog
- std::unique_ptr<Schema> InitializeTablesSchema();
+  // Initialize the schema of the database catalog
+  std::unique_ptr<Schema> InitializeDatabaseSchema();
 
- // Get table from a database
- storage::DataTable* GetTableFromDatabase(std::string database_name, std::string table_name);
+  // Initialize the schema of the table catalog
+  std::unique_ptr<Schema> InitializeTablesSchema();
 
- // Get the number of databases currently in the catalog
- int GetDatabaseCount();
+  // Get table from a database
+  storage::DataTable *GetTableFromDatabase(std::string database_name,
+                                           std::string table_name);
 
- void PrintCatalogs();
+  // Get the number of databases currently in the catalog
+  int GetDatabaseCount();
 
- // Get a new id for database, table, etc.
- oid_t GetNewID();
+  void PrintCatalogs();
 
-private:
- // A vector of the database pointers in the catalog
- std::vector<storage::Database*> databases;
+  // Get a new id for database, table, etc.
+  oid_t GetNewID();
 
- // The id variable that get assigned to objects. Initialized with START_OID
- oid_t id_cntr = 1;
+ private:
+  // A vector of the database pointers in the catalog
+  std::vector<storage::Database *> databases;
 
- // Mutex used for atomic operations
- std::mutex catalog_mutex;
+  // The id variable that get assigned to objects. Initialized with START_OID
+  oid_t id_cntr = 1;
 
- const size_t max_name_size = 32;
+  // Mutex used for atomic operations
+  std::mutex catalog_mutex;
 
-
-
+  // Maximum Column Size for Catalog Schemas
+  const size_t max_name_size = 32;
 };
 }
 }

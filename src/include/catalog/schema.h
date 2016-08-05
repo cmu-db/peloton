@@ -124,6 +124,17 @@ class Schema : public Printable {
     return columns[column_id];
   }
 
+  inline oid_t GetColumnID(std::string col_name) {
+	  oid_t index = -1;
+	  for(oid_t i = 0; i < columns.size(); ++i) {
+		  if(columns[i].column_name == col_name){
+			  index = i;
+			  break;
+		  }
+	  }
+	  return index;
+  }
+
   inline oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
