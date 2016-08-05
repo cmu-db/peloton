@@ -136,6 +136,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
           } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
             LOG_TRACE("******* TEXT *******");
             t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
+          } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
+            LOG_TRACE("******* DECIMAL *******");
+            t_desc.push_back(std::make_tuple(columns[i].column_name, 1700, 16));
           } else {
             LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
             t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
