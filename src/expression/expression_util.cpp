@@ -497,54 +497,44 @@ void ExpressionUtil::ConvertParameterExpressions(
     catalog::Schema *schema) {
   LOG_TRACE("expression: %s", expression->GetInfo().c_str());
 
-  bool has_two_children = true;
   if (expression->GetLeft()) {
     LOG_TRACE("expression->left: %s", expression->GetLeft()->GetInfo().c_str());
-  } else {
-    has_two_children = false;
+    if (expression->GetLeft()->GetExpressionType() ==
+        EXPRESSION_TYPE_VALUE_PARAMETER) {
+      // left expression is parameter
+      auto left = (ParameterValueExpression *)expression->GetLeft();
+      auto value = new ConstantValueExpression(values->at(left->GetValueIdx()));
+      LOG_TRACE("left in vector type: %s",
+                values->at(left->GetValueIdx()).GetInfo().c_str());
+      LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
+                value->getValue().GetInfo().c_str());
+      delete left;
+      expression->setLeftExpression(value);
+    } else {
+      ConvertParameterExpressions(expression->GetModifiableLeft(), values,
+                                  schema);
+    }
   }
+
   if (expression->GetRight()) {
     LOG_TRACE("expression->right: %s",
               expression->GetRight()->GetInfo().c_str());
-  } else {
-    has_two_children = false;
-  }
-  if (!has_two_children) return;
-  if (expression->GetLeft()->GetExpressionType() ==
-      EXPRESSION_TYPE_VALUE_PARAMETER) {
-    // left expression is parameter
-    auto left = (ParameterValueExpression *)expression->GetLeft();
-    // right expression is column
-    auto right = (TupleValueExpression *)expression->GetRight();
-    auto value =
-        new ConstantValueExpression(values->at(left->GetValueIdx()).CastAs(
-            schema->GetColumn(right->GetColumnId()).GetType()));
-    LOG_TRACE("left in vector type: %s",
-              values->at(left->GetValueIdx()).GetInfo().c_str());
-    LOG_TRACE("Setting parameter %u to value %s", left->GetValueIdx(),
-              value->getValue().GetInfo().c_str());
-    delete left;
-    expression->setLeftExpression(value);
-  } else if (expression->GetRight()->GetExpressionType() ==
-             EXPRESSION_TYPE_VALUE_PARAMETER) {
-    // right expression is parameter
-    auto right = (ParameterValueExpression *)expression->GetRight();
-    // left expression is column
-    auto left = (TupleValueExpression *)expression->GetLeft();
-    auto value =
-        new ConstantValueExpression(values->at(right->GetValueIdx()).CastAs(
-            schema->GetColumn(left->GetColumnId()).GetType()));
-    LOG_TRACE("right in vector type: %s",
-              values->at(right->GetValueIdx()).GetInfo().c_str());
-    LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
-              value->getValue().GetInfo().c_str());
-    delete right;
-    expression->setRightExpression(value);
-  } else {
-    ConvertParameterExpressions(expression->GetModifiableLeft(), values,
-                                schema);
-    ConvertParameterExpressions(expression->GetModifiableRight(), values,
-                                schema);
+    if (expression->GetRight()->GetExpressionType() ==
+        EXPRESSION_TYPE_VALUE_PARAMETER) {
+      // right expression is parameter
+      auto right = (ParameterValueExpression *)expression->GetRight();
+      auto value =
+          new ConstantValueExpression(values->at(right->GetValueIdx()));
+      LOG_TRACE("right in vector type: %s",
+                values->at(right->GetValueIdx()).GetInfo().c_str());
+      LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
+                value->getValue().GetInfo().c_str());
+      delete right;
+      expression->setRightExpression(value);
+    } else {
+      ConvertParameterExpressions(expression->GetModifiableRight(), values,
+                                  schema);
+    }
   }
 }
 
