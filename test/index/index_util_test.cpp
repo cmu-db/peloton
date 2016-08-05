@@ -150,6 +150,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, true);
+  value_index_list.clear();
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {1, 0, 3},
@@ -158,6 +159,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, true);
+  value_index_list.clear();
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {0, 1, 3},
@@ -166,6 +168,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, true);
+  value_index_list.clear();
   
   // Test whether reconizes if only two columns are matched
   
@@ -175,6 +178,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, false);
+  value_index_list.clear();
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {3, 0},
@@ -182,6 +186,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, false);
+  value_index_list.clear();
   
   // Test empty
   
@@ -190,9 +195,11 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                      {},
                      value_index_list);
   EXPECT_EQ(ret, false);
+  value_index_list.clear();
   
   // Test redundant conditions
   
+  // This should return false, since the < already defines a lower bound
   ret = IsPointQuery(index_p->GetMetadata(),
                      {0, 3, 3, 0, 3, 1},
                      {EXPRESSION_TYPE_COMPARE_LESSTHAN,
@@ -202,7 +209,21 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
+  EXPECT_EQ(ret, false);
+  value_index_list.clear();
+  
+  // This should return true
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {0, 3, 3, 0, 3, 1},
+                     {EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                      EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, true);
+  value_index_list.clear();
   
   // Test duplicated conditions on a single column
   
@@ -213,6 +234,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL},
                      value_index_list);
   EXPECT_EQ(ret, false);
+  value_index_list.clear();
   
   //
   // The last test should logically be classified as point query
@@ -228,6 +250,7 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO},
                      value_index_list);
   EXPECT_EQ(ret, false);
+  value_index_list.clear();
   
   return;
 }
