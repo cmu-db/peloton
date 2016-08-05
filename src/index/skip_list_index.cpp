@@ -197,8 +197,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
       if (non_leading_columns.find(key_column_id) ==
           non_leading_columns.end()) {
         auto key_schema = metadata->GetKeySchema();
-        LOG_INFO("here! non leading offset %d; key schema size: %d",
-                 non_leading_column_offset, key_schema->GetColumnCount());
+        LOG_TRACE("non leading offset %d; key schema size: %d",
+                  non_leading_column_offset, key_schema->GetColumnCount());
         auto type =
             key_schema->GetColumn(non_leading_column_offset).column_type;
         std::pair<Value, Value> range(Value::GetMinValue(type),
