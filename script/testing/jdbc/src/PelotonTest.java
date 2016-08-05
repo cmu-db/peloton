@@ -43,6 +43,7 @@ public class PelotonTest {
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = 1 FOR UPDATE";
   private final String UNION = "SELECT * FROM A WHERE id = ? UNION SELECT * FROM B WHERE id = ?";
   
+  // To test the join in TPCC
   private final String CREATE_STOCK_TABLE = "CREATE TABLE STOCK ("
 		  	+ "S_W_ID INT PRIMARY KEY,"
 		  	+ "S_I_ID INT PRIMARY KEY,"
@@ -60,6 +61,7 @@ public class PelotonTest {
   private final String INSERT_STOCK_2 = "INSERT INTO STOCK VALUES (1, 5, 1);";
   private final String INSERT_STOCK_3 = "INSERT INTO STOCK VALUES (1, 7, 6);";
   private final String SELECT_STOCK = "SELECT * FROM STOCK;";
+  // Test general expression evaluation
   private final String SELECT_STOCK_COMPLEX = "SELECT * FROM STOCK WHERE"
   		+ " S_W_ID + S_I_ID = ? + S_QUANTITY + 1;";
   
@@ -74,6 +76,11 @@ public class PelotonTest {
 			+ " AND S_W_ID = ?"
 			+ " AND S_I_ID = OL_I_ID" 
 			+ " AND S_QUANTITY < ?";
+
+  private final String CREATE_TIMESTAMP_TABLE = "CREATE TABLE TS ("
+			+ "id INT NOT NULL,"
+			+ "ts TIMESTAMP NOT NULL);";
+  private final String INSERT_TIMESTAMP = "INSERT INTO TS VALUES (1, ?);";
 
   private final Connection conn;
 
@@ -130,6 +137,13 @@ public class PelotonTest {
     pstmt.execute();
     pstmt = conn.prepareStatement(SELECT_STOCK_COMPLEX);
     pstmt.setInt(1, 4);
+    pstmt.execute();
+
+    stmt.execute(CREATE_TIMESTAMP_TABLE);
+    pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
+    Timestamp sysdate = new java.sql.Timestamp(
+			System.currentTimeMillis());
+    pstmt.setTimestamp(1, sysdate);
     pstmt.execute();
     System.out.println("Test db created.");
     //System.exit(0);
