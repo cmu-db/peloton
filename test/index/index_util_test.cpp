@@ -139,27 +139,32 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
   const index::Index *index_p = BuildIndex();
   bool ret;
   
+  std::vector<std::pair<oid_t, oid_t>> value_index_list{};
+  
   // Test basic
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {3, 0, 1},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, true);
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {1, 0, 3},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, true);
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {0, 1, 3},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, true);
   
   // Test whether reconizes if only two columns are matched
@@ -167,20 +172,23 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
   ret = IsPointQuery(index_p->GetMetadata(),
                      {0, 1},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, false);
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {3, 0},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, false);
   
   // Test empty
   
   ret = IsPointQuery(index_p->GetMetadata(),
                      {},
-                     {});
+                     {},
+                     value_index_list);
   EXPECT_EQ(ret, false);
   
   // Test redundant conditions
@@ -192,7 +200,8 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_LESSTHAN,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, true);
   
   // Test duplicated conditions on a single column
@@ -201,7 +210,8 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                      {3, 3, 3},
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_EQUAL});
+                      EXPRESSION_TYPE_COMPARE_EQUAL},
+                     value_index_list);
   EXPECT_EQ(ret, false);
   
   //
@@ -215,7 +225,8 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                      {EXPRESSION_TYPE_COMPARE_EQUAL,
                       EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
                       EXPRESSION_TYPE_COMPARE_EQUAL,
-                      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO});
+                      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO},
+                     value_index_list);
   EXPECT_EQ(ret, false);
   
   return;
