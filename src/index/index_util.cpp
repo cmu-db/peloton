@@ -118,6 +118,9 @@ bool IsPointQuery(const IndexMetadata *metadata_p,
                   const std::vector<oid_t> &tuple_column_id_list,
                   const std::vector<ExpressionType> &expr_list) {
 
+  // Make sure these two are consistent at least on legnth
+  assert(tuple_column_id_list.size() == expr_list.size());
+
   // Number of columns in index key
   size_t index_column_count = metadata_p->GetColumnCount();
 
@@ -147,7 +150,10 @@ bool IsPointQuery(const IndexMetadata *metadata_p,
     // Map tuple column to index column
     oid_t index_column_id = \
       metadata_p->GetTupleToIndexMapping()[tuple_column_id];
-      
+
+    // Make sure the mapping exists (i.e. the tuple column is in
+    // index columns)
+    PL_ASSERT(index_column_id != INVALID_OID);
     PL_ASSERT(index_column_id < index_column_count);
       
     // If there is a column not yet seen an equality then
