@@ -102,6 +102,7 @@ bool SeqScanExecutor::DExecute() {
 
       /* Hopefully we needn't do projections here */
       SetOutput(tile.release());
+
       return true;
     }
 
@@ -117,9 +118,6 @@ bool SeqScanExecutor::DExecute() {
     // Force to use occ txn manager if dirty read is forbidden
     concurrency::TransactionManager &transaction_manager =
         concurrency::TransactionManagerFactory::GetInstance();
-
-    // LOG_TRACE("Number of tuples: %f",
-    // target_table_->GetIndex(0)->GetNumberOfTuples());
 
     // Retrieve next tile group.
     while (current_tile_group_offset_ < table_tile_group_count_) {
@@ -156,6 +154,9 @@ bool SeqScanExecutor::DExecute() {
               if (!res) {
                 transaction_manager.SetTransactionResult(RESULT_FAILURE);
                 return res;
+              }
+              else {
+            	  LOG_TRACE("Sequential Scan Predicate Satisfied");
               }
             }
           }

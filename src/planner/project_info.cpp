@@ -14,6 +14,9 @@
 #include "planner/project_info.h"
 #include "executor/executor_context.h"
 #include "storage/rollback_segment.h"
+#include "expression/expression_util.h"
+#include "expression/parameter_value_expression.h"
+#include "expression/constant_value_expression.h"
 
 namespace peloton {
 namespace planner {
@@ -91,6 +94,28 @@ std::string ProjectInfo::Debug() const {
   }
 
   return (buffer.str());
+}
+
+void ProjectInfo::transformParameterToConstantValueExpression(std::vector<Value> *values, catalog::Schema* schema) {
+  LOG_TRACE("Setting parameter values in Projection");
+  for(unsigned int i = 0; i < target_list_.size(); ++i) {
+	  // The assignment parameter is an expression with left and right
+	  if(target_list_[i].second->GetLeft() && target_list_[i].second->GetRight()) {
+		  auto expr = target_list_[i].second->Copy();
+		  delete target_list_[i].second;
+		  expression::ExpressionUtil::ConvertParameterExpressions(expr, values, schema);
+		  target_list_[i].second = expr;
+	  }
+	  // The assignment parameter is a single value
+	  else {
+		  auto param_expr = (expression::ParameterValueExpression*) target_list_[i].second;
+		  LOG_TRACE("Setting parameter %u to value %s", param_expr->GetValueIdx(),
+				  values->at(param_expr->GetValueIdx()).GetInfo().c_str());
+		  auto value = new expression::ConstantValueExpression(values->at(param_expr->GetValueIdx()));
+		  delete param_expr;
+		  target_list_[i].second = value;
+	  }
+  }
 }
 
 } /* namespace planner */

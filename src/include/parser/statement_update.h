@@ -23,12 +23,23 @@ namespace parser {
  */
 class UpdateClause {
  public:
-  char* column;
+  const char* column;
   expression::AbstractExpression* value;
 
   ~UpdateClause() {
-    free (column);
+	delete column;
     delete value;
+  }
+
+  UpdateClause* Copy(){
+	  UpdateClause* new_clause = new UpdateClause();
+      std::string str (column);
+	  char* new_cstr = new char [str.length()+1];
+	  std::strcpy (new_cstr, str.c_str());
+	  expression::AbstractExpression* new_expr = value->Copy();
+	  new_clause->column = new_cstr;
+	  new_clause->value = new_expr;
+	  return new_clause;
   }
 };
 
@@ -51,13 +62,15 @@ struct UpdateStatement : SQLStatement {
     }
 
     delete updates;
+    if(where != NULL)
     delete where;
+
   }
 
   // TODO: switch to char* instead of TableRef
   TableRef* table;
   std::vector<UpdateClause*>* updates;
-  expression::AbstractExpression* where;
+  expression::AbstractExpression* where = nullptr;
 };
 
 }  // End parser namespace

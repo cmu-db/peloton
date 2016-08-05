@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/value.h"
 #include "common/logger.h"
 #include "common/macros.h"
@@ -311,10 +310,9 @@ ValueType Value::s_intPromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DECIMAL,  // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DECIMAL,  // 22 decimal
+    VALUE_TYPE_INVALID,                      // 23 boolean
+    VALUE_TYPE_INVALID,                      // 24 address
 };
 
 // for x<op>y where x is a double
@@ -336,10 +334,9 @@ ValueType Value::s_doublePromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DOUBLE,   // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DOUBLE,  // 22 decimal
+    VALUE_TYPE_INVALID,                     // 23 boolean
+    VALUE_TYPE_INVALID,                     // 24 address
 };
 
 // for x<op>y where x is a decimal
@@ -361,10 +358,9 @@ ValueType Value::s_decimalPromotionTable[] = {
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
     VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
-    VALUE_TYPE_INVALID,
-    VALUE_TYPE_DECIMAL,  // 22 decimal
-    VALUE_TYPE_INVALID,  // 23 boolean
-    VALUE_TYPE_INVALID,  // 24 address
+    VALUE_TYPE_INVALID, VALUE_TYPE_DECIMAL,  // 22 decimal
+    VALUE_TYPE_INVALID,                      // 23 boolean
+    VALUE_TYPE_INVALID,                      // 24 address
 };
 
 TTInt Value::s_maxDecimalValue(
@@ -384,6 +380,44 @@ const double Value::s_ltMinDecimalAsDouble = -1E26;
 
 TTInt Value::s_maxInt64AsDecimal(TTInt(INT64_MAX) * kMaxScaleFactor);
 TTInt Value::s_minInt64AsDecimal(TTInt(-INT64_MAX) * kMaxScaleFactor);
+
+std::string Value::ToString() {
+	const ValueType type = GetValueType();
+	const char *ptr;
+	switch (type) {
+	    case VALUE_TYPE_BOOLEAN:
+	    	if(GetBoolean()) {
+	    		return "true";
+	    	}
+	    	else {
+	    		return "false";
+	    	}
+	    case VALUE_TYPE_TINYINT:
+	      return std::to_string(static_cast<int32_t>(GetTinyInt()));
+	    case VALUE_TYPE_SMALLINT:
+	      return std::to_string(GetSmallInt());
+	    case VALUE_TYPE_DATE:
+	    case VALUE_TYPE_INTEGER:
+	    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+	      return std::to_string(GetInteger());
+	    case VALUE_TYPE_BIGINT:
+	    case VALUE_TYPE_TIMESTAMP:
+	      return std::to_string(GetBigInt());
+	    case VALUE_TYPE_REAL:
+	    case VALUE_TYPE_DOUBLE:
+	    	return std::to_string(GetDouble());
+	    case VALUE_TYPE_VARCHAR:
+	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+	      return std::string(ptr, GetObjectLengthWithoutNull());
+	    case VALUE_TYPE_VARBINARY:
+	      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+	      return std::string(ptr, GetObjectLengthWithoutNull());
+	    case VALUE_TYPE_DECIMAL:
+	      return CreateStringFromDecimal();
+	    default:
+	      return "(no details)";
+	  }
+}
 
 /*
  * Produce a debugging string describing an Value.
@@ -411,6 +445,7 @@ const std::string Value::GetInfo() const {
       break;
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
       buffer << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:
@@ -615,8 +650,8 @@ struct ValueList {
 
   void DeserializeValues(SerializeInputBE &input, VarlenPool *varlen_pool) {
     for (size_t ii = 0; ii < m_length; ++ii) {
-      m_values[ii].DeserializeFromAllocateForStorage(m_elementType, input,
-                                                     varlen_pool);
+      m_values[ii]
+          .DeserializeFromAllocateForStorage(m_elementType, input, varlen_pool);
     }
   }
 
@@ -955,7 +990,8 @@ int64_t Value::parseTimestampString(const std::string &str) {
     result = epoch_microseconds_from_components(
         (unsigned short int)year, (unsigned short int)month,
         (unsigned short int)day, hour, minute, second);
-  } catch (const std::out_of_range &bad) {
+  }
+  catch (const std::out_of_range &bad) {
     throwTimestampFormatError(str);
   }
   result += (micro - 1000000);

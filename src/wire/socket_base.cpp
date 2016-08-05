@@ -16,6 +16,7 @@
 
 #include <sys/un.h>
 #include <string>
+#include <fstream>
 
 namespace peloton {
 namespace wire {
@@ -31,8 +32,8 @@ void StartServer(const PelotonConfiguration& configuration,
     int len;
 
     std::string SOCKET_PATH = "/tmp/.s.PGSQL." + std::to_string(server->port);
-    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
-    LOG_INFO("Socket path : %s", SOCKET_PATH.c_str());
+    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
+    LOG_TRACE("Socket path : %s", SOCKET_PATH.c_str());
 
     server->server_fd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server->server_fd < 0) {
@@ -72,7 +73,7 @@ void StartServer(const PelotonConfiguration& configuration,
   else if (configuration.GetSocketFamily() == "AF_INET") {
     struct sockaddr_in serv_addr;
 
-    LOG_INFO("Family : %s", configuration.GetSocketFamily().c_str());
+    LOG_TRACE("Family : %s", configuration.GetSocketFamily().c_str());
 
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd < 0) {
@@ -117,6 +118,9 @@ void StartServer(const PelotonConfiguration& configuration,
 
 template <typename B>
 bool SocketManager<B>::RefillReadBuffer() {
+	LOG_INFO("RefillReadBuffer");
+	std::ofstream fs;
+	fs.open ("Bytes_Log.txt", std::ios::app);
   ssize_t bytes_read;
 
   // our buffer is to be emptied
@@ -128,6 +132,8 @@ bool SocketManager<B>::RefillReadBuffer() {
     bytes_read = read(sock_fd, &rbuf.buf[rbuf.buf_ptr],
                       SOCKET_BUFFER_SIZE - rbuf.buf_size);
     LOG_INFO("Bytes Read: %lu", bytes_read);
+    fs << bytes_read << "\n";
+    fs.close();
     if (bytes_read < 0) {
       if (errno == EINTR) {
         // interrupts are OK

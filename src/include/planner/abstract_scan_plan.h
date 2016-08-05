@@ -64,6 +64,10 @@ class AbstractScan : public AbstractPlan {
   std::vector<oid_t> &ColumnIds() { return column_ids_; }
   void SetTargetTable(storage::DataTable *table) { target_table_ = table; }
   void SetColumnId(oid_t col_id) { column_ids_.push_back(col_id); }
+  void SetPredicate(expression::AbstractExpression* predicate) {
+    std::unique_ptr<expression::AbstractExpression> pre_(std::move(predicate));
+    predicate_ = std::move(pre_);
+  }
 
  private:
   /** @brief Pointer to table to scan from. */

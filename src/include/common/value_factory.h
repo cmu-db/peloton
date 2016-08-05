@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "common/value.h"
@@ -37,6 +36,10 @@ class ValueFactory {
 
   static inline Value GetIntegerValue(int32_t value) {
     return Value::GetIntegerValue(value);
+  }
+
+  static inline Value GetBindingOnlyIntegerValue(int32_t value) {
+    return Value::GetBindingOnlyIntegerValue(value);
   }
 
   static inline Value GetBigIntValue(int64_t value) {
@@ -214,9 +217,7 @@ class ValueFactory {
                                        const std::string &value,
                                        VarlenPool *pool) {
     switch (type) {
-      case VALUE_TYPE_NULL: {
-        return GetNullValue();
-      }
+      case VALUE_TYPE_NULL: { return GetNullValue(); }
       case VALUE_TYPE_TINYINT:
       case VALUE_TYPE_SMALLINT:
       case VALUE_TYPE_INTEGER:
@@ -227,19 +228,13 @@ class ValueFactory {
         retval = GetBigIntValue(ival);
         return retval.CastAs(type);
       }
-      case VALUE_TYPE_DECIMAL: {
-        return GetDecimalValueFromString(value);
-      }
+      case VALUE_TYPE_DECIMAL: { return GetDecimalValueFromString(value); }
       case VALUE_TYPE_DOUBLE: {
         double dval = atof(value.c_str());
         return GetDoubleValue(dval);
       }
-      case VALUE_TYPE_VARCHAR: {
-        return GetStringValue(value.c_str(), pool);
-      }
-      case VALUE_TYPE_VARBINARY: {
-        return GetBinaryValue(value, pool);
-      }
+      case VALUE_TYPE_VARCHAR: { return GetStringValue(value.c_str(), pool); }
+      case VALUE_TYPE_VARBINARY: { return GetBinaryValue(value, pool); }
       default: {
         // skip to throw
       }

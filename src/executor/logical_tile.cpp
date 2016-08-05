@@ -171,7 +171,6 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile.get();
 
-  LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   if (base_tuple_id == NULL_OID) {
     return ValueFactory::GetNullValueByType(
         base_tile->GetSchema()->GetType(column_id));
@@ -424,6 +423,27 @@ void LogicalTile::ProjectColumns(const std::vector<oid_t> &original_column_ids,
 
   // remove references to base tiles from columns that are projected away
   schema_ = std::move(new_schema);
+}
+
+std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings() {
+	std::vector<std::vector<std::string>> string_tile;
+	for (oid_t tuple_itr = 0; tuple_itr < total_tuples_; tuple_itr++) {
+		std::vector<std::string> row;
+	    if (visible_rows_[tuple_itr] == false) continue;
+	    for (oid_t column_itr = 0; column_itr < schema_.size(); column_itr++) {
+	      const LogicalTile::ColumnInfo &cp = schema_[column_itr];
+	      oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_itr];
+	      // get the value from the base physical tile
+	      if (base_tuple_id == NULL_OID) {
+	        row.push_back(ValueFactory::GetNullValueByType(
+	                  cp.base_tile->GetSchema()->GetType(cp.origin_column_id)).ToString());
+	      } else {
+	        row.push_back(cp.base_tile->GetValue(base_tuple_id, cp.origin_column_id).ToString());
+	      }
+	    }
+	    string_tile.push_back(row);
+	}
+	return string_tile;
 }
 
 const std::string LogicalTile::GetInfo() const {

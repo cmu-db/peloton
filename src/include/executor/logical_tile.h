@@ -104,6 +104,8 @@ class LogicalTile : public Printable {
 
   void SetPositionListsAndVisibility(PositionLists &&position_lists);
 
+  std::vector<std::vector<std::string>> GetAllValuesAsStrings();
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 

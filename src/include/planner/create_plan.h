@@ -39,7 +39,7 @@ class CreatePlan : public AbstractPlan {
 
   explicit CreatePlan(storage::DataTable *table);
 
-  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema);
+  explicit CreatePlan(std::string name, std::unique_ptr<catalog::Schema> schema, CreateType c_type);
 
   explicit CreatePlan(parser::CreateParse *parse_tree);
 
@@ -53,9 +53,13 @@ class CreatePlan : public AbstractPlan {
     return "Create Plan";
   }
 
+  void SetParameterValues(UNUSED_ATTRIBUTE std::vector<Value>* values) { };
+
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new CreatePlan(target_table_));
   }
+
+  std::string GetIndexName() const {return index_name;}
 
   std::string GetTableName() const { return table_name; }
 
@@ -63,12 +67,33 @@ class CreatePlan : public AbstractPlan {
     return table_schema;
   }
 
+  CreateType GetCreateType() const { return create_type; }
+
+  bool IsUnique() const { return unique; }
+
+  std::vector<std::string> GetIndexAttributes() const { return index_attrs;}
+
  private:
   // Target Table
   storage::DataTable *target_table_ = nullptr;
+
+  //Table Name
   std::string table_name;
+
+  // Table Schema
   catalog::Schema* table_schema;
 
+  // Index attributes
+  std::vector<std::string> index_attrs;
+  
+  // Check to either Create Table or INDEX
+  CreateType create_type;
+  
+  // IndexName
+  std::string index_name;
+
+  //UNIQUE INDEX flag
+  bool unique;
 };
 }
 }

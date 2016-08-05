@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "planner/abstract_plan.h"
 
 #include <sstream>
@@ -21,13 +20,12 @@
 #include "common/types.h"
 #include "common/logger.h"
 #include "catalog/bootstrapper.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace planner {
 
-AbstractPlan::AbstractPlan() {
-
-}
+AbstractPlan::AbstractPlan() {}
 
 AbstractPlan::~AbstractPlan() {}
 
@@ -63,6 +61,45 @@ const std::string AbstractPlan::GetInfo() const {
   }
 
   return os.str();
+}
+
+/**
+ * This function replaces all COLUMN_REF expressions with TupleValue expressions
+ */
+void AbstractPlan::ReplaceColumnExpressions(
+    catalog::Schema *schema, expression::AbstractExpression *expression) {
+	  LOG_TRACE("Expression Type --> %s",
+			  ExpressionTypeToString(expression->GetExpressionType()).c_str());
+	  if(expression->GetLeft() == nullptr)
+		  return;
+	  LOG_TRACE("Left Type --> %s",
+			  ExpressionTypeToString(expression->GetLeft()->GetExpressionType()).c_str());
+	  if(expression->GetRight() == nullptr)
+	  	  return;
+	  LOG_TRACE("Right Type --> %s",
+			  ExpressionTypeToString(expression->GetRight()->GetExpressionType()).c_str());
+  if (expression->GetLeft()->GetExpressionType() ==
+      EXPRESSION_TYPE_COLUMN_REF) {
+    auto expr = expression->GetLeft();
+    std::string col_name(expr->GetName());
+    LOG_TRACE("Column name: %s", col_name.c_str());
+    delete expr;
+    expression->setLeftExpression(
+        expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
+                                                                  col_name));
+  } else if (expression->GetRight()->GetExpressionType() ==
+             EXPRESSION_TYPE_COLUMN_REF) {
+    auto expr = expression->GetRight();
+    std::string col_name(expr->GetName());
+    LOG_TRACE("Column name: %s", col_name.c_str());
+    delete expr;
+    expression->setRightExpression(
+        expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
+                                                                  col_name));
+  } else {
+    ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+    ReplaceColumnExpressions(schema, expression->GetModifiableRight());
+  }
 }
 
 }  // namespace planner
