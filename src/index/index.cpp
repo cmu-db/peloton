@@ -36,6 +36,12 @@ oid_t IndexMetadata::GetColumnCount() const {
 
 /*
  * Constructor - Initializes tuple key to index mapping
+ *
+ * NOTE: This metadata object owns key_schema since it is specially
+ * constructed for the index
+ *
+ * However, tuple schema belongs to the table, such that this metadata should
+ * not destroy the tuple schema object on destruction
  */
 IndexMetadata::IndexMetadata(std::string index_name,
                              oid_t index_oid,
@@ -78,7 +84,9 @@ IndexMetadata::IndexMetadata(std::string index_name,
 IndexMetadata::~IndexMetadata() {
   // clean up key schema
   delete key_schema;
+  
   // no need to clean the tuple schema
+  return;
 }
 
 const std::string IndexMetadata::GetInfo() const {
@@ -101,12 +109,43 @@ const std::string IndexMetadata::GetInfo() const {
 // Member function definition for class Index
 /////////////////////////////////////////////////////////////////////
 
+/*
+ * Constructor
+ *
+ * NOTE: Though Index object receives the index metadata pointer
+ * from the caller, the Index object owns that metadata and is responsible
+ * for destructing the metadata object on its own destruction
+ */
+Index::Index(IndexMetadata *metadata) :
+  metadata(metadata),
+  indexed_tile_group_offset_(0) {
+
+  // This is redundant
+  index_oid = metadata->GetOid();
+  
+  // initialize counters
+  lookup_counter = insert_counter = delete_counter = update_counter = 0;
+
+  // initialize pool
+  pool = new VarlenPool(BACKEND_TYPE_MM);
+  
+  return;
+}
+
+/*
+ * Destructor
+ */
 Index::~Index() {
-  // clean up metadata
+  
+  // Free metadata which frees the key schema but not tuple schema
+  // This is passed in as construction argument but Index object is
+  // responsible for its destruction
   delete metadata;
 
-  // clean up pool
+  // Free the varlen pool - it is allocted during construction
   delete pool;
+  
+  return;
 }
 
 /*
@@ -302,17 +341,6 @@ bool Index::ConstructLowerBoundTuple(
   if (col_count > values.size()) all_constraints_equal = false;
 
   return all_constraints_equal;
-}
-
-Index::Index(IndexMetadata *metadata) :
-    metadata(metadata),
-    indexed_tile_group_offset_(0) {
-  index_oid = metadata->GetOid();
-  // initialize counters
-  lookup_counter = insert_counter = delete_counter = update_counter = 0;
-
-  // initialize pool
-  pool = new VarlenPool(BACKEND_TYPE_MM);
 }
 
 const std::string Index::GetInfo() const {

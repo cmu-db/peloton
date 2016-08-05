@@ -228,9 +228,10 @@ class Index : public Printable {
   // If not any of those k-v pair satisfy the predicate, insert the k-v pair
   // into the index and return true.
   // This function should be called for all primary/unique index insert
-  virtual bool CondInsertEntry(
-      const storage::Tuple *key, const ItemPointer &location,
-      std::function<bool(const ItemPointer &)> predicate) = 0;
+  virtual bool CondInsertEntry(const storage::Tuple *key,
+                               const ItemPointer &location,
+                               std::function<bool(const ItemPointer &)> \
+                                 predicate) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
