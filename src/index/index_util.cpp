@@ -110,72 +110,104 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
  *         a > 5 AND a < 3
  *     4.2 there might be duplicated (malformed) input from the user, e.g.
  *         a == 5 AND a== 3; a == 5 AND a > 10. It is assumed that such
- *         malformed expressions are not removed by the optimizer, but they
- *         should be filtered out by the executor (which keeps a separate
+ *         malformed expressions are not removed by the optimizer, but returned
+ *         tuples should be filtered out by the executor (which keeps a separate
  *         predicate)
+ *
+ * NOTE 2: This function takes an extra argument value_index_list, which is a
+ * list of indices into the value array for constructing the actual lower bound
+ * and upper bound search key during runtime. The vector element has two
+ * components, the first being index into value list for lower bound, the
+ * second being the index into value list for upper bound. If the query is a
+ * point query then these two are equal.
+ *
+ * NOTE 3: This function does not guarantee it is malloc()-free, since it calls
+ * reserve() on value_index_list.
  */
 bool IsPointQuery(const IndexMetadata *metadata_p,
                   const std::vector<oid_t> &tuple_column_id_list,
-                  const std::vector<ExpressionType> &expr_list) {
+                  const std::vector<ExpressionType> &expr_list,
+                  std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
 
   // Make sure these two are consistent at least on legnth
-  assert(tuple_column_id_list.size() == expr_list.size());
+  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
   // Number of columns in index key
   size_t index_column_count = metadata_p->GetColumnCount();
 
-  // This is an array of length of the key columns
-  // We use this to track whether all columns have at least
-  // an equality constraint
+  // This will call reserve() and also changes size accordingly
+  // Since we want random accessibility on this vector
   //
-  // NOTE: It could have more than one constraint in this case,
-  // e.g. a == 10 AND a > 20, which will resolve to empty set
-  // but anyway we do the scan, and let the executor to filter it out
-  bool has_equality[index_column_count];
-  
-  // Initialize all values to false
-  std::fill(has_equality, has_equality + index_column_count, false);
+  // Also resize the vector to pairs of INVALID_OID, which means the
+  // column has not seen any constraint yet
+  value_index_list.resize(index_column_count,
+                          std::make_pair(INVALID_OID, INVALID_OID));
   
   // This is used to count how many index columns have an "==" predicate
   size_t counter = 0;
+
+  // i in the common index for tuple column id, expression and value
   for(oid_t i = 0;i < tuple_column_id_list.size();i++) {
     
-    // If the constraint type is not equal then continue to the next
-    if(expr_list[i] != EXPRESSION_TYPE_COMPARE_EQUAL) {
-      continue;
-    }
-    
+    // This is only used to retrieve index column id
     oid_t tuple_column_id = tuple_column_id_list[i];
-    
+
     // Map tuple column to index column
     oid_t index_column_id = \
       metadata_p->GetTupleToIndexMapping()[tuple_column_id];
-
+      
     // Make sure the mapping exists (i.e. the tuple column is in
     // index columns)
     PL_ASSERT(index_column_id != INVALID_OID);
     PL_ASSERT(index_column_id < index_column_count);
-      
-    // If there is a column not yet seen an equality then
-    // make it true and increase counter
-    if(has_equality[index_column_id] == false) {
-      counter++;
-      
-      // If after increment the counter reaches index col count
-      // then we know all columns are "==" since we never increase
-      // counter twice for the same column
-      if(counter == index_column_count) {
-        return true;
+    
+    ExpressionType e_type = expr_list[i];
+    
+    // Fill in lower bound and upper bound separately
+    // Node that for "==" expression it both defines a lower bound
+    // and an upper bound, so we should run if statements twice
+    // rather than if ... else ...
+
+    if(DefinesLowerBound(e_type) == true) {
+      if(value_index_list[index_column_id].first == INVALID_OID) {
+        // The lower bound is on value i
+        value_index_list[index_column_id].first = i;
       }
-      
-      // We only write memory at the end of loop to save
-      // the last memory write which could be avoided
-      has_equality[index_column_id] = true;
     }
-  }
-  
+    
+    if(DefinesUpperBound(e_type) == true) {
+      if(value_index_list[index_column_id].second == INVALID_OID) {
+        // The upper bound is on value i
+        value_index_list[index_column_id].second = i;
+        
+        // If all constraints are equal, then everytime we set
+        // an upperbound it's time to check
+        
+        // Since we already know second should not be INVALID_OID
+        // just checking whether these two equals suffices
+        if(value_index_list[index_column_id].second == \
+           value_index_list[index_column_id].first) {
+          PL_ASSERT(value_index_list[index_column_id].second != INVALID_OID);
+          
+          // We have seen an equality relation
+          counter++;
+          
+          // We could return since we have seen all columns being
+          // filled with equality relation
+          //
+          // Also if this happens then all future expression does not
+          // have any effect - since they
+          if(counter == index_column_count) {
+            return true;
+          }
+        } // if current index key column is an equality
+      } // if the upperbound has not yet been filled
+    } // if current expression defines an upper bound
+  } // for all tuple column ids in the list
+    
   return false;
 }
+
 
 /*
  * ValuePairComparator() - Compares std::pair<Value, int>
