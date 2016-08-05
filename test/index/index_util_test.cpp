@@ -162,6 +162,20 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL});
   EXPECT_EQ(ret, true);
   
+  // Test whether reconizes if only two columns are matched
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {0, 1},
+                     {EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL});
+  EXPECT_EQ(ret, false);
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {3, 0},
+                     {EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL});
+  EXPECT_EQ(ret, false);
+  
   return;
 }
   
