@@ -24,30 +24,29 @@ namespace parser {
 
 std::string indent(uint num_indent) { return std::string(num_indent, '\t'); }
 
-void inprint(int64_t val, UNUSED_ATTRIBUTE uint num_indent) {
+void inprint(UNUSED_ATTRIBUTE int64_t val, UNUSED_ATTRIBUTE uint num_indent) {
   // indent(num_indent)
-  LOG_INFO("%lu", val);
+  LOG_TRACE("%lu", val);
 }
 
-void inprint(float val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_INFO("%f", val);
+void inprint(UNUSED_ATTRIBUTE float val, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_TRACE("%f", val);
 }
 
-void inprint(const char* val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_INFO("%s", val);
+void inprint(UNUSED_ATTRIBUTE const char* val, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_TRACE("%s", val);
 }
 
-void inprint(const char* val, const char* val2,
-             UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_INFO("%s -> %s", val, val2);
+void inprint(UNUSED_ATTRIBUTE const char* val, UNUSED_ATTRIBUTE const char* val2, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_TRACE("%s -> %s", val, val2);
 }
 
-void inprintC(char val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_INFO("%c", val);
+void inprintC(UNUSED_ATTRIBUTE char val, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_TRACE("%c", val);
 }
 
-void inprintU(uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
-  LOG_INFO("%lu", val);
+void inprintU(UNUSED_ATTRIBUTE uint64_t val, UNUSED_ATTRIBUTE uint num_indent) {
+  LOG_TRACE("%lu", val);
 }
 
 void PrintTableRefInfo(TableRef* table, UNUSED_ATTRIBUTE uint num_indent) {
@@ -105,8 +104,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr,
     return;
   }
 
-  LOG_INFO("-> Expr Type :: %s",
-           ExpressionTypeToString(expr->GetExpressionType()).c_str());
+  LOG_TRACE("-> Expr Type :: %s", ExpressionTypeToString(expr->GetExpressionType()).c_str());
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:

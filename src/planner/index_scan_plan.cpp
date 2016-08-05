@@ -30,7 +30,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       values_(std::move(index_scan_desc.values)),
       runtime_keys_(std::move(index_scan_desc.runtime_keys)) {
 
-  LOG_INFO("Creating an Index Scan Plan");
+  LOG_TRACE("Creating an Index Scan Plan");
 
   SetTargetTable(table);
 
@@ -44,7 +44,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
 }
 
 void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
-  LOG_INFO("Setting parameter values in Index Scans");
+  LOG_TRACE("Setting parameter values in Index Scans");
   auto where = predicate_with_params_->Copy();
   expression::ExpressionUtil::ConvertParameterExpressions(
       where, values, GetTable()->GetSchema());

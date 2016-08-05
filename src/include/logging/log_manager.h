@@ -89,7 +89,8 @@ class LogManager {
   // Check whether the frontend logger is in logging mode
   inline bool IsInLoggingMode() {
     // Check the logging status
-    return (logging_status == LOGGING_STATUS_TYPE_LOGGING);
+    auto is_in_logging_mode = (logging_status == LOGGING_STATUS_TYPE_LOGGING);
+    return is_in_logging_mode;
   }
 
   // Used to terminate current logging and wait for sleep mode
