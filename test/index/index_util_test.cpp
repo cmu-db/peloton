@@ -176,6 +176,48 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
                       EXPRESSION_TYPE_COMPARE_EQUAL});
   EXPECT_EQ(ret, false);
   
+  // Test empty
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {},
+                     {});
+  EXPECT_EQ(ret, false);
+  
+  // Test redundant conditions
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {0, 3, 3, 0, 3, 1},
+                     {EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_LESSTHAN,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL});
+  EXPECT_EQ(ret, true);
+  
+  // Test duplicated conditions on a single column
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {3, 3, 3},
+                     {EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_EQUAL});
+  EXPECT_EQ(ret, false);
+  
+  //
+  // The last test should logically be classified as point query
+  // but our procedure does not give positive result to reduce
+  // the complexity
+  //
+  
+  ret = IsPointQuery(index_p->GetMetadata(),
+                     {3, 0, 1, 0},
+                     {EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+                      EXPRESSION_TYPE_COMPARE_EQUAL,
+                      EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO});
+  EXPECT_EQ(ret, false);
+  
   return;
 }
   
