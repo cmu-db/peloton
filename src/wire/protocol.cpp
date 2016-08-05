@@ -523,7 +523,7 @@ void PacketManager::ExecDescribeMessage(Packet *pkt,
                                         ResponseBuffer &responses) {
   PktBuf mode;
   std::string portal_name;
-  LOG_INFO("Describe message");
+  LOG_TRACE("Describe message");
   PacketGetBytes(pkt, 1, mode);
   LOG_TRACE("mode %c", mode[0]);
   GetStringToken(pkt, portal_name);

@@ -153,7 +153,7 @@ bool InsertExecutor::DExecute() {
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
       if (tuple->GetColumnCount() > 2) {
-        LOG_INFO("value: %s", tuple->GetValue(2).GetInfo().c_str());
+        LOG_TRACE("value: %s", tuple->GetValue(2).GetInfo().c_str());
       }
 
       if (location.block == INVALID_OID) {

@@ -531,7 +531,7 @@ void SimpleOptimizer::GetPredicateColumns(
       std::string col_name(expr->GetName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
-      LOG_INFO("Column id: %d", column_id);
+      LOG_TRACE("Column id: %d", column_id);
       column_ids.push_back(column_id);
       expr_types.push_back(expression->GetExpressionType());
       if (left_type == EXPRESSION_TYPE_VALUE_CONSTANT) {
@@ -633,7 +633,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<planner::IndexScanPlan> orderline_scan_node(
       new planner::IndexScanPlan(orderline_table, predicate8, column_ids,
                                  index_scan_desc));
-  LOG_INFO("Index scan for order_line plan created");
+  LOG_DEBUG("Index scan for order_line plan created");
 
   // predicate for scanning stock table
   char s_w_id_name[] = "s_w_id";
@@ -664,7 +664,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   std::unique_ptr<planner::IndexScanPlan> stock_scan_node(
       new planner::IndexScanPlan(stock_table, predicate11, column_ids,
                                  index_scan_desc2));
-  LOG_INFO("Index scan plan for STOCK created");
+  LOG_DEBUG("Index scan plan for STOCK created");
 
   // Create hash plan node
   expression::AbstractExpression* right_table_attr_1 =
@@ -712,10 +712,10 @@ SimpleOptimizer::CreateHackingJoinPlan() {
       std::make_pair(0, inner_pair);
   DirectMapList direct_map_list;
   direct_map_list.emplace_back(outer_pair);
-  LOG_INFO("Direct map list: (%d, (%d, %d))", outer_pair.first,
-           outer_pair.second.first, outer_pair.second.second);
+  LOG_TRACE("Direct map list: (%d, (%d, %d))", outer_pair.first,
+            outer_pair.second.first, outer_pair.second.second);
 
-  LOG_INFO("Creating a ProjectInfo");
+  LOG_TRACE("Creating a ProjectInfo");
   std::unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(TargetList(), std::move(direct_map_list)));
 
@@ -731,12 +731,12 @@ SimpleOptimizer::CreateHackingJoinPlan() {
                       true);
   std::shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema({column}));
-  LOG_INFO("Output Schema Info: %s",
-           output_table_schema.get()->GetInfo().c_str());
+  LOG_DEBUG("Output Schema Info: %s",
+            output_table_schema.get()->GetInfo().c_str());
   std::unique_ptr<planner::AggregatePlan> agg_plan(new planner::AggregatePlan(
       std::move(proj_info), std::move(predicate), std::move(agg_terms),
       std::move(group_by_columns), output_table_schema, AGGREGATE_TYPE_PLAIN));
-  LOG_INFO("Aggregation plan constructed");
+  LOG_DEBUG("Aggregation plan constructed");
 
   agg_plan->AddChild(std::move(hash_join_plan_node));
 
