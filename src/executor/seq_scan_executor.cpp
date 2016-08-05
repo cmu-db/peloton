@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/seq_scan_executor.h"
 
 #include <memory>
@@ -146,17 +145,18 @@ bool SeqScanExecutor::DExecute() {
           } else {
             expression::ContainerTuple<storage::TileGroup> tuple(
                 tile_group.get(), tuple_id);
+            LOG_TRACE("Evaluate predicate for a tuple");
             auto eval = predicate_->Evaluate(&tuple, nullptr, executor_context_)
                             .IsTrue();
+            LOG_TRACE("Evaluation result: %d", eval);
             if (eval == true) {
               position_list.push_back(tuple_id);
               auto res = transaction_manager.PerformRead(location);
               if (!res) {
                 transaction_manager.SetTransactionResult(RESULT_FAILURE);
                 return res;
-              }
-              else {
-            	  LOG_TRACE("Sequential Scan Predicate Satisfied");
+              } else {
+                LOG_TRACE("Sequential Scan Predicate Satisfied");
               }
             }
           }
@@ -173,6 +173,7 @@ bool SeqScanExecutor::DExecute() {
       logical_tile->AddColumns(tile_group, column_ids_);
       logical_tile->AddPositionList(std::move(position_list));
 
+      LOG_TRACE("Information %s", logical_tile->GetInfo().c_str());
       SetOutput(logical_tile.release());
       return true;
     }

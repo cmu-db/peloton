@@ -129,7 +129,7 @@ public class PelotonTest {
     pstmt.setDouble(6, 5);
     pstmt.execute();
     pstmt = conn.prepareStatement(SELECT_STOCK_COMPLEX);
-    pstmt.setInt(1, 5);
+    pstmt.setInt(1, 4);
     pstmt.execute();
     System.out.println("Test db created.");
     System.exit(0);
