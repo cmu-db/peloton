@@ -52,6 +52,10 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
   }
 }
 
+/////////////////////////////////////////////////////////////////////
+// Mutating operations
+/////////////////////////////////////////////////////////////////////
+
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
                                                  const ItemPointer &location) {
@@ -146,7 +150,9 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
   return true;
 }
 
-///////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// Scan operations
+/////////////////////////////////////////////////////////////////////
 
 BTREE_TEMPLATE_ARGUMENT
 void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
@@ -190,15 +196,10 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
     if (special_case == true) {
       // Assumption: must have leading column, assume it's first one in
       // key_column_ids.
-      assert(key_column_ids.size() > 0);
+      PL_ASSERT(key_column_ids.size() > 0);
 
       oid_t leading_column_offset = 0;
       oid_t leading_column_id = key_column_ids[leading_column_offset];
-      
-      // Since we assume if there is a constraint on the leading
-      // column then the it must be the first one in the vector
-      // NOTE: This would fail index_Scan_test
-      //assert(leading_column_id == 0);
       
       std::vector<std::pair<Value, Value>> intervals;
 
@@ -240,7 +241,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
 
         LOG_TRACE("%s", "Constructing start/end keys\n");
 
-        LOG_TRACE("left bound %s\t\t right bound %s\n",
+        LOG_TRACE("(leading column) left bound %s\t\t right bound %s\n",
                   interval.first.GetInfo().c_str(),
                   interval.second.GetInfo().c_str());
 
@@ -250,7 +251,7 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
         for (const auto &k_v : non_leading_columns) {
           start_key->SetValue(k_v.first, k_v.second.first, GetPool());
           end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-          LOG_TRACE("left bound %s\t\t right bound %s\n",
+          LOG_INFO("left bound %s\t\t right bound %s\n",
                     k_v.second.first.GetInfo().c_str(),
                     k_v.second.second.GetInfo().c_str());
         }
