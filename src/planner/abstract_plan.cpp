@@ -70,43 +70,44 @@ void AbstractPlan::ReplaceColumnExpressions(
     catalog::Schema *schema, expression::AbstractExpression *expression) {
   LOG_TRACE("Expression Type --> %s",
             ExpressionTypeToString(expression->GetExpressionType()).c_str());
-  if (expression->GetLeft() == nullptr) return;
-  LOG_TRACE("Left Type --> %s",
-            ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
-                .c_str());
-  if (expression->GetRight() == nullptr) return;
-  LOG_TRACE("Right Type --> %s",
-            ExpressionTypeToString(expression->GetRight()->GetExpressionType())
-                .c_str());
-  if (expression->GetLeft()->GetExpressionType() ==
-      EXPRESSION_TYPE_COLUMN_REF) {
-    auto expr = expression->GetLeft();
-    std::string col_name(expr->GetName());
-    LOG_TRACE("Column name: %s", col_name.c_str());
-    delete expr;
-    expression->setLeftExpression(
-        expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
-                                                                  col_name));
+  if (expression->GetLeft() != nullptr) {
+    LOG_TRACE("Left Type --> %s",
+              ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
+                  .c_str());
+    if (expression->GetLeft()->GetExpressionType() ==
+        EXPRESSION_TYPE_COLUMN_REF) {
+      auto expr = expression->GetLeft();
+      std::string col_name(expr->GetName());
+      LOG_TRACE("Column name: %s", col_name.c_str());
+      delete expr;
+      expression->setLeftExpression(
+          expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
+                                                                    col_name));
 
-    ReplaceColumnExpressions(schema, expression->GetModifiableRight());
-    return;
+      return;
+    } else {
+      ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
+    }
   }
 
-  if (expression->GetRight()->GetExpressionType() ==
-      EXPRESSION_TYPE_COLUMN_REF) {
-    auto expr = expression->GetRight();
-    std::string col_name(expr->GetName());
-    LOG_TRACE("Column name: %s", col_name.c_str());
-    delete expr;
-    expression->setRightExpression(
-        expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
-                                                                  col_name));
-    ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
-    return;
+  if (expression->GetRight() != nullptr) {
+    LOG_TRACE("Right Type --> %s",
+              ExpressionTypeToString(
+                  expression->GetRight()->GetExpressionType()).c_str());
+    if (expression->GetRight()->GetExpressionType() ==
+        EXPRESSION_TYPE_COLUMN_REF) {
+      auto expr = expression->GetRight();
+      std::string col_name(expr->GetName());
+      LOG_TRACE("Column name: %s", col_name.c_str());
+      delete expr;
+      expression->setRightExpression(
+          expression::ExpressionUtil::ConvertToTupleValueExpression(schema,
+                                                                    col_name));
+      return;
+    } else {
+      ReplaceColumnExpressions(schema, expression->GetModifiableRight());
+    }
   }
-
-  ReplaceColumnExpressions(schema, expression->GetModifiableLeft());
-  ReplaceColumnExpressions(schema, expression->GetModifiableRight());
 }
 
 }  // namespace planner

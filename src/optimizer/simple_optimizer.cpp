@@ -493,6 +493,7 @@ void SimpleOptimizer::GetPredicateColumns(
 
   LOG_INFO("Expression Type --> %s",
            ExpressionTypeToString(expression->GetExpressionType()).c_str());
+  if (!(expression->GetLeft() && expression->GetRight())) return;
   LOG_INFO("Left Type --> %s",
            ExpressionTypeToString(expression->GetLeft()->GetExpressionType())
                .c_str());
