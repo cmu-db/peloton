@@ -66,6 +66,14 @@ class SkipListIndex : public Index {
   bool Cleanup() { return true; }
 
   size_t GetMemoryFootprint() { return 0; }
+  
+  bool NeedGC() {
+    return false;
+  }
+  
+  void PerformGC() {
+    return;
+  }
 
  protected:
   MapType container;

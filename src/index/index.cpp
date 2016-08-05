@@ -58,6 +58,11 @@ const std::string IndexMetadata::GetInfo() const {
   return os.str();
 }
 
+/*
+ * Compare() - Check whether a given index key satisfies a predicate
+ *
+ * The predicate has the same specification as those in Scan()
+ */
 bool Index::Compare(const AbstractTuple &index_key,
                     const std::vector<oid_t> &key_column_ids,
                     const std::vector<ExpressionType> &expr_types,
@@ -164,34 +169,26 @@ bool Index::Compare(const AbstractTuple &index_key,
   return true;
 }
 
-bool Index::IfForwardExpression(ExpressionType e) {
-  if (e == EXPRESSION_TYPE_COMPARE_GREATERTHAN ||
-      e == EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO) {
-    return true;
-  }
-  return false;
-}
-
-bool Index::IfBackwardExpression(ExpressionType e) {
-  if (e == EXPRESSION_TYPE_COMPARE_LESSTHAN ||
-      e == EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO) {
-    return true;
-  }
-  return false;
-}
-
-bool Index::ValuePairComparator(const std::pair<peloton::Value, int> &i,
-                                const std::pair<peloton::Value, int> &j) {
-  if (i.first.Compare(j.first) == VALUE_COMPARE_EQUAL) {
-    return i.second < j.second;
-  }
-  return i.first.Compare(j.first) == VALUE_COMPARE_LESSTHAN;
-}
-
+/*
+ * ConstructLowerBoundTuple() - Constructs a lower bound of index key that
+ *                              satisfies a given tuple
+ *
+ * The predicate has the same specification as those in Scan()
+ * This function works even if there are multiple predicates on a single
+ * column, e.g. both "<" and ">" could be applied to the same column. Even
+ * in this case this function correctly identifies the lower bound, though not
+ * necessarily be a tight lower bound.
+ *
+ * Note that this function logically is more proper to be in index_util than
+ * in here. But it must call the varlen pool which makes moving out to
+ * index_util impossible.
+ */
 bool Index::ConstructLowerBoundTuple(
-    storage::Tuple *index_key, const std::vector<peloton::Value> &values,
+    storage::Tuple *index_key,
+    const std::vector<peloton::Value> &values,
     const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types) {
+      
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
   bool all_constraints_equal = true;
@@ -199,40 +196,57 @@ bool Index::ConstructLowerBoundTuple(
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
+    
+    // If the current column of the key has a predicate item
+    // specified in the key column list
     auto key_column_itr =
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
+        
     bool placeholder = false;
     Value value;
 
     // This column is part of the key column ids
     if (key_column_itr != key_column_ids.end()) {
+      
+      // This is the index into value list and expression type list
       auto offset = std::distance(key_column_ids.begin(), key_column_itr);
-      // Equality constraint
+      
+      // If there is an "==" for the current column then we could fix the value
+      // for index key
+      // otherwise we know not all predicate items are "==", i.e. this is not
+      // a point query and potentially requires an index scan
       if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQUAL) {
         placeholder = true;
+        
+        // This is the value object that will be filled into the index key
         value = values[offset];
-      }
-      // Not all expressions / constraints are equal
-      else {
+      } else {
         all_constraints_equal = false;
       }
     }
 
     LOG_TRACE("Column itr : %u  Placeholder : %d ", column_itr, placeholder);
 
-    // Fill in the placeholder
+    // If the value is available then just fill in the value for the
+    // current "==" relation
+    // Otherwise if there is not a value then we could only fill the
+    // min possible value of the current column's type
     if (placeholder == true) {
       index_key->SetValue(column_itr, value, GetPool());
-    }
-    // Fill in the min value
-    else {
+    } else {
       auto value_type = schema->GetType(column_itr);
-      index_key->SetValue(column_itr, Value::GetMinValue(value_type),
+      
+      index_key->SetValue(column_itr,
+                          Value::GetMinValue(value_type),
                           GetPool());
     }
-  }
+  } // for all columns in index key
 
   LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
+  
+  // Corner case: If not all columns have a "==" relation then still
+  // this is not a point query though all existing predicate items
+  // are "=="
   if (col_count > values.size()) all_constraints_equal = false;
 
   return all_constraints_equal;

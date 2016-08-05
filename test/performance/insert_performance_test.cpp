@@ -4,7 +4,7 @@
 //
 // loader_test.cpp
 //
-// Identification: test/executor/loader_test.cpp
+// Identification: test/performance/insert_performance_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //

@@ -132,7 +132,7 @@ public class PelotonTest {
     pstmt.setInt(1, 4);
     pstmt.execute();
     System.out.println("Test db created.");
-    System.exit(0);
+    //System.exit(0);
   }
 
   public void ShowTable() throws SQLException {

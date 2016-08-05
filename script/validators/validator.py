@@ -70,7 +70,8 @@ SKIP_FILES_LIST = [
     "src/include/parser/statement_insert.h",
     "src/include/parser/statement_prepare.h",
     "src/include/parser/statement_update.h",
-    "src/parser/table_ref.cpp"
+    "src/parser/table_ref.cpp",
+    "src/include/index/bloom_filter.h"
 ];
 
 ## ==============================================
