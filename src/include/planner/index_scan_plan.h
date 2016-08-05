@@ -35,10 +35,6 @@ namespace planner {
 
 class IndexScanPlan : public AbstractScan {
  public:
-  IndexScanPlan(const IndexScanPlan &) = delete;
-  IndexScanPlan &operator=(const IndexScanPlan &) = delete;
-  IndexScanPlan(IndexScanPlan &&) = delete;
-  IndexScanPlan &operator=(IndexScanPlan &&) = delete;
 
   /*
    * class IndexScanDesc - Stores information to do the index scan
@@ -75,6 +71,15 @@ class IndexScanPlan : public AbstractScan {
     // ???
     std::vector<expression::AbstractExpression *> runtime_key_list;
   };
+  
+  ///////////////////////////////////////////////////////////////////
+  // Members of IndexScanPlan
+  ///////////////////////////////////////////////////////////////////
+  
+  IndexScanPlan(const IndexScanPlan &) = delete;
+  IndexScanPlan &operator=(const IndexScanPlan &) = delete;
+  IndexScanPlan(IndexScanPlan &&) = delete;
+  IndexScanPlan &operator=(IndexScanPlan &&) = delete;
 
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
@@ -128,8 +133,12 @@ class IndexScanPlan : public AbstractScan {
   /** @brief index associated with index scan. */
   std::shared_ptr<index::Index> index_;
 
+  // A list of column IDs involved in the index scan no matter whether
+  // it is indexed or not (i.e. select statement)
   const std::vector<oid_t> column_ids_;
 
+  // A list of column IDs involved in the index scan that are indexed by
+  // the index choen inside the optimizer
   const std::vector<oid_t> key_column_ids_;
 
   const std::vector<ExpressionType> expr_types_;
