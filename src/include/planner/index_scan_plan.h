@@ -41,43 +41,56 @@ class IndexScanPlan : public AbstractScan {
   IndexScanPlan(IndexScanPlan &&) = delete;
   IndexScanPlan &operator=(IndexScanPlan &&) = delete;
 
+  /*
+   * class IndexScanDesc - Stores information to do the index scan
+   */
   struct IndexScanDesc {
     IndexScanDesc() {}
 
-    IndexScanDesc(
-        std::shared_ptr<index::Index> index_,
-        const std::vector<oid_t> &column_ids,
-        const std::vector<ExpressionType> &expr_types,
-        const std::vector<Value> &values,
-        const std::vector<expression::AbstractExpression *> &runtime_keys)
-        : index(index_),
-          key_column_ids(column_ids),
-          expr_types(expr_types),
-          values(values),
-          runtime_keys(runtime_keys) {}
+    IndexScanDesc(std::shared_ptr<index::Index> p_index,
+                  const std::vector<oid_t> &p_tuple_column_id_list,
+                  const std::vector<ExpressionType> &expr_list_p,
+                  const std::vector<Value> &p_value_list,
+                  const std::vector<expression::AbstractExpression *> \
+                    &p_runtime_key_list) :
+      index_obj(p_index),
+      tuple_column_id_list(p_tuple_column_id_list),
+      expr_list(expr_list_p),
+      value_list(p_value_list),
+      runtime_key_list(p_runtime_key_list)
+    {}
 
-    std::shared_ptr<index::Index> index;
+    // The index object for scanning
+    std::shared_ptr<index::Index> index_obj;
 
-    std::vector<oid_t> key_column_ids;
+    // A list of columns id in the base table that has a scan predicate
+    // (only for indexed column in the base table)
+    std::vector<oid_t> tuple_column_id_list;
 
-    std::vector<ExpressionType> expr_types;
+    // A list of expressions
+    std::vector<ExpressionType> expr_list;
 
-    std::vector<Value> values;
+    // A list of values either bounded or unbounded
+    std::vector<Value> value_list;
 
-    std::vector<expression::AbstractExpression *> runtime_keys;
+    // ???
+    std::vector<expression::AbstractExpression *> runtime_key_list;
   };
 
   IndexScanPlan(storage::DataTable *table,
                 expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
-                const IndexScanDesc &index_scan_desc)
-      : AbstractScan(table, predicate, column_ids),
-        index_(index_scan_desc.index),
-        column_ids_(column_ids),
-        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-        expr_types_(std::move(index_scan_desc.expr_types)),
-        values_(std::move(index_scan_desc.values)),
-        runtime_keys_(std::move(index_scan_desc.runtime_keys)) {}
+                const IndexScanDesc &index_scan_desc) :
+    AbstractScan(table,
+                 predicate,
+                 column_ids),
+    index_(index_scan_desc.index_obj),
+    column_ids_(column_ids),
+    key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
+    expr_types_(std::move(index_scan_desc.expr_list)),
+    values_(std::move(index_scan_desc.value_list)),
+    runtime_keys_(std::move(index_scan_desc.runtime_key_list))
+  {}
 
   ~IndexScanPlan() {
     for (auto expr : runtime_keys_) {

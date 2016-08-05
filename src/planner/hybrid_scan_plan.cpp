@@ -28,11 +28,11 @@ namespace planner {
     : AbstractScan(table, predicate, column_ids),
       type_(hybrid_scan_type),
       column_ids_(column_ids),
-      key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-      expr_types_(std::move(index_scan_desc.expr_types)),
-      values_(std::move(index_scan_desc.values)),
-      runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-      index_(index_scan_desc.index){}
+      key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
+      expr_types_(std::move(index_scan_desc.expr_list)),
+      values_(std::move(index_scan_desc.value_list)),
+      runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
+      index_(index_scan_desc.index_obj){}
 
 }
 }
