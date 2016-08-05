@@ -22,6 +22,7 @@
 
 #include "common/printable.h"
 #include "common/types.h"
+#include "common/logger.h"
 
 namespace peloton {
 
@@ -61,15 +62,7 @@ class IndexMetadata : public Printable {
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 const std::vector<oid_t>& key_attrs,
-                bool unique_keys)
- : index_name(index_name),
-   index_oid(index_oid),
-   method_type(method_type),
-   index_type(index_type),
-   tuple_schema(tuple_schema),
-   key_schema(key_schema),
-   key_attrs(key_attrs),
-   unique_keys(unique_keys) {}
+                bool unique_keys);
 
   ~IndexMetadata();
 
@@ -112,12 +105,21 @@ class IndexMetadata : public Printable {
    * GetKeyAttrs() - Returns the mapping relation between indexed columns
    *                 and base table columns
    *
-   * The return value is a vector object (instead of an object reference)
+   * The return value is a const vector reference
+   *
    * The entry whose value is j on index i means the i-th column in the
    * key is mapped to the j-th column in the base table tuple
    */
-  std::vector<oid_t> GetKeyAttrs() const {
+  const std::vector<oid_t> &GetKeyAttrs() const {
     return key_attrs;
+  }
+  
+  /*
+   * GetTupleToIndexMapping() - Returns the mapping relation between tuple key
+   *                            column and index key columns
+   */
+  const std::vector<oid_t> &GetTupleToIndexMapping() const {
+    return tuple_attrs;
   }
 
   double GetUtility() const {
@@ -154,6 +156,13 @@ class IndexMetadata : public Printable {
 
   // The mapping relation between key schema and tuple schema
   std::vector<oid_t> key_attrs;
+  
+  // The mapping relation between tuple schema and key schema
+  // i.e. if the column in tuple is not indexed, then it is set to INVALID_OID
+  //      if the column in tuple is indexed, then it is the index in index_key
+  //
+  // This vector has the same length as the tuple schema.columns
+  std::vector<oid_t> tuple_attrs;
 
   // Whether keys are unique (e.g. primary key)
   bool unique_keys;

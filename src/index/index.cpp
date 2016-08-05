@@ -34,12 +34,45 @@ oid_t IndexMetadata::GetColumnCount() const {
   return GetKeySchema()->GetColumnCount();
 }
 
-Index::~Index() {
-  // clean up metadata
-  delete metadata;
+/*
+ * Constructor - Initializes tuple key to index mapping
+ */
+IndexMetadata::IndexMetadata(std::string index_name,
+                             oid_t index_oid,
+                             IndexType method_type,
+                             IndexConstraintType index_type,
+                             const catalog::Schema *tuple_schema,
+                             const catalog::Schema *key_schema,
+                             const std::vector<oid_t>& key_attrs,
+                             bool unique_keys) :
+  index_name(index_name),
+  index_oid(index_oid),
+  method_type(method_type),
+  index_type(index_type),
+  tuple_schema(tuple_schema),
+  key_schema(key_schema),
+  key_attrs(key_attrs),
+  tuple_attrs(),
+  unique_keys(unique_keys) {
 
-  // clean up pool
-  delete pool;
+  // Push the reverse mapping relation into tuple_attrs which maps
+  // tuple key's column into index key's column
+  // resize() automatially does allocation, extending and insertion
+  tuple_attrs.resize(tuple_schema->GetColumnCount(), INVALID_OID);
+
+  // For those column IDs not mapped, they are set to INVALID_OID
+  for(oid_t i = 0;i < key_attrs.size();i++) {
+    // That is the tuple column ID that index key column i is mapped to
+    oid_t tuple_column_id = key_attrs[i];
+
+    // The tuple column must be included into key_attrs, otherwise
+    // the construction argument is malformed
+    PL_ASSERT(tuple_column_id < tuple_attrs.size());
+
+    tuple_attrs[tuple_column_id] = i;
+  }
+
+  return;
 }
 
 IndexMetadata::~IndexMetadata() {
@@ -62,6 +95,18 @@ const std::string IndexMetadata::GetInfo() const {
   os << utility_ratio;
 
   return os.str();
+}
+
+/////////////////////////////////////////////////////////////////////
+// Member function definition for class Index
+/////////////////////////////////////////////////////////////////////
+
+Index::~Index() {
+  // clean up metadata
+  delete metadata;
+
+  // clean up pool
+  delete pool;
 }
 
 /*
