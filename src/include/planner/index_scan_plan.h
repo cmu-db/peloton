@@ -46,13 +46,13 @@ class IndexScanPlan : public AbstractScan {
   struct IndexScanDesc {
     IndexScanDesc() {}
 
-    IndexScanDesc(std::shared_ptr<index::Index> p_index,
+    IndexScanDesc(std::shared_ptr<index::Index> p_index_obj,
                   const std::vector<oid_t> &p_tuple_column_id_list,
                   const std::vector<ExpressionType> &expr_list_p,
                   const std::vector<Value> &p_value_list,
                   const std::vector<expression::AbstractExpression *> \
                     &p_runtime_key_list) :
-      index_obj(p_index),
+      index_obj(p_index_obj),
       tuple_column_id_list(p_tuple_column_id_list),
       expr_list(expr_list_p),
       value_list(p_value_list),
