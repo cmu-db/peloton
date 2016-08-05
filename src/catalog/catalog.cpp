@@ -159,7 +159,7 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
 Result Catalog::CreateIndex(const std::string &database_name,
                             const std::string &table_name,
                             std::vector<std::string> index_attr,
-                            std::string index_name, bool unique) {
+                            std::string index_name, bool unique, IndexType index_type) {
 
   auto database = GetDatabaseWithName(database_name);
   if (database != nullptr) {
@@ -201,12 +201,12 @@ Result Catalog::CreateIndex(const std::string &database_name,
     if (unique == false) {
       index_metadata = new index::IndexMetadata(
           index_name.c_str(), Manager::GetInstance().GetNextOid(),
-          INDEX_TYPE_SKIPLIST, INDEX_CONSTRAINT_TYPE_DEFAULT, schema,
+          index_type, INDEX_CONSTRAINT_TYPE_DEFAULT, schema,
           key_schema, key_attrs, true);
     } else {
       index_metadata = new index::IndexMetadata(
           index_name.c_str(), Manager::GetInstance().GetNextOid(),
-          INDEX_TYPE_SKIPLIST, INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema,
+          index_type, INDEX_CONSTRAINT_TYPE_UNIQUE, schema, key_schema,
           key_attrs, true);
     }
 
