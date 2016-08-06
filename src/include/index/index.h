@@ -211,9 +211,9 @@ class Index : public Printable {
 
   virtual ~Index();
 
-  //===--------------------------------------------------------------------===//
-  // Mutators
-  //===--------------------------------------------------------------------===//
+  ///////////////////////////////////////////////////////////////////
+  // Point Modification
+  ///////////////////////////////////////////////////////////////////
 
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key,
@@ -233,9 +233,9 @@ class Index : public Printable {
                                std::function<bool(const ItemPointer &)> \
                                  predicate) = 0;
 
-  //===--------------------------------------------------------------------===//
-  // Accessors
-  //===--------------------------------------------------------------------===//
+  ///////////////////////////////////////////////////////////////////
+  // Index Scan
+  ///////////////////////////////////////////////////////////////////
 
   virtual void Scan(const std::vector<Value> &values,
                     const std::vector<oid_t> &key_column_ids,
@@ -247,6 +247,10 @@ class Index : public Printable {
 
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
+
+  ///////////////////////////////////////////////////////////////////
+  // Garbage Collection
+  ///////////////////////////////////////////////////////////////////
 
   // This gives a hint on whether GC is needed on the index
   // For those that do not need GC this always return false
@@ -336,11 +340,12 @@ class Index : public Printable {
 
   // Get the indexed tile group offset
   virtual size_t GetIndexedTileGroupOff() {
-    return indexed_tile_group_offset_.load();
+    return indexed_tile_group_offset.load();
   }
 
   virtual void IncrementIndexedTileGroupOffset() {
-    indexed_tile_group_offset_++;
+    indexed_tile_group_offset++;
+    
     return;
   }
 
@@ -375,8 +380,9 @@ class Index : public Printable {
 
   // pool
   VarlenPool *pool = nullptr;
-
-  std::atomic<size_t> indexed_tile_group_offset_;
+  
+  // This is used by index tuner
+  std::atomic<size_t> indexed_tile_group_offset;
 };
 
 }  // End index namespace
