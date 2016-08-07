@@ -118,7 +118,7 @@ const std::string IndexMetadata::GetInfo() const {
  */
 Index::Index(IndexMetadata *metadata) :
   metadata(metadata),
-  indexed_tile_group_offset_(0) {
+  indexed_tile_group_offset(0) {
 
   // This is redundant
   index_oid = metadata->GetOid();
