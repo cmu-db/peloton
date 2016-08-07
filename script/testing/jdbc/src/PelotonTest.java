@@ -1,4 +1,8 @@
 import java.sql.*;
+import org.postgresql.util.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 
 /**
  * Author:  Ming Fang
@@ -141,9 +145,15 @@ public class PelotonTest {
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
     pstmt = conn.prepareStatement(INSERT_TIMESTAMP);
-    Timestamp sysdate = new java.sql.Timestamp(
+    java.sql.Timestamp sysdate = new java.sql.Timestamp(
 			System.currentTimeMillis());
-    pstmt.setTimestamp(1, sysdate);
+    java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+    Timestamp timestamp = new org.postgresql.util.PGTimestamp(System.currentTimeMillis());
+    LocalDateTime datetime = new LocalDateTime();
+    //pstmt.setDate(1, today);
+    //pstmt.setTimestamp(1, timestamp, null);
+    //pstmt.setTimestamp(1, sysdate);
+    pstmt.setTimestamp(1, datetime, null);
     pstmt.execute();
     System.out.println("Test db created.");
     //System.exit(0);
