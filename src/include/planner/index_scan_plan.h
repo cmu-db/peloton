@@ -20,11 +20,13 @@
 #include "common/types.h"
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
+#include "index/scan_optimizer.h"
 
 namespace peloton {
 
 namespace index {
 class Index;
+class ConjunctionScanPredicate;
 }
 
 namespace storage {
@@ -149,6 +151,8 @@ class IndexScanPlan : public AbstractScan {
   std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
+  
+  index::ConjunctionScanPredicate index_predicate;
 };
 
 }  // namespace planner
