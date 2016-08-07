@@ -474,6 +474,15 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
                 ValueType::VALUE_TYPE_INTEGER, std::to_string(int_val)));
             param_values->push_back(ValueFactory::GetIntegerValue(int_val));
           } break;
+          case POSTGRES_VALUE_TYPE_BIGINT: {
+            int64_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int64_t); ++i) {
+              int_val = (int_val << 8) | param[i];
+            }
+            bind_parameters.push_back(std::make_pair(
+                ValueType::VALUE_TYPE_BIGINT, std::to_string(int_val)));
+            param_values->push_back(ValueFactory::GetBigIntValue(int_val));
+          } break;
           case POSTGRES_VALUE_TYPE_DOUBLE: {
             double float_val = 0;
             unsigned long buf = 0;
