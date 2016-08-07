@@ -454,6 +454,7 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
         // TEXT mode
         LOG_TRACE("param %d type: %d", param_idx, param_types[param_idx]);
         std::string param_str = std::string(std::begin(param), std::end(param));
+        LOG_TRACE("Text content: %s", param_str.c_str());
         bind_parameters.push_back(
             std::make_pair(ValueType::VALUE_TYPE_VARCHAR, param_str));
         param_values->push_back(

@@ -1,7 +1,5 @@
 import java.sql.*;
 import org.postgresql.util.*;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 
 
 /**
@@ -149,11 +147,10 @@ public class PelotonTest {
 			System.currentTimeMillis());
     java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
     Timestamp timestamp = new org.postgresql.util.PGTimestamp(System.currentTimeMillis());
-    LocalDateTime datetime = new LocalDateTime();
     //pstmt.setDate(1, today);
-    //pstmt.setTimestamp(1, timestamp, null);
+    pstmt.setTimestamp(1, timestamp, null);
     //pstmt.setTimestamp(1, sysdate);
-    pstmt.setTimestamp(1, datetime, null);
+    //pstmt.setTimestamp(1, datetime, null);
     pstmt.execute();
     System.out.println("Test db created.");
     //System.exit(0);
