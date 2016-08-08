@@ -261,6 +261,52 @@ class ConjunctionScanPredicate {
     
     return;
   }
+  
+  /*
+   * LateBind() - Bind values to all columns of a given index key according
+   *              to the previous planning result
+   *
+   * This function assumes that all values must be valid and should not
+   * be placeholders
+   */
+  void LateBind(Index *index_p,
+                const std::vector<Value> &value_list,
+                const std::vector<std::pair<oid_t, oid_t>> key_bind_list,
+                storage::Tuple *index_key_p) {
+    // For each item <key column index, value list index> do the binding job
+    for(auto &bind_item : key_bind_list) {
+      oid_t bind_ret = BindValueToIndexKey(index_p,
+                                           value_list[bind_item.second],
+                                           index_key_p,
+                                           bind_item.first);
+                                           
+      // This could not be other values since all values must be
+      // valid during the binding stage
+      PL_ASSERT(bind_ret == INVALID_OID);
+    }
+    
+    return;
+  }
+  
+  /*
+   * LateBindValues() - Late bind values given in the argument to the high key
+   *                    and low key inside this object
+   *
+   * NOTE: This function is not thread-safe since if multiple threads are
+   * calling this function, then the outcome is undefined. But anyway this
+   * should be called together with IndexScanPlan's SetParameterValues(), so
+   * if that function is not multithreaded then it is OK for this to be not
+   * multithreaded
+   */
+  void LateBindValues(Index *index_p,
+                      const std::vector<Value> &value_list) {
+
+    // Bind values to low key and high key respectively
+    LateBind(index_p, value_list, low_key_bind_list, low_kep_p);
+    LateBind(index_p, value_list, high_key_bind_list, high_kep_p);
+    
+    return;
+  }
 };
   
 }  // End index namespace
