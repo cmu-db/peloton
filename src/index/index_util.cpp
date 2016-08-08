@@ -84,7 +84,8 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
 }
 
 /*
- * IsPointQuery() - Check whether a predicate scan is point query
+ * FindValueIndex() - Check whether a predicate scan is point query
+ *                    and construct value_index_list
  *
  * Point query may be implemented by the index as a more efficient
  * operation than scanning with a key, which is the case for BwTree.
@@ -124,10 +125,10 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
  * NOTE 3: This function does not guarantee it is malloc()-free, since it calls
  * reserve() on value_index_list.
  */
-bool IsPointQuery(const IndexMetadata *metadata_p,
-                  const std::vector<oid_t> &tuple_column_id_list,
-                  const std::vector<ExpressionType> &expr_list,
-                  std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
+bool FindValueIndex(const IndexMetadata *metadata_p,
+                    const std::vector<oid_t> &tuple_column_id_list,
+                    const std::vector<ExpressionType> &expr_list,
+                    std::vector<std::pair<oid_t, oid_t>> &value_index_list) {
 
   // Make sure these two are consistent at least on legnth
   PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
