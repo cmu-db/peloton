@@ -148,10 +148,23 @@ class IndexScanPlan : public AbstractScan {
   expression::AbstractExpression *predicate_with_params_ = nullptr;
 
   // LM: I removed a const keyword for binding purpose
+  //
+  // The life time of the scan predicate is as long as the lifetime
+  // of this array, since we always use the values in this array to
+  // construct low key and high key for the scan plan, it should stay
+  // valid until the scan plan is destructed
+  //
+  // Note that when binding values to the scan plan we copy those values
+  // into this array, which means the lifetime of values being bound is
+  // also the lifetime of the IndexScanPlan object
   std::vector<Value> values_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
   
+  // Currently we just support single conjunction predicate
+  //
+  // In the future this might be extended into an array of conjunctive
+  // predicates connected by disjunction
   index::ConjunctionScanPredicate index_predicate;
 };
 
