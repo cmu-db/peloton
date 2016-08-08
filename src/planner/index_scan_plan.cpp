@@ -29,7 +29,12 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       expr_types_(std::move(index_scan_desc.expr_list)),
       values_(std::move(index_scan_desc.value_list)),
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
-      index_predicate() {
+      // Initialize the index scan predicate object and initialize all
+      // keys that we could initialize
+      index_predicate(index_.get(),
+                      values_,
+                      key_column_ids_,
+                      expr_types_) {
 
   LOG_TRACE("Creating an Index Scan Plan");
 
