@@ -31,10 +31,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
       // Initialize the index scan predicate object and initialize all
       // keys that we could initialize
-      index_predicate(index_.get(),
-                      values_,
-                      key_column_ids_,
-                      expr_types_) {
+      index_predicate() {
 
   LOG_TRACE("Creating an Index Scan Plan");
 
@@ -47,6 +44,13 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     ReplaceColumnExpressions(table->GetSchema(), predicate_with_params_);
     SetPredicate(predicate_with_params_->Copy());
   }
+  
+  // Then add the only conjunction predicate into the index predicate list
+  // (at least for now we only supports single conjunction)
+  index_predicate.AddConjunctionScanPredicate(index_.get(),
+                                              values_,
+                                              key_column_ids_,
+                                              expr_types_);
   
   return;
 }

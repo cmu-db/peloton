@@ -165,7 +165,7 @@ class IndexScanPlan : public AbstractScan {
   //
   // In the future this might be extended into an array of conjunctive
   // predicates connected by disjunction
-  index::ConjunctionScanPredicate index_predicate;
+  index::IndexScanPredicate index_predicate;
 };
 
 }  // namespace planner
