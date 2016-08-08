@@ -70,6 +70,17 @@ class ConjunctionScanPredicate {
   // If is point query then the ubound and lbound index must be equal
   bool is_point_query;
   
+  // Only queries with > >= == < <= get a chance to be optimized
+  // i.e. those with IN NOT IN LIKE NOT LIKE NOT EQUAL could not be optimized
+  // and they will result in an index scan
+  //
+  // There is a trick to make the situation less miserable: if there are
+  // many conjunctive predicates, and if one of them require a full index
+  // scan, then we do not conduct index scan multiple times, and instead
+  // only a full index scan is done and we let the index scan plan to
+  // filter tuples using its full predicate
+  bool full_index_scan;
+  
   // These two represents low key and high key of the predicate scan
   // We fill in these two values using the information available as much as
   // we can, and if there are still values missing (that needs to be bound at
@@ -92,21 +103,81 @@ class ConjunctionScanPredicate {
     // It contains a pointer to the index key schema
     IndexMetadata *metadata_p = index_p->GetMetadata();
     
-    // Then allocate storage for key template
-    
-    // Give it a schema and true flag to let the constructor allocate
-    // memory for holding fields inside the tuple
+    // If there are expressions that result in full index scan
+    // then this flag is set, and we do not construct lower bound
     //
-    // The schema will not be freed by tuple, but its internal data array will
-    low_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
-    high_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
+    // Actually if we do not do this optimization, ConstructScanInterval()
+    // could still correctly construct all bounds as +/-Inf, but the index
+    // scanner does not know that we will do a table scan so in the case
+    // of multiple disjunctive predicates there might be multiple scan
+    // which is wasteful since a single index full scan should cover all cases
+    full_index_scan = HasNonOptimizablePredicate(expr_list);
     
-    // This further initializes is_point_query flag, and then
-    // fill the high key and low key with boundary values
-    ConstructScanInterval(index_p,
-                          value_list,
-                          tuple_column_id_list,
-                          expr_list);
+    // Only construct the two keys when full table scan is unnecessary
+    if(full_index_scan == false) {
+      // Then allocate storage for key template
+
+      // Give it a schema and true flag to let the constructor allocate
+      // memory for holding fields inside the tuple
+      //
+      // The schema will not be freed by tuple, but its internal data array will
+      low_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
+      high_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
+      
+      // This further initializes is_point_query flag, and then
+      // fill the high key and low key with boundary values
+      ConstructScanInterval(index_p,
+                            value_list,
+                            tuple_column_id_list,
+                            expr_list);
+    } else {
+      // This will not be touched in the destructor
+      low_key_p = nullptr;
+      high_key_p = nullptr;
+      
+      // This must hold since full table scan could not be point query
+      is_point_query = false;
+    }
+    
+    return;
+  }
+  
+  /*
+   * Copy Constructor - Deleted
+   *
+   * This was deleted to avoid copying the two member pointers without
+   * a clear pointer ownership
+   */
+  ConjunctionScanPredicate(const ConjunctionScanPredicate &) = delete;
+  
+  /*
+   * operator= - Deleted
+   *
+   * Same reason as deleting the copy constructor
+   */
+  ConjunctionScanPredicate &operator=(const ConjunctionScanPredicate &) = delete;
+  
+  /*
+   * Move assignment - Deleted
+   *
+   * Same reason as deleting the copy constructor
+   */
+  ConjunctionScanPredicate &operator=(ConjunctionScanPredicate &&) = delete;
+  
+  /*
+   * Move Constructor - Clear the child pointer in the old predicate
+   */
+  ConjunctionScanPredicate(ConjunctionScanPredicate &&other) :
+    value_index_list{std::move(other.value_index_list)},
+    low_key_bind_list{std::move(other.low_key_bind_list)},
+    high_key_bind_list{std::move(other.high_key_bind_list)},
+    is_point_query(other.is_point_query),
+    full_index_scan{other.full_index_scan},
+    low_key_p{other.low_key_p},
+    high_key_p{other.high_key_p} {
+    // Clear the original object
+    other.low_key_p = nullptr;
+    other.high_key_p = nullptr;
     
     return;
   }
@@ -116,10 +187,20 @@ class ConjunctionScanPredicate {
    *
    * NOTE: If there is memory leak then it is likely to be caused
    * by pointer ownership problem brought about by Tuple and Value
+   *
+   * NOTE 2: We must check whether the pointer is nullptr, since for a
+   * move constructor it is possible that the keys are cleared
    */
   ~ConjunctionScanPredicate() {
-    delete low_key_p;
-    delete high_key_p;
+    if(low_key_p != nullptr) {
+      delete low_key_p;
+      
+      PL_ASSERT(high_key_p != nullptr);
+    }
+    
+    if(high_key_p != nullptr) {
+      delete high_key_p;
+    }
     
     return;
   }
@@ -306,6 +387,33 @@ class ConjunctionScanPredicate {
     LateBind(index_p, value_list, high_key_bind_list, high_key_p);
     
     return;
+  }
+};
+
+
+/*
+ * class IndexScanPredicate - The predicate for index scan
+ *
+ * This class maintains planner information about index scan, especially
+ * columns involved in the index scan and their corresponding values.
+ *
+ * Please note that this class represents the most general form of scan
+ * predicate that does not have any other constraints
+ */
+class IndexScanPredicate {
+ private:
+
+  // This holds all conjunctions which are assumed to be connected
+  // together by disjunctions
+  std::vector<ConjunctionScanPredicate> conjunction_list;
+
+ public:
+
+  /*
+   * Constructor -
+   */
+  IndexScanPredicate() {
+
   }
 };
   
