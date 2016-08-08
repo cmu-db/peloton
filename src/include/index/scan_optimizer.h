@@ -378,13 +378,19 @@ class ConjunctionScanPredicate {
    * should be called together with IndexScanPlan's SetParameterValues(), so
    * if that function is not multithreaded then it is OK for this to be not
    * multithreaded
+   *
+   * NOTE 2: If the current query is point query then we only bind the low key
+   * since for point query there is one query key
    */
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
 
     // Bind values to low key and high key respectively
     LateBind(index_p, value_list, low_key_bind_list, low_key_p);
-    LateBind(index_p, value_list, high_key_bind_list, high_key_p);
+    
+    if(is_point_query == false) {
+      LateBind(index_p, value_list, high_key_bind_list, high_key_p);
+    }
     
     return;
   }
@@ -475,9 +481,16 @@ class IndexScanPredicate {
    */
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
-    for(const ConjunctionScanPredicate &conjunction_item : conjunction_list) {
-
+    if(full_index_scan == true) {
+      return;
     }
+    
+    // For every conjunction predicate, bind value on them one by one
+    for(const ConjunctionScanPredicate &conjunction_item : conjunction_list) {
+      cunjunction_item.LateBindValues(index_p, value_list);
+    }
+    
+    return;
   }
 };
   
