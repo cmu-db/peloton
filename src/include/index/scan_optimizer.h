@@ -41,6 +41,14 @@ namespace index {
  *
  * This class does not store the predicate itself (they should be stored as
  * vectors elsewhere)
+ *
+ * There are two corner cases with this class: full index scan and point query
+ *
+ * For full index scan, no key allocation is done, and both low key and high key
+ * should not be touched on all cases, including construction of bounds and
+ * value late binding. For point query, only the low key should be touched,
+ * and it is exactly the key for construction of lower bound and for value
+ * late binding
  */
 class ConjunctionScanPredicate {
  private:
@@ -250,6 +258,8 @@ class ConjunctionScanPredicate {
    * the IndexScanPlan object, assuming that for each column there is only one
    * interval to scan, such that the scan could be classified by its high key
    * and low key. This is true for AND, but not true for OR
+   *
+   * NOTE 2: This function should not be called if full_index_scan is true
    */
   void ConstructScanInterval(Index *index_p,
                              const std::vector<Value> &value_list,
@@ -264,10 +274,10 @@ class ConjunctionScanPredicate {
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
-    is_point_query = IsPointQuery(metadata_p,
-                                  tuple_column_id_list,
-                                  expr_list,
-                                  value_index_list);
+    is_point_query = FindValueIndex(metadata_p,
+                                    tuple_column_id_list,
+                                    expr_list,
+                                    value_index_list);
     
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
@@ -354,11 +364,15 @@ class ConjunctionScanPredicate {
    *
    * This function assumes that all values must be valid and should not
    * be placeholders
+   *
+   * NOTE: This function could not be called if full_index_scan is true
    */
   void LateBind(Index *index_p,
                 const std::vector<Value> &value_list,
                 const std::vector<std::pair<oid_t, oid_t>> key_bind_list,
                 storage::Tuple *index_key_p) {
+    PL_ASSERT(full_index_scan == false);
+                  
     // For each item <key column index, value list index> do the binding job
     for(auto &bind_item : key_bind_list) {
       oid_t bind_ret = BindValueToIndexKey(index_p,
@@ -386,10 +400,13 @@ class ConjunctionScanPredicate {
    *
    * NOTE 2: If the current query is point query then we only bind the low key
    * since for point query there is one query key
+   *
+   * NOTE 3: This function could not be called if full_index_scan if true
    */
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
-
+    PL_ASSERT(full_index_scan == false);
+    
     // Bind values to low key and high key respectively
     LateBind(index_p, value_list, low_key_bind_list, low_key_p);
     
@@ -404,8 +421,15 @@ class ConjunctionScanPredicate {
    * IsFullIndexScan() - Return whether this conjunction predicate is a full
    *                     index scan
    */
-  inline IsFullIndexScan() const {
+  inline bool IsFullIndexScan() const {
     return full_index_scan;
+  }
+  
+  /*
+   * IsPointQuery() - Returns whether this conjunction is a point query
+   */
+  inline bool IsPointQuery() const {
+    return is_point_query;
   }
   
   /*
@@ -416,6 +440,7 @@ class ConjunctionScanPredicate {
    */
   inline const storage::Tuple *GetLowKey() const {
     PL_ASSERT(is_point_query == false);
+    PL_ASSERT(full_index_scan == false);
     
     return low_key_p;
   }
@@ -428,6 +453,7 @@ class ConjunctionScanPredicate {
    */
   inline const storage::Tuple *GetHighKey() const {
     PL_ASSERT(is_point_query == false);
+    PL_ASSERT(full_index_scan == false);
 
     return high_key_p;
   }
@@ -439,6 +465,7 @@ class ConjunctionScanPredicate {
    */
   inline const storage::Tuple *GetPointQueryKey() const {
     PL_ASSERT(is_point_query == true);
+    PL_ASSERT(full_index_scan == false);
     
     return low_key_p;
   }
@@ -503,7 +530,8 @@ class IndexScanPredicate {
 
     // If any of the newly added predicate results in a full index scan
     // then the entire predicate is a scan
-    full_index_scan ||= conjunction_list.back().IsFullIndexScan();
+    full_index_scan = \
+      full_index_scan || conjunction_list.back().IsFullIndexScan();
     
     return;
   }
@@ -526,8 +554,12 @@ class IndexScanPredicate {
     }
     
     // For every conjunction predicate, bind value on them one by one
-    for(const ConjunctionScanPredicate &conjunction_item : conjunction_list) {
-      cunjunction_item.LateBindValues(index_p, value_list);
+    for(ConjunctionScanPredicate &conjunction_item : conjunction_list) {
+      // This should be true since this object's index scan flag is an "OR"
+      // of all elements in the array
+      PL_ASSERT(conjunction_item.IsFullIndexScan() == false);
+      
+      conjunction_item.LateBindValues(index_p, value_list);
     }
     
     return;
