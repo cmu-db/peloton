@@ -213,7 +213,7 @@ class ConjunctionScanPredicate {
                                              i);
                                              
         if(bind_ret != INVALID_OID) {
-          LOG_INFO("Low key column %lu needs late binding!", i);
+          LOG_INFO("Low key for column %lu needs late binding!", i);
           
           // The first element is index, and the second element
           // is the return value, which is the future index in the
@@ -231,7 +231,19 @@ class ConjunctionScanPredicate {
                              Value::GetMaxValue(index_key_column_type),
                              index_p->GetPool());
       } else {
+        oid_t bind_ret = BindValueToIndexKey(index_p,
+                                             value_list[index_pair.second],
+                                             high_key_p,
+                                             i);
 
+        if(bind_ret != INVALID_OID) {
+          LOG_INFO("High key for column %lu needs late binding!", i);
+
+          // The first element is index, and the second element
+          // is the return value, which is the future index in the
+          // value object array
+          high_key_bind_list.push_back(std::make_pair(i, bind_ret));
+        }
       }
       
       // At the end of loop
