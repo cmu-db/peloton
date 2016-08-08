@@ -290,6 +290,7 @@ class ConjunctionScanPredicate {
       //
       // Also do the same for upper bound
       if(index_pair.first == INVALID_OID) {
+        PL_ASSERT(is_point_query == false);
         
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
@@ -312,28 +313,32 @@ class ConjunctionScanPredicate {
         }
       }
       
-      if(index_pair.second == INVALID_OID) {
-        
-        // We set the value using index's varlen pool, if any VARCHAR is
-        // involved (this is OK since the routine only runs for once)
-        high_key_p->SetValue(i,
-                             Value::GetMaxValue(index_key_column_type),
-                             index_p->GetPool());
-      } else {
-        oid_t bind_ret = BindValueToIndexKey(index_p,
-                                             value_list[index_pair.second],
-                                             high_key_p,
-                                             i);
+      // Only bind the second half if point query is false
+      if(is_point_query == false) {
+      
+        if(index_pair.second == INVALID_OID) {
 
-        if(bind_ret != INVALID_OID) {
-          LOG_INFO("High key for column %u needs late binding!", i);
+          // We set the value using index's varlen pool, if any VARCHAR is
+          // involved (this is OK since the routine only runs for once)
+          high_key_p->SetValue(i,
+                               Value::GetMaxValue(index_key_column_type),
+                               index_p->GetPool());
+        } else {
+          oid_t bind_ret = BindValueToIndexKey(index_p,
+                                               value_list[index_pair.second],
+                                               high_key_p,
+                                               i);
 
-          // The first element is index, and the second element
-          // is the return value, which is the future index in the
-          // value object array
-          high_key_bind_list.push_back(std::make_pair(i, bind_ret));
+          if(bind_ret != INVALID_OID) {
+            LOG_INFO("High key for column %u needs late binding!", i);
+
+            // The first element is index, and the second element
+            // is the return value, which is the future index in the
+            // value object array
+            high_key_bind_list.push_back(std::make_pair(i, bind_ret));
+          }
         }
-      }
+      } // if is point query == false
       
       // At the end of loop
       // All control paths must pass through this
