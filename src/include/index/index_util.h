@@ -32,10 +32,10 @@ void FindMaxMinInColumns(oid_t leading_column_id,
                          
 bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types);
 
-bool IsPointQuery(const IndexMetadata *metadata_p,
-                  const std::vector<oid_t> &tuple_column_id_list,
-                  const std::vector<ExpressionType> &expr_list,
-                  std::vector<std::pair<oid_t, oid_t>> &value_index_list);
+bool FindValueIndex(const IndexMetadata *metadata_p,
+                    const std::vector<oid_t> &tuple_column_id_list,
+                    const std::vector<ExpressionType> &expr_list,
+                    std::vector<std::pair<oid_t, oid_t>> &value_index_list);
 
 }  // End index namespace
 }  // End peloton namespace
