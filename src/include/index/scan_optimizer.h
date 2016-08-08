@@ -406,14 +406,34 @@ class IndexScanPredicate {
   // This holds all conjunctions which are assumed to be connected
   // together by disjunctions
   std::vector<ConjunctionScanPredicate> conjunction_list;
+  
+  // This is the OR of all full_index_scan field in existing conjunction lists
+  // If this is true then we could simply do an index scan and return all
+  // entries inside the index rather than doing scans on each conjunction
+  // predicate first and then do a union using hash table
+  bool full_index_scan;
 
  public:
 
   /*
-   * Constructor -
+   * Constructor - Initialize nothing
    */
-  IndexScanPredicate() {
-
+  IndexScanPredicate() :
+    conjunction_list{},
+    full_index_scan{false}
+  {}
+  
+  /*
+   * AddConjunctionScanPredicate() - Adds a conjunction scan predicate
+   *                                 i.e. (attr op value) AND (attr2 op value)..
+   *
+   * This is the basic unit that we scan the index. If one of the conjunction
+   * predicates are full index scan due to an expression that is not
+   * optimizable, then we just set the full_index_scan flag inside this
+   * object and always does full index scan
+   */
+  void AddConjunctionScanPredicate() {
+    
   }
 };
   
