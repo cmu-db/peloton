@@ -128,6 +128,8 @@ class IndexScanPlan : public AbstractScan {
 
   // LM: I removed a const keyword for binding purpose
   std::vector<Value> values_;
+  // the original copy of values with all the value parameters (bind them later)
+  std::vector<Value> values_with_params_;
 
   const std::vector<expression::AbstractExpression *> runtime_keys_;
 };
