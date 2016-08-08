@@ -27,7 +27,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       column_ids_(column_ids),
       key_column_ids_(std::move(index_scan_desc.key_column_ids)),
       expr_types_(std::move(index_scan_desc.expr_types)),
-      values_(std::move(index_scan_desc.values)),
+      values_with_params_(std::move(index_scan_desc.values)),
       runtime_keys_(std::move(index_scan_desc.runtime_keys)) {
 
   LOG_TRACE("Creating an Index Scan Plan");
@@ -49,6 +49,8 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
   expression::ExpressionUtil::ConvertParameterExpressions(
       where, values, GetTable()->GetSchema());
   SetPredicate(where);
+
+  values_ = values_with_params_;
   for (unsigned int i = 0; i < values_.size(); ++i) {
     // for (auto &value : values_) {
     auto &value = values_[i];
