@@ -388,6 +388,14 @@ class ConjunctionScanPredicate {
     
     return;
   }
+  
+  /*
+   * IsFullIndexScan() - Return whether this conjunction predicate is a full
+   *                     index scan
+   */
+  inline IsFullIndexScan() {
+    return full_index_scan;
+  }
 };
 
 
@@ -431,9 +439,45 @@ class IndexScanPredicate {
    * predicates are full index scan due to an expression that is not
    * optimizable, then we just set the full_index_scan flag inside this
    * object and always does full index scan
+   *
+   * Also note that for full index scan we do not need to bind the actual value
+   * because anyway a full scan will be conducted and there is no point
+   * updating the low key and high key
    */
-  void AddConjunctionScanPredicate() {
+  void AddConjunctionScanPredicate(Index *index_p,
+                                   const std::vector<Value> &value_list,
+                                   const std::vector<oid_t> &tuple_column_id_list,
+                                   const std::vector<ExpressionType> &expr_list) {
+    // Construct a conjunction predicate in-place and initialize all
+    // low key and high key and binding slots
+    conjunction_list.emplace_back(index_p,
+                                  value_list,
+                                  tuple_column_id_list,
+                                  expr_list);
+
+    // If any of the newly added predicate results in a full index scan
+    // then the entire predicate is a scan
+    full_index_scan ||= conjunction_list.back().IsFullIndexScan();
     
+    return;
+  }
+  
+  /*
+   * LateBindValues() - Bind values to all conjunction predicates of the
+   *                    index scan predicate
+   *
+   * This function only operates on all predicates present in the array, and
+   * are not responsible for future addition of predicates if any
+   *
+   * If the current predicate has already degraded into a full index scan, then
+   * this function simply return, since there is no point updating the low
+   * key and high key with full index scan
+   */
+  void LateBindValues(Index *index_p,
+                      const std::vector<Value> &value_list) {
+    for(const ConjunctionScanPredicate &conjunction_item : conjunction_list) {
+
+    }
   }
 };
   
