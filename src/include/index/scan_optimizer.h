@@ -404,8 +404,43 @@ class ConjunctionScanPredicate {
    * IsFullIndexScan() - Return whether this conjunction predicate is a full
    *                     index scan
    */
-  inline IsFullIndexScan() {
+  inline IsFullIndexScan() const {
     return full_index_scan;
+  }
+  
+  /*
+   * GetLowKey() - Returns the scan low key if this is not a point query
+   *
+   * For point queries assertion fails, since it is mandatory to call another
+   * version of the same function to get query key for point query
+   */
+  inline const storage::Tuple *GetLowKey() const {
+    PL_ASSERT(is_point_query == false);
+    
+    return low_key_p;
+  }
+  
+  /*
+   * GetHighKey() - Returns the scan high key
+   *
+   * For point queries assertion fails, since there is no high key
+   * for a point query
+   */
+  inline const storage::Tuple *GetHighKey() const {
+    PL_ASSERT(is_point_query == false);
+
+    return high_key_p;
+  }
+  
+  /*
+   * GetPointQueryKey() - Returns the key for point query
+   *
+   * This function could only be called if the current query is a point query
+   */
+  inline const storage::Tuple *GetPointQueryKey() const {
+    PL_ASSERT(is_point_query == true);
+    
+    return low_key_p;
   }
 };
 
