@@ -21,6 +21,7 @@
 #include "catalog/schema.h"
 #include "catalog/manager.h"
 #include "storage/tuple.h"
+#include "common/printable.h"
 
 #include "index/index_util.h"
 
@@ -97,8 +98,8 @@ class ConjunctionScanPredicate {
     // memory for holding fields inside the tuple
     //
     // The schema will not be freed by tuple, but its internal data array will
-    low_key_p = new Tuple(metadata_p->GetKeySchema(), true);
-    high_key_p = new Tuple(metadata_p->GetKeySchema(), true);
+    low_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
+    high_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
     
     // This further initializes is_point_query flag, and then
     // fill the high key and low key with boundary values
@@ -106,6 +107,19 @@ class ConjunctionScanPredicate {
                           value_list,
                           tuple_column_id_list,
                           expr_list);
+    
+    return;
+  }
+  
+  /*
+   * Destructor - Deletes low key and high key template tuples
+   *
+   * NOTE: If there is memory leak then it is likely to be caused
+   * by pointer ownership problem brought about by Tuple and Value
+   */
+  ~ConjunctionScanPredicate() {
+    delete low_key_p;
+    delete high_key_p;
     
     return;
   }
@@ -165,7 +179,7 @@ class ConjunctionScanPredicate {
     PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
 
     // We need to check index key schema
-    const IndexMeatdata *metadata_p = index_p->GetMetadata();
+    const IndexMetadata *metadata_p = index_p->GetMetadata();
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
@@ -184,12 +198,6 @@ class ConjunctionScanPredicate {
     // representable as Value object then we use min and max of the
     // corresponding type
     for(oid_t i = 0;i < value_index_list.size();i++) {
-
-      // If any of the low key or high key has incomplete value type
-      // then we set this flag to true, and push the current column ID
-      // into the vector for later binding task
-      bool need_binding = false;
-      
       const std::pair<oid_t, oid_t> &index_pair = value_index_list[i];
       
       // We use the type of the current index key column to get the
@@ -201,6 +209,7 @@ class ConjunctionScanPredicate {
       //
       // Also do the same for upper bound
       if(index_pair.first == INVALID_OID) {
+        
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
         low_key_p->SetValue(i,
@@ -213,7 +222,7 @@ class ConjunctionScanPredicate {
                                              i);
                                              
         if(bind_ret != INVALID_OID) {
-          LOG_INFO("Low key for column %lu needs late binding!", i);
+          LOG_INFO("Low key for column %u needs late binding!", i);
           
           // The first element is index, and the second element
           // is the return value, which is the future index in the
@@ -223,8 +232,7 @@ class ConjunctionScanPredicate {
       }
       
       if(index_pair.second == INVALID_OID) {
-        auto ubound_type = value_list[i].GetValueType();
-
+        
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
         high_key_p->SetValue(i,
@@ -237,7 +245,7 @@ class ConjunctionScanPredicate {
                                              i);
 
         if(bind_ret != INVALID_OID) {
-          LOG_INFO("High key for column %lu needs late binding!", i);
+          LOG_INFO("High key for column %u needs late binding!", i);
 
           // The first element is index, and the second element
           // is the return value, which is the future index in the
