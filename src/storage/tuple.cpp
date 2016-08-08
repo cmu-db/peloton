@@ -55,8 +55,9 @@ void Tuple::SetValue(const oid_t column_offset, const Value &value,
   if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_offset);
 
-  LOG_TRACE("column_offset: %d; value_location %p; column_length %d",
-            column_offset, value_location, column_length);
+  LOG_TRACE("column_offset: %d; value_location %p; column_length %d; type %s",
+            column_offset, value_location, column_length,
+            ValueTypeToString(type).c_str());
 
   const bool is_in_bytes = false;
   // Allocate in heap or given data pool depending on whether a pool is provided

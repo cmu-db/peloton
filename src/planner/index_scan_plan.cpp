@@ -53,7 +53,7 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
     // for (auto &value : values_) {
     auto &value = values_[i];
     auto column_id = key_column_ids_[i];
-    if (value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER) {
+    if (value.GetValueType() == VALUE_TYPE_PARAMETER_OFFSET) {
       value = values->at(ValuePeeker::PeekBindingOnlyInteger(value)).CastAs(
           GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }

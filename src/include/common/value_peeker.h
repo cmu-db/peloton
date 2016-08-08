@@ -52,7 +52,7 @@ class ValuePeeker {
   }
 
   static inline int32_t PeekBindingOnlyInteger(const Value &value) {
-    PL_ASSERT(value.GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+    PL_ASSERT(value.GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return value.GetInteger();
   }
 

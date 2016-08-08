@@ -572,7 +572,7 @@ SimpleOptimizer::CreateHackingJoinPlan() {
   expression::ParameterValueExpression* params[6];
   for (int i = 0; i < 6; ++i)
     params[i] = new expression::ParameterValueExpression(
-        VALUE_TYPE_FOR_BINDING_ONLY_INTEGER, i);
+        VALUE_TYPE_PARAMETER_OFFSET, i);
 
   char ol_w_id_name[] = "ol_w_id";
   char ol_d_id_name[] = "ol_d_id";

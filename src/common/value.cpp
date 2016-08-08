@@ -397,7 +397,7 @@ std::string Value::ToString() {
       return std::to_string(GetSmallInt());
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
       return std::to_string(GetInteger());
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
@@ -444,7 +444,7 @@ const std::string Value::GetInfo() const {
       break;
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
       buffer << GetInteger();
       break;
     case VALUE_TYPE_BIGINT:

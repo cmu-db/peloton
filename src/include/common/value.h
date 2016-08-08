@@ -668,7 +668,7 @@ class Value {
       case VALUE_TYPE_BIGINT:
       case VALUE_TYPE_DATE:
       case VALUE_TYPE_TIMESTAMP:
-      case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+      case VALUE_TYPE_PARAMETER_OFFSET:
         rt = s_intPromotionTable[vtb];
         break;
 
@@ -961,14 +961,14 @@ class Value {
   const int32_t &GetInteger() const {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<const int32_t *>(m_data);
   }
 
   int32_t &GetInteger() {
     PL_ASSERT(GetValueType() == VALUE_TYPE_INTEGER ||
               GetValueType() == VALUE_TYPE_DATE ||
-              GetValueType() == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+              GetValueType() == VALUE_TYPE_PARAMETER_OFFSET);
     return *reinterpret_cast<int32_t *>(m_data);
   }
 
@@ -1652,6 +1652,7 @@ class Value {
     PL_ASSERT(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
     const ValueType type = GetValueType();
+    LOG_INFO("value type: %s", ValueTypeToString(type).c_str());
     if (IsNull()) {
       retval.SetNull();
       return retval;
@@ -1663,6 +1664,8 @@ class Value {
       case VALUE_TYPE_BIGINT: {
         int64_t rhsint = CastAsBigIntAndGetValue();
         retval.CreateDecimalFromInt(rhsint);
+        LOG_INFO("return value type: %s",
+                 ValueTypeToString(retval.GetValueType()).c_str());
         break;
       }
       case VALUE_TYPE_DECIMAL:
@@ -2435,7 +2438,7 @@ class Value {
   }
 
   static Value GetBindingOnlyIntegerValue(int32_t value) {
-    Value retval(VALUE_TYPE_FOR_BINDING_ONLY_INTEGER);
+    Value retval(VALUE_TYPE_PARAMETER_OFFSET);
     retval.GetInteger() = value;
     if (value == INT32_NULL) {
       retval.tagAsNull();
@@ -3387,7 +3390,7 @@ inline void Value::SerializeToExportWithoutNull(ExportSerializeOutput &io)
       return;
     }
     case VALUE_TYPE_DATE:
-    case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
+    case VALUE_TYPE_PARAMETER_OFFSET:
     case VALUE_TYPE_INTEGER: {
       io.WriteInt(GetInteger());
       return;
