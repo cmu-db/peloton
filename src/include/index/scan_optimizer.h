@@ -302,8 +302,8 @@ class ConjunctionScanPredicate {
                       const std::vector<Value> &value_list) {
 
     // Bind values to low key and high key respectively
-    LateBind(index_p, value_list, low_key_bind_list, low_kep_p);
-    LateBind(index_p, value_list, high_key_bind_list, high_kep_p);
+    LateBind(index_p, value_list, low_key_bind_list, low_key_p);
+    LateBind(index_p, value_list, high_key_bind_list, high_key_p);
     
     return;
   }

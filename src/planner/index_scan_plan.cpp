@@ -68,6 +68,11 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
       value = values->at(ValuePeeker::PeekBindingOnlyInteger(value)).CastAs(GetTable()->GetSchema()->GetColumn(column_id).GetType());
     }
   }
+  
+  // Also bind values to index scan predicate object
+  //
+  // NOTE: This could only be called by one thread at a time
+  index_predicate.LateBindValues(index_.get(), *values);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
