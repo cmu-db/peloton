@@ -457,11 +457,24 @@ const std::string Value::GetInfo() const {
       buffer << GetDouble();
       break;
     case VALUE_TYPE_VARCHAR:
-      ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
-      addr = reinterpret_cast<int64_t>(ptr);
-      out_val = std::string(ptr, GetObjectLengthWithoutNull());
-      buffer << "[" << GetObjectLengthWithoutNull() << "]";
-      buffer << "\"" << out_val << "\"[@" << addr << "]";
+      // For VARCHAR type we should take care since it is not consistent
+      // with other Value types
+      //
+      // VARCHAR min value has 1 byte payload '\0' with length being 1
+      // VARCHAR max value has nullptr as payoad pointer with length VARCHAR_MAX_INDICATOR
+      if(GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
+        buffer << "[0]*VARCHAR_MAX*";
+      } else if((GetObjectLengthWithoutNull() == 1) && \
+                (((char *)GetObjectValueWithoutNull())[0] == '\0')) {
+        buffer << "[0]*VARCHAR_MIN*";
+      } else {
+        ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
+        addr = reinterpret_cast<int64_t>(ptr);
+        out_val = std::string(ptr, GetObjectLengthWithoutNull());
+        buffer << "[" << GetObjectLengthWithoutNull() << "]";
+        buffer << "\"" << out_val << "\"[@" << addr << "]";
+      }
+      
       break;
     case VALUE_TYPE_VARBINARY:
       ptr = reinterpret_cast<const char *>(GetObjectValueWithoutNull());
