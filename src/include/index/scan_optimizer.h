@@ -469,6 +469,17 @@ class ConjunctionScanPredicate {
     
     return low_key_p;
   }
+  
+  /*
+   * GetBindingCount() - Returns the number of bindings that must be done
+   *
+   * This function is majorly for debugging purposes. Non-debugging
+   * routines may call this function but the return value is not quite
+   * enlightening
+   */
+  inline size_t GetBindingCount() const {
+    return low_key_bind_list.size() + high_key_bind_list.size();
+  }
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -570,6 +581,16 @@ class IndexScanPredicate {
     }
     
     return;
+  }
+  
+  /*
+   * GetConjunctionList() - Returns the conjunction list to caller
+   *
+   * The returned value is a const reference which means it is read-only
+   * and that all modifications should be done through member function call
+   */
+  const std::vector<ConjunctionScanPredicate> &GetConjunctionList() const {
+    return conjunction_list;
   }
 };
   
