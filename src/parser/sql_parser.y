@@ -572,6 +572,14 @@ update_clause:
 			$$->column = $1;
 			$$->value = $3;
 		}
+		
+	|
+
+		IDENTIFIER '=' expr {
+			$$ = new UpdateClause();
+			$$->column = $1;
+			$$->value = $3;
+		}
 	;
 
 /******************************
