@@ -24,8 +24,6 @@
 #include "catalog/manager.h"
 #include "common/logger.h"
 
-#include "libcuckoo/cuckoohash_map.hh"
-
 namespace peloton {
 
 class ItemPointer;
@@ -39,8 +37,6 @@ namespace concurrency {
 class Transaction;
 
 extern thread_local Transaction *current_txn;
-
-#define RUNNING_TXN_BUCKET_NUM 10
 
 class TransactionManager {
  public:
@@ -66,7 +62,7 @@ class TransactionManager {
 
   bool IsOccupied(const ItemPointer &position);
 
-  virtual bool IsVisible(
+  virtual VisibilityType IsVisible(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
@@ -81,7 +77,14 @@ class TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
+  // This method is used by executor to yield ownership after the acquired ownership.
+  virtual void YieldOwnership(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+
   virtual bool PerformInsert(const ItemPointer &location) = 0;
+
+  // The itemptr_ptr is the address of the head node of the version chain, 
+  // which is directly pointed by the primary index.
+  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) = 0;
 
   virtual bool PerformRead(const ItemPointer &location) = 0;
 
@@ -117,6 +120,10 @@ class TransactionManager {
   virtual Result CommitTransaction() = 0;
 
   virtual Result AbortTransaction() = 0;
+
+  virtual ItemPointer *GetHeadPtr(
+    const storage::TileGroupHeader *const tile_group_header,
+    const oid_t tuple_id) = 0;
 
   void ResetStates() {
     next_txn_id_ = START_TXN_ID;

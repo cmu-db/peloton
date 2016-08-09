@@ -96,18 +96,21 @@ bool InsertExecutor::DExecute() {
                                                         tuple_id);
 
       // Materialize the logical tile tuple
-      for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
         tuple->SetValue(column_itr, cur_tuple.GetValue(column_itr),
                         executor_pool);
+      }
 
-      peloton::ItemPointer location = target_table->InsertTuple(tuple.get());
+      ItemPointer *itemptr_ptr = nullptr;
+      peloton::ItemPointer location = target_table->InsertTuple(tuple.get(), &itemptr_ptr);
+
       if (location.block == INVALID_OID) {
         transaction_manager.SetTransactionResult(
             peloton::Result::RESULT_FAILURE);
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location);
+      auto res = transaction_manager.PerformInsert(location, itemptr_ptr);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
@@ -151,7 +154,8 @@ bool InsertExecutor::DExecute() {
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
 
       // Carry out insertion
-      ItemPointer location = target_table->InsertTuple(tuple);
+      ItemPointer *itemptr_ptr = nullptr;
+      ItemPointer location = target_table->InsertTuple(tuple, &itemptr_ptr);
       LOG_TRACE("Inserted into location: %u, %u", location.block,
                 location.offset);
 
@@ -161,7 +165,7 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location);
+      auto res = transaction_manager.PerformInsert(location, itemptr_ptr);
       if (!res) {
         transaction_manager.SetTransactionResult(RESULT_FAILURE);
         return res;
