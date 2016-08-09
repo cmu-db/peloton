@@ -19,9 +19,13 @@
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 #include "index/index_util.h"
+#include "index/scan_optimizer.h"
 
 namespace peloton {
 namespace test {
+  
+using namespace index;
+using namespace storage;
 
 class IndexUtilTests : public PelotonTest {};
 
@@ -43,7 +47,7 @@ static catalog::Schema *key_schema = nullptr;
  * index key: 3 0   1 (i.e. the 1st column of index key is the 3rd column of
  *                     tuple key)
  */
-static const index::Index *BuildIndex() {
+static index::Index *BuildIndex() {
   // Build tuple and key schema
   std::vector<catalog::Column> tuple_column_list{};
   std::vector<catalog::Column> index_column_list{};
@@ -127,15 +131,15 @@ static const index::Index *BuildIndex() {
 }
 
 /*
- * IsPointQueryTest() - Tests whether the index util correctly recognizes
- *                      point query
+ * FindValueIndexTest() - Tests whether the index util correctly recognizes
+ *                        point query
  *
  * The index configuration is as follows:
  *
  * tuple key: 0 1 2 3
  * index_key: 3 0 1
  */
-TEST_F(IndexUtilTests, IsPointQueryTest) {
+TEST_F(IndexUtilTests, FindValueIndexTest) {
   const index::Index *index_p = BuildIndex();
   bool ret;
   
@@ -254,6 +258,60 @@ TEST_F(IndexUtilTests, IsPointQueryTest) {
   
   return;
 }
+
+/*
+ * ConstructBoundaryKeyTest() - Tests ConstructBoundaryKey() function for
+ *                              conjunctions
+ */
+TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
+  index::Index *index_p = BuildIndex();
+
+  // This is the output variable
+  std::vector<std::pair<oid_t, oid_t>> value_index_list{};
+
+  std::vector<Value> value_list{};
+  std::vector<oid_t> tuple_column_id_list{};
+  std::vector<ExpressionType> expr_list{};
+
+  value_list = {ValueFactory::GetIntegerValue(100),
+                ValueFactory::GetIntegerValue(200),
+                ValueFactory::GetIntegerValue(50), };
+                
+  tuple_column_id_list = {3, 3, 0};
   
+  expr_list = {EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+               EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+               EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, };
+               
+  IndexScanPredicate isp{};
+  
+  isp.AddConjunctionScanPredicate(index_p,
+                                  value_list,
+                                  tuple_column_id_list,
+                                  expr_list);
+                                  
+  const std::vector<ConjunctionScanPredicate> &cl = isp.GetConjunctionList();
+  
+  // First check the conjunction has been pushed into the scan predicate object
+  EXPECT_EQ(cl.size(), 1UL);
+  
+  // Then make sure all values have been bound (i.e. no free variable)
+  EXPECT_EQ(cl[0].GetBindingCount(), 0UL);
+  
+  // Check whether the entire predicate is full index scan (should not be)
+  EXPECT_EQ(isp.IsFullIndexScan(), false);
+  
+  // Then check the conjunction predicate
+  EXPECT_EQ(cl[0].IsFullIndexScan(), false);
+  
+  // Then check whether the conjunction predicate is a point query
+  EXPECT_EQ(cl[0].IsPointQuery(), false);
+  
+  LOG_INFO("Low key = %s", cl[0].GetLowKey()->GetInfo().c_str());
+  LOG_INFO("High key = %s", cl[0].GetHighKey()->GetInfo().c_str());
+  
+  return;
+}
+
 }  // End test namespace
 }  // End peloton namespace
