@@ -100,10 +100,6 @@ class DataTable : public AbstractTable {
   // insert tuple in table
   ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **itemptr_ptr = nullptr);
 
-  // delete the tuple at given location
-  // bool DeleteTuple(const concurrency::Transaction *transaction,
-  //                  ItemPointer location);
-
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -264,7 +260,6 @@ class DataTable : public AbstractTable {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
-  // TODO need some policy ?
   // number of tuples allocated per tilegroup
   size_t tuples_per_tilegroup_;
 
