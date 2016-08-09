@@ -349,10 +349,6 @@ class ConjunctionScanPredicate {
           }
         }
       } // if is point query == false
-      
-      // At the end of loop
-      // All control paths must pass through this
-      i++;
     } // for index_pair in the list
     
     return;
@@ -597,7 +593,7 @@ class IndexScanPredicate {
    * IsFullIndexScan() - Returns whether the entire predicate should be
    *                     done by one and only one full index scan
    */
-  inline bool IsFullIndexScan() {
+  inline bool IsFullIndexScan() const {
     return full_index_scan;
   }
 };
