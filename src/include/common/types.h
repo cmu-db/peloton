@@ -69,8 +69,9 @@ enum ReplicationType {
 };
 
 enum GCType {
-  GC_TYPE_OFF = 0,
-  GC_TYPE_ON = 1
+  GC_TYPE_INVALID = 0,
+  GC_TYPE_OFF = 1,  // turn off GC
+  GC_TYPE_ON = 2  // turn on GC
 };
 
 //===--------------------------------------------------------------------===//
@@ -390,9 +391,10 @@ enum ConcurrencyType {
 //===--------------------------------------------------------------------===//
 
 enum VisibilityType {
-  VISIBILITY_INVISIBLE = 0,
-  VISIBILITY_DELETED = 1,
-  VISIBILITY_OK = 2
+  VISIBILITY_INVALID = 0,
+  VISIBILITY_INVISIBLE = 1,
+  VISIBILITY_DELETED = 2,
+  VISIBILITY_OK = 3
 };
 
 //===--------------------------------------------------------------------===//
@@ -410,11 +412,6 @@ enum IsolationLevelType {
 // Garbage Collection Types
 //===--------------------------------------------------------------------===//
 
-enum GCType {
-  GC_TYPE_INVALID = 0,
-  GC_TYPE_OFF = 1,         // turn off GC
-  GC_TYPE_COOPERATIVE = 2  // cooperative GC
-};
 
 enum BackendType {
   BACKEND_TYPE_INVALID = 0,  // invalid backend type
