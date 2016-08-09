@@ -60,6 +60,8 @@ class TrafficCop {
                                               const std::string& query_string,
                                               std::string &error_message);
 
+  std::vector<FieldInfoType> GenerateTupleDescriptor(std::string query);
+
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt,
                      std::string &error_message);
