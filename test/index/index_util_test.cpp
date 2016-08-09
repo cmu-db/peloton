@@ -310,6 +310,37 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   LOG_INFO("Low key = %s", cl[0].GetLowKey()->GetInfo().c_str());
   LOG_INFO("High key = %s", cl[0].GetHighKey()->GetInfo().c_str());
   
+  ///////////////////////////////////////////////////////////////////
+  // Test the case where there is no optimization that could be done
+  //
+  // The condition means first index column does not equal 100
+  ///////////////////////////////////////////////////////////////////
+  
+  value_list = {ValueFactory::GetIntegerValue(100), };
+
+  tuple_column_id_list = {3, };
+
+  expr_list = {EXPRESSION_TYPE_COMPARE_NOTEQUAL, };
+  
+  isp.AddConjunctionScanPredicate(index_p,
+                                  value_list,
+                                  tuple_column_id_list,
+                                  expr_list);
+                                  
+  const std::vector<ConjunctionScanPredicate> &cl2 = isp.GetConjunctionList();
+
+  EXPECT_EQ(cl2.size(), 2UL);
+  EXPECT_EQ(cl2[1].GetBindingCount(), 0UL);
+  EXPECT_EQ(isp.IsFullIndexScan(), true);
+  EXPECT_EQ(cl2[1].IsFullIndexScan(), true);
+  EXPECT_EQ(cl2[1].IsPointQuery(), false);
+  
+
+  
+  ///////////////////////////////////////////////////////////////////
+  // End of all test cases
+  ///////////////////////////////////////////////////////////////////
+  
   return;
 }
 
