@@ -43,13 +43,10 @@ class TsOrderTxnManager : public TransactionManager {
       const oid_t &tuple_id);
 
   virtual bool AcquireOwnership(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tile_group_id, const oid_t &tuple_id);
+      const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id);
 
   virtual void YieldOwnership(const oid_t &tile_group_id,
     const oid_t &tuple_id);
-
-  virtual bool PerformInsert(const ItemPointer &location UNUSED_ATTRIBUTE) { return true; }
 
   // The itemptr_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
