@@ -589,8 +589,16 @@ class IndexScanPredicate {
    * The returned value is a const reference which means it is read-only
    * and that all modifications should be done through member function call
    */
-  const std::vector<ConjunctionScanPredicate> &GetConjunctionList() const {
+  inline const std::vector<ConjunctionScanPredicate> &GetConjunctionList() const {
     return conjunction_list;
+  }
+  
+  /*
+   * IsFullIndexScan() - Returns whether the entire predicate should be
+   *                     done by one and only one full index scan
+   */
+  inline bool IsFullIndexScan() {
+    return full_index_scan;
   }
 };
   
