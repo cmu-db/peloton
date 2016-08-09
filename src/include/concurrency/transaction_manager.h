@@ -74,17 +74,14 @@ class TransactionManager {
       const oid_t &tuple_id) = 0;
 
   virtual bool AcquireOwnership(
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
+      const storage::TileGroupHeader *const tile_group_header, const oid_t &tuple_id) = 0;
 
   // This method is used by executor to yield ownership after the acquired ownership.
   virtual void YieldOwnership(const oid_t &tile_group_id, const oid_t &tuple_id) = 0;
 
-  virtual bool PerformInsert(const ItemPointer &location) = 0;
-
-  // The itemptr_ptr is the address of the head node of the version chain, 
+  // The index_entry_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
-  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) = 0;
+  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) = 0;
 
   virtual bool PerformRead(const ItemPointer &location) = 0;
 
