@@ -76,11 +76,11 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
         t == EXPRESSION_TYPE_COMPARE_IN       ||
         t == EXPRESSION_TYPE_COMPARE_LIKE     ||
         t == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
-      return false;
+      return true;
     }
   }
   
-  return true;
+  return false;
 }
 
 /*
