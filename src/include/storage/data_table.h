@@ -98,7 +98,7 @@ class DataTable : public AbstractTable {
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
   ItemPointer InsertVersion(const Tuple *tuple);
   // insert tuple in table
-  ItemPointer InsertTuple(const Tuple *tuple);
+  ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **itemptr_ptr = nullptr);
 
   // delete the tuple at given location
   // bool DeleteTuple(const concurrency::Transaction *transaction,
@@ -224,7 +224,8 @@ class DataTable : public AbstractTable {
                      ItemPointer location);
 
   // try to insert into the indices
-  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // the forth argument return the itempointer ptr inserted into the primary index
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **itemptr_ptr);
 
  protected:
   //===--------------------------------------------------------------------===//

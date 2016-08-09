@@ -382,7 +382,7 @@ enum ExpressionType {
 
 enum ConcurrencyType {
   CONCURRENCY_TYPE_INVALID = 0,
-  CONCURRENCY_TYPE_TO = 4  // timestamp ordering
+  CONCURRENCY_TYPE_TO = 1  // timestamp ordering
 };
 
 //===--------------------------------------------------------------------===//
@@ -390,10 +390,9 @@ enum ConcurrencyType {
 //===--------------------------------------------------------------------===//
 
 enum VisibilityType {
-  VISIBILITY_INVALID = 0,
-  VISIBILITY_INVISIBLE = 1,
-  VISIBILITY_DELETED = 2,
-  VISIBILITY_OK = 3
+  VISIBILITY_INVISIBLE = 0,
+  VISIBILITY_DELETED = 1,
+  VISIBILITY_OK = 2
 };
 
 //===--------------------------------------------------------------------===//
@@ -941,7 +940,7 @@ bool IsBasedOnWriteBehindLogging(const LoggingType &logging_type);
 
 BackendType GetBackendType(const LoggingType &logging_type);
 
-void AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
+bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 //===--------------------------------------------------------------------===//
 // Transformers

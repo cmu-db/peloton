@@ -118,11 +118,14 @@ BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
                                           const ItemPointer &location,
                                           std::function<bool(const ItemPointer &)> predicate) {
+
   KeyType index_key;
   index_key.SetFromKey(key);
 
   {
     index_lock.WriteLock();
+
+
 
     // find the <key, location> pair
     auto entries = container.equal_range(index_key);
@@ -132,6 +135,7 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
       if (predicate(item_pointer)) {
         // this key is already visible or dirty in the index
         index_lock.Unlock();
+
         return false;
       }
     }
@@ -380,3 +384,4 @@ template class BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
 
 }  // End index namespace
 }  // End peloton namespace
+
