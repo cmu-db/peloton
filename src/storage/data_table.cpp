@@ -137,11 +137,6 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
                                          UNUSED_ATTRIBUTE bool check_constraint) {
   PL_ASSERT(tuple);
 
-  // Check constraints
-  //if (check_constraint == true && CheckConstraints(tuple) == false) {
-  //  return INVALID_ITEMPOINTER;
-  //}
-
   std::shared_ptr<storage::TileGroup> tile_group;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_id = INVALID_OID;

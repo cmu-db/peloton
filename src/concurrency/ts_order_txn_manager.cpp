@@ -218,7 +218,6 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   auto tile_group = manager.GetTileGroup(tile_group_id);
   auto tile_group_header = tile_group->GetHeader();
 
-  //auto last_reader_cid = GetLastReaderCid(tile_group_header, tuple_id);
   if (IsOwner(tile_group_header, tuple_id) == true) {
     // it is possible to be a blind write.
     assert(GetLastReaderCid(tile_group_header, tuple_id) <= current_txn->GetBeginCommitId());
@@ -273,10 +272,6 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   auto new_tile_group_header = catalog::Manager::GetInstance()
       .GetTileGroup(new_location.block)->GetHeader();
 
-  // ATTENTION: this assert may fail some time!
-  // assert(GetLastReaderCid(tile_group_header, old_location.offset) == current_txn->GetBeginCommitId());
-
-
   auto transaction_id = current_txn->GetTransactionId();
   // if we can perform update, then we must have already locked the older
   // version.
@@ -288,9 +283,8 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
          MAX_CID);
   assert(new_tile_group_header->GetEndCommitId(new_location.offset) == MAX_CID);
 
-  // Notice: if the executor doesn't call PerformUpdate after AcquireOwnership,
-  // no
-  // one will possibly release the write lock acquired by this txn.
+  // if the executor doesn't call PerformUpdate after AcquireOwnership,
+  // no one will possibly release the write lock acquired by this txn.
   // Set double linked list
   // old_prev is the version next (newer) to the old version.
 
@@ -316,9 +310,6 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   }
 
   InitTupleReserved(new_tile_group_header, new_location.offset);
-
-  // set last read
-  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
 
   // if the transaction is not updating the latest version, 
   // then do not change item pointer header.
@@ -410,8 +401,6 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   }
 
   InitTupleReserved(new_tile_group_header, new_location.offset);
-  
-  //SetLastReaderCid(new_tile_group_header, new_location.offset, current_txn->GetBeginCommitId());
 
   // if the transaction is not deleting the latest version, 
   // then do not change item pointer header.
@@ -470,10 +459,7 @@ Result TsOrderTxnManager::CommitTransaction() {
 
   auto &rw_set = current_txn->GetRWSet();
 
-  // TODO: Add optimization for read only
-
   for (auto &tile_group_entry : rw_set) {
-    //fprintf(stdout, "Committing tile group: %u\n", tile_group_entry.first);
     oid_t tile_group_id = tile_group_entry.first;
     auto tile_group = manager.GetTileGroup(tile_group_id);
     auto tile_group_header = tile_group->GetHeader();
@@ -484,8 +470,6 @@ Result TsOrderTxnManager::CommitTransaction() {
         // visible.
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
-
-        //fprintf(stdout, "commit new version: %u, %u\n", new_version.block, new_version.offset);
 
         assert(new_version.IsNull() == false);
 
@@ -594,12 +578,7 @@ Result TsOrderTxnManager::AbortTransaction() {
         new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
 
-        // TODO: I think there's no need to set this fence.
         COMPILER_MEMORY_FENCE;
-
-        //////////////////////////////////////////////////
-        // DOUBLE CHECK!!!
-        //////////////////////////////////////////////////
 
         // reset the item pointers.
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
@@ -631,26 +610,12 @@ Result TsOrderTxnManager::AbortTransaction() {
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
-        // NOTE: We cannot do the unlink here because maybe someone is still traversing
-        // the aborted version. Such unlink will isolate such travelers. The unlink task
-        // should be offload to GC
-        // COMPILER_MEMORY_FENCE;
-        
-        // UPDATE: now we rely on GC for resetting pointers.
-        // new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        // new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
-
         COMPILER_MEMORY_FENCE;
 
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
-
-        // GC recycle
-        //RecycleInvalidTupleSlot(new_version.block, new_version.offset);
         aborted_versions.push_back(new_version);
 
       } else if (tuple_entry.second == RW_TYPE_DELETE) {
-        // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -662,10 +627,6 @@ Result TsOrderTxnManager::AbortTransaction() {
         new_tile_group_header->SetEndCommitId(new_version.offset, MAX_CID);
 
         COMPILER_MEMORY_FENCE;
-
-        //////////////////////////////////////////////////
-        // DOUBLE CHECK!!!
-        //////////////////////////////////////////////////
 
         // reset the item pointers.
         auto old_prev = new_tile_group_header->GetPrevItemPointer(new_version.offset);
@@ -693,12 +654,6 @@ Result TsOrderTxnManager::AbortTransaction() {
         }
 
         tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
-
-        //COMPILER_MEMORY_FENCE;
-        
-        //new_tile_group_header->SetPrevItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        //new_tile_group_header->SetNextItemPointer(new_version.offset, INVALID_ITEMPOINTER);
-        // tile_group_header->SetEndCommitId(tuple_slot, MAX_CID);
 
         COMPILER_MEMORY_FENCE;
 
