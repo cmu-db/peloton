@@ -335,7 +335,38 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   EXPECT_EQ(cl2[1].IsFullIndexScan(), true);
   EXPECT_EQ(cl2[1].IsPointQuery(), false);
   
+  ///////////////////////////////////////////////////////////////////
+  // Test point query and query key
+  //
+  // Index key = <100, 50, "Peloton!">
+  ///////////////////////////////////////////////////////////////////
 
+  IndexScanPredicate isp2{};
+
+  value_list = {ValueFactory::GetIntegerValue(100),
+                ValueFactory::GetStringValue("Peloton!"),
+                ValueFactory::GetIntegerValue(50), };
+
+  tuple_column_id_list = {3, 1, 0};
+
+  expr_list = {EXPRESSION_TYPE_COMPARE_EQUAL,
+               EXPRESSION_TYPE_COMPARE_EQUAL,
+               EXPRESSION_TYPE_COMPARE_EQUAL, };
+
+  isp2.AddConjunctionScanPredicate(index_p,
+                                   value_list,
+                                   tuple_column_id_list,
+                                   expr_list);
+
+  const std::vector<ConjunctionScanPredicate> &cl3 = isp2.GetConjunctionList();
+
+  EXPECT_EQ(cl3.size(), 1UL);
+  EXPECT_EQ(cl3[0].GetBindingCount(), 0UL);
+  EXPECT_EQ(isp2.IsFullIndexScan(), false);
+  EXPECT_EQ(cl3[0].IsFullIndexScan(), false);
+  EXPECT_EQ(cl3[0].IsPointQuery(), true);
+
+  LOG_INFO("Point query key = %s", cl3[0].GetPointQueryKey()->GetInfo().c_str());
   
   ///////////////////////////////////////////////////////////////////
   // End of all test cases
