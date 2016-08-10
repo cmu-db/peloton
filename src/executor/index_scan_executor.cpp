@@ -158,7 +158,7 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
                  expr_types_,
                  SCAN_DIRECTION_TYPE_FORWARD,
                  tuple_location_ptrs,
-                 node.index_predicate);
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
   if (tuple_location_ptrs.size() == 0) return false;
 
@@ -322,8 +322,12 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   if (0 == key_column_ids_.size()) {
     index_->ScanAllKeys(tuple_location_ptrs);
   } else {
-    index_->Scan(values_, key_column_ids_, expr_type_,
-                 SCAN_DIRECTION_TYPE_FORWARD, tuple_location_ptrs);
+    index_->Scan(values_,
+                 key_column_ids_,
+                 expr_type_,
+                 SCAN_DIRECTION_TYPE_FORWARD,
+                 tuple_location_ptrs,
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
   if (tuple_location_ptrs.size() == 0) {
