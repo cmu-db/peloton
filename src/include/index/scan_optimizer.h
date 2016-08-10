@@ -564,6 +564,8 @@ class IndexScanPredicate {
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
     if(full_index_scan == true) {
+      LOG_INFO("Fast path: For full index scan do not bind");
+      
       return;
     }
     
