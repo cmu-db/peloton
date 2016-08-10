@@ -173,7 +173,7 @@ Result Catalog::CreateIndex(const std::string &database_name,
         for(auto attr : index_attr){
           for(uint i = 0; i < columns.size() ; ++i){  
             if(attr == columns[i].column_name){
-              key_attrs.push_back(columns[i].column_offset);
+              key_attrs.push_back(i);
             }
           }
         }
