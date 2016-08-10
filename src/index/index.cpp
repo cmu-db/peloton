@@ -154,39 +154,58 @@ Index::~Index() {
  * The predicate has the same specification as those in Scan()
  */
 bool Index::Compare(const AbstractTuple &index_key,
-                    const std::vector<oid_t> &key_column_ids,
-                    const std::vector<ExpressionType> &expr_types,
-                    const std::vector<Value> &values) {
+                    const std::vector<oid_t> &tuple_column_id_list,
+                    const std::vector<ExpressionType> &expr_list,
+                    const std::vector<Value> &value_list) {
   int diff;
-
-  oid_t key_column_itr = -1;
+  
+  // The size of these three arrays must be the same
+  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
+  PL_ASSERT(expr_list.size() == value_list.size());
+  
+  // Need the mapping
+  const IndexMetadata *metadata_p = GetMetadata();
+  
+  // This is the end of loop
+  oid_t cond_num = tuple_column_id_list.size();
+  
+  // This maps the tuple column ID to index key column ID
+  // Since tuple_column_id_list is a list returned from the optimizer,
+  // we should first map them to columns on index and then retrieve
+  // comparion operand
+  const std::vector<oid_t> &tuple_to_index_map = \
+    metadata_p->GetTupleToIndexMapping();
+  
   // Go over each attribute in the list of comparison columns
   // The key_columns_ids, as the name shows, saves the key column ids that
   // have values and expression needs to be compared.
 
-  // Example:
-  // 1.
-  //    key_column_ids { 0 }
-  //    expr_types { == }
-  //    values    { 5 }
-  // basically it's saying get the tuple whose 0 column, which is the key
-  // column,
-  //  equals to 5
-  //
-  // 2.
-  //   key_column_ids {0, 1}
-  //   expr_types { > , >= }
-  //  values  {5, 10}
-  // it's saysing col[0] > 5 && col[1] >= 10, where 0 and 1 are key columns.
+  for (oid_t i = 0;i < cond_num;i++) {
+    // First retrieve the tuple column ID from the map, and then map
+    // it to the column ID of index key
+    oid_t tuple_key_column_id = tuple_column_id_list[i];
+    oid_t index_key_column_id = tuple_to_index_map[tuple_key_column_id];
+    
+    // This the comparison right hand side operand
+    const Value &rhs = value_list[i];
+    
+    // Also retrieve left hand side operand using index key column ID
+    const Value &lhs = index_key.GetValue(index_key_column_id);
+    
+    // Expression type. We use this to interpret comparison result
+    //
+    // Possible results of comparison are: EQ, >, <
+    const ExpressionType expr_type = expr_list[i];
 
-  for (auto column_itr : key_column_ids) {
-    key_column_itr++;
-    const Value &rhs = values[key_column_itr];
-    const Value &lhs = index_key.GetValue(column_itr);
-    const ExpressionType expr_type = expr_types[key_column_itr];
-
+    // If the operation is IN, then use the boolean values comparator
+    // that determines whether a value is in a list
+    //
+    // To make the procedure more uniform, we interpret IN as EQUAL
+    // and NOT IN as NOT EQUAL, and react based on expression type below
+    // accordingly
     if (expr_type == EXPRESSION_TYPE_COMPARE_IN) {
       bool bret = lhs.InList(rhs);
+      
       if (bret == true) {
         diff = VALUE_COMPARE_EQUAL;
       } else {
@@ -250,8 +269,7 @@ bool Index::Compare(const AbstractTuple &index_key,
                                std::to_string(expr_type));
       }
     } else if (diff == VALUE_COMPARE_NO_EQUAL) {
-      // problems here when there are multiple
-      // conditions with OR in the query
+      // Since it is an AND predicate, we could directly return false
       return false;
     }
   }
