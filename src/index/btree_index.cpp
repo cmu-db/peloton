@@ -165,8 +165,8 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
   // First make sure all three components of the scan predicate are
   // of the same length
   // Since there is a 1-to-1 correspondense between these three vectors
-  PL_ASSERT(key_column_ids.size() == expr_types.size());
-  PL_ASSERT(key_column_ids.size() == values.size());
+  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
+  PL_ASSERT(tuple_column_id_list.size() == value_list.size());
   
   // This is a hack - we do not support backward scan
   if(scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
@@ -176,9 +176,38 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
   LOG_TRACE("Special case : %d ", special_case);
 
   index_lock.ReadLock();
+
+  if(csp_p->IsPointQuery() == true) {
+    // For point query we construct the key and use equal_range
     
-  // If it is a full index scan, then just do the scan
-  if(csp_p->IsFullIndexScan() == true) {
+    const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
+
+    KeyType point_query_key;
+    point_query_key.SetFromKey(point_query_key_p);
+
+    // Use equal_range to mark two ends of the scan
+    auto scan_itr_pair = container.equal_range(point_query_key);
+    
+    auto scan_begin_itr = scan_itr_pair.first;
+    auto scan_end_itr = scan_itr_pair.second;
+
+    for (auto scan_itr = scan_begin_itr;
+         scan_itr != scan_end_itr;
+         scan_itr++) {
+      auto scan_current_key = scan_itr->first;
+      auto tuple = \
+        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+
+      if (Compare(tuple,
+                  tuple_column_id_list,
+                  expr_list,
+                  value_list) == true) {
+        result.push_back(scan_itr->second);
+      }
+    }
+  } else if(csp_p->IsFullIndexScan() == true) {
+    // If it is a full index scan, then just do the scan
+    
     for (auto scan_itr = container.begin();
          scan_itr != container.end();
          scan_itr++) {
@@ -210,8 +239,8 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
     index_high_key.SetFromKey(high_key_p);
     
     // It is good that we have equal_range
-    scan_begin_itr = container.equal_range(start_index_key).first;
-    scan_end_itr = container.equal_range(end_index_key).second;
+    auto scan_begin_itr = container.equal_range(index_low_key).first;
+    auto scan_end_itr = container.equal_range(index_high_key).second;
 
     for (auto scan_itr = scan_begin_itr;
          scan_itr != scan_end_itr;
