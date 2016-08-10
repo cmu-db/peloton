@@ -28,6 +28,7 @@ namespace peloton {
 
 class AbstractTuple;
 class VarlenPool;
+class ConjunctionScanPredicate;
 
 namespace catalog {
 class Schema;
@@ -237,11 +238,12 @@ class Index : public Printable {
   // Index Scan
   ///////////////////////////////////////////////////////////////////
 
-  virtual void Scan(const std::vector<Value> &values,
-                    const std::vector<oid_t> &key_column_ids,
-                    const std::vector<ExpressionType> &exprs,
+  virtual void Scan(const std::vector<Value> &value_list,
+                    const std::vector<oid_t> &tuple_column_id_list,
+                    const std::vector<ExpressionType> &expr_list,
                     const ScanDirectionType &scan_direction,
-                    std::vector<ItemPointer *> &result) = 0;
+                    std::vector<ItemPointer *> &result,
+                    const ConjunctionScanPredicate *csp_p) = 0;
 
   virtual void ScanAllKeys(std::vector<ItemPointer *> &result) = 0;
 
