@@ -34,11 +34,17 @@ namespace planner {
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
       index_(index_scan_desc.index_obj),
       index_predicate() {
-        
-    index_predicate.AddConjunctionScanPredicate(index_.get(),
-                                              values_,
-                                              key_column_ids_,
-                                              expr_types_);
+
+    // If the hybrid scan is used only for seq scan which does not require
+    // an index, where the index pointer will be set to nullptr by the default
+    // initializer of the scan descriptor, then we do not try to add predicate
+    // since it causes memory fault
+    if(index_.get() != nullptr) {
+      index_predicate.AddConjunctionScanPredicate(index_.get(),
+                                                  values_,
+                                                  key_column_ids_,
+                                                  expr_types_);
+    }
                                               
     return;
   }
