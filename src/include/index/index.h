@@ -87,7 +87,7 @@ class IndexMetadata : public Printable {
    *                  the schema of indexed columns, from leading column
    *                  to the least important columns
    */
-  const catalog::Schema *GetKeySchema() const {
+  inline const catalog::Schema *GetKeySchema() const {
     return key_schema;
   }
 
@@ -110,7 +110,7 @@ class IndexMetadata : public Printable {
    * The entry whose value is j on index i means the i-th column in the
    * key is mapped to the j-th column in the base table tuple
    */
-  const std::vector<oid_t> &GetKeyAttrs() const {
+  inline const std::vector<oid_t> &GetKeyAttrs() const {
     return key_attrs;
   }
   
@@ -118,7 +118,7 @@ class IndexMetadata : public Printable {
    * GetTupleToIndexMapping() - Returns the mapping relation between tuple key
    *                            column and index key columns
    */
-  const std::vector<oid_t> &GetTupleToIndexMapping() const {
+  inline const std::vector<oid_t> &GetTupleToIndexMapping() const {
     return tuple_attrs;
   }
 
