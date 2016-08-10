@@ -155,9 +155,9 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
 /////////////////////////////////////////////////////////////////////
 
 BTREE_TEMPLATE_ARGUMENT
-void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
-                               const std::vector<oid_t> &key_column_ids,
-                               const std::vector<ExpressionType> &expr_types,
+void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
+                               const std::vector<oid_t> &tuple_column_id_list,
+                               const std::vector<ExpressionType> &expr_list,
                                const ScanDirectionType &scan_direction,
                                std::vector<ItemPointer *> &result,
                                const ConjunctionScanPredicate *csp_p) {
@@ -191,7 +191,10 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
       // since we just narrowed down search range using low key and
       // high key for scan, it is still possible that there are tuples
       // for which the predicate is not true
-      if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+      if(Compare(tuple,
+                 tuple_column_id_list,
+                 expr_list,
+                 value_list) == true) {
         result.push_back(scan_itr->second);
       }
     } // for it from begin() to end()
@@ -217,7 +220,10 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
       auto tuple = \
         scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
         
-      if (Compare(tuple, key_column_ids, expr_types, values) == true) {
+      if (Compare(tuple,
+                  tuple_column_id_list,
+                  expr_list,
+                  value_list) == true) {
         result.push_back(scan_itr->second);
       }
     }
