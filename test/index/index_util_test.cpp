@@ -375,5 +375,76 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   return;
 }
 
+/*
+ * BindKeyTest() - Tests binding values onto keys that are not bound
+ */
+TEST_F(IndexUtilTests, BindKeyTest) {
+  index::Index *index_p = BuildIndex();
+
+  // This is the output variable
+  std::vector<std::pair<oid_t, oid_t>> value_index_list{};
+
+  std::vector<Value> value_list{};
+  std::vector<oid_t> tuple_column_id_list{};
+  std::vector<ExpressionType> expr_list{};
+
+  value_list = {ValueFactory::GetBindingOnlyIntegerValue(2),
+                ValueFactory::GetBindingOnlyIntegerValue(0),
+                ValueFactory::GetBindingOnlyIntegerValue(1), };
+
+  tuple_column_id_list = {3, 3, 0};
+
+  expr_list = {EXPRESSION_TYPE_COMPARE_GREATERTHAN,
+               EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO,
+               EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO, };
+
+  IndexScanPredicate isp{};
+
+  isp.AddConjunctionScanPredicate(index_p,
+                                  value_list,
+                                  tuple_column_id_list,
+                                  expr_list);
+
+  const std::vector<ConjunctionScanPredicate> &cl = isp.GetConjunctionList();
+
+  ///////////////////////////////////////////////////////////////////
+  // Test bind for range query
+  ///////////////////////////////////////////////////////////////////
+
+  // Basic check to avoid surprise in later tests
+  EXPECT_EQ(cl.size(), 1);
+  EXPECT_EQ(cl[0].IsPointQuery(), false);
+  EXPECT_EQ(isp.IsFullIndexScan(), false);
+
+  // There are three unbound values
+  EXPECT_EQ(cl[0].GetBindingCount(), 3);
+
+  // At this time low key and high key should be binded
+  // (Note that the type should be also INT but the value is likely to be 0)
+  LOG_INFO("Low key (NOT BINDED) = %s", cl[0].GetLowKey()->GetInfo().c_str());
+  LOG_INFO("High key (NOT BINDED) = %s", cl[0].GetHighKey()->GetInfo().c_str());
+
+  // Bind real value
+  isp.LateBindValues(index_p, {ValueFactory::GetIntegerValue(100),
+                               ValueFactory::GetIntegerValue(200),
+                               ValueFactory::GetIntegerValue(300)});
+
+  // This is important - Since binding does not change the number of
+  // binding points, and their information is preserved for next
+  // binding
+  EXPECT_EQ(cl[0].GetBindingCount(), 3);
+
+  // At this time low key and high key should be binded
+  LOG_INFO("Low key = %s", cl[0].GetLowKey()->GetInfo().c_str());
+  LOG_INFO("High key = %s", cl[0].GetHighKey()->GetInfo().c_str());
+
+
+  ///////////////////////////////////////////////////////////////////
+  // End of all tests
+  ///////////////////////////////////////////////////////////////////
+
+  return;
+}
+
 }  // End test namespace
 }  // End peloton namespace
