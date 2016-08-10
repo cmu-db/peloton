@@ -112,6 +112,7 @@ std::shared_ptr<const Schema> Schema::CopySchema(
   return std::shared_ptr<Schema>(new Schema(columns));
 }
 
+
 // Backward compatible for raw pointers
 // Copy schema
 Schema *Schema::CopySchema(const Schema *schema) {
@@ -152,6 +153,9 @@ Schema *Schema::CopySchema(const Schema *schema,
 
   // For each column index, push the column
   for(oid_t column_index : index_list) {
+    // Make sure the index does not refer to invalid element
+    PL_ASSERT(column_index < schema->columns.size());
+    
     column_list.push_back(schema->columns[column_index]);
   }
 
