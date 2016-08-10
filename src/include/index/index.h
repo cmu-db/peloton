@@ -323,10 +323,12 @@ class Index : public Printable {
   const std::string GetInfo() const;
 
   // Generic key comparator between index key and given arbitrary key
-  static bool Compare(const AbstractTuple &index_key,
-                      const std::vector<oid_t> &column_ids,
-                      const std::vector<ExpressionType> &expr_types,
-                      const std::vector<Value> &values);
+  //
+  // NOTE: Do not make it static since we need the metadata fild
+  bool Compare(const AbstractTuple &index_key,
+               const std::vector<oid_t> &column_ids,
+               const std::vector<ExpressionType> &expr_types,
+               const std::vector<Value> &values);
 
   VarlenPool *GetPool() const {
     return pool;
