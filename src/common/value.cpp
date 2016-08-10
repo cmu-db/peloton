@@ -445,6 +445,8 @@ const std::string Value::GetInfo() const {
       break;
     case VALUE_TYPE_DATE:
     case VALUE_TYPE_INTEGER:
+      buffer << GetInteger();
+      break;
     case VALUE_TYPE_FOR_BINDING_ONLY_INTEGER:
       buffer << "NOT BINDED @ " << GetInteger();
       break;
