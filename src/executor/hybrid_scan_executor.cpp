@@ -353,7 +353,7 @@ bool HybridScanExecutor::ExecPrimaryIndexLookup() {
                  expr_type_,
                  SCAN_DIRECTION_TYPE_FORWARD,
                  tuple_location_ptrs,
-                 node.index_predicate);
+                 &node.GetIndexPredicate().GetConjunctionList()[0]);
   }
 
   LOG_TRACE("Result tuple count: %lu", tuple_location_ptrs.size());
