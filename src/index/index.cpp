@@ -19,6 +19,8 @@
 #include "catalog/manager.h"
 #include "storage/tuple.h"
 
+#include "index/scan_optimizer.h"
+
 #include <iostream>
 
 namespace peloton {
@@ -145,6 +147,28 @@ Index::~Index() {
   // Free the varlen pool - it is allocted during construction
   delete pool;
   
+  return;
+}
+
+void Index::ScanTest(const std::vector<Value> &value_list,
+                     const std::vector<oid_t> &tuple_column_id_list,
+                     const std::vector<ExpressionType> &expr_list,
+                     const ScanDirectionType &scan_direction,
+                     std::vector<ItemPointer *> &result) {
+  IndexScanPredicate isp{};
+
+  isp.AddConjunctionScanPredicate(this,
+                                  value_list,
+                                  tuple_column_id_list,
+                                  expr_list);
+
+  Scan(value_list,
+       tuple_column_id_list,
+       expr_list,
+       scan_direction,
+       result,
+       &isp.GetConjunctionList()[0]);
+
   return;
 }
 
