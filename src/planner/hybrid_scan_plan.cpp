@@ -32,7 +32,15 @@ namespace planner {
       expr_types_(std::move(index_scan_desc.expr_list)),
       values_(std::move(index_scan_desc.value_list)),
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
-      index_(index_scan_desc.index_obj){}
-
+      index_(index_scan_desc.index_obj),
+      scan_predicate() {
+        
+    index_predicate.AddConjunctionScanPredicate(index_.get(),
+                                              values_,
+                                              key_column_ids_,
+                                              expr_types_);
+                                              
+    return;
+  }
 }
 }
