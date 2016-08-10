@@ -140,8 +140,10 @@ BWTREE_INDEX_TYPE::Scan(const std::vector<Value> &values,
                         const std::vector<oid_t> &key_column_ids,
                         const std::vector<ExpressionType> &expr_types,
                         const ScanDirectionType &scan_direction,
-                        std::vector<ItemPointer *> &result) {
+                        std::vector<ItemPointer *> &result,
+                        const ConjunctionScanPredicate *csp_p) {
   KeyType index_key;
+  (void)csp_p;
 
   // Checkif we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
