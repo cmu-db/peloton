@@ -153,6 +153,7 @@ void PacketManager::PutTupleDescriptor(
 void PacketManager::SendDataRows(std::vector<ResultType> &results, int colcount,
                                  int &rows_affected,
                                  ResponseBuffer &responses) {
+  LOG_TRACE("result size: %ld, colcount: %d", results.size(), colcount);
   if (!results.size() || !colcount) return;
 
   LOG_TRACE("Flatten result size: %lu", results.size());
@@ -419,6 +420,9 @@ void PacketManager::ExecBindMessage(Packet *pkt, ResponseBuffer &responses) {
 
   const auto &query_string = statement->GetQueryString();
   const auto &query_type = statement->GetQueryType();
+
+  LOG_TRACE("Query string: %s", query_string.c_str());
+  LOG_TRACE("Query type: %s", query_type.c_str());
 
   // check if the loaded statement needs to be skipped
   skipped_stmt_ = false;
