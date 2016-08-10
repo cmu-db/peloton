@@ -19,6 +19,8 @@
 #include "common/types.h"
 #include "expression/abstract_expression.h"
 
+#include "index/scan_optimizer.h"
+
 namespace peloton {
 namespace planner {
 
@@ -79,6 +81,7 @@ class HybridScanPlan : public AbstractScan {
 
   std::shared_ptr<index::Index> index_;
 
+  ConjunctionScanPredicate scan_predicate;
 };
 
 }  // namespace planner
