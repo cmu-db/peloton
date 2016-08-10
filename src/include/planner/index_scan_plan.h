@@ -42,8 +42,24 @@ class IndexScanPlan : public AbstractScan {
    * class IndexScanDesc - Stores information to do the index scan
    */
   struct IndexScanDesc {
-    IndexScanDesc() {}
+    
+    /*
+     * Default Constructor - Set index pointer to empty
+     *
+     * We need to do this since this might be created even when an index
+     * is not required, e.g. inside hybrid scan
+     */
+    IndexScanDesc() :
+      index_obj{nullptr}
+    {}
 
+    /*
+     * Constructor
+     *
+     * This constructor is called when an index scan is required. For the
+     * situations where index is not required, the default constructor should
+     * be called to notify later procedures of the absense of an index
+     */
     IndexScanDesc(std::shared_ptr<index::Index> p_index_obj,
                   const std::vector<oid_t> &p_tuple_column_id_list,
                   const std::vector<ExpressionType> &expr_list_p,
@@ -58,6 +74,13 @@ class IndexScanPlan : public AbstractScan {
     {}
 
     // The index object for scanning
+    //
+    // NOTE: For hybrid scan plans, even if there is no index required
+    // for a scan, an empty scan descriptor will still be passed in as
+    // argument. This is a bad design but currently we have to live with it
+    // In order to prevent the scan predicate optimizer from trying to
+    // optimizing the index scan while the index pointer is not valid
+    // this should be set to 0 for an empty initialization
     std::shared_ptr<index::Index> index_obj;
 
     // A list of columns id in the base table that has a scan predicate
