@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <algorithm>
 #include <cstring>
 #include <iterator>
@@ -213,6 +212,9 @@ bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
   // iterate through all the packets
   for (size_t i = 0; i < packets.size(); i++) {
     auto pkt = packets[i].get();
+    printf("write packet:\n");
+    for (size_t i = 0; i < pkt->buf.size(); ++i) printf("%u ", pkt->buf[i]);
+    printf("\n");
     if (!client->sock->BufferWriteBytes(pkt->buf, pkt->len, pkt->msg_type)) {
       packets.clear();
       return false;

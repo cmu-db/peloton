@@ -139,7 +139,15 @@ public class PelotonTest {
     pstmt.execute();
     pstmt = conn.prepareStatement(SELECT_STOCK_COMPLEX);
     pstmt.setInt(1, 4);
-    pstmt.execute();
+    //pstmt.execute();
+    ResultSet r=pstmt.executeQuery();
+
+    while(r.next()) {
+    	System.out.println(r.getInt(1));
+    	System.out.println(r.getInt(2));
+    	System.out.println(r.getBigDecimal(3));
+   }
+   r.close();
 
     stmt.execute(CREATE_TIMESTAMP_TABLE);
     pstmt = conn.prepareStatement(INSERT_TIMESTAMP);

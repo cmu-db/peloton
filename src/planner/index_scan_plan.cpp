@@ -41,6 +41,8 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
     ReplaceColumnExpressions(table->GetSchema(), predicate_with_params_);
     SetPredicate(predicate_with_params_->Copy());
   }
+
+  values_ = values_with_params_;
 }
 
 void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {

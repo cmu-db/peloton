@@ -107,7 +107,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       optimizer::SimpleOptimizer::BuildPelotonPlanTree(sql_stmt));
 
   auto t_desc = GenerateTupleDescriptor(query_string);
-  
+
   statement->SetTupleDescriptor(t_desc);
 
   bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
@@ -115,91 +115,112 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   return std::move(statement);
 }
 
-std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(std::string query){
+std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
+    std::string query) {
 
   // The tuple descriptor to be returned
   std::vector<FieldInfoType> t_desc;
-  
+
   std::vector<std::string> query_tokens;
   boost::split(query_tokens, query, boost::is_any_of(" "),
                boost::token_compress_on);
 
-  //Check if Select
-  if(query_tokens[0] == "SELECT"){
+  // Check if Select
+  if (query_tokens[0] == "SELECT") {
 
     auto &peloton_parser = parser::Parser::GetInstance();
     auto sql_stmt = peloton_parser.BuildParseTree(query);
 
-    auto select_stmt = (parser::SelectStatement *) sql_stmt.get();
+    auto select_stmt = (parser::SelectStatement *)sql_stmt.get();
 
-    auto target_table = static_cast<storage::DataTable *>(
+    if (select_stmt->from_table->list == NULL) {
+      auto target_table = static_cast<storage::DataTable *>(
           catalog::Bootstrapper::global_catalog->GetTableFromDatabase(
               DEFAULT_DB_NAME, select_stmt->from_table->name));
 
-    auto columns = target_table->GetSchema()->GetColumns();
+      auto columns = target_table->GetSchema()->GetColumns();
 
-    for(auto expr : *select_stmt->select_list){
-      if(expr->GetExpressionType() == EXPRESSION_TYPE_STAR){
+      for (auto expr : *select_stmt->select_list) {
+        if (expr->GetExpressionType() == EXPRESSION_TYPE_STAR) {
 
-        for (oid_t i = 0; i < columns.size(); ++i) {
+          for (oid_t i = 0; i < columns.size(); ++i) {
 
-          if (columns[i].column_type == VALUE_TYPE_INTEGER) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 23, 4));
-          } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 701, 8));
-          } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
-          } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 1700, 16));
-          } else {
-            LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
-          }
-        }
-
-      }
-      else if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF){
-        auto col_name = expr->GetName();
-        for(oid_t i = 0; i < columns.size(); ++i){
-          if(col_name == columns[i].column_name){
             if (columns[i].column_type == VALUE_TYPE_INTEGER) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 23, 4));
-          } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 701, 8));
-          } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
-          } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 1700, 16));
-          } else {
-            LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
-            t_desc.push_back(std::make_tuple(columns[i].column_name, 25, 255));
+              t_desc.push_back(std::make_tuple(columns[i].column_name, 23, 4));
+            } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
+              t_desc.push_back(std::make_tuple(columns[i].column_name, 701, 8));
+            } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
+              t_desc.push_back(
+                  std::make_tuple(columns[i].column_name, 25, 255));
+            } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
+              t_desc.push_back(
+                  std::make_tuple(columns[i].column_name, 1700, 16));
+            } else {
+              LOG_ERROR("Unrecognized column type: %d", columns[i].column_type);
+              t_desc.push_back(
+                  std::make_tuple(columns[i].column_name, 25, 255));
+            }
           }
+
+        } else if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
+          auto col_name = expr->GetName();
+          for (oid_t i = 0; i < columns.size(); ++i) {
+            if (col_name == columns[i].column_name) {
+              if (columns[i].column_type == VALUE_TYPE_INTEGER) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 23, 4));
+              } else if (columns[i].column_type == VALUE_TYPE_DOUBLE) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 701, 8));
+              } else if (columns[i].column_type == VALUE_TYPE_VARCHAR) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 25, 255));
+              } else if (columns[i].column_type == VALUE_TYPE_DECIMAL) {
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 1700, 16));
+              } else {
+                LOG_ERROR("Unrecognized column type: %d",
+                          columns[i].column_type);
+                t_desc.push_back(
+                    std::make_tuple(columns[i].column_name, 25, 255));
+              }
+            }
+          }
+        } else if (expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF) {
+          auto func_expr = (expression::ParserExpression *)expr;
+          if (func_expr->expr->GetExpressionType() ==
+              EXPRESSION_TYPE_COLUMN_REF) {
+            std::string col_name = std::string(func_expr->GetName()) + "(" +
+                                   std::string(func_expr->expr->GetName()) +
+                                   ")";
+            t_desc.push_back(std::make_tuple(col_name, 23, 4));
+          } else if (func_expr->expr->GetExpressionType() ==
+                     EXPRESSION_TYPE_AGGREGATE_AVG) {
+            std::string col_name = std::string(func_expr->GetName()) + "(" +
+                                   std::string(func_expr->expr->GetName()) +
+                                   ")";
+            t_desc.push_back(std::make_tuple(col_name, 701, 8));
+          } else if (func_expr->expr->GetExpressionType() ==
+                     EXPRESSION_TYPE_AGGREGATE_MAX) {
+            std::string col_name = std::string(func_expr->GetName()) + "(" +
+                                   std::string(func_expr->expr->GetName()) +
+                                   ")";
+            t_desc.push_back(std::make_tuple(col_name, 25, 4));
+          } else if (func_expr->expr->GetExpressionType() ==
+                     EXPRESSION_TYPE_AGGREGATE_MIN) {
+            std::string col_name = std::string(func_expr->GetName()) + "(" +
+                                   std::string(func_expr->expr->GetName()) +
+                                   ")";
+            t_desc.push_back(std::make_tuple(col_name, 25, 4));
+          } else if (func_expr->expr->GetExpressionType() ==
+                     EXPRESSION_TYPE_AGGREGATE_COUNT_STAR) {
+            std::string col_name = "COUNT(*)";
+            t_desc.push_back(std::make_tuple(col_name, 701, 8));
           }
         }
       }
-      else if(expr->GetExpressionType() == EXPRESSION_TYPE_FUNCTION_REF){
-        auto func_expr = (expression::ParserExpression *) expr;
-        if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF){
-          std::string col_name = std::string(func_expr->GetName()) + "(" + std::string(func_expr->expr->GetName()) + ")";
-          t_desc.push_back(std::make_tuple(col_name, 23, 4));
-        }
-        else if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_AVG){
-          std::string col_name = std::string(func_expr->GetName()) + "(" + std::string(func_expr->expr->GetName()) + ")";
-          t_desc.push_back(std::make_tuple(col_name, 701, 8)); 
-        }
-        else if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_MAX){
-          std::string col_name = std::string(func_expr->GetName()) + "(" + std::string(func_expr->expr->GetName()) + ")";
-          t_desc.push_back(std::make_tuple(col_name, 25, 4)); 
-        }
-        else if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_MIN){
-          std::string col_name = std::string(func_expr->GetName()) + "(" + std::string(func_expr->expr->GetName()) + ")";
-          t_desc.push_back(std::make_tuple(col_name, 25, 4)); 
-        }
-        else if(func_expr->expr->GetExpressionType() == EXPRESSION_TYPE_AGGREGATE_COUNT_STAR){
-          std::string col_name = "COUNT(*)";
-          t_desc.push_back(std::make_tuple(col_name, 701, 8)); 
-        }
-      } 
+    } else {
+      t_desc.push_back(std::make_tuple(query_tokens[1], 23, 4));
     }
   }
 
