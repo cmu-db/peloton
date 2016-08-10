@@ -103,6 +103,10 @@ class IndexScanPlan : public AbstractScan {
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
   }
+  
+  const index::IndexScanPredicate &GetIndexPredicate() const {
+    return index_predicate;
+  }
 
   const std::vector<Value> &GetValues() const { return values_; }
 

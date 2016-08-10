@@ -56,6 +56,10 @@ class HybridScanPlan : public AbstractScan {
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
   }
+  
+  const index::IndexScanPredicate &GetIndexPredicate() const {
+    return index_predicate;
+  }
 
   const std::vector<Value> &GetValues() const { return values_; }
 
@@ -81,7 +85,7 @@ class HybridScanPlan : public AbstractScan {
 
   std::shared_ptr<index::Index> index_;
 
-  ConjunctionScanPredicate scan_predicate;
+  index::IndexScanPredicate index_predicate;
 };
 
 }  // namespace planner
