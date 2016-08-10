@@ -37,7 +37,7 @@ ItemPointer item2(123, 19);
 
 // Since we need index type to determine the result
 // of the test, this needs to be made as a global static
-static IndexType index_type = INDEX_TYPE_BWTREE;
+static IndexType index_type = INDEX_TYPE_BTREE;
 
 // Uncomment this to enable BwTree as index being tested
 //static IndexType index_type = INDEX_TYPE_BWTREE;
@@ -518,25 +518,25 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
@@ -649,7 +649,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
@@ -660,7 +660,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
@@ -672,7 +672,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
@@ -685,14 +685,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+  index->ScanTest({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
@@ -704,7 +704,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
        key2->GetValue(1)},
       {0, 1, 0, 1},
@@ -720,7 +720,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+  index->ScanTest({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
               {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,
@@ -737,7 +737,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // REVERSE SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
@@ -748,7 +748,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
@@ -760,7 +760,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
@@ -773,7 +773,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
@@ -782,7 +782,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+  index->ScanTest({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
@@ -794,7 +794,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
        key2->GetValue(1)},
       {0, 1, 0, 1},
@@ -810,7 +810,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+  index->ScanTest({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
               {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,
