@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <cassert>
-#include <map>
 
 #include "common/types.h"
 #include "common/logger.h"

@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <map>
 #include "index/index.h"
 
 namespace peloton {
