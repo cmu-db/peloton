@@ -121,7 +121,7 @@ bool HasNonOptimizablePredicate(const std::vector<ExpressionType> &expr_types) {
  * second being the index into value list for upper bound. If the query is a
  * point query then these two are equal.
  *
- * NOTE 3: This function does not guarantee it is malloc()-free, since it calls
+ * NOTE 3: This function does not guarantee it is ma11oc()-free, since it calls
  * reserve() on value_index_list.
  */
 bool FindValueIndex(const IndexMetadata *metadata_p,
