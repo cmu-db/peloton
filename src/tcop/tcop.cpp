@@ -118,6 +118,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
     std::string query) {
 
+  // Might change the paramater to SQLStatement* to remove the extra parsing
+  // here.
+
   // The tuple descriptor to be returned
   std::vector<FieldInfoType> t_desc;
 
@@ -125,7 +128,7 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
   boost::split(query_tokens, query, boost::is_any_of(" "),
                boost::token_compress_on);
 
-  // Check if Select
+  // Check if query is select query
   if (query_tokens[0] == "SELECT") {
 
     auto &peloton_parser = parser::Parser::GetInstance();
@@ -161,11 +164,11 @@ std::vector<FieldInfoType> TrafficCop::GenerateTupleDescriptor(
                   std::make_tuple(columns[i].column_name, 25, 255));
             }
           }
-
         } else if (expr->GetExpressionType() == EXPRESSION_TYPE_COLUMN_REF) {
           auto col_name = expr->GetName();
           for (oid_t i = 0; i < columns.size(); ++i) {
             if (col_name == columns[i].column_name) {
+
               if (columns[i].column_type == VALUE_TYPE_INTEGER) {
                 t_desc.push_back(
                     std::make_tuple(columns[i].column_name, 23, 4));
