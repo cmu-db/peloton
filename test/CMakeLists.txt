@@ -36,7 +36,7 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 
 # Set memcheck parameters
 find_program(MEMORYCHECK_COMMAND valgrind REQUIRED)
-set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes --soname-synonyms='somalloc=*jemalloc*')
+set(MEMORYCHECK_COMMAND_OPTIONS --trace-children=yes --leak-check=full --track-origins=yes --soname-synonyms=somalloc=*jemalloc*)
 set(MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/third_party/valgrind/valgrind.supp" )
 
 # For each performance test source file
