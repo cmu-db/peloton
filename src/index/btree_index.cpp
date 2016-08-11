@@ -173,7 +173,9 @@ void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
     throw Exception("Invalid scan direction \n");
   }
 
-  LOG_TRACE("Special case : %d ", special_case);
+  LOG_TRACE("Point Query = %d; Full Scan = %d ",
+            csp_p->IsPointQuery(),
+            csp_p->IsFullTableScan());
 
   index_lock.ReadLock();
 
