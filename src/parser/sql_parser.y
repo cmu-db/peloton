@@ -218,7 +218,7 @@ struct PARSER_CUST_LTYPE {
 %type <uval>		opt_join_type column_type opt_column_width opt_index_type
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
-%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr
+%type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr parameter_expr opt_default
 %type <expr> 		column_name literal int_literal num_literal string_literal
 %type <expr> 		comp_expr opt_where join_condition opt_having
 %type <order>		opt_order
@@ -375,12 +375,13 @@ column_def_commalist:
 	;
 	
 column_def:
-		IDENTIFIER column_type opt_column_width opt_notnull opt_primary opt_unique {
+		IDENTIFIER column_type opt_column_width opt_notnull opt_primary opt_unique opt_default{
 			$$ = new ColumnDefinition($1, (ColumnDefinition::DataType) $2);
 			$$->varlen = $3;
 			$$->not_null = $4;
 			$$->primary = $5;
 			$$->unique = $6;
+			$$->default_value = $7;
 		}
 		|
 		PRIMARY KEY '(' ident_commalist ')' {
@@ -414,6 +415,10 @@ opt_primary:
 opt_unique:
 	UNIQUE { $$ = true; }
 	|  /* empty */ { $$ = false; }
+	;
+
+opt_default:
+	DEFAULT literal {$$ = $2;}
 	;
 
 column_type:
