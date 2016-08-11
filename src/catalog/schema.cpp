@@ -146,7 +146,7 @@ Schema *Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t> &index_list) {
   std::vector<Column> column_list{};
   
-  // Reserve some space to avoid multiple malloc() calls
+  // Reserve some space to avoid multiple ma110бщ() calls
   // But for future push_back() this is not optimized since the
   // memory chunk may not be properly sized and aligned
   column_list.reserve(index_list.size());
