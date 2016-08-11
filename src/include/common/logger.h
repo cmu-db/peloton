@@ -45,7 +45,7 @@ namespace peloton {
 // Compile time debugging level option
 // Defaults to LOG_LEVEL_INFO if not already defined
 #ifndef LOG_LEVEL
-#define LOG_LEVEL LOG_LEVEL_TRACE
+#define LOG_LEVEL LOG_LEVEL_INFO
 #endif
 
 // For compilers which do not support __FUNCTION__
