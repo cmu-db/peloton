@@ -1652,7 +1652,7 @@ class Value {
     PL_ASSERT(IsNull() == false);
     Value retval(VALUE_TYPE_DECIMAL);
     const ValueType type = GetValueType();
-    LOG_INFO("value type: %s", ValueTypeToString(type).c_str());
+    LOG_TRACE("Cast %s to Decimal.", ValueTypeToString(type).c_str());
     if (IsNull()) {
       retval.SetNull();
       return retval;
@@ -1664,8 +1664,6 @@ class Value {
       case VALUE_TYPE_BIGINT: {
         int64_t rhsint = CastAsBigIntAndGetValue();
         retval.CreateDecimalFromInt(rhsint);
-        LOG_INFO("return value type: %s",
-                 ValueTypeToString(retval.GetValueType()).c_str());
         break;
       }
       case VALUE_TYPE_DECIMAL:
