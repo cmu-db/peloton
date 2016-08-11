@@ -55,11 +55,14 @@ TEST_F(UpdateTests, Updating) {
   auto id_column =
       catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                       "dept_id", true);
+  auto manager_id_column =
+      catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                      "manager_id", true);
   auto name_column =
       catalog::Column(VALUE_TYPE_VARCHAR, 32,
                       "dept_name", false);
 
-  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, name_column}));
+  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({id_column, manager_id_column,name_column}));
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
@@ -75,12 +78,12 @@ TEST_F(UpdateTests, Updating) {
   // Inserting a tuple end-to-end
   txn_manager.BeginTransaction();
   LOG_INFO("Inserting a tuple...");
-  LOG_INFO("Query: INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
+  LOG_INFO("Query: INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES (1,12,'hello_1');");
   std::unique_ptr<Statement> statement;
-  statement.reset(new Statement("INSERT", "INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');"));
+  statement.reset(new Statement("INSERT", "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES (1,12,'hello_1');"));
   auto& peloton_parser = parser::Parser::GetInstance();
   LOG_INFO("Building parse tree...");
-  auto insert_stmt = peloton_parser.BuildParseTree("INSERT INTO department_table(dept_id,dept_name) VALUES (1,'hello_1');");
+  auto insert_stmt = peloton_parser.BuildParseTree("INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES (1,12,'hello_1');");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(insert_stmt));
@@ -101,6 +104,23 @@ TEST_F(UpdateTests, Updating) {
   statement.reset(new Statement("UPDATE", "UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1"));
   LOG_INFO("Building parse tree...");
   auto update_stmt = peloton_parser.BuildParseTree("UPDATE department_table SET dept_name = 'CS' WHERE dept_id = 1");
+  LOG_INFO("Building parse tree completed!");
+  LOG_INFO("Building plan tree...");
+  statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
+  LOG_INFO("Building plan tree completed!");
+  bridge::PlanExecutor::PrintPlan(statement->GetPlanTree().get(), "Plan");
+  LOG_INFO("Executing plan...");
+  status = bridge::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(), params, result);
+  LOG_INFO("Statement executed. Result: %d", status.m_result);
+  LOG_INFO("Tuple Updated!");
+  txn_manager.CommitTransaction();
+
+  txn_manager.BeginTransaction();
+  LOG_INFO("Updating another tuple...");
+  LOG_INFO("Query: UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = 1");
+  statement.reset(new Statement("UPDATE", "UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = 1"));
+  LOG_INFO("Building parse tree...");
+  update_stmt = peloton_parser.BuildParseTree("UPDATE department_table SET manager_id = manager_id + 1 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
   statement->SetPlanTree(optimizer::SimpleOptimizer::BuildPelotonPlanTree(update_stmt));
