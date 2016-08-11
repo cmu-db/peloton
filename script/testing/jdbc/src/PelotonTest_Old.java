@@ -6,7 +6,7 @@ import java.sql.*;
  * Email:   mingf@cs.cmu.edu
  */
 public class PelotonTest {
-  private final String url = "jdbc:postgresql://localhost:5432/";
+  private final String url = "jdbc:postgresql://localhost:12345/test";
   private final String username = "postgres";
   private final String pass = "postgres";
 
@@ -77,12 +77,16 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
     stmt.execute(DROP_IF_EXISTS);
     stmt.execute(CREATE);
-    stmt.execute(INSERT_A_1);
+for(int i = 0; i < 1000; ++i) {
+String query = "INSERT INTO A(id,data) VALUES (" + i + ",'hello_1');";
+stmt.execute(query);
+}
+/*    stmt.execute(INSERT_A_1);
     stmt.execute(INSERT_A_2);
     stmt.execute(INSERT_A_3);
     stmt.execute(INSERT_B_1);
     stmt.execute(SEQSCAN);
-/*    stmt.execute(SEQSCAN_2);
+    stmt.execute(SEQSCAN_2);
     stmt.execute(AGG_COUNT);
     stmt.execute(AGG_COUNT_2);
     stmt.execute(UPDATE_BY_INDEXSCAN);
