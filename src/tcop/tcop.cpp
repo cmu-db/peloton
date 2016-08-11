@@ -79,8 +79,7 @@ Result TrafficCop::ExecuteStatement(
 Result TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     UNUSED_ATTRIBUTE const bool unnamed, std::vector<ResultType> &result,
-    UNUSED_ATTRIBUTE int &rows_changed,
-    UNUSED_ATTRIBUTE std::string &error_message) {
+    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message) {
 
   LOG_TRACE("Execute Statement %s", statement->GetStatementName().c_str());
   std::vector<Value> params;
@@ -88,6 +87,8 @@ Result TrafficCop::ExecuteStatement(
   bridge::peloton_status status = bridge::PlanExecutor::ExecutePlan(
       statement->GetPlanTree().get(), params, result);
   LOG_TRACE("Statement executed. Result: %d", status.m_result);
+
+  rows_changed = status.m_processed;
   return status.m_result;
 }
 

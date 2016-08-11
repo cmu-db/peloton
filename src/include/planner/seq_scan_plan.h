@@ -46,7 +46,7 @@ class SeqScanPlan : public AbstractScan {
       : AbstractScan(table, predicate, column_ids) {
     LOG_DEBUG("Creating a Sequential Scan Plan");
     target_table_ = table;
-    where_ = predicate;
+    if (predicate != nullptr) where_ = predicate->Copy();
     if (predicate != nullptr) where_with_params_ = predicate->Copy();
   }
 
