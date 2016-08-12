@@ -419,6 +419,7 @@ opt_unique:
 
 opt_default:
 	DEFAULT literal {$$ = $2;}
+	|  /* empty */ { $$ = nullptr; }
 	;
 
 column_type:
