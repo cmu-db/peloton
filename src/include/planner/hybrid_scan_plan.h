@@ -19,9 +19,13 @@
 #include "common/types.h"
 #include "expression/abstract_expression.h"
 
-#include "index/scan_optimizer.h"
-
 namespace peloton {
+
+// Forward declaration for the index optimizer
+namespace index {
+class IndexScanPredicate;
+}
+  
 namespace planner {
 
 class HybridScanPlan : public AbstractScan {
