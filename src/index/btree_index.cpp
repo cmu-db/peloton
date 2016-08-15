@@ -52,6 +52,10 @@ BTreeIndex<KeyType, ValueType, KeyComparator,
   }
 }
 
+/////////////////////////////////////////////////////////////////////
+// Mutating operations
+/////////////////////////////////////////////////////////////////////
+
 BTREE_TEMPLATE_ARGUMENT
 bool BTREE_TEMPLATE_TYPE::InsertEntry(const storage::Tuple *key,
                                                  const ItemPointer &location) {
@@ -146,173 +150,119 @@ bool BTREE_TEMPLATE_TYPE::CondInsertEntry(const storage::Tuple *key,
   return true;
 }
 
-///////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+// Scan operations
+/////////////////////////////////////////////////////////////////////
 
 BTREE_TEMPLATE_ARGUMENT
-void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &values,
-                               const std::vector<oid_t> &key_column_ids,
-                               const std::vector<ExpressionType> &expr_types,
+void BTREE_TEMPLATE_TYPE::Scan(const std::vector<Value> &value_list,
+                               const std::vector<oid_t> &tuple_column_id_list,
+                               const std::vector<ExpressionType> &expr_list,
                                const ScanDirectionType &scan_direction,
-                               std::vector<ItemPointer *> &result) {
+                               std::vector<ItemPointer *> &result,
+                               const ConjunctionScanPredicate *csp_p) {
       
-  // Check if we have leading (leftmost) column equality
-  // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
-  //  oid_t leading_column_id = 0;
-  //  auto key_column_ids_itr = std::find(key_column_ids.begin(),
-  //                                      key_column_ids.end(),
-  //                                      leading_column_id);
-
-  // SPECIAL CASE : leading column id is one of the key column ids
-  // and is involved in a equality constraint
-  // Currently special case only includes EXPRESSION_TYPE_COMPARE_EQUAL
-  // There are two more types, one is aligned, another is not aligned.
-  // Aligned example: A > 0, B >= 15, c > 4
-  // Not Aligned example: A >= 15, B < 30
-
-  bool special_case = true;
-  for (auto key_column_ids_itr = key_column_ids.begin();
-       key_column_ids_itr != key_column_ids.end(); key_column_ids_itr++) {
-    auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-
-    if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTEQUAL ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_IN ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_LIKE ||
-        expr_types[offset] == EXPRESSION_TYPE_COMPARE_NOTLIKE) {
-      special_case = false;
-      break;
-    }
+  // First make sure all three components of the scan predicate are
+  // of the same length
+  // Since there is a 1-to-1 correspondense between these three vectors
+  PL_ASSERT(tuple_column_id_list.size() == expr_list.size());
+  PL_ASSERT(tuple_column_id_list.size() == value_list.size());
+  
+  // This is a hack - we do not support backward scan
+  if(scan_direction == SCAN_DIRECTION_TYPE_INVALID) {
+    throw Exception("Invalid scan direction \n");
   }
 
-  LOG_TRACE("Special case : %d ", special_case);
+  LOG_TRACE("Point Query = %d; Full Scan = %d ",
+            csp_p->IsPointQuery(),
+            csp_p->IsFullTableScan());
 
-  {
-    index_lock.ReadLock();
+  index_lock.ReadLock();
 
-    // If it is a special case, we can figure out the range to scan in the index
-    if (special_case == true) {
-      // Assumption: must have leading column, assume it's first one in
-      // key_column_ids.
-      assert(key_column_ids.size() > 0);
-      oid_t leading_column_offset = 0;
-      oid_t leading_column_id = key_column_ids[leading_column_offset];
-      
-      std::vector<std::pair<Value, Value>> intervals;
+  if(csp_p->IsPointQuery() == true) {
+    // For point query we construct the key and use equal_range
+    
+    const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
 
-      ConstructIntervals(leading_column_id, values, key_column_ids, expr_types,
-                         intervals);
+    KeyType point_query_key;
+    point_query_key.SetFromKey(point_query_key_p);
 
-      // For non-leading columns, find the max and min
-      std::map<oid_t, std::pair<Value, Value>> non_leading_columns;
-      FindMaxMinInColumns(leading_column_id, values, key_column_ids, expr_types,
-                          non_leading_columns);
+    // Use equal_range to mark two ends of the scan
+    auto scan_itr_pair = container.equal_range(point_query_key);
+    
+    auto scan_begin_itr = scan_itr_pair.first;
+    auto scan_end_itr = scan_itr_pair.second;
 
-      auto indexed_columns = metadata->GetKeySchema()->GetIndexedColumns();
-      for (auto key_column_id : indexed_columns) {
-        if (key_column_id == leading_column_id) {
-          LOG_TRACE("Leading column : %u", key_column_id);
-          continue;
-        }
+    for (auto scan_itr = scan_begin_itr;
+         scan_itr != scan_end_itr;
+         scan_itr++) {
+      auto scan_current_key = scan_itr->first;
+      auto tuple = \
+        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
-        if (non_leading_columns.find(key_column_id) == non_leading_columns.end()) {
-          auto type =
-              metadata->GetKeySchema()->GetColumn(key_column_id).column_type;
-          std::pair<Value, Value> range(Value::GetMinValue(type),
-                                        Value::GetMaxValue(type));
-          std::pair<oid_t, std::pair<Value, Value>> key_value(key_column_id,
-                                                              range);
-          non_leading_columns.insert(key_value);
-        }
-      }
-
-      assert(intervals.size() != 0);
-      // Search each interval of leading_column.
-      for (const auto &interval : intervals) {
-        auto scan_begin_itr = container.begin();
-        auto scan_end_itr = container.end();
-        std::unique_ptr<storage::Tuple> start_key;
-        std::unique_ptr<storage::Tuple> end_key;
-        start_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
-        end_key.reset(new storage::Tuple(metadata->GetKeySchema(), true));
-
-        LOG_TRACE("%s", "Constructing start/end keys\n");
-
-        LOG_TRACE("left bound %s\t\t right bound %s\n",
-                  interval.first.GetInfo().c_str(),
-                  interval.second.GetInfo().c_str());
-
-        start_key->SetValue(leading_column_offset, interval.first, GetPool());
-        end_key->SetValue(leading_column_offset, interval.second, GetPool());
-
-        for (const auto &k_v : non_leading_columns) {
-          start_key->SetValue(k_v.first, k_v.second.first, GetPool());
-          end_key->SetValue(k_v.first, k_v.second.second, GetPool());
-        }
-        KeyType start_index_key;
-        KeyType end_index_key;
-        start_index_key.SetFromKey(start_key.get());
-        end_index_key.SetFromKey(end_key.get());
-
-        scan_begin_itr = container.equal_range(start_index_key).first;
-        scan_end_itr = container.equal_range(end_index_key).second;
-        switch (scan_direction) {
-          case SCAN_DIRECTION_TYPE_FORWARD:
-          case SCAN_DIRECTION_TYPE_BACKWARD: {
-            // Scan the index entries in forward direction
-            for (auto scan_itr = scan_begin_itr; scan_itr != scan_end_itr;
-                 scan_itr++) {
-              auto scan_current_key = scan_itr->first;
-              auto tuple = scan_current_key.GetTupleForComparison(
-                  metadata->GetKeySchema());
-              // Compare the current key in the scan with "values" based on
-              // "expression types"
-              // For instance, "5" EXPR_GREATER_THAN "2" is true
-              if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-                ItemPointer *location_header = scan_itr->second;
-                result.push_back(location_header);
-              }
-            }
-            LOG_TRACE("DONE");
-          } break;
-
-          case SCAN_DIRECTION_TYPE_INVALID:
-          default:
-            throw Exception("Invalid scan direction \n");
-            break;
-        }
-      }
-
-    } else {
-      auto scan_begin_itr = container.begin();
-
-      switch (scan_direction) {
-        case SCAN_DIRECTION_TYPE_FORWARD:
-        case SCAN_DIRECTION_TYPE_BACKWARD: {
-          // Scan the index entries in forward direction
-          for (auto scan_itr = scan_begin_itr; scan_itr != container.end();
-               scan_itr++) {
-            auto scan_current_key = scan_itr->first;
-            auto tuple = scan_current_key.GetTupleForComparison(
-                metadata->GetKeySchema());
-
-            // Compare the current key in the scan with "values" based on
-            // "expression types"
-            // For instance, "5" EXPR_GREATER_THAN "2" is true
-            if (Compare(tuple, key_column_ids, expr_types, values) == true) {
-              ItemPointer *location_header = scan_itr->second;
-              result.push_back(location_header);
-            }
-          }
-        } break;
-
-        case SCAN_DIRECTION_TYPE_INVALID:
-        default:
-          throw Exception("Invalid scan direction \n");
-          break;
+      if (Compare(tuple,
+                  tuple_column_id_list,
+                  expr_list,
+                  value_list) == true) {
+        result.push_back(scan_itr->second);
       }
     }
+  } else if(csp_p->IsFullIndexScan() == true) {
+    // If it is a full index scan, then just do the scan
+    
+    for (auto scan_itr = container.begin();
+         scan_itr != container.end();
+         scan_itr++) {
+      // Unpack the key as a standard tuple for comparison
+      auto scan_current_key = scan_itr->first;
+      auto tuple = \
+        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
 
-    index_lock.Unlock();
-  }
+      // Compare whether the current key satisfies the predicate
+      // since we just narrowed down search range using low key and
+      // high key for scan, it is still possible that there are tuples
+      // for which the predicate is not true
+      if(Compare(tuple,
+                 tuple_column_id_list,
+                 expr_list,
+                 value_list) == true) {
+        result.push_back(scan_itr->second);
+      }
+    } // for it from begin() to end()
+  } else {
+    const storage::Tuple *low_key_p = csp_p->GetLowKey();
+    const storage::Tuple *high_key_p = csp_p->GetHighKey();
+    
+    // Construct low key and high key in KeyType form, rather than
+    // the standard in-memory tuple
+    KeyType index_low_key;
+    KeyType index_high_key;
+    index_low_key.SetFromKey(low_key_p);
+    index_high_key.SetFromKey(high_key_p);
+    
+    // It is good that we have equal_range
+    auto scan_begin_itr = container.equal_range(index_low_key).first;
+    auto scan_end_itr = container.equal_range(index_high_key).second;
+
+    for (auto scan_itr = scan_begin_itr;
+         scan_itr != scan_end_itr;
+         scan_itr++) {
+      auto scan_current_key = scan_itr->first;
+      auto tuple = \
+        scan_current_key.GetTupleForComparison(metadata->GetKeySchema());
+        
+      if (Compare(tuple,
+                  tuple_column_id_list,
+                  expr_list,
+                  value_list) == true) {
+        result.push_back(scan_itr->second);
+      }
+    }
+  } // if is full scan
+
+  index_lock.Unlock();
+  
+  return;
 }
 
 BTREE_TEMPLATE_ARGUMENT

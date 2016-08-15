@@ -91,7 +91,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
     const std::vector<Value> &values, const std::vector<oid_t> &key_column_ids,
     const std::vector<ExpressionType> &expr_types,
     const ScanDirectionType &scan_direction,
-    std::vector<ItemPointer *> &result) {
+    std::vector<ItemPointer *> &result,
+    const ConjunctionScanPredicate *csp_p) {
   // Check if we have leading (leftmost) column equality
   // refer : http://www.postgresql.org/docs/8.2/static/indexes-multicolumn.html
   //  oid_t leading_column_id = 0;
@@ -105,6 +106,8 @@ void SkipListIndex<KeyType, ValueType, KeyComparator, KeyEqualityChecker>::Scan(
   // There are two more types, one is aligned, another is not aligned.
   // Aligned example: A > 0, B >= 15, c > 4
   // Not Aligned example: A >= 15, B < 30
+  
+  (void)csp_p;
 
   // Check if suitable for point query
   bool point_query = true;
