@@ -55,7 +55,8 @@ class SkipListIndex : public Index {
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &exprs,
             const ScanDirectionType &scan_direction,
-            std::vector<ItemPointer *> &result);
+            std::vector<ItemPointer *> &result,
+            const ConjunctionScanPredicate *csp_p);
 
   void ScanAllKeys(std::vector<ItemPointer *> &result);
 

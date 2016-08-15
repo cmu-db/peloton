@@ -63,15 +63,20 @@ class ValueFactory {
   }
 
   /// Constructs a value copied into long-lived pooled memory (or the heap)
-  /// that will require an explicit Value::free.
+  /// If the Varlen is constructed on the heap, then the object will
+  /// be freed automatically by the destructor inside Value's destructor
+  /// otherwise, it will be left in the string pool and does not require
+  /// deallocation
+  ///
+  /// Both cases do not need the caller to perform any special action such
+  /// as freeing memory
   static inline Value GetStringValue(const char *value,
                                      VarlenPool *pool = NULL) {
     return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value,
                                     (size_t)(value ? strlen(value) : 0), pool);
   }
 
-  /// Constructs a value copied into long-lived pooled memory (or the heap)
-  /// that will require an explicit Value::free.
+  /// Please refer to the GetStringValue() above
   static inline Value GetStringValue(const std::string value,
                                      VarlenPool *pool = NULL) {
     return Value::GetAllocatedValue(VALUE_TYPE_VARCHAR, value.c_str(),
