@@ -594,15 +594,17 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
 class TupleKey {
  public:
   inline TupleKey() {
-    column_indices = NULL;
-    key_tuple = NULL;
-    key_tuple_schema = NULL;
+    column_indices = nullptr;
+    key_tuple = nullptr;
+    key_tuple_schema = nullptr;
   }
 
   // Set a key from a key-schema tuple.
   inline void SetFromKey(const storage::Tuple *tuple) {
     PL_ASSERT(tuple);
-    column_indices = NULL;
+    
+    column_indices = nullptr;
+    
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();
   }
@@ -619,7 +621,7 @@ class TupleKey {
   }
 
   // Return true if the TupleKey references an ephemeral index key.
-  bool IsKeySchema() const { return column_indices == NULL; }
+  bool IsKeySchema() const { return column_indices == nullptr; }
 
   // Return a table tuple that is valid for comparison
   const storage::Tuple GetTupleForComparison(
