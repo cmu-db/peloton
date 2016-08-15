@@ -138,9 +138,8 @@ Result Catalog::CreatePrimaryIndex(const std::string &database_name,
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-        "customer_pkey", Manager::GetInstance().GetNextOid(),
-        INDEX_TYPE_SKIPLIST, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema,
-        key_schema, key_attrs, true);
+        "customer_pkey", Manager::GetInstance().GetNextOid(), INDEX_TYPE_BWTREE,
+        INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, schema, key_schema, key_attrs, true);
 
     std::shared_ptr<index::Index> pkey_index(
         index::IndexFactory::GetInstance(index_metadata));

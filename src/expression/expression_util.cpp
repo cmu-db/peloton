@@ -523,10 +523,10 @@ void ExpressionUtil::ConvertParameterExpressions(
         EXPRESSION_TYPE_VALUE_PARAMETER) {
       // right expression is parameter
       auto right = (ParameterValueExpression *)expression->GetRight();
-      auto value =
-          new ConstantValueExpression(values->at(right->GetValueIdx()));
       LOG_TRACE("right in vector type: %s",
                 values->at(right->GetValueIdx()).GetInfo().c_str());
+      auto value =
+          new ConstantValueExpression(values->at(right->GetValueIdx()));
       LOG_TRACE("Setting parameter %u to value %s", right->GetValueIdx(),
                 value->getValue().GetInfo().c_str());
       delete right;
