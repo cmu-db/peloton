@@ -224,7 +224,7 @@ class ConjunctionScanPredicate {
    * NOTE: This function is made static to reflact the fact that it does not
    * require any data member
    */
-  oid_t BindValueToIndexKey(Index *index_p,
+  static oid_t BindValueToIndexKey(Index *index_p,
                                    const Value &value,
                                    storage::Tuple *index_key_p,
                                    oid_t index) {
