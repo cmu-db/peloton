@@ -378,6 +378,7 @@ class ConjunctionScanPredicate {
       // This could not be other values since all values must be
       // valid during the binding stage
       PL_ASSERT(bind_ret == INVALID_OID);
+      (void)bind_ret;
     }
     
     return;
