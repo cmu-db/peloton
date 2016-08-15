@@ -23,9 +23,13 @@ namespace wire {
 
 // checks for parsing overflows
 void CheckOverflow(Packet *pkt, size_t size) {
+//	LOG_INFO("pkt->ptr: %d", (int)pkt->ptr);
+//	LOG_INFO("size: %d", (int) size);
+//	LOG_INFO("pkt->len: %d", (int)pkt->len);
   if (pkt->ptr + size - 1 >= pkt->len) {
     // overflow case, throw error
-    LOG_WARN("Parsing error: pointer overflow for int");
+    LOG_WARN("Parsing error: pointer overflow. pkt->ptr: %d. size: %d. pkt->len: %d",
+    		(int)pkt->ptr, (int) size, (int)pkt->len);
   }
 }
 
@@ -154,6 +158,12 @@ void PacketPutCbytes(std::unique_ptr<Packet> &pkt, const uchar *b, int len) {
   pkt->buf.insert(std::end(pkt->buf), b, b + len);
   pkt->len += len;
 }
+/**
+ * Check if the buffer has data to be read
+ */
+bool CanRead(Client *client) {
+	return client->sock->CanRead();
+}
 
 /*
  * read_packet - Tries to read a single packet, returns true on success,
@@ -217,7 +227,6 @@ bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
       return false;
     }
   }
-
   // clear packets
   packets.clear();
   return client->sock->FlushWriteBuffer();
