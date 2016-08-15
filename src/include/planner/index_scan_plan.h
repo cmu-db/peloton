@@ -127,7 +127,7 @@ class IndexScanPlan : public AbstractScan {
   }
   
   const index::IndexScanPredicate &GetIndexPredicate() const {
-    return index_predicate;
+    return index_predicate_;
   }
 
   const std::vector<Value> &GetValues() const { return values_; }
@@ -191,7 +191,7 @@ class IndexScanPlan : public AbstractScan {
   //
   // In the future this might be extended into an array of conjunctive
   // predicates connected by disjunction
-  index::IndexScanPredicate index_predicate;
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace planner
