@@ -31,7 +31,7 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
       runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
       // Initialize the index scan predicate object and initialize all
       // keys that we could initialize
-      index_predicate() {
+      index_predicate_() {
 
   LOG_TRACE("Creating an Index Scan Plan");
 
@@ -47,10 +47,10 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   
   // Then add the only conjunction predicate into the index predicate list
   // (at least for now we only supports single conjunction)
-  index_predicate.AddConjunctionScanPredicate(index_.get(),
-                                              values_,
-                                              key_column_ids_,
-                                              expr_types_);
+  index_predicate_.AddConjunctionScanPredicate(index_.get(),
+                                               values_,
+                                               key_column_ids_,
+                                               expr_types_);
   
   return;
 }
@@ -64,7 +64,6 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
   SetPredicate(where);
   
   for (unsigned int i = 0; i < values_.size(); ++i) {
-    //for (auto &value : values_) {
   	auto &value = values_[i];
   	auto column_id = key_column_ids_[i];
 	
@@ -76,7 +75,7 @@ void IndexScanPlan::SetParameterValues(std::vector<Value> *values) {
   // Also bind values to index scan predicate object
   //
   // NOTE: This could only be called by one thread at a time
-  index_predicate.LateBindValues(index_.get(), *values);
+  index_predicate_.LateBindValues(index_.get(), *values);
 
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
