@@ -98,7 +98,7 @@ class DataTable : public AbstractTable {
   ItemPointer InsertEmptyVersion(const Tuple *tuple);
   ItemPointer InsertVersion(const Tuple *tuple);
   // insert tuple in table
-  ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **itemptr_ptr = nullptr);
+  ItemPointer InsertTuple(const Tuple *tuple, ItemPointer **index_entry_ptr = nullptr);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -215,13 +215,9 @@ class DataTable : public AbstractTable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  // insert into specific index
-  bool InsertInIndex(oid_t index_offset, const storage::Tuple *tuple,
-                     ItemPointer location);
-
-  // try to insert into the indices
-  // the forth argument return the itempointer ptr inserted into the primary index
-  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **itemptr_ptr);
+  // try to insert into all indexes.
+  // the last argument is the index entry in primary index holding the new tuple.
+  bool InsertInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer **index_entry_ptr);
 
  protected:
   //===--------------------------------------------------------------------===//

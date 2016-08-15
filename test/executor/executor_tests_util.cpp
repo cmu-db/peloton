@@ -211,13 +211,13 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
             random ? std::rand() % (num_rows / 3) : populate_value, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    ItemPointer *itemptr_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &itemptr_ptr);
+    ItemPointer *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    UNUSED_ATTRIBUTE bool status = txn_manager.PerformInsert(tuple_slot_id, itemptr_ptr);
+    UNUSED_ATTRIBUTE bool status = txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
     PL_ASSERT(status == true);
   }
 }
@@ -255,10 +255,10 @@ void ExecutorTestsUtil::PopulateTiles(
         std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value, testing_pool);
 
-    ItemPointer *itemptr_ptr = nullptr;
+    ItemPointer *index_entry_ptr = nullptr;
     oid_t tuple_slot_id = tile_group->InsertTuple(&tuple);
     txn_manager.PerformInsert(
-        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id), itemptr_ptr);
+        ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id), index_entry_ptr);
   }
 
   txn_manager.CommitTransaction();

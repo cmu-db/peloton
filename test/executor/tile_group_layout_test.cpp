@@ -135,13 +135,13 @@ void ExecuteTileGroupTest() {
       tuple.SetValue(col_itr, value, testing_pool);
     }
 
-    ItemPointer  *itemptr_ptr = nullptr;
-    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &itemptr_ptr);
+    ItemPointer  *index_entry_ptr = nullptr;
+    ItemPointer tuple_slot_id = table->InsertTuple(&tuple, &index_entry_ptr);
     
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     
-    txn_manager.PerformInsert(tuple_slot_id, itemptr_ptr);
+    txn_manager.PerformInsert(tuple_slot_id, index_entry_ptr);
   }
 
   txn_manager.CommitTransaction();

@@ -402,8 +402,8 @@ void BuildIndex(std::shared_ptr<index::Index> index,
       tile_group->CopyTuple(tuple_id, tuple_ptr.get());
       ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
 
-      ItemPointer *itemptr_ptr = nullptr;
-      table->InsertInIndexes(tuple_ptr.get(), location, &itemptr_ptr);
+      ItemPointer *index_entry_ptr = nullptr;
+      table->InsertInIndexes(tuple_ptr.get(), location, &index_entry_ptr);
     }
     index->IncrementIndexedTileGroupOffset();
   }

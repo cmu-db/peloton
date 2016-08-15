@@ -232,7 +232,7 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   }
 }
 
-bool TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *itemptr_ptr) {
+bool TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -255,7 +255,7 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *
   InitTupleReserved(tile_group_header, tuple_id);
 
   // Write down the head pointer's address in tile group header
-  SetHeadPtr(tile_group_header, tuple_id, itemptr_ptr);
+  SetHeadPtr(tile_group_header, tuple_id, index_entry_ptr);
 
 
   return true;
