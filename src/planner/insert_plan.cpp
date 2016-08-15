@@ -98,7 +98,6 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
       std::unique_ptr<storage::Tuple> tuple(
           new storage::Tuple(table_schema, true));
       int col_cntr = 0;
-      int param_index = 0;
       auto table_columns = table_schema->GetColumns();
       auto query_columns = parse_tree->columns;
       for (catalog::Column const &elem : table_columns) {
@@ -122,10 +121,10 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
         } else {
           // If it's varchar or varbinary then use data pool, otherwise allocate
           // inline
-          auto dataPool = GetPlanPool();
+          auto data_pool = GetPlanPool();
           if (elem.GetType() != VALUE_TYPE_VARCHAR &&
               elem.GetType() != VALUE_TYPE_VARBINARY)
-            dataPool = nullptr;
+            data_pool = nullptr;
 
           LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
                     col_cntr,
@@ -134,7 +133,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
 
           if (values->at(pos)->GetExpressionType() ==
               EXPRESSION_TYPE_VALUE_PARAMETER) {
-            std::pair<oid_t, oid_t> pair = std::make_pair(pos, param_index++);
+            std::pair<oid_t, oid_t> pair = std::make_pair(col_cntr, pos);
             parameter_vector_->push_back(pair);
             params_value_type_->push_back(
                 table_schema->GetColumn(col_cntr).GetType());
@@ -142,7 +141,7 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(
                     values->at(pos));
-            tuple->SetValue(col_cntr, const_expr_elem->getValue(), dataPool);
+            tuple->SetValue(col_cntr, const_expr_elem->getValue(), data_pool);
           }
         }
 
@@ -168,17 +167,18 @@ void InsertPlan::SetParameterValues(std::vector<Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   for (unsigned int i = 0; i < values->size(); ++i) {
     auto param_type = params_value_type_->at(i);
+    auto value = values->at(parameter_vector_->at(i).second);
     // LOG_TRACE("Setting value of type %s",
     // ValueTypeToString(param_type).c_str());
     switch (param_type) {
       case VALUE_TYPE_VARBINARY:
       case VALUE_TYPE_VARCHAR:
         tuple_->SetValue(parameter_vector_->at(i).first,
-                         values->at(i).CastAs(param_type), GetPlanPool());
+                         value.CastAs(param_type), GetPlanPool());
         break;
       default:
         tuple_->SetValue(parameter_vector_->at(i).first,
-                         values->at(i).CastAs(param_type), nullptr);
+                         value.CastAs(param_type), nullptr);
     }
   }
 }
