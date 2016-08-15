@@ -105,44 +105,47 @@ InsertPlan::InsertPlan(parser::InsertStatement *parse_tree,
         std::size_t pos = std::find(query_columns->begin(),
                                     query_columns->end(), elem.GetName()) -
                           query_columns->begin();
-        switch (elem.GetType()) {
-          case VALUE_TYPE_VARCHAR:
-          case VALUE_TYPE_VARBINARY: {
-            if (pos >= query_columns->size()) {  // Not found. Set value to null
+
+        // If the column does not exist, insert a null value
+        if (pos >= query_columns->size()) {
+          switch (elem.GetType()) {
+            case VALUE_TYPE_VARCHAR:
+            case VALUE_TYPE_VARBINARY: {
               tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(),
                               GetPlanPool());
-            } else {
-              if (values->at(pos)->GetExpressionType() ==
-                  EXPRESSION_TYPE_VALUE_PARAMETER) {
-                std::pair<oid_t, oid_t> pair =
-                    std::make_pair(pos, param_index++);
-                parameter_vector_->push_back(pair);
-                params_value_type_->push_back(
-                    table_schema->GetColumn(col_cntr).GetType());
-              }
-              expression::ConstantValueExpression *const_expr_elem =
-                  dynamic_cast<expression::ConstantValueExpression *>(
-                      values->at(pos));
-              tuple->SetValue(col_cntr, const_expr_elem->getValue(),
-                              GetPlanPool());
+              break;
             }
-            break;
+            default:
+              tuple->SetValue(col_cntr, Value::GetNullValue(elem.GetType()),
+                              nullptr);
           }
+        } else {
+          // If it's varchar or varbinary then use data pool, otherwise allocate
+          // inline
+          auto dataPool = GetPlanPool();
+          if (elem.GetType() != VALUE_TYPE_VARCHAR &&
+              elem.GetType() != VALUE_TYPE_VARBINARY)
+            dataPool = nullptr;
 
-          default: {
+          LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
+                    col_cntr,
+                    ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                        .c_str());
 
-            // If the column does not exist, insert a null value as string
-            if (pos >= query_columns->size()) {
-              tuple->SetValue(col_cntr, ValueFactory::GetNullStringValue(),
-                              GetPlanPool());
-            } else {
-              expression::ConstantValueExpression *const_expr_elem =
-                  dynamic_cast<expression::ConstantValueExpression *>(
-                      values->at(pos));
-              tuple->SetValue(col_cntr, const_expr_elem->getValue(), nullptr);
-            }
+          if (values->at(pos)->GetExpressionType() ==
+              EXPRESSION_TYPE_VALUE_PARAMETER) {
+            std::pair<oid_t, oid_t> pair = std::make_pair(pos, param_index++);
+            parameter_vector_->push_back(pair);
+            params_value_type_->push_back(
+                table_schema->GetColumn(col_cntr).GetType());
+          } else {
+            expression::ConstantValueExpression *const_expr_elem =
+                dynamic_cast<expression::ConstantValueExpression *>(
+                    values->at(pos));
+            tuple->SetValue(col_cntr, const_expr_elem->getValue(), dataPool);
           }
         }
+
         ++col_cntr;
       }
       tuple_ = std::move(tuple);
