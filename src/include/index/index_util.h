@@ -14,10 +14,11 @@
 #pragma once
 
 #include <map>
-#include "index/index.h"
 
 namespace peloton {
 namespace index {
+
+class IndexMetadata;
 
 void ConstructIntervals(oid_t leading_column_id,
                         const std::vector<Value> &values,
