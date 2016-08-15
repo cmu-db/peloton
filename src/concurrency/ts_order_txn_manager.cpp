@@ -606,7 +606,7 @@ Result TsOrderTxnManager::AbortTransaction() {
           old_prev_tile_group_header->SetNextItemPointer(old_prev.offset, ItemPointer(tile_group_id, tuple_slot));
           tile_group_header->SetPrevItemPointer(tuple_slot, old_prev);
         } else {
-          assert(tile_group_header->GetPrevItemPointer(tuple_slot) == new_version);
+          // assert(tile_group_header->GetPrevItemPointer(tuple_slot) == new_version);
           tile_group_header->SetPrevItemPointer(tuple_slot, INVALID_ITEMPOINTER);
         }
 
