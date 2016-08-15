@@ -81,7 +81,7 @@ class TransactionManager {
 
   // The index_entry_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
-  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) = 0;
+  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(const ItemPointer &location) = 0;
 
