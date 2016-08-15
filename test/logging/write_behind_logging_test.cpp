@@ -92,48 +92,48 @@ TEST_F(WriteBehindLoggingTests, DirtyRangeVisibilityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &catalog_manager = catalog::Manager::GetInstance();
 
-  ItemPointer *itemptr_ptr = nullptr;
+  ItemPointer *index_entry_ptr = nullptr;
 
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
   std::unique_ptr<VarlenPool> pool(new VarlenPool(BACKEND_TYPE_MM));
   txn_manager.SetNextCid(1);
   txn_manager.BeginTransaction();
   auto tuple = ExecutorTestsUtil::GetTuple(table.get(), 1, pool.get());
-  itemptr_ptr = nullptr;
-  auto visible1 = table->InsertTuple(tuple.get(), &itemptr_ptr);
-  txn_manager.PerformInsert(visible1, itemptr_ptr);
+  index_entry_ptr = nullptr;
+  auto visible1 = table->InsertTuple(tuple.get(), &index_entry_ptr);
+  txn_manager.PerformInsert(visible1, index_entry_ptr);
   txn_manager.CommitTransaction();
   // got cid_2
 
   txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 2, pool.get());
-  itemptr_ptr = nullptr;
-  auto visible2 = table->InsertTuple(tuple.get(), &itemptr_ptr);
-  txn_manager.PerformInsert(visible2, itemptr_ptr);
+  index_entry_ptr = nullptr;
+  auto visible2 = table->InsertTuple(tuple.get(), &index_entry_ptr);
+  txn_manager.PerformInsert(visible2, index_entry_ptr);
   txn_manager.CommitTransaction();
   //git cid 4
 
   txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 3, pool.get());
-  itemptr_ptr = nullptr;
-  auto invisible1 = table->InsertTuple(tuple.get(), &itemptr_ptr);
-  txn_manager.PerformInsert(invisible1, itemptr_ptr);
+  index_entry_ptr = nullptr;
+  auto invisible1 = table->InsertTuple(tuple.get(), &index_entry_ptr);
+  txn_manager.PerformInsert(invisible1, index_entry_ptr);
   txn_manager.CommitTransaction();
   // got cid 6
 
   txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 4, pool.get());
-  itemptr_ptr = nullptr;
-  auto invisible2 = table->InsertTuple(tuple.get(), &itemptr_ptr);
-  txn_manager.PerformInsert(invisible2, itemptr_ptr);
+  index_entry_ptr = nullptr;
+  auto invisible2 = table->InsertTuple(tuple.get(), &index_entry_ptr);
+  txn_manager.PerformInsert(invisible2, index_entry_ptr);
   txn_manager.CommitTransaction();
   // got cid 8
 
   txn_manager.BeginTransaction();
   tuple = ExecutorTestsUtil::GetTuple(table.get(), 5, pool.get());
-  itemptr_ptr = nullptr;
-  auto visible3 = table->InsertTuple(tuple.get(), &itemptr_ptr);
-  txn_manager.PerformInsert(visible3, itemptr_ptr);
+  index_entry_ptr = nullptr;
+  auto visible3 = table->InsertTuple(tuple.get(), &index_entry_ptr);
+  txn_manager.PerformInsert(visible3, index_entry_ptr);
   txn_manager.CommitTransaction();
   // got cid 10
 

@@ -158,10 +158,10 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
       pool);
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
-    ItemPointer *itemptr_ptr = nullptr;
+    ItemPointer *index_entry_ptr = nullptr;
     auto tuple_slot = tile_group->InsertTuple(tuple);
     txn_manager.PerformInsert(
-        ItemPointer(tile_group->GetTileGroupId(), tuple_slot), itemptr_ptr);
+        ItemPointer(tile_group->GetTileGroupId(), tuple_slot), index_entry_ptr);
   }
 
   txn_manager.CommitTransaction();

@@ -74,13 +74,13 @@ TEST_F(LogicalTileTests, TileMaterializationTest) {
   auto tuple_id2 = tile_group->InsertTuple(&tuple2);
   auto tuple_id3 = tile_group->InsertTuple(&tuple1);
 
-  ItemPointer *itemptr_ptr = nullptr;
+  ItemPointer *index_entry_ptr = nullptr;
   txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id1), itemptr_ptr);
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id1), index_entry_ptr);
   txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id2), itemptr_ptr);
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id2), index_entry_ptr);
   txn_manager.PerformInsert(
-      ItemPointer(tile_group->GetTileGroupId(), tuple_id3), itemptr_ptr);
+      ItemPointer(tile_group->GetTileGroupId(), tuple_id3), index_entry_ptr);
 
   txn_manager.CommitTransaction();
 

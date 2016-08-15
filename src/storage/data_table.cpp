@@ -215,13 +215,13 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
 }
 
 
-ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **itemptr_ptr) {
+ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **index_entry_ptr) {
   // First, do integrity checks and claim a slot
   ItemPointer *temp_ptr = nullptr;
 
   // Upper layer don't want to know infomation about index
-  if (itemptr_ptr == nullptr) {
-    itemptr_ptr = &temp_ptr;
+  if (index_entry_ptr == nullptr) {
+    index_entry_ptr = &temp_ptr;
   }
 
   ItemPointer location = GetEmptyTupleSlot(tuple);
@@ -233,7 +233,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   // Index checks and updates
-  if (InsertInIndexes(tuple, location, itemptr_ptr) == false) {
+  if (InsertInIndexes(tuple, location, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
     return INVALID_ITEMPOINTER;
   }
@@ -246,9 +246,9 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
 
   // Write down the master version's pointer into tile group header
   auto tg_hdr = catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
-  tg_hdr->SetMasterPointer(location.offset, *itemptr_ptr);
+  tg_hdr->SetMasterPointer(location.offset, *index_entry_ptr);
 
-  PL_ASSERT((*itemptr_ptr)->block == location.block && (*itemptr_ptr)->offset == location.offset);
+  PL_ASSERT((*index_entry_ptr)->block == location.block && (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
@@ -266,43 +266,6 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **it
   return location;
 }
 
-/**
- * @brief Insert a tuple into a specific index.
- * If index is primary/unique, check visibility of existing index entries.
- *
- * @returns True on success, false if a visible entry exists (in case of
- *primary/unique).
- */
-bool DataTable::InsertInIndex(oid_t index_offset,
-                              const storage::Tuple *tuple,
-                              ItemPointer location){
-
-  // (A) Check existence for primary/unique indexes
-  // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
-  auto index = GetIndex(index_offset);
-  auto index_schema = index->GetKeySchema();
-  auto indexed_columns = index_schema->GetIndexedColumns();
-  std::unique_ptr<storage::Tuple> key(new storage::Tuple(index_schema, true));
-  key->SetFromTuple(tuple, indexed_columns, index->GetPool());
-
-  switch (index->GetIndexType()) {
-    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-      // TODO: get unique tuple from primary index.
-      // if in this index there has been a visible or uncommitted
-      // <key, location> pair, this constraint is violated
-      index->InsertEntry(key.get(), location);
-    } break;
-
-    case INDEX_CONSTRAINT_TYPE_DEFAULT:
-    default:
-      index->InsertEntry(key.get(), location);
-      break;
-  }
-  LOG_TRACE("Index constraint check on %s passed.", index->GetName().c_str());
-
-  return true;
-}
 /**
  * @brief Insert a tuple into all indexes. If index is primary/unique,
  * check visibility of existing
