@@ -62,7 +62,7 @@ class HybridScanPlan : public AbstractScan {
   }
   
   const index::IndexScanPredicate &GetIndexPredicate() const {
-    return index_predicate;
+    return index_predicate_;
   }
 
   const std::vector<Value> &GetValues() const { return values_; }
@@ -89,7 +89,7 @@ class HybridScanPlan : public AbstractScan {
 
   std::shared_ptr<index::Index> index_;
 
-  index::IndexScanPredicate index_predicate;
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace planner
