@@ -2989,9 +2989,9 @@ inline void Value::SerializeToTupleStorageAllocateForObjects(
       // and allocate a special object only sufficient for holding
       // the length of the object (should be 4 bytes)
       if (GetObjectLengthWithoutNull() == VARCHAR_MAX_INDICATOR) {
-        LOG_INFO("SerializeToTupleStorageAllocateForObjects(): "
-                 "Variable length with VARCHAR_MAX_INDICATOR "
-                 "(VARCHAR Maximum Value)");
+        LOG_TRACE("SerializeToTupleStorageAllocateForObjects(): "
+                  "Variable length with VARCHAR_MAX_INDICATOR "
+                  "(VARCHAR Maximum Value)");
                  
         // There must be enough space to hold at least a pointer inside
         // the storage we are serializing into
