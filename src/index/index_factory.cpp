@@ -35,7 +35,6 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   LOG_TRACE("Index type : %d", index_type);
 
   if (index_type == INDEX_TYPE_BTREE) {
-
     if (key_size <= 4) {
       return new BTreeIndex<GenericKey<4>, ItemPointer *, GenericComparator<4>,
                             GenericEqualityChecker<4>>(metadata);
@@ -58,10 +57,7 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
       return new BTreeIndex<TupleKey, ItemPointer *, TupleKeyComparator,
                             TupleKeyEqualityChecker>(metadata);
     }
-  }
-
-  if (index_type == INDEX_TYPE_SKIPLIST) {
-
+  } else if (index_type == INDEX_TYPE_SKIPLIST) {
     if (key_size <= 4) {
       return new SkipListIndex<GenericKey<4>, ItemPointer *, GenericComparatorRaw<4>,
                             GenericEqualityChecker<4>>(metadata);
@@ -84,9 +80,7 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
       return new SkipListIndex<TupleKey, ItemPointer *, TupleKeyComparatorRaw,
                             TupleKeyEqualityChecker>(metadata);
     }
-  }
-  
-  if (index_type == INDEX_TYPE_BWTREE) {
+  } else if (index_type == INDEX_TYPE_BWTREE) {
     if (key_size <= 4) {
       return new BWTreeIndex<GenericKey<4>,
                              ItemPointer *,
@@ -137,10 +131,10 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
                              ItemPointerComparator,
                              ItemPointerHashFunc>(metadata);
     }
+  } else {
+    throw IndexException("Unsupported index scheme.");
   }
-
-
-  throw IndexException("Unsupported index scheme.");
+  
   return NULL;
 }
 

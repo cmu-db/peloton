@@ -28,11 +28,25 @@ namespace planner {
     : AbstractScan(table, predicate, column_ids),
       type_(hybrid_scan_type),
       column_ids_(column_ids),
-      key_column_ids_(std::move(index_scan_desc.key_column_ids)),
-      expr_types_(std::move(index_scan_desc.expr_types)),
-      values_(std::move(index_scan_desc.values)),
-      runtime_keys_(std::move(index_scan_desc.runtime_keys)),
-      index_(index_scan_desc.index){}
+      key_column_ids_(std::move(index_scan_desc.tuple_column_id_list)),
+      expr_types_(std::move(index_scan_desc.expr_list)),
+      values_(std::move(index_scan_desc.value_list)),
+      runtime_keys_(std::move(index_scan_desc.runtime_key_list)),
+      index_(index_scan_desc.index_obj),
+      index_predicate_() {
 
+    // If the hybrid scan is used only for seq scan which does not require
+    // an index, where the index pointer will be set to nullptr by the default
+    // initializer of the scan descriptor, then we do not try to add predicate
+    // since it causes memory fault
+    if(index_.get() != nullptr) {
+      index_predicate_.AddConjunctionScanPredicate(index_.get(),
+                                                   values_,
+                                                   key_column_ids_,
+                                                   expr_types_);
+    }
+                                              
+    return;
+  }
 }
 }
