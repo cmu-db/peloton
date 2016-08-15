@@ -61,7 +61,7 @@ class ConjunctionScanPredicate {
   // This vector holds indices for those index key columns that have
   // a free variable
   // We use this to speed up value binding since we could just skip
-  // columns that do not have a free variabke
+  // columns that do not have a free variable
   //
   // The element is a pair of oid_t. The first oid_t is the index
   // in index key that needs a binding, and the second oid_t is the
