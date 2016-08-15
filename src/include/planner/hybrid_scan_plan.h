@@ -20,6 +20,12 @@
 #include "expression/abstract_expression.h"
 
 namespace peloton {
+
+// Forward declaration for the index optimizer
+namespace index {
+class IndexScanPredicate;
+}
+  
 namespace planner {
 
 class HybridScanPlan : public AbstractScan {
@@ -54,6 +60,10 @@ class HybridScanPlan : public AbstractScan {
   const std::vector<ExpressionType> &GetExprTypes() const {
     return expr_types_;
   }
+  
+  const index::IndexScanPredicate &GetIndexPredicate() const {
+    return index_predicate_;
+  }
 
   const std::vector<Value> &GetValues() const { return values_; }
 
@@ -79,6 +89,7 @@ class HybridScanPlan : public AbstractScan {
 
   std::shared_ptr<index::Index> index_;
 
+  index::IndexScanPredicate index_predicate_;
 };
 
 }  // namespace planner
