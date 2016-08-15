@@ -282,7 +282,7 @@ class ConjunctionScanPredicate {
     // schema, since it maps index key column to indices inside value_list
     PL_ASSERT(metadata_p->GetColumnCount() == value_index_list_.size());
     
-    LOG_INFO("Constructing scan interval. Point query = %d", is_point_query_);
+    LOG_TRACE("Constructing scan interval. Point query = %d", is_point_query_);
     
     // For each column in the index key, if there is not a bound
     // representable as Value object then we use min and max of the
@@ -370,7 +370,7 @@ class ConjunctionScanPredicate {
                   
     // For each item <key column index, value list index> do the binding job
     for(auto &bind_item : key_bind_list) {
-      oid_t bind_ret = BindValueToIndexKey(index_p,
+      BindValueToIndexKey(index_p,
                                            value_list[bind_item.second],
                                            index_key_p,
                                            bind_item.first);
