@@ -81,6 +81,9 @@ extern void GetStringToken(Packet *pkt, std::string &result);
 extern bool WritePackets(std::vector<std::unique_ptr<Packet>> &packets,
                          Client *client);
 
+/* Check if there is data to be read in the buffer*/
+extern bool CanRead(Client *client);
+
 /* Read a single packet from the socket read buffer */
 extern bool ReadPacket(Packet *pkt, bool has_type_field, Client *client);
 
