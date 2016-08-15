@@ -130,7 +130,7 @@ Schema *Schema::CopySchema(const Schema *schema) {
  *                as indices to copy
  *
  * This function essentially does a "Gathering" operation, in a sense that it
- * collects columns indexed by elemenys inside index_list in the given order
+ * collects columns indexed by elements inside index_list in the given order
  * and store them inside a newly created schema object
  *
  * If there are duplicates in index_list then the columns will be duplicated
@@ -146,7 +146,7 @@ Schema *Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t> &index_list) {
   std::vector<Column> column_list{};
   
-  // Reserve some space to avoid multiple ma110бщ() calls
+  // Reserve some space to avoid multiple ma110c() calls
   // But for future push_back() this is not optimized since the
   // memory chunk may not be properly sized and aligned
   column_list.reserve(index_list.size());
