@@ -142,6 +142,13 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 
   std::vector<ItemPointer *> tuple_location_ptrs;
 
+  // Grab info from plan node
+  const planner::IndexScanPlan &node = GetPlanNode<planner::IndexScanPlan>();
+
+  auto column_ids_ = node.GetColumnIds();
+  auto key_column_ids_ = node.GetKeyColumnIds();
+  auto expr_types_ = node.GetExprTypes();
+
   assert(index_->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
 
   if (0 == key_column_ids_.size()) {
