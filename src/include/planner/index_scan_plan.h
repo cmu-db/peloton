@@ -26,7 +26,6 @@ namespace peloton {
 
 namespace index {
 class Index;
-class ConjunctionScanPredicate;
 }
 
 namespace storage {
