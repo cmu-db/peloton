@@ -42,41 +42,94 @@ static IndexType index_type = INDEX_TYPE_BWTREE;
 // Uncomment this to enable BwTree as index being tested
 //static IndexType index_type = INDEX_TYPE_BWTREE;
 
+/*
+ * BuildIndex() - Builds an index with 4 columns, the first 2 being indexed
+ */
 index::Index *BuildIndex(const bool unique_keys) {
+  // Identify the index type to simplify things
+  if(index_type == INDEX_TYPE_BWTREE) {
+    LOG_INFO("Build index type: peloton::index::BwTree");
+  } else if(index_type == INDEX_TYPE_BTREE) {
+    LOG_INFO("Build index type: stx::BTree");
+  } else {
+    LOG_INFO("Build index type: Other type");
+  }
+  
   // Build tuple and key schema
-  std::vector<std::vector<std::string>> column_names;
-  std::vector<catalog::Column> columns;
-  std::vector<catalog::Schema *> schemas;
+  std::vector<catalog::Column> column_list;
+
+  // The following key are both in index key and tuple key and they are
+  // indexed
+  // The size of the key is:
+  //   integer 4 + varchar 8 = total 12
 
   catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
                           "A", true);
+                          
   catalog::Column column2(VALUE_TYPE_VARCHAR, 1024, "B", false);
-  catalog::Column column3(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
-                          "C", true);
-  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                          "D", true);
+  
+  // The following twoc constitutes tuple schema but does not appear in index
+  
+  catalog::Column column3(VALUE_TYPE_DOUBLE,
+                          GetTypeSize(VALUE_TYPE_DOUBLE),
+                          "C",
+                          true);
+                          
+  catalog::Column column4(VALUE_TYPE_INTEGER,
+                          GetTypeSize(VALUE_TYPE_INTEGER),
+                          "D",
+                          true);
 
-  columns.push_back(column1);
-  columns.push_back(column2);
+  // Use the first two columns to build key schema
 
-  // INDEX KEY SCHEMA -- {column1, column2}
+  column_list.push_back(column1);
+  column_list.push_back(column2);
+
+  // This will be copied into the key schema as well as into the IndexMetadata
+  // object to identify indexed columns
   std::vector<oid_t> key_attrs = {0, 1};
-  key_schema = new catalog::Schema(columns);
+  
+  key_schema = new catalog::Schema(column_list);
   key_schema->SetIndexedColumns(key_attrs);
 
-  columns.push_back(column3);
-  columns.push_back(column4);
+  // Use all four columns to build tuple schema
 
-  // TABLE SCHEMA -- {column1, column2, column3, column4}
-  tuple_schema = new catalog::Schema(columns);
+  column_list.push_back(column3);
+  column_list.push_back(column4);
+
+  tuple_schema = new catalog::Schema(column_list);
 
   // Build index metadata
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "test_index", 125, index_type, INDEX_CONSTRAINT_TYPE_DEFAULT,
-      tuple_schema, key_schema, key_attrs, unique_keys);
+  //
+  // NOTE: Since here we use a relatively small key (size = 12)
+  // so index_test is only testing with a certain kind of key
+  // (most likely, GenericKey)
+  //
+  // For testing IntsKey and TupleKey we need more test cases
+  index::IndexMetadata *index_metadata = \
+    new index::IndexMetadata("test_index",
+                             125,                       // Index oid
+                             index_type,
+                             INDEX_CONSTRAINT_TYPE_DEFAULT,
+                             tuple_schema,
+                             key_schema,
+                             key_attrs,
+                             unique_keys);
 
   // Build index
+  //
+  // The type of index key has been chosen inside this function, but we are
+  // unable to know the exact type of key it has chosen
+  //
+  // The index interface always accept tuple key from the external world
+  // and transforms into the correct index key format, so the caller
+  // do not need to worry about the actual implementation of the index
+  // key, and only passing tuple key suffices
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
+  
+  // Actually this will never be hit since if index creation fails an exception
+  // would be raised (maybe out of memory would result in a nullptr? Anyway
+  // leave it here)
   EXPECT_TRUE(index != NULL);
 
   return index;
@@ -474,25 +527,25 @@ TEST_F(IndexTests, UniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
@@ -605,7 +658,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // FORWARD SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
@@ -616,7 +669,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
@@ -628,7 +681,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
@@ -641,14 +694,14 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
   EXPECT_EQ(location_ptrs.size(), 0);
   location_ptrs.clear();
 
-  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+  index->ScanTest({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
               SCAN_DIRECTION_TYPE_FORWARD, location_ptrs);
               
@@ -660,7 +713,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
        key2->GetValue(1)},
       {0, 1, 0, 1},
@@ -676,7 +729,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+  index->ScanTest({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
               {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,
@@ -693,7 +746,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   location_ptrs.clear();
 
   // REVERSE SCAN
-  index->Scan({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
+  index->ScanTest({key1->GetValue(0)}, {0}, {EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
   if(index_type == INDEX_TYPE_BWTREE) {
@@ -704,7 +757,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
+  index->ScanTest({key1->GetValue(0), key1->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_EQUAL},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
@@ -716,7 +769,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_GREATERTHAN},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
@@ -729,7 +782,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key1->GetValue(0), key1->GetValue(1)}, {0, 1},
       {EXPRESSION_TYPE_COMPARE_GREATERTHAN, EXPRESSION_TYPE_COMPARE_EQUAL},
       SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
@@ -738,7 +791,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
+  index->ScanTest({key2->GetValue(0), key2->GetValue(1)}, {0, 1},
               {EXPRESSION_TYPE_COMPARE_EQUAL, EXPRESSION_TYPE_COMPARE_LESSTHAN},
               SCAN_DIRECTION_TYPE_BACKWARD, location_ptrs);
               
@@ -750,7 +803,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan(
+  index->ScanTest(
       {key0->GetValue(0), key0->GetValue(1), key2->GetValue(0),
        key2->GetValue(1)},
       {0, 1, 0, 1},
@@ -766,7 +819,7 @@ TEST_F(IndexTests, NonUniqueKeyMultiThreadedTest) {
   
   location_ptrs.clear();
 
-  index->Scan({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
+  index->ScanTest({key0->GetValue(0), key0->GetValue(1), key4->GetValue(0),
                key4->GetValue(1)},
               {0, 1, 0, 1}, {EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO,
                              EXPRESSION_TYPE_COMPARE_GREATERTHAN,

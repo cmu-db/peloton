@@ -45,6 +45,16 @@ namespace peloton {
 namespace test {
 
 /** @brief Helper function for defining schema */
+/*
+ * GetColumnInfo() - Returns column object for testing
+ *
+ * Column 0: Integer column, not null
+ * Column 1: Integer column, not null
+ * Column 2: Double column, not null
+ * Column 3: VARCHAR, max len = 25, not null
+ *
+ * For other column IDs an exception will be thrown
+ */
 catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
   std::string not_null_constraint_name = "not_null";
@@ -288,7 +298,9 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 }
 
 storage::DataTable *ExecutorTestsUtil::CreateTable(
-    int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
+    int tuples_per_tilegroup_count,
+    bool indexes,
+    oid_t table_oid) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
@@ -301,16 +313,39 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
       tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
-    // PRIMARY INDEX
+
+    // This holds column ID in the underlying table that are being indexed
     std::vector<oid_t> key_attrs;
 
+    // This holds schema of the underlying table, which stays all the same
+    // for all indices on the same underlying table
     auto tuple_schema = table->GetSchema();
+    
+    // This points to the schmea of only columns indiced by the index
+    // This is basically selecting tuple_schema() with key_attrs as index
+    // but the order inside tuple schema is preserved - the order of schema
+    // inside key_schema is not the order of real key
     catalog::Schema *key_schema;
+    
+    // This will be created for each index on the table
+    // and the metadata is passed as part of the index construction paratemter
+    // list
     index::IndexMetadata *index_metadata;
+    
+    // Whether keys should be unique. For primary key this must be true;
+    // for secondary keys this might be true as an extra constraint
     bool unique;
+
+    /////////////////////////////////////////////////////////////////
+    // Add primary key on column 0
+    /////////////////////////////////////////////////////////////////
 
     key_attrs = {0};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    
+    // This is not redundant
+    // since the key schema always follows the ordering of the base table
+    // schema, we need real ordering of the key columns
     key_schema->SetIndexedColumns(key_attrs);
 
     unique = true;
@@ -323,7 +358,10 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(
 
     table->AddIndex(pkey_index);
 
-    // SECONDARY INDEX
+    /////////////////////////////////////////////////////////////////
+    // Add index on table column 0 and 1
+    /////////////////////////////////////////////////////////////////
+    
     key_attrs = {0, 1};
     key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
     key_schema->SetIndexedColumns(key_attrs);
