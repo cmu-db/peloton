@@ -370,7 +370,7 @@ class ConjunctionScanPredicate {
                   
     // For each item <key column index, value list index> do the binding job
     for(auto &bind_item : key_bind_list) {
-      BindValueToIndexKey(index_p,
+      UNUSED_ATTRIBUTE oid_t bind_ret = BindValueToIndexKey(index_p,
                                            value_list[bind_item.second],
                                            index_key_p,
                                            bind_item.first);
