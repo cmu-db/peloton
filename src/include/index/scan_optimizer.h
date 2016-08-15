@@ -15,13 +15,9 @@
 #include <vector>
 
 #include "index/index.h"
-#include "common/exception.h"
 #include "common/logger.h"
-#include "common/pool.h"
 #include "catalog/schema.h"
-#include "catalog/manager.h"
 #include "storage/tuple.h"
-#include "common/printable.h"
 
 #include "index/index_util.h"
 
@@ -60,7 +56,7 @@ class ConjunctionScanPredicate {
   //
   // The length of this vector should equal the number of columns in
   // index key
-  std::vector<std::pair<oid_t, oid_t>> value_index_list;
+  std::vector<std::pair<oid_t, oid_t>> value_index_list_;
   
   // This vector holds indices for those index key columns that have
   // a free variable
@@ -70,13 +66,13 @@ class ConjunctionScanPredicate {
   // The element is a pair of oid_t. The first oid_t is the index
   // in index key that needs a binding, and the second oid_t is the
   // index inside the new Value array during late binding
-  std::vector<std::pair<oid_t, oid_t>> low_key_bind_list;
-  std::vector<std::pair<oid_t, oid_t>> high_key_bind_list;
+  std::vector<std::pair<oid_t, oid_t>> low_key_bind_list_;
+  std::vector<std::pair<oid_t, oid_t>> high_key_bind_list_;
   
   // Whether the query is a point query.
   //
   // If is point query then the ubound and lbound index must be equal
-  bool is_point_query;
+  bool is_point_query_;
   
   // Only queries with > >= == < <= get a chance to be optimized
   // i.e. those with IN NOT IN LIKE NOT LIKE NOT EQUAL could not be optimized
@@ -87,7 +83,7 @@ class ConjunctionScanPredicate {
   // scan, then we do not conduct index scan multiple times, and instead
   // only a full index scan is done and we let the index scan plan to
   // filter tuples using its full predicate
-  bool full_index_scan;
+  bool full_index_scan_;
   
   // These two represents low key and high key of the predicate scan
   // We fill in these two values using the information available as much as
@@ -95,8 +91,8 @@ class ConjunctionScanPredicate {
   // run time, then just leave them there and bind at run time) they are left
   // blank, and we use these two keys as template to construct search key
   // at run time
-  storage::Tuple *low_key_p;
-  storage::Tuple *high_key_p;
+  storage::Tuple *low_key_p_;
+  storage::Tuple *high_key_p_;
   
  public:
 
@@ -119,18 +115,18 @@ class ConjunctionScanPredicate {
     // scanner does not know that we will do a table scan so in the case
     // of multiple disjunctive predicates there might be multiple scan
     // which is wasteful since a single index full scan should cover all cases
-    full_index_scan = HasNonOptimizablePredicate(expr_list);
+    full_index_scan_ = HasNonOptimizablePredicate(expr_list);
     
     // Only construct the two keys when full table scan is unnecessary
-    if(full_index_scan == false) {
+    if(full_index_scan_ == false) {
       // Then allocate storage for key template
 
       // Give it a schema and true flag to let the constructor allocate
       // memory for holding fields inside the tuple
       //
       // The schema will not be freed by tuple, but its internal data array will
-      low_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
-      high_key_p = new storage::Tuple(metadata_p->GetKeySchema(), true);
+      low_key_p_ = new storage::Tuple(metadata_p->GetKeySchema(), true);
+      high_key_p_ = new storage::Tuple(metadata_p->GetKeySchema(), true);
       
       // This further initializes is_point_query flag, and then
       // fill the high key and low key with boundary values
@@ -140,11 +136,11 @@ class ConjunctionScanPredicate {
                             expr_list);
     } else {
       // This will not be touched in the destructor
-      low_key_p = nullptr;
-      high_key_p = nullptr;
+      low_key_p_ = nullptr;
+      high_key_p_ = nullptr;
       
       // This must hold since full table scan could not be point query
-      is_point_query = false;
+      is_point_query_ = false;
     }
     
     return;
@@ -176,16 +172,16 @@ class ConjunctionScanPredicate {
    * Move Constructor - Clear the child pointer in the old predicate
    */
   ConjunctionScanPredicate(ConjunctionScanPredicate &&other) :
-    value_index_list{std::move(other.value_index_list)},
-    low_key_bind_list{std::move(other.low_key_bind_list)},
-    high_key_bind_list{std::move(other.high_key_bind_list)},
-    is_point_query(other.is_point_query),
-    full_index_scan{other.full_index_scan},
-    low_key_p{other.low_key_p},
-    high_key_p{other.high_key_p} {
+    value_index_list_{std::move(other.value_index_list_)},
+    low_key_bind_list_{std::move(other.low_key_bind_list_)},
+    high_key_bind_list_{std::move(other.high_key_bind_list_)},
+    is_point_query_(other.is_point_query_),
+    full_index_scan_{other.full_index_scan_},
+    low_key_p_{other.low_key_p_},
+    high_key_p_{other.high_key_p_} {
     // Clear the original object
-    other.low_key_p = nullptr;
-    other.high_key_p = nullptr;
+    other.low_key_p_ = nullptr;
+    other.high_key_p_ = nullptr;
     
     return;
   }
@@ -200,14 +196,14 @@ class ConjunctionScanPredicate {
    * move constructor it is possible that the keys are cleared
    */
   ~ConjunctionScanPredicate() {
-    if(low_key_p != nullptr) {
-      delete low_key_p;
+    if(low_key_p_ != nullptr) {
+      delete low_key_p_;
       
-      PL_ASSERT(high_key_p != nullptr);
+      PL_ASSERT(high_key_p_ != nullptr);
     }
     
-    if(high_key_p != nullptr) {
-      delete high_key_p;
+    if(high_key_p_ != nullptr) {
+      delete high_key_p_;
     }
     
     return;
@@ -224,11 +220,14 @@ class ConjunctionScanPredicate {
    * If this function is called for late binding then caller is responsible
    * for checking return value not being INVALID_OID, since during late binding
    * stage all values must be valid
+   *
+   * NOTE: This function is made static to reflact the fact that it does not
+   * require any data member
    */
   oid_t BindValueToIndexKey(Index *index_p,
-                            const Value &value,
-                            storage::Tuple *index_key_p,
-                            oid_t index) {
+                                   const Value &value,
+                                   storage::Tuple *index_key_p,
+                                   oid_t index) {
     ValueType bind_type = value.GetValueType();
     
     if(bind_type == VALUE_TYPE_FOR_BINDING_ONLY_INTEGER) {
@@ -274,22 +273,22 @@ class ConjunctionScanPredicate {
 
     // This function will modify value_index_list, but value_index_list
     // should have capacity 0 to avoid further problems
-    is_point_query = FindValueIndex(metadata_p,
-                                    tuple_column_id_list,
-                                    expr_list,
-                                    value_index_list);
+    is_point_query_ = FindValueIndex(metadata_p,
+                                     tuple_column_id_list,
+                                     expr_list,
+                                     value_index_list_);
     
     // value_index_list should be of the same length as the index key
     // schema, since it maps index key column to indices inside value_list
-    PL_ASSERT(metadata_p->GetColumnCount() == value_index_list.size());
+    PL_ASSERT(metadata_p->GetColumnCount() == value_index_list_.size());
     
-    LOG_INFO("Constructing scan interval. Point query = %d", is_point_query);
+    LOG_INFO("Constructing scan interval. Point query = %d", is_point_query_);
     
     // For each column in the index key, if there is not a bound
     // representable as Value object then we use min and max of the
     // corresponding type
-    for(oid_t i = 0;i < value_index_list.size();i++) {
-      const std::pair<oid_t, oid_t> &index_pair = value_index_list[i];
+    for(oid_t i = 0;i < value_index_list_.size();i++) {
+      const std::pair<oid_t, oid_t> &index_pair = value_index_list_[i];
       
       // We use the type of the current index key column to get the
       // +Inf, -Inf and/or casted type for Value object
@@ -300,17 +299,17 @@ class ConjunctionScanPredicate {
       //
       // Also do the same for upper bound
       if(index_pair.first == INVALID_OID) {
-        PL_ASSERT(is_point_query == false);
+        PL_ASSERT(is_point_query_ == false);
         
         // We set the value using index's varlen pool, if any VARCHAR is
         // involved (this is OK since the routine only runs for once)
-        low_key_p->SetValue(i,
-                            Value::GetMinValue(index_key_column_type),
-                            index_p->GetPool());
+        low_key_p_->SetValue(i,
+                             Value::GetMinValue(index_key_column_type),
+                             index_p->GetPool());
       } else {
         oid_t bind_ret = BindValueToIndexKey(index_p,
                                              value_list[index_pair.first],
-                                             low_key_p,
+                                             low_key_p_,
                                              i);
                                              
         if(bind_ret != INVALID_OID) {
@@ -319,24 +318,24 @@ class ConjunctionScanPredicate {
           // The first element is index, and the second element
           // is the return value, which is the future index in the
           // value object array
-          low_key_bind_list.push_back(std::make_pair(i, bind_ret));
+          low_key_bind_list_.push_back(std::make_pair(i, bind_ret));
         }
       }
       
       // Only bind the second half if point query is false
-      if(is_point_query == false) {
+      if(is_point_query_ == false) {
       
         if(index_pair.second == INVALID_OID) {
 
           // We set the value using index's varlen pool, if any VARCHAR is
           // involved (this is OK since the routine only runs for once)
-          high_key_p->SetValue(i,
-                               Value::GetMaxValue(index_key_column_type),
-                               index_p->GetPool());
+          high_key_p_->SetValue(i,
+                                Value::GetMaxValue(index_key_column_type),
+                                index_p->GetPool());
         } else {
           oid_t bind_ret = BindValueToIndexKey(index_p,
                                                value_list[index_pair.second],
-                                               high_key_p,
+                                               high_key_p_,
                                                i);
 
           if(bind_ret != INVALID_OID) {
@@ -345,7 +344,7 @@ class ConjunctionScanPredicate {
             // The first element is index, and the second element
             // is the return value, which is the future index in the
             // value object array
-            high_key_bind_list.push_back(std::make_pair(i, bind_ret));
+            high_key_bind_list_.push_back(std::make_pair(i, bind_ret));
           }
         }
       } // if is point query == false
@@ -367,7 +366,7 @@ class ConjunctionScanPredicate {
                 const std::vector<Value> &value_list,
                 const std::vector<std::pair<oid_t, oid_t>> key_bind_list,
                 storage::Tuple *index_key_p) {
-    PL_ASSERT(full_index_scan == false);
+    PL_ASSERT(full_index_scan_ == false);
                   
     // For each item <key column index, value list index> do the binding job
     for(auto &bind_item : key_bind_list) {
@@ -401,13 +400,13 @@ class ConjunctionScanPredicate {
    */
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
-    PL_ASSERT(full_index_scan == false);
+    PL_ASSERT(full_index_scan_ == false);
     
     // Bind values to low key and high key respectively
-    LateBind(index_p, value_list, low_key_bind_list, low_key_p);
+    LateBind(index_p, value_list, low_key_bind_list_, low_key_p_);
     
-    if(is_point_query == false) {
-      LateBind(index_p, value_list, high_key_bind_list, high_key_p);
+    if(is_point_query_ == false) {
+      LateBind(index_p, value_list, high_key_bind_list_, high_key_p_);
     }
     
     return;
@@ -418,14 +417,14 @@ class ConjunctionScanPredicate {
    *                     index scan
    */
   inline bool IsFullIndexScan() const {
-    return full_index_scan;
+    return full_index_scan_;
   }
   
   /*
    * IsPointQuery() - Returns whether this conjunction is a point query
    */
   inline bool IsPointQuery() const {
-    return is_point_query;
+    return is_point_query_;
   }
   
   /*
@@ -435,10 +434,10 @@ class ConjunctionScanPredicate {
    * version of the same function to get query key for point query
    */
   inline const storage::Tuple *GetLowKey() const {
-    PL_ASSERT(is_point_query == false);
-    PL_ASSERT(full_index_scan == false);
+    PL_ASSERT(is_point_query_ == false);
+    PL_ASSERT(full_index_scan_ == false);
     
-    return low_key_p;
+    return low_key_p_;
   }
   
   /*
@@ -448,10 +447,10 @@ class ConjunctionScanPredicate {
    * for a point query
    */
   inline const storage::Tuple *GetHighKey() const {
-    PL_ASSERT(is_point_query == false);
-    PL_ASSERT(full_index_scan == false);
+    PL_ASSERT(is_point_query_ == false);
+    PL_ASSERT(full_index_scan_ == false);
 
-    return high_key_p;
+    return high_key_p_;
   }
   
   /*
@@ -460,10 +459,10 @@ class ConjunctionScanPredicate {
    * This function could only be called if the current query is a point query
    */
   inline const storage::Tuple *GetPointQueryKey() const {
-    PL_ASSERT(is_point_query == true);
-    PL_ASSERT(full_index_scan == false);
+    PL_ASSERT(is_point_query_ == true);
+    PL_ASSERT(full_index_scan_ == false);
     
-    return low_key_p;
+    return low_key_p_;
   }
   
   /*
@@ -474,7 +473,7 @@ class ConjunctionScanPredicate {
    * enlightening
    */
   inline size_t GetBindingCount() const {
-    return low_key_bind_list.size() + high_key_bind_list.size();
+    return low_key_bind_list_.size() + high_key_bind_list_.size();
   }
 };
 
@@ -500,13 +499,13 @@ class IndexScanPredicate {
 
   // This holds all conjunctions which are assumed to be connected
   // together by disjunctions
-  std::vector<ConjunctionScanPredicate> conjunction_list;
+  std::vector<ConjunctionScanPredicate> conjunction_list_;
   
   // This is the OR of all full_index_scan field in existing conjunction lists
   // If this is true then we could simply do an index scan and return all
   // entries inside the index rather than doing scans on each conjunction
   // predicate first and then do a union using hash table
-  bool full_index_scan;
+  bool full_index_scan_;
 
  public:
 
@@ -514,8 +513,8 @@ class IndexScanPredicate {
    * Constructor - Initialize nothing
    */
   IndexScanPredicate() :
-    conjunction_list{},
-    full_index_scan{false}
+    conjunction_list_{},
+    full_index_scan_{false}
   {}
   
   /*
@@ -537,15 +536,15 @@ class IndexScanPredicate {
                                    const std::vector<ExpressionType> &expr_list) {
     // Construct a conjunction predicate in-place and initialize all
     // low key and high key and binding slots
-    conjunction_list.emplace_back(index_p,
-                                  value_list,
-                                  tuple_column_id_list,
-                                  expr_list);
+    conjunction_list_.emplace_back(index_p,
+                                   value_list,
+                                   tuple_column_id_list,
+                                   expr_list);
 
     // If any of the newly added predicate results in a full index scan
     // then the entire predicate is a scan
-    full_index_scan = \
-      full_index_scan || conjunction_list.back().IsFullIndexScan();
+    full_index_scan_ = \
+      full_index_scan_ || conjunction_list_.back().IsFullIndexScan();
     
     return;
   }
@@ -563,14 +562,14 @@ class IndexScanPredicate {
    */
   void LateBindValues(Index *index_p,
                       const std::vector<Value> &value_list) {
-    if(full_index_scan == true) {
+    if(full_index_scan_ == true) {
       LOG_INFO("Fast path: For full index scan do not bind");
       
       return;
     }
     
     // For every conjunction predicate, bind value on them one by one
-    for(ConjunctionScanPredicate &conjunction_item : conjunction_list) {
+    for(ConjunctionScanPredicate &conjunction_item : conjunction_list_) {
       // This should be true since this object's index scan flag is an "OR"
       // of all elements in the array
       PL_ASSERT(conjunction_item.IsFullIndexScan() == false);
@@ -588,7 +587,7 @@ class IndexScanPredicate {
    * and that all modifications should be done through member function call
    */
   inline const std::vector<ConjunctionScanPredicate> &GetConjunctionList() const {
-    return conjunction_list;
+    return conjunction_list_;
   }
   
   /*
@@ -596,7 +595,7 @@ class IndexScanPredicate {
    *                     done by one and only one full index scan
    */
   inline bool IsFullIndexScan() const {
-    return full_index_scan;
+    return full_index_scan_;
   }
 };
   
