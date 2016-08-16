@@ -50,7 +50,7 @@ class TsOrderTxnManager : public TransactionManager {
 
   // The index_entry_ptr is the address of the head node of the version chain, 
   // which is directly pointed by the primary index.
-  virtual bool PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr);
+  virtual void PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr);
 
   virtual bool PerformRead(const ItemPointer &location);
 
@@ -88,15 +88,10 @@ class TsOrderTxnManager : public TransactionManager {
     current_txn = nullptr;
   }
 
-  virtual ItemPointer *GetHeadPtr(
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t tuple_id);
-
  private:
 
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
-  static const int ITEM_POINTER_OFFSET = (LAST_READER_OFFSET + 8);
 
 
   Spinlock *GetSpinlockField(
@@ -111,20 +106,12 @@ class TsOrderTxnManager : public TransactionManager {
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 
-  void SetHeadPtr(
-      const storage::TileGroupHeader *const tile_group_header, 
-      const oid_t tuple_id, ItemPointer *item_ptr);
-
   // Init reserved area of a tuple
-  // delete_flag is used to mark that the transaction that owns the tuple
-  // has deleted the tuple
-  // Primary index header ptr (8 bytes)
   static void InitTupleReserved(const storage::TileGroupHeader *tile_group_header, const oid_t tuple_id) {
     auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
     new ((reserved_area + LOCK_OFFSET)) Spinlock();
     *(cid_t*)(reserved_area + LAST_READER_OFFSET) = 0;
-    *(reinterpret_cast<ItemPointer**>(reserved_area + ITEM_POINTER_OFFSET)) = nullptr;
   }
 
 };

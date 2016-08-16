@@ -110,11 +110,8 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location, index_entry_ptr);
-      if (!res) {
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
+      transaction_manager.PerformInsert(location, index_entry_ptr);
+
       executor_context_->num_processed += 1;  // insert one
     }
 
@@ -165,11 +162,8 @@ bool InsertExecutor::DExecute() {
         return false;
       }
 
-      auto res = transaction_manager.PerformInsert(location, index_entry_ptr);
-      if (!res) {
-        transaction_manager.SetTransactionResult(RESULT_FAILURE);
-        return res;
-      }
+      transaction_manager.PerformInsert(location, index_entry_ptr);
+      
       LOG_TRACE("Number of tuples in table after insert: %lu",
                 target_table->GetTupleCount());
 

@@ -211,6 +211,10 @@ ItemPointer DataTable::InsertVersion(const storage::Tuple *tuple) {
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   IncreaseTupleCount(1);
+
+  // auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
+  // tile_group_header->SetIndirection(location.offset, index_entry);
+
   return location;
 }
 
@@ -244,6 +248,10 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
     return INVALID_ITEMPOINTER;
   }
 
+  // Write down the master version's pointer into tile group header
+  // auto tile_group_header = catalog::Manager::GetInstance().GetTileGroup(location.block)->GetHeader();
+  // tile_group_header->SetIndirection(location.offset, *index_entry_ptr);
+
   PL_ASSERT((*index_entry_ptr)->block == location.block && (*index_entry_ptr)->offset == location.offset);
 
   // Increase the table's number of tuples by 1
@@ -274,7 +282,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple, ItemPointer **in
 bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location, ItemPointer **index_entry_ptr) {
   *index_entry_ptr = new ItemPointer(location);
-
+  
   int index_count = GetIndexCount();
   auto &transaction_manager =
       concurrency::TransactionManagerFactory::GetInstance();
@@ -283,7 +291,6 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       std::bind(&concurrency::TransactionManager::IsOccupied,
                 &transaction_manager, std::placeholders::_1);
 
-  // (A) Check existence for primary/unique indexes
   // FIXME Since this is NOT protected by a lock, concurrent insert may happen.
 
   bool res = true;
@@ -323,7 +330,7 @@ bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
       // If some of the indexes have been inserted,
       // the pointer has a chance to be dereferenced by readers and it cannot be deleted
       if (success_count == 0) {
-        delete index_entry_ptr;
+        delete *index_entry_ptr;
       }
       *index_entry_ptr = nullptr;
       return false;

@@ -64,17 +64,17 @@ bool TsOrderTxnManager::SetLastReaderCid(
 }
 
 
-ItemPointer *TsOrderTxnManager::GetHeadPtr(
-    const storage::TileGroupHeader *const tile_group_header, 
-    const oid_t tuple_id) {
-  return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET));
-}
+// ItemPointer *TsOrderTxnManager::GetHeadPtr(
+//     const storage::TileGroupHeader *const tile_group_header, 
+//     const oid_t tuple_id) {
+//   return *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET));
+// }
 
-void TsOrderTxnManager::SetHeadPtr(
-    const storage::TileGroupHeader *const tile_group_header, 
-    const oid_t tuple_id, ItemPointer *item_ptr) {
-  *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET)) = item_ptr;
-}
+// void TsOrderTxnManager::SetHeadPtr(
+//     const storage::TileGroupHeader *const tile_group_header, 
+//     const oid_t tuple_id, ItemPointer *item_ptr) {
+//   *(reinterpret_cast<ItemPointer**>(tile_group_header->GetReservedFieldRef(tuple_id) + ITEM_POINTER_OFFSET)) = item_ptr;
+// }
 
 TsOrderTxnManager &TsOrderTxnManager::GetInstance() {
   static TsOrderTxnManager txn_manager;
@@ -232,7 +232,7 @@ bool TsOrderTxnManager::PerformRead(const ItemPointer &location) {
   }
 }
 
-bool TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) {
+void TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *index_entry_ptr) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -255,10 +255,9 @@ bool TsOrderTxnManager::PerformInsert(const ItemPointer &location, ItemPointer *
   InitTupleReserved(tile_group_header, tuple_id);
 
   // Write down the head pointer's address in tile group header
-  SetHeadPtr(tile_group_header, tuple_id, index_entry_ptr);
+  tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
+  // SetHeadPtr(tile_group_header, tuple_id, index_entry_ptr);
 
-
-  return true;
 }
 
 
@@ -316,17 +315,23 @@ void TsOrderTxnManager::PerformUpdate(const ItemPointer &old_location,
   if (old_prev.IsNull() == true) {
     // if we are updating the latest version.
     // Set the header information for the new version
-    auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+    // auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
 
-    assert(head_ptr != nullptr);
+    // assert(head_ptr != nullptr);
     
-    SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+    // SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+
+    ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
+
+    assert(index_entry_ptr != nullptr);
+
+    new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
 
     // Set the index header in an atomic way.
     // We do it atomically because we don't want any one to see a half-done pointer.
     // In case of contention, no one can update this pointer when we are updating it
     // because we are holding the write lock. This update should success in its first trial.
-    auto res = AtomicUpdateItemPointer(head_ptr, new_location);
+    auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
     assert(res == true);
     (void) res;
   }
@@ -407,17 +412,23 @@ void TsOrderTxnManager::PerformDelete(const ItemPointer &old_location,
   if (old_prev.IsNull() == true) {
     // if we are deleting the latest version.
     // Set the header information for the new version
-    auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
+    // auto head_ptr = GetHeadPtr(tile_group_header, old_location.offset);
 
-    assert(head_ptr != nullptr);
+    // assert(head_ptr != nullptr);
 
-    SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+    // SetHeadPtr(new_tile_group_header, new_location.offset, head_ptr);
+
+    ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(old_location.offset);
+
+    assert(index_entry_ptr != nullptr);
+
+    new_tile_group_header->SetIndirection(new_location.offset, index_entry_ptr);
 
     // Set the index header in an atomic way.
     // We do it atomically because we don't want any one to see a half-down pointer
     // In case of contention, no one can update this pointer when we are updating it
     // because we are holding the write lock. This update should success in its first trial.
-    auto res = AtomicUpdateItemPointer(head_ptr, new_location);
+    auto res = AtomicUpdateItemPointer(index_entry_ptr, new_location);
     assert(res == true);
     (void) res;
   }
@@ -588,8 +599,9 @@ Result TsOrderTxnManager::AbortTransaction() {
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
-          auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
-          auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
+          // auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
+          ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
+          auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
           assert(res == true);
           (void) res;
         }
@@ -635,8 +647,10 @@ Result TsOrderTxnManager::AbortTransaction() {
           // if we updated the latest version.
           // We must first adjust the head pointer
           // before we unlink the aborted version from version list
-          auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
-          auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
+          ItemPointer *index_entry_ptr = tile_group_header->GetIndirection(tuple_slot);
+          auto res = AtomicUpdateItemPointer(index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+          // auto head_ptr = GetHeadPtr(tile_group_header, tuple_slot);
+          // auto res = AtomicUpdateItemPointer(head_ptr, ItemPointer(tile_group_id, tuple_slot));
           assert(res == true);
           (void) res;
         }

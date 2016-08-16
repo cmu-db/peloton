@@ -105,7 +105,6 @@ bool UpdateExecutor::DExecute() {
                               executor_context_);
 
 
-      // Current rb segment is OK, just overwrite the tuple in place
       tile_group->CopyTuple(new_tuple.get(), physical_tuple_id);
       transaction_manager.PerformUpdate(old_location);
 
@@ -141,6 +140,7 @@ bool UpdateExecutor::DExecute() {
       // the acquired lock can't be released when the txn is aborted.
       if (new_location.IsNull() == true) {
         LOG_TRACE("Fail to insert new tuple. Set txn failure.");
+        transaction_manager.YieldOwnership(tile_group_id, physical_tuple_id);
         transaction_manager.SetTransactionResult(Result::RESULT_FAILURE);
         return false;
       }
